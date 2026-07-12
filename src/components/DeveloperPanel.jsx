@@ -410,7 +410,19 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail da Escola</label>
-                  <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={e => {
+                      const newEmail = e.target.value;
+                      setFormData({ ...formData, email: newEmail });
+                      // Auto-preenche o email de login do admin se ainda não foi editado manualmente
+                      if (!editingSchool && (adminData.email === '' || adminData.email === formData.email)) {
+                        setAdminData(prev => ({ ...prev, email: newEmail }));
+                      }
+                    }}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
 
                 <div>

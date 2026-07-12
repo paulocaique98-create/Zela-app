@@ -6,13 +6,19 @@ export default function AdminKioskManagement({ currentSchool }) {
   const [kiosks, setKiosks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const schoolId = currentSchool?.id || currentSchool?.school_id || null;
+
   const fetchKiosks = async () => {
+    if (!schoolId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('kiosk_devices')
         .select('*')
-        .eq('school_id', currentSchool.school_id || currentSchool.id)
+        .eq('school_id', schoolId)
         .order('created_at', { ascending: false });
         
       if (!error && data) {
@@ -27,7 +33,7 @@ export default function AdminKioskManagement({ currentSchool }) {
 
   useEffect(() => {
     fetchKiosks();
-  }, [currentSchool]);
+  }, [schoolId]);
 
   const handleRevoke = async (kioskId) => {
     if (!window.confirm('Tem certeza que deseja revogar o acesso deste Totem? Ele deixará de funcionar imediatamente.')) return;

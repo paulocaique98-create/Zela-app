@@ -36,6 +36,32 @@ export default function App() {
   // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
   const realtimeChannelRef = useRef(null);
 
+  // Valida a sessão do Supabase ao carregar o app.
+  // Se o token guardado no localStorage expirou ou é inválido,
+  // derruba a sessão local para evitar o app abrir "logado" indevidamente.
+  useEffect(() => {
+    const validateSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session && localStorage.getItem('zela_user')) {
+        // Token inválido/expirado — faz logout silencioso
+        localStorage.removeItem('zela_user');
+        setCurrentUser(null);
+      }
+    };
+    validateSession();
+
+    // Escuta mudanças de estado de auth (ex: token expirado em tempo real)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('zela_user');
+          setCurrentUser(null);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const fetchGlobalLogo = async () => {
     try {
       const { data } = await supabase
