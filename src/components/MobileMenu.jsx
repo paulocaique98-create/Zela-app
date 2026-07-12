@@ -1,5 +1,4 @@
-import React from 'react';
-import { Home, CalendarDays, Settings, AlertCircle, Users, LogOut, X } from 'lucide-react';
+import { Home, CalendarDays, Settings, AlertCircle, Users, LogOut, X, Smartphone } from 'lucide-react';
 
 export default function MobileMenu({ 
   currentUser, 
@@ -63,6 +62,9 @@ export default function MobileMenu({
               </button>
               <button onClick={() => { setAdminTab('register'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${adminTab === 'register' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
                 <Users size={18}/> Cadastro de Usuários
+              </button>
+              <button onClick={() => { setAdminTab('kiosks'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${adminTab === 'kiosks' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+                <Smartphone size={18}/> Gerenciar Totens
               </button>
               <button onClick={() => { setAdminTab('settings'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
                 <Settings size={18}/> Configurações
