@@ -95,8 +95,8 @@ export default function KioskPasswordLogin({ onClose, executeKioskQuery, schoolI
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 text-white animate-in zoom-in-95 duration-300">
-      <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/5">
+    <div className="w-full max-w-md mx-auto bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 text-white animate-in zoom-in-95 duration-300 max-h-full flex flex-col">
+      <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/5 shrink-0">
         <h3 className="font-bold flex items-center gap-2 text-lg">
           <KeyRound size={18} className="text-amber-400" /> Acesso Manual
         </h3>
@@ -105,7 +105,7 @@ export default function KioskPasswordLogin({ onClose, executeKioskQuery, schoolI
         </button>
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
         {actionDone ? (
           <div className="text-center py-10 space-y-4 animate-in zoom-in">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />

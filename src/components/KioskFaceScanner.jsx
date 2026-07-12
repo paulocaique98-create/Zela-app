@@ -285,9 +285,9 @@ export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId 
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-black rounded-3xl overflow-hidden relative shadow-2xl flex flex-col md:flex-row h-[70vh] border border-white/10">
+    <div className="w-full h-full max-w-4xl mx-auto bg-black rounded-3xl overflow-hidden relative shadow-2xl flex flex-col md:flex-row border border-white/10">
       
-      <div className="relative flex-1 bg-slate-950 flex items-center justify-center overflow-hidden min-h-[300px] md:min-h-0">
+      <div className="relative flex-1 md:flex-auto bg-slate-950 flex items-center justify-center overflow-hidden min-h-[40vh] md:min-h-0">
         {(!cameraReady || !faceMatcher) && !error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
             <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
@@ -337,8 +337,8 @@ export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId 
         )}
       </div>
 
-      <div className="w-full md:w-85 shrink-0 border-t md:border-t-0 md:border-l border-white/10 flex flex-col bg-slate-900 text-white">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
+      <div className="w-full md:w-85 md:shrink-0 flex-1 md:flex-none border-t md:border-t-0 md:border-l border-white/10 flex flex-col bg-slate-900 text-white min-h-0">
+        <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/10 shrink-0">
           <h3 className="font-bold flex items-center gap-1.5 text-lg">
             <ScanFace size={18} className="text-blue-400" /> Biometria
           </h3>
@@ -347,7 +347,7 @@ export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
           {isProcessingCapture ? (
             <div className="text-center py-16 space-y-3">
               <Loader2 className="h-10 w-10 text-blue-500 animate-spin mx-auto" />
