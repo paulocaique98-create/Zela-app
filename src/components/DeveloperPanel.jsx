@@ -8,7 +8,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     cnpj: '',
@@ -21,7 +21,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
   });
   const [adminData, setAdminData] = useState({ name: '', email: '', password: '' });
   const [saveError, setSaveError] = useState('');
-  
+
   const [zelaGlobalLogo, setZelaGlobalLogo] = useState('');
   const [logoSaving, setLogoSaving] = useState(false);
   const [logoMsg, setLogoMsg] = useState('');
@@ -79,7 +79,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
         .from('schools')
         .select('*')
         .order('school_code', { ascending: true });
-        
+
       if (error) throw error;
       setSchools(data || []);
     } catch (err) {
@@ -122,16 +122,16 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
         .like('school_code', 'ZL%')
         .order('school_code', { ascending: false })
         .limit(1);
-        
+
       if (error) throw error;
-      
+
       let nextNum = 1;
       if (data && data.length > 0) {
         const lastCode = data[0].school_code;
         const lastNum = parseInt(lastCode.substring(2));
         if (!isNaN(lastNum)) nextNum = lastNum + 1;
       }
-      
+
       return `ZL${nextNum.toString().padStart(3, '0')}`;
     } catch (err) {
       console.error('Erro ao gerar código:', err);
@@ -149,7 +149,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
           .from('schools')
           .update(formData)
           .eq('id', editingSchool.id);
-          
+
         if (error) throw error;
       } else {
         // 1. Validar dados do administrador
@@ -169,7 +169,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
           .insert([{ ...formData, school_code: schoolCode }])
           .select()
           .single();
-          
+
         if (schoolError) throw schoolError;
 
         // 3. Criar o usuário admin no Supabase Auth usando o helper
@@ -208,7 +208,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
           throw userError;
         }
       }
-      
+
       setIsModalOpen(false);
       fetchSchools();
     } catch (err) {
@@ -223,7 +223,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
         .from('schools')
         .update({ is_active: !currentStatus })
         .eq('id', id);
-        
+
       if (error) throw error;
       fetchSchools();
     } catch (err) {
@@ -231,42 +231,27 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
     }
   };
 
-  const [isResetting, setIsResetting] = useState(false);
-
-  const handleResetAllData = async () => {
-    const confirmation = window.prompt(
-      'ATENÇÃO: Esta ação é IRREVERSÍVEL.\n\nEla vai apagar TODOS os alunos, autorizados e usuários (exceto o desenvolvedor).\n\nDigite CONFIRMAR para prosseguir:'
-    );
-    if (confirmation !== 'CONFIRMAR') {
-      alert('Operação cancelada.');
+  const handleDeleteSchool = async (id, name, code) => {
+    const confirmMsg = `ATENÇÃO: Você está prestes a excluir a escola ${name} (${code}).\n\nIsso apagará permanentemente todos os alunos, responsáveis, totens e históricos vinculados a ela.\n\nDigite CONFIRMAR para prosseguir:`;
+    if (prompt(confirmMsg) !== 'CONFIRMAR') {
       return;
     }
 
-    setIsResetting(true);
     try {
-      // 1. Apaga todos os alunos
-      const { error: e1 } = await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (e1) throw e1;
+      // Chama a função especial RPC para apagar os logins (auth.users) e depois a escola.
+      const { error } = await supabase.rpc('delete_school_and_users', { target_school_id: id });
+      if (error) throw error;
 
-      // 2. Apaga todos os autorizados
-      const { error: e2 } = await supabase.from('authorized_persons').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (e2) throw e2;
-
-      // 3. Apaga todos os usuários de role 'family' e 'admin' (não o developer)
-      const { error: e3 } = await supabase.from('users').delete().neq('id', currentUser.id);
-      if (e3) throw e3;
-
-      alert('✅ Limpeza concluída! Todos os dados fictícios foram removidos. O banco está zerado e pronto para uso real.');
+      fetchSchools();
+      alert(`Escola ${name} excluída com sucesso.`);
     } catch (err) {
-      console.error('Erro ao limpar dados:', err);
-      alert('Erro ao limpar dados: ' + (err.message || JSON.stringify(err)));
-    } finally {
-      setIsResetting(false);
+      console.error(err);
+      alert(`Erro ao excluir escola: ${err.message}`);
     }
   };
 
-  const filteredSchools = schools.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredSchools = schools.filter(s =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.school_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.cnpj && s.cnpj.includes(searchTerm))
   );
@@ -293,7 +278,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
+          <input
             type="text"
             placeholder="Buscar por nome, código ou CNPJ..."
             value={searchTerm}
@@ -301,8 +286,8 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition text-sm"
           />
         </div>
-        
-        <button 
+
+        <button
           onClick={() => handleOpenModal()}
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md whitespace-nowrap"
         >
@@ -350,40 +335,44 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                       <p className="text-xs text-slate-500">{school.cnpj || 'Sem CNPJ'} • {school.email}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`text-xs font-black uppercase px-2 py-1 rounded-md border ${
-                        school.plan === 'pro' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                        'bg-slate-100 text-slate-600 border-slate-200'
-                      }`}>
+                      <span className={`text-xs font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          'bg-slate-100 text-slate-600 border-slate-200'
+                        }`}>
                         {school.plan}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
-                        school.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${school.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${school.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         {school.is_active ? 'Ativa' : 'Suspensa'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => handleOpenModal(school)}
                           className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                           title="Editar escola"
                         >
                           <Edit2 size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => toggleStatus(school.id, school.is_active)}
-                          className={`p-2 rounded-lg transition ${
-                            school.is_active 
-                              ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' 
+                          className={`p-2 rounded-lg transition ${school.is_active
+                              ? 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
                               : 'text-slate-400 hover:text-green-600 hover:bg-green-50'
-                          }`}
+                            }`}
                           title={school.is_active ? "Suspender acesso" : "Reativar acesso"}
                         >
                           <Power size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSchool(school.id, school.name, school.school_code)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition ml-2"
+                          title="Excluir escola permanentemente"
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
@@ -404,47 +393,47 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                 <Building2 size={20} className="text-indigo-600" />
                 {editingSchool ? `Editar ${editingSchool.school_code}` : 'Nova Escola Contratante'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-6 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Razão Social / Nome da Escola</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                  <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CNPJ</label>
-                  <input type="text" value={formData.cnpj} onChange={e => setFormData({...formData, cnpj: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="00.000.000/0000-00" />
+                  <input type="text" value={formData.cnpj} onChange={e => setFormData({ ...formData, cnpj: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="00.000.000/0000-00" />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail da Escola</label>
-                  <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                  <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone</label>
-                  <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Plano Contratado</label>
-                  <select value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <select value={formData.plan} onChange={e => setFormData({ ...formData, plan: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white">
                     <option value="basic">Basic (Portaria Simples)</option>
                     <option value="pro">Pro (Reconhecimento Facial)</option>
                   </select>
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Endereço Completo</label>
-                  <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Notas Internas da Zela</label>
-                  <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={2} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
+                  <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
 
                 {/* Responsável da escola — apenas no cadastro */}
@@ -462,7 +451,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                           <input
                             type="text"
                             value={adminData.name}
-                            onChange={e => setAdminData({...adminData, name: e.target.value})}
+                            onChange={e => setAdminData({ ...adminData, name: e.target.value })}
                             placeholder="Ex: Ana Paula Souza"
                             className="w-full p-2.5 border border-indigo-200 bg-indigo-50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
                           />
@@ -472,7 +461,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                           <input
                             type="email"
                             value={adminData.email}
-                            onChange={e => setAdminData({...adminData, email: e.target.value})}
+                            onChange={e => setAdminData({ ...adminData, email: e.target.value })}
                             placeholder="admin@escola.com.br"
                             className="w-full p-2.5 border border-indigo-200 bg-indigo-50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
                           />
@@ -482,7 +471,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                           <input
                             type="password"
                             value={adminData.password}
-                            onChange={e => setAdminData({...adminData, password: e.target.value})}
+                            onChange={e => setAdminData({ ...adminData, password: e.target.value })}
                             placeholder="Mínimo 6 caracteres"
                             className="w-full p-2.5 border border-indigo-200 bg-indigo-50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
                           />
@@ -492,7 +481,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                   </div>
                 )}
               </div>
-              
+
               {saveError && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium flex items-start gap-2">
                   <AlertTriangle size={16} className="shrink-0 mt-0.5" />
@@ -527,8 +516,8 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
             <h3 className="text-sm font-bold text-slate-800">Logo Global (Zela Portal)</h3>
             <p className="text-xs text-slate-500">Selecione uma imagem (PNG, JPG) para alterar a logo no cabeçalho do sistema.</p>
             <div className="flex gap-2 items-center">
-              <input 
-                type="file" 
+              <input
+                type="file"
                 accept="image/*"
                 onChange={handleGlobalFileChange}
                 className="block w-full text-sm text-slate-500
@@ -539,14 +528,14 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                   hover:file:bg-indigo-100 cursor-pointer"
               />
               {zelaGlobalLogo && (
-                <button 
-                  onClick={() => setZelaGlobalLogo('')} 
+                <button
+                  onClick={() => setZelaGlobalLogo('')}
                   className="px-3 text-red-500 text-xs font-bold hover:bg-red-50 rounded-xl transition h-9"
                 >
                   Remover
                 </button>
               )}
-              <button 
+              <button
                 onClick={handleSaveGlobalLogo}
                 disabled={logoSaving}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold rounded-lg transition text-xs whitespace-nowrap h-9"
@@ -557,30 +546,6 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
             {logoMsg && (
               <p className={`text-xs font-medium mt-1 ${logoMsg.startsWith('Erro') ? 'text-red-600' : 'text-green-600'}`}>{logoMsg}</p>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* DANGER ZONE */}
-      <div className="bg-white border-2 border-red-200 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="bg-red-100 p-3 rounded-xl text-red-600 shrink-0">
-            <AlertTriangle size={24} />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-black text-red-700 mb-1">Zona de Perigo — Reset Completo</h3>
-            <p className="text-sm text-slate-500 mb-4">
-              Apaga <strong>todos os alunos, autorizados e usuários</strong> (exceto o desenvolvedor) de todas as escolas.
-              Use para limpar dados de testes antes de iniciar o uso real do sistema.
-            </p>
-            <button
-              onClick={handleResetAllData}
-              disabled={isResetting}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-md"
-            >
-              <Trash2 size={16} />
-              {isResetting ? 'Limpando banco...' : 'Limpar Todos os Dados Fictícios'}
-            </button>
           </div>
         </div>
       </div>
