@@ -54,8 +54,8 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                       const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
                       if (detection) {
                         const descriptorArray = Array.from(detection.descriptor);
-                        // Chama togglePhoto passando null para a URL da foto (não salva) e o array do descritor
-                        await togglePhoto(person.id, null, descriptorArray);
+                        // Salva a foto (base64) e o descritor biométrico no banco de dados
+                        await togglePhoto(person.id, reader.result, descriptorArray);
                       } else {
                         alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
                       }
@@ -78,6 +78,8 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                   <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer">
                     {isProcessingId === person.id ? (
                       <Loader2 size={20} className="text-indigo-600 animate-spin"/>
+                    ) : person.photo_url ? (
+                      <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
                     ) : person.hasPhoto || person.has_biometrics ? (
                       <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-600">
                         <Fingerprint size={24} />
