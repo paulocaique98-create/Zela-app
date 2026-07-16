@@ -268,7 +268,39 @@ export default function App() {
     setStudents([]);
     setAuthorized([]);
     localStorage.removeItem('zela_user');
+    // Faz o logoff do Auth Supabase por garantia
+    supabase.auth.signOut().catch(() => {});
   };
+
+  // Temporizador de inatividade (10 minutos)
+  useEffect(() => {
+    let inactivityTimer;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      // Se não houver usuário logado ou estiver no totem, não ativa o timer
+      if (!currentUser || window.location.pathname === '/totem') return;
+      
+      inactivityTimer = setTimeout(() => {
+        handleLogout();
+        window.location.reload();
+      }, 600000); // 10 minutos (600.000 ms)
+    };
+
+    // Eventos que indicam atividade do usuário
+    const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
+
+    // Atribui os listeners de evento apenas se houver usuário logado
+    if (currentUser && window.location.pathname !== '/totem') {
+      events.forEach(event => window.addEventListener(event, resetTimer));
+      resetTimer(); // Inicia o contador logo de cara
+    }
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [currentUser]);
 
   const togglePhoto = async (id, photoUrl = null, descriptorArray = null) => {
     try {
