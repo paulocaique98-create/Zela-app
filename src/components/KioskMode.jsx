@@ -7,6 +7,7 @@ import KioskPasswordLogin from './KioskPasswordLogin';
 
 export default function KioskMode() {
   const [deviceToken, setDeviceToken] = useState(localStorage.getItem('zela_kiosk_device'));
+  const [kioskPlan, setKioskPlan] = useState(localStorage.getItem('zela_kiosk_plan') || 'BASIC');
   const [schoolCode, setSchoolCode] = useState('');
 
   // States de Pareamento
@@ -38,7 +39,7 @@ export default function KioskMode() {
 
       const actualSchoolId = user.user_metadata.school_id;
       const { data: schoolData } = await supabaseAuthHelper
-        .from('schools').select('school_code').eq('id', actualSchoolId).single();
+        .from('schools').select('school_code, plan').eq('id', actualSchoolId).single();
 
       if (!schoolData || schoolData.school_code !== schoolCode) {
         await supabaseAuthHelper.auth.signOut();
@@ -58,7 +59,9 @@ export default function KioskMode() {
       await supabaseAuthHelper.auth.signOut();
       localStorage.setItem('zela_kiosk_device', token);
       localStorage.setItem('zela_kiosk_school', actualSchoolId);
+      localStorage.setItem('zela_kiosk_plan', schoolData.plan);
       setDeviceToken(token);
+      setKioskPlan(schoolData.plan);
     } catch (err) {
       setPairingError(err.message);
     } finally {
@@ -74,6 +77,27 @@ export default function KioskMode() {
     supabase.rest.headers = oldHeaders;
     return result;
   };
+
+  // 2.5 BUSCAR PLANO ATUALIZADO NO CARREGAMENTO
+  useEffect(() => {
+    const fetchPlan = async () => {
+      const schoolId = localStorage.getItem('zela_kiosk_school');
+      if (schoolId && deviceToken) {
+        try {
+          const { data } = await executeKioskQuery(
+            supabase.from('schools').select('plan').eq('id', schoolId).single()
+          );
+          if (data && data.plan) {
+            setKioskPlan(data.plan);
+            localStorage.setItem('zela_kiosk_plan', data.plan);
+          }
+        } catch (err) {
+          console.warn('Erro ao verificar plano no kiosk:', err);
+        }
+      }
+    };
+    fetchPlan();
+  }, [deviceToken]);
 
   // 3. SCANNER QR
   useEffect(() => {
@@ -232,7 +256,7 @@ export default function KioskMode() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl">
             {/* QR Code */}
             <button onClick={() => setMode('qr')}
-              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95">
+              className={`${kioskPlan === 'PRO' ? '' : 'col-span-2'} group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95`}>
               <div className="w-11 h-11 sm:w-20 sm:h-20 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                 <QrCode size={22} className="sm:hidden" />
                 <QrCode size={40} className="hidden sm:block" />
@@ -243,18 +267,20 @@ export default function KioskMode() {
               </div>
             </button>
 
-            {/* Reconhecimento Facial */}
-            <button onClick={() => setMode('face')}
-              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95">
-              <div className="w-11 h-11 sm:w-20 sm:h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ScanFace size={22} className="sm:hidden" />
-                <ScanFace size={40} className="hidden sm:block" />
-              </div>
-              <div className="text-center">
-                <h3 className="text-xs sm:text-xl font-bold leading-tight">Reconhecimento Facial</h3>
-                <p className="text-slate-400 text-[10px] sm:text-sm mt-1 hidden sm:block">Olhe para a câmera para identificação automática</p>
-              </div>
-            </button>
+            {/* Reconhecimento Facial (Apenas PRO) */}
+            {kioskPlan === 'PRO' && (
+              <button onClick={() => setMode('face')}
+                className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95">
+                <div className="w-11 h-11 sm:w-20 sm:h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <ScanFace size={22} className="sm:hidden" />
+                  <ScanFace size={40} className="hidden sm:block" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xs sm:text-xl font-bold leading-tight">Reconhecimento Facial</h3>
+                  <p className="text-slate-400 text-[10px] sm:text-sm mt-1 hidden sm:block">Olhe para a câmera para identificação automática</p>
+                </div>
+              </button>
+            )}
 
             {/* Senha — ocupa largura total */}
             <button onClick={() => setMode('password')}
