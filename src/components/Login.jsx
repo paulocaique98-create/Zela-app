@@ -7,6 +7,8 @@ export default function Login({ onLogin }) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
+  const [recoveryMsg, setRecoveryMsg] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -73,6 +75,32 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const handlePasswordRecovery = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setLoginError('');
+    setRecoveryMsg('');
+
+    if (!loginEmail) {
+      setLoginError('Por favor, informe seu e-mail para recuperar a senha.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      if (error) throw error;
+      setRecoveryMsg('E-mail de recuperação enviado! Verifique sua caixa de entrada (e o spam).');
+    } catch (err) {
+      console.error('[Login] Recovery error:', err);
+      setLoginError(err.message || 'Erro ao enviar e-mail de recuperação.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans text-slate-800">
@@ -82,23 +110,52 @@ export default function Login({ onLogin }) {
             <ShieldCheck className="text-white w-8 h-8" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-center mb-2">Acesso Zela</h1>
-        <p className="text-center text-slate-500 mb-8 text-sm">Portal de Gestão e Segurança Escolar</p>
+        <h1 className="text-2xl font-bold text-center mb-2">
+          {isRecoveringPassword ? 'Recuperar Senha' : 'Acesso Zela'}
+        </h1>
+        <p className="text-center text-slate-500 mb-8 text-sm">
+          {isRecoveringPassword ? 'Enviaremos um link para redefinir sua senha' : 'Portal de Gestão e Segurança Escolar'}
+        </p>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold mb-1">E-mail</label>
-            <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="seu@email.com" required />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">Senha</label>
-            <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••" required />
-          </div>
-          {loginError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{loginError}</div>}
-          <button type="submit" disabled={isLoading} className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 transition-colors mt-2 shadow-md disabled:opacity-70">
-            {isLoading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+        {isRecoveringPassword ? (
+          <form onSubmit={handlePasswordRecovery} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">E-mail cadastrado</label>
+              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="seu@email.com" required />
+            </div>
+            {loginError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{loginError}</div>}
+            {recoveryMsg && <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-200">{recoveryMsg}</div>}
+            
+            <button type="submit" disabled={isLoading} className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 transition-colors mt-2 shadow-md disabled:opacity-70">
+              {isLoading ? 'Enviando...' : 'Enviar Link'}
+            </button>
+            <div className="text-center mt-4">
+              <button type="button" onClick={() => { setIsRecoveringPassword(false); setLoginError(''); setRecoveryMsg(''); }} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                Voltar para o login
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">E-mail</label>
+              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="seu@email.com" required />
+            </div>
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-semibold">Senha</label>
+                <button type="button" onClick={() => { setIsRecoveringPassword(true); setLoginError(''); }} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                  Esqueceu a senha?
+                </button>
+              </div>
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••" required />
+            </div>
+            {loginError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{loginError}</div>}
+            <button type="submit" disabled={isLoading} className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 transition-colors mt-2 shadow-md disabled:opacity-70">
+              {isLoading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

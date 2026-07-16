@@ -7,6 +7,7 @@ import AdminPortal from './components/AdminPortal';
 import AuthModal from './components/AuthModal';
 import DeveloperPanel from './components/DeveloperPanel';
 import KioskMode from './components/KioskMode';
+import ResetPassword from './components/ResetPassword';
 import { supabase } from './lib/supabase';
 
 export default function App() {
@@ -481,6 +482,11 @@ export default function App() {
     setIsEmergency(false);
     setEmergencyData(null);
   };
+
+  // ──────── ROUTING GLOBAL ────────
+  if (window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery')) {
+    return <ResetPassword />;
+  }
 
   if (window.location.pathname === '/totem') {
     return <KioskMode />;
