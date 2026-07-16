@@ -98,22 +98,12 @@ export default function KioskMode() {
     };
     fetchPlan();
 
-    const channel = supabase
-      .channel(`public:schools:id=eq.${schoolId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'schools', filter: `id=eq.${schoolId}` },
-        (payload) => {
-          if (payload.new && payload.new.plan) {
-            setKioskPlan(payload.new.plan);
-            localStorage.setItem('zela_kiosk_plan', payload.new.plan);
-          }
-        }
-      )
-      .subscribe();
+    // Iniciar verificação contínua (Polling) a cada 5 segundos
+    // Isso garante que o plano seja atualizado mesmo se o WebSocket falhar ou RLS bloquear conexões anônimas.
+    const intervalId = setInterval(fetchPlan, 5000);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(intervalId);
     };
   }, [deviceToken]);
 
