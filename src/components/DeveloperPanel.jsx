@@ -21,6 +21,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
   });
   const [adminData, setAdminData] = useState({ name: '', email: '', password: '' });
   const [saveError, setSaveError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const [zelaGlobalLogo, setZelaGlobalLogo] = useState('');
   const [logoSaving, setLogoSaving] = useState(false);
@@ -109,6 +110,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
       });
       setAdminData({ name: '', email: '', password: '' });
       setSaveError('');
+      setSuccessMsg('');
     }
     setIsModalOpen(true);
   };
@@ -142,6 +144,7 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaveError('');
+    setSuccessMsg('');
     try {
       if (editingSchool) {
         // Update apenas dados da escola
@@ -197,7 +200,6 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
             id: authUser.id,
             name: adminData.name.trim(),
             email: adminData.email.trim().toLowerCase(),
-            password: '', // Não salvar em texto plano
             role: 'admin',
             school_id: newSchool.id
           }]);
@@ -208,9 +210,12 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
           throw userError;
         }
       }
-
-      setIsModalOpen(false);
+      setSuccessMsg('Escola criada com sucesso!');
       fetchSchools();
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSuccessMsg('');
+      }, 2000);
     } catch (err) {
       console.error('Erro ao salvar escola:', err);
       setSaveError(err.message || 'Erro ao salvar dados da escola.');
@@ -498,6 +503,11 @@ export default function DeveloperPanel({ currentUser, onUpdateGlobalLogo }) {
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium flex items-start gap-2">
                   <AlertTriangle size={16} className="shrink-0 mt-0.5" />
                   {saveError}
+                </div>
+              )}
+              {successMsg && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium flex items-start gap-2">
+                  {successMsg}
                 </div>
               )}
 

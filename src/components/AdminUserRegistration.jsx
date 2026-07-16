@@ -229,7 +229,6 @@ export default function AdminUserRegistration({ currentUser }) {
           id: authUser.id,
           name: formData.name,
           email: formData.email.trim().toLowerCase(),
-          password: '',
           phone: formData.phone1,
           role: formData.role,
           school_id: currentUser.school_id,
