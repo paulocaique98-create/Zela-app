@@ -276,17 +276,32 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
   const handleRequestAccess = async () => {
     if (!matchedStudents.length) return;
     
+    setIsProcessingCapture(true);
     try {
+      // Como o processamento já ocorreu via front-end (face-api.js), chamamos a função direta
+      // para cada aluno ao invés de usar a Edge Function que pode estar indisponível localmente
       for (const student of matchedStudents) {
-        if (student.status === 'in_school') {
-          await updateStudentStatus(student.id, 'pending_exit');
-        } else if (student.status === 'idle' || student.status === 'incoming' || student.status === 'left') {
-          await updateStudentStatus(student.id, 'pending_entry');
+        let newStatus = student.status;
+        if (['idle', 'left'].includes(student.status)) {
+          newStatus = 'pending_entry';
+        } else if (student.status === 'in_school') {
+          newStatus = 'pending_exit';
+        }
+
+        if (newStatus !== student.status) {
+          // Utiliza a função já existente no App.jsx que salva as métricas de tempo
+          await updateStudentStatus(student.id, newStatus);
         }
       }
+
+      // Sucesso!
       setActionDone(true);
     } catch (err) {
-      console.error(err);
+      console.error('Erro ao solicitar acesso:', err);
+      setError('Acesso negado: ' + (err.message || 'Erro de comunicação.'));
+      setMatchStatus('no-match');
+    } finally {
+      setIsProcessingCapture(false);
     }
   };
 
@@ -496,7 +511,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
                             student.status === 'left' ? 'bg-slate-100 text-slate-500' : 
                             student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
                           }`}>
-                            {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'A Caminho'}
+                            {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente'}
                           </span>
                         </div>
                       ))

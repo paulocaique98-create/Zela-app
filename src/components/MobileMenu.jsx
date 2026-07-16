@@ -1,4 +1,4 @@
-import { Home, CalendarDays, Settings, AlertCircle, Users, LogOut, X, Smartphone } from 'lucide-react';
+import { Home, CalendarDays, Settings, AlertCircle, Users, LogOut, X, Smartphone, HeartPulse, ClipboardList } from 'lucide-react';
 
 export default function MobileMenu({ 
   currentUser, 
@@ -35,6 +35,12 @@ export default function MobileMenu({
               </button>
               <button onClick={() => { setFamilyTab('history'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${familyTab === 'history' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
                 <CalendarDays size={18}/> Históricos
+              </button>
+              <button onClick={() => { setFamilyTab('registration'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${familyTab === 'registration' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+                <ClipboardList size={18}/> Dados Cadastrais
+              </button>
+              <button onClick={() => { setFamilyTab('medical'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${familyTab === 'medical' ? 'bg-rose-50 text-rose-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+                <HeartPulse size={18}/> Ficha Médica
               </button>
               <button onClick={() => { setFamilyTab('settings'); onClose(); }} className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
                 <Settings size={18}/> Configurações

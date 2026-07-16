@@ -1,10 +1,12 @@
 import React from 'react';
-import { Home, CalendarDays, Settings, QrCode, Users } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList } from 'lucide-react';
 import FamilyHome from './FamilyHome';
 import FamilyHistory from './FamilyHistory';
 import FamilySettings from './FamilySettings';
 import FamilyWallet from './FamilyWallet';
 import FamilyAuthorized from './FamilyAuthorized';
+import FamilyMedical from './FamilyMedical';
+import FamilyRegistrationData from './FamilyRegistrationData';
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -48,6 +50,18 @@ export default function FamilyPortal({
               <CalendarDays size={18} /> Históricos
             </button>
             <button
+              onClick={() => setFamilyTab('registration')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${familyTab === 'registration' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+            >
+              <ClipboardList size={18} /> Dados Cadastrais
+            </button>
+            <button
+              onClick={() => setFamilyTab('medical')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${familyTab === 'medical' ? 'bg-rose-50 text-rose-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+            >
+              <HeartPulse size={18} /> Ficha Médica
+            </button>
+            <button
               onClick={() => setFamilyTab('settings')}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
@@ -63,6 +77,8 @@ export default function FamilyPortal({
         {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
         {familyTab === 'wallet' && <FamilyWallet familyStudents={familyStudents} />}
         {familyTab === 'history' && <FamilyHistory currentUser={currentUser} />}
+        {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
+        {familyTab === 'medical' && <FamilyMedical currentUser={currentUser} familyStudents={familyStudents} />}
         {familyTab === 'settings' && (
           <FamilySettings 
             currentUser={currentUser}

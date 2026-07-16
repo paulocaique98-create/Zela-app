@@ -68,12 +68,16 @@ export default function AdminQRScanner({ onClose, onScanSuccess }) {
       let updates = {};
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-      if (student.status === 'incoming' || student.status === 'idle' || student.status === 'left') {
+      if (student.status === 'idle' || student.status === 'left') {
         newStatus = 'pending_entry';
-        updates = { status: newStatus };
+        const now = new Date();
+        const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        updates = { status: newStatus, today_entry: fullRecordStr, today_exit: null };
       } else if (student.status === 'in_school') {
         newStatus = 'pending_exit';
-        updates = { status: newStatus };
+        const now = new Date();
+        const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        updates = { status: newStatus, today_exit: fullRecordStr };
       }
 
       const processedStudents = [];

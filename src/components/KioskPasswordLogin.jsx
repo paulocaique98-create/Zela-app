@@ -71,7 +71,7 @@ export default function KioskPasswordLogin({ onClose, executeKioskQuery, schoolI
     try {
       for (const student of matchedStudents) {
         let newStatus = student.status;
-        if (['incoming', 'idle', 'left'].includes(student.status)) newStatus = 'pending_entry';
+        if (['idle', 'left'].includes(student.status)) newStatus = 'pending_entry';
         else if (student.status === 'in_school') newStatus = 'pending_exit';
 
         if (newStatus !== student.status) {

@@ -12,13 +12,13 @@ import { supabase } from './lib/supabase';
 export default function App() {
   const [students, setStudents] = useState([]);
   const [authorized, setAuthorized] = useState([]);
-  
+
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('zela_user');
     return saved ? JSON.parse(saved) : null;
   });
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [adminTab, setAdminTab] = useState('monitor');
   const [familyTab, setFamilyTab] = useState('home'); // home | history | settings
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -107,17 +107,28 @@ export default function App() {
     // estão no mesmo navegador em abas diferentes
     const channelName = `students-realtime-${currentUser.id}`;
 
-    const formatStudent = (s) => ({
-      id: s.id,
-      name: s.name,
-      familyId: s.family_id,
-      status: s.status,
-      contractedHours: s.contracted_hours,
-      todayRecord: {
-        entry: s.today_entry ? s.today_entry.substring(0, 5) : null,
-        exit: s.today_exit ? s.today_exit.substring(0, 5) : null,
-      },
-    });
+    const formatStudent = (s) => {
+      // Extrai hora curta do formato 'YYYY-MM-DD|HH:MM:SS' ou 'HH:MM'
+      const parseShort = (str) => {
+        if (!str) return null;
+        if (str.includes('|')) return str.split('|')[1].substring(0, 5);
+        return str.substring(0, 5);
+      };
+      return {
+        id: s.id,
+        name: s.name,
+        familyId: s.family_id,
+        status: s.status,
+        contractedHours: s.contracted_hours,
+        todayRecord: {
+          entry: parseShort(s.today_entry),
+          exit: parseShort(s.today_exit),
+          // Preserva os valores completos para usar como horário original na confirmação
+          entry_full: s.today_entry || null,
+          exit_full: s.today_exit || null,
+        },
+      };
+    };
 
     // Filtro: família ouve apenas seus próprios alunos; admin ouve tudo da sua escola
     const filter = currentUser.role === 'family'
@@ -172,7 +183,7 @@ export default function App() {
         studentsQuery = studentsQuery.eq('family_id', currentUser.id);
       }
       const { data: studentsData } = await studentsQuery;
-      
+
       const todayDate = new Date().toISOString().split('T')[0];
 
       const formattedStudents = (studentsData || []).map(s => {
@@ -180,7 +191,7 @@ export default function App() {
         let entryTime = s.today_entry;
         let exitTime = s.today_exit;
         let sStatus = s.status;
-        
+
         const processTime = (timeStr) => {
           if (!timeStr) return null;
           if (timeStr.includes('|')) {
@@ -208,7 +219,12 @@ export default function App() {
           familyId: s.family_id,
           status: sStatus,
           contractedHours: s.contracted_hours,
-          todayRecord: { entry: parsedEntry, exit: parsedExit }
+          todayRecord: {
+            entry: parsedEntry,
+            exit: parsedExit,
+            entry_full: s.today_entry,
+            exit_full: s.today_exit
+          }
         };
       });
       setStudents(formattedStudents);
@@ -219,13 +235,14 @@ export default function App() {
         authQuery = authQuery.eq('family_id', currentUser.id);
       }
       const { data: authData } = await authQuery;
-      
+
       const formattedAuth = (authData || []).map(a => ({
         id: a.id,
         name: a.name,
         relation: a.relation,
         hasPhoto: a.has_photo,
         photo_url: a.photo_url,
+        has_biometrics: a.face_descriptor != null,
         status: a.status,
         emergencyOrder: a.emergency_order,
         temporaryUntil: a.temporary_until
@@ -253,16 +270,22 @@ export default function App() {
     localStorage.removeItem('zela_user');
   };
 
-  const togglePhoto = async (id, photoUrl = null) => {
+  const togglePhoto = async (id, photoUrl = null, descriptorArray = null) => {
     try {
-      const updates = { has_photo: true, status: 'approved' };
+      const updates = { has_photo: !!photoUrl, status: 'approved' };
       if (photoUrl) {
         updates.photo_url = photoUrl;
+      } else {
+        updates.photo_url = null;
       }
-      
+
+      if (descriptorArray) {
+        updates.face_descriptor = JSON.stringify(descriptorArray);
+      }
+
       const { error } = await supabase.from('authorized_persons').update(updates).eq('id', id);
       if (!error) {
-        setAuthorized(prev => prev.map(p => p.id === id ? { ...p, hasPhoto: true, status: 'approved', photo_url: photoUrl } : p));
+        setAuthorized(prev => prev.map(p => p.id === id ? { ...p, hasPhoto: !!photoUrl, has_biometrics: !!descriptorArray, status: 'approved', photo_url: photoUrl } : p));
       }
     } catch (err) {
       console.error(err);
@@ -281,9 +304,9 @@ export default function App() {
         temporary_until: newPerson.temporaryUntil ? newPerson.temporaryUntil.split('/').reverse().join('-') : null,
         school_id: currentUser.school_id
       };
-      
+
       const { data, error } = await supabase.from('authorized_persons').insert([dbPerson]).select();
-      
+
       if (!error && data && data.length > 0) {
         const a = data[0];
         setAuthorized([...authorized, {
@@ -301,7 +324,7 @@ export default function App() {
     }
 
     setIsAuthModalOpen(false);
-    setAuthForm({ name: '', relation: 'Outro', emergencyOrder: '', isTemporary: false, temporaryUntil: '' }); 
+    setAuthForm({ name: '', relation: 'Outro', emergencyOrder: '', isTemporary: false, temporaryUntil: '' });
   };
 
   const updateStudentStatus = async (studentId, newStatus) => {
@@ -315,34 +338,65 @@ export default function App() {
     const fullRecordStr = `${dateStr}|${nowStr}`;
 
     // Determina o tipo de evento para o log
-    const isEntry = newStatus === 'in_school';
-    const isExit = newStatus === 'left';
+    const isRequestEntry = newStatus === 'pending_entry';
+    const isRequestExit = newStatus === 'pending_exit';
+    const isConfirmEntry = newStatus === 'in_school';
+    const isConfirmExit = newStatus === 'left';
 
     try {
       // 1. Atualiza o status atual do aluno na tabela students
       let studentUpdates = { status: newStatus };
 
-      // Para status in_school/left, grava horario rapido no campo legado (usado pelo realtime/monitor)
-      if (isEntry) {
+      // Grava o horário exato da solicitação pelo pai/totem (ou direto pelo admin se não havia solicitação)
+      let usedEntryStr = student.todayRecord.entry_full;
+      let usedExitStr = student.todayRecord.exit_full;
+
+      if (isRequestEntry || (isConfirmEntry && !student.todayRecord.entry)) {
         studentUpdates.today_entry = fullRecordStr;
         studentUpdates.today_exit = null;
-      } else if (isExit) {
+        usedEntryStr = fullRecordStr;
+        usedExitStr = null;
+      } else if (isRequestExit || (isConfirmExit && !student.todayRecord.exit)) {
         studentUpdates.today_exit = fullRecordStr;
+        usedExitStr = fullRecordStr;
       }
 
-      // Apos uma saída confirmada (left), reseta para idle apos 2s
-      // para permitir novo ciclo de check-in no mesmo dia
       const { error } = await supabase.from('students').update(studentUpdates).eq('id', studentId);
       if (error) throw error;
 
-      // 2. Se for confirmação de entrada ou saída, insere log imutável
-      if (isEntry || isExit) {
+      // 2. Se for confirmação de entrada ou saída, insere log imutável usando o horário da solicitação original!
+      if (isConfirmEntry || isConfirmExit) {
+        let eventTimeIso = now.toISOString();
+
+        // Busca o horário salvo (pode estar no estado local ou precisar ir ao banco)
+        let recordStr = isConfirmEntry ? usedEntryStr : usedExitStr;
+
+        // Fallback: se o estado local não tem o horário completo (veio via Realtime antigo), busca no banco
+        if (!recordStr) {
+          const { data: freshStudent } = await supabase
+            .from('students')
+            .select('today_entry, today_exit')
+            .eq('id', studentId)
+            .single();
+          if (freshStudent) {
+            recordStr = isConfirmEntry ? freshStudent.today_entry : freshStudent.today_exit;
+          }
+        }
+
+        if (recordStr && recordStr.includes('|')) {
+          const [datePart, timePart] = recordStr.split('|');
+          const localDate = new Date(`${datePart}T${timePart}`);
+          if (!isNaN(localDate.getTime())) {
+            eventTimeIso = localDate.toISOString();
+          }
+        }
+
         await supabase.from('attendance_logs').insert([{
-          student_id:  studentId,
-          family_id:   student.familyId,
-          school_id:   currentUser.school_id,
-          event_type:  isEntry ? 'entry' : 'exit',
-          event_time:  now.toISOString(),
+          student_id: studentId,
+          family_id: student.familyId,
+          school_id: currentUser.school_id,
+          event_type: isConfirmEntry ? 'entry' : 'exit',
+          event_time: eventTimeIso,
           recorded_by: currentUser.id,
         }]);
       }
@@ -354,15 +408,17 @@ export default function App() {
           ...s,
           status: newStatus,
           todayRecord: {
-            entry: isEntry ? nowShortStr : s.todayRecord.entry,
-            exit:  isExit  ? nowShortStr : (isEntry ? null : s.todayRecord.exit),
+            entry: usedEntryStr ? usedEntryStr.split('|')[1].substring(0, 5) : s.todayRecord.entry,
+            exit: usedExitStr ? usedExitStr.split('|')[1].substring(0, 5) : (isConfirmEntry ? null : s.todayRecord.exit),
+            // Mantém os valores completos: se a confirmação não mudou, preserva o anterior
+            entry_full: usedEntryStr || s.todayRecord.entry_full,
+            exit_full: isConfirmEntry ? null : (usedExitStr || s.todayRecord.exit_full),
           },
         };
       }));
 
       // 4. Se foi uma saída confirmada, reseta para idle após 2s
-      //    para permitir um novo ciclo de entrada no mesmo dia
-      if (isExit) {
+      if (isConfirmExit) {
         setTimeout(async () => {
           await supabase.from('students').update({ status: 'idle' }).eq('id', studentId);
           setStudents(prev => prev.map(s =>
@@ -404,64 +460,64 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
-      <Header 
-        currentUser={currentUser} 
+      <Header
+        currentUser={currentUser}
         currentSchool={currentSchool}
         globalLogo={globalLogo}
-        onLogout={handleLogout} 
-        onOpenMobileMenu={() => setIsMobileMenuOpen(true)} 
+        onLogout={handleLogout}
+        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onTriggerEmergency={triggerEmergency}
       />
 
       {isMobileMenuOpen && (
-        <MobileMenu 
-          currentUser={currentUser} 
+        <MobileMenu
+          currentUser={currentUser}
           adminTab={adminTab}
           setAdminTab={setAdminTab}
           familyTab={familyTab}
           setFamilyTab={setFamilyTab}
-          onClose={() => setIsMobileMenuOpen(false)} 
-          onLogout={handleLogout} 
+          onClose={() => setIsMobileMenuOpen(false)}
+          onLogout={handleLogout}
         />
       )}
 
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8 flex justify-center">
         <div className="w-full h-full">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
-          </div>
-        ) : currentUser.role === 'developer' ? (
-          <DeveloperPanel currentUser={currentUser} onUpdateGlobalLogo={fetchGlobalLogo} />
-        ) : currentUser.role === 'admin' ? (
-          <AdminPortal 
-            currentUser={currentUser}
-            currentSchool={currentSchool}
-            students={students} 
-            adminTab={adminTab} 
-            setAdminTab={setAdminTab} 
-            updateStudentStatus={updateStudentStatus} 
-            onUpdateSchool={fetchData}
-          />
-        ) : (
-          <FamilyPortal 
-            currentUser={currentUser} 
-            currentSchool={currentSchool}
-            setCurrentUser={setCurrentUser}
-            students={students} 
-            familyTab={familyTab} 
-            setFamilyTab={setFamilyTab} 
-            updateStudentStatus={updateStudentStatus} 
-            authorized={authorized}
-            togglePhoto={togglePhoto}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          />
-        )}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
+            </div>
+          ) : currentUser.role === 'developer' ? (
+            <DeveloperPanel currentUser={currentUser} onUpdateGlobalLogo={fetchGlobalLogo} />
+          ) : currentUser.role === 'admin' ? (
+            <AdminPortal
+              currentUser={currentUser}
+              currentSchool={currentSchool}
+              students={students}
+              adminTab={adminTab}
+              setAdminTab={setAdminTab}
+              updateStudentStatus={updateStudentStatus}
+              onUpdateSchool={fetchData}
+            />
+          ) : (
+            <FamilyPortal
+              currentUser={currentUser}
+              currentSchool={currentSchool}
+              setCurrentUser={setCurrentUser}
+              students={students}
+              familyTab={familyTab}
+              setFamilyTab={setFamilyTab}
+              updateStudentStatus={updateStudentStatus}
+              authorized={authorized}
+              togglePhoto={togglePhoto}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
+          )}
         </div>
       </main>
 
       {isAuthModalOpen && (
-        <AuthModal 
+        <AuthModal
           authForm={authForm}
           setAuthForm={setAuthForm}
           onClose={() => setIsAuthModalOpen(false)}

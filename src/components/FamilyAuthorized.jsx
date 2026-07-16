@@ -1,7 +1,10 @@
-import React from 'react';
-import { Users, Plus, Camera } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Plus, Camera, Fingerprint, Loader2 } from 'lucide-react';
+import * as faceapi from 'face-api.js';
+import { preloadFaceModels } from '../lib/faceModels';
 
 export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthModal, currentSchool }) {
+  const [isProcessingId, setIsProcessingId] = useState(null);
   const isBasic = currentSchool?.plan === 'basic';
   const limitReached = isBasic && authorized.length >= 2;
   return (
@@ -37,12 +40,34 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
             </div>
           )}
           {authorized.map(person => {
-            const handleFileChange = (e) => {
+            const handleFileChange = async (e) => {
               const file = e.target.files[0];
               if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => togglePhoto(person.id, reader.result);
-                reader.readAsDataURL(file);
+                setIsProcessingId(person.id);
+                try {
+                  await preloadFaceModels();
+                  const reader = new FileReader();
+                  reader.onloadend = async () => {
+                    const img = new Image();
+                    img.src = reader.result;
+                    img.onload = async () => {
+                      const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+                      if (detection) {
+                        const descriptorArray = Array.from(detection.descriptor);
+                        // Chama togglePhoto passando null para a URL da foto (não salva) e o array do descritor
+                        await togglePhoto(person.id, null, descriptorArray);
+                      } else {
+                        alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
+                      }
+                      setIsProcessingId(null);
+                    };
+                  };
+                  reader.readAsDataURL(file);
+                } catch (err) {
+                  console.error(err);
+                  alert("Erro ao processar biometria.");
+                  setIsProcessingId(null);
+                }
               }
             };
 
@@ -51,14 +76,18 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                 {/* Avatar & Info */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer">
-                    {person.photo_url ? (
-                      <img src={person.photo_url} alt="Avatar" className="w-full h-full object-cover"/>
+                    {isProcessingId === person.id ? (
+                      <Loader2 size={20} className="text-indigo-600 animate-spin"/>
+                    ) : person.hasPhoto || person.has_biometrics ? (
+                      <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-600">
+                        <Fingerprint size={24} />
+                      </div>
                     ) : (
                       <Camera size={20} className="text-slate-400"/>
                     )}
                     <label className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white cursor-pointer transition">
                       <Camera size={18}/>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isProcessingId === person.id}/>
                     </label>
                   </div>
 
@@ -86,8 +115,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                     {person.status === 'approved' ? 'Ativo' : 'Pendente'}
                   </span>
                   <label className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer flex items-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
-                    <Camera size={14}/> {person.photo_url ? 'Alterar Foto' : 'Adicionar Foto'}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
+                    {isProcessingId === person.id ? (
+                       <><Loader2 size={14} className="animate-spin"/> Processando...</>
+                    ) : (
+                       <><Fingerprint size={14}/> {person.hasPhoto || person.has_biometrics ? 'Atualizar Biometria' : 'Cadastrar Biometria'}</>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isProcessingId === person.id}/>
                   </label>
                 </div>
               </div>

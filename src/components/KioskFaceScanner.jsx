@@ -262,11 +262,20 @@ export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId 
     try {
       for (const student of matchedStudents) {
         let newStatus = student.status;
-        if (['incoming', 'idle', 'left'].includes(student.status)) newStatus = 'pending_entry';
-        else if (student.status === 'in_school') newStatus = 'pending_exit';
+        let updates = {};
+        const now = new Date();
+        const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+        if (['idle', 'left'].includes(student.status)) {
+          newStatus = 'pending_entry';
+          updates = { status: newStatus, today_entry: fullRecordStr, today_exit: null };
+        } else if (student.status === 'in_school') {
+          newStatus = 'pending_exit';
+          updates = { status: newStatus, today_exit: fullRecordStr };
+        }
 
         if (newStatus !== student.status) {
-          await executeKioskQuery(supabase.from('students').update({ status: newStatus }).eq('id', student.id));
+          await executeKioskQuery(supabase.from('students').update(updates).eq('id', student.id));
         }
       }
       setActionDone(true);

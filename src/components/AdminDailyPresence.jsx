@@ -8,7 +8,6 @@ export const TURMAS = ['Todas as Turmas', 'Nido', 'Kids - 1', 'Kids - 2'];
 const STATUS_CONFIG = {
   in_school: { label: 'Na escola',  cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
   left:      { label: 'Já saiu',    cls: 'bg-slate-700 text-slate-100', icon: <LogOut size={12}/> },
-  incoming:  { label: 'A caminho',  cls: 'bg-amber-100 text-amber-700', icon: <Clock size={12}/> },
   absent:    { label: 'Ausente',    cls: 'bg-red-100 text-red-600',     icon: null },
   idle:      { label: 'Pendente',   cls: 'bg-slate-100 text-slate-500', icon: null },
 };
@@ -52,7 +51,6 @@ export default function AdminDailyPresence() {
   const inSchool = allStudents.filter(s => s.status === 'in_school').length;
   const left     = allStudents.filter(s => s.status === 'left').length;
   const absent   = allStudents.filter(s => s.status === 'absent').length;
-  const incoming = allStudents.filter(s => s.status === 'incoming').length;
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -79,10 +77,9 @@ export default function AdminDailyPresence() {
         </div>
 
         {/* Cards de resumo */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {[
             { label: 'Na escola',   count: inSchool, color: 'bg-green-50 border-green-200 text-green-700' },
-            { label: 'A caminho',   count: incoming, color: 'bg-amber-50 border-amber-200 text-amber-700' },
             { label: 'Já saíram',   count: left,     color: 'bg-slate-100 border-slate-200 text-slate-600' },
             { label: 'Ausentes',    count: absent,   color: 'bg-red-50 border-red-200 text-red-600' },
           ].map(({ label, count, color }) => (

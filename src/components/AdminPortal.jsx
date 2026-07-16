@@ -13,7 +13,7 @@ import AdminKioskManagement from './AdminKioskManagement';
 import { preloadFaceModels } from '../lib/faceModels';
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, onUpdateSchool }) {
-  const monitorStudents = students.filter(s => ['incoming', 'pending_entry', 'pending_exit'].includes(s.status));
+  const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -164,12 +164,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {monitorStudents.map(student => {
                   let badgeClass, badgeText, btnClass, btnText, btnActionStatus, borderColor, bgColor;
 
-                  if (student.status === 'incoming') {
-                    badgeClass = "text-amber-700"; badgeText = "A Caminho";
-                    btnClass = "bg-amber-600 hover:bg-amber-700 text-white"; btnText = "Registrar Entrada (Manual)";
-                    btnActionStatus = "in_school";
-                    borderColor = "border-amber-300"; bgColor = "bg-amber-50";
-                  } else if (student.status === 'pending_entry') {
+                  if (student.status === 'pending_entry') {
                     badgeClass = "text-green-700"; badgeText = "Solicitação de Entrada";
                     btnClass = "bg-green-600 hover:bg-green-700 text-white"; btnText = "Confirmar Entrada";
                     btnActionStatus = "in_school";

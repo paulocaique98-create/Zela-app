@@ -115,7 +115,7 @@ export default function KioskMode() {
       if (sError || !student) throw new Error('Aluno não encontrado ou não pertence a esta escola.');
 
       let newStatus = student.status;
-      if (['incoming', 'idle', 'left'].includes(student.status)) newStatus = 'pending_entry';
+      if (['idle', 'left'].includes(student.status)) newStatus = 'pending_entry';
       else if (student.status === 'in_school') newStatus = 'pending_exit';
 
       if (newStatus !== student.status) {

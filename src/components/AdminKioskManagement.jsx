@@ -68,14 +68,14 @@ export default function AdminKioskManagement({ currentSchool }) {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Gerenciar Totens</h2>
           <p className="text-slate-500 text-sm mt-1">
             Controle os dispositivos pareados na escola. Revogue o acesso em caso de perda ou manutenção.
           </p>
         </div>
-        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl flex flex-col gap-3 min-w-[300px]">
+        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl flex flex-col gap-3 w-full lg:w-auto lg:min-w-[300px]">
           <div>
             <p className="text-xs font-bold text-indigo-800">Código da sua Escola para pareamento:</p>
             <code className="block mt-1 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 font-mono text-sm select-all uppercase">
