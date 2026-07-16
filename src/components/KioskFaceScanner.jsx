@@ -4,7 +4,7 @@ import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 
-export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId }) {
+export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId, schoolPlan }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   
@@ -30,6 +30,11 @@ export default function KioskFaceScanner({ onClose, executeKioskQuery, schoolId 
 
     async function init() {
       try {
+        if (schoolPlan !== 'PRO') {
+          setError('O reconhecimento facial é exclusivo para o plano PRO. Faça o upgrade para utilizá-lo.');
+          return;
+        }
+
         setLoadingText('Verificando modelos de IA...');
         await preloadFaceModels();
 

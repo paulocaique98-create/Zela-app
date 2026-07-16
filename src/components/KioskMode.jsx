@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
-import { QrCode, ScanFace, CheckCircle2, AlertCircle, Building2, Lock, Smartphone, KeyRound } from 'lucide-react';
+import { QrCode, ScanFace, CheckCircle2, AlertCircle, Building2, Lock, Smartphone, KeyRound, LogOut } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import KioskFaceScanner from './KioskFaceScanner';
 import KioskPasswordLogin from './KioskPasswordLogin';
 
 export default function KioskMode() {
   const [deviceToken, setDeviceToken] = useState(localStorage.getItem('zela_kiosk_device'));
-  const [kioskPlan, setKioskPlan] = useState(localStorage.getItem('zela_kiosk_plan') || 'BASIC');
+  const [kioskPlan, setKioskPlan] = useState(() => {
+    const saved = localStorage.getItem('zela_kiosk_plan');
+    return saved ? saved.toUpperCase() : 'BASIC';
+  });
   const [schoolCode, setSchoolCode] = useState('');
 
   // States de Pareamento
@@ -18,9 +21,20 @@ export default function KioskMode() {
   const [deviceName, setDeviceName] = useState('Totem ' + Math.floor(Math.random() * 1000));
 
   // States do Kiosk
-  const [mode, setMode] = useState('menu'); // menu | qr | face | password
+  const [mode, setMode] = useState('menu'); // menu | qr | face | password | upgrade_info
   const [successData, setSuccessData] = useState(null);
   const [kioskError, setKioskError] = useState('');
+
+  // Helper para desparear e limpar cache
+  const handleUnpair = () => {
+    localStorage.removeItem('zela_kiosk_device');
+    localStorage.removeItem('zela_kiosk_school');
+    localStorage.removeItem('zela_kiosk_plan');
+    setDeviceToken(null);
+    setKioskPlan('BASIC');
+    setSchoolCode('');
+    setMode('menu');
+  };
 
   // 1. PAREAMENTO
   const handlePairDevice = async (e) => {
@@ -59,9 +73,10 @@ export default function KioskMode() {
       await supabaseAuthHelper.auth.signOut();
       localStorage.setItem('zela_kiosk_device', token);
       localStorage.setItem('zela_kiosk_school', actualSchoolId);
-      localStorage.setItem('zela_kiosk_plan', schoolData.plan);
+      const planUpper = (schoolData.plan || 'BASIC').toUpperCase();
+      localStorage.setItem('zela_kiosk_plan', planUpper);
       setDeviceToken(token);
-      setKioskPlan(schoolData.plan);
+      setKioskPlan(planUpper);
     } catch (err) {
       setPairingError(err.message);
     } finally {
@@ -83,14 +98,36 @@ export default function KioskMode() {
     const schoolId = localStorage.getItem('zela_kiosk_school');
     if (!schoolId || !deviceToken) return;
 
+    // Se o ID da escola não for um UUID válido, despareia na hora para evitar erros de sintaxe no banco
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(schoolId)) {
+      console.warn('ID da escola inválido no localStorage:', schoolId);
+      handleUnpair();
+      return;
+    }
+
     const fetchPlan = async () => {
       try {
-        const { data } = await executeKioskQuery(
+        const { data, error } = await executeKioskQuery(
           supabase.from('schools').select('plan').eq('id', schoolId).single()
         );
-        if (data && data.plan) {
-          setKioskPlan(data.plan);
-          localStorage.setItem('zela_kiosk_plan', data.plan);
+        if (error) {
+          console.warn('Erro ao verificar plano no kiosk:', error);
+          // Se a escola com este ID não existir ou se houver um erro permanente de autenticação/sintaxe,
+          // significa que o pareamento está obsoleto/inválido. Vamos desparear automaticamente.
+          const isPermanentDbError = 
+            error.status === 406 || 
+            error.status === 401 || 
+            error.status === 403 || 
+            error.code === 'PGRST116' || 
+            error.code === '22P02';
+          if (isPermanentDbError) {
+            handleUnpair();
+          }
+        } else if (data && data.plan) {
+          const planUpper = data.plan.toUpperCase();
+          setKioskPlan(planUpper);
+          localStorage.setItem('zela_kiosk_plan', planUpper);
         }
       } catch (err) {
         console.warn('Erro ao verificar plano no kiosk:', err);
@@ -235,11 +272,25 @@ export default function KioskMode() {
       </div>
 
       {/* Header compacto — não cresce */}
-      <header className="shrink-0 py-3 px-4 sm:py-4 relative z-10 text-center border-b border-white/10 bg-white/5 backdrop-blur-md">
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-          Zela <span className="text-indigo-400">Totem</span>
-        </h1>
-        <p className="text-slate-400 text-xs mt-0.5">Aproxime-se para realizar o check-in ou check-out</p>
+      <header className="shrink-0 py-3 px-4 sm:py-4 relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-between">
+        <div className="w-10 h-10 shrink-0" /> {/* Spacer para equilibrar o título centralizado */}
+        <div className="text-center flex-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+            Zela <span className="text-indigo-400">Totem</span>
+          </h1>
+          <p className="text-slate-400 text-xs mt-0.5">Aproxime-se para realizar o check-in ou check-out</p>
+        </div>
+        <button
+          onClick={() => {
+            if (window.confirm('Deseja desparear este Totem? Ele deixará de funcionar até ser pareado novamente.')) {
+              handleUnpair();
+            }
+          }}
+          className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all shrink-0 flex items-center justify-center"
+          title="Desparear Totem"
+        >
+          <LogOut size={20} />
+        </button>
       </header>
 
       {/* Área central — flex-1 min-h-0 garante que não ultrapasse a tela */}
@@ -264,7 +315,7 @@ export default function KioskMode() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl">
             {/* QR Code */}
             <button onClick={() => setMode('qr')}
-              className={`${kioskPlan === 'PRO' ? '' : 'col-span-2'} group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95`}>
+              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95">
               <div className="w-11 h-11 sm:w-20 sm:h-20 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                 <QrCode size={22} className="sm:hidden" />
                 <QrCode size={40} className="hidden sm:block" />
@@ -275,20 +326,39 @@ export default function KioskMode() {
               </div>
             </button>
 
-            {/* Reconhecimento Facial (Apenas PRO) */}
-            {kioskPlan === 'PRO' && (
-              <button onClick={() => setMode('face')}
-                className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95">
-                <div className="w-11 h-11 sm:w-20 sm:h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <ScanFace size={22} className="sm:hidden" />
-                  <ScanFace size={40} className="hidden sm:block" />
+            {/* Reconhecimento Facial (Exclusivo PRO) */}
+            <button onClick={() => {
+              if (kioskPlan === 'PRO') {
+                setMode('face');
+              } else {
+                setMode('upgrade_info');
+              }
+            }}
+              className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col items-center gap-2 sm:gap-5 active:scale-95 relative overflow-hidden">
+              
+              {/* Badge PLANO PRO para plano básico */}
+              {kioskPlan !== 'PRO' && (
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-extrabold text-[8px] sm:text-[10px] px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                  <Lock size={9} /> PLANO PRO
                 </div>
-                <div className="text-center">
-                  <h3 className="text-xs sm:text-xl font-bold leading-tight">Reconhecimento Facial</h3>
-                  <p className="text-slate-400 text-[10px] sm:text-sm mt-1 hidden sm:block">Olhe para a câmera para identificação automática</p>
-                </div>
-              </button>
-            )}
+              )}
+
+              <div className={`w-11 h-11 sm:w-20 sm:h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${
+                kioskPlan === 'PRO' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700/30 text-slate-400'
+              }`}>
+                <ScanFace size={22} className="sm:hidden" />
+                <ScanFace size={40} className="hidden sm:block" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-xs sm:text-xl font-bold leading-tight flex items-center justify-center gap-1">
+                  Reconhecimento Facial
+                  {kioskPlan !== 'PRO' && <Lock size={12} className="text-amber-500 shrink-0 sm:w-4 sm:h-4" />}
+                </h3>
+                <p className="text-slate-400 text-[10px] sm:text-sm mt-1 hidden sm:block">
+                  {kioskPlan === 'PRO' ? 'Olhe para a câmera para identificação automática' : 'Disponível no Plano PRO. Saiba mais.'}
+                </p>
+              </div>
+            </button>
 
             {/* Senha — ocupa largura total */}
             <button onClick={() => setMode('password')}
@@ -321,7 +391,59 @@ export default function KioskMode() {
             onClose={() => setMode('menu')}
             executeKioskQuery={executeKioskQuery}
             schoolId={localStorage.getItem('zela_kiosk_school')}
+            schoolPlan={kioskPlan}
           />
+
+        ) : mode === 'upgrade_info' ? (
+          /* Tela de Informações sobre o Plano PRO (Upsell/Inteligência de Planos) */
+          <div className="w-full max-w-lg bg-slate-800/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col items-center text-center animate-in zoom-in duration-300 relative overflow-hidden">
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-900 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/10 mb-4 relative z-10">
+              <ScanFace size={32} className="sm:hidden" />
+              <ScanFace size={40} className="hidden sm:block" />
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-black text-white relative z-10 mb-1">Reconhecimento Facial</h2>
+            <div className="bg-amber-500/10 border border-amber-500/20 px-3 py-0.5 rounded-full text-amber-400 text-[10px] font-black uppercase tracking-wider mb-4">
+              Recurso do Plano PRO
+            </div>
+
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-5">
+              O Reconhecimento Facial permite que pais e responsáveis façam check-in e check-out das crianças apenas olhando para a câmera, com máxima segurança, rapidez e sem precisar de cartões físicos ou celulares.
+            </p>
+
+            <div className="w-full space-y-2 mb-6 text-left bg-white/5 p-4 rounded-xl border border-white/5">
+              <div className="flex items-start gap-2.5">
+                <div className="bg-amber-500/20 text-amber-400 p-0.5 rounded mt-0.5 shrink-0">
+                  <CheckCircle2 size={12} />
+                </div>
+                <p className="text-xs text-slate-300"><strong className="text-white">Mais Agilidade:</strong> Reduz filas e tempo de espera na recepção.</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="bg-amber-500/20 text-amber-400 p-0.5 rounded mt-0.5 shrink-0">
+                  <CheckCircle2 size={12} />
+                </div>
+                <p className="text-xs text-slate-300"><strong className="text-white">Segurança LGPD:</strong> Relação biométrica segura e criptografada.</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="bg-amber-500/20 text-amber-400 p-0.5 rounded mt-0.5 shrink-0">
+                  <CheckCircle2 size={12} />
+                </div>
+                <p className="text-xs text-slate-300"><strong className="text-white">Fácil Acesso:</strong> Sem preocupações com perda ou esquecimento de senhas.</p>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-normal mb-6">
+              Para habilitar o reconhecimento facial biométrico neste totem, entre em contato com a administração da escola para solicitar o upgrade de plano.
+            </p>
+
+            <button onClick={() => setMode('menu')}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition active:scale-95 shadow-md text-sm">
+              Voltar ao Menu principal
+            </button>
+          </div>
 
         ) : (
           /* Scanner QR */
