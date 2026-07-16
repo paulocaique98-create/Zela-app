@@ -78,25 +78,43 @@ export default function KioskMode() {
     return result;
   };
 
-  // 2.5 BUSCAR PLANO ATUALIZADO NO CARREGAMENTO
+  // 2.5 BUSCAR PLANO ATUALIZADO NO CARREGAMENTO E ESCUTAR MUDANÇAS
   useEffect(() => {
+    const schoolId = localStorage.getItem('zela_kiosk_school');
+    if (!schoolId || !deviceToken) return;
+
     const fetchPlan = async () => {
-      const schoolId = localStorage.getItem('zela_kiosk_school');
-      if (schoolId && deviceToken) {
-        try {
-          const { data } = await executeKioskQuery(
-            supabase.from('schools').select('plan').eq('id', schoolId).single()
-          );
-          if (data && data.plan) {
-            setKioskPlan(data.plan);
-            localStorage.setItem('zela_kiosk_plan', data.plan);
-          }
-        } catch (err) {
-          console.warn('Erro ao verificar plano no kiosk:', err);
+      try {
+        const { data } = await executeKioskQuery(
+          supabase.from('schools').select('plan').eq('id', schoolId).single()
+        );
+        if (data && data.plan) {
+          setKioskPlan(data.plan);
+          localStorage.setItem('zela_kiosk_plan', data.plan);
         }
+      } catch (err) {
+        console.warn('Erro ao verificar plano no kiosk:', err);
       }
     };
     fetchPlan();
+
+    const channel = supabase
+      .channel(`public:schools:id=eq.${schoolId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'schools', filter: `id=eq.${schoolId}` },
+        (payload) => {
+          if (payload.new && payload.new.plan) {
+            setKioskPlan(payload.new.plan);
+            localStorage.setItem('zela_kiosk_plan', payload.new.plan);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [deviceToken]);
 
   // 3. SCANNER QR
