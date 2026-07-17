@@ -30,7 +30,7 @@ export default function AdminStudentList({ currentUser }) {
 
   useEffect(() => { fetchStudents(); }, []);
 
-  const turmaOptions = ['Todas as Turmas', ...TURMAS.filter(t => t !== 'Todas')];
+  const turmaOptions = TURMAS;
 
   const filtered = students.filter(s => {
     const term = searchTerm.toLowerCase().trim();
