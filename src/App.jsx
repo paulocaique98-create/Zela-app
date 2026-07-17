@@ -10,6 +10,19 @@ import KioskMode from './components/KioskMode';
 import ResetPassword from './components/ResetPassword';
 import { supabase } from './lib/supabase';
 
+// Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
+const parseShortTime = (timeStr, todayDate = null) => {
+  if (!timeStr) return null;
+  if (timeStr.includes('|')) {
+    const parts = timeStr.split('|');
+    const datePart = parts[0];
+    const timePart = parts[1] || '';
+    if (todayDate && datePart !== todayDate) return null;
+    return timePart.substring(0, 5);
+  }
+  return timeStr.substring(0, 5);
+};
+
 export default function App() {
   const [students, setStudents] = useState([]);
   const [authorized, setAuthorized] = useState([]);
@@ -109,12 +122,6 @@ export default function App() {
     const channelName = `students-realtime-${currentUser.id}`;
 
     const formatStudent = (s) => {
-      // Extrai hora curta do formato 'YYYY-MM-DD|HH:MM:SS' ou 'HH:MM'
-      const parseShort = (str) => {
-        if (!str) return null;
-        if (str.includes('|')) return str.split('|')[1].substring(0, 5);
-        return str.substring(0, 5);
-      };
       return {
         id: s.id,
         name: s.name,
@@ -122,8 +129,8 @@ export default function App() {
         status: s.status,
         contractedHours: s.contracted_hours,
         todayRecord: {
-          entry: parseShort(s.today_entry),
-          exit: parseShort(s.today_exit),
+          entry: parseShortTime(s.today_entry),
+          exit: parseShortTime(s.today_exit),
           // Preserva os valores completos para usar como horário original na confirmação
           entry_full: s.today_entry || null,
           exit_full: s.today_exit || null,
@@ -193,19 +200,8 @@ export default function App() {
         let exitTime = s.today_exit;
         let sStatus = s.status;
 
-        const processTime = (timeStr) => {
-          if (!timeStr) return null;
-          if (timeStr.includes('|')) {
-            const [datePart, timePart] = timeStr.split('|');
-            if (datePart !== todayDate) return null; // Reseta se não for de hoje
-            return timePart.substring(0, 5); // HH:mm
-          }
-          // Compatibilidade com formato antigo (apenas HH:mm:ss)
-          return timeStr.substring(0, 5);
-        };
-
-        const parsedEntry = processTime(entryTime);
-        const parsedExit = processTime(exitTime);
+        const parsedEntry = parseShortTime(entryTime, todayDate);
+        const parsedExit = parseShortTime(exitTime, todayDate);
 
         // Se a entrada foi resetada (virou o dia) e o status ainda era 'in_school', 'left', etc, volta para 'idle'
         if (!parsedEntry && s.today_entry) {
@@ -441,8 +437,8 @@ export default function App() {
           ...s,
           status: newStatus,
           todayRecord: {
-            entry: usedEntryStr ? usedEntryStr.split('|')[1].substring(0, 5) : s.todayRecord.entry,
-            exit: usedExitStr ? usedExitStr.split('|')[1].substring(0, 5) : (isConfirmEntry ? null : s.todayRecord.exit),
+            entry: parseShortTime(usedEntryStr) || s.todayRecord.entry,
+            exit: parseShortTime(usedExitStr) || (isConfirmEntry ? null : s.todayRecord.exit),
             // Mantém os valores completos: se a confirmação não mudou, preserva o anterior
             entry_full: usedEntryStr || s.todayRecord.entry_full,
             exit_full: isConfirmEntry ? null : (usedExitStr || s.todayRecord.exit_full),

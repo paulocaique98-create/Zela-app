@@ -79,7 +79,7 @@ export default function AdminKioskManagement({ currentSchool }) {
           <div>
             <p className="text-xs font-bold text-indigo-800">Código da sua Escola para pareamento:</p>
             <code className="block mt-1 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 font-mono text-sm select-all uppercase">
-              {currentSchool.school_code || '---'}
+              {currentSchool?.school_code || '---'}
             </code>
           </div>
           <div className="pt-3 border-t border-indigo-100">

@@ -6,7 +6,10 @@ function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  if (h > 0) {
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  }
+  return `${m}min`;
 }
 
 function formatTime(isoString) {
@@ -85,7 +88,7 @@ export default function AdminHistory({ currentSchool }) {
             const exitTime = nextExit ? new Date(nextExit.event_time) : null;
             const stayMins = exitTime ? Math.round((exitTime - entryTime) / 60000) : null;
             const contractedMins = (ev.students?.contracted_hours || 0) * 60;
-            const overtimeMins = stayMins !== null ? Math.max(0, stayMins - contractedMins) : null;
+            const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
 
             result.push({
               key: ev.id,
@@ -220,9 +223,8 @@ export default function AdminHistory({ currentSchool }) {
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Responsável</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Contratado</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Permanência</th>
-                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Excedente</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Ciclo</th>
+                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Excedente pós tolerância (15 min)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -246,7 +248,6 @@ export default function AdminHistory({ currentSchool }) {
                       )}
                     </td>
                     <td className="py-3 pr-4 font-medium text-slate-600">{log.contracted}</td>
-                    <td className="py-3 pr-4 font-medium text-slate-800">{log.duration ?? <span className="text-amber-500 italic text-xs">Em andamento</span>}</td>
                     <td className="py-3 text-right">
                       {log.duration === null ? (
                         <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase bg-amber-50 text-amber-600">—</span>

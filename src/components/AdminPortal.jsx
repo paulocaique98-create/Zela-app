@@ -271,7 +271,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         )}
 
         {/* PRESENÇA */}
-        {adminTab === 'presence' && <AdminDailyPresence />}
+        {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} />}
 
         {/* GESTÃO */}
         {adminTab === 'users' && <AdminUserManagement currentUser={currentUser} />}

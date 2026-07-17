@@ -12,7 +12,7 @@ const STATUS_CONFIG = {
   idle:      { label: 'Pendente',   cls: 'bg-slate-100 text-slate-500', icon: null },
 };
 
-export default function AdminDailyPresence() {
+export default function AdminDailyPresence({ currentUser }) {
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,10 +21,11 @@ export default function AdminDailyPresence() {
   const fetchPresence = async () => {
     setIsLoading(true);
     try {
-      // Busca todos os alunos que tiveram alguma movimentação hoje
+      // Busca todos os alunos da escola que tiveram alguma movimentação hoje
       const { data, error } = await supabase
         .from('students')
         .select('id, name, status, turma, contracted_hours, today_entry, today_exit, family_id')
+        .eq('school_id', currentUser.school_id)
         .neq('status', 'idle')   // exclui quem ainda não interagiu hoje
         .order('name', { ascending: true });
 

@@ -93,8 +93,12 @@ function EditUserModal({ user, onClose, onSaved }) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-              <span className="font-black text-indigo-700">{user.name.charAt(0).toUpperCase()}</span>
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 shrink-0 border border-indigo-200">
+              {user.photo_url ? (
+                <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-black text-indigo-700">{user.name.charAt(0).toUpperCase()}</span>
+              )}
             </div>
             <div>
               <h2 className="font-bold text-slate-800">Editar Usuário</h2>
@@ -263,10 +267,26 @@ export default function AdminUserManagement({ currentUser }) {
         .eq('school_id', currentUser.school_id);
       if (studentsError) throw studentsError;
 
-      const combinedData = usersData.map(user => ({
-        ...user,
-        students: studentsData.filter(s => s.family_id === user.id),
-      }));
+      const { data: authData, error: authError } = await supabase
+        .from('authorized_persons')
+        .select('id, name, relation, photo_url, family_id')
+        .eq('school_id', currentUser.school_id);
+      if (authError) throw authError;
+
+      const combinedData = usersData.map(user => {
+        const familyAuths = (authData || []).filter(
+          ap => ap.family_id === user.id
+        );
+        const matchingAuth = familyAuths.find(
+          ap => ap.name.toLowerCase().trim() === user.name.toLowerCase().trim()
+        ) || familyAuths.find(ap => ap.relation?.includes('(Titular)'));
+        return {
+          ...user,
+          photo_url: matchingAuth?.photo_url || null,
+          authorized: familyAuths,
+          students: studentsData.filter(s => s.family_id === user.id),
+        };
+      });
       setUsersList(combinedData);
     } catch (err) {
       console.error('Erro ao buscar usuários:', err);
@@ -387,8 +407,12 @@ export default function AdminUserManagement({ currentUser }) {
 
                   {/* Avatar + Nome */}
                   <div className="flex items-center gap-3 mb-4 pr-16">
-                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full flex items-center justify-center shrink-0 border border-indigo-100">
-                      <span className="font-black text-indigo-700 text-lg">{user.name.charAt(0).toUpperCase()}</span>
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-indigo-100 bg-gradient-to-br from-indigo-100 to-indigo-200">
+                      {user.photo_url ? (
+                        <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-black text-indigo-700 text-lg">{user.name.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-slate-800 text-sm truncate" title={user.name}>{user.name}</h3>

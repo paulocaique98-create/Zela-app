@@ -16,6 +16,11 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   useEffect(() => {
     if (currentSchool) {
       setLogoUrl(currentSchool.logo_url || '');
+      setFormData({
+        name: currentSchool.name || '',
+        phone: currentSchool.phone || '',
+        address: currentSchool.address || '',
+      });
     }
   }, [currentSchool]);
 
