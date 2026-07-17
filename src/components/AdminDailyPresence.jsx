@@ -3,7 +3,7 @@ import { GraduationCap, Clock, LogOut, CheckCircle2, Users, RefreshCw } from 'lu
 import { supabase } from '../lib/supabase';
 
 // Turmas disponíveis na escola
-export const TURMAS = ['Todas as Turmas', 'Nido', 'Kids - 1', 'Kids - 2'];
+export const TURMAS = ['Todas as Turmas', 'Nido', 'Kids I', 'Kids II - Flores', 'Kids II - Frutos'];
 
 const STATUS_CONFIG = {
   in_school: { label: 'Na escola',  cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
