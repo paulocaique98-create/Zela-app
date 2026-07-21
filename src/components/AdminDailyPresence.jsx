@@ -8,7 +8,7 @@ const STATUS_CONFIG = {
   in_school: { label: 'Na escola',  cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
   left:      { label: 'Já saiu',    cls: 'bg-slate-700 text-slate-100', icon: <LogOut size={12}/> },
   absent:    { label: 'Ausente',    cls: 'bg-red-100 text-red-600',     icon: null },
-  idle:      { label: 'Pendente',   cls: 'bg-slate-100 text-slate-500', icon: null },
+  idle:      { label: 'Pendente de Check-in', cls: 'bg-slate-100 text-slate-500', icon: null },
 };
 
 export default function AdminDailyPresence({ currentUser }) {

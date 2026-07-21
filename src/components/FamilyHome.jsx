@@ -22,7 +22,7 @@ export default function FamilyHome({ currentUser, familyStudents, updateStudentS
                     <p className="text-sm text-slate-500 font-medium">Contrato: {student.contractedHours}h/dia</p>
                   </div>
                   <div className="shrink-0">
-                    {student.status === 'idle' && <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Não chegou</span>}
+                    {student.status === 'idle' && <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Pendente de Check-in</span>}
 
                     {student.status === 'in_school' && <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 w-fit"><CheckCircle2 size={14} /> Na escola</span>}
                     {student.status === 'left' && <span className="bg-slate-800 text-slate-100 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Já saiu</span>}

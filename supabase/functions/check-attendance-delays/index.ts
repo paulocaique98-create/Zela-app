@@ -7,6 +7,7 @@ interface Student {
   school_id: string
   family_id: string
   name: string
+  status: string
   contracted_entry_time: string | null
   contracted_exit_time: string | null
 }
@@ -30,7 +31,7 @@ serve(async (req) => {
     // Obter todos os alunos com horários contratados ativos
     const { data: students, error: stdError } = await supabase
       .from('students')
-      .select('id, school_id, family_id, name, contracted_entry_time, contracted_exit_time')
+      .select('id, school_id, family_id, name, status, contracted_entry_time, contracted_exit_time')
       // Vamos checar apenas alunos que tenham ao menos 1 dos horários cadastrados
       .or('contracted_entry_time.not.is.null,contracted_exit_time.not.is.null')
 
@@ -84,6 +85,7 @@ serve(async (req) => {
 
     const notificationsToInsert: any[] = []
     const statusUpdates: any[] = []
+    const studentsToMarkAbsent: string[] = []
 
     const currentMinutesOfDay = now.getHours() * 60 + now.getMinutes()
 
@@ -103,10 +105,16 @@ serve(async (req) => {
       let statusChanged = false
       const newStatus = { ...statusRow }
 
-      // --- CHECAGEM DE ENTRADA (Atraso > 5 min) ---
-      if (student.contracted_entry_time && !hasEntryLog && !newStatus.notified_late_entry_5) {
+      // --- CHECAGEM DE ENTRADA (Atraso > 5 min e Falta > 30 min) ---
+      if (student.contracted_entry_time && !hasEntryLog) {
         const entryMinutes = timeToMinutes(student.contracted_entry_time)
-        if (currentMinutesOfDay >= entryMinutes + 5) {
+        
+        // Transição automática para Ausente se passou de 30 min e ainda está idle
+        if (currentMinutesOfDay >= entryMinutes + 30 && student.status === 'idle') {
+          studentsToMarkAbsent.push(student.id)
+        }
+
+        if (currentMinutesOfDay >= entryMinutes + 5 && !newStatus.notified_late_entry_5) {
           notificationsToInsert.push({
             school_id: student.school_id,
             family_id: student.family_id,
@@ -188,10 +196,18 @@ serve(async (req) => {
       }
     }
 
+    // 6. Atualizar os alunos para Ausente
+    if (studentsToMarkAbsent.length > 0) {
+      await supabase.from('students')
+        .update({ status: 'absent' })
+        .in('id', studentsToMarkAbsent)
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       notificationsCreated: notificationsToInsert.length,
-      statusesUpdated: statusUpdates.length
+      statusesUpdated: statusUpdates.length,
+      absencesMarked: studentsToMarkAbsent.length
     }), { headers: { 'Content-Type': 'application/json' } })
 
   } catch (err: any) {
