@@ -15,7 +15,7 @@ export default function AdminStudentList({ currentUser }) {
       // Busca alunos com dados da família vinculada
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, turma, contracted_hours, status, family_id, users:family_id(name, email, phone)')
+        .select('id, name, turma, contracted_hours, contracted_entry_time, status, family_id, users:family_id(name, email, phone)')
         .eq('school_id', currentUser.school_id)
         .order('name', { ascending: true });
 
@@ -141,7 +141,14 @@ export default function AdminStudentList({ currentUser }) {
                             {(student.name || '?').charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <span className="font-semibold text-slate-800">{student.name || 'Sem nome'}</span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800">{student.name || 'Sem nome'}</span>
+                          {student.contracted_entry_time == null && (
+                            <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded w-max mt-0.5">
+                              Sem período
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
 

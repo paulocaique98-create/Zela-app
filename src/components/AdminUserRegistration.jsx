@@ -329,6 +329,26 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               ? `${s.custom_entry} às ${s.custom_exit}`
               : s.periodo;
 
+            const PERIODO_HORARIOS = {
+              '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
+              '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
+              '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
+              '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
+              '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
+              '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
+            };
+            
+            let entryTime = null;
+            let exitTime = null;
+            
+            if (s.is_custom_period && s.custom_entry && s.custom_exit) {
+              entryTime = `${s.custom_entry}:00`;
+              exitTime = `${s.custom_exit}:00`;
+            } else if (s.periodo && PERIODO_HORARIOS[s.periodo]) {
+              entryTime = PERIODO_HORARIOS[s.periodo].entry;
+              exitTime = PERIODO_HORARIOS[s.periodo].exit;
+            }
+
             const studentData = {
               name: s.name,
               contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
@@ -338,6 +358,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               birth_date: s.birth_date || null,
               turno: s.turno || null,
               periodo: periodStr || null,
+              contracted_entry_time: entryTime,
+              contracted_exit_time: exitTime,
             };
 
             const isExisting = typeof s.id === 'string';
