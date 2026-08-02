@@ -13,6 +13,20 @@ interface Student {
 }
 
 serve(async (req) => {
+  // Verificar se hoje é fim de semana (sábado = 6, domingo = 0)
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = domingo, 6 = sábado
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Fim de semana — notificações de atraso desativadas.',
+        notificationsCreated: 0 
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')

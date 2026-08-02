@@ -13,6 +13,33 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
     currentSchool?.logo_url || ''
   );
 
+  const features = currentSchool?.features_enabled || {};
+  const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
+  
+  const [localPrefs, setLocalPrefs] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(prefsKey) || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  const allModules = [
+    { id: 'cadastros', label: 'Cadastros', desc: 'Usuários, comunicados e funcionários', core: true },
+    { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Lista de alunos e gestão de acessos', core: true },
+    { id: 'checkin', label: 'Check-in/out', desc: 'Totem, monitor, presença e histórico', core: true },
+    { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas', core: false },
+    { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos da escola', core: false },
+    { id: 'comunicados', label: 'Comunicados', desc: 'Mural de recados', core: false },
+    { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos das turmas', core: false },
+    { id: 'cardapio', label: 'Cardápio', desc: 'Lanches e refeições', core: false },
+  ];
+
+  const availableModules = allModules.filter(mod => {
+    if (mod.core) return features[mod.id] !== false;
+    return features[mod.id] === true;
+  });
+
   useEffect(() => {
     if (currentSchool) {
       setLogoUrl(currentSchool.logo_url || '');
@@ -21,6 +48,11 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         phone: currentSchool.phone || '',
         address: currentSchool.address || '',
       });
+      try {
+        setLocalPrefs(JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool.id}`) || '{}'));
+      } catch {
+        setLocalPrefs({});
+      }
     }
   }, [currentSchool]);
 
@@ -63,6 +95,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         .eq('id', currentUser.school_id);
 
       if (error) throw error;
+      
+      // Salvar as preferências locais
+      localStorage.setItem(prefsKey, JSON.stringify(localPrefs));
       
       setSuccessMsg('Configurações atualizadas com sucesso! A página será atualizada.');
       if (onUpdate) onUpdate();
@@ -158,6 +193,38 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
                 onChange={e => setFormData({...formData, address: e.target.value})} 
                 className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm" 
               />
+            </div>
+
+            {/* PERSONALIZAÇÃO DO MENU LOCAL */}
+            <div className="md:col-span-2 mt-4 pt-6 border-t border-slate-100">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-slate-800">Personalizar Menu</h3>
+                <p className="text-sm text-slate-500">Escolha quais módulos ficarão visíveis para você nesta tela. Esta configuração afeta apenas o seu navegador.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {availableModules.map(mod => {
+                  const isVisible = localPrefs[mod.id] !== false; // default true if available
+                  return (
+                    <div key={mod.id} className="flex items-start gap-3 p-3 border border-slate-100 rounded-xl bg-white hover:bg-slate-50 transition">
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-slate-700">{mod.label}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{mod.desc}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLocalPrefs(prev => ({ ...prev, [mod.id]: !isVisible }))}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisible ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                      >
+                        <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isVisible ? 'translate-x-2' : '-translate-x-2'}`} />
+                      </button>
+                    </div>
+                  );
+                })}
+                {availableModules.length === 0 && (
+                  <p className="text-sm text-slate-500 italic col-span-2">Nenhum módulo customizável disponível.</p>
+                )}
+              </div>
             </div>
 
           </div>

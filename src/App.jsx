@@ -34,7 +34,7 @@ export default function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const [adminTab, setAdminTab] = useState('monitor');
+  const [adminTab, setAdminTab] = useState('home');
   const [familyTab, setFamilyTab] = useState('home'); // home | history | settings
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -111,6 +111,8 @@ export default function App() {
     }
   }, [currentUser]);
 
+  const channelSuffix = Math.random().toString(36).substring(2, 8);
+
   const setupRealtime = () => {
     // Remove canal anterior se existir
     if (realtimeChannelRef.current) {
@@ -118,9 +120,8 @@ export default function App() {
       realtimeChannelRef.current = null;
     }
 
-    // Nome único por usuário — evita conflito quando admin e família
-    // estão no mesmo navegador em abas diferentes
-    const channelName = `students-realtime-${currentUser.id}`;
+    // Nome único por aba (usando channelSuffix) evita conflito de canais com mesmo nome
+    const channelName = `students-realtime-${currentUser.id}-${channelSuffix}`;
 
     const formatStudent = (s) => {
       return {
@@ -151,7 +152,20 @@ export default function App() {
 
         if (eventType === 'UPDATE') {
           setStudents((prev) =>
-            prev.map((s) => (s.id === newRow.id ? formatStudent(newRow) : s))
+            prev.map((s) => {
+              if (s.id === newRow.id) {
+                const formatted = formatStudent(newRow);
+                // Merge: preserva campos antigos caso algo falte no payload,
+                // sobrescreve com os novos valores formatados.
+                return { 
+                  ...s, 
+                  ...formatted,
+                  // Garantir que todayRecord só sobescreve os campos que vieram
+                  todayRecord: { ...s.todayRecord, ...formatted.todayRecord }
+                };
+              }
+              return s;
+            })
           );
         } else if (eventType === 'INSERT') {
           setStudents((prev) => [...prev, formatStudent(newRow)]);

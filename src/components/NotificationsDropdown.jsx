@@ -14,7 +14,8 @@ export default function NotificationsDropdown({ currentUser }) {
     fetchNotifications();
 
     // Subscribe to realtime notifications
-    const channelName = `notifications-${currentUser.id}`;
+    const channelSuffix = Math.random().toString(36).substring(2, 8);
+    const channelName = `notifications-${currentUser.id}-${channelSuffix}`;
     const channel = supabase
       .channel(channelName)
       .on(

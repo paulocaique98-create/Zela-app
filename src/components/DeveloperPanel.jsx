@@ -23,6 +23,20 @@ export default function DeveloperPanel({ currentUser }) {
   const [saveError, setSaveError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  const defaultFeatures = {
+    cadastros: true,
+    gerenciamento: true,
+    formularios: false,
+    checkin: true,
+    calendario: false,
+    comunicados: false,
+    mural: false,
+    cardapio: false,
+    configuracoes: true
+  };
+
+  const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
+
 
 
   useEffect(() => {
@@ -59,11 +73,13 @@ export default function DeveloperPanel({ currentUser }) {
         is_active: school.is_active,
         notes: school.notes || ''
       });
+      setFeaturesEnabled({ ...defaultFeatures, ...(school.features_enabled || {}) });
     } else {
       setEditingSchool(null);
       setFormData({
         name: '', cnpj: '', email: '', phone: '', address: '', plan: 'basic', is_active: true, notes: ''
       });
+      setFeaturesEnabled(defaultFeatures);
       setAdminData({ name: '', email: '', password: '' });
       setSaveError('');
       setSuccessMsg('');
@@ -106,7 +122,7 @@ export default function DeveloperPanel({ currentUser }) {
         // Update apenas dados da escola
         const { error } = await supabase
           .from('schools')
-          .update(formData)
+          .update({ ...formData, features_enabled: featuresEnabled })
           .eq('id', editingSchool.id);
 
         if (error) throw error;
@@ -125,7 +141,7 @@ export default function DeveloperPanel({ currentUser }) {
         const schoolCode = await generateSchoolCode();
         const { data: newSchool, error: schoolError } = await supabase
           .from('schools')
-          .insert([{ ...formData, school_code: schoolCode }])
+          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled }])
           .select()
           .single();
 
@@ -423,6 +439,38 @@ export default function DeveloperPanel({ currentUser }) {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* MÓDULOS CONTRATADOS */}
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <h4 className="text-sm font-bold text-slate-800 mb-4">Módulos Contratados</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { id: 'cadastros', label: 'Cadastros', desc: 'Cadastro de usuários, comunicados e funcionários' },
+                    { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Gestão de usuários, alunos e funcionários' },
+                    { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas' },
+                    { id: 'checkin', label: 'Check-in/out', desc: 'Monitor, totem, presença e histórico' },
+                    { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos e datas do ano letivo' },
+                    { id: 'comunicados', label: 'Comunicados', desc: 'Envio e visualização de comunicados' },
+                    { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
+                    { id: 'cardapio', label: 'Cardápio', desc: 'Cardápio semanal da escola' },
+                    { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' }
+                  ].map(mod => (
+                    <div key={mod.id} className="flex items-start gap-3 p-3 border border-slate-100 rounded-xl bg-white hover:bg-slate-50 transition">
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-slate-700">{mod.label}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{mod.desc}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFeaturesEnabled(prev => ({ ...prev, [mod.id]: !prev[mod.id] }))}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${featuresEnabled[mod.id] ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                      >
+                        <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${featuresEnabled[mod.id] ? 'translate-x-2' : '-translate-x-2'}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {saveError && (

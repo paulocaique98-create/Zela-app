@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar } from 'lucide-react';
+import AdminInicio from './AdminInicio';
+import AdminMatriculas from './AdminMatriculas';
+import AdminFichaMedica from './AdminFichaMedica';
+import AdminComunicados from './AdminComunicados';
+import AdminMuralFotos from './AdminMuralFotos';
+import AdminCardapio from './AdminCardapio';
+import AdminCadastroFuncionarios from './AdminCadastroFuncionarios';
+import AdminGerenciarFuncionarios from './AdminGerenciarFuncionarios';
+import AdminCadastroComunicados from './AdminCadastroComunicados';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminUserManagement from './AdminUserManagement';
 import AdminDailyPresence from './AdminDailyPresence';
@@ -20,6 +29,26 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
+
+  // Estados dos Accordions
+  const [openAccordion, setOpenAccordion] = useState(null);
+  const toggleAccordion = (name) => {
+    setOpenAccordion(openAccordion === name ? null : name);
+  };
+
+  const features = currentSchool?.features_enabled || {};
+  const localPrefs = JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool?.id}`) || '{}');
+
+  const showCadastros = features.cadastros !== false && localPrefs.cadastros !== false;
+  const showGerenciamento = features.gerenciamento !== false && localPrefs.gerenciamento !== false;
+  const showCheckin = features.checkin !== false && localPrefs.checkin !== false;
+  const showConfiguracoes = features.configuracoes !== false && localPrefs.configuracoes !== false;
+
+  const showFormularios = features.formularios === true && localPrefs.formularios !== false;
+  const showCalendario = features.calendario === true && localPrefs.calendario !== false;
+  const showComunicados = features.comunicados === true && localPrefs.comunicados !== false;
+  const showMural = features.mural === true && localPrefs.mural !== false;
+  const showCardapio = features.cardapio === true && localPrefs.cardapio !== false;
 
   // Pré-carrega os modelos de IA em background ao montar o painel
   // Assim quando o scanner abrir, os modelos já estão na memória
@@ -52,88 +81,170 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full bg-white p-3 pt-28 md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
           <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2 shrink-0">Navegação Principal</p>
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5">
+          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
+            {/* INÍCIO */}
             <button
-              onClick={() => { setAdminTab('monitor'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'monitor' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              onClick={() => { setAdminTab('home'); setIsMobileMenuOpen(false); }}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
-              <Monitor size={18} />
-              Monitor Check-in
-              {monitorStudents.length > 0 && (
-                <span className="ml-auto bg-amber-500 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                  {monitorStudents.length}
-                </span>
-              )}
+              <Home size={18} /> Início
             </button>
-            <button
-              onClick={() => { 
-                // MOTIVO TÉCNICO PARA MANTER O RELOAD: 
-                // O projeto não utiliza react-router-dom. O roteamento no App.jsx 
-                // é baseado na avaliação direta de window.location.pathname sem um 
-                // listener de history (popstate). Portanto, é necessário forçar o 
-                // reload da página (href) para que o React monte a árvore com a nova rota.
-                window.location.href = '/admin/totem-checkin'; 
-              }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-700`}
-            >
-              <QrCode size={16} />
-              Totem Check-in
-            </button>
-            <button
-              onClick={() => { setAdminTab('presence'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'presence' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <ShieldCheck size={16} />
-              Presença Diária
-            </button>
-            <button
-              onClick={() => { setAdminTab('users'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'users' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Users size={16} />
-              Gestão de Usuários
-            </button>
-            <button
-              onClick={() => { setAdminTab('students'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'students' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Users size={16} />
-              Lista de Alunos
-            </button>
-            <button
-              onClick={() => { setAdminTab('history'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'history' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <CalendarDays size={16} />
-              Histórico Geral
-            </button>
-            <button
-              onClick={() => { setAdminTab('register'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'register' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <ShieldHalf size={16} />
-              Cadastro de Usuários
-            </button>
-            <button
-              onClick={() => { setAdminTab('kiosks'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'kiosks' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Smartphone size={16} />
-              Gerenciar Totens
-            </button>
-            <button
-              onClick={() => { setAdminTab('settings'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Settings size={16} />
-              Configurações
-            </button>
+
+            {/* CADASTROS */}
+            {showCadastros && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('cadastros')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab) || openAccordion === 'cadastros' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FolderPlus size={18} /> Cadastros</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'cadastros' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'cadastros' ? 'max-h-40' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <button onClick={() => { setAdminTab('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                    <button onClick={() => { setAdminTab('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GERENCIAMENTO */}
+            {showGerenciamento && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('gerenciamento')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['users', 'students', 'gerenciar-funcionarios'].includes(adminTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><Folders size={18} /> Gerenciamento</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <button onClick={() => { setAdminTab('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gestão de Usuários</button>
+                    <button onClick={() => { setAdminTab('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Lista de Alunos</button>
+                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FORMULÁRIOS */}
+            {showFormularios && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('formularios')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(adminTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FileText size={18} /> Formulários</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <button onClick={() => { setAdminTab('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                    <button onClick={() => { setAdminTab('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CHECK-IN/OUT */}
+            {showCheckin && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('checkin')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosks'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <button onClick={() => { setAdminTab('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                      Monitor Check-in
+                      {monitorStudents.length > 0 && (
+                        <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
+                      )}
+                    </button>
+                    <button onClick={() => { window.location.href = '/admin/totem-checkin'; }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
+                    <button onClick={() => { setAdminTab('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
+                    <button onClick={() => { setAdminTab('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    <button onClick={() => { setAdminTab('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CALENDÁRIO ESCOLAR */}
+            {showCalendario && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('calendario')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${openAccordion === 'calendario' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><CalendarDays size={18} /> Calendário</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'calendario' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'calendario' ? 'max-h-20' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <span className="text-left text-xs font-bold py-1.5 text-slate-400 italic">Em breve</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MURAL DE FOTOS */}
+            {showMural && (
+              <button
+                onClick={() => { setAdminTab('mural-fotos'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <ImageIcon size={18} /> Mural de Fotos
+              </button>
+            )}
+
+            {/* CARDÁPIO */}
+            {showCardapio && (
+              <button
+                onClick={() => { setAdminTab('cardapio'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <UtensilsCrossed size={18} /> Cardápio
+              </button>
+            )}
           </nav>
+
+          {/* CONFIGURAÇÕES (Fixo no footer) */}
+          {showConfiguracoes && (
+            <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
+              <button
+                onClick={() => { setAdminTab('settings'); setIsMobileMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <Settings size={18} /> Configurações
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
+        
+        {/* INICIO */}
+        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} />}
+
+        {/* NOVOS PLACEHOLDERS */}
+        {adminTab === 'matriculas' && <AdminMatriculas />}
+        {adminTab === 'ficha-medica' && <AdminFichaMedica />}
+        {adminTab === 'comunicados' && <AdminComunicados />}
+        {adminTab === 'mural-fotos' && <AdminMuralFotos />}
+        {adminTab === 'cardapio' && <AdminCardapio />}
+        {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios />}
+        {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios />}
+        {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados />}
+
         {/* MONITOR */}
         {adminTab === 'monitor' && (
           <div className={`h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-slate-200'}`}>

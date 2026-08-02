@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Lock, ShieldCheck, X, Loader2, KeyRound } from 'lucide-react';
+import { Lock, ShieldCheck, X, Loader2, KeyRound, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminFaceScanner from './AdminFaceScanner';
+import AdminKioskFaceRegistration from './AdminKioskFaceRegistration';
 
 /*
  * IMPORTANTE — NOTA DE SEGURANÇA:
@@ -19,6 +20,14 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Estados do Cadastro Facial
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsPassword, setSettingsPassword] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
+  const [showRegistrationPanel, setShowRegistrationPanel] = useState(false);
+  const [scannerKey, setScannerKey] = useState(0);
 
   const handleExitClick = () => {
     setShowExitModal(true);
@@ -56,6 +65,36 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
     }
   };
 
+  const handleSettingsClick = () => {
+    setShowSettingsModal(true);
+    setSettingsPassword('');
+    setSettingsError('');
+  };
+
+  const handleConfirmSettings = async (e) => {
+    e.preventDefault();
+    setIsSettingsLoading(true);
+    setSettingsError('');
+
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: settingsPassword,
+      });
+
+      if (signInError) {
+        throw new Error('Senha incorreta. Tente novamente.');
+      }
+
+      setShowSettingsModal(false);
+      setShowRegistrationPanel(true);
+    } catch (err) {
+      setSettingsError(err.message);
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
   return (
     <div className="h-screen h-[100dvh] w-full flex flex-col bg-slate-900 overflow-hidden font-sans">
       {/* Cabeçalho Minimalista do Totem */}
@@ -74,18 +113,29 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
           </div>
         </div>
 
-        <button 
-          onClick={handleExitClick}
-          className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95"
-        >
-          <Lock size={18} className="text-slate-500" />
-          <span className="hidden sm:inline">Sair do Modo Totem</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleSettingsClick}
+            className="flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 w-11 h-11 rounded-xl transition-all active:scale-95"
+            title="Cadastro Facial"
+          >
+            <Settings size={20} className="text-slate-500" />
+          </button>
+          
+          <button 
+            onClick={handleExitClick}
+            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95"
+          >
+            <Lock size={18} className="text-slate-500" />
+            <span className="hidden sm:inline">Sair do Modo Totem</span>
+          </button>
+        </div>
       </header>
 
       {/* Conteúdo Principal: Scanner Ocupando Tudo */}
       <main className="flex-1 relative bg-slate-900 w-full h-full flex flex-col min-h-0 overflow-hidden">
         <AdminFaceScanner
+          key={scannerKey}
           onClose={() => {}} // Não faz nada no Kiosk Mode nativo, pois o header do scanner foi ocultado
           updateStudentStatus={updateStudentStatus}
           students={students}
@@ -153,6 +203,79 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Configurações / Cadastro Facial com Senha */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-5 border-b border-slate-100">
+              <h3 className="font-bold flex items-center gap-2 text-slate-800 text-lg">
+                <Settings size={20} className="text-indigo-600" /> Cadastro Facial
+              </h3>
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="p-2 -mr-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors"
+                disabled={isSettingsLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm text-slate-500 mb-6 font-medium">
+                Por segurança, digite a senha de administrador (<span className="text-slate-800 font-bold">{currentUser.email}</span>) para acessar o cadastro de responsáveis.
+              </p>
+
+              <form onSubmit={handleConfirmSettings} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Senha do Admin</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <KeyRound size={18} className="text-slate-400" />
+                    </div>
+                    <input
+                      type="password"
+                      value={settingsPassword}
+                      onChange={(e) => setSettingsPassword(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      placeholder="Sua senha..."
+                      required
+                      autoFocus
+                      disabled={isSettingsLoading}
+                    />
+                  </div>
+                </div>
+
+                {settingsError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100">
+                    {settingsError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSettingsLoading || !settingsPassword}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mt-2"
+                >
+                  {isSettingsLoading ? <Loader2 size={18} className="animate-spin" /> : 'Acessar Cadastro'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Painel de Cadastro Facial (Overlay) */}
+      {showRegistrationPanel && (
+        <AdminKioskFaceRegistration 
+          currentSchool={currentSchool}
+          students={students} 
+          onClose={() => {
+            setShowRegistrationPanel(false);
+            setScannerKey(prev => prev + 1); // Força remount do scanner para atualizar biometrias
+          }} 
+        />
       )}
     </div>
   );

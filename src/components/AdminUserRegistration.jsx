@@ -337,10 +337,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
               '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
             };
-            
+
             let entryTime = null;
             let exitTime = null;
-            
+
             if (s.is_custom_period && s.custom_entry && s.custom_exit) {
               entryTime = `${s.custom_entry}:00`;
               exitTime = `${s.custom_exit}:00`;
