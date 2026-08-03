@@ -14,12 +14,13 @@ import AdminUserRegistration from './AdminUserRegistration';
 import AdminUserManagement from './AdminUserManagement';
 import AdminDailyPresence from './AdminDailyPresence';
 import AdminStudentList from './AdminStudentList';
-import AdminQRScanner from './AdminQRScanner';
+import QRCodeScanner from './QRCodeScanner';
 import AdminFaceScanner from './AdminFaceScanner';
 import AdminPasswordLogin from './AdminPasswordLogin';
 import AdminHistory from './AdminHistory';
 import AdminSettings from './AdminSettings';
 import AdminKioskManagement from './AdminKioskManagement';
+import AdminRelatorioHorasExtras from './AdminRelatorioHorasExtras';
 import { preloadFaceModels } from '../lib/faceModels';
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen }) {
@@ -154,7 +155,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div>
                 <button
                   onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosks'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosks', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
                   <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
                   <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
@@ -170,6 +171,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     <button onClick={() => { window.location.href = '/admin/totem-checkin'; }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
                     <button onClick={() => { setAdminTab('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
                     <button onClick={() => { setAdminTab('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    <button onClick={() => { setAdminTab('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatório Horas Extras</button>
                     <button onClick={() => { setAdminTab('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
                   </div>
                 </div>
@@ -409,6 +411,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {/* HISTÓRICO */}
         {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} />}
 
+        {/* HORAS EXTRAS */}
+        {adminTab === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
+
         {/* TOTENS */}
         {adminTab === 'kiosks' && <AdminKioskManagement currentSchool={currentSchool} />}
 
@@ -420,12 +425,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* QR Scanner Modal */}
         {isScannerOpen && createPortal(
-          <AdminQRScanner
+          <QRCodeScanner
+            mode="admin"
+            school_id={currentSchool?.id}
+            currentSchool={currentSchool}
+            students={students}
+            updateStudentStatus={updateStudentStatus}
             onClose={() => setIsScannerOpen(false)}
-            onScanSuccess={(updatedStudents) => {
-              // A interface vai atualizar sozinha via Realtime (App.jsx), 
-              // mas onScanSuccess pode ser usado para efeitos ou logs extras.
-            }}
+            isLandscape={false}
           />,
           document.body
         )}

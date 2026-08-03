@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { agruparEventosPorDia } from '../utils/attendanceUtils';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -69,50 +70,33 @@ export default function AdminHistory({ currentSchool }) {
 
       if (error) throw error;
 
-      // Agrupa por aluno e emparelha entrada+saída
-      const byStudent = {};
-      (rawLogs || []).forEach(log => {
-        if (!byStudent[log.student_id]) byStudent[log.student_id] = [];
-        byStudent[log.student_id].push(log);
-      });
+      // Utiliza a função extraída para agrupar 1 registro (primeiro entry, último exit) por dia por aluno
+      const groupedLogs = agruparEventosPorDia(rawLogs);
 
-      const result = [];
-      Object.values(byStudent).forEach(events => {
-        // Itera emparelhando entradas com sua próxima saída
-        let i = 0;
-        while (i < events.length) {
-          const ev = events[i];
-          if (ev.event_type === 'entry') {
-            const entryTime = new Date(ev.event_time);
-            const nextExit = events.find((e, idx) => idx > i && e.event_type === 'exit');
-            const exitTime = nextExit ? new Date(nextExit.event_time) : null;
-            const stayMins = exitTime ? Math.round((exitTime - entryTime) / 60000) : null;
-            const contractedMins = (ev.students?.contracted_hours || 0) * 60;
-            const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
-
-            result.push({
-              key: ev.id,
-              studentName: ev.students?.name || '—',
-              family: ev.students?.users?.name || '—',
-              date: formatDate(ev.event_time),
-              entry: formatTime(ev.event_time),
-              exit: exitTime ? formatTime(nextExit.event_time) : null,
-              contracted: `${ev.students?.contracted_hours || 0}h`,
-              duration: stayMins !== null ? formatMinutes(stayMins) : null,
-              overtime: overtimeMins !== null && overtimeMins > 0 ? formatMinutes(overtimeMins) : null,
-              rawTime: entryTime.getTime(),
-            });
-
-            // Pula o evento de saída que foi emparelhado
-            if (nextExit) {
-              i = events.indexOf(nextExit) + 1;
-            } else {
-              i++;
-            }
-          } else {
-            i++; // Saída sem entrada correspondente, ignora
-          }
+      const result = groupedLogs.map(group => {
+        const entryTime = group.entryLog ? new Date(group.entryLog.event_time) : null;
+        const exitTime = group.exitLog ? new Date(group.exitLog.event_time) : null;
+        
+        let stayMins = null;
+        if (entryTime && exitTime) {
+          stayMins = Math.round((exitTime - entryTime) / 60000);
         }
+        
+        const contractedMins = (group.studentData?.contracted_hours || 0) * 60;
+        const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
+
+        return {
+          key: `${group.student_id}_${group.date}`,
+          studentName: group.studentData?.name || '—',
+          family: group.studentData?.users?.name || '—',
+          date: formatDate(group.entryLog?.event_time || group.exitLog?.event_time),
+          entry: entryTime ? formatTime(entryTime.toISOString()) : null,
+          exit: exitTime ? formatTime(exitTime.toISOString()) : null,
+          contracted: `${group.studentData?.contracted_hours || 0}h`,
+          duration: stayMins !== null ? formatMinutes(stayMins) : null,
+          overtime: overtimeMins !== null && overtimeMins > 0 ? formatMinutes(overtimeMins) : null,
+          rawTime: entryTime ? entryTime.getTime() : (exitTime ? exitTime.getTime() : 0),
+        };
       });
 
       result.sort((a, b) => b.rawTime - a.rawTime || a.studentName.localeCompare(b.studentName));

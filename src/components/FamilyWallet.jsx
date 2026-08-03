@@ -11,43 +11,48 @@ export default function FamilyWallet({ familyStudents }) {
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Carteira Digital</h2>
-          <p className="text-slate-500 text-sm">Apresente o QR Code individual do aluno na portaria.</p>
+          <p className="text-slate-500 text-sm">Apresente este código na câmera do totem para realizar o check-in ou check-out.</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 flex items-center justify-center">
         {familyStudents.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
             <p className="text-slate-500 font-medium">Nenhum aluno vinculado a esta conta.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-4">
-            {familyStudents.map(student => (
-              <div key={student.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col items-center text-center relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
-                
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4 mt-2">
-                  <GraduationCap size={24} className="text-indigo-600" />
-                </div>
-                
-                <h3 className="text-xl font-bold text-slate-800 mb-1">{student.name}</h3>
-                <p className="text-sm font-medium text-slate-500 mb-6">
-                  Turma: <span className="text-slate-700">{student.turma || 'Não definida'}</span>
-                </p>
-                
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 inline-block shadow-inner mb-6">
-                  <QRCodeSVG 
-                    value={JSON.stringify({ studentId: student.id, type: 'student_checkin' })} 
-                    size={160} 
-                    level="M" 
-                  />
-                </div>
-
-                <p className="text-xs text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 flex items-center gap-1.5">
-                  <QrCode size={12} /> QR Code individual intransferível
-                </p>
+          <div className="w-full max-w-sm">
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center text-center relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+              
+              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 mt-2">
+                <GraduationCap size={32} className="text-indigo-600" />
               </div>
-            ))}
+              
+              <h3 className="text-2xl font-black text-slate-800 mb-1">{currentUser?.name || 'Responsável'}</h3>
+              <p className="text-sm font-medium text-slate-500 mb-8">
+                Responsável Familiar
+              </p>
+              
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 inline-block shadow-inner mb-8">
+                <QRCodeSVG 
+                  value={JSON.stringify({ type: 'zela_checkin', family_id: currentUser?.id, school_id: currentSchool?.id })} 
+                  size={200} 
+                  level="M" 
+                />
+              </div>
+
+              <div className="w-full border-t border-slate-100 pt-6">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Alunos Vinculados</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {familyStudents.map(student => (
+                    <span key={student.id} className="bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-lg">
+                      {student.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

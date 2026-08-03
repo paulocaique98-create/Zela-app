@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Lock, ShieldCheck, X, Loader2, KeyRound, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, ShieldCheck, X, Loader2, KeyRound, Settings, Camera, QrCode } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminFaceScanner from './AdminFaceScanner';
 import AdminKioskFaceRegistration from './AdminKioskFaceRegistration';
+import QRCodeScanner from './QRCodeScanner';
+import AdminPasswordLogin from './AdminPasswordLogin';
 
 /*
  * IMPORTANTE — NOTA DE SEGURANÇA:
@@ -20,6 +22,16 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Modos do Kiosk
+  const [activeMode, setActiveMode] = useState(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode');
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Estados do Cadastro Facial
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -114,9 +126,34 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
         </div>
 
         <div className="flex gap-2">
+          {currentSchool?.plan === 'pro' && (
+            <button 
+              onClick={() => setActiveMode('facial')}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'facial' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            >
+              <Camera size={18} /> <span className="hidden sm:inline">Facial</span>
+            </button>
+          )}
+          
+          <button 
+            onClick={() => setActiveMode('qrcode')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'qrcode' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            <QrCode size={18} /> <span className="hidden sm:inline">QR Code</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveMode('manual')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'manual' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            <KeyRound size={18} /> <span className="hidden sm:inline">Senha</span>
+          </button>
+
+          <div className="w-px h-8 bg-slate-200 mx-1 self-center"></div>
+
           <button 
             onClick={handleSettingsClick}
-            className="flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 w-11 h-11 rounded-xl transition-all active:scale-95"
+            className="flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 w-10 sm:w-11 h-10 sm:h-11 rounded-xl transition-all active:scale-95"
             title="Cadastro Facial"
           >
             <Settings size={20} className="text-slate-500" />
@@ -134,14 +171,35 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
       {/* Conteúdo Principal: Scanner Ocupando Tudo */}
       <main className="flex-1 relative bg-slate-900 w-full h-full flex flex-col min-h-0 overflow-hidden">
-        <AdminFaceScanner
-          key={scannerKey}
-          onClose={() => {}} // Não faz nada no Kiosk Mode nativo, pois o header do scanner foi ocultado
-          updateStudentStatus={updateStudentStatus}
-          students={students}
-          currentUser={currentUser}
-          isKioskMode={true} // Prop para esconder o cabeçalho do scanner e remover bordas modais
-        />
+        {activeMode === 'facial' && (
+          <AdminFaceScanner
+            key={scannerKey}
+            onClose={() => {}} // Não faz nada no Kiosk Mode nativo
+            updateStudentStatus={updateStudentStatus}
+            students={students}
+            currentUser={currentUser}
+            isKioskMode={true} 
+          />
+        )}
+        
+        {activeMode === 'qrcode' && (
+          <QRCodeScanner
+            mode="kiosk"
+            isLandscape={isLandscape}
+            school_id={currentSchool?.id}
+            currentSchool={currentSchool}
+            students={students}
+            updateStudentStatus={updateStudentStatus}
+          />
+        )}
+
+        {activeMode === 'manual' && (
+          <AdminPasswordLogin
+            onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
+            updateStudentStatus={updateStudentStatus}
+            currentUser={currentUser}
+          />
+        )}
       </main>
 
       {/* Modal de Saída com Senha */}
