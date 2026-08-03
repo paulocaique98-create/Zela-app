@@ -51,20 +51,10 @@ export default function Login({ onLogin }) {
       if (users && users.length > 0) {
         onLogin(users[0]);
       } else {
-        // Fallback: monta perfil a partir dos metadados do JWT
-        const meta = authData.user.user_metadata;
-        if (meta?.role) {
-          console.warn('[Login] Perfil não encontrado na tabela users, usando metadados JWT.');
-          onLogin({
-            id: authData.user.id,
-            email: authData.user.email,
-            name: meta.name || authData.user.email,
-            role: meta.role,
-            school_id: meta.school_id || null,
-          });
-        } else {
-          setLoginError('Perfil do usuário não encontrado. Contate o administrador.');
-        }
+        // Usuário não encontrado em public.users (excluído, inativo ou inexistente)
+        await supabase.auth.signOut();
+        setLoginError('Acesso não autorizado. Sua conta foi removida ou desativada. Entre em contato com a escola.');
+        return;
       }
     } catch (err) {
       console.error('[Login] Catch error:', err);

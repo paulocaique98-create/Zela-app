@@ -60,11 +60,17 @@ export default function AdminUserManagement({ currentUser }) {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Tem certeza que deseja excluir este usuário? Todos os dados vinculados serão perdidos.')) return;
     try {
-      const { error } = await supabase.from('users').delete().eq('id', userId);
+      // Chama a Edge Function para excluir o usuário dos dois ambientes (auth e public)
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
+      
       if (error) throw error;
+      
       setUsersList(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
-      alert('Erro ao excluir usuário.');
+      console.error(err);
+      alert('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
     }
   };
 

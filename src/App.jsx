@@ -65,7 +65,26 @@ export default function App() {
     };
     validateSession();
 
-    // Escuta mudanças de estado de auth (ex: token expirado em tempo real)
+    // Listener para validar exclusão fantasma ao focar a janela
+    const handleFocus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (!userData) {
+        // Usuário foi excluído no public.users enquanto estava logado
+        await supabase.auth.signOut();
+        localStorage.removeItem('zela_user');
+        setCurrentUser(null);
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         if (event === 'SIGNED_OUT') {
@@ -74,7 +93,10 @@ export default function App() {
         }
       }
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const fetchGlobalLogo = async () => {
