@@ -18,7 +18,6 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
   const [matchedStudents, setMatchedStudents] = useState([]);
   const [actionDone, setActionDone] = useState(false);
 
-  // New states for manual snapshot confrontation
   const [capturedImage, setCapturedImage] = useState(null);
   const [matchDistance, setMatchDistance] = useState(null);
   const [isProcessingCapture, setIsProcessingCapture] = useState(false);
@@ -199,9 +198,16 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
       setCapturedImage(dataUrl);
       setMatchStatus('searching');
 
-      // Run face detection on the captured static image
-      const img = await loadImage(dataUrl);
-      const detection = await faceapi.detectSingleFace(img)
+      // Criar canvas auxiliar para pré-processamento de brilho e contraste
+      const processCanvas = document.createElement('canvas');
+      processCanvas.width = video.videoWidth || 640;
+      processCanvas.height = video.videoHeight || 480;
+      const processCtx = processCanvas.getContext('2d');
+      processCtx.filter = 'brightness(1.8) contrast(1.3)';
+      processCtx.drawImage(video, 0, 0);
+
+      // Usar processCanvas para a detecção de confronto
+      const detection = await faceapi.detectSingleFace(processCanvas)
         .withFaceLandmarks()
         .withFaceDescriptor();
 
@@ -306,6 +312,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden w-full h-full">
           {/* Left pane: Camera feed or Static Captured Image */}
           <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
+          
           {(!cameraReady || !faceMatcher) && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
