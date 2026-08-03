@@ -292,17 +292,19 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div className="flex-1 overflow-y-auto min-h-0 pr-1">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {monitorStudents.map(student => {
-                    let badgeClass, badgeText, btnClass, btnText, btnActionStatus, borderColor, bgColor;
+                    let badgeClass, badgeText, btnClass, btnText, btnActionStatus, cancelStatus, borderColor, bgColor;
 
                     if (student.status === 'pending_entry') {
                       badgeClass = "text-green-700"; badgeText = "Solicitação de Entrada";
                       btnClass = "bg-green-600 hover:bg-green-700 text-white"; btnText = "Confirmar Entrada";
                       btnActionStatus = "in_school";
+                      cancelStatus = "idle";
                       borderColor = "border-green-300"; bgColor = "bg-green-50";
                     } else if (student.status === 'pending_exit') {
                       badgeClass = "text-indigo-700"; badgeText = "Solicitação de Saída";
                       btnClass = "bg-indigo-600 hover:bg-indigo-700 text-white"; btnText = "Confirmar Saída";
                       btnActionStatus = "left";
+                      cancelStatus = "in_school";
                       borderColor = "border-indigo-300"; bgColor = "bg-indigo-50";
                     }
 
@@ -315,12 +317,20 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                           <Clock size={12} /> {badgeText}
                         </p>
                         <h3 className="font-bold text-lg text-slate-800 mb-4">{student.name}</h3>
-                        <button
-                          onClick={() => updateStudentStatus(student.id, btnActionStatus)}
-                          className={`w-full font-bold py-3 rounded-xl active:scale-95 transition-all shadow-sm ${btnClass}`}
-                        >
-                          {btnText}
-                        </button>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => updateStudentStatus(student.id, btnActionStatus)}
+                            className={`w-full font-bold py-3 rounded-xl active:scale-95 transition-all shadow-sm ${btnClass}`}
+                          >
+                            {btnText}
+                          </button>
+                          <button
+                            onClick={() => updateStudentStatus(student.id, cancelStatus)}
+                            className="w-full font-semibold py-2 rounded-xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
+                          >
+                            Cancelar Solicitação
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
