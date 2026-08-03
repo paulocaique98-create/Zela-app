@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, KeyRound, Loader2, CheckCircle, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function AdminPasswordLogin({ onClose, updateStudentStatus, currentUser }) {
+export default function AdminPasswordLogin({ onClose, updateStudentStatus, requestKioskAccess, currentUser }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -62,16 +62,22 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, curre
     
     setIsLoading(true);
     try {
-      for (const student of matchedStudents) {
-        let newStatus = student.status;
-        if (['idle', 'left'].includes(student.status)) {
-          newStatus = 'pending_entry';
-        } else if (student.status === 'in_school') {
-          newStatus = 'pending_exit';
-        }
+      if (requestKioskAccess) {
+        // Envia a lista de IDs para a RPC, que resolve o status fresco no banco.
+        await requestKioskAccess(matchedStudents.map(s => s.id));
+      } else {
+        // Fallback legado caso não venha no prop
+        for (const student of matchedStudents) {
+          let newStatus = student.status;
+          if (['idle', 'left'].includes(student.status)) {
+            newStatus = 'pending_entry';
+          } else if (student.status === 'in_school') {
+            newStatus = 'pending_exit';
+          }
 
-        if (newStatus !== student.status) {
-          await updateStudentStatus(student.id, newStatus);
+          if (newStatus !== student.status) {
+            await updateStudentStatus(student.id, newStatus);
+          }
         }
       }
       
@@ -81,7 +87,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, curre
       }, 3000);
     } catch (err) {
       console.error(err);
-      setError('Erro ao registrar presença.');
+      setError(err.message || 'Erro ao registrar presença.');
     } finally {
       setIsLoading(false);
     }

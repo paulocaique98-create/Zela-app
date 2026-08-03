@@ -4,7 +4,7 @@ import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 
-export default function AdminFaceScanner({ onClose, updateStudentStatus, students, currentUser, isKioskMode = false }) {
+export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false }) {
   const videoRef = useRef(null);
   
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -259,19 +259,21 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
     
     setIsProcessingCapture(true);
     try {
-      // Como o processamento já ocorreu via front-end (face-api.js), chamamos a função direta
-      // para cada aluno ao invés de usar a Edge Function que pode estar indisponível localmente
-      for (const student of matchedStudents) {
-        let newStatus = student.status;
-        if (['idle', 'left'].includes(student.status)) {
-          newStatus = 'pending_entry';
-        } else if (student.status === 'in_school') {
-          newStatus = 'pending_exit';
-        }
+      if (requestKioskAccess) {
+        await requestKioskAccess(matchedStudents.map(s => s.id));
+      } else {
+        // Fallback legado caso requestKioskAccess não venha nos props
+        for (const student of matchedStudents) {
+          let newStatus = student.status;
+          if (['idle', 'left'].includes(student.status)) {
+            newStatus = 'pending_entry';
+          } else if (student.status === 'in_school') {
+            newStatus = 'pending_exit';
+          }
 
-        if (newStatus !== student.status) {
-          // Utiliza a função já existente no App.jsx que salva as métricas de tempo
-          await updateStudentStatus(student.id, newStatus);
+          if (newStatus !== student.status) {
+            await updateStudentStatus(student.id, newStatus);
+          }
         }
       }
 

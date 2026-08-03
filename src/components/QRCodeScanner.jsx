@@ -9,6 +9,7 @@ export default function QRCodeScanner({
   onClose, 
   onCheckinConfirmed, // equivalent to onScanSuccess
   updateStudentStatus, // used if in kiosk mode to update parent state directly
+  requestKioskAccess, // passed for atomic DB updates
   students, // optionally passed for kiosk mode
   mode = 'admin', 
   isLandscape = false 
@@ -194,39 +195,43 @@ export default function QRCodeScanner({
     setIsProcessing(true);
     try {
       const processedStudents = [];
-      const now = new Date();
-      const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
-      // TODO: unificar com AdminFaceScanner em refatoração futura
-      for (const student of matchedStudents) {
-        let newStatus = student.status;
-        let updates = {};
+      if (requestKioskAccess) {
+        await requestKioskAccess(matchedStudents.map(s => s.id));
+        processedStudents.push(...matchedStudents); // Para o AdminPortal
+      } else {
+        // Fallback legado
+        const now = new Date();
+        const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
-        if (['idle', 'left'].includes(student.status)) {
-          newStatus = 'pending_entry';
-          updates = { status: newStatus, today_entry: fullRecordStr, today_exit: null };
-        } else if (student.status === 'in_school') {
-          newStatus = 'pending_exit';
-          updates = { status: newStatus, today_exit: fullRecordStr };
-        }
+        for (const student of matchedStudents) {
+          let newStatus = student.status;
+          let updates = {};
 
-        if (newStatus !== student.status) {
-          if (updateStudentStatus) {
-            // Se foi passada a função de update (Kiosk)
-            await updateStudentStatus(student.id, newStatus);
-            processedStudents.push({ ...student, ...updates });
-          } else {
-            // Update direto no banco (AdminPortal default)
-            const { error: updError } = await supabase
-              .from('students')
-              .update(updates)
-              .eq('id', student.id);
-            if (!updError) {
-              processedStudents.push({ ...student, ...updates });
-            }
+          if (['idle', 'left'].includes(student.status)) {
+            newStatus = 'pending_entry';
+            updates = { status: newStatus, today_entry: fullRecordStr, today_exit: null };
+          } else if (student.status === 'in_school') {
+            newStatus = 'pending_exit';
+            updates = { status: newStatus, today_exit: fullRecordStr };
           }
-        } else {
-          processedStudents.push(student);
+
+          if (newStatus !== student.status) {
+            if (updateStudentStatus) {
+              await updateStudentStatus(student.id, newStatus);
+              processedStudents.push({ ...student, ...updates });
+            } else {
+              const { error: updError } = await supabase
+                .from('students')
+                .update(updates)
+                .eq('id', student.id);
+              if (!updError) {
+                processedStudents.push({ ...student, ...updates });
+              }
+            }
+          } else {
+            processedStudents.push(student);
+          }
         }
       }
 

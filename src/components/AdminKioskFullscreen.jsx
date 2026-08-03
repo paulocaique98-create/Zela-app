@@ -17,7 +17,7 @@ import AdminPasswordLogin from './AdminPasswordLogin';
  * (Caso necessite de maior segurança no futuro, deve-se voltar a usar uma sessão segregada)
  */
 
-export default function AdminKioskFullscreen({ currentUser, currentSchool, students, updateStudentStatus }) {
+export default function AdminKioskFullscreen({ currentUser, currentSchool, students, updateStudentStatus, requestKioskAccess }) {
   const [showExitModal, setShowExitModal] = useState(false);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -176,6 +176,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             key={scannerKey}
             onClose={() => {}} // Não faz nada no Kiosk Mode nativo
             updateStudentStatus={updateStudentStatus}
+            requestKioskAccess={requestKioskAccess}
             students={students}
             currentUser={currentUser}
             isKioskMode={true} 
@@ -190,6 +191,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             currentSchool={currentSchool}
             students={students}
             updateStudentStatus={updateStudentStatus}
+            requestKioskAccess={requestKioskAccess}
           />
         )}
 
@@ -197,6 +199,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
           <AdminPasswordLogin
             onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
             updateStudentStatus={updateStudentStatus}
+            requestKioskAccess={requestKioskAccess}
             currentUser={currentUser}
           />
         )}

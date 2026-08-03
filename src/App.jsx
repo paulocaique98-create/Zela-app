@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Login from './components/Login';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import MobileMenu from './components/MobileMenu';
-import FamilyPortal from './components/FamilyPortal';
-import AdminPortal from './components/AdminPortal';
 import AuthModal from './components/AuthModal';
-import DeveloperLayout from './components/DeveloperLayout';
-import TotemComingSoon from './components/TotemComingSoon';
-import ResetPassword from './components/ResetPassword';
-import AdminKioskFullscreen from './components/AdminKioskFullscreen';
 import { supabase } from './lib/supabase';
 import { preloadFaceModels } from './lib/faceModels';
+
+const Login = lazy(() => import('./components/Login'));
+const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
+const AdminPortal = lazy(() => import('./components/AdminPortal'));
+const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
+const TotemComingSoon = lazy(() => import('./components/TotemComingSoon'));
+const ResetPassword = lazy(() => import('./components/ResetPassword'));
+const AdminKioskFullscreen = lazy(() => import('./components/AdminKioskFullscreen'));
 
 // Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
 const parseShortTime = (timeStr, todayDate = null) => {
@@ -53,38 +54,45 @@ export default function App() {
   const realtimeChannelRef = useRef(null);
 
   // Valida a sessão do Supabase ao carregar o app.
-  // Se o token guardado no localStorage expirou ou é inválido,
-  // derruba a sessão local para evitar o app abrir "logado" indevidamente.
   useEffect(() => {
     const validateSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session && localStorage.getItem('zela_user')) {
-        // Token inválido/expirado — faz logout silencioso
         localStorage.removeItem('zela_user');
         setCurrentUser(null);
       }
     };
     validateSession();
 
-    // Listener para validar exclusão fantasma ao focar a janela
-    const handleFocus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      if (!userData) {
-        // Usuário foi excluído no public.users enquanto estava logado
-        await supabase.auth.signOut();
-        localStorage.removeItem('zela_user');
-        setCurrentUser(null);
+    // Recarrega dados quando a aba ganha foco, a tela volta ou a rede retorna
+    const handleVisibilityOrFocus = async () => {
+      if (document.visibilityState === 'visible') {
+        console.info('[Zela] Aba ativa novamente, validando sessão e recarregando dados...');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (!userData) {
+          await supabase.auth.signOut();
+          localStorage.removeItem('zela_user');
+          setCurrentUser(null);
+          return;
+        }
+
+        // Se continua logado, recarrega
+        if (currentUser && currentUser.role !== 'developer') {
+          fetchData();
+        }
       }
     };
-    window.addEventListener('focus', handleFocus);
+
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('online', handleVisibilityOrFocus);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
@@ -96,9 +104,10 @@ export default function App() {
     });
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('online', handleVisibilityOrFocus);
     };
-  }, []);
+  }, [currentUser]);
 
   const fetchGlobalLogo = async () => {
     try {
@@ -137,13 +146,12 @@ export default function App() {
   const channelSuffix = Math.random().toString(36).substring(2, 8);
 
   const setupRealtime = () => {
-    // Remove canal anterior se existir
     if (realtimeChannelRef.current) {
       supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
     }
 
-    // Nome único por aba (usando channelSuffix) evita conflito de canais com mesmo nome
+    console.info('[Zela] Conectando ao canal Realtime (students)...');
     const channelName = `students-realtime-${currentUser.id}-${channelSuffix}`;
 
     const formatStudent = (s) => {
@@ -200,12 +208,19 @@ export default function App() {
         setEmergencyData(payload.payload);
         setIsEmergency(true);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.info('[Zela] Realtime conectado com sucesso.');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn(`[Zela] Realtime desconectado: ${status}.`);
+        }
+      });
 
     realtimeChannelRef.current = channel;
   };
 
   const fetchData = async () => {
+    console.info('[Zela] Carregando dados da escola e alunos...');
     setIsLoading(true);
     try {
       if (currentUser.school_id) {
@@ -498,6 +513,25 @@ export default function App() {
     }
   };
 
+  const requestKioskAccess = async (studentIds) => {
+    if (!studentIds || studentIds.length === 0) return;
+    try {
+      console.info('[Zela] Kiosk solicitando acesso via RPC para alunos:', studentIds);
+      const { data, error } = await supabase.rpc('kiosk_request_access', {
+        p_student_ids: studentIds
+      });
+      if (error) {
+        console.error('[Zela] Erro na RPC kiosk_request_access:', error);
+        throw new Error('Erro de Comunicação - Tente Novamente');
+      }
+      // A UI local (students) será atualizada automaticamente via Realtime.
+      console.info('[Zela] RPC kiosk_request_access executada com sucesso:', data);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+
   const triggerEmergency = async (data) => {
     if (realtimeChannelRef.current) {
       await realtimeChannelRef.current.send({
@@ -518,15 +552,15 @@ export default function App() {
 
   // ──────── ROUTING GLOBAL ────────
   if (window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery')) {
-    return <ResetPassword />;
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><ResetPassword /></Suspense>;
   }
 
   if (window.location.pathname === '/totem') {
-    return <TotemComingSoon />;
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><TotemComingSoon /></Suspense>;
   }
 
   if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><Login onLogin={handleLogin} /></Suspense>;
   }
 
   // ──────── ROUTING GLOBAL ────────
@@ -536,12 +570,15 @@ export default function App() {
       return null;
     }
     return (
-      <AdminKioskFullscreen 
-        currentUser={currentUser} 
-        currentSchool={currentSchool} 
-        students={students} 
-        updateStudentStatus={updateStudentStatus} 
-      />
+      <Suspense fallback={<div className="h-screen bg-slate-900 flex items-center justify-center">Carregando Kiosk...</div>}>
+        <AdminKioskFullscreen 
+          currentUser={currentUser} 
+          currentSchool={currentSchool} 
+          students={students} 
+          updateStudentStatus={updateStudentStatus}
+          requestKioskAccess={requestKioskAccess}
+        />
+      </Suspense>
     );
   }
 
@@ -562,43 +599,51 @@ export default function App() {
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
             </div>
-          ) : currentUser.role === 'developer' ? (
-            <DeveloperLayout 
-              currentUser={currentUser} 
-              onUpdateGlobalLogo={fetchGlobalLogo}
-              isMobileMenuOpen={isMobileMenuOpen}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
-              onLogout={handleLogout}
-            />
-          ) : currentUser.role === 'admin' ? (
-            <AdminPortal
-              currentUser={currentUser}
-              currentSchool={currentSchool}
-              students={students}
-              adminTab={adminTab}
-              setAdminTab={setAdminTab}
-              updateStudentStatus={updateStudentStatus}
-              onUpdateSchool={fetchData}
-              isMobileMenuOpen={isMobileMenuOpen}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
-              onLogout={handleLogout}
-            />
           ) : (
-            <FamilyPortal
-              currentUser={currentUser}
-              currentSchool={currentSchool}
-              setCurrentUser={setCurrentUser}
-              students={students}
-              familyTab={familyTab}
-              setFamilyTab={setFamilyTab}
-              updateStudentStatus={updateStudentStatus}
-              authorized={authorized}
-              togglePhoto={togglePhoto}
-              onOpenAuthModal={() => setIsAuthModalOpen(true)}
-              isMobileMenuOpen={isMobileMenuOpen}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
-              onLogout={handleLogout}
-            />
+            <Suspense fallback={
+              <div className="flex justify-center items-center py-20 w-full h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
+              </div>
+            }>
+              {currentUser.role === 'developer' ? (
+                <DeveloperLayout 
+                  currentUser={currentUser} 
+                  onUpdateGlobalLogo={fetchGlobalLogo}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
+                />
+              ) : currentUser.role === 'admin' ? (
+                <AdminPortal
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  students={students}
+                  adminTab={adminTab}
+                  setAdminTab={setAdminTab}
+                  updateStudentStatus={updateStudentStatus}
+                  onUpdateSchool={fetchData}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <FamilyPortal
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  setCurrentUser={setCurrentUser}
+                  students={students}
+                  familyTab={familyTab}
+                  setFamilyTab={setFamilyTab}
+                  updateStudentStatus={updateStudentStatus}
+                  authorized={authorized}
+                  togglePhoto={togglePhoto}
+                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
+                />
+              )}
+            </Suspense>
           )}
         </div>
       </main>
