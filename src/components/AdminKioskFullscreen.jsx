@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Lock, ShieldCheck, X, Loader2, KeyRound, Settings, Camera, QrCode } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import AdminFaceScanner from './AdminFaceScanner';
-import AdminKioskFaceRegistration from './AdminKioskFaceRegistration';
-import QRCodeScanner from './QRCodeScanner';
 import AdminPasswordLogin from './AdminPasswordLogin';
+
+const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
+const AdminKioskFaceRegistration = lazy(() => import('./AdminKioskFaceRegistration'));
+const QRCodeScanner = lazy(() => import('./QRCodeScanner'));
 
 /*
  * IMPORTANTE — NOTA DE SEGURANÇA:
@@ -171,38 +172,40 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
       {/* Conteúdo Principal: Scanner Ocupando Tudo */}
       <main className="flex-1 relative bg-slate-900 w-full h-full flex flex-col min-h-0 overflow-hidden">
-        {activeMode === 'facial' && (
-          <AdminFaceScanner
-            key={scannerKey}
-            onClose={() => {}} // Não faz nada no Kiosk Mode nativo
-            updateStudentStatus={updateStudentStatus}
-            requestKioskAccess={requestKioskAccess}
-            students={students}
-            currentUser={currentUser}
-            isKioskMode={true} 
-          />
-        )}
-        
-        {activeMode === 'qrcode' && (
-          <QRCodeScanner
-            mode="kiosk"
-            isLandscape={isLandscape}
-            school_id={currentSchool?.id}
-            currentSchool={currentSchool}
-            students={students}
-            updateStudentStatus={updateStudentStatus}
-            requestKioskAccess={requestKioskAccess}
-          />
-        )}
+        <Suspense fallback={<div className="flex-1 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" /><p className="text-white text-sm font-semibold">Carregando módulo...</p></div>}>
+          {activeMode === 'facial' && (
+            <AdminFaceScanner
+              key={scannerKey}
+              onClose={() => {}} // Não faz nada no Kiosk Mode nativo
+              updateStudentStatus={updateStudentStatus}
+              requestKioskAccess={requestKioskAccess}
+              students={students}
+              currentUser={currentUser}
+              isKioskMode={true} 
+            />
+          )}
+          
+          {activeMode === 'qrcode' && (
+            <QRCodeScanner
+              mode="kiosk"
+              isLandscape={isLandscape}
+              school_id={currentSchool?.id}
+              currentSchool={currentSchool}
+              students={students}
+              updateStudentStatus={updateStudentStatus}
+              requestKioskAccess={requestKioskAccess}
+            />
+          )}
 
-        {activeMode === 'manual' && (
-          <AdminPasswordLogin
-            onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
-            updateStudentStatus={updateStudentStatus}
-            requestKioskAccess={requestKioskAccess}
-            currentUser={currentUser}
-          />
-        )}
+          {activeMode === 'manual' && (
+            <AdminPasswordLogin
+              onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
+              updateStudentStatus={updateStudentStatus}
+              requestKioskAccess={requestKioskAccess}
+              currentUser={currentUser}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Modal de Saída com Senha */}
@@ -329,14 +332,16 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
       {/* Painel de Cadastro Facial (Overlay) */}
       {showRegistrationPanel && (
-        <AdminKioskFaceRegistration 
-          currentSchool={currentSchool}
-          students={students} 
-          onClose={() => {
-            setShowRegistrationPanel(false);
-            setScannerKey(prev => prev + 1); // Força remount do scanner para atualizar biometrias
-          }} 
-        />
+        <Suspense fallback={<div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm"><Loader2 className="w-12 h-12 text-white animate-spin" /></div>}>
+          <AdminKioskFaceRegistration 
+            currentSchool={currentSchool}
+            students={students} 
+            onClose={() => {
+              setShowRegistrationPanel(false);
+              setScannerKey(prev => prev + 1); // Força remount do scanner para atualizar biometrias
+            }} 
+          />
+        </Suspense>
       )}
     </div>
   );

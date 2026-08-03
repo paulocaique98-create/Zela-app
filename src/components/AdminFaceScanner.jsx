@@ -259,29 +259,11 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     
     setIsProcessingCapture(true);
     try {
-      if (requestKioskAccess) {
-        await requestKioskAccess(matchedStudents.map(s => s.id));
-      } else {
-        // Fallback legado caso requestKioskAccess não venha nos props
-        for (const student of matchedStudents) {
-          let newStatus = student.status;
-          if (['idle', 'left'].includes(student.status)) {
-            newStatus = 'pending_entry';
-          } else if (student.status === 'in_school') {
-            newStatus = 'pending_exit';
-          }
-
-          if (newStatus !== student.status) {
-            await updateStudentStatus(student.id, newStatus);
-          }
-        }
-      }
-
-      // Sucesso!
-      setActionDone(true);
+      await requestKioskAccess(matchedStudents.map(s => s.id));
+      setActionDone(true); // Só aqui, após confirmação real do banco
     } catch (err) {
       console.error('Erro ao solicitar acesso:', err);
-      setError('Acesso negado: ' + (err.message || 'Erro de comunicação.'));
+      setError('Falha ao registrar. Tente novamente: ' + (err.message || ''));
       setMatchStatus('no-match');
     } finally {
       setIsProcessingCapture(false);
@@ -318,7 +300,11 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           {(!cameraReady || !faceMatcher) && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
-              <p className="text-sm font-semibold">{loadingText}</p>
+              <p className="text-sm font-semibold">
+                {!modelsLoaded ? "Carregando IA de reconhecimento..." : 
+                 !cameraReady ? "Iniciando câmera..." : 
+                 !faceMatcher ? "Preparando biometrias..." : "Preparando sistema..."}
+              </p>
             </div>
           )}
 

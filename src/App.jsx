@@ -223,13 +223,13 @@ export default function App() {
     console.info('[Zela] Carregando dados da escola e alunos...');
     setIsLoading(true);
     try {
+      let schoolPromise = Promise.resolve({ data: null });
       if (currentUser.school_id) {
-        const { data: schoolData } = await supabase
+        schoolPromise = supabase
           .from('schools')
           .select('*')
           .eq('id', currentUser.school_id)
           .single();
-        if (schoolData) setCurrentSchool(schoolData);
       }
 
       // Fetch Students
@@ -237,7 +237,22 @@ export default function App() {
       if (currentUser.role === 'family') {
         studentsQuery = studentsQuery.eq('family_id', currentUser.id);
       }
-      const { data: studentsData } = await studentsQuery;
+
+      // Fetch Authorized Persons
+      let authQuery = supabase.from('authorized_persons').select('*').eq('school_id', currentUser.school_id);
+      if (currentUser.role === 'family') {
+        authQuery = authQuery.eq('family_id', currentUser.id);
+      }
+
+      const [schoolRes, studentsRes, authRes] = await Promise.all([
+        schoolPromise,
+        studentsQuery,
+        authQuery
+      ]);
+
+      if (schoolRes.data) setCurrentSchool(schoolRes.data);
+      const studentsData = studentsRes.data;
+      const authData = authRes.data;
 
       const todayDate = new Date().toISOString().split('T')[0];
 
@@ -273,12 +288,7 @@ export default function App() {
       });
       setStudents(formattedStudents);
 
-      // Fetch Authorized Persons
-      let authQuery = supabase.from('authorized_persons').select('*').eq('school_id', currentUser.school_id);
-      if (currentUser.role === 'family') {
-        authQuery = authQuery.eq('family_id', currentUser.id);
-      }
-      const { data: authData } = await authQuery;
+      // Authorized Persons (já carregado pelo Promise.all acima)
 
       const formattedAuth = (authData || []).map(a => ({
         id: a.id,
@@ -510,24 +520,37 @@ export default function App() {
 
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
+      throw err;
     }
   };
 
   const requestKioskAccess = async (studentIds) => {
     if (!studentIds || studentIds.length === 0) return;
-    try {
-      console.info('[Zela] Kiosk solicitando acesso via RPC para alunos:', studentIds);
-      const { data, error } = await supabase.rpc('kiosk_request_access', {
-        p_student_ids: studentIds
-      });
-      if (error) {
-        console.error('[Zela] Erro na RPC kiosk_request_access:', error);
-        throw new Error('Erro de Comunicação - Tente Novamente');
+    for (const studentId of studentIds) {
+      const student = students.find(s => s.id === studentId);
+      if (!student) continue;
+      
+      let newStatus = student.status;
+      if (['idle', 'left', 'absent'].includes(student.status)) {
+        newStatus = 'pending_entry';
+      } else if (student.status === 'in_school') {
+        newStatus = 'pending_exit';
       }
-      // A UI local (students) será atualizada automaticamente via Realtime.
-      console.info('[Zela] RPC kiosk_request_access executada com sucesso:', data);
-    } catch (err) {
-      throw err;
+      
+      if (newStatus !== student.status) {
+        const { error } = await supabase
+          .from('students')
+          .update({ status: newStatus })
+          .eq('id', studentId);
+        
+        if (error) {
+          console.error('Erro ao atualizar status do aluno:', error);
+          throw new Error(error.message); // PROPAGAR o erro
+        }
+        
+        // Atualizar estado local também para refletir imediatamente na UI
+        await updateStudentStatus(studentId, newStatus);
+      }
     }
   };
 
