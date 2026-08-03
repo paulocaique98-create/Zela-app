@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar } from 'lucide-react';
+import { useMenuClicks } from '../hooks/useMenuClicks';
 import AdminInicio from './AdminInicio';
 import AdminMatriculas from './AdminMatriculas';
 import AdminFichaMedica from './AdminFichaMedica';
@@ -24,6 +25,8 @@ import AdminRelatorioHorasExtras from './AdminRelatorioHorasExtras';
 import { preloadFaceModels } from '../lib/faceModels';
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen }) {
+  const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
+
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
@@ -83,9 +86,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         <div className="h-full bg-white p-3 pt-28 md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
           <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2 shrink-0">Navegação Principal</p>
           <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
-            {/* INÍCIO */}
             <button
-              onClick={() => { setAdminTab('home'); setIsMobileMenuOpen(false); }}
+              onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
               <Home size={18} /> Início
@@ -103,9 +105,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'cadastros' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                    <button onClick={() => { setAdminTab('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
-                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                    <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                    <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
               </div>
@@ -123,9 +125,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gestão de Usuários</button>
-                    <button onClick={() => { setAdminTab('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Lista de Alunos</button>
-                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gestão de Usuários</button>
+                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Lista de Alunos</button>
+                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
               </div>
@@ -143,8 +145,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                    <button onClick={() => { setAdminTab('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                    <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                    <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
                   </div>
                 </div>
               </div>
@@ -162,17 +164,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                    <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
                       Monitor Check-in
                       {monitorStudents.length > 0 && (
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
                     </button>
-                    <button onClick={() => { window.location.href = '/admin/totem-checkin'; }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
-                    <button onClick={() => { setAdminTab('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
-                    <button onClick={() => { setAdminTab('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                    <button onClick={() => { setAdminTab('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatório Horas Extras</button>
-                    <button onClick={() => { setAdminTab('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
+                    <button onClick={() => { registerClick('totem'); window.location.href = '/admin/totem-checkin'; }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
+                    <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
+                    <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatório Horas Extras</button>
+                    <button onClick={() => { setAdminTab('kiosks'); registerClick('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
                   </div>
                 </div>
               </div>
@@ -199,7 +201,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* MURAL DE FOTOS */}
             {showMural && (
               <button
-                onClick={() => { setAdminTab('mural-fotos'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setAdminTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <ImageIcon size={18} /> Mural de Fotos
@@ -209,7 +211,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* CARDÁPIO */}
             {showCardapio && (
               <button
-                onClick={() => { setAdminTab('cardapio'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setAdminTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <UtensilsCrossed size={18} /> Cardápio
@@ -221,7 +223,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           {showConfiguracoes && (
             <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
               <button
-                onClick={() => { setAdminTab('settings'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <Settings size={18} /> Configurações
@@ -235,7 +237,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       <main className="flex-1 min-w-0 h-full flex flex-col">
         
         {/* INICIO */}
-        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} />}
+        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} />}
 
         {/* NOVOS PLACEHOLDERS */}
         {adminTab === 'matriculas' && <AdminMatriculas />}

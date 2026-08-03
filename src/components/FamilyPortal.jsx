@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck } from 'lucide-react';
+import { useMenuClicks } from '../hooks/useMenuClicks';
 import FamilyInicio from './FamilyInicio';
 import FamilyMatriculas from './FamilyMatriculas';
 import FamilyFichaMedica from './FamilyFichaMedica';
@@ -22,6 +23,8 @@ export default function FamilyPortal({
   authorized, togglePhoto, onOpenAuthModal, currentSchool,
   isMobileMenuOpen, setIsMobileMenuOpen
 }) {
+  const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
+
   const familyStudents = students.filter(s => s.familyId === currentUser.id);
 
   // Estados dos Accordions
@@ -55,7 +58,7 @@ export default function FamilyPortal({
           <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
             {/* INÍCIO */}
             <button
-              onClick={() => { setFamilyTab('home'); setIsMobileMenuOpen(false); }}
+              onClick={() => { setFamilyTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
               <Home size={18} /> Início
@@ -73,8 +76,8 @@ export default function FamilyPortal({
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setFamilyTab('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                    <button onClick={() => { setFamilyTab('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                    <button onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                    <button onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
                   </div>
                 </div>
               </div>
@@ -92,8 +95,8 @@ export default function FamilyPortal({
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
-                    <button onClick={() => { setFamilyTab('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
+                    <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
+                    <button onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
                   </div>
                 </div>
               </div>
@@ -111,10 +114,10 @@ export default function FamilyPortal({
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setFamilyTab('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
-                    <button onClick={() => { setFamilyTab('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
-                    <button onClick={() => { setFamilyTab('wallet'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'wallet' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Carteira QR Code</button>
-                    <button onClick={() => { setFamilyTab('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
+                    <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
+                    <button onClick={() => { setFamilyTab('wallet'); registerClick('wallet'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'wallet' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Carteira QR Code</button>
+                    <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
                   </div>
                 </div>
               </div>
@@ -141,7 +144,7 @@ export default function FamilyPortal({
             {/* COMUNICADOS */}
             {showComunicados && (
               <button
-                onClick={() => { setFamilyTab('comunicados'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setFamilyTab('comunicados'); registerClick('comunicados'); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'comunicados' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <Bell size={18} /> Comunicados
@@ -151,7 +154,7 @@ export default function FamilyPortal({
             {/* MURAL DE FOTOS */}
             {showMural && (
               <button
-                onClick={() => { setFamilyTab('mural-fotos'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setFamilyTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <ImageIcon size={18} /> Mural de Fotos
@@ -161,7 +164,7 @@ export default function FamilyPortal({
             {/* CARDÁPIO */}
             {showCardapio && (
               <button
-                onClick={() => { setFamilyTab('cardapio'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setFamilyTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <UtensilsCrossed size={18} /> Cardápio
@@ -172,7 +175,7 @@ export default function FamilyPortal({
           {showConfiguracoes && (
             <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
               <button
-                onClick={() => { setFamilyTab('settings'); setIsMobileMenuOpen(false); }}
+                onClick={() => { setFamilyTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <Settings size={18} /> Configurações
@@ -184,7 +187,7 @@ export default function FamilyPortal({
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
-        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} />}
+        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} />}
         
         {/* REUTILIZANDO COMPONENTES EXISTENTES */}
         {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
