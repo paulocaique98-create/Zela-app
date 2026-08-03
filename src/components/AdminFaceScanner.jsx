@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 
 export default function AdminFaceScanner({ onClose, updateStudentStatus, students, currentUser, isKioskMode = false }) {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial...');
@@ -134,36 +133,18 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
       isDetecting = true;
       try {
         const video = videoRef.current;
-        const canvas = canvasRef.current;
 
-        if (video && canvas) {
-          const displaySize = { width: video.videoWidth || 640, height: video.videoHeight || 480 };
-          faceapi.matchDimensions(canvas, displaySize);
-
-          // Usa maxResults: 1 para ser mais rápido (estamos procurando 1 rosto)
+        if (video) {
           const detections = await faceapi
-            .detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ maxResults: 1 }))
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
-            .withFaceDescriptors();
+            .withFaceDescriptor();
 
-          const resizedDetections = faceapi.resizeResults(detections, displaySize);
+          setMatchStatus(detections ? 'searching' : 'idle');
 
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-          setMatchStatus(detections.length > 0 ? 'searching' : 'idle');
-
-          resizedDetections.forEach(detection => {
-            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+          if (detections) {
+            const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
             
-            // Draw box
-            const box = detection.detection.box;
-            const drawBox = new faceapi.draw.DrawBox(box, { 
-              label: bestMatch.toString(),
-              boxColor: bestMatch.label !== 'unknown' ? '#10B981' : '#EF4444' // Green if match, Red if unknown
-            });
-            drawBox.draw(canvas);
-
             if (bestMatch.label !== 'unknown') {
               // Found a match!
               const personId = bestMatch.label;
@@ -178,7 +159,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
                 setMatchedStudents(familyStudents);
               }
             }
-          });
+          }
         }
       } catch (err) {
         console.error('Erro no loop de detecção:', err);
@@ -357,10 +338,6 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
                 playsInline
                 className="w-full h-full object-cover transform -scale-x-100"
               />
-              <canvas 
-                ref={canvasRef}
-                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none transform -scale-x-100"
-              />
             </>
           )}
 
@@ -373,7 +350,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, student
             }`}></span>
             {
               isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
-              matchStatus === 'matched' ? 'BIOMETRIA APONTADA' : 
+              matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') : 
               matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' : 
               matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
             }

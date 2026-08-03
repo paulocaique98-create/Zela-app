@@ -16,6 +16,7 @@ let _loadPromise = null;
 export function preloadFaceModels() {
   if (!_loadPromise) {
     _loadPromise = Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
       faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
       faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
       faceapi.nets.faceRecognitionNet.loadFromUri('/models'),

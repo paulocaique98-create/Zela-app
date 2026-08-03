@@ -10,6 +10,7 @@ import TotemComingSoon from './components/TotemComingSoon';
 import ResetPassword from './components/ResetPassword';
 import AdminKioskFullscreen from './components/AdminKioskFullscreen';
 import { supabase } from './lib/supabase';
+import { preloadFaceModels } from './lib/faceModels';
 
 // Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
 const parseShortTime = (timeStr, todayDate = null) => {
@@ -288,6 +289,9 @@ export default function App() {
     setCurrentUser(user);
     localStorage.setItem('zela_user', JSON.stringify(user));
     setFamilyTab('home');
+    
+    // Preload dos modelos faciais em background sem travar UI
+    preloadFaceModels().catch(console.error);
   };
 
   const handleLogout = () => {
