@@ -4,6 +4,7 @@ import MobileMenu from './components/MobileMenu';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
 import { preloadFaceModels } from './lib/faceModels';
+import { navigateTo } from './utils/navigate';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -36,6 +37,19 @@ export default function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  // ── Roteamento reativo via History API ──
+  // currentPath reage a pushState (via navigateTo) e ao botão Voltar do navegador.
+  // Sem isso, window.location.pathname é lido apenas 1x no render inicial.
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const [adminTab, setAdminTab] = useState('home');
   const [familyTab, setFamilyTab] = useState('home'); // home | history | settings
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -53,7 +67,13 @@ export default function App() {
   // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
   const realtimeChannelRef = useRef(null);
 
-  // Valida a sessão do Supabase ao carregar o app.
+  // Ref estável para currentUser — evita closures desatualizadas em listeners de longa duração
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  // Valida sessão na montagem do app (roda apenas 1x)
   useEffect(() => {
     const validateSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -64,50 +84,55 @@ export default function App() {
     };
     validateSession();
 
-    // Recarrega dados quando a aba ganha foco, a tela volta ou a rede retorna
-    const handleVisibilityOrFocus = async () => {
-      if (document.visibilityState === 'visible') {
-        console.info('[Zela] Aba ativa novamente, validando sessão e recarregando dados...');
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-        
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (!userData) {
-          await supabase.auth.signOut();
-          localStorage.removeItem('zela_user');
-          setCurrentUser(null);
-          return;
-        }
-
-        // Se continua logado, recarrega
-        if (currentUser && currentUser.role !== 'developer') {
-          fetchData();
-        }
-      }
-    };
-
-    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
-    window.addEventListener('online', handleVisibilityOrFocus);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('zela_user');
-          setCurrentUser(null);
-        }
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('zela_user');
+        setCurrentUser(null);
       }
+      // TOKEN_REFRESHED: ignorado intencionalmente — não causa nenhuma ação
     });
+
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
-      window.removeEventListener('online', handleVisibilityOrFocus);
     };
-  }, [currentUser]);
+  }, []); // [] = roda apenas 1x na montagem, não reregistra ao trocar de rota
+
+  // Listener de visibilidade — detecta usuário excluído ao voltar para a aba.
+  // CRÍTICO: NÃO chama fetchData() — o Realtime já mantém os dados atualizados.
+  // Só age se o usuário foi removido do banco; caso normal (usuário válido) = NÃO FAZ NADA.
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      // Só agir quando a aba volta ao foco
+      if (document.visibilityState !== 'visible') return;
+
+      const user = currentUserRef.current;
+      // Sem usuário logado = não há sessão para verificar
+      if (!user) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      // Sem sessão Supabase ativa = não fazer nada (o onAuthStateChange já trata)
+      if (!session) return;
+
+      // Verifica se o usuário ainda existe na tabela pública
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      // USUÁRIO VÁLIDO → retornar imediatamente sem causar nenhum efeito
+      if (userData) return;
+
+      // Só chega aqui se o usuário foi excluído do banco
+      // Reload intencional: limpa completamente o estado após exclusão
+      await supabase.auth.signOut();
+      localStorage.removeItem('zela_user');
+      setCurrentUser(null);
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []); // [] = listener estável, não reregistra a cada render
 
   const fetchGlobalLogo = async () => {
     try {
@@ -330,16 +355,18 @@ export default function App() {
   };
 
   // Temporizador de inatividade (10 minutos)
+  // Usa currentPath para detectar o totem, evitando leitura direta de window.location
   useEffect(() => {
     let inactivityTimer;
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);
       // Se não houver usuário logado ou estiver no totem, não ativa o timer
-      if (!currentUser || window.location.pathname === '/totem') return;
+      if (!currentUser || currentPath === '/totem') return;
       
       inactivityTimer = setTimeout(() => {
         handleLogout();
+        // Reload intencional após inatividade — limpa todo o estado do app
         window.location.reload();
       }, 600000); // 10 minutos (600.000 ms)
     };
@@ -347,8 +374,8 @@ export default function App() {
     // Eventos que indicam atividade do usuário
     const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
 
-    // Atribui os listeners de evento apenas se houver usuário logado
-    if (currentUser && window.location.pathname !== '/totem') {
+    // Atribui os listeners de evento apenas se houver usuário logado e fora do totem
+    if (currentUser && currentPath !== '/totem') {
       events.forEach(event => window.addEventListener(event, resetTimer));
       resetTimer(); // Inicia o contador logo de cara
     }
@@ -357,7 +384,7 @@ export default function App() {
       clearTimeout(inactivityTimer);
       events.forEach(event => window.removeEventListener(event, resetTimer));
     };
-  }, [currentUser]);
+  }, [currentUser, currentPath]);
 
   const togglePhoto = async (id, photoUrl = null, descriptorArray = null) => {
     try {
@@ -574,11 +601,13 @@ export default function App() {
   };
 
   // ──────── ROUTING GLOBAL ────────
-  if (window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery')) {
+  // Usa currentPath (estado reativo) em vez de window.location.pathname (estático).
+  // currentPath é atualizado por navigateTo() via popstate e pelo botão Voltar do navegador.
+  if (currentPath === '/reset-password' || window.location.hash.includes('type=recovery')) {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><ResetPassword /></Suspense>;
   }
 
-  if (window.location.pathname === '/totem') {
+  if (currentPath === '/totem') {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><TotemComingSoon /></Suspense>;
   }
 
@@ -587,9 +616,10 @@ export default function App() {
   }
 
   // ──────── ROUTING GLOBAL ────────
-  if (window.location.pathname === '/admin/totem-checkin') {
+  if (currentPath === '/admin/totem-checkin') {
     if (currentUser.role !== 'admin') {
-      window.location.href = '/';
+      // Redireciona sem reload — o guardrail apenas muda a rota exibida
+      navigateTo('/');
       return null;
     }
     return (

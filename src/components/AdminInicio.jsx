@@ -1,6 +1,7 @@
 import React from 'react';
 import { Monitor, CalendarCheck, Users, History, UserCog, QrCode, ArrowRight, Clock, UserPlus, Smartphone, Settings, Image, UtensilsCrossed } from 'lucide-react';
 import { useMemo } from 'react';
+import { navigateTo } from '../utils/navigate';
 
 export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {} }) {
   const hour = new Date().getHours();
@@ -14,7 +15,7 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     { key: 'students', label: 'Lista de Alunos', icon: Users, tab: 'students', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico Geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'users', label: 'Gestão de Usuários', icon: UserCog, tab: 'users', feature: 'cadastros', defaultOn: true },
-    { key: 'totem', label: 'Totem Check-in', icon: QrCode, tab: 'totem', feature: 'checkin', defaultOn: true, action: () => window.location.href = '/admin/totem-checkin' },
+    { key: 'totem', label: 'Totem Check-in', icon: QrCode, tab: 'totem', feature: 'checkin', defaultOn: true, action: () => navigateTo('/admin/totem-checkin') },
     { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras', feature: 'gerenciamento', defaultOn: true },
     { key: 'register', label: 'Cadastro de Usuários', icon: UserPlus, tab: 'register', feature: 'cadastros', defaultOn: true },
     { key: 'kiosks', label: 'Gerenciar Totens', icon: Smartphone, tab: 'kiosks', feature: 'configuracoes', defaultOn: true },

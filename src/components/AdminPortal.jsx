@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { navigateTo } from '../utils/navigate';
 import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import AdminInicio from './AdminInicio';
@@ -170,7 +171,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
                     </button>
-                    <button onClick={() => { registerClick('totem'); window.location.href = '/admin/totem-checkin'; }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
+                    <button onClick={() => { registerClick('totem'); navigateTo('/admin/totem-checkin'); }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
                     <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
                     <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
                     <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatório Horas Extras</button>
