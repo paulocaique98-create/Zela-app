@@ -207,33 +207,34 @@ export default function App() {
       .on('postgres_changes', pgFilter, (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
 
-        // Filtro por escola/família no callback — não depende de REPLICA IDENTITY
-        if (eventType === 'INSERT' || eventType === 'UPDATE') {
-          if (currentUser.role === 'family' && newRow?.family_id !== currentUser.id) return;
-          if (currentUser.role !== 'family' && newRow?.school_id !== currentUser.school_id) return;
-        }
-
-        console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id, newRow?.status);
-
         if (eventType === 'UPDATE') {
-          setStudents((prev) =>
-            prev.map((s) => {
-              if (s.id === newRow.id) {
-                const formatted = formatStudent(newRow);
-                // Merge: preserva campos antigos caso algo falte no payload,
-                // sobrescreve com os novos valores formatados.
-                return { 
-                  ...s, 
-                  ...formatted,
-                  // Garantir que todayRecord só sobrescreve os campos que vieram
-                  todayRecord: { ...s.todayRecord, ...formatted.todayRecord }
-                };
-              }
-              return s;
-            })
-          );
+          // Para UPDATE: verificar se o aluno existe no estado local — mais confiável
+          // que filtrar por school_id no payload (school_id pode não vir no Realtime
+          // dependendo da configuração de colunas da publicação).
+          setStudents((prev) => {
+            if (!prev.some(s => s.id === newRow.id)) return prev; // não é desta escola
+            console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id, newRow?.status);
+            return prev.map((s) => {
+              if (s.id !== newRow.id) return s;
+              const formatted = formatStudent(newRow);
+              return {
+                ...s,
+                ...formatted,
+                todayRecord: { ...s.todayRecord, ...formatted.todayRecord }
+              };
+            });
+          });
+
         } else if (eventType === 'INSERT') {
+          // Para INSERT: filtrar por school_id/family_id se vierem no payload
+          if (currentUser.role === 'family') {
+            if (newRow?.family_id && newRow.family_id !== currentUser.id) return;
+          } else {
+            if (newRow?.school_id && newRow.school_id !== currentUser.school_id) return;
+          }
+          console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id);
           setStudents((prev) => [...prev, formatStudent(newRow)]);
+
         } else if (eventType === 'DELETE') {
           setStudents((prev) => prev.filter((s) => s.id !== oldRow.id));
         }
@@ -574,6 +575,7 @@ export default function App() {
       }
       
       if (newStatus !== student.status) {
+        // Transição normal: novo status diferente do atual
         const { error } = await supabase
           .from('students')
           .update({ status: newStatus })
@@ -581,11 +583,27 @@ export default function App() {
         
         if (error) {
           console.error('Erro ao atualizar status do aluno:', error);
-          throw new Error(error.message); // PROPAGAR o erro
+          throw new Error(error.message);
         }
         
-        // Atualizar estado local também para refletir imediatamente na UI
         await updateStudentStatus(studentId, newStatus);
+
+      } else if (newStatus === 'pending_entry' || newStatus === 'pending_exit') {
+        // Aluno já está no status pending: re-disparar o evento Realtime
+        // fazendo um UPDATE no banco sem mudar o status (atualiza today_entry
+        // para notificar o monitor que pode ter perdido o evento anterior).
+        const timestampField = newStatus === 'pending_entry' ? 'today_entry' : 'today_exit';
+        const now = new Date();
+        const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toISOString().split('T')[0];
+        const fullRecordStr = `${dateStr}|${nowStr}`;
+        
+        await supabase
+          .from('students')
+          .update({ status: newStatus, [timestampField]: fullRecordStr })
+          .eq('id', studentId);
+        // Nota: não lança erro aqui — é um re-envio, não uma operação crítica
+        console.info('[Zela] Re-disparando notificação Realtime para aluno já em status pending:', studentId);
       }
     }
   };

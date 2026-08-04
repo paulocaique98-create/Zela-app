@@ -158,7 +158,7 @@ export default function QRCodeScanner({
       let familyStudents = [];
       if (students) {
         // Se a lista já foi passada (Kiosk Mode)
-        familyStudents = students.filter(s => s.family_id === targetFamilyId);
+        familyStudents = students.filter(s => s.familyId === targetFamilyId);
       } else {
         // Busca do banco se não tiver em memória
         const { data: sData } = await supabase
