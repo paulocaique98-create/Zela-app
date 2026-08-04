@@ -6,13 +6,13 @@ import { supabase } from '../lib/supabase';
 
 export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false }) {
   const videoRef = useRef(null);
-  
+
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial...');
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
   const [faceMatcher, setFaceMatcher] = useState(null);
-  
+
   const [matchedPerson, setMatchedPerson] = useState(null); // The authorized person detected
   const [matchStatus, setMatchStatus] = useState('idle'); // 'idle' | 'searching' | 'matched' | 'no-match'
   const [matchedStudents, setMatchedStudents] = useState([]);
@@ -143,7 +143,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
           if (detections) {
             const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
-            
+
             if (bestMatch.label !== 'unknown') {
               // Found a match!
               const personId = bestMatch.label;
@@ -152,7 +152,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 setMatchedPerson(person);
                 setMatchDistance(bestMatch.distance);
                 setMatchStatus('matched');
-                
+
                 // Find all students related to this authorized person's family
                 const familyStudents = students.filter(s => s.familyId === person.family_id);
                 setMatchedStudents(familyStudents);
@@ -218,7 +218,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       }
 
       const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-      
+
       if (bestMatch.label !== 'unknown') {
         const personId = bestMatch.label;
         const person = authorizedList.find(p => p.id === personId);
@@ -226,7 +226,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           setMatchedPerson(person);
           setMatchDistance(bestMatch.distance);
           setMatchStatus('matched');
-          
+
           // Find all students related to this authorized person's family
           const familyStudents = students.filter(s => s.familyId === person.family_id);
           setMatchedStudents(familyStudents);
@@ -256,7 +256,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
   const handleRequestAccess = async () => {
     if (!matchedStudents.length) return;
-    
+
     setIsProcessingCapture(true);
     try {
       await requestKioskAccess(matchedStudents.map(s => s.id));
@@ -281,37 +281,37 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
   const innerContent = (
     <>
-        {/* Mobile Header (Fixed at top on small screens) */}
-        {!isKioskMode && (
-          <div className="md:hidden flex justify-between items-center p-4 border-b border-slate-100 bg-white shrink-0 z-10">
-            <h3 className="font-bold text-slate-800 flex items-center gap-1.5 text-base">
-              <Camera size={18} className="text-indigo-600" /> Biometria Facial
-            </h3>
-            <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-lg transition-colors">
-              <X size={20}/>
-            </button>
-          </div>
-        )}
+      {/* Mobile Header (Fixed at top on small screens) */}
+      {!isKioskMode && (
+        <div className="md:hidden flex justify-between items-center p-4 border-b border-slate-100 bg-white shrink-0 z-10">
+          <h3 className="font-bold text-slate-800 flex items-center gap-1.5 text-base">
+            <Camera size={18} className="text-indigo-600" /> Biometria Facial
+          </h3>
+          <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+      )}
 
-        <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden w-full h-full">
-          {/* Left pane: Camera feed or Static Captured Image */}
-          <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-white flex items-center justify-center overflow-hidden">
-          
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden w-full h-full">
+        {/* Left pane: Camera feed or Static Captured Image */}
+        <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
+
           {(!cameraReady || !faceMatcher) && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 bg-white/80 z-10 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
               <p className="text-sm font-semibold">
-                {!modelsLoaded ? "Carregando IA de reconhecimento..." : 
-                 !cameraReady ? "Iniciando câmera..." : 
-                 !faceMatcher ? "Preparando biometrias..." : "Preparando sistema..."}
+                {!modelsLoaded ? "Carregando IA de reconhecimento..." :
+                  !cameraReady ? "Iniciando câmera..." :
+                    !faceMatcher ? "Preparando biometrias..." : "Preparando sistema..."}
               </p>
             </div>
           )}
 
           {error && !capturedImage && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 bg-white/90 z-10 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/90 z-10 p-6 text-center">
               <ShieldAlert className="h-12 w-12 text-red-500 mb-3" />
-              <p className="text-sm font-bold text-red-600 mb-4">{error}</p>
+              <p className="text-sm font-bold text-red-400 mb-4">{error}</p>
               <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
                 Fechar Janela
               </button>
@@ -319,17 +319,17 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {capturedImage ? (
-            <img 
-              src={capturedImage} 
-              alt="Foto Capturada" 
+            <img
+              src={capturedImage}
+              alt="Foto Capturada"
               className="w-full h-full object-cover"
             />
           ) : (
             <>
-              <video 
+              <video
                 ref={videoRef}
-                autoPlay 
-                muted 
+                autoPlay
+                muted
                 playsInline
                 className="w-full h-full object-cover transform -scale-x-100"
               />
@@ -337,17 +337,16 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {/* Mirror status badge */}
-          <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-xl text-[11px] text-slate-700 flex items-center gap-1.5 font-mono shadow-sm">
-            <span className={`w-2.5 h-2.5 rounded-full ${
-              matchStatus === 'matched' ? 'bg-green-500' : 
-              matchStatus === 'searching' ? 'bg-amber-500 animate-ping' : 
-              matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
-            }`}></span>
+          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] text-white flex items-center gap-1.5 font-mono">
+            <span className={`w-2.5 h-2.5 rounded-full ${matchStatus === 'matched' ? 'bg-green-500' :
+                matchStatus === 'searching' ? 'bg-amber-500 animate-ping' :
+                  matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
+              }`}></span>
             {
               isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
-              matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') : 
-              matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' : 
-              matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
+                matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') :
+                  matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
+                    matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
             }
           </div>
 
@@ -373,7 +372,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 <Camera size={18} className="text-indigo-600" /> Biometria Facial
               </h3>
               <button onClick={onClose} className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg transition">
-                <X size={20}/>
+                <X size={20} />
               </button>
             </div>
           )}
@@ -395,7 +394,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                     O rosto capturado não corresponde a nenhum dos responsáveis aprovados e cadastrados no sistema.
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={handleResetScanner}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2"
                 >
@@ -409,7 +408,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                   <h4 className="font-bold text-slate-800 text-lg">Solicitação Enviada!</h4>
                   <p className="text-slate-500 text-xs mt-1">Aguardando confirmação da recepção.</p>
                 </div>
-                <button 
+                <button
                   onClick={handleResetScanner}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm"
                 >
@@ -429,7 +428,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             ) : (
               // Match Found
               <div className="space-y-5 animate-in fade-in duration-300">
-                
+
                 {/* Visual side-by-side confrontation */}
                 {capturedImage && (
                   <div>
@@ -447,7 +446,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                           <img src={matchedPerson.photo_url} alt="Registrado" className="w-full h-full object-cover" />
                         </div>
                       </div>
-                      
+
                       {/* Similarity Badge */}
                       <div className="absolute top-[48%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white font-black text-[10px] px-2 py-1 rounded-full shadow border-2 border-white">
                         {getSimilarityPercentage(matchDistance)}%
@@ -485,11 +484,10 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                             <p className="font-bold text-slate-700">{student.name}</p>
                             <span className="text-[10px] text-slate-400 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' : 
-                            student.status === 'left' ? 'bg-slate-100 text-slate-500' : 
-                            student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                          }`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' :
+                              student.status === 'left' ? 'bg-slate-100 text-slate-500' :
+                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                            }`}>
                             {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente de Check-in'}
                           </span>
                         </div>
@@ -499,7 +497,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 </div>
 
                 {/* Reset button to clear confrontation and start live scans again */}
-                <button 
+                <button
                   onClick={handleResetScanner}
                   className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl transition text-xs flex items-center justify-center gap-1.5"
                 >
