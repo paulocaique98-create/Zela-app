@@ -25,7 +25,7 @@ export default function FamilyPortal({
 }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
 
-  const familyStudents = students.filter(s => s.familyId === currentUser.id);
+  const familyStudents = students.filter(s => s.familyId === (currentUser.linked_family_id || currentUser.id));
 
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);

@@ -84,9 +84,9 @@ export default function App() {
           return;
         }
 
-        // Se continua logado, recarrega
+        // Se continua logado, recarrega em background (sem exibir loading)
         if (currentUser && currentUser.role !== 'developer') {
-          fetchData();
+          fetchData(true);
         }
       }
     };
@@ -130,7 +130,7 @@ export default function App() {
     if (currentUser) {
       fetchGlobalLogo();
       if (currentUser.role !== 'developer') {
-        fetchData();
+        fetchData(false); // First load is not background
         setupRealtime();
       }
     } else {
@@ -171,9 +171,9 @@ export default function App() {
       };
     };
 
-    // Filtro: família ouve apenas seus próprios alunos; admin ouve tudo da sua escola
+    // Filtro: família ouve apenas seus próprios alunos (incluindo vinculados); admin ouve tudo da sua escola
     const filter = currentUser.role === 'family'
-      ? { event: '*', schema: 'public', table: 'students', filter: `family_id=eq.${currentUser.id}` }
+      ? { event: '*', schema: 'public', table: 'students', filter: `family_id=eq.${currentUser.linked_family_id || currentUser.id}` }
       : { event: '*', schema: 'public', table: 'students', filter: `school_id=eq.${currentUser.school_id}` };
 
     const channel = supabase
@@ -219,9 +219,9 @@ export default function App() {
     realtimeChannelRef.current = channel;
   };
 
-  const fetchData = async () => {
+  const fetchData = async (isBackground = false) => {
     console.info('[Zela] Carregando dados da escola e alunos...');
-    setIsLoading(true);
+    if (!isBackground) setIsLoading(true);
     try {
       let schoolPromise = Promise.resolve({ data: null });
       if (currentUser.school_id) {
@@ -235,13 +235,13 @@ export default function App() {
       // Fetch Students
       let studentsQuery = supabase.from('students').select('*').eq('school_id', currentUser.school_id);
       if (currentUser.role === 'family') {
-        studentsQuery = studentsQuery.eq('family_id', currentUser.id);
+        studentsQuery = studentsQuery.eq('family_id', currentUser.linked_family_id || currentUser.id);
       }
 
       // Fetch Authorized Persons
       let authQuery = supabase.from('authorized_persons').select('*').eq('school_id', currentUser.school_id);
       if (currentUser.role === 'family') {
-        authQuery = authQuery.eq('family_id', currentUser.id);
+        authQuery = authQuery.eq('family_id', currentUser.linked_family_id || currentUser.id);
       }
 
       const [schoolRes, studentsRes, authRes] = await Promise.all([
@@ -306,7 +306,7 @@ export default function App() {
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   };
 

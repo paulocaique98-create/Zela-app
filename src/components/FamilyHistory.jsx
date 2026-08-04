@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { calcularHorasExtras } from '../utils/attendanceUtils';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -37,8 +38,12 @@ export default function FamilyHistory({ currentUser }) {
 
       let startDate, endDate;
       if (period === 'today') {
-        startDate = `${todayISO}T00:00:00`;
-        endDate   = `${todayISO}T23:59:59`;
+        const hoje = new Date();
+        const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+        const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
+        
+        startDate = inicioDia.toISOString();
+        endDate   = fimDia.toISOString();
       } else if (period === 'custom' && customDate) {
         startDate = `${customDate}T00:00:00`;
         endDate   = `${customDate}T23:59:59`;
@@ -58,9 +63,9 @@ export default function FamilyHistory({ currentUser }) {
           event_type,
           event_time,
           student_id,
-          students:student_id (name, contracted_hours, users:family_id(name))
+          students:student_id (name, contracted_hours, contracted_exit_time, users:family_id(name))
         `)
-        .eq('family_id', currentUser.id)
+        .eq('family_id', currentUser.linked_family_id || currentUser.id)
         .gte('event_time', startDate)
         .lte('event_time', endDate)
         .order('student_id')
@@ -85,8 +90,14 @@ export default function FamilyHistory({ currentUser }) {
             const nextExit = events.find((e, idx) => idx > i && e.event_type === 'exit');
             const exitTime = nextExit ? new Date(nextExit.event_time) : null;
             const stayMins = exitTime ? Math.round((exitTime - entryTime) / 60000) : null;
-            const contractedMins = (ev.students?.contracted_hours || 0) * 60;
-            const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
+            
+            let overtimeMins = null;
+            if (exitTime && ev.students?.contracted_exit_time) {
+              const calc = calcularHorasExtras(nextExit.event_time, ev.students.contracted_exit_time);
+              if (calc.minutos_excedentes > 0) {
+                overtimeMins = calc.minutos_excedentes;
+              }
+            }
 
             result.push({
               key: ev.id,

@@ -24,7 +24,7 @@ export default function NotificationsDropdown({ currentUser }) {
           event: '*',
           schema: 'public',
           table: 'notifications',
-          filter: `family_id=eq.${currentUser.id}`,
+          filter: `family_id=eq.${currentUser.linked_family_id || currentUser.id}`,
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
@@ -63,7 +63,7 @@ export default function NotificationsDropdown({ currentUser }) {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('family_id', currentUser.id)
+      .eq('family_id', currentUser.linked_family_id || currentUser.id)
       .order('created_at', { ascending: false })
       .limit(50);
 

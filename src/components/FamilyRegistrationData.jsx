@@ -14,6 +14,7 @@ export default function FamilyRegistrationData({ currentUser }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const isReadOnly = !!currentUser.linked_family_id;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -117,17 +118,21 @@ export default function FamilyRegistrationData({ currentUser }) {
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-800">Dados Cadastrais</h2>
-              <p className="text-sm text-slate-500">Mantenha suas informações e documentos atualizados.</p>
+              <p className="text-sm text-slate-500">
+                {isReadOnly ? 'Sua conta tem acesso apenas leitura aos dados cadastrais.' : 'Mantenha suas informações e documentos atualizados.'}
+              </p>
             </div>
           </div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="hidden md:flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition"
-          >
-            {isSaving ? <Loader2 size={18} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={18} /> : <Save size={18} />)}
-            {saveSuccess ? 'Salvo!' : 'Salvar'}
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="hidden md:flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition"
+            >
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={18} /> : <Save size={18} />)}
+              {saveSuccess ? 'Salvo!' : 'Salvar'}
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-8">
@@ -139,27 +144,27 @@ export default function FamilyRegistrationData({ currentUser }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="sm:col-span-2">
                 <label className={labelCls}>Nome Completo</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} className={inputCls} />
+                <input type="text" name="name" value={formData.name} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div>
                 <label className={labelCls}>E-mail</label>
-                <input type="email" name="email" value={formData.email} disabled className={`${inputCls} opacity-70 cursor-not-allowed`} title="E-mail não pode ser alterado por aqui" />
+                <input type="email" name="email" value={formData.email} disabled className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} title="E-mail não pode ser alterado por aqui" />
               </div>
               <div>
                 <label className={labelCls}>Telefone 1</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={inputCls} />
+                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div>
                 <label className={labelCls}>Telefone 2</label>
-                <input type="tel" name="phone2" value={formData.phone2} onChange={handleChange} className={inputCls} />
+                <input type="tel" name="phone2" value={formData.phone2} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div>
                 <label className={labelCls}>Profissão</label>
-                <input type="text" name="profession" value={formData.profession} onChange={handleChange} className={inputCls} />
+                <input type="text" name="profession" value={formData.profession} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div>
                 <label className={labelCls}>Tipo de Documento</label>
-                <select name="doc_type" value={formData.doc_type} onChange={handleChange} className={inputCls}>
+                <select name="doc_type" value={formData.doc_type} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`}>
                   <option value="">Selecione...</option>
                   <option value="CPF">CPF</option>
                   <option value="RG">RG</option>
@@ -169,11 +174,11 @@ export default function FamilyRegistrationData({ currentUser }) {
               </div>
               <div>
                 <label className={labelCls}>Número do Documento</label>
-                <input type="text" name="doc_number" value={formData.doc_number} onChange={handleChange} className={inputCls} />
+                <input type="text" name="doc_number" value={formData.doc_number} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div>
                 <label className={labelCls}>Estado Civil</label>
-                <select name="civil_status" value={formData.civil_status} onChange={handleChange} className={inputCls}>
+                <select name="civil_status" value={formData.civil_status} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`}>
                   <option value="">Selecione...</option>
                   <option value="Solteiro(a)">Solteiro(a)</option>
                   <option value="Casado(a)">Casado(a)</option>
@@ -193,47 +198,49 @@ export default function FamilyRegistrationData({ currentUser }) {
             <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
               <div className="sm:col-span-2">
                 <label className={labelCls}>CEP</label>
-                <input type="text" name="zip_code" value={formData.zip_code} onChange={handleChange} className={inputCls} placeholder="00000-000" />
+                <input type="text" name="zip_code" value={formData.zip_code} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} placeholder="00000-000" />
               </div>
               <div className="sm:col-span-4">
                 <label className={labelCls}>Rua / Logradouro</label>
-                <input type="text" name="street" value={formData.street} onChange={handleChange} className={inputCls} />
+                <input type="text" name="street" value={formData.street} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Número</label>
-                <input type="text" name="number" value={formData.number} onChange={handleChange} className={inputCls} />
+                <input type="text" name="number" value={formData.number} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div className="sm:col-span-4">
                 <label className={labelCls}>Complemento</label>
-                <input type="text" name="complement" value={formData.complement} onChange={handleChange} className={inputCls} placeholder="Apto, Bloco, etc." />
+                <input type="text" name="complement" value={formData.complement} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} placeholder="Apto, Bloco, etc." />
               </div>
               <div className="sm:col-span-3">
                 <label className={labelCls}>Bairro</label>
-                <input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} className={inputCls} />
+                <input type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Cidade</label>
-                <input type="text" name="city" value={formData.city} onChange={handleChange} className={inputCls} />
+                <input type="text" name="city" value={formData.city} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
               <div className="sm:col-span-1">
                 <label className={labelCls}>UF</label>
-                <input type="text" name="state" value={formData.state} onChange={handleChange} className={inputCls} placeholder="SP" maxLength={2} />
+                <input type="text" name="state" value={formData.state} onChange={handleChange} disabled={isReadOnly} className={`\${inputCls} \${isReadOnly ? \'opacity-70 cursor-not-allowed\' : \'\'}`} />
               </div>
             </div>
           </div>
           </div>
         
         {/* Botão Salvar Mobile */}
-        <div className="mt-8 md:hidden">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition"
-          >
-            {isSaving ? <Loader2 size={20} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={20} /> : <Save size={20} />)}
-            {saveSuccess ? 'Salvo com sucesso!' : 'Salvar Alterações'}
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="mt-8 md:hidden">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition"
+            >
+              {isSaving ? <Loader2 size={20} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={20} /> : <Save size={20} />)}
+              {saveSuccess ? 'Salvo com sucesso!' : 'Salvar Alterações'}
+            </button>
+          </div>
+        )}
     </div>
   );
 }

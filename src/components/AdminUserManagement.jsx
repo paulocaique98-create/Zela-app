@@ -40,13 +40,18 @@ export default function AdminUserManagement({ currentUser }) {
         const matchingAuth = familyAuths.find(
           ap => ap.name.toLowerCase().trim() === user.name.toLowerCase().trim()
         ) || familyAuths.find(ap => ap.relation?.includes('(Titular)'));
+        
+        // Verifica se este usuário possui um secundário vinculado a ele
+        const hasSecondary = usersData.some(u => u.linked_family_id === user.id);
+        
         return {
           ...user,
           photo_url: matchingAuth?.photo_url || null,
           authorized: familyAuths,
           students: studentsData.filter(s => s.family_id === user.id),
+          hasSecondary,
         };
-      });
+      }).filter(user => !user.linked_family_id); // Filtra os secundários da lista principal
       setUsersList(combinedData);
     } catch (err) {
       console.error('Erro ao buscar usuários:', err);
@@ -75,9 +80,12 @@ export default function AdminUserManagement({ currentUser }) {
   };
 
   const handleUserSaved = (updatedUser) => {
-    setUsersList(prev =>
-      prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u)
-    );
+    setUsersList(prev => {
+      // Se não tiver id, foi adicionado (mas o modal atualiza de outra forma)
+      // Recarregamos a lista inteira para simplificar a concorrência do secundário
+      fetchUsersAndStudents();
+      return prev;
+    });
   };
 
   // Busca em tempo real por nome OU email
@@ -182,8 +190,8 @@ export default function AdminUserManagement({ currentUser }) {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-slate-800 text-sm truncate" title={user.name}>{user.name}</h3>
-                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block ${user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {user.role === 'admin' ? 'Administrador' : 'Família'}
+                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block ${user.role === 'admin' ? 'bg-amber-100 text-amber-700' : (user.hasSecondary ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}`}>
+                        {user.role === 'admin' ? 'Administrador' : (user.hasSecondary ? 'Família (Com Secundário)' : 'Família')}
                       </span>
                     </div>
                   </div>
@@ -203,7 +211,7 @@ export default function AdminUserManagement({ currentUser }) {
                   </div>
 
                   {/* Alunos vinculados */}
-                  {user.role === 'family' && user.students?.length > 0 && (
+                  {user.role === 'family' && !user.linked_family_id && user.students?.length > 0 && (
                     <div className="mt-auto pt-3 border-t border-slate-100">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                         <GraduationCap size={11}/> Alunos ({user.students.length})
@@ -215,6 +223,14 @@ export default function AdminUserManagement({ currentUser }) {
                           </span>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {user.role === 'family' && user.linked_family_id && (
+                    <div className="mt-auto pt-3 border-t border-slate-100">
+                      <p className="text-[10px] font-medium text-slate-500 italic">
+                        Compartilha os dados do Titular.
+                      </p>
                     </div>
                   )}
                 </div>

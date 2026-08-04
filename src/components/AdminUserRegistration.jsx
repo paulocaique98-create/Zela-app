@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X } from 'lucide-react';
+import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, GraduationCap } from 'lucide-react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 
@@ -99,61 +99,60 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
         </div>
       </div>
 
-      {/* Turma + Ciclo + Turno */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Turma + Ciclo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>Turma</label>
-          <select value={student.turma} onChange={e => set('turma', e.target.value)} className={inputCls}>
-            <option value="">Selecionar...</option>
-            {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+          <label className={labelCls}>Turma / Ano *</label>
+          <select required value={student.turma} onChange={e => set('turma', e.target.value)} className={inputCls}>
+            <option value="">Selecione...</option>
+            {TURMAS.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
-          <label className={labelCls}>Ciclo (Horas/Dia) *</label>
+          <label className={labelCls}>Ciclo Contratado *</label>
           <select required value={student.ciclo} onChange={e => set('ciclo', e.target.value)} className={inputCls}>
-            <option value="">Selecionar...</option>
-            {CICLOS.map(c => <option key={c} value={c}>{c}h/dia</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Turno *</label>
-          <select required value={student.turno} onChange={e => set('turno', e.target.value)}
-            disabled={!student.ciclo} className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`}>
-            <option value="">{student.ciclo ? 'Selecionar...' : '← Primeiro o Ciclo'}</option>
-            {turnos.map(t => <option key={t} value={t}>{t}</option>)}
+            <option value="">Selecione...</option>
+            {CICLOS.map(c => <option key={c} value={c}>{c} Horas</option>)}
           </select>
         </div>
       </div>
 
-      {/* Período */}
-      <div>
-        <label className={labelCls}>Período *</label>
-        <select required value={student.is_custom_period ? '__custom__' : student.periodo}
-          onChange={e => set('periodo', e.target.value)}
-          disabled={!student.turno}
-          className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`}>
-          <option value="">{student.turno ? 'Selecionar...' : '← Primeiro o Turno'}</option>
-          {periodos.map(p => <option key={p} value={p}>{p}</option>)}
-          {student.turno && <option value="__custom__">✏️ Personalizar Horário</option>}
-        </select>
-      </div>
-
-      {/* Horário personalizado */}
-      {student.is_custom_period && (
-        <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl animate-in fade-in duration-200">
+      {/* Turno + Período */}
+      {student.ciclo && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className={labelCls}>Entrada Personalizada *</label>
+            <label className={labelCls}>Turno *</label>
+            <select required value={student.turno} onChange={e => set('turno', e.target.value)} className={inputCls}>
+              <option value="">Selecione...</option>
+              {turnos.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {student.turno && (
+            <div>
+              <label className={labelCls}>Período *</label>
+              <select required value={student.periodo} onChange={e => set('periodo', e.target.value)} className={inputCls}>
+                <option value="">Selecione o horário...</option>
+                {periodos.map(p => <option key={p} value={p}>{p}</option>)}
+                <option value="__custom__">Outro (Personalizado)</option>
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Horário Personalizado */}
+      {student.is_custom_period && (
+        <div className="grid grid-cols-2 gap-3 mt-2 p-3 bg-white rounded-xl border border-indigo-100">
+          <div>
+            <label className={labelCls}>Entrada *</label>
             <input type="time" required value={student.custom_entry}
-              onChange={e => set('custom_entry', e.target.value)}
-              className={inputCls} />
+              onChange={e => set('custom_entry', e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Saída Personalizada *</label>
+            <label className={labelCls}>Saída *</label>
             <input type="time" required value={student.custom_exit}
-              onChange={e => set('custom_exit', e.target.value)}
-              className={inputCls} />
+              onChange={e => set('custom_exit', e.target.value)} className={inputCls} />
           </div>
         </div>
       )}
@@ -161,37 +160,59 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
   );
 }
 
-
-
 // ──────────────────────────────────────────────────────────
-// Componente principal
+// COMPONENTE PRINCIPAL (Modal de Cadastro)
 // ──────────────────────────────────────────────────────────
 export default function AdminUserRegistration({ currentUser, editingUser, onClose, onSaved }) {
-  const [guardianType, setGuardianType] = useState('Responsável'); // 'Responsável' | 'Responsável Financeiro'
-  const [resetSent, setResetSent] = useState(false);
+  const [activeTab, setActiveTab] = useState('primary'); // 'primary' | 'secondary'
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone1: '',
-    phone2: '',
-    doc_type: 'CPF',
-    doc_number: '',
-    profession: '',
-    civil_status: '',
-    role: 'family',
-  });
+  const defaultForm = {
+    name: '', email: '', password: '', phone1: '', phone2: '', doc_type: 'CPF', doc_number: '', profession: '', civil_status: '', role: 'family'
+  };
+
+  const [primaryFormData, setPrimaryFormData] = useState(defaultForm);
+  const [secondaryFormData, setSecondaryFormData] = useState(defaultForm);
+  
+  // Guardamos o ID do secundário, se existir, para fazer o UPDATE em vez de INSERT.
+  const [secondaryUserId, setSecondaryUserId] = useState(null);
+  const [primaryUserId, setPrimaryUserId] = useState(editingUser ? editingUser.id : null);
+
+  // Computed state para facilitar a exibição
+  const formData = activeTab === 'primary' ? primaryFormData : secondaryFormData;
+  
+  const setFormData = (updater) => {
+    if (typeof updater === 'function') {
+      activeTab === 'primary' ? setPrimaryFormData(updater) : setSecondaryFormData(updater);
+    } else {
+      activeTab === 'primary' ? setPrimaryFormData(updater) : setSecondaryFormData(updater);
+    }
+  };
+
+  // Titular = 'Responsável Financeiro', Secundário = 'Responsável'
+  const guardianType = activeTab === 'primary' ? 'Responsável Financeiro' : 'Responsável';
 
   const [students, setStudents] = useState([emptyStudent()]);
-
+  const [resetSent, setResetSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const handleCloseModal = () => {
+    setActiveTab('primary');
+    setPrimaryFormData(defaultForm);
+    setSecondaryFormData(defaultForm);
+    setErrorMsg('');
+    setSuccessMsg('');
+    setIsLoading(false);
+    setPrimaryUserId(editingUser ? editingUser.id : null);
+    onClose();
+  };
+
+
+  // Carrega os dados quando o modal abre (modo de edição)
   useEffect(() => {
     if (editingUser) {
-      setFormData({
+      setPrimaryFormData({
         name: editingUser.name || '',
         email: editingUser.email || '',
         password: '',
@@ -204,7 +225,34 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
         role: editingUser.role || 'family',
       });
 
-      setGuardianType(editingUser.guardian_type || 'Responsável');
+      if (editingUser.role === 'family') {
+        // Busca o usuário secundário cujo linked_family_id é o ID do titular (editingUser.id)
+        supabase
+          .from('users')
+          .select('*')
+          .eq('linked_family_id', editingUser.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setSecondaryUserId(data.id);
+              setSecondaryFormData({
+                name: data.name || '',
+                email: data.email || '',
+                password: '',
+                phone1: data.phone || '',
+                phone2: data.phone2 || '',
+                doc_type: data.doc_type || 'CPF',
+                doc_number: data.doc_number || '',
+                profession: data.profession || '',
+                civil_status: data.civil_status || '',
+                role: 'family',
+              });
+            } else {
+              setSecondaryUserId(null);
+              setSecondaryFormData(defaultForm);
+            }
+          });
+      }
 
       if (editingUser.students && editingUser.students.length > 0) {
         const loadedStudents = editingUser.students.map(s => {
@@ -244,36 +292,15 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
       } else {
         setStudents([emptyStudent()]);
       }
+    } else {
+      setStudents([emptyStudent()]);
+      setPrimaryFormData(defaultForm);
+      setSecondaryFormData(defaultForm);
+      setSecondaryUserId(null);
+      setActiveTab('primary');
     }
   }, [editingUser]);
 
-  const handleSendResetEmail = async () => {
-    setIsLoading(true);
-    setErrorMsg('');
-    try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/`,
-      });
-      if (resetError) throw resetError;
-      setResetSent(true);
-      setTimeout(() => setResetSent(false), 3000);
-    } catch (e) {
-      setErrorMsg(e.message || 'Erro ao enviar e-mail de redefinição.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ── Handlers de alunos ──
-  const handleAddStudent = () => setStudents(prev => [...prev, emptyStudent()]);
-
-  const handleRemoveStudent = (id) => setStudents(prev => prev.filter(s => s.id !== id));
-
-  const handleStudentChange = (id, patch) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
-  };
-
-  // ── Submit ──
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -281,243 +308,281 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     setSuccessMsg('');
 
     try {
-      if (editingUser) {
-        // 1. Atualizar usuário na tabela users
-        const { error: userError } = await supabase
-          .from('users')
-          .update({
-            name: formData.name,
-            email: formData.email.trim().toLowerCase(),
-            phone: formData.phone1,
-            role: formData.role,
-          })
-          .eq('id', editingUser.id);
+      if (activeTab === 'primary') {
+        if (editingUser) {
+          // 1. Atualizar usuário titular existente
+          const { error: userError } = await supabase
+            .from('users')
+            .update({
+              name: primaryFormData.name,
+              email: primaryFormData.email.trim().toLowerCase(),
+              phone: primaryFormData.phone1,
+              role: primaryFormData.role,
+              phone2: primaryFormData.phone2 || null,
+              doc_type: primaryFormData.doc_type || null,
+              doc_number: primaryFormData.doc_number || null,
+              profession: primaryFormData.profession || null,
+              civil_status: primaryFormData.civil_status || null,
+              guardian_type: 'Responsável Financeiro',
+              linked_family_id: null
+            })
+            .eq('id', editingUser.id);
 
-        if (userError) {
-          if (userError.code === '23505') throw new Error('Este e-mail já está em uso por outro usuário.');
-          throw userError;
-        }
-
-        // 2. Atualizar campos extras
-        const extraFields = {
-          phone2: formData.phone2 || null,
-          doc_type: formData.doc_type || null,
-          doc_number: formData.doc_number || null,
-          profession: formData.profession || null,
-          civil_status: formData.civil_status || null,
-          guardian_type: guardianType,
-        };
-        await supabase.from('users').update(extraFields).eq('id', editingUser.id);
-
-        // 3. Atualizar alunos vinculados (apenas se for família)
-        if (formData.role === 'family') {
-          const existingStudentIds = (editingUser.students || []).map(s => s.id);
-          const currentStudentIds = students.map(s => s.id);
-
-          // 3a. Deletar alunos que foram removidos do formulário
-          const removedStudentIds = existingStudentIds.filter(id => !currentStudentIds.includes(id));
-          if (removedStudentIds.length > 0) {
-            const { error: delErr } = await supabase.from('students').delete().in('id', removedStudentIds);
-            if (delErr) throw delErr;
+          if (userError) {
+            if (userError.code === '23505') throw new Error('Este e-mail já está em uso por outro usuário.');
+            throw userError;
           }
 
-          // 3b. Atualizar ou inserir alunos atuais
-          for (const s of students) {
-            if (!s.name.trim()) continue;
+          // Atualizar alunos vinculados (Apenas no titular)
+          if (primaryFormData.role === 'family') {
+            const existingStudentIds = (editingUser.students || []).map(s => s.id);
+            const currentStudentIds = students.map(s => s.id);
 
-            const periodStr = s.is_custom_period
-              ? `${s.custom_entry} às ${s.custom_exit}`
-              : s.periodo;
-
-            const PERIODO_HORARIOS = {
-              '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
-              '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
-              '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
-              '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
-              '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
-              '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
-            };
-
-            let entryTime = null;
-            let exitTime = null;
-
-            if (s.is_custom_period && s.custom_entry && s.custom_exit) {
-              entryTime = `${s.custom_entry}:00`;
-              exitTime = `${s.custom_exit}:00`;
-            } else if (s.periodo && PERIODO_HORARIOS[s.periodo]) {
-              entryTime = PERIODO_HORARIOS[s.periodo].entry;
-              exitTime = PERIODO_HORARIOS[s.periodo].exit;
+            const removedStudentIds = existingStudentIds.filter(id => !currentStudentIds.includes(id));
+            if (removedStudentIds.length > 0) {
+              const { error: delErr } = await supabase.from('students').delete().in('id', removedStudentIds);
+              if (delErr) throw delErr;
             }
 
-            const studentData = {
-              name: s.name,
-              contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
-              turma: s.turma || null,
-              family_id: editingUser.id,
-              school_id: currentUser.school_id,
-              birth_date: s.birth_date || null,
-              turno: s.turno || null,
-              periodo: periodStr || null,
-              contracted_entry_time: entryTime,
-              contracted_exit_time: exitTime,
-            };
+            for (const s of students) {
+              if (!s.name.trim()) continue;
 
-            const isExisting = typeof s.id === 'string';
-            if (isExisting) {
-              const { error: updErr } = await supabase.from('students').update(studentData).eq('id', s.id);
-              if (updErr) throw updErr;
-            } else {
-              const { error: insErr } = await supabase.from('students').insert([{
-                ...studentData,
-                status: 'idle'
-              }]);
-              if (insErr) throw insErr;
-            }
-          }
-
-          // 3c. Atualizar titular na lista de autorizados
-          const titularAuth = (editingUser.authorized || []).find(ap => ap.relation?.includes('(Titular)'));
-          if (titularAuth) {
-            await supabase.from('authorized_persons')
-              .update({
-                name: formData.name,
-                relation: `${guardianType} (Titular)`
-              })
-              .eq('id', titularAuth.id);
-          }
-        }
-
-        setSuccessMsg('Cadastro atualizado com sucesso!');
-        if (onSaved) {
-          onSaved({
-            ...editingUser,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone1,
-            phone2: formData.phone2,
-            doc_type: formData.doc_type,
-            doc_number: formData.doc_number,
-            profession: formData.profession,
-            civil_status: formData.civil_status,
-            role: formData.role,
-            guardian_type: guardianType,
-            students: formData.role === 'family' ? students.filter(s => s.name.trim() !== '').map(s => ({
-              id: s.id,
-              name: s.name,
-              turma: s.turma,
-              contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
-              turno: s.turno,
-              periodo: s.is_custom_period ? `${s.custom_entry} às ${s.custom_exit}` : s.periodo,
-              birth_date: s.birth_date
-            })) : []
-          });
-        }
-        setTimeout(() => {
-          if (onClose) onClose();
-        }, 1500);
-
-      } else {
-        // 1. Criar usuário de forma segura via Edge Function
-        const extraFields = {
-          phone: formData.phone1,
-          phone2: formData.phone2 || null,
-          doc_type: formData.doc_type || null,
-          doc_number: formData.doc_number || null,
-          profession: formData.profession || null,
-          civil_status: formData.civil_status || null,
-          guardian_type: guardianType,
-        };
-
-        const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
-          body: {
-            email: formData.email.trim().toLowerCase(),
-            password: formData.password,
-            name: formData.name,
-            role: formData.role,
-            school_id: currentUser.school_id,
-            extra_fields: extraFields
-          }
-        });
-
-        if (funcError || !newUser || newUser.error) {
-          const errMsg = (funcError?.message || newUser?.error || 'Erro ao criar usuário');
-          if (errMsg.includes('already registered')) throw new Error('Este e-mail já está em uso.');
-          throw new Error(errMsg);
-        }
-
-
-        // 3. Inserir alunos vinculados (apenas para família)
-        if (formData.role === 'family') {
-          const studentsToInsert = students
-            .filter(s => s.name.trim() !== '')
-            .map(s => {
               const periodStr = s.is_custom_period
                 ? `${s.custom_entry} às ${s.custom_exit}`
                 : s.periodo;
-              // Campos base garantidos
-              return {
+
+              const PERIODO_HORARIOS = {
+                '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
+                '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
+                '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
+                '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
+                '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
+                '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
+              };
+
+              let entryTime = null;
+              let exitTime = null;
+
+              if (s.is_custom_period && s.custom_entry && s.custom_exit) {
+                entryTime = `${s.custom_entry}:00`;
+                exitTime = `${s.custom_exit}:00`;
+              } else if (s.periodo && PERIODO_HORARIOS[s.periodo]) {
+                entryTime = PERIODO_HORARIOS[s.periodo].entry;
+                exitTime = PERIODO_HORARIOS[s.periodo].exit;
+              }
+
+              const studentData = {
                 name: s.name,
                 contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
                 turma: s.turma || null,
-                family_id: newUser.id,
-                status: 'idle',
+                family_id: editingUser.id,
                 school_id: currentUser.school_id,
-                // Campos extras (ignorados pelo Supabase se coluna não existir)
-                ...(s.birth_date ? { birth_date: s.birth_date } : {}),
-                ...(s.turno ? { turno: s.turno } : {}),
-                ...(periodStr ? { periodo: periodStr } : {}),
-
+                birth_date: s.birth_date || null,
+                turno: s.turno || null,
+                periodo: periodStr || null,
+                contracted_entry_time: entryTime,
+                contracted_exit_time: exitTime,
               };
-            });
 
-          if (studentsToInsert.length > 0) {
-            const { error: studErr } = await supabase.from('students').insert(studentsToInsert);
-            // Se o erro for de coluna inexistente, tenta sem os campos extras
-            if (studErr) {
-              if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
-                console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
-                const baseSt = studentsToInsert.map(({ birth_date, turno, periodo, ...rest }) => rest);
-                const { error: studErr2 } = await supabase.from('students').insert(baseSt);
-                if (studErr2) throw studErr2;
+              const isExisting = typeof s.id === 'string';
+              if (isExisting) {
+                await supabase.from('students').update(studentData).eq('id', s.id);
               } else {
-                throw studErr;
+                await supabase.from('students').insert([{ ...studentData, status: 'idle' }]);
               }
+            }
+
+            // Atualizar titular na lista de autorizados
+            const titularAuth = (editingUser.authorized || []).find(ap => ap.relation?.includes('(Titular)'));
+            if (titularAuth) {
+              await supabase.from('authorized_persons')
+                .update({
+                  name: primaryFormData.name,
+                  relation: 'Responsável Financeiro (Titular)'
+                })
+                .eq('id', titularAuth.id);
             }
           }
 
-          // 4. Adicionar o titular como autorizado
-          await supabase.from('authorized_persons').insert([{
-            family_id: newUser.id,
-            name: newUser.name,
-            relation: `${guardianType} (Titular)`,
-            has_photo: false,
+          setSuccessMsg('Titular atualizado com sucesso!');
+          if (onSaved) onSaved({ ...editingUser, name: primaryFormData.name });
+          
+        } else {
+          // 2. Criar novo titular
+          const extraFields = {
+            phone: primaryFormData.phone1,
+            phone2: primaryFormData.phone2 || null,
+            doc_type: primaryFormData.doc_type || null,
+            doc_number: primaryFormData.doc_number || null,
+            profession: primaryFormData.profession || null,
+            civil_status: primaryFormData.civil_status || null,
+            guardian_type: 'Responsável Financeiro',
+            linked_family_id: null
+          };
 
-            emergency_order: 1,
-            school_id: currentUser.school_id,
-          }]);
+          const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
+            body: {
+              email: primaryFormData.email.trim().toLowerCase(),
+              password: primaryFormData.password,
+              name: primaryFormData.name,
+              role: primaryFormData.role,
+              school_id: currentUser.school_id,
+              extra_fields: extraFields
+            }
+          });
+
+          if (funcError || !newUser || newUser.error) {
+            let errMsg = 'Erro ao criar usuário titular.';
+            if (funcError) {
+              try {
+                const errBody = typeof funcError.context?.json === 'function' 
+                  ? await funcError.context.json() 
+                  : funcError.context;
+                errMsg = errBody?.error || errBody?.message || funcError.message;
+              } catch(e) { errMsg = funcError.message; }
+            } else if (newUser?.error) {
+              errMsg = newUser.error;
+            }
+            if (errMsg?.includes?.('already registered')) throw new Error('Este e-mail já está em uso.');
+            throw new Error(errMsg);
+          }
+
+          let studentsToInsert = [];
+          if (primaryFormData.role === 'family') {
+            studentsToInsert = students
+              .filter(s => s.name.trim() !== '')
+              .map(s => {
+                const periodStr = s.is_custom_period ? `${s.custom_entry} às ${s.custom_exit}` : s.periodo;
+                return {
+                  name: s.name,
+                  contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
+                  turma: s.turma || null,
+                  family_id: newUser.id,
+                  status: 'idle',
+                  school_id: currentUser.school_id,
+                  ...(s.birth_date ? { birth_date: s.birth_date } : {}),
+                  ...(s.turno ? { turno: s.turno } : {}),
+                  ...(periodStr ? { periodo: periodStr } : {}),
+                };
+              });
+
+            if (studentsToInsert.length > 0) {
+              await supabase.from('students').insert(studentsToInsert);
+            }
+
+            await supabase.from('authorized_persons').insert([{
+              family_id: newUser.id,
+              name: newUser.name,
+              relation: 'Responsável Financeiro (Titular)',
+              has_photo: false,
+              emergency_order: 1,
+              school_id: currentUser.school_id,
+            }]);
+          }
+
+          setSuccessMsg('Titular criado com sucesso! Agora você pode criar um Responsável secundário se quiser.');
+          // Chamar callback para atualizar lista no componente pai, mas sem fechar o modal
+          if (onSaved) onSaved({ ...newUser, students: studentsToInsert || [] });
+          
+          setPrimaryUserId(newUser.id);
         }
+      } else if (activeTab === 'secondary') {
+        // 3. Salvar Secundário
+        if (secondaryUserId) {
+          // Update Secundário
+          const { error: userError } = await supabase
+            .from('users')
+            .update({
+              name: secondaryFormData.name,
+              email: secondaryFormData.email.trim().toLowerCase(),
+              phone: secondaryFormData.phone1,
+              phone2: secondaryFormData.phone2 || null,
+              doc_type: secondaryFormData.doc_type || null,
+              doc_number: secondaryFormData.doc_number || null,
+              profession: secondaryFormData.profession || null,
+              civil_status: secondaryFormData.civil_status || null,
+              guardian_type: 'Responsável'
+            })
+            .eq('id', secondaryUserId);
 
-        setSuccessMsg('Cadastro realizado com sucesso!');
-        setFormData({ name: '', email: '', password: '', phone1: '', phone2: '', doc_type: 'CPF', doc_number: '', profession: '', civil_status: '', role: 'family' });
-        setStudents([emptyStudent()]);
-        setGuardianType('Responsável');
+          if (userError) throw userError;
+          setSuccessMsg('Secundário atualizado com sucesso!');
+        } else {
+          // Insert Secundário
+          const extraFields = {
+            phone: secondaryFormData.phone1,
+            phone2: secondaryFormData.phone2 || null,
+            doc_type: secondaryFormData.doc_type || null,
+            doc_number: secondaryFormData.doc_number || null,
+            profession: secondaryFormData.profession || null,
+            civil_status: secondaryFormData.civil_status || null,
+            guardian_type: 'Responsável',
+            linked_family_id: primaryUserId
+          };
+
+          const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
+            body: {
+              email: secondaryFormData.email.trim().toLowerCase(),
+              password: secondaryFormData.password,
+              name: secondaryFormData.name,
+              role: 'family',
+              school_id: currentUser.school_id,
+              extra_fields: extraFields
+            }
+          });
+
+          if (funcError || !newUser || newUser.error) {
+            let errMsg = 'Erro ao criar usuário secundário.';
+            if (funcError) {
+              try {
+                const errBody = typeof funcError.context?.json === 'function' 
+                  ? await funcError.context.json() 
+                  : funcError.context;
+                errMsg = errBody?.error || errBody?.message || funcError.message;
+              } catch(e) { errMsg = funcError.message; }
+            } else if (newUser?.error) {
+              errMsg = newUser.error;
+            }
+            if (errMsg?.includes?.('already registered')) throw new Error('Este e-mail já está em uso.');
+            throw new Error(errMsg);
+          }
+          
+          setSecondaryUserId(newUser.id);
+          setSuccessMsg('Secundário criado com sucesso!');
+          if (onSaved) onSaved({ ...editingUser }); // Re-fetch na listagem
+        }
       }
+
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || 'Ocorreu um erro ao cadastrar o usuário.');
+      setErrorMsg(err.message || 'Ocorreu um erro ao salvar os dados.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const field = (label, required, node) => (
-    <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-1">{label}{required && ' *'}</label>
-      {node}
-    </div>
-  );
+  const handleResetPassword = async () => {
+    if (!editingUser || !editingUser.email) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(editingUser.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    } catch (err) {
+      alert('Erro ao enviar e-mail de redefinição.');
+    }
+  };
 
   const inputCls = 'w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium';
+
+  const field = (label, required, content) => (
+    <div className="flex flex-col space-y-1.5">
+      <label className="text-xs font-semibold text-slate-700">{label} {required && <span className="text-red-500">*</span>}</label>
+      {content}
+    </div>
+  );
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -527,9 +592,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2">
           1. Tipo de Conta
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {field('Perfil do Usuário', true,
-            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
+        <div className="grid grid-cols-1 gap-4">
+          {activeTab === 'primary' && field('Perfil do Usuário', true,
+            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls} disabled={!!primaryUserId}>
               <option value="family">Família / Responsáveis</option>
               <option value="admin">Administrador (Equipe)</option>
             </select>
@@ -537,16 +602,26 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
 
           {formData.role === 'family' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo de Responsável *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo de Responsável (Abas)</label>
               <div className="flex gap-2">
-                {['Responsável', 'Responsável Financeiro'].map(t => (
-                  <button key={t} type="button"
-                    onClick={() => setGuardianType(t)}
-                    className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
-                    {t}
-                  </button>
-                ))}
+                <button type="button"
+                  onClick={() => setActiveTab('primary')}
+                  className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold border-2 transition-all ${activeTab === 'primary' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+                  Responsável Financeiro
+                </button>
+                <button type="button"
+                  disabled={!primaryUserId} // Desabilita aba secundária se for novo cadastro
+                  title={!primaryUserId ? "Salve o titular primeiro" : ""}
+                  onClick={() => setActiveTab('secondary')}
+                  className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold border-2 transition-all ${activeTab === 'secondary' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'} ${!primaryUserId ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  Responsável
+                </button>
               </div>
+              {!primaryUserId && (
+                <p className="text-[10px] text-amber-600 mt-2 font-medium bg-amber-50 p-2 rounded-lg border border-amber-100">
+                  ⚠️ Cadastre o Responsável Financeiro primeiro. Após salvar, reabra a edição para adicionar o segundo responsável.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -554,189 +629,159 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
 
       {/* ── SEÇÃO 2: DADOS DO RESPONSÁVEL ── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
-          <Users size={14} /> 2. Dados do Responsável
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {field('Nome Completo', true,
-            <input type="text" required value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className={inputCls} placeholder="Nome completo" />
-          )}
-          {field('E-mail Principal', true,
-            <input type="email" required value={formData.email}
-              onChange={e => setFormData({ ...formData, email: e.target.value })}
-              className={inputCls} placeholder="email@exemplo.com" />
-          )}
-          {editingUser ? (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <KeyRound size={12} className="text-slate-400" /> Senha de Acesso
-              </label>
-              <button
-                type="button"
-                onClick={handleSendResetEmail}
-                disabled={isLoading || resetSent}
-                className="w-full py-3 px-4 border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2"
-              >
-                {resetSent ? 'E-mail de Redefinição Enviado!' : 'Enviar E-mail de Redefinição'}
-              </button>
-            </div>
-          ) : (
-            field('Senha Provisória', true,
-              <input type="text" required minLength={4} value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className={inputCls} placeholder="Mínimo 4 caracteres" />
-            )
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <Users size={16}/> 2. Dados do {guardianType}
+          </h3>
+          {activeTab === 'primary' && editingUser && (
+            <button type="button" onClick={handleResetPassword} className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-indigo-100">
+              <KeyRound size={12} /> {resetSent ? 'E-mail Enviado!' : 'Redefinir Senha'}
+            </button>
           )}
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {field('Nome Completo', true, <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="Ex: João da Silva"/>)}
+          {field('E-mail (Login)', true, <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className={inputCls} placeholder="joao@email.com" />)}
+        </div>
 
-        {/* Documento */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {field('Tipo de Documento', false,
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {field('Telefone (Principal)', true, <input type="text" required value={formData.phone1} onChange={e => setFormData({ ...formData, phone1: e.target.value })} className={inputCls} placeholder="(11) 99999-9999" />)}
+          {field('Telefone (Secundário)', false, <input type="text" value={formData.phone2} onChange={e => setFormData({ ...formData, phone2: e.target.value })} className={inputCls} placeholder="(11) 88888-8888" />)}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {field('Tipo de Documento', true, (
             <select value={formData.doc_type} onChange={e => setFormData({ ...formData, doc_type: e.target.value })} className={inputCls}>
-              {DOC_TYPES.map(d => <option key={d} value={d}>{d}</option>)}
+              {DOC_TYPES.map(dt => <option key={dt} value={dt}>{dt}</option>)}
             </select>
-          )}
-          {field('Número do Documento', false,
-            <input type="text" value={formData.doc_number}
-              onChange={e => setFormData({ ...formData, doc_number: e.target.value })}
-              className={inputCls} placeholder="000.000.000-00" />
-          )}
-          {field('Estado Civil', false,
-            <select value={formData.civil_status} onChange={e => setFormData({ ...formData, civil_status: e.target.value })} className={inputCls}>
-              <option value="">Selecionar...</option>
+          ))}
+          <div className="md:col-span-2">
+            {field('Número do Documento', true, <input type="text" required value={formData.doc_number} onChange={e => setFormData({ ...formData, doc_number: e.target.value })} className={inputCls} placeholder="000.000.000-00" />)}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {field('Profissão', false, <input type="text" value={formData.profession} onChange={e => setFormData({ ...formData, profession: e.target.value })} className={inputCls} placeholder="Engenheiro" />)}
+          {field('Estado Civil', true, (
+            <select required value={formData.civil_status} onChange={e => setFormData({ ...formData, civil_status: e.target.value })} className={inputCls}>
+              <option value="">Selecione...</option>
               {ESTADO_CIVIL.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-          )}
+          ))}
         </div>
 
-        {/* Telefone + Profissão */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {field('Telefone 1', false,
-            <input type="tel" value={formData.phone1}
-              onChange={e => setFormData({ ...formData, phone1: e.target.value })}
-              className={inputCls} placeholder="(11) 90000-0000" />
-          )}
-          {field('Telefone 2', false,
-            <input type="tel" value={formData.phone2}
-              onChange={e => setFormData({ ...formData, phone2: e.target.value })}
-              className={inputCls} placeholder="(11) 90000-0000" />
-          )}
-          {field('Profissão', false,
-            <input type="text" value={formData.profession}
-              onChange={e => setFormData({ ...formData, profession: e.target.value })}
-              className={inputCls} placeholder="Ex: Engenheira" />
-          )}
-        </div>
+        {((!primaryUserId && activeTab === 'primary') || (activeTab === 'secondary' && !secondaryUserId)) && (
+          <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+            {field('Senha Temporária', true, <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className={inputCls} placeholder="Defina uma senha inicial" minLength={6} />)}
+            <p className="text-[10px] text-amber-600 mt-2">No primeiro acesso, a família poderá alterar a senha pelo aplicativo.</p>
+          </div>
+        )}
       </div>
 
-      {/* ── SEÇÃO 3: ALUNOS VINCULADOS ── */}
-      {formData.role === 'family' && (
+      {/* ── SEÇÃO ALUNOS ── */}
+      {formData.role === 'family' && activeTab === 'primary' && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
-            <span className="flex items-center gap-2"><Clock size={14} /> 3. Alunos Vinculados</span>
-            <button type="button" onClick={handleAddStudent}
-              className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
-              <Plus size={13} /> Adicionar Aluno
-            </button>
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
+            <GraduationCap size={16}/> 3. Alunos Vinculados
           </h3>
+          <p className="text-xs text-slate-500 mb-3">
+            Adicione os alunos pertencentes a este Responsável Financeiro.
+          </p>
 
           <div className="space-y-4">
-            {students.map((student, idx) => (
+            {students.map((student, index) => (
               <StudentCard
                 key={student.id}
                 student={student}
-                index={idx}
-                onChange={handleStudentChange}
-                onRemove={handleRemoveStudent}
+                index={index}
                 canRemove={students.length > 1}
+                onChange={(id, patch) => {
+                  setStudents(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+                }}
+                onRemove={(id) => {
+                  setStudents(prev => prev.filter(s => s.id !== id));
+                }}
               />
             ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setStudents(prev => [...prev, emptyStudent()])}
+            className="flex items-center gap-2 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-sm w-full justify-center hover:bg-indigo-100 transition-colors"
+          >
+            <Plus size={16} /> Adicionar mais um Aluno
+          </button>
+        </div>
+      )}
+
+      {formData.role === 'family' && activeTab === 'secondary' && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
+            <GraduationCap size={16}/> 3. Alunos Vinculados
+          </h3>
+          <div className="p-4 bg-purple-50 text-purple-700 text-xs font-medium rounded-xl border border-purple-100 italic">
+            O responsável secundário herda automaticamente os mesmos alunos do Responsável Financeiro. Não é necessário vinculá-los novamente.
           </div>
         </div>
       )}
 
-      {/* ── SUBMIT ── */}
-      <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-        {editingUser && (
-          <button type="button" onClick={onClose} className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition text-sm">
-            Cancelar
-          </button>
-        )}
+      {/* ── MENSAGENS E BOTÕES ── */}
+      {errorMsg && (
+        <div className="p-4 bg-red-50 text-red-700 text-sm font-bold rounded-xl border border-red-100">
+          {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div className="p-4 bg-green-50 text-green-700 text-sm font-bold rounded-xl flex items-center gap-2 border border-green-100">
+          <CheckCircle2 size={18} /> {successMsg}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+        <button type="button" onClick={handleCloseModal}
+          className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+          Cancelar
+        </button>
         <button type="submit" disabled={isLoading}
-          className="bg-indigo-600 text-white font-bold px-8 py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-md disabled:opacity-70 flex items-center gap-2">
-          {isLoading ? 'Salvando...' : editingUser ? 'Salvar Alterações' : 'Finalizar Cadastro'}
+          className="px-8 py-3 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 rounded-xl transition flex items-center gap-2">
+          {isLoading ? (
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Salvando...</>
+          ) : (
+            <><UserPlus size={18} /> Salvar {guardianType}</>
+          )}
         </button>
       </div>
+
     </form>
   );
 
-  if (editingUser) {
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
-                <UserPlus size={22} />
-              </div>
-              <div>
-                <h2 className="font-bold text-slate-800 text-lg">Editar Cadastro do Usuário</h2>
-                <p className="text-xs text-slate-400">Atualize as informações do perfil e alunos vinculados</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-lg transition text-slate-500">
-              <X size={20} />
-            </button>
+  return createPortal(
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col scale-in-center">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <UserPlus size={24} className="text-indigo-600"/>
+              {editingUser ? 'Editar Cadastro' : 'Novo Cadastro'}
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {editingUser ? 'Atualize as informações do usuário' : 'Cadastre um novo titular e seus alunos'}
+            </p>
           </div>
-
-          {/* Scrollable Body */}
-          <div className="p-6 overflow-y-auto flex-1">
-            {successMsg && (
-              <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl border border-green-200 flex items-center gap-2 font-medium">
-                <CheckCircle2 size={20} /> {successMsg}
-              </div>
-            )}
-            {errorMsg && (
-              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium">{errorMsg}</div>
-            )}
-
-            {formContent}
-          </div>
+          <button type="button" onClick={handleCloseModal} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition">
+            <X size={20} />
+          </button>
         </div>
-      </div>,
-      document.body
-    );
-  }
 
-  return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-8 rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8 shrink-0">
-        <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600"><UserPlus size={24} /></div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Cadastro de Novo Usuário</h2>
-          <p className="text-sm text-slate-500">Crie perfis para novas Famílias ou Administradores.</p>
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto p-6 md:px-8">
+          {formContent}
         </div>
       </div>
-
-      {/* Scrollable content wrapper */}
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-6">
-        {/* Feedback */}
-        {successMsg && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-xl border border-green-200 flex items-center gap-2 font-medium">
-            <CheckCircle2 size={20} /> {successMsg}
-          </div>
-        )}
-        {errorMsg && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium">{errorMsg}</div>
-        )}
-
-        {formContent}
-      </div>
-    </div>
+    </div>,
+    document.body
   );
 }
