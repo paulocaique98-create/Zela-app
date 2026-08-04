@@ -51,7 +51,7 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-            {greeting}, {currentUser?.name || 'Responsável'}! 👋
+            {greeting}, {currentUser?.name?.split(' ')[0] || 'Responsável'}! 👋
           </h1>
           <p className="text-slate-500 font-medium">O que você deseja acessar hoje?</p>
         </div>

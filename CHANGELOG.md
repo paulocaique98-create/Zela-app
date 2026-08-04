@@ -1,7 +1,11 @@
 # Changelog
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
-## [1.1.3] - 2026-07-21
+## [1.2.1] - 2026-08-04
+### Corrigido
+- Saudação na página inicial do portal da família exibe apenas o primeiro nome do responsável (em vez do nome completo)
+
+
 ### Adicionado
 - Sistema de notificações em tempo real para responsáveis (check-in, check-out, lembretes de atraso e cobrança extra)
 - Novo status "Pendente de Check-in" para alunos, substituindo o comportamento incorreto de "Ausente" por padrão
