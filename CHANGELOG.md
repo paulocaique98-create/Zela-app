@@ -1,6 +1,11 @@
 # Changelog
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [1.2.3] - 2026-08-04
+### Corrigido
+- **Monitor Check-in não recebia atualizações em tempo real** — o filtro de coluna (`school_id=eq.xxx`) no canal Supabase Realtime estava sendo descartado silenciosamente no servidor; o recepcionista precisava dar F5 para ver as solicitações do totem. Corrigido removendo o filtro de coluna do canal e aplicando a filtragem por escola/família no callback do frontend (independe de REPLICA IDENTITY). O Monitor agora exibe os cards de check-in/checkout em menos de 1 segundo, sem recarregar a página.
+- `channelSuffix` migrado de variável de módulo para `useRef` — evita recriação acidental do canal a cada render do componente `App`.
+
 ## [1.2.1] - 2026-08-04
 ### Corrigido
 - Saudação na página inicial do portal da família exibe apenas o primeiro nome do responsável (em vez do nome completo)

@@ -168,7 +168,8 @@ export default function App() {
     }
   }, [currentUser]);
 
-  const channelSuffix = Math.random().toString(36).substring(2, 8);
+  // Sufixo estável por sessão — evita recriar o canal desnecessariamente a cada render
+  const channelSuffixRef = useRef(Math.random().toString(36).substring(2, 8));
 
   const setupRealtime = () => {
     if (realtimeChannelRef.current) {
@@ -177,7 +178,7 @@ export default function App() {
     }
 
     console.info('[Zela] Conectando ao canal Realtime (students)...');
-    const channelName = `students-realtime-${currentUser.id}-${channelSuffix}`;
+    const channelName = `students-realtime-${currentUser.id}-${channelSuffixRef.current}`;
 
     const formatStudent = (s) => {
       return {
@@ -196,15 +197,23 @@ export default function App() {
       };
     };
 
-    // Filtro: família ouve apenas seus próprios alunos; admin ouve tudo da sua escola
-    const filter = currentUser.role === 'family'
-      ? { event: '*', schema: 'public', table: 'students', filter: `family_id=eq.${currentUser.id}` }
-      : { event: '*', schema: 'public', table: 'students', filter: `school_id=eq.${currentUser.school_id}` };
+    // SEM filtro de coluna no canal — filtros de coluna exigem REPLICA IDENTITY FULL;
+    // sem essa configuração no banco, os eventos são descartados silenciosamente no servidor.
+    // A filtragem por escola/família é feita no callback (mais confiável e independe do banco).
+    const pgFilter = { event: '*', schema: 'public', table: 'students' };
 
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', filter, (payload) => {
+      .on('postgres_changes', pgFilter, (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
+
+        // Filtro por escola/família no callback — não depende de REPLICA IDENTITY
+        if (eventType === 'INSERT' || eventType === 'UPDATE') {
+          if (currentUser.role === 'family' && newRow?.family_id !== currentUser.id) return;
+          if (currentUser.role !== 'family' && newRow?.school_id !== currentUser.school_id) return;
+        }
+
+        console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id, newRow?.status);
 
         if (eventType === 'UPDATE') {
           setStudents((prev) =>
@@ -216,7 +225,7 @@ export default function App() {
                 return { 
                   ...s, 
                   ...formatted,
-                  // Garantir que todayRecord só sobescreve os campos que vieram
+                  // Garantir que todayRecord só sobrescreve os campos que vieram
                   todayRecord: { ...s.todayRecord, ...formatted.todayRecord }
                 };
               }
