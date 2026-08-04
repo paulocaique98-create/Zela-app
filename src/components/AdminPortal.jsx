@@ -358,8 +358,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             {/* Botões — responsivo: coluna no celular, linha no tablet/desktop */}
             {currentSchool?.plan === 'pro' ? (
-              /* Plano Pro: 3 botões lado a lado */
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-3xl">
+              /* Plano Pro: botões lado a lado (QR Code temporariamente desabilitado) */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl">
                 <button
                   onClick={() => setIsFaceScannerOpen(true)}
                   className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 sm:p-8 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
@@ -369,14 +369,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <span className="font-black text-base sm:text-lg">Reconhecimento Facial</span>
                 </button>
 
-                <button
+                {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
+                {false && <button
                   onClick={() => setIsScannerOpen(true)}
                   className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 hover:border-indigo-600 p-5 sm:p-8 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
                 >
                   <QrCode size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
                   <QrCode size={48} className="hidden sm:block group-hover:scale-110 transition-transform" />
                   <span className="font-black text-base sm:text-lg">Ler QR Code</span>
-                </button>
+                </button>}
 
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
@@ -388,16 +389,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
               </div>
             ) : (
-              /* Plano Basic: 2 botões lado a lado */
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl">
-                <button
+              /* Plano Basic: botão único (QR Code temporariamente desabilitado) */
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 w-full max-w-md">
+                {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
+                {false && <button
                   onClick={() => setIsScannerOpen(true)}
                   className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 hover:border-indigo-600 p-5 sm:p-10 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
                 >
                   <QrCode size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
                   <QrCode size={56} className="hidden sm:block group-hover:scale-110 transition-transform" />
                   <span className="font-black text-base sm:text-xl">Ler QR Code</span>
-                </button>
+                </button>}
 
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
@@ -436,8 +438,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {/* CONFIGURAÇÕES */}
         {adminTab === 'settings' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />}
 
-        {/* QR Scanner Modal */}
-        {isScannerOpen && createPortal(
+        {/* QR Scanner Modal — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
+        {false && isScannerOpen && createPortal(
           <QRCodeScanner
             mode="admin"
             school_id={currentSchool?.id}

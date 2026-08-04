@@ -25,7 +25,9 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   const [error, setError] = useState('');
 
   // Modos do Kiosk
-  const [activeMode, setActiveMode] = useState(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode');
+  // QR Code temporariamente desabilitado — modo padrão alterado para 'manual'.
+  // Para reabilitar: restaurar para currentSchool?.plan === 'pro' ? 'facial' : 'qrcode'
+  const [activeMode, setActiveMode] = useState(currentSchool?.plan === 'pro' ? 'facial' : 'manual');
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
   useEffect(() => {
@@ -170,12 +172,13 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             </button>
           )}
           
-          <button 
+          {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
+          {false && <button 
             onClick={() => setActiveMode('qrcode')}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'qrcode' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             <QrCode size={18} /> <span className="hidden sm:inline">QR Code</span>
-          </button>
+          </button>}
           
           <button 
             onClick={() => setActiveMode('manual')}
@@ -219,7 +222,8 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             />
           )}
           
-          {activeMode === 'qrcode' && (
+          {/* QRCodeScanner — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
+          {false && activeMode === 'qrcode' && (
             <QRCodeScanner
               mode="kiosk"
               isLandscape={isLandscape}
@@ -233,7 +237,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
           {activeMode === 'manual' && (
             <AdminPasswordLogin
-              onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
+              onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'manual')}
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
               currentUser={currentUser}
