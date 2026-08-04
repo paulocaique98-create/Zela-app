@@ -34,6 +34,40 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Melhoria 2: Screen Wake Lock API para impedir tela de escurecer
+  useEffect(() => {
+    let wakeLock = null;
+    
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('[Zela] Wake Lock ativo — tela não irá escurecer.');
+        }
+      } catch (err) {
+        console.warn('[Zela] Wake Lock não disponível:', err.message);
+      }
+    };
+    
+    requestWakeLock();
+    
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock) {
+        wakeLock.release().then(() => {
+          console.log('[Zela] Wake Lock liberado.');
+        });
+      }
+    };
+  }, []);
+
   // Estados do Cadastro Facial
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsPassword, setSettingsPassword] = useState('');
@@ -109,7 +143,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   };
 
   return (
-    <div className="h-screen h-[100dvh] w-full flex flex-col bg-slate-900 overflow-hidden font-sans">
+    <div className="h-screen h-[100dvh] w-full flex flex-col bg-white overflow-hidden font-sans">
       {/* Cabeçalho Minimalista do Totem */}
       <header className="bg-white px-6 py-4 flex justify-between items-center shrink-0 border-b-4 border-indigo-500 shadow-md z-10">
         <div className="flex items-center gap-3">
@@ -171,7 +205,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
       </header>
 
       {/* Conteúdo Principal: Scanner Ocupando Tudo */}
-      <main className="flex-1 relative bg-slate-900 w-full h-full flex flex-col min-h-0 overflow-hidden">
+      <main className="flex-1 relative bg-white w-full h-full flex flex-col min-h-0 overflow-hidden">
         <Suspense fallback={<div className="flex-1 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" /><p className="text-white text-sm font-semibold">Carregando módulo...</p></div>}>
           {activeMode === 'facial' && (
             <AdminFaceScanner

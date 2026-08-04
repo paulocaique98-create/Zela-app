@@ -295,10 +295,10 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden w-full h-full">
           {/* Left pane: Camera feed or Static Captured Image */}
-          <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
+          <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-white flex items-center justify-center overflow-hidden">
           
           {(!cameraReady || !faceMatcher) && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 bg-white/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
               <p className="text-sm font-semibold">
                 {!modelsLoaded ? "Carregando IA de reconhecimento..." : 
@@ -309,9 +309,9 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {error && !capturedImage && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/90 z-10 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 bg-white/90 z-10 p-6 text-center">
               <ShieldAlert className="h-12 w-12 text-red-500 mb-3" />
-              <p className="text-sm font-bold text-red-400 mb-4">{error}</p>
+              <p className="text-sm font-bold text-red-600 mb-4">{error}</p>
               <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
                 Fechar Janela
               </button>
@@ -337,7 +337,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {/* Mirror status badge */}
-          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] text-white flex items-center gap-1.5 font-mono">
+          <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-xl text-[11px] text-slate-700 flex items-center gap-1.5 font-mono shadow-sm">
             <span className={`w-2.5 h-2.5 rounded-full ${
               matchStatus === 'matched' ? 'bg-green-500' : 
               matchStatus === 'searching' ? 'bg-amber-500 animate-ping' : 
