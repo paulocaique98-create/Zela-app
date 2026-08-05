@@ -61,17 +61,46 @@ export default function App() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [emergencyData, setEmergencyData] = useState(null);
 
+  // Alerta de check-in/check-out pendente para o Admin
+  // { studentName, type: 'Check-in'|'Check-out', studentId }
+  const [pendingAlert, setPendingAlert] = useState(null);
+
   const [currentSchool, setCurrentSchool] = useState(null);
   const [globalLogo, setGlobalLogo] = useState(null);
 
   // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
   const realtimeChannelRef = useRef(null);
+  // Ref para controle do auto-reconnect (evita múltiplos timeouts simultâneos)
+  const reconnectTimerRef = useRef(null);
 
   // Ref estável para currentUser — evita closures desatualizadas em listeners de longa duração
   const currentUserRef = useRef(currentUser);
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
+
+  // Desbloqueio de áudio: navegadores exigem um gesto do usuário antes de tocar áudio.
+  // Registramos um listener de clique que resume o AudioContext na primeira interação.
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (!window._zelaAudioUnlocked) {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          ctx.resume();
+          window._zelaAudioUnlocked = true;
+          console.info('[Zela] Audio context desbloqueado.');
+        } catch (e) {
+          // AudioContext não suportado no browser — silent fail
+        }
+      }
+    };
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   // Valida sessão na montagem do app (roda apenas 1x)
   useEffect(() => {
@@ -166,12 +195,17 @@ export default function App() {
         realtimeChannelRef.current = null;
       }
     }
-  }, [currentUser]);
+  }, [currentUser?.id]); // Depende apenas do ID (primitivo estável) — evita recriar o canal ao reatribuir o objeto currentUser
 
   // Sufixo estável por sessão — evita recriar o canal desnecessariamente a cada render
   const channelSuffixRef = useRef(Math.random().toString(36).substring(2, 8));
 
   const setupRealtime = () => {
+    // Cancela qualquer reconexão pendente antes de configurar novo canal
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
     if (realtimeChannelRef.current) {
       supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
@@ -225,12 +259,27 @@ export default function App() {
             });
           });
 
+          // ── Disparo do alerta de check-in/check-out pendente ──
+          // Só dispara para admins, apenas quando há mudança real de status
+          // para pending_entry ou pending_exit (não em re-broadcasts do mesmo status).
+          if (
+            currentUserRef.current?.role === 'admin' &&
+            (newRow?.status === 'pending_entry' || newRow?.status === 'pending_exit') &&
+            oldRow?.status !== newRow?.status
+          ) {
+            setPendingAlert({
+              studentId: newRow.id,
+              studentName: newRow.name,
+              type: newRow.status === 'pending_entry' ? 'Check-in' : 'Check-out',
+            });
+          }
+
         } else if (eventType === 'INSERT') {
           // Para INSERT: filtrar por school_id/family_id se vierem no payload
-          if (currentUser.role === 'family') {
-            if (newRow?.family_id && newRow.family_id !== currentUser.id) return;
+          if (currentUserRef.current?.role === 'family') {
+            if (newRow?.family_id && newRow.family_id !== currentUserRef.current.id) return;
           } else {
-            if (newRow?.school_id && newRow.school_id !== currentUser.school_id) return;
+            if (newRow?.school_id && newRow.school_id !== currentUserRef.current?.school_id) return;
           }
           console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id);
           setStudents((prev) => [...prev, formatStudent(newRow)]);
@@ -246,8 +295,18 @@ export default function App() {
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.info('[Zela] Realtime conectado com sucesso.');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.warn(`[Zela] Realtime desconectado: ${status}.`);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn(`[Zela] Realtime desconectado: ${status}. Reconectando em 5s...`);
+          // Auto-reconnect: aguarda 5s e tenta reestabelecer o canal
+          reconnectTimerRef.current = setTimeout(() => {
+            const user = currentUserRef.current;
+            if (user && user.role !== 'developer') {
+              console.info('[Zela] Tentando reconectar ao Realtime...');
+              setupRealtime();
+            }
+          }, 5000);
+        } else if (status === 'CLOSED') {
+          console.warn('[Zela] Realtime canal fechado.');
         }
       });
 
@@ -561,6 +620,33 @@ export default function App() {
     }
   };
 
+  /**
+   * rejectStudentStatus — Rejeita/cancela uma solicitação pendente SEM gravar no attendance_logs.
+   * 
+   * É diferente de updateStudentStatus, que grava log quando o status muda para 'in_school' ou 'left'.
+   * Esta função é usada exclusivamente pelo botão "Cancelar Solicitação" do Monitor.
+   *
+   * pending_entry  → idle      (aluno nunca chegou — cancela entrada)
+   * pending_exit   → in_school (aluno continua na escola — cancela saída)
+   */
+  const rejectStudentStatus = async (studentId, revertToStatus) => {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({ status: revertToStatus })
+        .eq('id', studentId);
+      if (error) throw error;
+
+      // Atualiza apenas o status no estado local — preserva todayRecord intacto
+      setStudents(prev => prev.map(s =>
+        s.id === studentId ? { ...s, status: revertToStatus } : s
+      ));
+    } catch (err) {
+      console.error('[Zela] Erro ao rejeitar solicitação:', err);
+      throw err;
+    }
+  };
+
   const requestKioskAccess = async (studentIds) => {
     if (!studentIds || studentIds.length === 0) return;
     for (const studentId of studentIds) {
@@ -701,10 +787,14 @@ export default function App() {
                   adminTab={adminTab}
                   setAdminTab={setAdminTab}
                   updateStudentStatus={updateStudentStatus}
+                  rejectStudentStatus={rejectStudentStatus}
                   onUpdateSchool={fetchData}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
+                  pendingAlert={pendingAlert}
+                  onDismissAlert={() => setPendingAlert(null)}
+                  onGoToMonitor={() => { setPendingAlert(null); setAdminTab('monitor'); }}
                 />
               ) : (
                 <FamilyPortal

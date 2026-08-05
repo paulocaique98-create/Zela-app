@@ -24,10 +24,13 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Modos do Kiosk
-  // QR Code temporariamente desabilitado — modo padrão alterado para 'manual'.
-  // Para reabilitar: restaurar para currentSchool?.plan === 'pro' ? 'facial' : 'qrcode'
-  const [activeMode, setActiveMode] = useState(currentSchool?.plan === 'pro' ? 'facial' : 'manual');
+  // Modos do Kiosk: Pro → facial, Basic → qrcode, sem plano → facial (fallback seguro).
+  // Usa função de inicialização para evitar problema de timing com currentSchool.
+  const [activeMode, setActiveMode] = useState(() => {
+    if (currentSchool?.plan === 'pro') return 'facial';
+    if (currentSchool?.plan === 'basic') return 'qrcode';
+    return 'facial'; // fallback seguro se plan não definido ainda
+  });
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
   useEffect(() => {
@@ -216,20 +219,19 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
               onClose={() => {}} // Não faz nada no Kiosk Mode nativo
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
-              students={students}
+              students={students || []}
               currentUser={currentUser}
               isKioskMode={true} 
             />
           )}
           
-          {/* QRCodeScanner — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-          {false && activeMode === 'qrcode' && (
+          {activeMode === 'qrcode' && (
             <QRCodeScanner
               mode="kiosk"
               isLandscape={isLandscape}
               school_id={currentSchool?.id}
               currentSchool={currentSchool}
-              students={students}
+              students={students || []}
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
             />
@@ -237,11 +239,18 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
           {activeMode === 'manual' && (
             <AdminPasswordLogin
-              onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'manual')}
+              onClose={() => setActiveMode(currentSchool?.plan === 'pro' ? 'facial' : 'qrcode')}
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
               currentUser={currentUser}
             />
+          )}
+
+          {/* Fallback de segurança: se activeMode tiver valor inesperado, exibe loader */}
+          {!['facial', 'qrcode', 'manual'].includes(activeMode) && (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
+            </div>
           )}
         </Suspense>
       </main>

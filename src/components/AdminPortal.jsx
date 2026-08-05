@@ -24,8 +24,9 @@ import AdminSettings from './AdminSettings';
 import AdminKioskManagement from './AdminKioskManagement';
 import AdminRelatorioHorasExtras from './AdminRelatorioHorasExtras';
 import { preloadFaceModels } from '../lib/faceModels';
+import CheckinAlertModal from './CheckinAlertModal';
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
 
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
@@ -78,8 +79,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
 
       {/* MENU LATERAL (SIDEBAR) */}
-      <div 
-        className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+      <div
+        className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
@@ -166,7 +167,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
                     <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                      Monitor Check-in
+                      Monitorar Solicitações
                       {monitorStudents.length > 0 && (
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
@@ -236,7 +237,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
-        
+
         {/* INICIO */}
         {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} />}
 
@@ -261,8 +262,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <AlertCircle size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Monitor de Check-in/out</h2>
-                  <p className="text-sm text-slate-500">Acompanhe as solicitações e chegadas em tempo real</p>
+                  <h2 className="text-xl font-bold text-slate-800">Monitor de Solicitações</h2>
+                  <p className="text-sm text-slate-500">Acompanhe as solicitações em tempo real</p>
                 </div>
               </div>
 
@@ -319,15 +320,19 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         </p>
                         <h3 className="font-bold text-lg text-slate-800 mb-4">{student.name}</h3>
                         <div className="flex flex-col gap-2">
+                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button
+                            title={student.status === 'pending_entry' ? 'Confirmar Check-in' : 'Confirmar Check-out'}
                             onClick={() => updateStudentStatus(student.id, btnActionStatus)}
                             className={`w-full font-bold py-3 rounded-xl active:scale-95 transition-all shadow-sm ${btnClass}`}
                           >
                             {btnText}
                           </button>
+                          {/* Botão CANCELAR: reverte status sem gravar no attendance_logs */}
                           <button
-                            onClick={() => updateStudentStatus(student.id, cancelStatus)}
-                            className="w-full font-semibold py-2 rounded-xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
+                            title="Rejeitar solicitação"
+                            onClick={() => rejectStudentStatus(student.id, cancelStatus)}
+                            className="w-full font-semibold py-2 rounded-xl text-slate-500 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 active:scale-95 transition-all"
                           >
                             Cancelar Solicitação
                           </button>
@@ -350,7 +355,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <ShieldCheck size={36} className="sm:hidden" />
                 <ShieldCheck size={40} className="hidden sm:block" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Autoatendimento Zela</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Autoatendimento</h2>
               <p className="text-slate-500 font-medium text-sm sm:text-base max-w-md mx-auto">
                 Escolha abaixo como deseja se identificar para realizar a entrada ou saída do aluno.
               </p>
@@ -469,6 +474,16 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             onClose={() => setIsPasswordLoginOpen(false)}
             updateStudentStatus={updateStudentStatus}
             currentUser={currentUser}
+          />,
+          document.body
+        )}
+
+        {/* Alerta de Check-in/Check-out — overlay em qualquer aba do Admin */}
+        {pendingAlert && createPortal(
+          <CheckinAlertModal
+            alert={pendingAlert}
+            onDismiss={onDismissAlert}
+            onGoToMonitor={onGoToMonitor}
           />,
           document.body
         )}
