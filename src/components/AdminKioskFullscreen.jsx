@@ -42,7 +42,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   // Melhoria 2: Screen Wake Lock API para impedir tela de escurecer
   useEffect(() => {
     let wakeLock = null;
-    
+
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator) {
@@ -53,16 +53,16 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
         console.warn('[Zela] Wake Lock não disponível:', err.message);
       }
     };
-    
+
     requestWakeLock();
-    
+
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
         await requestWakeLock();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLock) {
@@ -105,11 +105,11 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
       // Se a senha estiver correta, volta para o painel de admin
       // TO-DO: Numa iteração futura, adicionar rate-limit para evitar força bruta
-      
+
       // MOTIVO TÉCNICO PARA MANTER O RELOAD:
       // Como não há react-router-dom no projeto, window.location.href é necessário
       // para forçar a reavaliação de rotas nativas no App.jsx e resetar o estado de Kiosk.
-      window.location.href = '/'; 
+      window.location.href = '/';
     } catch (err) {
       setError(err.message);
     } finally {
@@ -167,23 +167,23 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
         <div className="flex flex-wrap justify-center sm:justify-end gap-2 w-full sm:w-auto">
           {currentSchool?.plan === 'pro' && (
-            <button 
+            <button
               onClick={() => setActiveMode('facial')}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'facial' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               <Camera size={18} /> <span className="hidden sm:inline">Facial</span>
             </button>
           )}
-          
+
           {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-          {false && <button 
+          {false && <button
             onClick={() => setActiveMode('qrcode')}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'qrcode' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             <QrCode size={18} /> <span className="hidden sm:inline">QR Code</span>
           </button>}
-          
-          <button 
+
+          <button
             onClick={() => setActiveMode('manual')}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'manual' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
@@ -192,20 +192,20 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
           <div className="w-px h-8 bg-slate-200 mx-1 self-center"></div>
 
-          <button 
+          <button
             onClick={handleSettingsClick}
             className="flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 w-10 sm:w-11 h-10 sm:h-11 rounded-xl transition-all active:scale-95"
             title="Cadastro Facial"
           >
             <Settings size={20} className="text-slate-500" />
           </button>
-          
-          <button 
+
+          <button
             onClick={handleExitClick}
             className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95"
           >
             <Lock size={18} className="text-slate-500" />
-            <span className="hidden sm:inline">Sair do Modo Totem</span>
+            <span className="hidden sm:inline">Sair</span>
           </button>
         </div>
       </header>
@@ -216,15 +216,15 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
           {activeMode === 'facial' && (
             <AdminFaceScanner
               key={scannerKey}
-              onClose={() => {}} // Não faz nada no Kiosk Mode nativo
+              onClose={() => { }} // Não faz nada no Kiosk Mode nativo
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
               students={students || []}
               currentUser={currentUser}
-              isKioskMode={true} 
+              isKioskMode={true}
             />
           )}
-          
+
           {activeMode === 'qrcode' && (
             <QRCodeScanner
               mode="kiosk"
@@ -263,7 +263,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
               <h3 className="font-bold flex items-center gap-2 text-slate-800 text-lg">
                 <Lock size={20} className="text-indigo-600" /> Confirme sua identidade
               </h3>
-              <button 
+              <button
                 onClick={() => setShowExitModal(false)}
                 className="p-2 -mr-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors"
                 disabled={isLoading}
@@ -274,7 +274,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
             <div className="p-6">
               <p className="text-sm text-slate-500 mb-6 font-medium">
-                Por segurança, digite a senha da sua conta de administrador (<span className="text-slate-800 font-bold">{currentUser.email}</span>) para sair do modo Totem.
+                Por segurança, digite a senha da conta (<span className="text-slate-800 font-bold">{currentUser.email}</span>) para sair do modo Totem.
               </p>
 
               <form onSubmit={handleConfirmExit} className="space-y-4">
@@ -324,7 +324,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
               <h3 className="font-bold flex items-center gap-2 text-slate-800 text-lg">
                 <Settings size={20} className="text-indigo-600" /> Cadastro Facial
               </h3>
-              <button 
+              <button
                 onClick={() => setShowSettingsModal(false)}
                 className="p-2 -mr-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors"
                 disabled={isSettingsLoading}
@@ -380,13 +380,13 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
       {/* Painel de Cadastro Facial (Overlay) */}
       {showRegistrationPanel && (
         <Suspense fallback={<div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm"><Loader2 className="w-12 h-12 text-white animate-spin" /></div>}>
-          <AdminKioskFaceRegistration 
+          <AdminKioskFaceRegistration
             currentSchool={currentSchool}
-            students={students} 
+            students={students}
             onClose={() => {
               setShowRegistrationPanel(false);
               setScannerKey(prev => prev + 1); // Força remount do scanner para atualizar biometrias
-            }} 
+            }}
           />
         </Suspense>
       )}

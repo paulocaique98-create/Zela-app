@@ -423,7 +423,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 <div>
                   <p className="text-sm font-semibold text-slate-700">Aguardando detecção...</p>
                   <p className="text-xs mt-1 px-4 leading-relaxed">
-                    Posicione o responsável ou clique no botão **"Capturar e Comparar"** na câmera para capturar uma foto manual de confronto.
+                    Posicione o responsável ou clique no botão Capturar e Comparar na câmera para capturar uma foto manual de confronto.
                   </p>
                 </div>
               </div>

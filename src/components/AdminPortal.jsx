@@ -167,7 +167,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
                     <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                      Monitorar Solicitações
+                      Monitor
                       {monitorStudents.length > 0 && (
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
@@ -175,7 +175,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     <button onClick={() => { registerClick('totem'); navigateTo('/admin/totem-checkin'); }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
                     <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
                     <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatório Horas Extras</button>
+                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
                     <button onClick={() => { setAdminTab('kiosks'); registerClick('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
                   </div>
                 </div>
@@ -357,7 +357,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Autoatendimento</h2>
               <p className="text-slate-500 font-medium text-sm sm:text-base max-w-md mx-auto">
-                Escolha abaixo como deseja se identificar para realizar a entrada ou saída do aluno.
+                Identifique-se
               </p>
             </div>
 

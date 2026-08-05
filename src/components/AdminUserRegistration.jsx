@@ -530,7 +530,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Perfil do Usuário', true,
             <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
-              <option value="family">Família / Responsáveis</option>
+              <option value="family">Responsáveis</option>
               <option value="admin">Administrador (Equipe)</option>
             </select>
           )}
