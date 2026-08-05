@@ -239,7 +239,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       <main className="flex-1 min-w-0 h-full flex flex-col">
 
         {/* INICIO */}
-        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} />}
+        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} />}
 
         {/* NOVOS PLACEHOLDERS */}
         {adminTab === 'matriculas' && <AdminMatriculas />}

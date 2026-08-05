@@ -3,7 +3,7 @@ import { Monitor, CalendarCheck, Users, History, UserCog, QrCode, ArrowRight, Cl
 import { useMemo } from 'react';
 import { navigateTo } from '../utils/navigate';
 
-export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {} }) {
+export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
@@ -50,28 +50,38 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
   };
 
   return (
-    <div className="h-full bg-slate-50 p-6 md:p-10 rounded-3xl overflow-y-auto">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+    <div className="h-full bg-slate-50 p-4 md:p-6 lg:p-8 xl:p-10 rounded-3xl overflow-y-auto lg:overflow-hidden flex flex-col">
+      <div className="max-w-4xl mx-auto w-full mt-0 lg:my-auto py-2 lg:py-0">
+        <div className="mb-6 lg:mb-8 shrink-0">
           <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
             {greeting}, {currentUser?.name || 'Administrador'}! 👋
           </h1>
           <p className="text-slate-500 font-medium">O que você deseja acessar hoje?</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {topMenus.map((menu) => {
             const count = clickCounts[menu.key] || 0;
             return (
               <div
                 key={menu.key}
                 onClick={() => handleCardClick(menu)}
-                className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group relative"
+                className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col items-center gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group relative"
               >
-                {count > 0 && (
-                  <span className="absolute top-3 right-3 text-[10px] font-semibold text-slate-300">
-                    {count} {count === 1 ? 'acesso' : 'acessos'}
+                {/* Badges Vermelhos */}
+                {menu.key === 'monitor' && monitorCount > 0 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
+                    {monitorCount}
                   </span>
+                )}
+                {menu.key === 'notificacoes' && unreadNotifications > 0 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
+                    {unreadNotifications}
+                  </span>
+                )}
+                {menu.key === 'comunicados' && (
+                  // TODO: adicionar badge quando comunicados tiverem contagem de não lidos
+                  null
                 )}
                 <div className="bg-indigo-50 rounded-xl p-3 group-hover:bg-indigo-100 transition-colors">
                   <menu.icon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-500" />

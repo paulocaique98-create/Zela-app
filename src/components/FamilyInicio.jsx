@@ -2,7 +2,7 @@ import React from 'react';
 import { Home, QrCode, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, FileText, Image, Heart, Settings } from 'lucide-react';
 import { useMemo } from 'react';
 
-export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {} }) {
+export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
@@ -65,10 +65,15 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
                 onClick={() => handleCardClick(menu)}
                 className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group relative"
               >
-                {count > 0 && (
-                  <span className="absolute top-3 right-3 text-[10px] font-semibold text-slate-300">
-                    {count} {count === 1 ? 'acesso' : 'acessos'}
+                {/* Badges Vermelhos */}
+                {menu.key === 'notificacoes' && unreadNotifications > 0 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
+                    {unreadNotifications}
                   </span>
+                )}
+                {menu.key === 'comunicados' && (
+                  // TODO: adicionar badge quando comunicados tiverem contagem de não lidos
+                  null
                 )}
                 <div className="bg-indigo-50 rounded-xl p-3 group-hover:bg-indigo-100 transition-colors">
                   <menu.icon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-500" />
