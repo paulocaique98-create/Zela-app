@@ -143,7 +143,7 @@ export default function FamilyHistory({ currentUser }) {
         </div>
         <button
           onClick={() => alert('Exportação de PDF será implementada na próxima versão.')}
-          className="flex items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
         >
           <FileText size={16} /> Exportar Relatório
         </button>
@@ -211,7 +211,7 @@ export default function FamilyHistory({ currentUser }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="text-left border-b border-slate-100">
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>

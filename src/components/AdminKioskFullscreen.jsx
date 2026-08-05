@@ -147,22 +147,22 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   return (
     <div className="h-screen h-[100dvh] w-full flex flex-col bg-white overflow-hidden font-sans">
       {/* Cabeçalho Minimalista do Totem */}
-      <header className="bg-white px-6 py-4 flex justify-between items-center shrink-0 border-b-4 border-indigo-500 shadow-md z-10">
-        <div className="flex items-center gap-3">
+      <header className="bg-white px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center shrink-0 border-b-4 border-indigo-500 shadow-md z-10 gap-4 sm:gap-0">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-start">
           {currentSchool?.logo_url ? (
-            <img src={currentSchool.logo_url} alt="Escola" className="w-10 h-10 object-contain" />
+            <img src={currentSchool.logo_url} alt="Escola" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
           ) : (
-            <div className="w-10 h-10 bg-indigo-950 rounded-xl flex items-center justify-center">
-              <ShieldCheck className="text-white w-6 h-6" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-950 rounded-xl flex items-center justify-center">
+              <ShieldCheck className="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           )}
-          <div>
-            <h1 className="font-black text-xl text-slate-800 leading-none">Autoatendimento</h1>
-            <p className="text-sm font-bold text-slate-400">{currentSchool?.name || 'Zela Portal'}</p>
+          <div className="text-center sm:text-left">
+            <h1 className="font-black text-lg sm:text-xl text-slate-800 leading-none">Autoatendimento</h1>
+            <p className="text-xs sm:text-sm font-bold text-slate-400">{currentSchool?.name || 'Zela Portal'}</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-center sm:justify-end gap-2 w-full sm:w-auto">
           {currentSchool?.plan === 'pro' && (
             <button 
               onClick={() => setActiveMode('facial')}

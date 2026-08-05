@@ -133,11 +133,11 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                 </div>
 
                 {/* Status + Foto Action */}
-                <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 sm:gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-slate-200">
+                <div className="flex flex-col sm:flex-col items-start sm:items-end justify-between w-full sm:w-auto gap-3 sm:gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-slate-200">
                   <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg ${person.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
                     {person.status === 'approved' ? 'Ativo' : 'Pendente'}
                   </span>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <label className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto">
                       {isProcessingId === person.id ? (
                          <><Loader2 size={14} className="animate-spin"/> Proc...</>

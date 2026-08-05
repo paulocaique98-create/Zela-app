@@ -22,11 +22,11 @@ export default function FamilyHome({ currentUser, familyStudents, updateStudentS
                     <p className="text-sm text-slate-500 font-medium">Contrato: {student.contractedHours}h/dia</p>
                   </div>
                   <div className="shrink-0">
-                    {student.status === 'idle' && <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Pendente de Check-in</span>}
+                    {student.status === 'idle' && <span className="bg-slate-100 text-slate-600 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full shrink-0 max-w-[140px] sm:max-w-none truncate text-center">Pendente Check-in</span>}
 
-                    {student.status === 'in_school' && <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 w-fit"><CheckCircle2 size={14} /> Na escola</span>}
-                    {student.status === 'left' && <span className="bg-slate-800 text-slate-100 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Já saiu</span>}
-                    {student.status === 'absent' && <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full inline-block">Não irá hoje</span>}
+                    {student.status === 'in_school' && <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 w-fit shrink-0"><CheckCircle2 size={14} /> Na escola</span>}
+                    {student.status === 'left' && <span className="bg-slate-800 text-slate-100 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full inline-block shrink-0">Já saiu</span>}
+                    {student.status === 'absent' && <span className="bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full inline-block shrink-0">Não irá hoje</span>}
                   </div>
                 </div>
 

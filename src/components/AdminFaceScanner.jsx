@@ -337,25 +337,27 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {/* Mirror status badge */}
-          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] text-white flex items-center gap-1.5 font-mono">
-            <span className={`w-2.5 h-2.5 rounded-full ${matchStatus === 'matched' ? 'bg-green-500' :
+          <div className="absolute top-4 left-4 md:top-auto md:bottom-4 md:left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] text-white flex items-center gap-1.5 font-mono max-w-[calc(100%-2rem)] md:max-w-none truncate shadow-md">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${matchStatus === 'matched' ? 'bg-green-500' :
                 matchStatus === 'searching' ? 'bg-amber-500 animate-ping' :
                   matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
               }`}></span>
+            <span className="truncate">
             {
               isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
                 matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') :
                   matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
                     matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
             }
+            </span>
           </div>
 
           {/* Capture snapshot overlay button */}
           {modelsLoaded && !capturedImage && !error && (
-            <div className="absolute bottom-4 right-4">
+            <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
               <button
                 onClick={handleCaptureAndCompare}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-4 rounded-xl shadow-lg transition active:scale-95 text-xs uppercase"
+                className="w-full md:w-auto flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-4 rounded-xl shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
               >
                 <Camera size={16} /> Capturar e Comparar
               </button>
@@ -378,7 +380,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           )}
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 pb-10">
             {isProcessingCapture ? (
               <div className="text-center py-16 space-y-3">
                 <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mx-auto" />

@@ -14,7 +14,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
     <nav className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 py-2 flex justify-between items-center shadow-sm min-h-[60px]">
       
       {/* ESQUERDA: ZELA LOGO & PORTAL */}
-      <div className="flex items-center gap-3 flex-1">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         {zelaLogo ? (
           <img src={zelaLogo} alt="Zela" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
         ) : (
@@ -30,7 +30,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
       </div>
       
       {/* CENTRO: NOME DA ESCOLA (Apenas Desktop) */}
-      <div className="hidden md:flex justify-center items-center flex-1">
+      <div className="hidden md:flex justify-center items-center flex-1 min-w-0">
         {(currentSchool || currentUser.role === 'developer') && (
           <div className="bg-slate-100/80 px-4 py-1.5 rounded-full border border-slate-200 flex items-center gap-2">
             <span className="text-xs font-black text-slate-600 tracking-wider uppercase">
@@ -41,7 +41,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
       </div>
 
       {/* DIREITA: LOGO DA ESCOLA & SAIR */}
-      <div className="flex justify-end items-center gap-3 flex-1">
+      <div className="flex justify-end items-center gap-3 flex-1 min-w-0">
         
         {currentUser.role === 'admin' && currentSchool && (
           <div className="hidden sm:flex items-center gap-3 mr-2 border-r border-slate-200 pr-4">

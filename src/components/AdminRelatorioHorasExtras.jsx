@@ -164,7 +164,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         <button
           onClick={exportCSV}
           disabled={filtered.length === 0}
-          className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0 w-full sm:w-auto"
         >
           <Download size={16} /> Exportar CSV
         </button>
@@ -207,7 +207,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         </div>
 
         <div className="flex flex-wrap gap-2 shrink-0">
-          <div className="flex bg-slate-100 p-1 rounded-2xl">
+          <div className="flex bg-slate-100 p-1 rounded-2xl overflow-x-auto">
             {[
               { id: 'today', label: 'Hoje' },
               { id: '7days', label: 'Últimos 7 dias' },

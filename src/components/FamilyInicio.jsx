@@ -63,7 +63,7 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
               <div
                 key={menu.key}
                 onClick={() => handleCardClick(menu)}
-                className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group relative"
+                className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group relative"
               >
                 {count > 0 && (
                   <span className="absolute top-3 right-3 text-[10px] font-semibold text-slate-300">
@@ -71,7 +71,7 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
                   </span>
                 )}
                 <div className="bg-indigo-50 rounded-xl p-3 group-hover:bg-indigo-100 transition-colors">
-                  <menu.icon className="w-7 h-7 text-indigo-500" />
+                  <menu.icon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-500" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-700 text-center">{menu.label}</h3>
                 <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-400 mt-auto transition-colors" />

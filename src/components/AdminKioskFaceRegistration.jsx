@@ -211,7 +211,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-50">
         
         {/* ESQUERDA: LISTA */}
-        <div className="w-full md:w-2/5 border-b md:border-b-0 md:border-r border-slate-200 bg-white flex flex-col h-[40vh] md:h-full shrink-0">
+        <div className={`w-full md:w-2/5 border-b md:border-b-0 md:border-r border-slate-200 bg-white flex-col h-full shrink-0 ${selectedPerson ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-slate-100">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -275,7 +275,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
         </div>
 
         {/* DIREITA: CÂMERA */}
-        <div className="w-full md:w-3/5 flex-1 flex flex-col items-center justify-center p-6 bg-slate-900 relative">
+        <div className={`w-full md:w-3/5 flex-1 flex-col items-center justify-start md:justify-center overflow-y-auto p-4 sm:p-6 pb-12 bg-slate-900 relative ${!selectedPerson ? 'hidden md:flex' : 'flex'}`}>
           
           {saveSuccess && (
             <div className="absolute top-6 left-6 right-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 z-10 animate-in fade-in slide-in-from-top-4">
@@ -293,6 +293,12 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
             <div className="w-full max-w-lg flex flex-col items-center">
               
               <div className="w-full text-white text-center mb-4">
+                <button 
+                  onClick={() => { setSelectedPerson(null); setCapturedPhoto(null); setFaceDescriptor(null); stopCamera(); }}
+                  className="md:hidden text-indigo-400 font-bold text-xs uppercase mb-3 flex items-center justify-center gap-1 mx-auto bg-slate-800 px-3 py-1.5 rounded-full"
+                >
+                  <span className="mr-1">←</span> Voltar à lista
+                </button>
                 <h2 className="font-bold text-lg">{selectedPerson.name}</h2>
                 <p className="text-slate-400 text-sm">Posicione o rosto centralizado</p>
               </div>

@@ -68,7 +68,7 @@ export default function AdminDailyPresence({ currentUser }) {
         <button
           onClick={fetchPresence}
           disabled={isLoading}
-          className="flex items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
+          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
         >
           <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> Atualizar
         </button>
