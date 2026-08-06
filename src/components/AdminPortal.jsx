@@ -127,8 +127,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gestão de Usuários</button>
-                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Lista de Alunos</button>
+                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
                     <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
@@ -320,7 +320,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         </p>
                         <h3 className="font-bold text-lg text-slate-800 mb-4">{student.name}</h3>
                         <div className="flex flex-col gap-2">
-                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
+                          {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button
                             title={student.status === 'pending_entry' ? 'Confirmar Check-in' : 'Confirmar Check-out'}
                             onClick={() => updateStudentStatus(student.id, btnActionStatus)}

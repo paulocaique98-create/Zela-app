@@ -339,16 +339,16 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           {/* Mirror status badge */}
           <div className="absolute top-4 left-4 md:top-auto md:bottom-4 md:left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] text-white flex items-center gap-1.5 font-mono max-w-[calc(100%-2rem)] md:max-w-none truncate shadow-md">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${matchStatus === 'matched' ? 'bg-green-500' :
-                matchStatus === 'searching' ? 'bg-amber-500 animate-ping' :
-                  matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
+              matchStatus === 'searching' ? 'bg-amber-500 animate-ping' :
+                matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
               }`}></span>
             <span className="truncate">
-            {
-              isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
-                matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') :
-                  matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
-                    matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
-            }
+              {
+                isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
+                  matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') :
+                    matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
+                      matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
+              }
             </span>
           </div>
 
@@ -487,8 +487,8 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                             <span className="text-[10px] text-slate-400 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
                           </div>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' :
-                              student.status === 'left' ? 'bg-slate-100 text-slate-500' :
-                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                            student.status === 'left' ? 'bg-slate-100 text-slate-500' :
+                              student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
                             }`}>
                             {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente de Check-in'}
                           </span>

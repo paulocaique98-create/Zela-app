@@ -92,10 +92,26 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
   const loadStudentsForUser = async (user) => {
     setIsLoading(true);
     try {
-      const { data: students, error: sError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('family_id', user.id);
+      // Buscar student_ids via student_guardians (cobre 1º e 2º Responsável)
+      const { data: guardianLinks, error: gError } = await supabase
+        .from('student_guardians')
+        .select('student_id')
+        .eq('guardian_id', user.id);
+
+      if (gError) throw new Error('Erro ao verificar vínculos familiares.');
+      
+      const studentIds = guardianLinks?.map(l => l.student_id) || [];
+      
+      let studentsQuery = supabase.from('students').select('*');
+      
+      if (studentIds.length === 0) {
+        // Fallback para 1º responsável ainda não migrado
+        studentsQuery = studentsQuery.eq('family_id', user.id);
+      } else {
+        studentsQuery = studentsQuery.in('id', studentIds);
+      }
+
+      const { data: students, error: sError } = await studentsQuery;
 
       if (sError) throw new Error('Erro ao buscar alunos vinculados.');
 

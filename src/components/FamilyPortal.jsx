@@ -10,9 +10,9 @@ import FamilyCardapio from './FamilyCardapio';
 import FamilyHome from './FamilyHome';
 import FamilyHistory from './FamilyHistory';
 import FamilySettings from './FamilySettings';
-import FamilyWallet from './FamilyWallet';
 import FamilyAuthorized from './FamilyAuthorized';
 import FamilyRegistrationData from './FamilyRegistrationData';
+import FamilyGerenciarResponsaveis from './FamilyGerenciarResponsaveis';
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -25,7 +25,8 @@ export default function FamilyPortal({
 }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
 
-  const familyStudents = students.filter(s => s.familyId === currentUser.id);
+  // Os alunos já vêm filtrados corretamente do App.jsx (via student_guardians ou family_id)
+  const familyStudents = students;
 
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -192,9 +193,8 @@ export default function FamilyPortal({
         {/* REUTILIZANDO COMPONENTES EXISTENTES */}
         {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
         {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
-        {familyTab === 'gerenciar-responsaveis' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
-        {familyTab === 'wallet' && <FamilyWallet familyStudents={familyStudents} />}
-        {familyTab === 'history' && <FamilyHistory currentUser={currentUser} />}
+        {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
+        {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
         {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
         
         {/* NOVOS PLACEHOLDERS */}

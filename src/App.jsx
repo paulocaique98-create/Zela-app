@@ -326,16 +326,48 @@ export default function App() {
           .single();
       }
 
-      // Fetch Students
       let studentsQuery = supabase.from('students').select('*').eq('school_id', currentUser.school_id);
-      if (currentUser.role === 'family') {
-        studentsQuery = studentsQuery.eq('family_id', currentUser.id);
-      }
-
-      // Fetch Authorized Persons
       let authQuery = supabase.from('authorized_persons').select('*').eq('school_id', currentUser.school_id);
+
       if (currentUser.role === 'family') {
-        authQuery = authQuery.eq('family_id', currentUser.id);
+        const { data: guardianLinks, error: glError } = await supabase
+          .from('student_guardians')
+          .select('student_id')
+          .eq('guardian_id', currentUser.id);
+
+        let studentIds = guardianLinks?.map(l => l.student_id) || [];
+
+        // Fallback: se student_guardians vazio, tentar family_id
+        if (studentIds.length === 0) {
+          const { data: directStudents } = await supabase
+            .from('students')
+            .select('id')
+            .eq('family_id', currentUser.id)
+            .eq('school_id', currentUser.school_id);
+          studentIds = directStudents?.map(s => s.id) || [];
+        }
+
+        if (studentIds.length === 0) {
+          // Nenhum aluno encontrado (nem via guardianLinks, nem fallback)
+          studentsQuery = studentsQuery.in('id', ['00000000-0000-0000-0000-000000000000']);
+          authQuery = authQuery.in('id', ['00000000-0000-0000-0000-000000000000']);
+        } else {
+          studentsQuery = studentsQuery.in('id', studentIds);
+
+          // Para authorized_persons, precisamos do family_id do 1º responsável
+          const { data: linkedStudents } = await supabase
+            .from('students')
+            .select('family_id')
+            .in('id', studentIds);
+
+          const familyIds = [...new Set(linkedStudents?.map(s => s.family_id).filter(Boolean))];
+
+          if (familyIds.length > 0) {
+            authQuery = authQuery.in('family_id', familyIds);
+          } else {
+            authQuery = authQuery.eq('family_id', currentUser.id);
+          }
+        }
       }
 
       const [schoolRes, studentsRes, authRes] = await Promise.all([
@@ -408,7 +440,7 @@ export default function App() {
     setCurrentUser(user);
     localStorage.setItem('zela_user', JSON.stringify(user));
     setFamilyTab('home');
-    
+
     // Preload dos modelos faciais em background sem travar UI
     preloadFaceModels().catch(console.error);
   };
@@ -420,7 +452,7 @@ export default function App() {
     setAuthorized([]);
     localStorage.removeItem('zela_user');
     // Faz o logoff do Auth Supabase por garantia
-    supabase.auth.signOut().catch(() => {});
+    supabase.auth.signOut().catch(() => { });
   };
 
   // Temporizador de inatividade (10 minutos)
@@ -432,7 +464,7 @@ export default function App() {
       clearTimeout(inactivityTimer);
       // Se não houver usuário logado ou estiver no totem, não ativa o timer
       if (!currentUser || currentPath === '/totem') return;
-      
+
       inactivityTimer = setTimeout(() => {
         handleLogout();
         // Reload intencional após inatividade — limpa todo o estado do app
@@ -652,26 +684,26 @@ export default function App() {
     for (const studentId of studentIds) {
       const student = students.find(s => s.id === studentId);
       if (!student) continue;
-      
+
       let newStatus = student.status;
       if (['idle', 'left', 'absent'].includes(student.status)) {
         newStatus = 'pending_entry';
       } else if (student.status === 'in_school') {
         newStatus = 'pending_exit';
       }
-      
+
       if (newStatus !== student.status) {
         // Transição normal: novo status diferente do atual
         const { error } = await supabase
           .from('students')
           .update({ status: newStatus })
           .eq('id', studentId);
-        
+
         if (error) {
           console.error('Erro ao atualizar status do aluno:', error);
           throw new Error(error.message);
         }
-        
+
         await updateStudentStatus(studentId, newStatus);
 
       } else if (newStatus === 'pending_entry' || newStatus === 'pending_exit') {
@@ -683,7 +715,7 @@ export default function App() {
         const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const dateStr = now.toISOString().split('T')[0];
         const fullRecordStr = `${dateStr}|${nowStr}`;
-        
+
         await supabase
           .from('students')
           .update({ status: newStatus, [timestampField]: fullRecordStr })
@@ -737,10 +769,10 @@ export default function App() {
     }
     return (
       <Suspense fallback={<div className="h-screen bg-slate-900 flex items-center justify-center">Carregando Kiosk...</div>}>
-        <AdminKioskFullscreen 
-          currentUser={currentUser} 
-          currentSchool={currentSchool} 
-          students={students} 
+        <AdminKioskFullscreen
+          currentUser={currentUser}
+          currentSchool={currentSchool}
+          students={students}
           updateStudentStatus={updateStudentStatus}
           requestKioskAccess={requestKioskAccess}
         />
@@ -772,8 +804,8 @@ export default function App() {
               </div>
             }>
               {currentUser.role === 'developer' ? (
-                <DeveloperLayout 
-                  currentUser={currentUser} 
+                <DeveloperLayout
+                  currentUser={currentUser}
                   onUpdateGlobalLogo={fetchGlobalLogo}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}

@@ -22,7 +22,7 @@ function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('pt-BR');
 }
 
-export default function FamilyHistory({ currentUser }) {
+export default function FamilyHistory({ currentUser, familyStudents }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,8 +50,8 @@ export default function FamilyHistory({ currentUser }) {
         endDate   = `${todayISO}T23:59:59`;
       }
 
-      // Busca apenas os logs desta família (RLS garante isolamento no banco também)
-      const { data: rawLogs, error } = await supabase
+      // Busca apenas os logs desta família (1º e 2º responsáveis via student_guardians)
+      let query = supabase
         .from('attendance_logs')
         .select(`
           id,
@@ -59,8 +59,15 @@ export default function FamilyHistory({ currentUser }) {
           event_time,
           student_id,
           students:student_id (name, contracted_hours, users:family_id(name))
-        `)
-        .eq('family_id', currentUser.id)
+        `);
+
+      if (familyStudents && familyStudents.length > 0) {
+        query = query.in('student_id', familyStudents.map(s => s.id));
+      } else {
+        query = query.eq('family_id', currentUser.id);
+      }
+
+      const { data: rawLogs, error } = await query
         .gte('event_time', startDate)
         .lte('event_time', endDate)
         .order('student_id')

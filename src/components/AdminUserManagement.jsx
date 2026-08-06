@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, Save, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, Save, KeyRound, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import AdminUserRegistration from './AdminUserRegistration';
+import AdminImportModal from './AdminImportModal';
 
 // ── Componente Principal ─────────────────────────────────────────────────────
 export default function AdminUserManagement({ currentUser }) {
@@ -10,6 +11,7 @@ export default function AdminUserManagement({ currentUser }) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const fetchUsersAndStudents = async () => {
     setIsLoading(true);
@@ -107,25 +109,34 @@ export default function AdminUserManagement({ currentUser }) {
         </div>
 
         {/* Campo de busca em tempo real */}
-        <div className="relative w-full md:w-72 shrink-0">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
+        <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+          <div className="relative w-full md:w-72">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nome ou e-mail..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+              >
+                <X size={14}/>
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Buscar por nome ou e-mail..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
-            >
-              <X size={14}/>
-            </button>
-          )}
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition font-medium text-sm whitespace-nowrap"
+          >
+            <FileSpreadsheet size={18} />
+            <span className="hidden md:inline">Importar Excel</span>
+          </button>
         </div>
       </div>
 
@@ -231,6 +242,18 @@ export default function AdminUserManagement({ currentUser }) {
           editingUser={editingUser}
           onClose={() => setEditingUser(null)}
           onSaved={handleUserSaved}
+        />
+      )}
+
+      {/* Modal de Importação */}
+      {showImportModal && (
+        <AdminImportModal
+          currentUser={currentUser}
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            fetchUsersAndStudents();
+          }}
         />
       )}
     </div>

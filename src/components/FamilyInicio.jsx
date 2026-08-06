@@ -10,7 +10,6 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
   
   const FAMILY_MENUS = [
     { key: 'home', label: 'Acompanhamento Diário', icon: Home, tab: 'acompanhamento', feature: 'checkin', defaultOn: true },
-    { key: 'wallet', label: 'Carteira QR Code', icon: QrCode, tab: 'wallet', feature: 'checkin', defaultOn: true },
     { key: 'authorized', label: 'Autorizados', icon: UserCheck, tab: 'authorized', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico Geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'comunicados', label: 'Comunicados', icon: Bell, tab: 'comunicados', feature: 'comunicados', defaultOn: false },

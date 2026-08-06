@@ -154,18 +154,30 @@ export default function QRCodeScanner({
 
       setMatchedPerson(personData);
 
-      // Buscar os alunos vinculados
+      // Buscar os alunos vinculados (via family_id ou student_guardians)
       let familyStudents = [];
-      if (students) {
-        // Se a lista já foi passada (Kiosk Mode)
-        familyStudents = students.filter(s => s.familyId === targetFamilyId);
+      
+      const { data: guardianLinks } = await supabase
+        .from('student_guardians')
+        .select('student_id')
+        .eq('guardian_id', targetFamilyId);
+        
+      const studentIds = guardianLinks?.map(l => l.student_id) || [];
+      
+      if (students && students.length > 0) {
+        // Se a lista já foi passada (Kiosk Mode em memória)
+        familyStudents = students.filter(s => s.family_id === targetFamilyId || studentIds.includes(s.id));
       } else {
         // Busca do banco se não tiver em memória
-        const { data: sData } = await supabase
-          .from('students')
-          .select('*')
-          .eq('family_id', targetFamilyId)
-          .eq('school_id', school_id);
+        let studentsQuery = supabase.from('students').select('*').eq('school_id', school_id);
+        
+        if (studentIds.length === 0) {
+          studentsQuery = studentsQuery.eq('family_id', targetFamilyId);
+        } else {
+          studentsQuery = studentsQuery.in('id', studentIds);
+        }
+        
+        const { data: sData } = await studentsQuery;
         familyStudents = sData || [];
       }
       

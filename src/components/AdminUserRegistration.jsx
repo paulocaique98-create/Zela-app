@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X } from 'lucide-react';
+import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 
@@ -189,6 +189,52 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Estados para 2º Responsável
+  const [secondGuardian, setSecondGuardian] = useState(null);
+  const [isAddingSecondGuardian, setIsAddingSecondGuardian] = useState(false);
+  const [secondGuardianForm, setSecondGuardianForm] = useState({
+    name: '', email: '', password: '', phone: '', doc_number: '', relationship: 'Pai'
+  });
+  const [secondGuardianLoading, setSecondGuardianLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadSecondGuardian() {
+      if (editingUser && editingUser.role === 'family') {
+        setSecondGuardian(null);
+        setIsAddingSecondGuardian(false);
+        const studentIds = editingUser.students?.map(s => s.id) || [];
+        if (studentIds.length === 0) return;
+        
+        const { data, error } = await supabase
+          .from('student_guardians')
+          .select(`
+            guardian_id,
+            relationship,
+            users (name, email, phone)
+          `)
+          .in('student_id', studentIds)
+          .eq('is_primary', false)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const sg = data[0];
+          // Trata caso a query retorne array em users (se não tiver foreign key mapeada com 1:1 exata pelo postgrest)
+          const u = Array.isArray(sg.users) ? sg.users[0] : sg.users;
+          if (u) {
+            setSecondGuardian({
+              id: sg.guardian_id,
+              name: u.name,
+              email: u.email,
+              phone: u.phone,
+              relationship: sg.relationship
+            });
+          }
+        }
+      }
+    }
+    loadSecondGuardian();
+  }, [editingUser]);
+
   useEffect(() => {
     if (editingUser) {
       setFormData({
@@ -264,10 +310,133 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     }
   };
 
-  // ── Handlers de alunos ──
+// ── Handlers de alunos ──
   const handleAddStudent = () => setStudents(prev => [...prev, emptyStudent()]);
 
-  const handleRemoveStudent = (id) => setStudents(prev => prev.filter(s => s.id !== id));
+  const handleRemoveStudent = (id) => {
+    setStudents(students.filter(s => s.id !== id));
+  };
+
+  const handleCreateSecondGuardian = async () => {
+    try {
+      setSecondGuardianLoading(true);
+      const studentIds = students.map(s => s.id).filter(id => typeof id === 'string');
+      if (studentIds.length === 0) {
+        throw new Error('Salve os alunos primeiro (Finalizar Cadastro/Alterações) antes de adicionar o 2º Responsável.');
+      }
+      
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://orafqopnomdrvwlvxrkz.supabase.co';
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-family-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...secondGuardianForm,
+          school_id: currentUser.school_id,
+          student_ids: studentIds,
+          is_financial: false
+        })
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Erro ao criar 2º Responsável');
+      
+      setSecondGuardian({
+        id: result.user.id,
+        name: secondGuardianForm.name,
+        email: secondGuardianForm.email,
+        phone: secondGuardianForm.phone,
+        relationship: secondGuardianForm.relationship
+      });
+      setIsAddingSecondGuardian(false);
+      setSuccessMsg('2º Responsável criado com sucesso!');
+      
+      // Limpa a msg após 5s
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      setErrorMsg(err.message);
+      setTimeout(() => setErrorMsg(''), 5000);
+    } finally {
+      setSecondGuardianLoading(false);
+    }
+  };
+
+  const handleRemoveSecondGuardian = async () => {
+    if (!window.confirm(`Remover o vínculo de ${secondGuardian.name} com os alunos desta família?\nO usuário continuará existindo no sistema e poderá ser vinculado a outra família futuramente.`)) return;
+    
+    try {
+      setSecondGuardianLoading(true);
+      const studentIds = students.map(s => s.id).filter(id => typeof id === 'string');
+      if (studentIds.length === 0) return;
+      
+      const { error } = await supabase
+        .from('student_guardians')
+        .delete()
+        .eq('guardian_id', secondGuardian.id)
+        .in('student_id', studentIds);
+        
+      if (error) {
+        console.error('Erro ao remover vínculo:', error);
+        throw error;
+      }
+      
+      setSecondGuardian(null);
+      setSuccessMsg('2º Responsável desvinculado com sucesso!');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Catch erro remover vínculo:', err);
+      setErrorMsg('Erro ao remover vínculo: ' + err.message);
+      setTimeout(() => setErrorMsg(''), 5000);
+    } finally {
+      setSecondGuardianLoading(false);
+    }
+  };
+
+  const handleDeleteSecondGuardian = async () => {
+    if (!window.confirm(
+      `ATENÇÃO: Isso excluirá permanentemente a conta de ${secondGuardian.name}.\n` +
+      `Esta ação não pode ser desfeita. Confirmar?`
+    )) return;
+    
+    setSecondGuardianLoading(true);
+    try {
+      const studentIds = students.map(s => s.id).filter(id => typeof id === 'string');
+      // 1. Remover vínculo primeiro
+      if (studentIds.length > 0) {
+        const { error: linkError } = await supabase
+          .from('student_guardians')
+          .delete()
+          .eq('guardian_id', secondGuardian.id)
+          .in('student_id', studentIds);
+        
+        if (linkError) throw new Error(linkError.message);
+      }
+      
+      // 2. Deletar usuário via Edge Function (igual ao delete-user existente)
+      const { error: deleteError } = await supabase.functions.invoke('delete-user', {
+        body: { userId: secondGuardian.id }
+      });
+      
+      if (deleteError) throw new Error(deleteError.message);
+      
+      setSecondGuardian(null);
+      console.log('2º Responsável excluído com sucesso');
+      setSuccessMsg('2º Responsável excluído permanentemente!');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Erro ao excluir 2º Responsável:', err);
+      setErrorMsg('Erro: ' + err.message);
+      setTimeout(() => setErrorMsg(''), 5000);
+    } finally {
+      setSecondGuardianLoading(false);
+    }
+  };
 
   const handleStudentChange = (id, patch) => {
     setStudents(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
@@ -655,6 +824,84 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── SEÇÃO 4: 2º RESPONSÁVEL (Apenas Edição) ── */}
+      {editingUser && formData.role === 'family' && (
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <Users size={14} /> 4. 2º Responsável (Opcional)
+          </h3>
+          
+          {secondGuardian ? (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-bold text-slate-800">{secondGuardian.name}</h4>
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md">
+                    2º Responsável
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">{secondGuardian.email} • {secondGuardian.relationship}</p>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={handleRemoveSecondGuardian}
+                  disabled={secondGuardianLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                >
+                  <UserMinus size={14} /> Remover Vínculo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteSecondGuardian}
+                  disabled={secondGuardianLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
+                >
+                  <Trash2 size={14} /> Excluir 2º Responsável
+                </button>
+              </div>
+            </div>
+          ) : isAddingSecondGuardian ? (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 animate-in fade-in duration-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('Nome Completo', true, <input type="text" value={secondGuardianForm.name} onChange={e => setSecondGuardianForm({...secondGuardianForm, name: e.target.value})} className={inputCls} placeholder="Nome do 2º Responsável" />)}
+                {field('E-mail Principal', true, <input type="email" value={secondGuardianForm.email} onChange={e => setSecondGuardianForm({...secondGuardianForm, email: e.target.value})} className={inputCls} placeholder="email@exemplo.com" />)}
+                {field('Senha Provisória', true, <input type="text" minLength={6} value={secondGuardianForm.password} onChange={e => setSecondGuardianForm({...secondGuardianForm, password: e.target.value})} className={inputCls} placeholder="Mínimo 6 caracteres" />)}
+                {field('Telefone', false, <input type="text" value={secondGuardianForm.phone} onChange={e => setSecondGuardianForm({...secondGuardianForm, phone: e.target.value})} className={inputCls} placeholder="(00) 00000-0000" />)}
+                {field('CPF (Usado no Totem)', false, <input type="text" value={secondGuardianForm.doc_number} onChange={e => setSecondGuardianForm({...secondGuardianForm, doc_number: e.target.value})} className={inputCls} placeholder="000.000.000-00" />)}
+                {field('Grau de Parentesco', true, 
+                  <select value={secondGuardianForm.relationship} onChange={e => setSecondGuardianForm({...secondGuardianForm, relationship: e.target.value})} className={inputCls}>
+                    <option value="Pai">Pai</option>
+                    <option value="Mãe">Mãe</option>
+                    <option value="Padrasto">Padrasto</option>
+                    <option value="Madrasta">Madrasta</option>
+                    <option value="Avô">Avô</option>
+                    <option value="Avó">Avó</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <button type="button" onClick={() => setIsAddingSecondGuardian(false)} className="px-4 py-2 border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-100 text-xs transition">
+                  Cancelar
+                </button>
+                <button type="button" onClick={handleCreateSecondGuardian} disabled={secondGuardianLoading || !secondGuardianForm.name || !secondGuardianForm.email || !secondGuardianForm.password || secondGuardianForm.password.length < 6} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-xs transition">
+                  {secondGuardianLoading ? 'Salvando...' : 'Salvar 2º Responsável'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAddingSecondGuardian(true)}
+              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+            >
+              <Plus size={18} /> Cadastrar 2º Responsável
+            </button>
+          )}
         </div>
       )}
 
