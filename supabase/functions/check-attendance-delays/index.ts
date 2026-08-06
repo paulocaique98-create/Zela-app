@@ -14,8 +14,10 @@ interface Student {
 
 serve(async (req) => {
   // Verificar se hoje é fim de semana (sábado = 6, domingo = 0)
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0 = domingo, 6 = sábado
+  const now = new Date();
+  const brasiliaOffset = -3 * 60;
+  const brasiliaTime = new Date(now.getTime() + brasiliaOffset * 60 * 1000);
+  const dayOfWeek = brasiliaTime.getUTCDay(); // 0 = domingo, 6 = sábado
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     return new Response(
       JSON.stringify({ 
@@ -39,8 +41,13 @@ serve(async (req) => {
 
     // Pegar horário e data atual (UTC ou configurado no timezone do servidor)
     const now = new Date()
-    // Como a data é extraída do formato ISO 8601 YYYY-MM-DD
-    const todayStr = now.toISOString().split('T')[0]
+    
+    // Converter para horário de Brasília (UTC-3)
+    const brasiliaOffset = -3 * 60 // -180 minutos
+    const brasiliaTime = new Date(now.getTime() + brasiliaOffset * 60 * 1000)
+    
+    // Data de hoje no fuso de Brasília
+    const todayStr = brasiliaTime.toISOString().split('T')[0]
     
     // Obter todos os alunos com horários contratados ativos
     const { data: students, error: stdError } = await supabase
@@ -78,8 +85,12 @@ serve(async (req) => {
 
     // 3. Buscar os logs de attendance de hoje para saber se o aluno já fez checkin/out
     // Definir início e fim do dia atual (em UTC ou local, dependendo do fuso do projeto)
-    const startOfDay = new Date(todayStr + 'T00:00:00.000Z').toISOString()
-    const endOfDay = new Date(todayStr + 'T23:59:59.999Z').toISOString()
+    // Brasília meia-noite = UTC 03:00 do mesmo dia
+    // Brasília 23:59 = UTC 02:59 do dia seguinte
+    const startOfDay = new Date(todayStr + 'T03:00:00.000Z').toISOString()
+    const endOfDayDate = new Date(todayStr + 'T03:00:00.000Z')
+    endOfDayDate.setDate(endOfDayDate.getDate() + 1)
+    const endOfDay = new Date(endOfDayDate.getTime() - 1).toISOString()
 
     const { data: attendanceLogs, error: logsError } = await supabase
       .from('attendance_logs')
@@ -101,7 +112,7 @@ serve(async (req) => {
     const statusUpdates: any[] = []
     const studentsToMarkAbsent: string[] = []
 
-    const currentMinutesOfDay = now.getHours() * 60 + now.getMinutes()
+    const currentMinutesOfDay = brasiliaTime.getUTCHours() * 60 + brasiliaTime.getUTCMinutes()
 
     const timeToMinutes = (timeStr: string) => {
       if (!timeStr) return 0;
@@ -128,17 +139,7 @@ serve(async (req) => {
           studentsToMarkAbsent.push(student.id)
         }
 
-        if (currentMinutesOfDay >= entryMinutes + 5 && !newStatus.notified_late_entry_5) {
-          notificationsToInsert.push({
-            school_id: student.school_id,
-            family_id: student.family_id,
-            student_id: student.id,
-            type: 'late_entry_5min',
-            message: `${student.name} está com o check-in pendente há mais de 5 minutos.`
-          })
-          newStatus.notified_late_entry_5 = true
-          statusChanged = true
-        }
+
       }
 
       // --- CHECAGEM DE SAÍDA ---
@@ -158,7 +159,6 @@ serve(async (req) => {
           newStatus.notified_late_exit_15_billing = true
           // Se pular direto para 15, marca os outros como true também para não mandar atrasado
           newStatus.notified_late_exit_10 = true
-          newStatus.notified_late_exit_5 = true
           statusChanged = true
         }
         // 10 minutos (Aviso de tolerância)
@@ -171,19 +171,6 @@ serve(async (req) => {
             message: `Faltam 5 minutos para o limite de tolerância do check-out de ${student.name}. Após isso, a cobrança extra será iniciada.`
           })
           newStatus.notified_late_exit_10 = true
-          newStatus.notified_late_exit_5 = true
-          statusChanged = true
-        }
-        // 5 minutos
-        else if (currentMinutesOfDay >= exitMinutes + 5 && !newStatus.notified_late_exit_5) {
-          notificationsToInsert.push({
-            school_id: student.school_id,
-            family_id: student.family_id,
-            student_id: student.id,
-            type: 'late_exit_5min',
-            message: `${student.name} está com o check-out pendente há mais de 5 minutos.`
-          })
-          newStatus.notified_late_exit_5 = true
           statusChanged = true
         }
       }
