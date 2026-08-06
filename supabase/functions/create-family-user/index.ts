@@ -128,6 +128,23 @@ serve(async (req) => {
       throw new Error(`Erro ao vincular aos alunos: ${guardianError.message}`)
     }
 
+    // 7. Inserir em authorized_persons
+    const { error: apError } = await adminClient
+      .from('authorized_persons')
+      .insert([{
+        family_id: newUserId,
+        name,
+        relation: relationship || 'Responsável',
+        has_photo: false,
+        emergency_order: 1,
+        school_id
+      }])
+
+    if (apError) {
+      throw new Error(`Erro ao criar registro em autorizados: ${apError.message}`)
+    }
+
+
     return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

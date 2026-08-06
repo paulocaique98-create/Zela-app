@@ -354,19 +354,7 @@ export default function App() {
         } else {
           studentsQuery = studentsQuery.in('id', studentIds);
 
-          // Para authorized_persons, precisamos do family_id do 1º responsável
-          const { data: linkedStudents } = await supabase
-            .from('students')
-            .select('family_id')
-            .in('id', studentIds);
-
-          const familyIds = [...new Set(linkedStudents?.map(s => s.family_id).filter(Boolean))];
-
-          if (familyIds.length > 0) {
-            authQuery = authQuery.in('family_id', familyIds);
-          } else {
-            authQuery = authQuery.eq('family_id', currentUser.id);
-          }
+          authQuery = authQuery.eq('family_id', currentUser.id);
         }
       }
 

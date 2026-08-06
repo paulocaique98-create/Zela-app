@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 
 export default function FamilyGerenciarResponsaveis({ currentUser, familyStudents, currentSchool }) {
   const [secondGuardian, setSecondGuardian] = useState(null);
+  const [currentUserIsFinancial, setCurrentUserIsFinancial] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
   const studentIds = familyStudents?.map(s => s.id).filter(id => typeof id === 'string') || [];
 
   useEffect(() => {
-    async function loadSecondGuardian() {
+    async function loadGuardians() {
       if (studentIds.length === 0) {
         setIsLoading(false);
         return;
@@ -26,32 +27,40 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
       
       try {
         const { data, error } = await supabase
-          .from('student_guardians')
-          .select('guardian_id, relationship, users (id, name, email, phone)')
-          .in('student_id', studentIds)
-          .eq('is_primary', false)
-          .limit(1);
+          .rpc('get_student_guardians', { student_uuid: studentIds[0] });
           
-        if (!error && data && data.length > 0) {
-          const sg = data[0];
-          const u = Array.isArray(sg.users) ? sg.users[0] : sg.users;
-          if (u) {
-            setSecondGuardian({
-              id: sg.guardian_id,
-              name: u.name,
-              email: u.email,
-              phone: u.phone,
-              relationship: sg.relationship
-            });
+        if (!error && data) {
+          const guardianIds = data.map(g => g.guardian_id);
+          const { data: usersData } = await supabase
+            .from('users')
+            .select('id, name, email, phone')
+            .in('id', guardianIds);
+
+          const me = data.find(g => g.guardian_id === currentUser.id);
+          if (me) setCurrentUserIsFinancial(!!me.is_financial);
+
+          const other = data.find(g => g.guardian_id !== currentUser.id);
+          if (other) {
+            const otherUser = usersData?.find(u => u.id === other.guardian_id);
+            if (otherUser) {
+              setSecondGuardian({
+                id: other.guardian_id,
+                name: otherUser.name,
+                email: otherUser.email,
+                phone: otherUser.phone,
+                relationship: other.relationship,
+                is_financial: other.is_financial
+              });
+            }
           }
         }
       } catch (err) {
-        console.error('Erro ao buscar 2º responsável:', err);
+        console.error('Erro ao buscar responsáveis:', err);
       } finally {
         setIsLoading(false);
       }
     }
-    loadSecondGuardian();
+    loadGuardians();
   }, [studentIds.join(',')]);
 
   const handleCreateSecondGuardian = async (e) => {
@@ -205,14 +214,20 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
           
           {/* Card 1: Main Guardian */}
           <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+            <div className={`absolute top-0 left-0 w-1 h-full ${currentUserIsFinancial ? 'bg-indigo-500' : 'bg-slate-400'}`}></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 <ShieldCheck size={18} className="text-indigo-600" /> Seu Perfil
               </h3>
-              <span className="text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-md">
-                Responsável Principal
-              </span>
+              {currentUserIsFinancial ? (
+                <span className="text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-md">
+                  Responsável Principal
+                </span>
+              ) : (
+                <span className="text-[10px] uppercase tracking-wider font-bold bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md">
+                  Responsável Secundário
+                </span>
+              )}
             </div>
             <div className="space-y-1 mt-auto">
               <p className="font-bold text-slate-700">{currentUser.name}</p>
@@ -225,40 +240,54 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
           <div className="h-full">
             {secondGuardian ? (
               <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col h-full relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-slate-400"></div>
+                <div className={`absolute top-0 left-0 w-1 h-full ${secondGuardian.is_financial ? 'bg-indigo-500' : 'bg-slate-400'}`}></div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                    <Users size={18} className="text-slate-500" /> 2º Responsável
+                    <Users size={18} className="text-slate-500" /> Outro Responsável
                   </h3>
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md">
-                    Secundário
-                  </span>
+                  {secondGuardian.is_financial ? (
+                    <span className="text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-md">
+                      Responsável Principal
+                    </span>
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-wider font-bold bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md">
+                      2º Responsável
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1 mb-4">
                   <p className="font-bold text-slate-700">{secondGuardian.name}</p>
                   <p className="text-sm text-slate-500">{secondGuardian.email}</p>
                   <p className="text-sm text-slate-500">{secondGuardian.relationship}</p>
                 </div>
-                <div className="mt-auto flex flex-wrap gap-2">
-                  <button onClick={handleRemoveSecondGuardian} disabled={actionLoading}
-                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition disabled:opacity-50">
-                    <UserMinus size={14} /> Remover Vínculo
-                  </button>
-                  <button onClick={handleDeleteSecondGuardian} disabled={actionLoading}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-50">
-                    <Trash2 size={14} /> Excluir
-                  </button>
-                </div>
+                {currentUserIsFinancial && (
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <button onClick={handleRemoveSecondGuardian} disabled={actionLoading}
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition disabled:opacity-50">
+                      <UserMinus size={14} /> Remover Vínculo
+                    </button>
+                    <button onClick={handleDeleteSecondGuardian} disabled={actionLoading}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-50">
+                      <Trash2 size={14} /> Excluir
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className={`p-5 rounded-2xl flex flex-col items-center justify-center h-full text-center border-2 border-dashed transition-all ${isAdding ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200 hover:border-indigo-300'}`}>
-                {!isAdding && (
+                {(!isAdding && currentUserIsFinancial) && (
                   <>
                     <Users className="h-10 w-10 text-slate-300 mb-3" />
                     <p className="text-slate-500 font-medium mb-4">Nenhum 2º Responsável cadastrado.</p>
                     <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-100/50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition">
                       <Plus size={16} /> Convidar 2º Responsável
                     </button>
+                  </>
+                )}
+                {(!isAdding && !currentUserIsFinancial) && (
+                  <>
+                    <Users className="h-10 w-10 text-slate-300 mb-3" />
+                    <p className="text-slate-500 font-medium mb-4">Outro responsável não encontrado.</p>
                   </>
                 )}
                 {isAdding && (
