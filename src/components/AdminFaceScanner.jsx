@@ -153,9 +153,40 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 setMatchDistance(bestMatch.distance);
                 setMatchStatus('matched');
 
-                // Find all students related to this authorized person's family
-                const familyStudents = students.filter(s => s.familyId === person.family_id);
-                setMatchedStudents(familyStudents);
+                // Primeiro buscar via student_guardians (cobre 1º e 2º Responsável)
+                const { data: guardianLinks } = await supabase
+                  .from('student_guardians')
+                  .select('student_id')
+                  .eq('guardian_id', person.family_id);
+                
+                const studentIds = guardianLinks?.map(l => l.student_id) || [];
+                
+                // Fallback para family_id direto se student_guardians vazio
+                let studentsData = [];
+                if (studentIds.length > 0) {
+                  if (students && students.length > 0) {
+                    studentsData = students.filter(s => studentIds.includes(s.id) || s.family_id === person.family_id || s.familyId === person.family_id);
+                  } else {
+                    const { data } = await supabase
+                      .from('students')
+                      .select('*')
+                      .in('id', studentIds)
+                      .eq('school_id', currentUser.school_id);
+                    studentsData = data || [];
+                  }
+                } else {
+                  if (students && students.length > 0) {
+                    studentsData = students.filter(s => s.familyId === person.family_id || s.family_id === person.family_id);
+                  } else {
+                    const { data } = await supabase
+                      .from('students')
+                      .select('*')
+                      .eq('family_id', person.family_id)
+                      .eq('school_id', currentUser.school_id);
+                    studentsData = data || [];
+                  }
+                }
+                setMatchedStudents(studentsData);
               }
             }
           }
@@ -227,9 +258,40 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           setMatchDistance(bestMatch.distance);
           setMatchStatus('matched');
 
-          // Find all students related to this authorized person's family
-          const familyStudents = students.filter(s => s.familyId === person.family_id);
-          setMatchedStudents(familyStudents);
+          // Primeiro buscar via student_guardians (cobre 1º e 2º Responsável)
+          const { data: guardianLinks } = await supabase
+            .from('student_guardians')
+            .select('student_id')
+            .eq('guardian_id', person.family_id);
+          
+          const studentIds = guardianLinks?.map(l => l.student_id) || [];
+          
+          // Fallback para family_id direto se student_guardians vazio
+          let studentsData = [];
+          if (studentIds.length > 0) {
+            if (students && students.length > 0) {
+              studentsData = students.filter(s => studentIds.includes(s.id) || s.family_id === person.family_id || s.familyId === person.family_id);
+            } else {
+              const { data } = await supabase
+                .from('students')
+                .select('*')
+                .in('id', studentIds)
+                .eq('school_id', currentUser.school_id);
+              studentsData = data || [];
+            }
+          } else {
+            if (students && students.length > 0) {
+              studentsData = students.filter(s => s.familyId === person.family_id || s.family_id === person.family_id);
+            } else {
+              const { data } = await supabase
+                .from('students')
+                .select('*')
+                .eq('family_id', person.family_id)
+                .eq('school_id', currentUser.school_id);
+              studentsData = data || [];
+            }
+          }
+          setMatchedStudents(studentsData);
         } else {
           setMatchStatus('no-match');
         }

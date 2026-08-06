@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, FileText, ChevronRight, X, Check, Pencil } from 'lucide-react';
+import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // ─── Texto do LGPD ────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
-export default function FamilySettings({ currentUser, setCurrentUser, currentSchool }) {
+export default function FamilySettings({ currentUser, setCurrentUser, currentSchool, pushData }) {
   const [modal, setModal] = useState(null); // null | 'edit' | 'lgpd' | 'image_usage'
   const [lgpdAccepted, setLgpdAccepted] = useState(!!currentUser.lgpd_accepted);
   const [imageUsageStatus, setImageUsageStatus] = useState(currentUser.image_usage_accepted);
@@ -281,6 +281,63 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
               </button>
             </div>
           </div>
+        </div>
+
+        {/* COLUNA 2 */}
+        <div className="space-y-4">
+          {/* Notificações Push */}
+          {pushData && (
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+              <h3 className="font-bold text-base text-slate-800 flex items-center gap-2 mb-4">
+                <Bell className="text-indigo-600" size={18}/> Notificações Push
+              </h3>
+              <div className="space-y-2">
+                {pushData.permission === 'denied' ? (
+                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
+                    <BellOff className="text-red-500 shrink-0" size={24} />
+                    <div>
+                      <p className="text-sm font-bold text-red-800">Notificações bloqueadas</p>
+                      <p className="text-xs text-red-600 mt-0.5">Habilite nas configurações do seu navegador para receber avisos.</p>
+                    </div>
+                  </div>
+                ) : !pushData.isSubscribed ? (
+                  <div className="flex flex-col gap-3 p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Bell className="text-slate-400 shrink-0" size={24} />
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">Ativar notificações</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Receba avisos de check-in e check-out no celular, mesmo com o portal fechado.</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={pushData.subscribe} 
+                      disabled={pushData.isLoading}
+                      className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm disabled:opacity-70"
+                    >
+                      {pushData.isLoading ? 'Ativando...' : 'Ativar notificações'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <BellRing className="text-emerald-500 shrink-0" size={24} />
+                      <div>
+                        <p className="text-sm font-bold text-emerald-800 flex items-center gap-1"><Check size={14} /> Ativas</p>
+                        <p className="text-xs text-emerald-600 mt-0.5">Neste dispositivo.</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={pushData.unsubscribe} 
+                      disabled={pushData.isLoading}
+                      className="w-full border border-emerald-200 text-emerald-700 font-bold py-2.5 rounded-lg hover:bg-emerald-100 transition text-sm disabled:opacity-70"
+                    >
+                      {pushData.isLoading ? 'Desativando...' : 'Desativar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       </div>

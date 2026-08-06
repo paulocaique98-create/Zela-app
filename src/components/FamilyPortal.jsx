@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import FamilyInicio from './FamilyInicio';
 import FamilyMatriculas from './FamilyMatriculas';
 import FamilyFichaMedica from './FamilyFichaMedica';
@@ -24,6 +25,16 @@ export default function FamilyPortal({
   isMobileMenuOpen, setIsMobileMenuOpen
 }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
+  const pushData = usePushNotifications(currentUser, currentSchool);
+
+  const [dismissedPush, setDismissedPush] = useState(
+    localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true'
+  );
+  
+  const dismissPushBanner = () => {
+    localStorage.setItem(`zela_push_dismissed_${currentUser?.id}`, 'true');
+    setDismissedPush(true);
+  };
 
   // Os alunos já vêm filtrados corretamente do App.jsx (via student_guardians ou family_id)
   const familyStudents = students;
@@ -188,6 +199,25 @@ export default function FamilyPortal({
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
+        
+        {/* BANNER NOTIFICAÇÕES PUSH */}
+        {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-amber-800 text-sm font-medium">
+              <Bell size={18} className="text-amber-600" />
+              <span className="truncate">Ative as notificações para receber avisos de check-in</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+                Ativar
+              </button>
+              <button onClick={dismissPushBanner} className="text-amber-500 hover:text-amber-700 p-1 rounded-md hover:bg-amber-100 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} />}
         
         {/* REUTILIZANDO COMPONENTES EXISTENTES */}
@@ -211,6 +241,7 @@ export default function FamilyPortal({
             togglePhoto={togglePhoto}
             onOpenAuthModal={onOpenAuthModal}
             currentSchool={currentSchool}
+            pushData={pushData}
           />
         )}
       </main>

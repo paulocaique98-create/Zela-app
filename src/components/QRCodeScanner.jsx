@@ -154,9 +154,7 @@ export default function QRCodeScanner({
 
       setMatchedPerson(personData);
 
-      // Buscar os alunos vinculados (via family_id ou student_guardians)
-      let familyStudents = [];
-      
+      // Primeiro buscar via student_guardians (cobre 1º e 2º Responsável)
       const { data: guardianLinks } = await supabase
         .from('student_guardians')
         .select('student_id')
@@ -164,21 +162,30 @@ export default function QRCodeScanner({
         
       const studentIds = guardianLinks?.map(l => l.student_id) || [];
       
-      if (students && students.length > 0) {
-        // Se a lista já foi passada (Kiosk Mode em memória)
-        familyStudents = students.filter(s => s.family_id === targetFamilyId || studentIds.includes(s.id));
-      } else {
-        // Busca do banco se não tiver em memória
-        let studentsQuery = supabase.from('students').select('*').eq('school_id', school_id);
-        
-        if (studentIds.length === 0) {
-          studentsQuery = studentsQuery.eq('family_id', targetFamilyId);
+      // Fallback para family_id direto se student_guardians vazio
+      let familyStudents = [];
+      if (studentIds.length > 0) {
+        if (students && students.length > 0) {
+          familyStudents = students.filter(s => studentIds.includes(s.id) || s.family_id === targetFamilyId || s.familyId === targetFamilyId);
         } else {
-          studentsQuery = studentsQuery.in('id', studentIds);
+          const { data } = await supabase
+            .from('students')
+            .select('*')
+            .in('id', studentIds)
+            .eq('school_id', school_id);
+          familyStudents = data || [];
         }
-        
-        const { data: sData } = await studentsQuery;
-        familyStudents = sData || [];
+      } else {
+        if (students && students.length > 0) {
+          familyStudents = students.filter(s => s.family_id === targetFamilyId || s.familyId === targetFamilyId);
+        } else {
+          const { data } = await supabase
+            .from('students')
+            .select('*')
+            .eq('family_id', targetFamilyId)
+            .eq('school_id', school_id);
+          familyStudents = data || [];
+        }
       }
       
       setMatchedStudents(familyStudents);

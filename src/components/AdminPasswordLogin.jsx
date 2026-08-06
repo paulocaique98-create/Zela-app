@@ -102,21 +102,27 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
       
       const studentIds = guardianLinks?.map(l => l.student_id) || [];
       
-      let studentsQuery = supabase.from('students').select('*');
-      
-      if (studentIds.length === 0) {
-        // Fallback para 1º responsável ainda não migrado
-        studentsQuery = studentsQuery.eq('family_id', user.id);
+      let studentsData = [];
+      if (studentIds.length > 0) {
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .in('id', studentIds)
+          .eq('school_id', currentUser.school_id);
+        studentsData = data || [];
       } else {
-        studentsQuery = studentsQuery.in('id', studentIds);
+        const { data } = await supabase
+          .from('students')
+          .select('*')
+          .eq('family_id', user.id)
+          .eq('school_id', currentUser.school_id);
+        studentsData = data || [];
       }
 
-      const { data: students, error: sError } = await studentsQuery;
-
-      if (sError) throw new Error('Erro ao buscar alunos vinculados.');
+      if (gError) throw new Error('Erro ao buscar alunos vinculados.');
 
       setFamilyPerson(user);
-      setMatchedStudents(students || []);
+      setMatchedStudents(studentsData || []);
       setStep('confirm');
     } catch (err) {
       setError(err.message);
