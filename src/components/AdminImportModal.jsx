@@ -172,10 +172,12 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
     const initial = parsedRows.map((row) => ({
       name: row['Nome Completo *'],
       email: row['E-mail *'],
+      secondName: row['2º Nome Completo']?.trim() || null,
       alunos: [row['Nome Aluno 1 *'], row['Nome Aluno 2'] || null]
         .filter(Boolean)
         .join(', '),
       status: 'pending',
+      msg: '',
       error: null,
     }));
     setResults(initial);
@@ -185,7 +187,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
 
       // Marca como processando
       setResults((prev) =>
-        prev.map((r, idx) => (idx === i ? { ...r, status: 'processing' } : r))
+        prev.map((r, idx) => (idx === i ? { ...r, status: 'processing', msg: `Criando 1º Responsável: ${row['Nome Completo *']}...` } : r))
       );
 
       try {
@@ -265,6 +267,10 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
           });
         }
 
+        setResults((prev) =>
+          prev.map((r, idx) => (idx === i ? { ...r, msg: 'Criando aluno(s)...' } : r))
+        );
+
         // ── 2b. INSERT students ───────────────────────────────────────────
         const { data: insertedStudents, error: studErr } = await supabase
           .from('students')
@@ -305,13 +311,50 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
 
         if (authErr) throw new Error('Erro ao inserir autorizado: ' + authErr.message);
 
+        // ── 3. Criar 2º Responsável (Opcional) ─────────────────────────────────
+        const nome2 = row['2º Nome Completo']?.trim();
+        const email2 = row['2º E-mail']?.trim();
+        const senha2 = row['2º Senha'];
+        let msg2 = '';
+        
+        if (nome2 || email2 || senha2) {
+          if (nome2 && email2 && senha2) {
+            setResults((prev) =>
+              prev.map((r, idx) => (idx === i ? { ...r, msg: `Criando 2º Responsável: ${nome2}...` } : r))
+            );
+            
+            const { error: funcError2 } = await supabase.functions.invoke(
+              'create-family-user',
+              {
+                body: {
+                  name: nome2,
+                  email: email2.toLowerCase(),
+                  password: senha2,
+                  phone: row['2º Telefone'] || null,
+                  doc_number: row['2º CPF']?.replace(/\D/g, '') || null,
+                  school_id: currentUser.school_id,
+                  student_ids: insertedStudents.map(s => s.id),
+                  relationship: row['2º Relação'] || 'Responsável',
+                  is_financial: false
+                }
+              }
+            );
+            
+            if (funcError2) {
+              msg2 = `⚠️ 1º Responsável criado, mas 2º falhou: ${funcError2.message}`;
+            }
+          } else {
+            msg2 = `⚠️ 1º Responsável criado. 2º ignorado (campos incompletos).`;
+          }
+        }
+
         setResults((prev) =>
-          prev.map((r, idx) => (idx === i ? { ...r, status: 'success' } : r))
+          prev.map((r, idx) => (idx === i ? { ...r, status: 'success', msg: msg2 || '✅ Família importada com sucesso' } : r))
         );
       } catch (err) {
         setResults((prev) =>
           prev.map((r, idx) =>
-            idx === i ? { ...r, status: 'error', error: err.message } : r
+            idx === i ? { ...r, status: 'error', error: err.message, msg: `❌ Erro: ${err.message}` } : r
           )
         );
       }
@@ -431,6 +474,9 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                     ['Telefone', 'Contato (opcional)'],
                     ['CPF', 'Documento (opcional)'],
                     ['Relação *', 'Ex: Mãe, Pai, Avó'],
+                    ['2º Nome Completo', 'Segundo responsável (opcional)'],
+                    ['2º E-mail', 'Segundo e-mail (opcional)'],
+                    ['2º Senha', 'Segunda senha (opcional)'],
                     ['Nome Aluno 1 *', 'Obrigatório'],
                     ['Turma Aluno 1', 'Ex: Kids I (opcional)'],
                     ['Período Aluno 1 *', 'Ex: 07:00 às 13:00'],
@@ -465,7 +511,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                      {['#', 'Responsável', 'Aluno(s)', 'Turma / Período'].map((h) => (
+                      {['#', '1º Responsável', '2º Responsável', 'Aluno(s)', 'Turma / Período'].map((h) => (
                         <th
                           key={h}
                           className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
@@ -478,6 +524,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                   <tbody className="divide-y divide-slate-100">
                     {parsedRows.map((row, idx) => {
                       const aluno2 = row['Nome Aluno 2']?.trim();
+                      const nome2 = row['2º Nome Completo']?.trim();
                       return (
                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-4 py-3 text-xs text-slate-400 font-mono w-8">
@@ -490,7 +537,22 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                             <div className="text-[11px] text-slate-400">{row['E-mail *']}</div>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="text-xs text-slate-700">{row['Nome Aluno 1 *']}</div>
+                            {nome2 ? (
+                              <>
+                                <div className="font-semibold text-slate-800 text-xs">{nome2}</div>
+                                <div className="text-[11px] text-slate-400">{row['2º E-mail']}</div>
+                              </>
+                            ) : (
+                              <span className="text-xs text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-xs text-slate-700 flex items-center gap-2">
+                              {row['Nome Aluno 1 *']}
+                              {nome2 && (
+                                <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">Com 2º Resp.</span>
+                              )}
+                            </div>
                             {aluno2 && (
                               <div className="text-[11px] text-slate-400 mt-0.5">{aluno2}</div>
                             )}
@@ -554,13 +616,9 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                         {r.name}
                       </div>
                       <div className="text-[11px] text-slate-400 truncate">{r.email}</div>
-                      {r.status === 'processing' && (
-                        <div className="text-[11px] text-indigo-600 mt-0.5">Processando…</div>
-                      )}
-                      {r.error && (
-                        <div className="text-[11px] text-red-600 mt-0.5 flex items-center gap-1">
-                          <AlertTriangle size={10} className="shrink-0" />
-                          {r.error}
+                      {r.msg && (
+                        <div className={`text-[11px] mt-0.5 font-medium ${r.status === 'processing' ? 'text-indigo-600' : (r.status === 'error' || r.msg.includes('falhou')) ? 'text-red-600' : 'text-emerald-600'}`}>
+                          {r.msg}
                         </div>
                       )}
                     </div>
