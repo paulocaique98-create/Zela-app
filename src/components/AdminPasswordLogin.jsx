@@ -53,17 +53,18 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
     setError('');
 
     try {
-      // Busca todos os responsáveis da escola
+      // Buscar todos os family da escola
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('id, name, photo_url, doc_number, role')
+        .select('id, name, role, doc_number, school_id')
         .eq('school_id', currentUser.school_id)
         .eq('role', 'family');
 
-      if (usersError || !usersData) throw new Error('Erro ao buscar responsáveis.');
+      if (usersError || !usersData) {
+        throw new Error('Erro ao buscar responsáveis.');
+      }
 
-      // Filtra em JS: doc_number limpo começa com os 4 dígitos digitados
-      // (funciona com CPF com ou sem máscara, pois limpamos antes de comparar)
+      // Filtrar pelo PIN (primeiros 4 dígitos do doc_number)
       const matched = usersData.filter(
         (u) => u.doc_number && u.doc_number.replace(/\D/g, '').startsWith(cleanPin)
       );
