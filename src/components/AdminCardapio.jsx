@@ -326,9 +326,9 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 sm:p-6 border-b border-slate-100 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
             <UtensilsCrossed size={22} />
           </div>
           <div>
@@ -337,22 +337,22 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
           </div>
         </div>
         {!showNewForm && !weekGroups && (
-          <div className="flex gap-2 flex-wrap justify-end">
-            <label className={`flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
-              {isParsingMonthPdf ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
-              {isParsingMonthPdf ? 'Lendo PDF...' : 'Importar Mês (PDF)'}
+          <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+            <label className={`flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
+              {isParsingMonthPdf ? <Loader2 size={18} className="animate-spin shrink-0" /> : <FileUp size={18} className="shrink-0" />}
+              <span className="truncate">{isParsingMonthPdf ? 'Lendo PDF...' : 'Importar Mês (PDF)'}</span>
               <input type="file" accept="application/pdf" onChange={handleMonthPdfSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
             </label>
-            <label className={`flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
-              {isParsingMonthImage ? <Loader2 size={18} className="animate-spin" /> : <ImageUp size={18} />}
-              {isParsingMonthImage ? `Lendo imagem... ${Math.round(monthImageProgress * 100)}%` : 'Importar Mês (Imagem)'}
+            <label className={`flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
+              {isParsingMonthImage ? <Loader2 size={18} className="animate-spin shrink-0" /> : <ImageUp size={18} className="shrink-0" />}
+              <span className="truncate">{isParsingMonthImage ? `Lendo imagem... ${Math.round(monthImageProgress * 100)}%` : 'Importar Mês (Imagem)'}</span>
               <input type="file" accept="image/*" onChange={handleMonthImageSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
             </label>
             <button
               onClick={() => setShowNewForm(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm"
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm"
             >
-              <Plus size={18} /> <span className="hidden sm:inline">Novo Cardápio</span>
+              <Plus size={18} className="shrink-0" /> Novo Cardápio
             </button>
           </div>
         )}

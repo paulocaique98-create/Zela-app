@@ -12,18 +12,27 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
   return (
     <>
     <nav className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-4 md:px-6 py-2 flex justify-between items-center shadow-sm min-h-[60px]">
-      
-      {/* ESQUERDA: ZELA LOGO & PORTAL */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        {zelaLogo ? (
-          <img src={zelaLogo} alt="Zela" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
-        ) : (
-          <div className="w-8 h-8 md:w-9 md:h-9 bg-indigo-950 rounded-xl flex items-center justify-center shrink-0">
-            <ShieldCheck className="text-white w-5 h-5 md:w-5 md:h-5" />
-          </div>
-        )}
-        <div className="flex flex-col">
-          <h1 className="font-bold text-lg tracking-tight leading-none text-indigo-950 flex items-center gap-1.5">
+
+      {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
+      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+        <button
+          onClick={onOpenMobileMenu}
+          className="md:hidden p-1.5 -ml-1 text-indigo-600 hover:bg-slate-100 rounded-xl transition active:scale-95 shrink-0"
+          title="Abrir menu"
+        >
+          <Menu size={24} />
+        </button>
+        <div className="hidden md:flex items-center shrink-0">
+          {zelaLogo ? (
+            <img src={zelaLogo} alt="Zela" className="w-9 h-9 object-contain" />
+          ) : (
+            <div className="w-9 h-9 bg-indigo-950 rounded-xl flex items-center justify-center">
+              <ShieldCheck className="text-white w-5 h-5" />
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col min-w-0">
+          <h1 className="font-bold text-lg tracking-tight leading-none text-indigo-950 flex items-center gap-1.5 truncate">
             Zela <span className="font-normal text-slate-400">Portal</span>
           </h1>
         </div>
@@ -77,14 +86,6 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
         </button>
       </div>
     </nav>
-    
-    {/* SUB-HEADER PARA MOBILE COM MENU HAMBURGUER (ESQUERDA) */}
-    <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2 flex items-center sticky top-[60px] z-30 shadow-sm">
-      <button onClick={onOpenMobileMenu} className="flex items-center gap-2 p-1 -ml-1 text-slate-600 hover:bg-slate-100 rounded-xl transition font-bold text-sm uppercase tracking-wide">
-        <Menu size={24} className="text-indigo-600" />
-        Menu Principal
-      </button>
-    </div>
     </>
   );
 }

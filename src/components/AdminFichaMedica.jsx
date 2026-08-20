@@ -17,14 +17,12 @@ function FichaCard({ student, ficha }) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between p-4 text-left">
-        <div className="min-w-0 flex items-center gap-2.5">
-          {hasAlerta && <AlertTriangle size={16} className="text-amber-500 shrink-0" />}
-          <div className="min-w-0">
-            <p className="font-bold text-slate-800 text-sm truncate">{student.name}</p>
-          </div>
+      <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 text-left">
+        <div className="flex items-start gap-2.5 min-w-0">
+          {hasAlerta && <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />}
+          <p className="font-bold text-slate-800 text-sm break-words">{student.name}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           {ficha ? (
             <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-green-50 text-green-700 border-green-200">Preenchida</span>
           ) : (
