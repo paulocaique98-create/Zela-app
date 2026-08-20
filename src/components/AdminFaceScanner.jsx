@@ -673,7 +673,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               exige aproximação — se o rosto não preencher o molde, está longe demais. */}
           {!capturedImage && !error && cameraReady && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className={`w-[55vw] max-w-[210px] aspect-[3/4] sm:w-[22rem] sm:max-w-none md:w-[26rem] lg:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
+              <div className={`w-[45vw] max-w-[170px] aspect-[3/4] sm:w-[22rem] sm:max-w-none md:w-[26rem] lg:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
                 matchStatus === 'matched' ? 'border-green-500' :
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
@@ -749,15 +749,28 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             </button>
           )}
 
-          {/* Capture snapshot overlay button */}
-          {modelsLoaded && !capturedImage && !error && (
+          {/* Botão principal da câmera: captura manual antes do match; depois de
+              encontrar o responsável, vira a ação de check-in/check-out direto —
+              evita precisar rolar até o botão do painel lateral. */}
+          {modelsLoaded && !capturedImage && !error && !actionDone && (
             <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
-              <button
-                onClick={handleCaptureAndCompare}
-                className="w-full md:w-auto flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-4 rounded-xl shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
-              >
-                <Camera size={16} /> Capturar e Comparar
-              </button>
+              {matchStatus === 'matched' ? (
+                <button
+                  onClick={handleRequestAccess}
+                  disabled={matchedStudents.length === 0 || isProcessingCapture}
+                  className="w-full md:w-auto flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-black py-2.5 px-4 rounded-xl shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
+                >
+                  {isProcessingCapture ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                  {matchedStudents.some(s => s.status === 'in_school') ? 'Realizar Check-out' : 'Realizar Check-in'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleCaptureAndCompare}
+                  className="w-full md:w-auto flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 px-4 rounded-xl shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
+                >
+                  <Camera size={16} /> Capturar e Comparar
+                </button>
+              )}
             </div>
           )}
         </div>
