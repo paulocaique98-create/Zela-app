@@ -19,6 +19,11 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
   const [cameraError, setCameraError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
+  // Captura múltiplas amostras do rosto (em vez de uma única foto) e guarda a MÉDIA
+  // dos descritores. Isso torna a biometria bem mais robusta a variações de ângulo/luz
+  // do dia do cadastro, reduzindo falsos positivos/negativos no totem depois.
+  const SAMPLES_REQUIRED = 3;
+  const [captureSamples, setCaptureSamples] = useState([]); // [{descriptor, photoBase64}]
 
   // Fetch all persons missing photo/descriptor for this school
   const fetchPersons = async () => {
@@ -83,6 +88,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
     setSaveSuccess('');
     setCapturedPhoto(null);
     setFaceDescriptor(null);
+    setCaptureSamples([]);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user' } 
@@ -113,7 +119,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
 
     try {
       const video = videoRef.current;
-      
+
       // Capture frame to canvas
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
@@ -133,7 +139,26 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
         return;
       }
 
-      setFaceDescriptor(detection.descriptor);
+      const nextSamples = [...captureSamples, { descriptor: detection.descriptor, photoBase64 }];
+      setCaptureSamples(nextSamples);
+
+      if (nextSamples.length < SAMPLES_REQUIRED) {
+        // Ainda faltam amostras — mantém a câmera ativa para a próxima captura
+        setIsProcessing(false);
+        return;
+      }
+
+      // Amostras suficientes: calcula a MÉDIA dos descritores (mais robusta que um único
+      // frame) e usa a última foto capturada como preview visual do cadastro.
+      const descriptorLength = nextSamples[0].descriptor.length;
+      const avgDescriptor = new Float32Array(descriptorLength);
+      for (const sample of nextSamples) {
+        for (let i = 0; i < descriptorLength; i++) {
+          avgDescriptor[i] += sample.descriptor[i] / nextSamples.length;
+        }
+      }
+
+      setFaceDescriptor(avgDescriptor);
       setCapturedPhoto(photoBase64);
       stopCamera();
     } catch (err) {
@@ -183,6 +208,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
   const handleRetry = () => {
     setCapturedPhoto(null);
     setFaceDescriptor(null);
+    setCaptureSamples([]);
     startCamera();
   };
 
@@ -300,7 +326,11 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
                   <span className="mr-1">←</span> Voltar à lista
                 </button>
                 <h2 className="font-bold text-lg">{selectedPerson.name}</h2>
-                <p className="text-slate-400 text-sm">Posicione o rosto centralizado</p>
+                <p className="text-slate-400 text-sm">
+                  {captureSamples.length > 0 && captureSamples.length < SAMPLES_REQUIRED
+                    ? `Amostra ${captureSamples.length}/${SAMPLES_REQUIRED} capturada — mude levemente o ângulo e capture novamente`
+                    : `Posicione o rosto centralizado (serão capturadas ${SAMPLES_REQUIRED} amostras para maior precisão)`}
+                </p>
               </div>
 
               <div className="relative w-full aspect-[3/4] sm:aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl mb-6">
@@ -355,7 +385,7 @@ export default function AdminKioskFaceRegistration({ currentSchool, students = [
                     className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:text-slate-500 text-white font-black rounded-xl text-lg flex items-center justify-center gap-2 transition-colors"
                   >
                     <Camera className="w-6 h-6" />
-                    Capturar Foto
+                    {captureSamples.length === 0 ? 'Capturar Foto' : `Capturar Amostra ${captureSamples.length + 1}/${SAMPLES_REQUIRED}`}
                   </button>
                 ) : (
                   <div className="flex gap-3">

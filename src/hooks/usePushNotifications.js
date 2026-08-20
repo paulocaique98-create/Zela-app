@@ -39,6 +39,11 @@ export function usePushNotifications(currentUser, currentSchool) {
       alert('Seu navegador não suporta notificações push.');
       return false;
     }
+    if (!VAPID_PUBLIC_KEY) {
+      console.error('[Push] VITE_VAPID_PUBLIC_KEY não configurada.');
+      alert('Notificações push não estão configuradas neste ambiente.');
+      return false;
+    }
     setIsLoading(true);
     try {
       // Registrar service worker

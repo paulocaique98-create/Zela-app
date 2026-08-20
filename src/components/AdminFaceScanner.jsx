@@ -1,22 +1,208 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
+import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, Sun, QrCode } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 
-export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false }) {
+// Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
+let _audioCtx = null;
+function getAudioContext() {
+  if (!_audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    _audioCtx = new Ctx();
+  }
+  return _audioCtx;
+}
+
+function playTone(frequency, durationMs, delayMs = 0, volume = 0.15) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const startAt = ctx.currentTime + delayMs / 1000;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gain.gain.setValueAtTime(0, startAt);
+  gain.gain.linearRampToValueAtTime(volume, startAt + 0.01);
+  gain.gain.linearRampToValueAtTime(0, startAt + durationMs / 1000);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(startAt);
+  oscillator.stop(startAt + durationMs / 1000 + 0.02);
+}
+
+function playSuccessBeep() {
+  playTone(880, 120, 0);
+  playTone(1320, 160, 130);
+}
+
+function playErrorBeep() {
+  playTone(220, 220, 0, 0.18);
+}
+
+// ── Parâmetros de segurança/precisão do reconhecimento facial ──
+// Distância euclidiana máxima para considerar um match (menor = mais rígido).
+// 0.55 era permissivo demais e permitia falsos positivos entre pessoas parecidas.
+const MATCH_THRESHOLD = 0.45;
+// A 2ª melhor correspondência precisa estar pelo menos essa distância acima da melhor,
+// senão o match é ambíguo demais (rostos parecidos) e é descartado por segurança.
+const MATCH_MARGIN = 0.07;
+// Quantos frames CONSECUTIVOS precisam apontar para a mesma pessoa antes de confirmar
+// — evita que um único frame ruidoso (comum em pouca luz) confirme a pessoa errada.
+const CONSISTENCY_FRAMES = 3;
+// Luminância média (escala 0-255) abaixo da qual o realce de baixa luminosidade é
+// aplicado automaticamente.
+const DARK_LUMINANCE_THRESHOLD = 85;
+const LUMINANCE_CHECK_INTERVAL_MS = 1000;
+const DETECTION_INTERVAL_MS = 180;
+const LIVE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
+
+// ── Enquadramento: exige que o rosto esteja perto (~60cm) e centralizado no molde ──
+// Sem sensor de profundidade, a distância é aproximada pela LARGURA que o rosto ocupa
+// no quadro: quanto mais perto, maior o rosto na imagem. Calibrado para uma webcam
+// comum de totem (campo de visão ~60-70°): a ~60cm o rosto ocupa por volta de 20-24%
+// da largura do quadro; abaixo disso está longe demais, acima de ~50% está perto demais.
+const MIN_FACE_WIDTH_RATIO = 0.20;
+const MAX_FACE_WIDTH_RATIO = 0.50;
+// Tolerância de centralização em relação ao centro do quadro (0 a 0.5)
+const CENTER_TOLERANCE_X = 0.26;
+const CENTER_TOLERANCE_Y = 0.32;
+
+// Avalia se o rosto detectado está bem posicionado (perto e dentro do molde central)
+function evaluateFramePosition(box, videoWidth, videoHeight) {
+  const faceWidthRatio = box.width / videoWidth;
+  const cx = (box.x + box.width / 2) / videoWidth;
+  const cy = (box.y + box.height / 2) / videoHeight;
+  const isOffCenter = Math.abs(cx - 0.5) > CENTER_TOLERANCE_X || Math.abs(cy - 0.5) > CENTER_TOLERANCE_Y;
+  const isTooFar = faceWidthRatio < MIN_FACE_WIDTH_RATIO;
+  const isTooClose = faceWidthRatio > MAX_FACE_WIDTH_RATIO;
+
+  if (isTooFar) return 'too-far';
+  if (isTooClose) return 'too-close';
+  if (isOffCenter) return 'off-center';
+  return 'ok';
+}
+
+// Mede a luminância média de um frame de vídeo/canvas de forma barata (amostra pequena)
+function getAverageLuminance(source, sampleSize = 24) {
+  const canvas = document.createElement('canvas');
+  canvas.width = sampleSize;
+  canvas.height = sampleSize;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(source, 0, 0, sampleSize, sampleSize);
+  const { data } = ctx.getImageData(0, 0, sampleSize, sampleSize);
+  let total = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  }
+  return total / (data.length / 4);
+}
+
+// Gera um canvas com realce de brilho/contraste proporcional ao quão escura está a cena
+// (ou forçado no máximo se `boost` estiver ativo pelo toggle manual do totem).
+function enhanceForLowLight(source, width, height, luminance, boost) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  const deficit = Math.max(0, DARK_LUMINANCE_THRESHOLD - luminance);
+  const brightness = boost ? 1.9 : Math.min(1.8, 1 + deficit / 90);
+  const contrast = boost ? 1.35 : Math.min(1.3, 1 + deficit / 220);
+  ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
+  ctx.drawImage(source, 0, 0, width, height);
+  return canvas;
+}
+
+// Substitui o FaceMatcher padrão por uma versão com verificação de ambiguidade:
+// rejeita o match se a segunda melhor correspondência estiver perigosamente próxima
+// da primeira (rostos parecidos), em vez de simplesmente aceitar a menor distância.
+function findSecureMatch(descriptor, labeledDescriptors) {
+  let bestLabel = 'unknown';
+  let bestDistance = Infinity;
+  let secondBestDistance = Infinity;
+
+  for (const ld of labeledDescriptors) {
+    for (const stored of ld.descriptors) {
+      const distance = faceapi.euclideanDistance(descriptor, stored);
+      if (distance < bestDistance) {
+        secondBestDistance = bestDistance;
+        bestDistance = distance;
+        bestLabel = ld.label;
+      } else if (distance < secondBestDistance) {
+        secondBestDistance = distance;
+      }
+    }
+  }
+
+  if (bestDistance > MATCH_THRESHOLD) {
+    return { label: 'unknown', distance: bestDistance };
+  }
+  if (secondBestDistance - bestDistance < MATCH_MARGIN) {
+    return { label: 'unknown', distance: bestDistance, ambiguous: true };
+  }
+  return { label: bestLabel, distance: bestDistance };
+}
+
+export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
   const videoRef = useRef(null);
 
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial...');
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
-  const [faceMatcher, setFaceMatcher] = useState(null);
+  const [labeledDescriptors, setLabeledDescriptors] = useState(null);
+  const [lowLightBoost, setLowLightBoost] = useState(
+    () => localStorage.getItem('zela_lowlight_boost') === 'true'
+  );
+  const isDarkRef = useRef(false);
+  const lastLuminanceCheckRef = useRef(0);
+  const recentMatchesRef = useRef([]);
+  // 'ok' | 'too-far' | 'off-center' | null — orienta o overlay de enquadramento
+  const [framePosition, setFramePosition] = useState(null);
+  const [noMatchReason, setNoMatchReason] = useState('');
+
+  const toggleLowLightBoost = () => {
+    setLowLightBoost(prev => {
+      const next = !prev;
+      localStorage.setItem('zela_lowlight_boost', String(next));
+      return next;
+    });
+  };
 
   const [matchedPerson, setMatchedPerson] = useState(null); // The authorized person detected
   const [matchStatus, setMatchStatus] = useState('idle'); // 'idle' | 'searching' | 'matched' | 'no-match'
   const [matchedStudents, setMatchedStudents] = useState([]);
   const [actionDone, setActionDone] = useState(false);
+
+  // Timeout de segurança: se ninguém for reconhecido depois de um tempo, oferece uma
+  // alternativa (QR Code/PIN) em vez de deixar a pessoa presa olhando pra câmera.
+  const STUCK_TIMEOUT_MS = 20000;
+  const [showAlternative, setShowAlternative] = useState(false);
+  const stuckTimerRef = useRef(null);
+
+  const resetStuckTimer = () => {
+    setShowAlternative(false);
+    if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+    stuckTimerRef.current = setTimeout(() => setShowAlternative(true), STUCK_TIMEOUT_MS);
+  };
+
+  useEffect(() => {
+    resetStuckTimer();
+    return () => {
+      if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+    };
+  }, []);
+
+  // Feedback sonoro nas transições de status — o responsável nem sempre está olhando
+  // para a tela, então o som confirma o resultado sem precisar checar visualmente.
+  const prevMatchStatusRef = useRef('idle');
+  useEffect(() => {
+    if (matchStatus === prevMatchStatusRef.current) return;
+    if (matchStatus === 'matched') playSuccessBeep();
+    else if (matchStatus === 'no-match') playErrorBeep();
+    prevMatchStatusRef.current = matchStatus;
+  }, [matchStatus]);
 
   const [capturedImage, setCapturedImage] = useState(null);
   const [matchDistance, setMatchDistance] = useState(null);
@@ -70,16 +256,16 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
         if (!active) return;
 
-        const labeledDescriptors = results.filter(Boolean);
+        const validLabeledDescriptors = results.filter(Boolean);
 
-        if (labeledDescriptors.length === 0) {
+        if (validLabeledDescriptors.length === 0) {
           setError('Não foi possível carregar as biometrias cadastradas.');
           return;
         }
 
-        // 4. Cria o matcher
-        const matcher = new faceapi.FaceMatcher(labeledDescriptors, 0.55);
-        setFaceMatcher(matcher);
+        // 4. Guarda os descritores para comparação com verificação de ambiguidade
+        // (ver findSecureMatch) — substitui o FaceMatcher padrão do face-api.js.
+        setLabeledDescriptors(validLabeledDescriptors);
 
         // 5. Inicia câmera
         setLoadingText('Iniciando câmera...');
@@ -119,12 +305,63 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     });
   };
 
+  // Busca os alunos vinculados a um responsável reconhecido (1º e 2º Responsável)
+  const fetchStudentsForPerson = async (person) => {
+    const { data: guardianLinks } = await supabase
+      .from('student_guardians')
+      .select('student_id')
+      .eq('guardian_id', person.family_id);
+
+    const studentIds = guardianLinks?.map(l => l.student_id) || [];
+
+    if (studentIds.length > 0) {
+      if (students && students.length > 0) {
+        return students.filter(s => studentIds.includes(s.id) || s.family_id === person.family_id || s.familyId === person.family_id);
+      }
+      const { data } = await supabase
+        .from('students')
+        .select('*')
+        .in('id', studentIds)
+        .eq('school_id', currentUser.school_id);
+      return data || [];
+    }
+
+    if (students && students.length > 0) {
+      return students.filter(s => s.familyId === person.family_id || s.family_id === person.family_id);
+    }
+    const { data } = await supabase
+      .from('students')
+      .select('*')
+      .eq('family_id', person.family_id)
+      .eq('school_id', currentUser.school_id);
+    return data || [];
+  };
+
   // Loop de detecção — só roda quando câmera estiver realmente ativa
   useEffect(() => {
-    if (!faceMatcher || !modelsLoaded || !cameraReady || error || capturedImage) return;
+    if (!labeledDescriptors || !modelsLoaded || !cameraReady || error || capturedImage) return;
 
     let timerId;
+    let cancelled = false;
     let isDetecting = false;
+    let matchConfirmed = false;
+
+    // Anti-flicker: só atualiza o estado exibido (borda/mensagem do molde) depois que
+    // a MESMA leitura se repetir por alguns frames seguidos, evitando que a mensagem
+    // "Aproxime-se/Afaste-se/Centralize" pisque a cada pequena oscilação da detecção.
+    let lastRawPosition = undefined;
+    let stableCount = 0;
+    const debouncedSetFramePosition = (position) => {
+      if (position === lastRawPosition) {
+        stableCount += 1;
+      } else {
+        lastRawPosition = position;
+        stableCount = 1;
+      }
+      if (stableCount === 2) {
+        setFramePosition(position);
+      }
+    };
 
     const detectFace = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended || isDetecting) return;
@@ -133,85 +370,112 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       try {
         const video = videoRef.current;
 
-        if (video) {
-          const detections = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        if (video && video.videoWidth) {
+          // Reavalia a luminância periodicamente (não a cada frame — é custoso)
+          const now = Date.now();
+          if (now - lastLuminanceCheckRef.current > LUMINANCE_CHECK_INTERVAL_MS) {
+            lastLuminanceCheckRef.current = now;
+            isDarkRef.current = getAverageLuminance(video) < DARK_LUMINANCE_THRESHOLD;
+          }
 
-          setMatchStatus(detections ? 'searching' : 'idle');
+          // Só paga o custo de pré-processamento em canvas quando necessário
+          // (cena escura ou boost manual ligado) — mantém o caminho rápido em boa luz.
+          let detectionInput = video;
+          if (isDarkRef.current || lowLightBoost) {
+            const luminance = getAverageLuminance(video);
+            detectionInput = enhanceForLowLight(video, video.videoWidth, video.videoHeight, luminance, lowLightBoost);
+          }
 
-          if (detections) {
-            const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
+          // Depois de já confirmado, só precisamos monitorar a posição do rosto (mais
+          // barato) — landmarks/descriptor só são recalculados enquanto ainda buscando.
+          const detections = matchConfirmed
+            ? await faceapi.detectSingleFace(detectionInput, LIVE_DETECTOR_OPTIONS)
+            : await faceapi.detectSingleFace(detectionInput, LIVE_DETECTOR_OPTIONS).withFaceLandmarks().withFaceDescriptor();
 
-            if (bestMatch.label !== 'unknown') {
-              // Found a match!
-              const personId = bestMatch.label;
-              const person = authorizedList.find(p => p.id === personId);
-              if (person) {
-                setMatchedPerson(person);
-                setMatchDistance(bestMatch.distance);
-                setMatchStatus('matched');
+          if (!detections) {
+            setMatchStatus('idle');
+            debouncedSetFramePosition(null);
+            recentMatchesRef.current = [];
+            if (matchConfirmed) {
+              matchConfirmed = false;
+              setMatchedPerson(null);
+              setMatchedStudents([]);
+              setMatchDistance(null);
+              resetStuckTimer();
+            }
+          } else {
+            const box = matchConfirmed ? detections.box : detections.detection.box;
+            const position = evaluateFramePosition(box, video.videoWidth, video.videoHeight);
+            debouncedSetFramePosition(position);
 
-                // Primeiro buscar via student_guardians (cobre 1º e 2º Responsável)
-                const { data: guardianLinks } = await supabase
-                  .from('student_guardians')
-                  .select('student_id')
-                  .eq('guardian_id', person.family_id);
-                
-                const studentIds = guardianLinks?.map(l => l.student_id) || [];
-                
-                // Fallback para family_id direto se student_guardians vazio
-                let studentsData = [];
-                if (studentIds.length > 0) {
-                  if (students && students.length > 0) {
-                    studentsData = students.filter(s => studentIds.includes(s.id) || s.family_id === person.family_id || s.familyId === person.family_id);
-                  } else {
-                    const { data } = await supabase
-                      .from('students')
-                      .select('*')
-                      .in('id', studentIds)
-                      .eq('school_id', currentUser.school_id);
-                    studentsData = data || [];
-                  }
-                } else {
-                  if (students && students.length > 0) {
-                    studentsData = students.filter(s => s.familyId === person.family_id || s.family_id === person.family_id);
-                  } else {
-                    const { data } = await supabase
-                      .from('students')
-                      .select('*')
-                      .eq('family_id', person.family_id)
-                      .eq('school_id', currentUser.school_id);
-                    studentsData = data || [];
-                  }
+            if (position !== 'ok') {
+              // Fora do molde (longe demais ou descentralizado): não é seguro confirmar
+              // — e se já estava confirmado, o molde é o "foco": sair dele cancela o
+              // match e volta automaticamente para "Verificando Rosto".
+              recentMatchesRef.current = [];
+              if (matchConfirmed) {
+                matchConfirmed = false;
+                setMatchedPerson(null);
+                setMatchedStudents([]);
+                setMatchDistance(null);
+                resetStuckTimer();
+              }
+              setMatchStatus('searching');
+            } else if (!matchConfirmed) {
+              setMatchStatus('searching');
+              const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
+
+              // Debounce por consistência: só confirma depois de N frames seguidos
+              // apontando para a MESMA pessoa. Um frame isolado ruim (comum em pouca
+              // luz) nunca é suficiente para exibir/confirmar alguém.
+              const history = recentMatchesRef.current;
+              history.push(bestMatch.label);
+              if (history.length > CONSISTENCY_FRAMES) history.shift();
+
+              const isConsistent =
+                history.length === CONSISTENCY_FRAMES &&
+                history.every(label => label === bestMatch.label);
+
+              if (bestMatch.label !== 'unknown' && isConsistent) {
+                const personId = bestMatch.label;
+                const person = authorizedList.find(p => p.id === personId);
+                if (person && !cancelled) {
+                  matchConfirmed = true;
+                  setMatchedPerson(person);
+                  setMatchDistance(bestMatch.distance);
+                  setMatchStatus('matched');
+                  if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
+                  setShowAlternative(false);
+                  const studentsData = await fetchStudentsForPerson(person);
+                  if (!cancelled) setMatchedStudents(studentsData);
                 }
-                setMatchedStudents(studentsData);
               }
             }
+            // Se matchConfirmed && position === 'ok': mantém o estado atual (já confirmado).
           }
         }
       } catch (err) {
         console.error('Erro no loop de detecção:', err);
       }
       isDetecting = false;
-      // Agenda próxima detecção a cada 250ms (mais leve que 60fps)
-      timerId = setTimeout(detectFace, 250);
+      timerId = setTimeout(detectFace, DETECTION_INTERVAL_MS);
     };
 
     timerId = setTimeout(detectFace, 100); // Primeira execução um pouco mais cedo
 
     return () => {
+      cancelled = true;
       clearTimeout(timerId);
     };
-  }, [faceMatcher, modelsLoaded, cameraReady, error, authorizedList, students, capturedImage]);
+  }, [labeledDescriptors, modelsLoaded, cameraReady, error, authorizedList, students, capturedImage, lowLightBoost]);
 
   // Capture current frame and run face comparison
   const handleCaptureAndCompare = async () => {
-    if (!videoRef.current || !faceMatcher) return;
+    if (!videoRef.current || !labeledDescriptors) return;
 
     setIsProcessingCapture(true);
     setError(null);
+    setNoMatchReason('');
     try {
       const video = videoRef.current;
       const canvas = document.createElement('canvas');
@@ -229,16 +493,16 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       setCapturedImage(dataUrl);
       setMatchStatus('searching');
 
-      // Criar canvas auxiliar para pré-processamento de brilho e contraste
-      const processCanvas = document.createElement('canvas');
-      processCanvas.width = video.videoWidth || 640;
-      processCanvas.height = video.videoHeight || 480;
-      const processCtx = processCanvas.getContext('2d');
-      processCtx.filter = 'brightness(1.8) contrast(1.3)';
-      processCtx.drawImage(video, 0, 0);
+      // Pré-processamento adaptativo: só realça brilho/contraste na intensidade que a
+      // cena realmente precisa (ou no máximo se o boost manual estiver ligado), em vez
+      // do filtro fixo 1.8/1.3 anterior, que distorcia o rosto mesmo com boa iluminação
+      // e piorava a taxa de falso-positivo.
+      const luminance = getAverageLuminance(video);
+      const processCanvas = enhanceForLowLight(video, video.videoWidth || 640, video.videoHeight || 480, luminance, lowLightBoost);
 
-      // Usar processCanvas para a detecção de confronto
-      const detection = await faceapi.detectSingleFace(processCanvas)
+      // Detector mais preciso (SsdMobilenetv1) para a confirmação manual — não é
+      // tempo-crítico como o loop ao vivo, então vale usar o modelo mais robusto.
+      const detection = await faceapi.detectSingleFace(processCanvas, new faceapi.SsdMobilenetv1Options())
         .withFaceLandmarks()
         .withFaceDescriptor();
 
@@ -248,7 +512,19 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         return;
       }
 
-      const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+      const position = evaluateFramePosition(detection.detection.box, video.videoWidth || 640, video.videoHeight || 480);
+      if (position !== 'ok') {
+        setNoMatchReason(
+          position === 'too-far' ? 'Aproxime-se do Dispositivo e tente novamente.' :
+            position === 'too-close' ? 'Afaste-se do Dispositivo e tente novamente.' :
+              'Centralize o rosto no molde e tente novamente.'
+        );
+        setMatchStatus('no-match');
+        setIsProcessingCapture(false);
+        return;
+      }
+
+      const bestMatch = findSecureMatch(detection.descriptor, labeledDescriptors);
 
       if (bestMatch.label !== 'unknown') {
         const personId = bestMatch.label;
@@ -257,40 +533,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           setMatchedPerson(person);
           setMatchDistance(bestMatch.distance);
           setMatchStatus('matched');
-
-          // Primeiro buscar via student_guardians (cobre 1º e 2º Responsável)
-          const { data: guardianLinks } = await supabase
-            .from('student_guardians')
-            .select('student_id')
-            .eq('guardian_id', person.family_id);
-          
-          const studentIds = guardianLinks?.map(l => l.student_id) || [];
-          
-          // Fallback para family_id direto se student_guardians vazio
-          let studentsData = [];
-          if (studentIds.length > 0) {
-            if (students && students.length > 0) {
-              studentsData = students.filter(s => studentIds.includes(s.id) || s.family_id === person.family_id || s.familyId === person.family_id);
-            } else {
-              const { data } = await supabase
-                .from('students')
-                .select('*')
-                .in('id', studentIds)
-                .eq('school_id', currentUser.school_id);
-              studentsData = data || [];
-            }
-          } else {
-            if (students && students.length > 0) {
-              studentsData = students.filter(s => s.familyId === person.family_id || s.family_id === person.family_id);
-            } else {
-              const { data } = await supabase
-                .from('students')
-                .select('*')
-                .eq('family_id', person.family_id)
-                .eq('school_id', currentUser.school_id);
-              studentsData = data || [];
-            }
-          }
+          const studentsData = await fetchStudentsForPerson(person);
           setMatchedStudents(studentsData);
         } else {
           setMatchStatus('no-match');
@@ -314,10 +557,14 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     setMatchStatus('idle');
     setMatchedStudents([]);
     setActionDone(false);
+    setFramePosition(null);
+    setNoMatchReason('');
+    recentMatchesRef.current = [];
+    resetStuckTimer();
   };
 
   const handleRequestAccess = async () => {
-    if (!matchedStudents.length) return;
+    if (!matchedStudents.length || isProcessingCapture) return;
 
     setIsProcessingCapture(true);
     try {
@@ -359,13 +606,13 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         {/* Left pane: Camera feed or Static Captured Image */}
         <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
 
-          {(!cameraReady || !faceMatcher) && !error && (
+          {(!cameraReady || !labeledDescriptors) && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
               <p className="text-sm font-semibold">
                 {!modelsLoaded ? "Carregando IA de reconhecimento..." :
                   !cameraReady ? "Iniciando câmera..." :
-                    !faceMatcher ? "Preparando biometrias..." : "Preparando sistema..."}
+                    !labeledDescriptors ? "Preparando biometrias..." : "Preparando sistema..."}
               </p>
             </div>
           )}
@@ -398,6 +645,57 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             </>
           )}
 
+          {/* Molde de rosto central: guia o responsável a se posicionar bem próximo
+              da câmera (~60cm) para melhor precisão do reconhecimento. O tamanho grande
+              exige aproximação — se o rosto não preencher o molde, está longe demais. */}
+          {!capturedImage && !error && cameraReady && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <div className={`w-[85vw] max-w-[26rem] aspect-[3/4] sm:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
+                matchStatus === 'matched' ? 'border-green-500' :
+                  matchStatus === 'no-match' ? 'border-red-500' :
+                    framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
+                      matchStatus === 'searching' ? 'border-indigo-600' : 'border-white/80'
+              }`}></div>
+            </div>
+          )}
+
+          {/* "Calibrando Câmera" — some assim que um rosto começa a ser verificado */}
+          {!capturedImage && !error && cameraReady && matchStatus === 'idle' && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 gap-2 px-6 text-center">
+              <span className="bg-black/60 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-xl shadow-md">
+                Calibrando Câmera...
+              </span>
+              <span className="bg-black/60 backdrop-blur-md text-slate-200 text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md">
+                Posicione o rosto dentro do molde
+              </span>
+            </div>
+          )}
+
+          {/* Aviso de enquadramento: rosto detectado mas longe/descentralizado do molde.
+              Enquanto isso, nenhum match é confirmado — o molde é o foco obrigatório. */}
+          {!capturedImage && !error && cameraReady && matchStatus === 'searching' && (framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center') && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 gap-2 px-6 text-center">
+              <span className="bg-orange-500/90 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-xl shadow-md animate-pulse">
+                {framePosition === 'too-far' ? 'Aproxime-se do Dispositivo' :
+                  framePosition === 'too-close' ? 'Afaste-se do Dispositivo' :
+                    'Centralize o rosto no molde'}
+              </span>
+            </div>
+          )}
+
+          {/* Timeout de segurança: se ninguém for reconhecido depois de um tempo,
+              oferece uma alternativa em vez de deixar a pessoa presa olhando pra câmera */}
+          {!capturedImage && !error && cameraReady && showAlternative && matchStatus !== 'matched' && onUseAlternative && (
+            <div className="absolute bottom-20 left-4 right-4 flex justify-center z-30">
+              <button
+                onClick={onUseAlternative}
+                className="pointer-events-auto flex items-center gap-2 bg-white text-slate-800 font-bold px-4 py-2.5 rounded-xl shadow-lg text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-4"
+              >
+                <QrCode size={16} className="text-indigo-600" /> Não está reconhecendo? Usar QR Code / Senha
+              </button>
+            </div>
+          )}
+
           {/* Mirror status badge */}
           <div className="absolute top-4 left-4 md:top-auto md:bottom-4 md:left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] text-white flex items-center gap-1.5 font-mono max-w-[calc(100%-2rem)] md:max-w-none truncate shadow-md">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${matchStatus === 'matched' ? 'bg-green-500' :
@@ -413,6 +711,20 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               }
             </span>
           </div>
+
+          {/* Toggle de baixa luminosidade — reforça o realce de brilho/contraste
+              manualmente para ambientes de entrada mal iluminados */}
+          {!capturedImage && !error && (
+            <button
+              onClick={toggleLowLightBoost}
+              title="Reforçar realce para ambientes escuros"
+              className={`absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] font-bold uppercase backdrop-blur-md shadow-md transition-colors z-30 ${
+                lowLightBoost ? 'bg-amber-500 text-white' : 'bg-black/60 text-slate-200 hover:bg-black/70'
+              }`}
+            >
+              <Sun size={14} /> {lowLightBoost ? 'Baixa Luz ON' : 'Baixa Luz'}
+            </button>
+          )}
 
           {/* Capture snapshot overlay button */}
           {modelsLoaded && !capturedImage && !error && (
@@ -455,7 +767,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 <div>
                   <h4 className="font-bold text-slate-800 text-base">Nenhum Confronto Encontrado</h4>
                   <p className="text-slate-500 text-xs mt-2 px-4 leading-relaxed">
-                    O rosto capturado não corresponde a nenhum dos responsáveis aprovados e cadastrados no sistema.
+                    {noMatchReason || 'O rosto capturado não corresponde a nenhum dos responsáveis aprovados e cadastrados no sistema.'}
                   </p>
                 </div>
                 <button
@@ -563,15 +875,15 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 {/* Reset button to clear confrontation and start live scans again */}
                 <button
                   onClick={handleResetScanner}
-                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl transition text-xs flex items-center justify-center gap-1.5"
+                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-2xl transition text-sm flex items-center justify-center gap-1.5 uppercase tracking-wider"
                 >
-                  <RefreshCw size={12} /> Limpar e Voltar
+                  <RefreshCw size={16} /> Limpar e Voltar
                 </button>
 
                 {/* Confirm access */}
                 <button
                   onClick={handleRequestAccess}
-                  disabled={matchedStudents.length === 0}
+                  disabled={matchedStudents.length === 0 || isProcessingCapture}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-black py-4 rounded-2xl active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider"
                 >
                   {matchedStudents.some(s => s.status === 'in_school') ? 'Realizar Check-out' : 'Realizar Check-in'}

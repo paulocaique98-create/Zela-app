@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useState, useEffect, useRef } from 'react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { X, QrCode, CheckCircle, ShieldAlert, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function QRCodeScanner({ 
-  school_id, 
-  currentSchool, 
-  onClose, 
+export default function QRCodeScanner({
+  school_id,
+  currentSchool,
+  onClose,
   onCheckinConfirmed, // equivalent to onScanSuccess
   updateStudentStatus, // used if in kiosk mode to update parent state directly
   requestKioskAccess, // passed for atomic DB updates
   students, // optionally passed for kiosk mode
-  mode = 'admin', 
-  isLandscape = false 
+  mode = 'admin',
+  isLandscape = false
 }) {
   const [error, setError] = useState('');
   const [scanning, setScanning] = useState(true);
@@ -21,10 +21,17 @@ export default function QRCodeScanner({
   const [matchedPerson, setMatchedPerson] = useState(null);
   const [matchedStudents, setMatchedStudents] = useState([]);
   const [actionDone, setActionDone] = useState(false);
+  const autoCloseTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     let html5QrCode;
-    
+
     // Pequeno delay para garantir que a div "reader" esteja renderizada
     const timer = setTimeout(() => {
       html5QrCode = new Html5Qrcode("reader");
@@ -33,17 +40,19 @@ export default function QRCodeScanner({
           await html5QrCode.start(
             { facingMode: "environment" },
             {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
+              fps: 60,
+              formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
             },
             async (decodedText) => {
               if (!scanning) return;
               try {
                 const data = JSON.parse(decodedText);
-                
+
                 if (data.type === 'zela_checkin' || data.type === 'student_checkin') {
+                  // Não chamar stop() aqui — o cleanup do efeito (disparado pela mudança
+                  // de `scanning`) já cuida de parar a câmera. Chamar os dois causava
+                  // "cannot stop, scanner is not running" e podia deixar o stream travado.
                   setScanning(false);
-                  html5QrCode.stop().catch(console.error);
                   await processQRCode(data);
                 } else {
                   // Not a recognized QR code type
@@ -87,7 +96,7 @@ export default function QRCodeScanner({
           return;
         }
         targetFamilyId = data.family_id;
-      } 
+      }
       // b) Formato legado: {"type": "student_checkin", "studentId": "..."}
       else if (data.type === 'student_checkin') {
         const { data: studentData, error: studentError } = await supabase
@@ -96,7 +105,7 @@ export default function QRCodeScanner({
           .eq('id', data.studentId)
           .eq('school_id', school_id)
           .single();
-        
+
         if (studentError || !studentData) {
           setError('Aluno do QR Code não encontrado nesta escola.');
           setMatchStatus('no-match');
@@ -115,25 +124,29 @@ export default function QRCodeScanner({
 
       // Buscar o responsável
       // 1. Tentar authorized_persons
-      let { data: authPerson } = await supabase
+      let { data: authPerson, error: authPersonError } = await supabase
         .from('authorized_persons')
         .select('*')
         .eq('family_id', targetFamilyId)
         .eq('school_id', school_id)
         .limit(1)
-        .single();
-      
+        .maybeSingle();
+
+      if (authPersonError) console.error('[QRCodeScanner] Erro ao buscar authorized_persons:', authPersonError);
+
       let personData = authPerson;
 
       // 2. Fallback: buscar em users se não achar em authorized_persons
       if (!personData) {
-        const { data: userPerson } = await supabase
+        const { data: userPerson, error: userPersonError } = await supabase
           .from('users')
           .select('*')
           .eq('id', targetFamilyId)
           .eq('school_id', school_id)
-          .single();
-          
+          .maybeSingle();
+
+        if (userPersonError) console.error('[QRCodeScanner] Erro ao buscar users:', userPersonError);
+
         if (userPerson) {
           personData = {
             id: userPerson.id,
@@ -159,9 +172,9 @@ export default function QRCodeScanner({
         .from('student_guardians')
         .select('student_id')
         .eq('guardian_id', targetFamilyId);
-        
+
       const studentIds = guardianLinks?.map(l => l.student_id) || [];
-      
+
       // Fallback para family_id direto se student_guardians vazio
       let familyStudents = [];
       if (studentIds.length > 0) {
@@ -187,7 +200,7 @@ export default function QRCodeScanner({
           familyStudents = data || [];
         }
       }
-      
+
       setMatchedStudents(familyStudents);
       setMatchStatus('matched');
 
@@ -221,7 +234,8 @@ export default function QRCodeScanner({
       } else {
         // Fallback legado
         const now = new Date();
-        const fullRecordStr = `${now.toISOString().split('T')[0]}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        const fullRecordStr = `${dateStr}|${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
         for (const student of matchedStudents) {
           let newStatus = student.status;
@@ -258,10 +272,10 @@ export default function QRCodeScanner({
       if (onCheckinConfirmed) {
         onCheckinConfirmed(processedStudents);
       }
-      
+
       // Auto-fechar ou resetar no AdminPortal
       if (mode === 'admin') {
-        setTimeout(() => {
+        autoCloseTimerRef.current = setTimeout(() => {
           if (onClose) onClose();
         }, 3500);
       }
@@ -287,7 +301,7 @@ export default function QRCodeScanner({
             <QrCode size={18} className="text-indigo-600" /> Leitor de QR Code
           </h3>
           <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-lg transition-colors">
-            <X size={20}/>
+            <X size={20} />
           </button>
         </div>
       )}
@@ -317,7 +331,7 @@ export default function QRCodeScanner({
               </div>
             </div>
           )}
-          
+
           {!scanning && matchStatus === 'idle' && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
@@ -327,16 +341,15 @@ export default function QRCodeScanner({
 
           {/* Badge */}
           <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] text-white flex items-center gap-1.5 font-mono z-30">
-            <span className={`w-2.5 h-2.5 rounded-full ${
-              matchStatus === 'matched' ? 'bg-green-500' : 
-              scanning ? 'bg-indigo-500 animate-ping' : 
-              matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
-            }`}></span>
+            <span className={`w-2.5 h-2.5 rounded-full ${matchStatus === 'matched' ? 'bg-green-500' :
+                scanning ? 'bg-indigo-500 animate-ping' :
+                  matchStatus === 'no-match' ? 'bg-red-500' : 'bg-slate-500'
+              }`}></span>
             {
               isProcessing ? 'PROCESSANDO QR CODE...' :
-              matchStatus === 'matched' ? 'RESPONSÁVEL IDENTIFICADO' : 
-              scanning ? 'CÂMERA ATIVA' : 
-              matchStatus === 'no-match' ? 'QR CODE INVÁLIDO' : 'AGUARDANDO'
+                matchStatus === 'matched' ? 'RESPONSÁVEL IDENTIFICADO' :
+                  scanning ? 'CÂMERA ATIVA' :
+                    matchStatus === 'no-match' ? 'QR CODE INVÁLIDO' : 'AGUARDANDO'
             }
           </div>
         </div>
@@ -350,7 +363,7 @@ export default function QRCodeScanner({
                 <QrCode size={18} className="text-indigo-600" /> Leitor de QR Code
               </h3>
               <button onClick={onClose} className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg transition">
-                <X size={20}/>
+                <X size={20} />
               </button>
             </div>
           )}
@@ -372,7 +385,7 @@ export default function QRCodeScanner({
                     Não foi possível identificar um responsável válido com este QR Code.
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={handleResetScanner}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2"
                 >
@@ -387,7 +400,7 @@ export default function QRCodeScanner({
                   <p className="text-slate-500 text-xs mt-1">Check-in / Check-out registrado.</p>
                 </div>
                 {mode === 'kiosk' && (
-                  <button 
+                  <button
                     onClick={handleResetScanner}
                     className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm"
                   >
@@ -414,7 +427,7 @@ export default function QRCodeScanner({
                     {matchedPerson.photo_url ? (
                       <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
                     ) : (
-                      matchedPerson.name.charAt(0).toUpperCase()
+                      (matchedPerson.name || '?').charAt(0).toUpperCase()
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -439,11 +452,10 @@ export default function QRCodeScanner({
                             <p className="font-bold text-slate-700">{student.name}</p>
                             <span className="text-[10px] text-slate-400 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' : 
-                            student.status === 'left' ? 'bg-slate-100 text-slate-500' : 
-                            student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                          }`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' :
+                              student.status === 'left' ? 'bg-slate-100 text-slate-500' :
+                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                            }`}>
                             {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente'}
                           </span>
                         </div>
@@ -453,7 +465,7 @@ export default function QRCodeScanner({
                 </div>
 
                 {/* Reset button */}
-                <button 
+                <button
                   onClick={handleResetScanner}
                   className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl transition text-xs flex items-center justify-center gap-1.5"
                 >

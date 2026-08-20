@@ -37,6 +37,9 @@ export default function DeveloperPanel({ currentUser }) {
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
 
+  const defaultLimits = { autorizados_por_responsavel: 2, autorizados_transporte: 1 };
+  const [limits, setLimits] = useState(defaultLimits);
+
 
 
   useEffect(() => {
@@ -74,12 +77,14 @@ export default function DeveloperPanel({ currentUser }) {
         notes: school.notes || ''
       });
       setFeaturesEnabled({ ...defaultFeatures, ...(school.features_enabled || {}) });
+      setLimits({ ...defaultLimits, ...(school.limits || {}) });
     } else {
       setEditingSchool(null);
       setFormData({
         name: '', cnpj: '', email: '', phone: '', address: '', plan: 'basic', is_active: true, notes: ''
       });
       setFeaturesEnabled(defaultFeatures);
+      setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
       setSaveError('');
       setSuccessMsg('');
@@ -122,7 +127,7 @@ export default function DeveloperPanel({ currentUser }) {
         // Update apenas dados da escola
         const { error } = await supabase
           .from('schools')
-          .update({ ...formData, features_enabled: featuresEnabled })
+          .update({ ...formData, features_enabled: featuresEnabled, limits })
           .eq('id', editingSchool.id);
 
         if (error) throw error;
@@ -141,7 +146,7 @@ export default function DeveloperPanel({ currentUser }) {
         const schoolCode = await generateSchoolCode();
         const { data: newSchool, error: schoolError } = await supabase
           .from('schools')
-          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled }])
+          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled, limits }])
           .select()
           .single();
 
@@ -470,6 +475,36 @@ export default function DeveloperPanel({ currentUser }) {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* LIMITES DE AUTORIZADOS (matrícula) */}
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <h4 className="text-sm font-bold text-slate-800 mb-1">Limites de Autorizados (Matrícula)</h4>
+                <p className="text-xs text-slate-400 mb-4">Quantos autorizados de retirada cada responsável pode cadastrar no formulário de matrícula, e quantos autorizados exclusivos de transporte. Básico: 2 por responsável + 1 de transporte (total de 5, com os 2 responsáveis).</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Autorizados por Responsável</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={limits.autorizados_por_responsavel}
+                      onChange={e => setLimits(prev => ({ ...prev, autorizados_por_responsavel: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Autorizados de Transporte</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={limits.autorizados_transporte}
+                      onChange={e => setLimits(prev => ({ ...prev, autorizados_transporte: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
               </div>
 

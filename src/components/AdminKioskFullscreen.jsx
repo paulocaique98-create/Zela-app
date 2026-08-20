@@ -33,6 +33,14 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   });
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
+  // Corrige o modo quando currentSchool chega depois do primeiro render (ex: fetch lento):
+  // sem isso, uma escola 'basic' podia ficar travada em 'facial' sem o botão pra trocar.
+  useEffect(() => {
+    if (currentSchool?.plan === 'basic') {
+      setActiveMode(prev => (prev === 'facial' ? 'qrcode' : prev));
+    }
+  }, [currentSchool?.plan]);
+
   useEffect(() => {
     const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
     window.addEventListener('resize', handleResize);
@@ -81,6 +89,26 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
   const [showRegistrationPanel, setShowRegistrationPanel] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
 
+  // Rate-limit client-side contra força bruta na senha do totem (dispositivo público).
+  // Não substitui rate-limit no servidor, mas já impede tentativas automatizadas rápidas.
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(null);
+
+  const getLockRemainingSeconds = () => {
+    if (!lockedUntil) return 0;
+    return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
+  };
+
+  const registerFailedAttempt = () => {
+    setFailedAttempts(prev => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setLockedUntil(Date.now() + 30000); // 30s de bloqueio após 5 tentativas
+      }
+      return next;
+    });
+  };
+
   const handleExitClick = () => {
     setShowExitModal(true);
     setPassword('');
@@ -89,22 +117,27 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
   const handleConfirmExit = async (e) => {
     e.preventDefault();
+    if (getLockRemainingSeconds() > 0) {
+      setError(`Muitas tentativas. Aguarde ${getLockRemainingSeconds()}s.`);
+      return;
+    }
     setIsLoading(true);
     setError('');
 
     try {
       // Reautenticação simples usando signInWithPassword com o e-mail da sessão ativa
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: currentUser.email,
+        email: currentUser?.email,
         password: password,
       });
 
       if (signInError) {
+        registerFailedAttempt();
         throw new Error('Senha incorreta. Tente novamente.');
       }
 
-      // Se a senha estiver correta, volta para o painel de admin
-      // TO-DO: Numa iteração futura, adicionar rate-limit para evitar força bruta
+      setFailedAttempts(0);
+      setLockedUntil(null);
 
       // MOTIVO TÉCNICO PARA MANTER O RELOAD:
       // Como não há react-router-dom no projeto, window.location.href é necessário
@@ -125,19 +158,26 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
   const handleConfirmSettings = async (e) => {
     e.preventDefault();
+    if (getLockRemainingSeconds() > 0) {
+      setSettingsError(`Muitas tentativas. Aguarde ${getLockRemainingSeconds()}s.`);
+      return;
+    }
     setIsSettingsLoading(true);
     setSettingsError('');
 
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: currentUser.email,
+        email: currentUser?.email,
         password: settingsPassword,
       });
 
       if (signInError) {
+        registerFailedAttempt();
         throw new Error('Senha incorreta. Tente novamente.');
       }
 
+      setFailedAttempts(0);
+      setLockedUntil(null);
       setShowSettingsModal(false);
       setShowRegistrationPanel(true);
     } catch (err) {
@@ -175,13 +215,13 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
             </button>
           )}
 
-          {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-          {false && <button
+          {/* QR Code */}
+          <button
             onClick={() => setActiveMode('qrcode')}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 ${activeMode === 'qrcode' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             <QrCode size={18} /> <span className="hidden sm:inline">QR Code</span>
-          </button>}
+          </button>
 
           <button
             onClick={() => setActiveMode('manual')}
@@ -222,6 +262,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
               students={students || []}
               currentUser={currentUser}
               isKioskMode={true}
+              onUseAlternative={() => setActiveMode('qrcode')}
             />
           )}
 
@@ -274,7 +315,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
             <div className="p-6">
               <p className="text-sm text-slate-500 mb-6 font-medium">
-                Por segurança, digite a senha da conta (<span className="text-slate-800 font-bold">{currentUser.email}</span>) para sair do modo Totem.
+                Por segurança, digite a senha da conta (<span className="text-slate-800 font-bold">{currentUser?.email}</span>) para sair do modo Totem.
               </p>
 
               <form onSubmit={handleConfirmExit} className="space-y-4">
@@ -335,7 +376,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
 
             <div className="p-6">
               <p className="text-sm text-slate-500 mb-6 font-medium">
-                Por segurança, digite a senha de administrador (<span className="text-slate-800 font-bold">{currentUser.email}</span>) para acessar o cadastro de responsáveis.
+                Por segurança, digite a senha de administrador (<span className="text-slate-800 font-bold">{currentUser?.email}</span>) para acessar o cadastro de responsáveis.
               </p>
 
               <form onSubmit={handleConfirmSettings} className="space-y-4">

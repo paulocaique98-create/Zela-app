@@ -17,9 +17,10 @@ export function agruparEventosPorDia(logs) {
   const byStudentDate = {};
 
   logs.forEach(log => {
-    // Extrai a data no fuso local para garantir agrupamento correto
+    // Extrai a data no fuso de Brasília (fixo) para garantir agrupamento correto
+    // independente do fuso do dispositivo que está processando os logs.
     const dateObj = new Date(log.event_time);
-    const dateStr = dateObj.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD local
+    const dateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // Formato YYYY-MM-DD
 
     const key = `${log.student_id}_${dateStr}`;
     if (!byStudentDate[key]) {
@@ -89,11 +90,16 @@ export function calcularHorasExtras(exitTimeIso, contractedExitTime) {
   const MINUTOS_TOLERANCIA = 15;
 
   const exitDate = new Date(exitTimeIso);
-  
-  // O horário contratado vem como "HH:MM". Precisamos criar um Date equivalente no mesmo dia da saída.
-  const contractedDate = new Date(exitTimeIso);
+
+  // O horário contratado vem como "HH:MM" em horário de Brasília. Construímos o instante
+  // equivalente fixando o offset -03:00 (Brasil não observa horário de verão atualmente),
+  // em vez de usar setHours(), que interpretaria o horário no fuso do dispositivo local
+  // e produziria cobranças erradas para admins fora do fuso de Brasília.
+  const brasiliaDateStr = exitDate.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
   const [hours, minutes] = contractedExitTime.split(':').map(Number);
-  contractedDate.setHours(hours, minutes, 0, 0);
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const contractedDate = new Date(`${brasiliaDateStr}T${hh}:${mm}:00-03:00`);
 
   const diffMs = exitDate.getTime() - contractedDate.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);

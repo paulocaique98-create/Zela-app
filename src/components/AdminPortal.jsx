@@ -6,6 +6,7 @@ import { useMenuClicks } from '../hooks/useMenuClicks';
 import AdminInicio from './AdminInicio';
 import AdminMatriculas from './AdminMatriculas';
 import AdminFichaMedica from './AdminFichaMedica';
+import AdminCalendario from './AdminCalendario';
 import AdminComunicados from './AdminComunicados';
 import AdminMuralFotos from './AdminMuralFotos';
 import AdminCardapio from './AdminCardapio';
@@ -184,20 +185,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             {/* CALENDÁRIO ESCOLAR */}
             {showCalendario && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('calendario')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${openAccordion === 'calendario' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><CalendarDays size={18} /> Calendário</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'calendario' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'calendario' ? 'max-h-20' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <span className="text-left text-xs font-bold py-1.5 text-slate-400 italic">Em breve</span>
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={() => { setAdminTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <CalendarDays size={18} /> Calendário
+              </button>
             )}
 
             {/* MURAL DE FOTOS */}
@@ -242,14 +235,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} />}
 
         {/* NOVOS PLACEHOLDERS */}
-        {adminTab === 'matriculas' && <AdminMatriculas />}
-        {adminTab === 'ficha-medica' && <AdminFichaMedica />}
-        {adminTab === 'comunicados' && <AdminComunicados />}
-        {adminTab === 'mural-fotos' && <AdminMuralFotos />}
-        {adminTab === 'cardapio' && <AdminCardapio />}
+        {adminTab === 'matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'ficha-medica' && <AdminFichaMedica currentUser={currentUser} currentSchool={currentSchool} students={students} />}
+        {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'comunicados' && <AdminComunicados currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios />}
-        {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados />}
+        {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (

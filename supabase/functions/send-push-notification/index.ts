@@ -1,13 +1,10 @@
 import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -15,8 +12,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || 
-      'BIdDnc8B3HDw5NnYhfE8Y63iDMuhlKOP3jwlvTQMtIn4r5coPYuXz4VPwz3wm5L5WoKG5OYAnyM4BGVOCFqOS58';
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
     const vapidSubject = Deno.env.get('VAPID_SUBJECT')!;
     
@@ -24,10 +20,15 @@ serve(async (req) => {
     
     const adminClient = createClient(supabaseUrl, serviceKey);
     
-    // Validar caller (service role ou admin autenticado)
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Sem autorização');
-    
+    // Validar caller: só a service role (triggers/backend) pode disparar push notifications,
+    // nunca clientes anônimos ou usuários finais — do contrário qualquer chamador poderia
+    // enviar push arbitrário para qualquer user_id (spam/phishing) só com um header não-vazio.
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token || token !== serviceKey) {
+      throw new Error('Não autorizado');
+    }
+
     const { user_id, title, body, url, tag } = await req.json();
     
     if (!user_id || !title || !body) {

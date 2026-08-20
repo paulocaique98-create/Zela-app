@@ -1,13 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -55,16 +51,26 @@ serve(async (req) => {
       throw new Error('userId é obrigatório')
     }
 
+    if (userId === caller.id) {
+      throw new Error('Você não pode excluir sua própria conta por aqui.')
+    }
+
     // (Opcional, mas recomendado): Verificar se o usuário a ser excluído pertence à mesma escola do admin
     if (callerData.role !== 'developer') {
       const { data: targetData } = await adminClient
         .from('users')
-        .select('school_id')
+        .select('school_id, role')
         .eq('id', userId)
         .single()
-      
+
       if (targetData && targetData.school_id !== callerData.school_id) {
         throw new Error('Acesso negado: o usuário não pertence a sua escola')
+      }
+
+      // Um admin não pode excluir outro admin — evita bloqueio acidental/mal-intencionado
+      // da escola inteira. Só o developer (suporte) pode remover contas de admin.
+      if (targetData && targetData.role === 'admin') {
+        throw new Error('Acesso negado: apenas o suporte pode excluir contas de administrador.')
       }
     }
 
@@ -75,11 +81,16 @@ serve(async (req) => {
 
     // 4. Excluir do auth.users usando a admin API
     const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId)
-    
+
     if (deleteAuthError) {
-      // Se não encontrou no auth, talvez seja um fantasma apenas no public, mas a API retorna erro?
-      // O erro 'User not found' pode ser ignorado se formos apagar do public de qualquer forma.
-      console.warn(`Erro ao excluir do Auth, pode já ter sido apagado: ${deleteAuthError.message}`)
+      // Só seguimos para apagar o public.users se o motivo for "já não existe no Auth"
+      // (ex: conta fantasma). Qualquer outro erro (permissão, rede, etc.) precisa parar
+      // aqui — senão apagamos o perfil público e deixamos um usuário órfão no Auth.
+      const notFound = /not.?found/i.test(deleteAuthError.message || '')
+      if (!notFound) {
+        throw new Error(`Erro ao excluir do Auth: ${deleteAuthError.message}`)
+      }
+      console.warn(`Usuário já não existia no Auth, prosseguindo para apagar do public: ${deleteAuthError.message}`)
     }
 
     // 5. Excluir do public.users

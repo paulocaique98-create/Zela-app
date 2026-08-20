@@ -14,6 +14,12 @@ const TotemComingSoon = lazy(() => import('./components/TotemComingSoon'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const AdminKioskFullscreen = lazy(() => import('./components/AdminKioskFullscreen'));
 
+// Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
+// do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
+// está "amanhã" entre ~21h e 23h59 no horário de Brasília (UTC-3).
+const getBrasiliaDateStr = (date = new Date()) =>
+  date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
 // Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
 const parseShortTime = (timeStr, todayDate = null) => {
   if (!timeStr) return null;
@@ -70,6 +76,7 @@ export default function App() {
 
   // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
   const realtimeChannelRef = useRef(null);
+  const emergencyChannelRef = useRef(null);
   // Ref para controle do auto-reconnect (evita múltiplos timeouts simultâneos)
   const reconnectTimerRef = useRef(null);
 
@@ -194,6 +201,10 @@ export default function App() {
         supabase.removeChannel(realtimeChannelRef.current);
         realtimeChannelRef.current = null;
       }
+      if (emergencyChannelRef.current) {
+        supabase.removeChannel(emergencyChannelRef.current);
+        emergencyChannelRef.current = null;
+      }
     }
   }, [currentUser?.id]); // Depende apenas do ID (primitivo estável) — evita recriar o canal ao reatribuir o objeto currentUser
 
@@ -288,10 +299,6 @@ export default function App() {
           setStudents((prev) => prev.filter((s) => s.id !== oldRow.id));
         }
       })
-      .on('broadcast', { event: 'emergency_alert' }, (payload) => {
-        setEmergencyData(payload.payload);
-        setIsEmergency(true);
-      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.info('[Zela] Realtime conectado com sucesso.');
@@ -311,6 +318,24 @@ export default function App() {
       });
 
     realtimeChannelRef.current = channel;
+
+    // Canal compartilhado por escola — todos os usuários da mesma escola entram
+    // no mesmo tópico, ao contrário do canal acima (privado por usuário/sessão).
+    // O alerta de emergência precisa ser ouvido por todos, não só por quem o disparou.
+    if (emergencyChannelRef.current) {
+      supabase.removeChannel(emergencyChannelRef.current);
+      emergencyChannelRef.current = null;
+    }
+    if (currentUser.school_id) {
+      const emergencyChannel = supabase
+        .channel(`emergency-${currentUser.school_id}`)
+        .on('broadcast', { event: 'emergency_alert' }, (payload) => {
+          setEmergencyData(payload.payload);
+          setIsEmergency(true);
+        })
+        .subscribe();
+      emergencyChannelRef.current = emergencyChannel;
+    }
   };
 
   const fetchData = async () => {
@@ -368,7 +393,7 @@ export default function App() {
       const studentsData = studentsRes.data;
       const authData = authRes.data;
 
-      const todayDate = new Date().toISOString().split('T')[0];
+      const todayDate = getBrasiliaDateStr();
 
       const formattedStudents = (studentsData || []).map(s => {
         // Parse date and time if it's in the new format "YYYY-MM-DD|HH:mm:ss"
@@ -383,7 +408,10 @@ export default function App() {
         if (!parsedEntry && s.today_entry) {
           sStatus = 'idle';
           // Opcional: Atualizar no banco em background
-          supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null }).eq('id', s.id).then();
+          supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null }).eq('id', s.id)
+            .then(({ error }) => {
+              if (error) console.error('[Zela] Falha ao resetar status do aluno para idle:', s.id, error);
+            });
         }
 
         return {
@@ -541,7 +569,7 @@ export default function App() {
     const now = new Date();
     const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const nowShortStr = nowStr.substring(0, 5);
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = getBrasiliaDateStr(now);
     const fullRecordStr = `${dateStr}|${nowStr}`;
 
     // Determina o tipo de evento para o log
@@ -701,7 +729,7 @@ export default function App() {
         const timestampField = newStatus === 'pending_entry' ? 'today_entry' : 'today_exit';
         const now = new Date();
         const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateStr = now.toISOString().split('T')[0];
+        const dateStr = getBrasiliaDateStr(now);
         const fullRecordStr = `${dateStr}|${nowStr}`;
 
         await supabase
@@ -716,8 +744,8 @@ export default function App() {
 
 
   const triggerEmergency = async (data) => {
-    if (realtimeChannelRef.current) {
-      await realtimeChannelRef.current.send({
+    if (emergencyChannelRef.current) {
+      await emergencyChannelRef.current.send({
         type: 'broadcast',
         event: 'emergency_alert',
         payload: { triggeredBy: currentUser.name, time: new Date().toLocaleTimeString(), ...data },

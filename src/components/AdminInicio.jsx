@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, QrCode, ArrowRight, Clock, UserPlus, Smartphone, Settings, Image, UtensilsCrossed } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, QrCode, ArrowRight, Clock, UserPlus, Smartphone, Settings, Image, UtensilsCrossed, CalendarDays } from 'lucide-react';
 import { useMemo } from 'react';
 import { navigateTo } from '../utils/navigate';
 
@@ -22,6 +22,7 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     { key: 'settings', label: 'Configurações', icon: Settings, tab: 'settings', feature: 'configuracoes', defaultOn: true },
     { key: 'mural-fotos', label: 'Mural de Fotos', icon: Image, tab: 'mural-fotos', feature: 'mural', defaultOn: false },
     { key: 'cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'cardapio', feature: 'cardapio', defaultOn: false },
+    { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario', feature: 'calendario', defaultOn: false },
   ];
 
   const topMenus = useMemo(() => {

@@ -24,6 +24,26 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
   const [familyPerson, setFamilyPerson] = useState(null); // responsável selecionado
   const [matchedStudents, setMatchedStudents] = useState(null);
 
+  // Rate-limit contra força bruta: PIN de 4 dígitos tem só 10.000 combinações e o
+  // totem é um dispositivo público — sem isso, dava pra tentar todas em minutos.
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(null);
+
+  const getLockRemainingSeconds = () => {
+    if (!lockedUntil) return 0;
+    return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
+  };
+
+  const registerFailedAttempt = () => {
+    setFailedAttempts(prev => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setLockedUntil(Date.now() + 30000); // 30s de bloqueio após 5 tentativas
+      }
+      return next;
+    });
+  };
+
   // ── Teclado numérico ────────────────────────────────────────────────────────
   const handleKeyPress = (digit) => {
     if (pin.length >= 4) return;
@@ -49,6 +69,13 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
       return;
     }
 
+    const lockRemaining = getLockRemainingSeconds();
+    if (lockRemaining > 0) {
+      setError(`Muitas tentativas incorretas. Aguarde ${lockRemaining}s.`);
+      setPin('');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -70,8 +97,13 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
       );
 
       if (matched.length === 0) {
+        registerFailedAttempt();
         throw new Error('PIN não encontrado. Verifique os 4 primeiros dígitos do seu CPF.');
       }
+
+      // PIN correto — reseta o contador de tentativas
+      setFailedAttempts(0);
+      setLockedUntil(null);
 
       if (matched.length === 1) {
         // Único match → pula seleção
@@ -365,7 +397,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
                 <button
                   onClick={() => handleSearch()}
-                  disabled={isLoading || pin.length < 4}
+                  disabled={isLoading || pin.length < 4 || getLockRemainingSeconds() > 0}
                   className="h-14 bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-black rounded-2xl transition-all shadow-md flex items-center justify-center select-none"
                 >
                   {isLoading ? <Loader2 size={20} className="animate-spin" /> : 'OK'}

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.11.0"
+import { getCorsHeaders } from "../_shared/cors.ts"
 
 // CONSTANTES E CONFIGURAÇÕES
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -8,17 +9,41 @@ const MATCH_THRESHOLD = 0.55 // Limite de distância euclidiana (menor = mais pa
 
 serve(async (req) => {
   // CORS configuration
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  }
+  const headers = getCorsHeaders(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers })
 
   try {
+    // 0. Exige um usuário autenticado (sessão do totem/admin) — sem isso, qualquer
+    // pessoa com a URL da função poderia mutar status de presença de qualquer escola.
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const token = authHeader.replace(/^Bearer\s+/i, '')
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Não autenticado' }), { status: 401, headers })
+    }
+
     const { snapshot_base64, nonce, student_ids, action, school_id } = await req.json()
 
     // 1. Instanciar Supabase Client com Service Role (Bypasses RLS para validação interna)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    const { data: authData, error: authUserError } = await supabase.auth.getUser(token)
+    if (authUserError || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Sessão inválida' }), { status: 401, headers })
+    }
+
+    const { data: callerData, error: callerError } = await supabase
+      .from('users')
+      .select('role, school_id')
+      .eq('id', authData.user.id)
+      .single()
+
+    const isAuthorizedCaller = callerData && (
+      callerData.role === 'developer' ||
+      (callerData.role === 'admin' && callerData.school_id === school_id)
+    )
+    if (callerError || !isAuthorizedCaller) {
+      return new Response(JSON.stringify({ error: 'Não autorizado para esta escola' }), { status: 403, headers })
+    }
 
     // 2. Verificar Nonce (Challenge-Response)
     const { data: nonceData, error: nonceError } = await supabase
@@ -75,13 +100,29 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Biometria não reconhecida' }), { status: 403, headers })
     }
 
+    // 5b. Restringe os alunos a atualizar somente aos vinculados à família que deu match —
+    // nunca confiar em student_ids vindo do corpo da requisição sem checar propriedade.
+    const { data: guardianStudents, error: guardianError } = await supabase
+      .from('student_guardians')
+      .select('student_id')
+      .eq('family_id', bestMatch.family_id)
+
+    if (guardianError) throw new Error('Erro ao validar vínculo aluno/responsável')
+
+    const allowedStudentIds = new Set((guardianStudents || []).map(g => g.student_id))
+    const safeStudentIds = (student_ids || []).filter(id => allowedStudentIds.has(id))
+
+    if (safeStudentIds.length === 0) {
+      return new Response(JSON.stringify({ error: 'Nenhum aluno vinculado a este responsável' }), { status: 403, headers })
+    }
+
     // 6. Atualizar Status dos Alunos
     const now = new Date();
     const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     const fullRecordStr = `${dateStr}|${nowStr}`;
 
-    for (const studentId of student_ids) {
+    for (const studentId of safeStudentIds) {
       let updateData = { status: action }
       if (action === 'in_school' || action === 'pending_entry') {
         updateData.today_entry = fullRecordStr

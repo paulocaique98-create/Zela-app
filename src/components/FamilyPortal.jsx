@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import FamilyInicio from './FamilyInicio';
 import FamilyMatriculas from './FamilyMatriculas';
 import FamilyFichaMedica from './FamilyFichaMedica';
+import FamilyCalendario from './FamilyCalendario';
 import FamilyComunicados from './FamilyComunicados';
 import FamilyMuralFotos from './FamilyMuralFotos';
 import FamilyCardapio from './FamilyCardapio';
@@ -14,6 +16,7 @@ import FamilySettings from './FamilySettings';
 import FamilyAuthorized from './FamilyAuthorized';
 import FamilyRegistrationData from './FamilyRegistrationData';
 import FamilyGerenciarResponsaveis from './FamilyGerenciarResponsaveis';
+import FamilyWallet from './FamilyWallet';
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -30,11 +33,41 @@ export default function FamilyPortal({
   const [dismissedPush, setDismissedPush] = useState(
     localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true'
   );
-  
+
+  // Re-sincroniza ao trocar de usuário sem remontar o componente (ex: troca de conta),
+  // senão o banner ficaria escondido usando a decisão de dispensa de outro usuário.
+  useEffect(() => {
+    setDismissedPush(localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true');
+  }, [currentUser?.id]);
+
   const dismissPushBanner = () => {
     localStorage.setItem(`zela_push_dismissed_${currentUser?.id}`, 'true');
     setDismissedPush(true);
   };
+
+  // Contagem de comunicados não lidos — usada no badge da Home. Recalcula sempre que
+  // o usuário volta para a Home (após ler comunicados em FamilyComunicados).
+  const [comunicadosUnread, setComunicadosUnread] = useState(0);
+  useEffect(() => {
+    const schoolId = currentSchool?.id || currentUser?.school_id;
+    if (!schoolId || !currentUser?.id || familyTab !== 'home') return;
+
+    let cancelled = false;
+    (async () => {
+      const [comunicadosRes, readsRes] = await Promise.all([
+        supabase.from('comunicados').select('id').eq('school_id', schoolId),
+        supabase.from('comunicado_reads').select('comunicado_id').eq('user_id', currentUser.id),
+      ]);
+      if (cancelled) return;
+      if (comunicadosRes.error || readsRes.error) return;
+
+      const readIds = new Set((readsRes.data || []).map(r => r.comunicado_id));
+      const unread = (comunicadosRes.data || []).filter(c => !readIds.has(c.id)).length;
+      setComunicadosUnread(unread);
+    })();
+
+    return () => { cancelled = true; };
+  }, [currentSchool?.id, currentUser?.id, familyTab]);
 
   // Os alunos já vêm filtrados corretamente do App.jsx (via student_guardians ou family_id)
   const familyStudents = students;
@@ -137,20 +170,12 @@ export default function FamilyPortal({
 
             {/* CALENDÁRIO ESCOLAR */}
             {showCalendario && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('calendario')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${openAccordion === 'calendario' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><CalendarDays size={18} /> Calendário Escolar</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'calendario' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'calendario' ? 'max-h-20' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <span className="text-left text-xs font-bold py-1.5 text-slate-400 italic">Em breve</span>
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={() => { setFamilyTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <CalendarDays size={18} /> Calendário Escolar
+              </button>
             )}
 
             {/* COMUNICADOS */}
@@ -218,21 +243,23 @@ export default function FamilyPortal({
           </div>
         )}
 
-        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} />}
+        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} />}
         
         {/* REUTILIZANDO COMPONENTES EXISTENTES */}
         {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
         {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
         {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
         {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
+        {familyTab === 'wallet' && <FamilyWallet familyStudents={familyStudents} currentUser={currentUser} currentSchool={currentSchool} />}
         {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
         
         {/* NOVOS PLACEHOLDERS */}
-        {familyTab === 'matriculas' && <FamilyMatriculas />}
-        {familyTab === 'ficha-medica' && <FamilyFichaMedica />}
-        {familyTab === 'comunicados' && <FamilyComunicados />}
-        {familyTab === 'mural-fotos' && <FamilyMuralFotos />}
-        {familyTab === 'cardapio' && <FamilyCardapio />}
+        {familyTab === 'matriculas' && <FamilyMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
+        {familyTab === 'ficha-medica' && <FamilyFichaMedica currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
+        {familyTab === 'calendario' && <FamilyCalendario currentUser={currentUser} currentSchool={currentSchool} />}
+        {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
+        {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+        {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
         {familyTab === 'settings' && (
           <FamilySettings 
             currentUser={currentUser}

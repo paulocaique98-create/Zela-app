@@ -13,6 +13,17 @@ interface Student {
 }
 
 serve(async (req) => {
+  // Só o backend (cron/scheduler com a service role key) pode disparar esta função —
+  // sem isso, qualquer chamador externo poderia forçar execuções extras e duplicar notificações.
+  const supabaseKeyForAuth = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const reqAuth = req.headers.get('Authorization')
+  if (reqAuth !== `Bearer ${supabaseKeyForAuth}`) {
+    return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   // Verificar se hoje é fim de semana (sábado = 6, domingo = 0)
   const now = new Date();
   const brasiliaOffset = -3 * 60;

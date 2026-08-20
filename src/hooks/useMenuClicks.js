@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function useMenuClicks(userId, schoolId) {
   const [clickCounts, setClickCounts] = useState({});
+  // Espelha clickCounts de forma síncrona para evitar "lost update" quando
+  // registerClick é chamado duas vezes antes do React re-renderizar (ex: duplo clique
+  // rápido) — closures presas ao clickCounts do state calculariam o mesmo valor base.
+  const clickCountsRef = useRef({});
 
   // Carregar contagens ao montar
   useEffect(() => {
@@ -22,6 +26,7 @@ export function useMenuClicks(userId, schoolId) {
           data.forEach(row => {
             counts[row.menu_key] = row.click_count;
           });
+          clickCountsRef.current = counts;
           setClickCounts(counts);
         }
       });
@@ -31,11 +36,10 @@ export function useMenuClicks(userId, schoolId) {
   const registerClick = useCallback(async (menuKey) => {
     if (!userId || !schoolId) return;
 
-    // Atualizar estado local imediatamente (sem esperar o banco)
-    setClickCounts(prev => {
-      const currentCount = prev[menuKey] || 0;
-      return { ...prev, [menuKey]: currentCount + 1 };
-    });
+    // Atualizar estado local (e o ref espelho, de forma síncrona) imediatamente
+    const newCount = (clickCountsRef.current[menuKey] || 0) + 1;
+    clickCountsRef.current = { ...clickCountsRef.current, [menuKey]: newCount };
+    setClickCounts(clickCountsRef.current);
 
     try {
       // Persistir no banco (upsert: incrementar se existir, inserir se não existir)
@@ -46,7 +50,7 @@ export function useMenuClicks(userId, schoolId) {
             user_id: userId,
             school_id: schoolId,
             menu_key: menuKey,
-            click_count: (clickCounts[menuKey] || 0) + 1,
+            click_count: newCount,
             last_clicked_at: new Date().toISOString()
           },
           { onConflict: 'user_id,menu_key' }
@@ -58,7 +62,7 @@ export function useMenuClicks(userId, schoolId) {
     } catch (err) {
       console.error('Exceção ao registrar clique:', err);
     }
-  }, [userId, schoolId, clickCounts]);
+  }, [userId, schoolId]);
 
   return { clickCounts, registerClick };
 }

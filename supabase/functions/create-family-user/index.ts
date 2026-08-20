@@ -1,13 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -71,6 +67,27 @@ serve(async (req) => {
     
     if (callerData.role !== 'developer' && callerData.role !== 'admin' && callerData.role !== 'family') {
       throw new Error('Acesso negado: você não tem permissão para criar guardiões')
+    }
+
+    // Se quem está criando é um responsável (não admin/developer), garante que só pode
+    // vincular o novo guardião a alunos que já são dele — senão qualquer família poderia
+    // se auto-vincular (ou vincular um terceiro) a filhos de outras famílias.
+    if (callerData.role === 'family') {
+      const { data: ownLinks, error: ownLinksError } = await adminClient
+        .from('student_guardians')
+        .select('student_id')
+        .eq('guardian_id', caller.id)
+        .in('student_id', student_ids)
+
+      if (ownLinksError) {
+        throw new Error('Erro ao validar vínculo com os alunos informados')
+      }
+
+      const ownStudentIds = new Set((ownLinks || []).map((l: { student_id: string }) => l.student_id))
+      const hasForeignStudent = student_ids.some((sId: string) => !ownStudentIds.has(sId))
+      if (hasForeignStudent) {
+        throw new Error('Acesso negado: você só pode vincular o novo responsável aos seus próprios filhos')
+      }
     }
 
     // 4. Criar o usuário no Auth
