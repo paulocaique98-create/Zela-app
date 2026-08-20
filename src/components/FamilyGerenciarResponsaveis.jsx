@@ -352,9 +352,9 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
             </p>
             
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="font-semibold text-slate-500">E-mail:</span>
-                <span className="font-bold text-slate-800">{successModalData.email}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 text-sm">
+                <span className="font-semibold text-slate-500 shrink-0">E-mail:</span>
+                <span className="font-bold text-slate-800 break-all sm:text-right">{successModalData.email}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="font-semibold text-slate-500">Senha:</span>

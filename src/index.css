@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* iOS Safari dá zoom automático ao focar um input com font-size < 16px — trava a
+   UI até o usuário dar pinch-zoom de volta. Vários formulários usam text-xs/text-sm
+   (12-14px) nos campos; força 16px só em telas de toque estreitas, sem alterar o
+   tamanho visual em desktop. */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
 @layer utilities {
   .animate-in {
     animation-duration: 0.5s;

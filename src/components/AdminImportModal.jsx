@@ -507,8 +507,8 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                 </span>
               </div>
 
-              <div className="border border-slate-200 rounded-2xl overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="border border-slate-200 rounded-2xl overflow-x-auto">
+                <table className="w-full text-sm min-w-[640px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                       {['#', '1º Responsável', '2º Responsável', 'Aluno(s)', 'Turma / Período'].map((h) => (

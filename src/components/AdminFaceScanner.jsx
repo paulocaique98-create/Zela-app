@@ -208,6 +208,13 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
   const [matchDistance, setMatchDistance] = useState(null);
   const [isProcessingCapture, setIsProcessingCapture] = useState(false);
   const [cameraReady, setCameraReady] = useState(false); // true quando stream de vídeo está ativo
+  const [retryCount, setRetryCount] = useState(0); // incrementar refaz o init() (câmera falhou e o usuário pediu nova tentativa)
+
+  const retryInit = () => {
+    setError(null);
+    setCameraReady(false);
+    setRetryCount(c => c + 1);
+  };
 
   useEffect(() => {
     let active = true;
@@ -278,7 +285,12 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         }
       } catch (err) {
         console.error(err);
-        setError('Erro ao iniciar reconhecimento facial: ' + (err.message || err));
+        const friendly =
+          err.name === 'NotAllowedError' ? 'Permissão de câmera negada. Habilite o acesso à câmera nas configurações do navegador e tente novamente.' :
+          err.name === 'NotFoundError' ? 'Nenhuma câmera foi encontrada neste dispositivo.' :
+          err.name === 'NotReadableError' ? 'A câmera está em uso por outro aplicativo ou aba. Feche-o e tente novamente.' :
+          'Erro ao iniciar reconhecimento facial: ' + (err.message || err);
+        setError(friendly);
       }
     }
 
@@ -290,7 +302,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [retryCount]);
 
   // Helper para carregar imagem — evita crossOrigin em data: URLs (causa erro em alguns browsers)
   const loadImage = (url) => {
@@ -620,10 +632,21 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           {error && !capturedImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/90 z-10 p-6 text-center">
               <ShieldAlert className="h-12 w-12 text-red-500 mb-3" />
-              <p className="text-sm font-bold text-red-400 mb-4">{error}</p>
-              <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
-                Fechar Janela
-              </button>
+              <p className="text-sm font-bold text-red-400 mb-4 max-w-sm">{error}</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button onClick={retryInit} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
+                  Tentar Novamente
+                </button>
+                {isKioskMode && onUseAlternative ? (
+                  <button onClick={onUseAlternative} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition flex items-center justify-center gap-1.5">
+                    <QrCode size={16} /> Usar QR Code / Senha
+                  </button>
+                ) : (
+                  <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
+                    Fechar Janela
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -650,7 +673,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               exige aproximação — se o rosto não preencher o molde, está longe demais. */}
           {!capturedImage && !error && cameraReady && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className={`w-[85vw] max-w-[26rem] aspect-[3/4] sm:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
+              <div className={`w-[55vw] max-w-[210px] aspect-[3/4] sm:w-[22rem] sm:max-w-none md:w-[26rem] lg:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
                 matchStatus === 'matched' ? 'border-green-500' :
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :

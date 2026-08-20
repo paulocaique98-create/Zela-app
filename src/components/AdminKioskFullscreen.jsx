@@ -256,7 +256,7 @@ export default function AdminKioskFullscreen({ currentUser, currentSchool, stude
           {activeMode === 'facial' && (
             <AdminFaceScanner
               key={scannerKey}
-              onClose={() => { }} // Não faz nada no Kiosk Mode nativo
+              onClose={() => setActiveMode('qrcode')} // No Kiosk, "fechar" cai para o QR Code em vez de travar a tela
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
               students={students || []}

@@ -235,7 +235,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                     <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
                     <button
                       onClick={() => removePendingFile(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-lg p-1 opacity-0 group-hover:opacity-100 transition"
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-lg p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
                     >
                       <X size={14} />
                     </button>
@@ -333,7 +333,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                 <button
                   onClick={() => handleDelete(foto)}
                   disabled={deletingId === foto.id}
-                  className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-lg p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
                 >
                   {deletingId === foto.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 </button>
