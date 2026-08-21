@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import ConfirmModal from './ConfirmModal';
 
 const TURMA_OPTIONS = TURMAS.filter(t => t !== 'Todas as Turmas');
 
@@ -36,6 +37,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
   const [sendToAll, setSendToAll] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // Anexos: existingAttachments (já salvos, ao editar) + pendingFiles (novos, ainda
   // não enviados ao Storage — só sobem de fato ao publicar/salvar).
@@ -205,8 +207,10 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Excluir este comunicado? Essa ação não pode ser desfeita.')) return;
+  const handleDelete = (id) => setConfirmDeleteId(id);
+
+  const confirmDelete = async () => {
+    const id = confirmDeleteId;
     setDeletingId(id);
     try {
       const comunicado = comunicados.find(c => c.id === id);
@@ -224,6 +228,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
       setError('Não foi possível excluir o comunicado.');
     } finally {
       setDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -441,6 +446,16 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
           ))
         )}
       </div>
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Excluir comunicado"
+          message="Excluir este comunicado? Essa ação não pode ser desfeita."
+          isLoading={deletingId === confirmDeleteId}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

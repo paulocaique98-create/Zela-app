@@ -1,13 +1,12 @@
 import React from 'react';
-import { Home, QrCode, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
+import { Home, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
   const features = currentSchool?.features_enabled || {};
-  
+
   const FAMILY_MENUS = [
     { key: 'home', label: 'Acompanhamento Diário', icon: Home, tab: 'acompanhamento', feature: 'checkin', defaultOn: true },
-    { key: 'wallet', label: 'Carteira Digital', icon: QrCode, tab: 'wallet', feature: 'checkin', defaultOn: true },
     { key: 'authorized', label: 'Autorizados', icon: UserCheck, tab: 'authorized', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico Geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'comunicados', label: 'Comunicados', icon: Bell, tab: 'comunicados', feature: 'comunicados', defaultOn: false },

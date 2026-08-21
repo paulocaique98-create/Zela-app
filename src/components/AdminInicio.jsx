@@ -1,7 +1,6 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, QrCode, ArrowRight, Clock, UserPlus, Smartphone, Settings, Image, UtensilsCrossed, CalendarDays } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone } from 'lucide-react';
 import { useMemo } from 'react';
-import { navigateTo } from '../utils/navigate';
 
 export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
   const features = currentSchool?.features_enabled || {};
@@ -12,14 +11,14 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     { key: 'students', label: 'Lista de Alunos', icon: Users, tab: 'students', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico Geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'users', label: 'Gestão de Usuários', icon: UserCog, tab: 'users', feature: 'cadastros', defaultOn: true },
-    { key: 'totem', label: 'Totem Check-in', icon: QrCode, tab: 'totem', feature: 'checkin', defaultOn: true, action: () => navigateTo('/admin/totem-checkin') },
+    { key: 'kiosk', label: 'Autoatendimento', icon: ShieldCheck, tab: 'kiosk', feature: 'checkin', defaultOn: true },
     { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras', feature: 'gerenciamento', defaultOn: true },
     { key: 'register', label: 'Cadastro de Usuários', icon: UserPlus, tab: 'register', feature: 'cadastros', defaultOn: true },
-    { key: 'kiosks', label: 'Gerenciar Totens', icon: Smartphone, tab: 'kiosks', feature: 'configuracoes', defaultOn: true },
     { key: 'settings', label: 'Configurações', icon: Settings, tab: 'settings', feature: 'configuracoes', defaultOn: true },
     { key: 'mural-fotos', label: 'Mural de Fotos', icon: Image, tab: 'mural-fotos', feature: 'mural', defaultOn: false },
     { key: 'cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'cardapio', feature: 'cardapio', defaultOn: false },
     { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario', feature: 'calendario', defaultOn: false },
+    { key: 'comunicados', label: 'Comunicados', icon: Megaphone, tab: 'cadastro-comunicados', feature: 'comunicados', defaultOn: false },
   ];
 
   const topMenus = useMemo(() => {
@@ -73,10 +72,6 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
                   <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
                     {unreadNotifications}
                   </span>
-                )}
-                {menu.key === 'comunicados' && (
-                  // TODO: adicionar badge quando comunicados tiverem contagem de não lidos
-                  null
                 )}
                 <div className="bg-indigo-50 rounded-xl p-3 group-hover:bg-indigo-100 transition-colors">
                   <menu.icon className="w-5 h-5 sm:w-7 sm:h-7 text-indigo-500" />

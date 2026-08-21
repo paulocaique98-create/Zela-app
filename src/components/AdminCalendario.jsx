@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { EVENTO_TIPOS } from '../lib/constants';
 import { parseDateTextList } from '../lib/pdfDateListParser';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import ConfirmModal from './ConfirmModal';
 
 const TIPO_BY_VALUE = Object.fromEntries(EVENTO_TIPOS.map(t => [t.value, t]));
 
@@ -35,6 +36,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
   const [eventType, setEventType] = useState('geral');
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // Importação de PDF: extrai datas + títulos candidatos e mostra pra revisão
   // antes de gravar em lote — evita que um PDF mal formatado gere lixo direto no
@@ -132,8 +134,10 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Excluir este evento do calendário? Essa ação não pode ser desfeita.')) return;
+  const handleDelete = (id) => setConfirmDeleteId(id);
+
+  const confirmDelete = async () => {
+    const id = confirmDeleteId;
     setDeletingId(id);
     try {
       const { error: deleteError } = await supabase.from('eventos_calendario').delete().eq('id', id);
@@ -144,6 +148,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
       setError('Não foi possível excluir o evento.');
     } finally {
       setDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -444,6 +449,16 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
           })
         )}
       </div>
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Excluir evento"
+          message="Excluir este evento do calendário? Essa ação não pode ser desfeita."
+          isLoading={deletingId === confirmDeleteId}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

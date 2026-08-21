@@ -5,6 +5,7 @@ import { REFEICOES } from '../lib/constants';
 import { parseDateTextList } from '../lib/pdfDateListParser';
 import { parseCardapioImageGrid } from '../lib/imageCardapioParser';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import ConfirmModal from './ConfirmModal';
 
 function formatDateLabel(dateStr) {
   const d = new Date(`${dateStr}T12:00:00`);
@@ -87,6 +88,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
   const [newDesativacao, setNewDesativacao] = useState('');
   const [isSavingNew, setIsSavingNew] = useState(false);
   const [deletingCardapioId, setDeletingCardapioId] = useState(null);
+  const [confirmDeleteCardapioId, setConfirmDeleteCardapioId] = useState(null);
 
   const [selectedId, setSelectedId] = useState(null);
 
@@ -167,8 +169,10 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
     }
   };
 
-  const handleDeleteCardapio = async (id) => {
-    if (!window.confirm('Excluir este cardápio e todos os seus itens? Essa ação não pode ser desfeita.')) return;
+  const handleDeleteCardapio = (id) => setConfirmDeleteCardapioId(id);
+
+  const confirmDeleteCardapio = async () => {
+    const id = confirmDeleteCardapioId;
     setDeletingCardapioId(id);
     try {
       const { error: deleteError } = await supabase.from('cardapios').delete().eq('id', id);
@@ -180,6 +184,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
       setError('Não foi possível excluir o cardápio.');
     } finally {
       setDeletingCardapioId(null);
+      setConfirmDeleteCardapioId(null);
     }
   };
 
@@ -553,6 +558,16 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
           })
         )}
       </div>
+
+      {confirmDeleteCardapioId && (
+        <ConfirmModal
+          title="Excluir cardápio"
+          message="Excluir este cardápio e todos os seus itens? Essa ação não pode ser desfeita."
+          isLoading={deletingCardapioId === confirmDeleteCardapioId}
+          onConfirm={confirmDeleteCardapio}
+          onCancel={() => setConfirmDeleteCardapioId(null)}
+        />
+      )}
     </div>
   );
 }

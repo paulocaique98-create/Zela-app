@@ -3,6 +3,7 @@ import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, Sun, QrCode } 
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
+import ConfirmExitPassword from './ConfirmExitPassword';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
 let _audioCtx = null;
@@ -146,6 +147,11 @@ function findSecureMatch(descriptor, labeledDescriptors) {
 
 export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
   const videoRef = useRef(null);
+
+  // Sair do Autoatendimento exige confirmar a senha da conta — a tela fica exposta
+  // pra qualquer pessoa durante o check-in (ver ConfirmExitPassword).
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const requestExit = () => setShowExitConfirm(true);
 
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial...');
@@ -608,7 +614,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           <h3 className="font-bold text-slate-800 flex items-center gap-1.5 text-base">
             <Camera size={18} className="text-indigo-600" /> Biometria Facial
           </h3>
-          <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-lg transition-colors">
+          <button onClick={requestExit} className="p-2 -mr-2 text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -642,7 +648,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                     <QrCode size={16} /> Usar QR Code / Senha
                   </button>
                 ) : (
-                  <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
+                  <button onClick={requestExit} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl text-sm transition">
                     Fechar Janela
                   </button>
                 )}
@@ -673,7 +679,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               exige aproximação — se o rosto não preencher o molde, está longe demais. */}
           {!capturedImage && !error && cameraReady && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className={`w-[45vw] max-w-[170px] aspect-[3/4] sm:w-[22rem] sm:max-w-none md:w-[26rem] lg:w-[30rem] rounded-full border-4 transition-colors duration-300 ${
+              <div className={`w-[45vw] max-w-[170px] aspect-[3/4] sm:w-[55%] sm:max-w-[320px] md:max-w-[360px] max-h-[80%] rounded-full border-4 transition-colors duration-300 ${
                 matchStatus === 'matched' ? 'border-green-500' :
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
@@ -783,7 +789,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
                 <Camera size={18} className="text-indigo-600" /> Biometria Facial
               </h3>
-              <button onClick={onClose} className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg transition">
+              <button onClick={requestExit} className="p-1 text-slate-400 hover:bg-slate-100 rounded-lg transition">
                 <X size={20} />
               </button>
             </div>
@@ -932,10 +938,19 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     </>
   );
 
+  const exitConfirmModal = showExitConfirm && (
+    <ConfirmExitPassword
+      email={currentUser?.email}
+      onConfirm={() => { setShowExitConfirm(false); onClose(); }}
+      onCancel={() => setShowExitConfirm(false)}
+    />
+  );
+
   if (isKioskMode) {
     return (
       <div className="w-full h-full flex flex-col bg-white overflow-hidden">
         {innerContent}
+        {exitConfirmModal}
       </div>
     );
   }
@@ -945,6 +960,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       <div className="w-full h-full max-w-5xl max-h-[850px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         {innerContent}
       </div>
+      {exitConfirmModal}
     </div>
   );
 }

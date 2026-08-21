@@ -19,7 +19,6 @@ import FamilySettings from './FamilySettings';
 import FamilyAuthorized from './FamilyAuthorized';
 import FamilyRegistrationData from './FamilyRegistrationData';
 import FamilyGerenciarResponsaveis from './FamilyGerenciarResponsaveis';
-import FamilyWallet from './FamilyWallet';
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -159,7 +158,7 @@ export default function FamilyPortal({
               <div>
                 <button
                   onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['acompanhamento', 'authorized', 'wallet', 'history'].includes(familyTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['acompanhamento', 'authorized', 'history'].includes(familyTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
                   <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
                   <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
@@ -168,7 +167,6 @@ export default function FamilyPortal({
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
                     <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
                     <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
-                    <button onClick={() => { setFamilyTab('wallet'); registerClick('wallet'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'wallet' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Carteira QR Code</button>
                     <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
                   </div>
                 </div>
@@ -257,7 +255,6 @@ export default function FamilyPortal({
         {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
         {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
         {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
-        {familyTab === 'wallet' && <FamilyWallet familyStudents={familyStudents} currentUser={currentUser} currentSchool={currentSchool} />}
         {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
         
         {/* NOVOS PLACEHOLDERS */}

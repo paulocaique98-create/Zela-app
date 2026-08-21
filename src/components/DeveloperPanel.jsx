@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
 import { Building2, Search, Plus, Edit2, Power, X, Trash2, AlertTriangle } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export default function DeveloperPanel({ currentUser }) {
   const [schools, setSchools] = useState([]);
+  const [confirmDeleteSchool, setConfirmDeleteSchool] = useState(null); // { id, name, code }
+  const [isDeletingSchool, setIsDeletingSchool] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -197,12 +200,11 @@ export default function DeveloperPanel({ currentUser }) {
     }
   };
 
-  const handleDeleteSchool = async (id, name, code) => {
-    const confirmMsg = `ATENÇÃO: Você está prestes a excluir a escola ${name} (${code}).\n\nIsso apagará permanentemente todos os alunos, responsáveis, totens e históricos vinculados a ela.\n\nDigite CONFIRMAR para prosseguir:`;
-    if (prompt(confirmMsg) !== 'CONFIRMAR') {
-      return;
-    }
+  const handleDeleteSchool = (id, name, code) => setConfirmDeleteSchool({ id, name, code });
 
+  const confirmDeleteSchoolAction = async () => {
+    const { id, name } = confirmDeleteSchool;
+    setIsDeletingSchool(true);
     try {
       // Chama a função especial RPC para apagar os logins (auth.users) e depois a escola.
       const { error } = await supabase.rpc('delete_school_and_users', { target_school_id: id });
@@ -213,6 +215,9 @@ export default function DeveloperPanel({ currentUser }) {
     } catch (err) {
       console.error(err);
       alert(`Erro ao excluir escola: ${err.message}`);
+    } finally {
+      setIsDeletingSchool(false);
+      setConfirmDeleteSchool(null);
     }
   };
 
@@ -455,7 +460,7 @@ export default function DeveloperPanel({ currentUser }) {
                     { id: 'cadastros', label: 'Cadastros', desc: 'Cadastro de usuários, comunicados e funcionários' },
                     { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Gestão de usuários, alunos e funcionários' },
                     { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas' },
-                    { id: 'checkin', label: 'Check-in/out', desc: 'Monitor, totem, presença e histórico' },
+                    { id: 'checkin', label: 'Check-in/out', desc: 'Monitor, autoatendimento, presença e histórico' },
                     { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos e datas do ano letivo' },
                     { id: 'comunicados', label: 'Comunicados', desc: 'Envio e visualização de comunicados' },
                     { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
@@ -535,6 +540,16 @@ export default function DeveloperPanel({ currentUser }) {
         </div>
       )}
 
+      {confirmDeleteSchool && (
+        <ConfirmModal
+          title="Excluir escola"
+          message={`ATENÇÃO: Você está prestes a excluir a escola ${confirmDeleteSchool.name} (${confirmDeleteSchool.code}). Isso apagará permanentemente todos os alunos, responsáveis e históricos vinculados a ela.`}
+          requireText="CONFIRMAR"
+          isLoading={isDeletingSchool}
+          onConfirm={confirmDeleteSchoolAction}
+          onCancel={() => setConfirmDeleteSchool(null)}
+        />
+      )}
 
       </div>
     </div>

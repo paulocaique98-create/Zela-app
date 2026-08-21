@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
 import { TURMAS, SETORES_CHAT } from '../lib/constants';
+import ConfirmModal from './ConfirmModal';
 
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 
@@ -373,9 +374,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     }
   };
 
-  const handleRemoveSecondGuardian = async () => {
-    if (!window.confirm(`Remover o vínculo de ${secondGuardian.name} com os alunos desta família?\nO usuário continuará existindo no sistema e poderá ser vinculado a outra família futuramente.`)) return;
-    
+  const [confirmSecondGuardianAction, setConfirmSecondGuardianAction] = useState(null); // 'remove' | 'delete' | null
+
+  const performRemoveSecondGuardian = async () => {
     try {
       setSecondGuardianLoading(true);
       const studentIds = students.map(s => s.id).filter(id => typeof id === 'string');
@@ -401,15 +402,11 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
       setTimeout(() => setErrorMsg(''), 5000);
     } finally {
       setSecondGuardianLoading(false);
+      setConfirmSecondGuardianAction(null);
     }
   };
 
-  const handleDeleteSecondGuardian = async () => {
-    if (!window.confirm(
-      `ATENÇÃO: Isso excluirá permanentemente a conta de ${secondGuardian.name}.\n` +
-      `Esta ação não pode ser desfeita. Confirmar?`
-    )) return;
-    
+  const performDeleteSecondGuardian = async () => {
     setSecondGuardianLoading(true);
     try {
       const studentIds = students.map(s => s.id).filter(id => typeof id === 'string');
@@ -441,6 +438,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
       setTimeout(() => setErrorMsg(''), 5000);
     } finally {
       setSecondGuardianLoading(false);
+      setConfirmSecondGuardianAction(null);
     }
   };
 
@@ -884,7 +882,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               <div className="flex gap-2 mt-3">
                 <button
                   type="button"
-                  onClick={handleRemoveSecondGuardian}
+                  onClick={() => setConfirmSecondGuardianAction('remove')}
                   disabled={secondGuardianLoading}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
                 >
@@ -892,7 +890,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
                 </button>
                 <button
                   type="button"
-                  onClick={handleDeleteSecondGuardian}
+                  onClick={() => setConfirmSecondGuardianAction('delete')}
                   disabled={secondGuardianLoading}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
                 >
@@ -907,7 +905,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
                 {field('E-mail Principal', true, <input type="email" value={secondGuardianForm.email} onChange={e => setSecondGuardianForm({...secondGuardianForm, email: e.target.value})} className={inputCls} placeholder="email@exemplo.com" />)}
                 {field('Senha Provisória', true, <input type="text" minLength={6} value={secondGuardianForm.password} onChange={e => setSecondGuardianForm({...secondGuardianForm, password: e.target.value})} className={inputCls} placeholder="Mínimo 6 caracteres" />)}
                 {field('Telefone', false, <input type="text" value={secondGuardianForm.phone} onChange={e => setSecondGuardianForm({...secondGuardianForm, phone: e.target.value})} className={inputCls} placeholder="(00) 00000-0000" />)}
-                {field('CPF (Usado no Totem)', false, <input type="text" value={secondGuardianForm.doc_number} onChange={e => setSecondGuardianForm({...secondGuardianForm, doc_number: e.target.value})} className={inputCls} placeholder="000.000.000-00" />)}
+                {field('CPF (Usado no Autoatendimento)', false, <input type="text" value={secondGuardianForm.doc_number} onChange={e => setSecondGuardianForm({...secondGuardianForm, doc_number: e.target.value})} className={inputCls} placeholder="000.000.000-00" />)}
                 {field('Grau de Parentesco', true, 
                   <select value={secondGuardianForm.relationship} onChange={e => setSecondGuardianForm({...secondGuardianForm, relationship: e.target.value})} className={inputCls}>
                     <option value="Pai">Pai</option>
@@ -956,6 +954,21 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     </form>
   );
 
+  const secondGuardianConfirmModal = confirmSecondGuardianAction && (
+    <ConfirmModal
+      title={confirmSecondGuardianAction === 'delete' ? 'Excluir 2º Responsável' : 'Remover vínculo'}
+      message={
+        confirmSecondGuardianAction === 'delete'
+          ? `ATENÇÃO: Isso excluirá permanentemente a conta de ${secondGuardian?.name}. Esta ação não pode ser desfeita.`
+          : `Remover o vínculo de ${secondGuardian?.name} com os alunos desta família? O usuário continuará existindo no sistema e poderá ser vinculado a outra família futuramente.`
+      }
+      danger={confirmSecondGuardianAction === 'delete'}
+      isLoading={secondGuardianLoading}
+      onConfirm={confirmSecondGuardianAction === 'delete' ? performDeleteSecondGuardian : performRemoveSecondGuardian}
+      onCancel={() => setConfirmSecondGuardianAction(null)}
+    />
+  );
+
   if (editingUser) {
     return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -990,6 +1003,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
             {formContent}
           </div>
         </div>
+        {secondGuardianConfirmModal}
       </div>,
       document.body
     );
@@ -1020,6 +1034,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
 
         {formContent}
       </div>
+      {secondGuardianConfirmModal}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { navigateTo } from '../utils/navigate';
-import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2 } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
@@ -15,7 +14,6 @@ import CheckinAlertModal from './CheckinAlertModal';
 const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
 const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
-const AdminComunicados = lazy(() => import('./AdminComunicados'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const AdminCardapio = lazy(() => import('./AdminCardapio'));
 const AdminChat = lazy(() => import('./AdminChat'));
@@ -26,21 +24,18 @@ const AdminUserRegistration = lazy(() => import('./AdminUserRegistration'));
 const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminStudentList = lazy(() => import('./AdminStudentList'));
-const QRCodeScanner = lazy(() => import('./QRCodeScanner'));
 const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
-const AdminKioskManagement = lazy(() => import('./AdminKioskManagement'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
 
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -120,7 +115,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'cadastros' ? 'max-h-40' : 'max-h-0'}`}>
                   <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
                     <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                    <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                    {showComunicados && (
+                      <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                    )}
                     <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
@@ -171,7 +168,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div>
                 <button
                   onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosks', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosk', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
                   <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
                   <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
@@ -184,11 +181,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
                     </button>
-                    <button onClick={() => { registerClick('totem'); navigateTo('/admin/totem-checkin'); }} className="text-left text-xs font-bold py-1.5 text-slate-500 hover:text-slate-700">Totem</button>
+                    <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
                     <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
                     <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
                     <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
-                    <button onClick={() => { setAdminTab('kiosks'); registerClick('kiosks'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosks' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Totens</button>
                   </div>
                 </div>
               </div>
@@ -250,11 +246,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'ficha-medica' && <AdminFichaMedica currentUser={currentUser} currentSchool={currentSchool} students={students} />}
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'comunicados' && <AdminComunicados currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios />}
-        {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios />}
+        {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* MONITOR */}
@@ -352,73 +347,50 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           </div>
         )}
 
-        {/* TOTEM AUTOATENDIMENTO */}
+        {/* AUTOATENDIMENTO */}
         {adminTab === 'kiosk' && (
-          <div className="h-full bg-white p-6 sm:p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center overflow-y-auto">
+          <div className="h-full bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center overflow-hidden">
             {/* Header */}
-            <div className="text-center mb-8 sm:mb-10 shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <ShieldCheck size={36} className="sm:hidden" />
-                <ShieldCheck size={40} className="hidden sm:block" />
+            <div className="text-center mb-5 sm:mb-8 shrink-0">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <ShieldCheck size={28} className="sm:hidden" />
+                <ShieldCheck size={32} className="hidden sm:block" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Autoatendimento</h2>
-              <p className="text-slate-500 font-medium text-sm sm:text-base max-w-md mx-auto">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-1">Autoatendimento</h2>
+              <p className="text-slate-500 font-medium text-sm max-w-md mx-auto">
                 Identifique-se
               </p>
             </div>
 
-            {/* Botões — responsivo: coluna no celular, linha no tablet/desktop */}
+            {/* Botões — sempre em linha, sem forçar altura extra, para caber sem scroll */}
             {currentSchool?.plan === 'pro' ? (
-              /* Plano Pro: botões lado a lado (QR Code temporariamente desabilitado) */
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl">
+              /* Plano Pro: reconhecimento facial + senha lado a lado */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl shrink-0">
                 <button
                   onClick={() => setIsFaceScannerOpen(true)}
-                  className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 sm:p-8 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
+                  className="flex flex-row items-center justify-center gap-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 rounded-2xl transition-all shadow-sm group"
                 >
-                  <Camera size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
-                  <Camera size={48} className="hidden sm:block group-hover:scale-110 transition-transform" />
+                  <Camera size={28} className="group-hover:scale-110 transition-transform shrink-0" />
                   <span className="font-black text-base sm:text-lg">Reconhecimento Facial</span>
                 </button>
 
-                {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-                {false && <button
-                  onClick={() => setIsScannerOpen(true)}
-                  className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 hover:border-indigo-600 p-5 sm:p-8 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
-                >
-                  <QrCode size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
-                  <QrCode size={48} className="hidden sm:block group-hover:scale-110 transition-transform" />
-                  <span className="font-black text-base sm:text-lg">Ler QR Code</span>
-                </button>}
-
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 sm:p-8 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
+                  className="flex flex-row items-center justify-center gap-3 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 rounded-2xl transition-all shadow-sm group"
                 >
-                  <KeyRound size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
-                  <KeyRound size={48} className="hidden sm:block group-hover:scale-110 transition-transform" />
+                  <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
                   <span className="font-black text-base sm:text-lg">Senha / PIN</span>
                 </button>
               </div>
             ) : (
-              /* Plano Basic: botão único (QR Code temporariamente desabilitado) */
-              <div className="grid grid-cols-1 gap-3 sm:gap-4 w-full max-w-md">
-                {/* QR Code — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-                {false && <button
-                  onClick={() => setIsScannerOpen(true)}
-                  className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 hover:border-indigo-600 p-5 sm:p-10 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
-                >
-                  <QrCode size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
-                  <QrCode size={56} className="hidden sm:block group-hover:scale-110 transition-transform" />
-                  <span className="font-black text-base sm:text-xl">Ler QR Code</span>
-                </button>}
-
+              /* Plano Basic: só senha (reconhecimento facial é recurso Pro) */
+              <div className="grid grid-cols-1 gap-3 w-full max-w-md shrink-0">
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 sm:p-10 rounded-2xl sm:rounded-3xl transition-all shadow-sm group aspect-auto sm:aspect-square"
+                  className="flex flex-row items-center justify-center gap-3 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 rounded-2xl transition-all shadow-sm group"
                 >
-                  <KeyRound size={32} className="sm:hidden group-hover:scale-110 transition-transform shrink-0" />
-                  <KeyRound size={56} className="hidden sm:block group-hover:scale-110 transition-transform" />
-                  <span className="font-black text-base sm:text-xl">Senha / PIN</span>
+                  <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="font-black text-base sm:text-lg">Senha / PIN</span>
                 </button>
               </div>
             )}
@@ -440,9 +412,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {/* HORAS EXTRAS */}
         {adminTab === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
 
-        {/* TOTENS */}
-        {adminTab === 'kiosks' && <AdminKioskManagement currentSchool={currentSchool} />}
-
         {/* CADASTRO */}
         {adminTab === 'register' && <AdminUserRegistration currentUser={currentUser} />}
 
@@ -450,28 +419,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'settings' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />}
       </Suspense>
 
-        {/* QR Scanner Modal — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
-        {false && isScannerOpen && createPortal(
-          <Suspense fallback={null}>
-            <QRCodeScanner
-              mode="admin"
-              school_id={currentSchool?.id}
-              currentSchool={currentSchool}
-              students={students}
-              updateStudentStatus={updateStudentStatus}
-              onClose={() => setIsScannerOpen(false)}
-              isLandscape={false}
-            />
-          </Suspense>,
-          document.body
-        )}
-
         {/* Face Scanner Modal */}
         {isFaceScannerOpen && createPortal(
           <Suspense fallback={null}>
             <AdminFaceScanner
               onClose={() => setIsFaceScannerOpen(false)}
               updateStudentStatus={updateStudentStatus}
+              requestKioskAccess={requestKioskAccess}
               students={students}
               currentUser={currentUser}
             />
@@ -485,6 +439,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             <AdminPasswordLogin
               onClose={() => setIsPasswordLoginOpen(false)}
               updateStudentStatus={updateStudentStatus}
+              requestKioskAccess={requestKioskAccess}
               currentUser={currentUser}
             />
           </Suspense>,

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
-import MobileMenu from './components/MobileMenu';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
 import { preloadFaceModels } from './lib/faceModels';
@@ -11,9 +10,7 @@ const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
 const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
-const TotemComingSoon = lazy(() => import('./components/TotemComingSoon'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
-const AdminKioskFullscreen = lazy(() => import('./components/AdminKioskFullscreen'));
 
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
@@ -500,14 +497,12 @@ export default function App() {
   };
 
   // Temporizador de inatividade (10 minutos)
-  // Usa currentPath para detectar o totem, evitando leitura direta de window.location
   useEffect(() => {
     let inactivityTimer;
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);
-      // Se não houver usuário logado ou estiver no totem, não ativa o timer
-      if (!currentUser || currentPath === '/totem') return;
+      if (!currentUser) return;
 
       inactivityTimer = setTimeout(() => {
         handleLogout();
@@ -519,8 +514,7 @@ export default function App() {
     // Eventos que indicam atividade do usuário
     const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
 
-    // Atribui os listeners de evento apenas se houver usuário logado e fora do totem
-    if (currentUser && currentPath !== '/totem') {
+    if (currentUser) {
       events.forEach(event => window.addEventListener(event, resetTimer));
       resetTimer(); // Inicia o contador logo de cara
     }
@@ -796,32 +790,8 @@ export default function App() {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><ResetPassword /></Suspense>;
   }
 
-  if (currentPath === '/totem') {
-    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><TotemComingSoon /></Suspense>;
-  }
-
   if (!currentUser) {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><Login onLogin={handleLogin} /></Suspense>;
-  }
-
-  // ──────── ROUTING GLOBAL ────────
-  if (currentPath === '/admin/totem-checkin') {
-    if (currentUser.role !== 'admin') {
-      // Redireciona sem reload — o guardrail apenas muda a rota exibida
-      navigateTo('/');
-      return null;
-    }
-    return (
-      <Suspense fallback={<div className="h-screen bg-slate-900 flex items-center justify-center">Carregando Kiosk...</div>}>
-        <AdminKioskFullscreen
-          currentUser={currentUser}
-          currentSchool={currentSchool}
-          students={students}
-          updateStudentStatus={updateStudentStatus}
-          requestKioskAccess={requestKioskAccess}
-        />
-      </Suspense>
-    );
   }
 
   return (
@@ -864,6 +834,7 @@ export default function App() {
                   setAdminTab={setAdminTab}
                   updateStudentStatus={updateStudentStatus}
                   rejectStudentStatus={rejectStudentStatus}
+                  requestKioskAccess={requestKioskAccess}
                   onUpdateSchool={fetchData}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}

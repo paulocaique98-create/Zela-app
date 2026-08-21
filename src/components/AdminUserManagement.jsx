@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
+import ConfirmModal from './ConfirmModal';
 
 // ── Componente Principal ─────────────────────────────────────────────────────
 export default function AdminUserManagement({ currentUser }) {
@@ -12,6 +13,8 @@ export default function AdminUserManagement({ currentUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
+  const [deletingUserId, setDeletingUserId] = useState(null);
 
   const fetchUsersAndStudents = async () => {
     setIsLoading(true);
@@ -59,20 +62,26 @@ export default function AdminUserManagement({ currentUser }) {
 
   useEffect(() => { fetchUsersAndStudents(); }, []);
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Tem certeza que deseja excluir este usuário? Todos os dados vinculados serão perdidos.')) return;
+  const handleDeleteUser = (userId) => setConfirmDeleteUserId(userId);
+
+  const confirmDeleteUser = async () => {
+    const userId = confirmDeleteUserId;
+    setDeletingUserId(userId);
     try {
       // Chama a Edge Function para excluir o usuário dos dois ambientes (auth e public)
       const { data, error } = await supabase.functions.invoke('delete-user', {
         body: { userId }
       });
-      
+
       if (error) throw error;
-      
+
       setUsersList(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
       console.error(err);
       alert('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
+    } finally {
+      setDeletingUserId(null);
+      setConfirmDeleteUserId(null);
     }
   };
 
@@ -254,6 +263,16 @@ export default function AdminUserManagement({ currentUser }) {
             setShowImportModal(false);
             fetchUsersAndStudents();
           }}
+        />
+      )}
+
+      {confirmDeleteUserId && (
+        <ConfirmModal
+          title="Excluir usuário"
+          message="Tem certeza que deseja excluir este usuário? Todos os dados vinculados serão perdidos."
+          isLoading={deletingUserId === confirmDeleteUserId}
+          onConfirm={confirmDeleteUser}
+          onCancel={() => setConfirmDeleteUserId(null)}
         />
       )}
     </div>

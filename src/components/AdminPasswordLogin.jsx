@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, KeyRound, Loader2, CheckCircle, ShieldAlert, Delete } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ConfirmExitPassword from './ConfirmExitPassword';
 
 /**
  * AdminPasswordLogin — modo "Senha/Manual" do Totem
@@ -14,6 +15,11 @@ import { supabase } from '../lib/supabase';
  *   - 2+ responsáveis → lista de seleção antes de confirmar
  */
 export default function AdminPasswordLogin({ onClose, updateStudentStatus, requestKioskAccess, currentUser }) {
+  // Sair do Autoatendimento exige confirmar a senha da conta — a tela fica exposta
+  // pra qualquer pessoa durante o check-in (ver ConfirmExitPassword).
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const requestExit = () => setShowExitConfirm(true);
+
   const [pin, setPin] = useState(''); // 4 dígitos
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -204,7 +210,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
             {step === 'done' && 'Solicitação Enviada'}
           </h3>
           <button
-            onClick={onClose}
+            onClick={requestExit}
             className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
           >
             <X size={20} />
@@ -412,6 +418,14 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
         </div>
       </div>
+
+      {showExitConfirm && (
+        <ConfirmExitPassword
+          email={currentUser?.email}
+          onConfirm={() => { setShowExitConfirm(false); onClose(); }}
+          onCancel={() => setShowExitConfirm(false)}
+        />
+      )}
     </div>
   );
 }

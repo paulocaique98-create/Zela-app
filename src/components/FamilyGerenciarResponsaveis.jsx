@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, UserMinus, Trash2, ShieldCheck, CheckCircle2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from './ConfirmModal';
 
 export default function FamilyGerenciarResponsaveis({ currentUser, familyStudents, currentSchool }) {
   const [secondGuardian, setSecondGuardian] = useState(null);
@@ -8,6 +9,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmSecondGuardianAction, setConfirmSecondGuardianAction] = useState(null); // 'remove' | 'delete' | null
   
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', phone: '', doc_number: '', relationship: 'Pai'
@@ -119,9 +121,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
     }
   };
 
-  const handleRemoveSecondGuardian = async () => {
-    if (!window.confirm(`Remover o vínculo de ${secondGuardian.name} com os alunos desta família?\nO usuário continuará existindo no sistema e poderá ser vinculado a outra família futuramente.`)) return;
-    
+  const performRemoveSecondGuardian = async () => {
     try {
       setActionLoading(true);
       const { error } = await supabase
@@ -129,41 +129,38 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
         .delete()
         .eq('guardian_id', secondGuardian.id)
         .in('student_id', studentIds);
-        
+
       if (error) throw error;
-      
+
       setSecondGuardian(null);
     } catch (err) {
       alert('Erro ao remover vínculo: ' + err.message);
     } finally {
       setActionLoading(false);
+      setConfirmSecondGuardianAction(null);
     }
   };
 
-  const handleDeleteSecondGuardian = async () => {
-    if (!window.confirm(
-      `ATENÇÃO: Isso excluirá permanentemente a conta de ${secondGuardian.name}.\n` +
-      `Esta ação não pode ser desfeita. Confirmar?`
-    )) return;
-    
+  const performDeleteSecondGuardian = async () => {
     setActionLoading(true);
     try {
       if (studentIds.length > 0) {
         await supabase.from('student_guardians').delete()
           .eq('guardian_id', secondGuardian.id).in('student_id', studentIds);
       }
-      
+
       const { error: deleteError } = await supabase.functions.invoke('delete-user', {
         body: { userId: secondGuardian.id }
       });
-      
+
       if (deleteError) throw new Error(deleteError.message);
-      
+
       setSecondGuardian(null);
     } catch (err) {
       alert('Erro ao excluir 2º Responsável: ' + err.message);
     } finally {
       setActionLoading(false);
+      setConfirmSecondGuardianAction(null);
     }
   };
 
@@ -262,11 +259,11 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
                 </div>
                 {currentUserIsFinancial && (
                   <div className="mt-auto flex flex-wrap gap-2">
-                    <button onClick={handleRemoveSecondGuardian} disabled={actionLoading}
+                    <button onClick={() => setConfirmSecondGuardianAction('remove')} disabled={actionLoading}
                       className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition disabled:opacity-50">
                       <UserMinus size={14} /> Remover Vínculo
                     </button>
-                    <button onClick={handleDeleteSecondGuardian} disabled={actionLoading}
+                    <button onClick={() => setConfirmSecondGuardianAction('delete')} disabled={actionLoading}
                       className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-50">
                       <Trash2 size={14} /> Excluir
                     </button>
@@ -316,7 +313,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
               {field('E-mail Principal', true, <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputCls} placeholder="email@exemplo.com" />)}
               {field('Senha Provisória', true, <input type="text" required minLength={6} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={inputCls} placeholder="Mínimo 6 caracteres" />)}
               {field('Telefone', false, <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputCls} placeholder="(00) 00000-0000" />)}
-              {field('CPF (Usado no Totem)', false, <input type="text" value={formData.doc_number} onChange={e => setFormData({...formData, doc_number: e.target.value})} className={inputCls} placeholder="000.000.000-00" />)}
+              {field('CPF (Usado no Autoatendimento)', false, <input type="text" value={formData.doc_number} onChange={e => setFormData({...formData, doc_number: e.target.value})} className={inputCls} placeholder="000.000.000-00" />)}
               {field('Grau de Parentesco', true, 
                 <select required value={formData.relationship} onChange={e => setFormData({...formData, relationship: e.target.value})} className={inputCls}>
                   <option value="Pai">Pai</option>
@@ -377,6 +374,21 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
             </div>
           </div>
         </div>
+      )}
+
+      {confirmSecondGuardianAction && (
+        <ConfirmModal
+          title={confirmSecondGuardianAction === 'delete' ? 'Excluir 2º Responsável' : 'Remover vínculo'}
+          message={
+            confirmSecondGuardianAction === 'delete'
+              ? `ATENÇÃO: Isso excluirá permanentemente a conta de ${secondGuardian?.name}. Esta ação não pode ser desfeita.`
+              : `Remover o vínculo de ${secondGuardian?.name} com os alunos desta família? O usuário continuará existindo no sistema e poderá ser vinculado a outra família futuramente.`
+          }
+          danger={confirmSecondGuardianAction === 'delete'}
+          isLoading={actionLoading}
+          onConfirm={confirmSecondGuardianAction === 'delete' ? performDeleteSecondGuardian : performRemoveSecondGuardian}
+          onCancel={() => setConfirmSecondGuardianAction(null)}
+        />
       )}
     </div>
   );

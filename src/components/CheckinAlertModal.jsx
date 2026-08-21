@@ -119,7 +119,7 @@ export default function CheckinAlertModal({ alert, onDismiss, onGoToMonitor }) {
         <div className="px-6 pb-2">
           <div className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm ${isCheckin ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}`}>
             <span className="text-base">{isCheckin ? '📥' : '📤'}</span>
-            {alert.type} solicitado no totem
+            {alert.type} solicitado no Autoatendimento
           </div>
         </div>
 

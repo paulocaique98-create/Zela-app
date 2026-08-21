@@ -27,7 +27,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   const allModules = [
     { id: 'cadastros', label: 'Cadastros', desc: 'Usuários, comunicados e funcionários', core: true },
     { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Lista de alunos e gestão de acessos', core: true },
-    { id: 'checkin', label: 'Check-in/out', desc: 'Totem, monitor, presença e histórico', core: true },
+    { id: 'checkin', label: 'Check-in/out', desc: 'Autoatendimento, monitor, presença e histórico', core: true },
     { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas', core: false },
     { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos da escola', core: false },
     { id: 'comunicados', label: 'Comunicados', desc: 'Mural de recados', core: false },

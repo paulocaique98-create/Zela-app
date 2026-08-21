@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { uploadFile, removeFile, getSignedUrls, buildSafeFileName } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import ConfirmModal from './ConfirmModal';
 
 const TURMA_OPTIONS = TURMAS.filter(t => t !== 'Todas as Turmas');
 const BUCKET = 'mural-fotos';
@@ -23,6 +24,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
   const [sendToAll, setSendToAll] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteFoto, setConfirmDeleteFoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -179,8 +181,10 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
     }
   };
 
-  const handleDelete = async (foto) => {
-    if (!window.confirm('Excluir esta foto do mural? Essa ação não pode ser desfeita.')) return;
+  const handleDelete = (foto) => setConfirmDeleteFoto(foto);
+
+  const confirmDelete = async () => {
+    const foto = confirmDeleteFoto;
     setDeletingId(foto.id);
     try {
       const { error: deleteError } = await supabase.from('mural_fotos').delete().eq('id', foto.id);
@@ -193,6 +197,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
       setError('Não foi possível excluir essa foto.');
     } finally {
       setDeletingId(null);
+      setConfirmDeleteFoto(null);
     }
   };
 
@@ -394,6 +399,16 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmDeleteFoto && (
+        <ConfirmModal
+          title="Excluir foto"
+          message="Excluir esta foto do mural? Essa ação não pode ser desfeita."
+          isLoading={deletingId === confirmDeleteFoto.id}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteFoto(null)}
+        />
       )}
     </div>
   );

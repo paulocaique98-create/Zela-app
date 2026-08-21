@@ -2,11 +2,27 @@ import React, { useState } from 'react';
 import { Users, Plus, Camera, Fingerprint, Loader2, Trash2 } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
+import ConfirmModal from './ConfirmModal';
 
 export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthModal, currentSchool }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
+  const [confirmRemovePhotoId, setConfirmRemovePhotoId] = useState(null);
   const isBasic = currentSchool?.plan === 'basic';
   const limitReached = isBasic && authorized.length >= 2;
+
+  const performRemovePhoto = async () => {
+    const personId = confirmRemovePhotoId;
+    setIsProcessingId(personId);
+    try {
+      await togglePhoto(personId, null, null);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao remover biometria.");
+    } finally {
+      setIsProcessingId(null);
+      setConfirmRemovePhotoId(null);
+    }
+  };
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
@@ -78,19 +94,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
               }
             };
 
-            const handleRemovePhoto = async () => {
-              if (window.confirm('Tem certeza que deseja remover a foto e biometria deste autorizado? O acesso por biometria será revogado imediatamente.')) {
-                setIsProcessingId(person.id);
-                try {
-                  await togglePhoto(person.id, null, null);
-                } catch (err) {
-                  console.error(err);
-                  alert("Erro ao remover biometria.");
-                } finally {
-                  setIsProcessingId(null);
-                }
-              }
-            };
+            const handleRemovePhoto = () => setConfirmRemovePhotoId(person.id);
 
             return (
               <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-slate-100 rounded-2xl bg-slate-50 gap-4 transition hover:border-slate-300">
@@ -169,6 +173,16 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
           </p>
         </div>
       </div>
+
+      {confirmRemovePhotoId && (
+        <ConfirmModal
+          title="Remover biometria"
+          message="Tem certeza que deseja remover a foto e biometria deste autorizado? O acesso por biometria será revogado imediatamente."
+          isLoading={isProcessingId === confirmRemovePhotoId}
+          onConfirm={performRemovePhoto}
+          onCancel={() => setConfirmRemovePhotoId(null)}
+        />
+      )}
     </div>
   );
 }

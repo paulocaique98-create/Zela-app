@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
+import ConfirmModal from './ConfirmModal';
 
 const BUCKET = 'matriculas-docs';
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -84,6 +85,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const [requestId] = useState(() => crypto.randomUUID());
   const [responsavel, setResponsavel] = useState(emptyResponsavel());
@@ -265,8 +268,11 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Excluir esta solicitação pendente?')) return;
+  const handleDelete = (id) => setConfirmDeleteId(id);
+
+  const confirmDelete = async () => {
+    const id = confirmDeleteId;
+    setDeletingId(id);
     try {
       const { error: deleteError } = await supabase.from('matricula_solicitacoes').delete().eq('id', id);
       if (deleteError) throw deleteError;
@@ -274,6 +280,9 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     } catch (err) {
       console.error('[FamilyMatriculas] Erro ao excluir:', err);
       setError('Não foi possível excluir essa solicitação.');
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -599,6 +608,16 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
           </>
         )}
       </div>
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Excluir solicitação"
+          message="Excluir esta solicitação pendente?"
+          isLoading={deletingId === confirmDeleteId}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }
