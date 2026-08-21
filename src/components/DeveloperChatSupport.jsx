@@ -116,7 +116,7 @@ export default function DeveloperChatSupport({ currentUser }) {
       notifyChatMessage(activeThread.id);
     } catch (err) {
       console.error('[DeveloperChatSupport] Erro ao enviar mensagem:', err);
-      setError('Não foi possível enviar a mensagem.');
+      setError(err.message?.includes('Muitas mensagens') ? err.message : 'Não foi possível enviar a mensagem.');
     } finally {
       setIsSending(false);
     }
@@ -130,7 +130,7 @@ export default function DeveloperChatSupport({ currentUser }) {
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-800 truncate">{activeThread.family?.name || 'Responsável'}</h2>
+            <h2 className="text-lg font-bold text-slate-800 truncate">{activeThread.family?.name || 'Admin'}</h2>
             <p className="text-xs text-slate-400 truncate">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function DeveloperChatSupport({ currentUser }) {
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Suporte Zela</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">Conversas de responsáveis de todas as escolas.</p>
+          <p className="text-slate-500 text-sm hidden sm:block">Conversas de administradores de todas as escolas.</p>
         </div>
       </div>
 
@@ -219,7 +219,7 @@ export default function DeveloperChatSupport({ currentUser }) {
                 className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition text-left"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-slate-800 text-sm truncate">{t.family?.name || 'Responsável'}</p>
+                  <p className="font-bold text-slate-800 text-sm truncate">{t.family?.name || 'Admin'}</p>
                   <p className="text-slate-400 text-xs truncate">{t.school?.school_code} — {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
                 </div>
                 {unread && <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />}

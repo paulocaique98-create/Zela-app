@@ -43,6 +43,23 @@ serve(async (req) => {
       throw new Error('Usuário não encontrado no banco')
     }
 
+    // Rate limit: limite alto (200/5min) de propósito — admins importam listas
+    // inteiras de alunos/famílias via planilha, o que chama essa função várias
+    // vezes seguidas em um fluxo legítimo. A chave usa o id do caller já
+    // validado pelo JWT acima, não um valor vindo do corpo da requisição.
+    const { data: rateLimitOk, error: rateLimitError } = await adminClient.rpc('check_rate_limit', {
+      p_key: `edge:create-family-user:${caller.id}`,
+      p_limit: 200,
+      p_window_seconds: 300,
+    })
+    if (rateLimitError) throw rateLimitError
+    if (!rateLimitOk) {
+      return new Response(JSON.stringify({ error: 'Muitas requisições em pouco tempo. Aguarde um instante.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 429,
+      })
+    }
+
     // 3. Obter os dados da requisição
     const { 
       name, 

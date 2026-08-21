@@ -32,6 +32,22 @@ serve(async (req) => {
       throw new Error('Permissão negada');
     }
 
+    // Rate limit: a chave usa o id do caller já validado pelo JWT acima, nunca
+    // um valor vindo do corpo da requisição — não dá pra "gastar" o limite de
+    // outra pessoa por aqui.
+    const { data: rateLimitOk, error: rateLimitError } = await supabaseClient.rpc('check_rate_limit', {
+      p_key: `edge:create-admin-user:${user.id}`,
+      p_limit: 15,
+      p_window_seconds: 60,
+    });
+    if (rateLimitError) throw rateLimitError;
+    if (!rateLimitOk) {
+      return new Response(JSON.stringify({ error: 'Muitas requisições em pouco tempo. Aguarde um instante.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 429,
+      });
+    }
+
     const { email, password, name, role, school_id, extra_fields } = await req.json();
 
     // Se for admin, só pode criar para a própria escola

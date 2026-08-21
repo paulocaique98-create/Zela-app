@@ -45,6 +45,22 @@ serve(async (req) => {
       throw new Error('Acesso negado: apenas administradores podem excluir usuários')
     }
 
+    // Rate limit: exclusão de conta é uma ação sensível/irreversível — limite
+    // mais apertado que os outros. A chave usa o id do caller já validado
+    // pelo JWT acima, não um valor vindo do corpo da requisição.
+    const { data: rateLimitOk, error: rateLimitError } = await adminClient.rpc('check_rate_limit', {
+      p_key: `edge:delete-user:${caller.id}`,
+      p_limit: 20,
+      p_window_seconds: 60,
+    })
+    if (rateLimitError) throw rateLimitError
+    if (!rateLimitOk) {
+      return new Response(JSON.stringify({ error: 'Muitas requisições em pouco tempo. Aguarde um instante.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 429,
+      })
+    }
+
     // 3. Obter o userId a ser excluído
     const { userId } = await req.json()
     if (!userId) {

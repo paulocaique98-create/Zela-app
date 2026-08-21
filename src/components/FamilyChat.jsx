@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Loader2, ArrowLeft, Send, Clock, Building2, GraduationCap, Users2, Contact, LifeBuoy } from 'lucide-react';
+import { MessageCircle, Loader2, ArrowLeft, Send, Clock, Building2, GraduationCap, Users2, Contact } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { notifyChatMessage } from '../lib/notifyChatMessage';
+
+// Suporte Zela não aparece pra família — só admins podem abrir conversa com o
+// time Zela (ver AdminChat.jsx).
+const SETORES_FAMILIA = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 
 const SETOR_ICONS = {
   administrativo: Building2,
   diretoria_pedagogica: GraduationCap,
   coordenacao: Users2,
   recepcao: Contact,
-  suporte_zela: LifeBuoy,
 };
 
 function formatTime(dateStr) {
@@ -184,7 +187,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
       notifyChatMessage(activeThread.id);
     } catch (err) {
       console.error('[FamilyChat] Erro ao enviar mensagem:', err);
-      setError('Não foi possível enviar a mensagem.');
+      setError(err.message?.includes('Muitas mensagens') ? err.message : 'Não foi possível enviar a mensagem.');
     } finally {
       setIsSending(false);
     }
@@ -291,7 +294,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
           </div>
         ) : (
           <div className="flex-1 flex flex-wrap content-start justify-center gap-3 min-h-0">
-          {SETORES_CHAT.map(setor => {
+          {SETORES_FAMILIA.map(setor => {
             const Icon = SETOR_ICONS[setor.value] || MessageCircle;
             const unread = isUnread(setor.value);
             return (

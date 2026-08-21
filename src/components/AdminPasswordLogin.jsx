@@ -86,6 +86,19 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
     setError('');
 
     try {
+      // Checagem real de rate limit no banco (o contador local acima é só uma
+      // otimização de UX pra não bater no servidor à toa — quem de fato
+      // impede força bruta é essa RPC, já que o estado do React se perde a
+      // qualquer reload da página).
+      const { data: allowed, error: rateLimitError } = await supabase.rpc('check_pin_login_rate_limit');
+      if (rateLimitError) throw rateLimitError;
+      if (!allowed) {
+        setLockedUntil(Date.now() + 30000);
+        setError('Muitas tentativas em pouco tempo. Aguarde um instante.');
+        setPin('');
+        return;
+      }
+
       // Buscar todos os family da escola
       const { data: usersData, error: usersError } = await supabase
         .from('users')
