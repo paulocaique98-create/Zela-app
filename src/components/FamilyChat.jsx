@@ -71,6 +71,24 @@ export default function FamilyChat({ currentUser, currentSchool }) {
     fetchThreadList();
   }, [currentUser?.id]);
 
+  // Realtime na lista de setores: a trigger touch_chat_thread() atualiza
+  // updated_at do thread a cada mensagem nova, então ouvir chat_threads cobre
+  // o badge de não lida sem precisar abrir a conversa pra atualizar.
+  useEffect(() => {
+    if (!currentUser?.id || activeSetor) return;
+
+    const channel = supabase
+      .channel(`chat-threads-list-family-${currentUser.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_threads', filter: `family_id=eq.${currentUser.id}` }, () => {
+        fetchThreadList();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id, activeSetor]);
+
   const openSetor = async (setorValue) => {
     setActiveSetor(setorValue);
     setIsLoadingThread(true);
@@ -97,7 +115,8 @@ export default function FamilyChat({ currentUser, currentSchool }) {
       if (msgsError) throw msgsError;
       setMessages(msgs || []);
 
-      await supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      const { error: readError } = await supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      if (readError) console.warn('[FamilyChat] Falha ao marcar conversa como lida:', readError);
     } catch (err) {
       console.error('[FamilyChat] Erro ao abrir conversa:', err);
       setError('Não foi possível abrir esta conversa.');
@@ -127,7 +146,10 @@ export default function FamilyChat({ currentUser, currentSchool }) {
         if (payload.new.thread_id !== activeThread.id) return;
         setMessages(prev => (prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]));
         if (payload.new.sender_role !== 'family') {
-          supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', activeThread.id);
+          supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', activeThread.id)
+            .then(({ error: readError }) => {
+              if (readError) console.warn('[FamilyChat] Falha ao marcar conversa como lida:', readError);
+            });
         }
       })
       .subscribe();

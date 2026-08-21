@@ -27,7 +27,7 @@ export default function FamilyComunicados({ currentUser, currentSchool }) {
       setError('');
       try {
         const [comunicadosRes, readsRes] = await Promise.all([
-          supabase.from('comunicados').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),
+          supabase.from('comunicados').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }).limit(300),
           supabase.from('comunicado_reads').select('comunicado_id').eq('user_id', currentUser.id),
         ]);
 

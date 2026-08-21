@@ -246,7 +246,8 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         .from('matricula_solicitacoes')
         .select('*')
         .eq('school_id', schoolId)
-        .order('submitted_at', { ascending: false });
+        .order('submitted_at', { ascending: false })
+        .limit(300);
       if (fetchError) throw fetchError;
       setSolicitacoes(data || []);
     } catch (err) {

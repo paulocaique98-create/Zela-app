@@ -56,7 +56,8 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
         .from('comunicados')
         .select('*')
         .eq('school_id', schoolId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(300);
 
       if (fetchError) throw fetchError;
       setComunicados(data || []);

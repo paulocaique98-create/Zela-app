@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Building2, Receipt, FileText, LifeBuoy, Settings } from 'lucide-react';
-import DeveloperPanel from './DeveloperPanel';
-import ConfiguracoesPanel from './ConfiguracoesPanel';
-import DeveloperChatSupport from './DeveloperChatSupport';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
+
+// Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
+const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
+const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
+const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState('schools');
@@ -81,19 +83,21 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
-        {activeTab === 'schools' && (
-          <DeveloperPanel 
-            currentUser={currentUser} 
-          />
-        )}
-        {activeTab === 'settings' && (
-          <ConfiguracoesPanel
-            onUpdateGlobalLogo={onUpdateGlobalLogo}
-          />
-        )}
-        {activeTab === 'support' && (
-          <DeveloperChatSupport currentUser={currentUser} />
-        )}
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div></div>}>
+          {activeTab === 'schools' && (
+            <DeveloperPanel
+              currentUser={currentUser}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <ConfiguracoesPanel
+              onUpdateGlobalLogo={onUpdateGlobalLogo}
+            />
+          )}
+          {activeTab === 'support' && (
+            <DeveloperChatSupport currentUser={currentUser} />
+          )}
+        </Suspense>
       </main>
     </div>
   );

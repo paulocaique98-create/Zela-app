@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -6,19 +6,22 @@ import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import FamilyInicio from './FamilyInicio';
-import FamilyMatriculas from './FamilyMatriculas';
-import FamilyFichaMedica from './FamilyFichaMedica';
-import FamilyCalendario from './FamilyCalendario';
-import FamilyComunicados from './FamilyComunicados';
-import FamilyMuralFotos from './FamilyMuralFotos';
-import FamilyCardapio from './FamilyCardapio';
-import FamilyChat from './FamilyChat';
-import FamilyHome from './FamilyHome';
-import FamilyHistory from './FamilyHistory';
-import FamilySettings from './FamilySettings';
-import FamilyAuthorized from './FamilyAuthorized';
-import FamilyRegistrationData from './FamilyRegistrationData';
-import FamilyGerenciarResponsaveis from './FamilyGerenciarResponsaveis';
+
+// Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
+// — mesmo padrão de code-splitting já usado no AdminPortal.
+const FamilyMatriculas = lazy(() => import('./FamilyMatriculas'));
+const FamilyFichaMedica = lazy(() => import('./FamilyFichaMedica'));
+const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
+const FamilyComunicados = lazy(() => import('./FamilyComunicados'));
+const FamilyMuralFotos = lazy(() => import('./FamilyMuralFotos'));
+const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
+const FamilyChat = lazy(() => import('./FamilyChat'));
+const FamilyHome = lazy(() => import('./FamilyHome'));
+const FamilyHistory = lazy(() => import('./FamilyHistory'));
+const FamilySettings = lazy(() => import('./FamilySettings'));
+const FamilyAuthorized = lazy(() => import('./FamilyAuthorized'));
+const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
+const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -83,17 +86,22 @@ export default function FamilyPortal({
   };
 
   const features = currentSchool?.features_enabled || {};
-  
-  const showFormularios = features.formularios === true;
+
+  // Dois grupos de flag por design: os módulos "core" (existiam antes do sistema
+  // de features_enabled) ficam ligados por padrão e só somem se explicitamente
+  // desativados (!== false); os módulos novos, adicionados depois, ficam
+  // desligados por padrão até o developer contratá-los pra escola (=== true).
   const showGerenciamento = features.gerenciamento !== false;
   const showCheckin = features.checkin !== false;
+  const showConfiguracoes = features.configuracoes !== false;
+
+  const showFormularios = features.formularios === true;
   const showCalendario = features.calendario === true;
   const showComunicados = features.comunicados === true;
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
   const showChat = features.chat === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
-  const showConfiguracoes = features.configuracoes !== false;
 
   return (
     <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
@@ -249,32 +257,34 @@ export default function FamilyPortal({
         )}
 
         {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} />}
-        
-        {/* REUTILIZANDO COMPONENTES EXISTENTES */}
-        {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
-        {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
-        {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
-        {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
-        {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
-        
-        {/* NOVOS PLACEHOLDERS */}
-        {familyTab === 'matriculas' && <FamilyMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
-        {familyTab === 'ficha-medica' && <FamilyFichaMedica currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
-        {familyTab === 'calendario' && <FamilyCalendario currentUser={currentUser} currentSchool={currentSchool} />}
-        {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
-        {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
-        {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-        {familyTab === 'settings' && (
-          <FamilySettings 
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser}
-            authorized={authorized}
-            togglePhoto={togglePhoto}
-            onOpenAuthModal={onOpenAuthModal}
-            currentSchool={currentSchool}
-            pushData={pushData}
-          />
-        )}
+
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div></div>}>
+          {/* REUTILIZANDO COMPONENTES EXISTENTES */}
+          {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
+          {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
+          {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
+          {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
+          {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
+
+          {/* NOVOS PLACEHOLDERS */}
+          {familyTab === 'matriculas' && <FamilyMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'ficha-medica' && <FamilyFichaMedica currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
+          {familyTab === 'calendario' && <FamilyCalendario currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'settings' && (
+            <FamilySettings
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              authorized={authorized}
+              togglePhoto={togglePhoto}
+              onOpenAuthModal={onOpenAuthModal}
+              currentSchool={currentSchool}
+              pushData={pushData}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Chat flutuante — acessível de qualquer aba, canto inferior direito */}
@@ -309,7 +319,9 @@ export default function FamilyPortal({
               >
                 {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
               </button>
-              <FamilyChat currentUser={currentUser} currentSchool={currentSchool} />
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>}>
+                <FamilyChat currentUser={currentUser} currentSchool={currentSchool} />
+              </Suspense>
             </div>
           )}
         </>,

@@ -29,7 +29,8 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         .from('funcionarios')
         .select('*')
         .eq('school_id', schoolId)
-        .order('name', { ascending: true });
+        .order('name', { ascending: true })
+        .limit(500);
       if (fetchError) throw fetchError;
       setFuncionarios(data || []);
     } catch (err) {

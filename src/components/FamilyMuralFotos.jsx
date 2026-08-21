@@ -66,7 +66,8 @@ export default function FamilyMuralFotos({ currentUser, currentSchool }) {
           .from('mural_fotos')
           .select('*')
           .eq('school_id', schoolId)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(300);
         if (fetchError) throw fetchError;
         setFotos(data || []);
 

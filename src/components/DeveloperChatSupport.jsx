@@ -28,7 +28,8 @@ export default function DeveloperChatSupport({ currentUser }) {
         .from('chat_threads')
         .select('*, family:users!chat_threads_family_id_fkey(name), school:schools!chat_threads_school_id_fkey(name, school_code)')
         .eq('setor', 'suporte_zela')
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(300);
       if (fetchError) throw fetchError;
       setThreads(data || []);
     } catch (err) {
@@ -54,7 +55,8 @@ export default function DeveloperChatSupport({ currentUser }) {
         .order('created_at', { ascending: true });
       if (msgsError) throw msgsError;
       setMessages(msgs || []);
-      await supabase.from('chat_threads').update({ staff_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      const { error: readError } = await supabase.from('chat_threads').update({ staff_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      if (readError) console.warn('[DeveloperChatSupport] Falha ao marcar conversa como lida:', readError);
     } catch (err) {
       console.error('[DeveloperChatSupport] Erro ao abrir conversa:', err);
       setError('Não foi possível abrir esta conversa.');

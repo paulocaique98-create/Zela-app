@@ -56,7 +56,8 @@ export default function AdminChat({ currentUser, currentSchool }) {
         .from('chat_threads')
         .select('*, family:users!chat_threads_family_id_fkey(name)')
         .eq('school_id', schoolId)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(300);
       if (fetchError) throw fetchError;
       setThreads(data || []);
     } catch (err) {
@@ -70,6 +71,25 @@ export default function AdminChat({ currentUser, currentSchool }) {
     fetchThreads();
   }, [schoolId]);
 
+  // Realtime na lista de conversas: a trigger touch_chat_thread() atualiza
+  // updated_at do thread a cada mensagem nova, então ouvir chat_threads cobre
+  // tanto "chegou mensagem nova" quanto "badge de não lida" sem precisar abrir
+  // a conversa pra atualizar.
+  useEffect(() => {
+    if (!schoolId || activeThread) return;
+
+    const channel = supabase
+      .channel(`chat-threads-list-admin-${schoolId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_threads', filter: `school_id=eq.${schoolId}` }, () => {
+        fetchThreads();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [schoolId, activeThread]);
+
   const openThread = async (thread) => {
     setActiveThread(thread);
     setIsLoadingThread(true);
@@ -82,7 +102,8 @@ export default function AdminChat({ currentUser, currentSchool }) {
         .order('created_at', { ascending: true });
       if (msgsError) throw msgsError;
       setMessages(msgs || []);
-      await supabase.from('chat_threads').update({ staff_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      const { error: readError } = await supabase.from('chat_threads').update({ staff_last_read_at: new Date().toISOString() }).eq('id', thread.id);
+      if (readError) console.warn('[AdminChat] Falha ao marcar conversa como lida:', readError);
     } catch (err) {
       console.error('[AdminChat] Erro ao abrir conversa:', err);
       setError('Não foi possível abrir esta conversa.');
