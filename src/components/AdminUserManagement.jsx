@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, Save, KeyRound, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { TURMAS } from '../lib/constants';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
 import ConfirmModal from './ConfirmModal';
 
-// ── Componente Principal ─────────────────────────────────────────────────────
+// Gestão de Usuários = só Responsáveis (família). Contas de Admin/Professor (com
+// login) ficam em Gerenciamento > Funcionários, junto do resto do cadastro de
+// equipe — evita misturar "responsável de aluno" com "equipe da escola".
 export default function AdminUserManagement({ currentUser }) {
   const [usersList, setUsersList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +24,7 @@ export default function AdminUserManagement({ currentUser }) {
         .from('users')
         .select('*')
         .eq('school_id', currentUser.school_id)
+        .eq('role', 'family')
         .order('name', { ascending: true });
       if (usersError) throw usersError;
 
@@ -112,7 +114,7 @@ export default function AdminUserManagement({ currentUser }) {
           <div>
             <h2 className="text-xl font-bold text-slate-800">Gestão de Usuários</h2>
             <p className="text-sm text-slate-500">
-              {usersList.length} usuário{usersList.length !== 1 ? 's' : ''} cadastrado{usersList.length !== 1 ? 's' : ''}
+              {usersList.length} responsável{usersList.length !== 1 ? 'is' : ''} cadastrado{usersList.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -159,7 +161,7 @@ export default function AdminUserManagement({ currentUser }) {
           <div className="flex flex-col items-center justify-center h-full py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
             <Users className="h-12 w-12 text-slate-300 mb-3" />
             <h3 className="text-slate-500 font-medium text-sm">
-              {searchTerm ? `Nenhum resultado para "${searchTerm}"` : 'Nenhum usuário cadastrado.'}
+              {searchTerm ? `Nenhum resultado para "${searchTerm}"` : 'Nenhum responsável cadastrado.'}
             </h3>
           </div>
         ) : (
@@ -202,8 +204,8 @@ export default function AdminUserManagement({ currentUser }) {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-slate-800 text-sm truncate" title={user.name}>{user.name}</h3>
-                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block ${user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {user.role === 'admin' ? 'Administrador' : 'Família'}
+                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block bg-blue-100 text-blue-700">
+                        Família
                       </span>
                     </div>
                   </div>
@@ -223,7 +225,7 @@ export default function AdminUserManagement({ currentUser }) {
                   </div>
 
                   {/* Alunos vinculados */}
-                  {user.role === 'family' && user.students?.length > 0 && (
+                  {user.students?.length > 0 && (
                     <div className="mt-auto pt-3 border-t border-slate-100">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                         <GraduationCap size={11}/> Alunos ({user.students.length})

@@ -36,6 +36,7 @@ export default function DeveloperPanel({ currentUser }) {
     mural: false,
     cardapio: false,
     chat: false,
+    relatorios_pedagogicos: false,
     configuracoes: true
   };
 
@@ -466,6 +467,7 @@ export default function DeveloperPanel({ currentUser }) {
                     { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
                     { id: 'cardapio', label: 'Cardápio', desc: 'Cardápio semanal da escola' },
                     { id: 'chat', label: 'Chat', desc: 'Chat interno por setor (Administrativo, Diretoria, Coordenação, Recepção e Suporte Zela)' },
+                    { id: 'relatorios_pedagogicos', label: 'Módulo Pedagógico', desc: 'Portal do Professor: registros pedagógicos e relatórios de desenvolvimento' },
                     { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-slate-100 rounded-xl bg-white hover:bg-slate-50 transition">

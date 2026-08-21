@@ -169,10 +169,13 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
 // ──────────────────────────────────────────────────────────
 // Componente principal
 // ──────────────────────────────────────────────────────────
-export default function AdminUserRegistration({ currentUser, editingUser, onClose, onSaved }) {
+export default function AdminUserRegistration({ currentUser, editingUser, initialData, forceModal, onClose, onSaved }) {
   const [guardianType, setGuardianType] = useState('Responsável'); // 'Responsável' | 'Responsável Financeiro'
   const [resetSent, setResetSent] = useState(false);
 
+  // initialData pré-preenche o formulário de CRIAÇÃO (não edição) — usado pelo
+  // atalho "Criar acesso de login" a partir de um Funcionário já cadastrado,
+  // pra não precisar redigitar nome/telefone/e-mail.
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -186,6 +189,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     role: 'family',
     departamento: '',
     chat_visibilidade_total: false,
+    turmas: [],
+    ...(initialData || {}),
   });
 
   const [students, setStudents] = useState([emptyStudent()]);
@@ -255,6 +260,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
         role: editingUser.role || 'family',
         departamento: editingUser.departamento || '',
         chat_visibilidade_total: editingUser.chat_visibilidade_total || false,
+        turmas: editingUser.turmas || [],
       });
 
       setGuardianType(editingUser.guardian_type || 'Responsável');
@@ -483,6 +489,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
             departamento: formData.departamento || null,
             ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
+          ...(formData.role === 'teacher' ? { turmas: formData.turmas } : {}),
         };
         await supabase.from('users').update(extraFields).eq('id', editingUser.id);
 
@@ -607,6 +614,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
             departamento: formData.departamento || null,
             ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
+          ...(formData.role === 'teacher' ? { turmas: formData.turmas } : {}),
         };
 
         const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
@@ -713,6 +721,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
             <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
               <option value="family">Responsáveis</option>
               <option value="admin">Administrador (Equipe)</option>
+              <option value="teacher">Professor</option>
             </select>
           )}
 
@@ -741,6 +750,37 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
             </div>
           )}
         </div>
+
+        {formData.role === 'teacher' && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Turma(s) que leciona *</label>
+            <div className="flex flex-wrap gap-2">
+              {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => {
+                const isSelected = formData.turmas.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setFormData({
+                      ...formData,
+                      turmas: isSelected ? formData.turmas.filter(x => x !== t) : [...formData.turmas, t],
+                    })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-600 text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+            {formData.turmas.length === 0 && (
+              <p className="text-[11px] text-amber-600 font-semibold mt-1.5">Selecione ao menos uma turma.</p>
+            )}
+          </div>
+        )}
 
         {formData.role === 'admin' && currentUser.is_primary_admin && (
           <label className="flex items-center gap-2 cursor-pointer bg-indigo-50 border border-indigo-100 rounded-xl p-3">
@@ -969,7 +1009,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     />
   );
 
-  if (editingUser) {
+  if (editingUser || forceModal) {
     return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -980,8 +1020,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
                 <UserPlus size={22} />
               </div>
               <div>
-                <h2 className="font-bold text-slate-800 text-lg">Editar Cadastro do Usuário</h2>
-                <p className="text-xs text-slate-400">Atualize as informações do perfil e alunos vinculados</p>
+                <h2 className="font-bold text-slate-800 text-lg">{editingUser ? 'Editar Cadastro do Usuário' : 'Criar Acesso de Login'}</h2>
+                <p className="text-xs text-slate-400">{editingUser ? 'Atualize as informações do perfil e alunos vinculados' : 'Complete os dados abaixo para criar o acesso ao sistema'}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-lg transition text-slate-500">

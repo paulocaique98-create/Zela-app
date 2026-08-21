@@ -9,6 +9,7 @@ import { navigateTo } from './utils/navigate';
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
 const AdminPortal = lazy(() => import('./components/AdminPortal'));
+const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 
@@ -56,6 +57,7 @@ export default function App() {
 
   const [adminTab, setAdminTab] = useState('home');
   const [familyTab, setFamilyTab] = useState('home'); // home | history | settings
+  const [teacherTab, setTeacherTab] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -852,6 +854,16 @@ export default function App() {
                   pendingAlert={pendingAlert}
                   onDismissAlert={() => setPendingAlert(null)}
                   onGoToMonitor={() => { setPendingAlert(null); setAdminTab('monitor'); }}
+                />
+              ) : currentUser.role === 'teacher' ? (
+                <TeacherPortal
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  teacherTab={teacherTab}
+                  setTeacherTab={setTeacherTab}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
                 />
               ) : (
                 <FamilyPortal

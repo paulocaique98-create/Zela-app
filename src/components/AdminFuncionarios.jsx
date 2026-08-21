@@ -1,9 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Loader2, Trash2, Pencil, X, Check, Plus, Search, Phone, Mail, Briefcase } from 'lucide-react';
+import { Users, Loader2, Trash2, Pencil, X, Check, Plus, Search, Phone, Mail, Briefcase, KeyRound, GraduationCap, Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { CARGOS_FUNCIONARIOS, TURMAS, SETORES_CHAT } from '../lib/constants';
 import ConfirmModal from './ConfirmModal';
+import AdminUserRegistration from './AdminUserRegistration';
+
+const DEPARTAMENTOS_LABEL = Object.fromEntries(SETORES_CHAT.map(s => [s.value, s.label]));
 
 const emptyForm = { name: '', cargo: '', phone: '', email: '', doc_number: '', admission_date: '', status: 'ativo', notes: '' };
+
+// Cargos que plausivelmente precisam logar no sistema — mapeados pro papel/
+// departamento sugerido no atalho "Criar acesso de login". Cargos operacionais
+// sem necessidade de acesso (cozinheira, porteiro, auxiliares, estagiária)
+// ficam de fora, sem o botão.
+const CARGO_PARA_ACESSO = {
+  'Professora': { role: 'teacher' },
+  'Coordenadora': { role: 'admin', departamento: 'coordenacao' },
+  'Diretora': { role: 'admin', departamento: 'diretoria_pedagogica' },
+  'Administradora': { role: 'admin', departamento: 'administrativo' },
+  'Recepcionista': { role: 'admin', departamento: 'recepcao' },
+};
 
 export default function AdminFuncionarios({ currentUser, currentSchool }) {
   const [funcionarios, setFuncionarios] = useState([]);
@@ -17,6 +33,19 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [creatingAccessFor, setCreatingAccessFor] = useState(null);
+
+  // ── Contas de Acesso (Admin/Professor) — mesma funcionalidade que existia em
+  // Gerenciamento > Usuários, movida pra cá pra não misturar com Responsáveis.
+  const [accessUsers, setAccessUsers] = useState([]);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [accessSearchTerm, setAccessSearchTerm] = useState('');
+  const [editingAccessUser, setEditingAccessUser] = useState(null);
+  const [confirmDeleteAccessId, setConfirmDeleteAccessId] = useState(null);
+  const [deletingAccessId, setDeletingAccessId] = useState(null);
+  const [editingTurmasFor, setEditingTurmasFor] = useState(null);
+  const [turmasDraft, setTurmasDraft] = useState([]);
+  const [isSavingTurmas, setIsSavingTurmas] = useState(false);
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
 
@@ -41,9 +70,82 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
     }
   };
 
+  const fetchAccessUsers = async () => {
+    if (!schoolId) return;
+    setIsLoadingAccess(true);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('school_id', schoolId)
+        .in('role', ['admin', 'teacher'])
+        .order('name', { ascending: true });
+      if (fetchError) throw fetchError;
+      setAccessUsers(data || []);
+    } catch (err) {
+      console.error('[AdminFuncionarios] Erro ao buscar contas de acesso:', err);
+    } finally {
+      setIsLoadingAccess(false);
+    }
+  };
+
   useEffect(() => {
     fetchFuncionarios();
+    fetchAccessUsers();
   }, [schoolId]);
+
+  const handleDeleteAccessUser = (id) => setConfirmDeleteAccessId(id);
+
+  const confirmDeleteAccessUser = async () => {
+    const userId = confirmDeleteAccessId;
+    setDeletingAccessId(userId);
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', { body: { userId } });
+      if (error) throw error;
+      setAccessUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err) {
+      console.error('[AdminFuncionarios] Erro ao excluir conta de acesso:', err);
+      alert('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
+    } finally {
+      setDeletingAccessId(null);
+      setConfirmDeleteAccessId(null);
+    }
+  };
+
+  const handleAccessUserSaved = (updatedUser) => {
+    setAccessUsers(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
+  };
+
+  const openTurmasEditor = (user) => {
+    setEditingTurmasFor(user);
+    setTurmasDraft(user.turmas || []);
+  };
+
+  const toggleTurmaDraft = (t) => {
+    setTurmasDraft(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
+
+  const saveTurmas = async () => {
+    if (!editingTurmasFor) return;
+    setIsSavingTurmas(true);
+    try {
+      const { error } = await supabase.from('users').update({ turmas: turmasDraft }).eq('id', editingTurmasFor.id);
+      if (error) throw error;
+      setAccessUsers(prev => prev.map(u => u.id === editingTurmasFor.id ? { ...u, turmas: turmasDraft } : u));
+      setEditingTurmasFor(null);
+    } catch (err) {
+      console.error('[AdminFuncionarios] Erro ao salvar turmas:', err);
+      alert('Erro ao salvar turmas: ' + (err.message || 'Desconhecido'));
+    } finally {
+      setIsSavingTurmas(false);
+    }
+  };
+
+  const filteredAccessUsers = accessUsers.filter(u => {
+    const term = accessSearchTerm.toLowerCase().trim();
+    if (!term) return true;
+    return u.name.toLowerCase().includes(term) || u.email?.toLowerCase().includes(term);
+  });
 
   const resetForm = () => {
     setShowForm(false);
@@ -186,14 +288,15 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                 required
                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
-              <input
-                type="text"
-                placeholder="Cargo / Função"
+              <select
                 value={form.cargo}
                 onChange={e => setForm({ ...form, cargo: e.target.value })}
                 required
                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              />
+              >
+                <option value="">Cargo / Função...</option>
+                {CARGOS_FUNCIONARIOS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
               <input
                 type="tel"
                 placeholder="Telefone"
@@ -301,6 +404,15 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   {f.notes && <p className="text-slate-600 text-sm mt-2 whitespace-pre-wrap">{f.notes}</p>}
                 </div>
                 <div className="flex gap-1.5 shrink-0">
+                  {CARGO_PARA_ACESSO[f.cargo] && (
+                    <button
+                      onClick={() => setCreatingAccessFor(f)}
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                      title="Criar acesso de login"
+                    >
+                      <KeyRound size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleEdit(f)}
                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -321,6 +433,111 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             </div>
           ))
         )}
+
+        {/* ── CONTAS DE ACESSO AO SISTEMA (Admin/Professor) ── */}
+        <div className="pt-6 mt-2 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Contas de Acesso ao Sistema</h3>
+              <p className="text-slate-500 text-sm">
+                {accessUsers.length} conta{accessUsers.length !== 1 ? 's' : ''} de login (Administradores e Professores)
+              </p>
+            </div>
+            {accessUsers.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome ou e-mail..."
+                  value={accessSearchTerm}
+                  onChange={e => setAccessSearchTerm(e.target.value)}
+                  className="pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full sm:w-64"
+                />
+              </div>
+            )}
+          </div>
+
+          {isLoadingAccess ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+            </div>
+          ) : filteredAccessUsers.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <KeyRound className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+              <p className="text-sm font-semibold text-slate-600">
+                {accessUsers.length === 0 ? 'Nenhuma conta de acesso criada ainda.' : 'Nenhuma conta encontrada.'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">Use o botão <KeyRound size={11} className="inline" /> em um funcionário acima pra criar uma.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filteredAccessUsers.map(u => (
+                <div key={u.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-bold text-slate-800 text-sm truncate">{u.name}</h4>
+                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${
+                          u.role === 'admin' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}>
+                          {u.role === 'admin' ? 'Admin' : 'Professor'}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs truncate mt-0.5">{u.email}</p>
+                      {u.role === 'admin' && u.departamento && (
+                        <p className="text-slate-500 text-xs mt-1">{DEPARTAMENTOS_LABEL[u.departamento] || u.departamento}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => setEditingAccessUser(u)}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                        title="Editar"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAccessUser(u.id)}
+                        disabled={deletingAccessId === u.id}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        title="Excluir"
+                      >
+                        {deletingAccessId === u.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {u.role === 'teacher' && (
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                          <GraduationCap size={11} /> Turmas
+                        </p>
+                        <button
+                          onClick={() => openTurmasEditor(u)}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition"
+                        >
+                          Trocar
+                        </button>
+                      </div>
+                      {u.turmas?.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {u.turmas.map(t => (
+                            <span key={t} className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded-md">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-600 font-semibold">Nenhuma turma vinculada</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {confirmDeleteId && (
@@ -331,6 +548,93 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
           onConfirm={confirmDelete}
           onCancel={() => setConfirmDeleteId(null)}
         />
+      )}
+
+      {creatingAccessFor && (
+        <AdminUserRegistration
+          currentUser={currentUser}
+          forceModal
+          initialData={{
+            name: creatingAccessFor.name,
+            phone1: creatingAccessFor.phone || '',
+            email: creatingAccessFor.email || '',
+            ...CARGO_PARA_ACESSO[creatingAccessFor.cargo],
+          }}
+          onClose={() => { setCreatingAccessFor(null); fetchAccessUsers(); }}
+        />
+      )}
+
+      {editingAccessUser && (
+        <AdminUserRegistration
+          currentUser={currentUser}
+          editingUser={editingAccessUser}
+          onClose={() => setEditingAccessUser(null)}
+          onSaved={handleAccessUserSaved}
+        />
+      )}
+
+      {confirmDeleteAccessId && (
+        <ConfirmModal
+          title="Excluir conta de acesso"
+          message="Tem certeza que deseja excluir esta conta? A pessoa perderá o acesso ao sistema imediatamente."
+          isLoading={deletingAccessId === confirmDeleteAccessId}
+          onConfirm={confirmDeleteAccessUser}
+          onCancel={() => setConfirmDeleteAccessId(null)}
+        />
+      )}
+
+      {editingTurmasFor && (
+        <div className="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-slate-800">Turmas de {editingTurmasFor.name}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Selecione as turmas que este professor leciona</p>
+              </div>
+              <button onClick={() => setEditingTurmasFor(null)} className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-5">
+              {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => {
+                const isSelected = turmasDraft.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTurmaDraft(t)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-600 text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditingTurmasFor(null)}
+                disabled={isSavingTurmas}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveTurmas}
+                disabled={isSavingTurmas}
+                className="flex-[1.5] flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl transition text-sm"
+              >
+                {isSavingTurmas ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
