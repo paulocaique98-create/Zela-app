@@ -98,6 +98,15 @@ export default function App() {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
+  // Ref estável para adminTab — usada para não disparar o alerta de "Nova
+  // Solicitação" no próprio dispositivo que está com a tela de Autoatendimento
+  // aberta (ele mesmo acabou de gerar o check-in/check-out, não precisa se
+  // avisar); os demais dispositivos logados como admin continuam recebendo.
+  const adminTabRef = useRef(adminTab);
+  useEffect(() => {
+    adminTabRef.current = adminTab;
+  }, [adminTab]);
+
   // Desbloqueio de áudio: navegadores exigem um gesto do usuário antes de tocar áudio.
   // Registramos um listener de clique que resume o AudioContext na primeira interação.
   useEffect(() => {
@@ -287,6 +296,7 @@ export default function App() {
           // para pending_entry ou pending_exit (não em re-broadcasts do mesmo status).
           if (
             currentUserRef.current?.role === 'admin' &&
+            adminTabRef.current !== 'kiosk' &&
             (newRow?.status === 'pending_entry' || newRow?.status === 'pending_exit') &&
             oldRow?.status !== newRow?.status
           ) {
