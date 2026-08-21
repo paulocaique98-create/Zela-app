@@ -142,7 +142,11 @@ export default function NotificationsDropdown({ currentUser }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden flex flex-col max-h-[85vh]">
+        <>
+          {/* Backdrop — só no mobile, fecha ao tocar fora do card */}
+          <div className="fixed inset-0 z-40 bg-slate-900/40 sm:hidden" onClick={() => setIsOpen(false)} />
+
+          <div className="fixed inset-x-4 top-20 z-50 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh]">
           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
               <Bell size={16} className="text-indigo-600" />
@@ -202,7 +206,8 @@ export default function NotificationsDropdown({ currentUser }) {
           <div className="p-2 border-t border-slate-100 bg-slate-50 text-center">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Histórico Completo</p>
           </div>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
