@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
+import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import FamilyInicio from './FamilyInicio';
 import FamilyMatriculas from './FamilyMatriculas';
@@ -10,6 +12,7 @@ import FamilyCalendario from './FamilyCalendario';
 import FamilyComunicados from './FamilyComunicados';
 import FamilyMuralFotos from './FamilyMuralFotos';
 import FamilyCardapio from './FamilyCardapio';
+import FamilyChat from './FamilyChat';
 import FamilyHome from './FamilyHome';
 import FamilyHistory from './FamilyHistory';
 import FamilySettings from './FamilySettings';
@@ -33,6 +36,8 @@ export default function FamilyPortal({
   const [dismissedPush, setDismissedPush] = useState(
     localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true'
   );
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Re-sincroniza ao trocar de usuário sem remontar o componente (ex: troca de conta),
   // senão o banner ficaria escondido usando a decisão de dispensa de outro usuário.
@@ -87,6 +92,8 @@ export default function FamilyPortal({
   const showComunicados = features.comunicados === true;
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
+  const showChat = features.chat === true;
+  const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
   const showConfiguracoes = features.configuracoes !== false;
 
   return (
@@ -99,7 +106,7 @@ export default function FamilyPortal({
 
       <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2 shrink-0">Navegação Principal</p>
+          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0">Navegação Principal</p>
           <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
             {/* INÍCIO */}
             <button
@@ -272,6 +279,45 @@ export default function FamilyPortal({
           />
         )}
       </main>
+
+      {/* Chat flutuante — acessível de qualquer aba, canto inferior direito */}
+      {showChat && createPortal(
+        <>
+          <button
+            onClick={() => {
+              setIsChatOpen(o => !o);
+              setIsChatExpanded(false);
+              if (isChatOpen) refreshChatUnread();
+            }}
+            className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+            title="Chat"
+          >
+            {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
+            {!isChatOpen && chatUnreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+              </span>
+            )}
+          </button>
+          {isChatOpen && (
+            <div className={`fixed z-40 border border-slate-200 shadow-2xl overflow-hidden bg-white animate-in fade-in duration-200 ${
+              isChatExpanded
+                ? 'inset-3 sm:inset-6 rounded-3xl'
+                : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-3xl slide-in-from-bottom-4'
+            }`}>
+              <button
+                onClick={() => setIsChatExpanded(e => !e)}
+                className="absolute top-4 right-4 z-10 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                title={isChatExpanded ? 'Recolher' : 'Expandir'}
+              >
+                {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              </button>
+              <FamilyChat currentUser={currentUser} currentSchool={currentSchool} />
+            </div>
+          )}
+        </>,
+        document.body
+      )}
     </div>
   );
 }

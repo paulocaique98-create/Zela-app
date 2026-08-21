@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Header from './components/Header';
+import LoadingLogo from './components/LoadingLogo';
 import MobileMenu from './components/MobileMenu';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
@@ -71,7 +72,21 @@ export default function App() {
   // { studentName, type: 'Check-in'|'Check-out', studentId }
   const [pendingAlert, setPendingAlert] = useState(null);
 
-  const [currentSchool, setCurrentSchool] = useState(null);
+  const [currentSchool, setCurrentSchool] = useState(() => {
+    // Só confia na escola em cache se ela pertencer ao mesmo usuário em cache —
+    // evita mostrar a logo de outra escola (ex: dispositivo compartilhado, troca
+    // de conta) por um instante antes do fetchData corrigir.
+    const savedSchool = localStorage.getItem('zela_school');
+    const savedUser = localStorage.getItem('zela_user');
+    if (!savedSchool || !savedUser) return null;
+    try {
+      const school = JSON.parse(savedSchool);
+      const user = JSON.parse(savedUser);
+      return school.id === user.school_id ? school : null;
+    } catch {
+      return null;
+    }
+  });
   const [globalLogo, setGlobalLogo] = useState(null);
 
   // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
@@ -389,7 +404,10 @@ export default function App() {
         authQuery
       ]);
 
-      if (schoolRes.data) setCurrentSchool(schoolRes.data);
+      if (schoolRes.data) {
+        setCurrentSchool(schoolRes.data);
+        localStorage.setItem('zela_school', JSON.stringify(schoolRes.data));
+      }
       const studentsData = studentsRes.data;
       const authData = authRes.data;
 
@@ -453,6 +471,12 @@ export default function App() {
   };
 
   const handleLogin = (user) => {
+    // Se a escola em cache não é a desse usuário (ex: troca de conta no mesmo
+    // navegador), descarta antes que o LoadingLogo chegue a exibir a logo errada.
+    if (currentSchool && currentSchool.id !== user.school_id) {
+      setCurrentSchool(null);
+      localStorage.removeItem('zela_school');
+    }
     setCurrentUser(user);
     localStorage.setItem('zela_user', JSON.stringify(user));
     setFamilyTab('home');
@@ -463,7 +487,11 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setCurrentSchool(null);
+    // currentSchool NÃO é limpo aqui de propósito: se o próximo login for da
+    // mesma escola (comum — trocar entre conta admin/família, ou logar de novo),
+    // a logo já fica disponível na hora, sem cair no ícone genérico da Zela
+    // enquanto os dados carregam. handleLogin já valida e descarta esse cache
+    // se o próximo usuário for de uma escola diferente.
     setStudents([]);
     setAuthorized([]);
     localStorage.removeItem('zela_user');
@@ -810,13 +838,13 @@ export default function App() {
       <main className="flex-1 overflow-hidden flex flex-col p-3 sm:p-4 md:p-6 lg:p-6">
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
+            <div className="flex-1 flex justify-center items-center">
+              <LoadingLogo logoUrl={currentSchool?.logo_url} size={120} />
             </div>
           ) : (
             <Suspense fallback={
-              <div className="flex justify-center items-center py-20 w-full h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900"></div>
+              <div className="flex-1 flex justify-center items-center w-full">
+                <LoadingLogo logoUrl={currentSchool?.logo_url} size={120} />
               </div>
             }>
               {currentUser.role === 'developer' ? (

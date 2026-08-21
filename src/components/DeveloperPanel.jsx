@@ -32,6 +32,7 @@ export default function DeveloperPanel({ currentUser }) {
     comunicados: false,
     mural: false,
     cardapio: false,
+    chat: false,
     configuracoes: true
   };
 
@@ -160,7 +161,7 @@ export default function DeveloperPanel({ currentUser }) {
             name: adminData.name.trim(),
             role: 'admin',
             school_id: newSchool.id,
-            extra_fields: {}
+            extra_fields: { is_primary_admin: true, chat_visibilidade_total: true }
           }
         });
 
@@ -459,6 +460,7 @@ export default function DeveloperPanel({ currentUser }) {
                     { id: 'comunicados', label: 'Comunicados', desc: 'Envio e visualização de comunicados' },
                     { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
                     { id: 'cardapio', label: 'Cardápio', desc: 'Cardápio semanal da escola' },
+                    { id: 'chat', label: 'Chat', desc: 'Chat interno por setor (Administrativo, Diretoria, Coordenação, Recepção e Suporte Zela)' },
                     { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-slate-100 rounded-xl bg-white hover:bg-slate-50 transition">

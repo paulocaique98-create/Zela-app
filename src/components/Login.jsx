@@ -132,13 +132,13 @@ export default function Login({ onLogin }) {
               <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="seu@email.com" required />
             </div>
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-semibold">Senha</label>
+              <label className="block text-sm font-semibold mb-1">Senha</label>
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••" required />
+              <div className="flex justify-end mt-1.5">
                 <button type="button" onClick={() => { setIsRecoveringPassword(true); setLoginError(''); }} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                   Esqueceu a senha?
                 </button>
               </div>
-              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="••••••••" required />
             </div>
             {loginError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{loginError}</div>}
             <button type="submit" disabled={isLoading} className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 transition-colors mt-2 shadow-md disabled:opacity-70">

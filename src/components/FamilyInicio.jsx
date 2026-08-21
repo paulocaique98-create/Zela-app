@@ -3,9 +3,6 @@ import { Home, QrCode, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, Fi
 import { useMemo } from 'react';
 
 export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-
   const features = currentSchool?.features_enabled || {};
   
   const FAMILY_MENUS = [
@@ -56,10 +53,7 @@ export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab,
     <div className="h-full bg-slate-50 p-6 md:p-10 rounded-3xl overflow-y-auto">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-            {greeting}, {currentUser?.name?.split(' ')[0] || 'Responsável'}! 👋
-          </h1>
-          <p className="text-slate-500 font-medium">O que você deseja acessar hoje?</p>
+          <h1 className="text-lg md:text-xl font-medium text-slate-500">O que você deseja acessar hoje?</h1>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">

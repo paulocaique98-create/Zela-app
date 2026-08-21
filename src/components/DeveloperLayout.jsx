@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import { Building2, Receipt, FileText, LifeBuoy, Settings } from 'lucide-react';
 import DeveloperPanel from './DeveloperPanel';
 import ConfiguracoesPanel from './ConfiguracoesPanel';
+import DeveloperChatSupport from './DeveloperChatSupport';
+import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState('schools');
+  const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
 
   const navItems = [
     { id: 'schools', label: 'Gestão de Escolas', icon: Building2, enabled: true },
     { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: false },
     { id: 'logs', label: 'Logs', icon: FileText, enabled: false },
-    { id: 'support', label: 'Suporte', icon: LifeBuoy, enabled: false },
+    { id: 'support', label: 'Suporte', icon: LifeBuoy, enabled: true },
     { id: 'settings', label: 'Configurações', icon: Settings, enabled: true },
   ];
 
@@ -51,7 +54,11 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
               return (
                 <button
                   key={item.id}
-                  onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setIsMobileMenuOpen(false);
+                    if (item.id === 'support') refreshChatUnread();
+                  }}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
                       ? 'bg-indigo-500/20 text-indigo-300'
@@ -60,6 +67,11 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                 >
                   <Icon size={16} />
                   {item.label}
+                  {item.id === 'support' && chatUnreadCount > 0 && (
+                    <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -75,9 +87,12 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           />
         )}
         {activeTab === 'settings' && (
-          <ConfiguracoesPanel 
-            onUpdateGlobalLogo={onUpdateGlobalLogo} 
+          <ConfiguracoesPanel
+            onUpdateGlobalLogo={onUpdateGlobalLogo}
           />
+        )}
+        {activeTab === 'support' && (
+          <DeveloperChatSupport currentUser={currentUser} />
         )}
       </main>
     </div>

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase, supabaseAuthHelper } from '../lib/supabase';
-import { TURMAS } from '../lib/constants';
+import { TURMAS, SETORES_CHAT } from '../lib/constants';
+
+const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 
 // ──────────────────────────────────────────────────────────
 // Dados de Ciclo / Turno / Período
@@ -181,6 +183,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
     profession: '',
     civil_status: '',
     role: 'family',
+    departamento: '',
+    chat_visibilidade_total: false,
   });
 
   const [students, setStudents] = useState([emptyStudent()]);
@@ -248,6 +252,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
         profession: editingUser.profession || '',
         civil_status: editingUser.civil_status || '',
         role: editingUser.role || 'family',
+        departamento: editingUser.departamento || '',
+        chat_visibilidade_total: editingUser.chat_visibilidade_total || false,
       });
 
       setGuardianType(editingUser.guardian_type || 'Responsável');
@@ -475,6 +481,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
           profession: formData.profession || null,
           civil_status: formData.civil_status || null,
           guardian_type: guardianType,
+          ...(formData.role === 'admin' ? {
+            departamento: formData.departamento || null,
+            ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
+          } : {}),
         };
         await supabase.from('users').update(extraFields).eq('id', editingUser.id);
 
@@ -595,6 +605,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
           profession: formData.profession || null,
           civil_status: formData.civil_status || null,
           guardian_type: guardianType,
+          ...(formData.role === 'admin' ? {
+            departamento: formData.departamento || null,
+            ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
+          } : {}),
         };
 
         const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
@@ -718,7 +732,29 @@ export default function AdminUserRegistration({ currentUser, editingUser, onClos
               </div>
             </div>
           )}
+
+          {formData.role === 'admin' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Departamento (Chat) *</label>
+              <select required value={formData.departamento} onChange={e => setFormData({ ...formData, departamento: e.target.value })} className={inputCls}>
+                <option value="">Selecionar...</option>
+                {DEPARTAMENTOS_CHAT.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </div>
+          )}
         </div>
+
+        {formData.role === 'admin' && currentUser.is_primary_admin && (
+          <label className="flex items-center gap-2 cursor-pointer bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+            <input
+              type="checkbox"
+              checked={formData.chat_visibilidade_total}
+              onChange={e => setFormData({ ...formData, chat_visibilidade_total: e.target.checked })}
+              className="w-4 h-4 accent-indigo-600"
+            />
+            <span className="text-xs font-bold text-indigo-900">Visualiza e responde o chat de todos os departamentos</span>
+          </label>
+        )}
       </div>
 
       {/* ── SEÇÃO 2: DADOS DO RESPONSÁVEL ── */}

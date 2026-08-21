@@ -9,18 +9,6 @@ import { notifyFamilies } from '../lib/notifyFamilies';
 
 const BUCKET = 'matriculas-docs';
 
-// Mesmo mapeamento período → horário usado no cadastro manual de alunos
-// (AdminUserRegistration.jsx), pra manter os horários contratados consistentes
-// não importa por qual fluxo o aluno entrou no sistema.
-const PERIODO_HORARIOS = {
-  '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
-  '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
-  '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
-  '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
-  '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
-  '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
-};
-
 function generateTempPassword() {
   return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 4).toUpperCase();
 }
@@ -273,73 +261,21 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
     fetchSolicitacoes();
   }, [schoolId]);
 
-  // Converte os dados da solicitação aprovada em cadastros reais: aluno(s) em
-  // `students` (+ vínculo em `student_guardians`), 2º responsável como conta de
-  // acesso própria (ou vinculado, se o e-mail já existir), autorizados em
-  // `authorized_persons`, e enriquece o cadastro do próprio responsável financeiro
-  // (que já é um usuário logado) com os dados/documentos preenchidos no formulário.
+  // Converte os dados da solicitação aprovada em cadastros reais. O "núcleo"
+  // (responsável financeiro + alunos + vínculos + autorizados) roda numa RPC
+  // Postgres atômica (approve_matricula) — se qualquer etapa falhar, tudo é
+  // revertido e a solicitação continua pendente, sem duplicar nada num retry.
+  // A criação da conta do 2º responsável fica de fora dessa transação (é uma
+  // chamada à API de Auth, não dá pra rodar dentro de uma function SQL) e só
+  // acontece depois que o núcleo já foi confirmado com sucesso.
   const convertSolicitacaoToRecords = async (solicitacao) => {
-    const resp = solicitacao.responsavel_financeiro || {};
-    const criancas = solicitacao.criancas || [];
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('approve_matricula', {
+      p_solicitacao_id: solicitacao.id,
+    });
+    if (rpcError) throw new Error(`Não foi possível aprovar: ${rpcError.message}`);
+    const newStudentIds = rpcResult?.new_student_ids || [];
 
-    // 1. Enriquece o cadastro do responsável financeiro (já é o family_id logado)
-    const documentsPatch = {
-      cpf_doc: resp.cpf_doc || null,
-      rg_doc: resp.rg_doc || null,
-      comprovante_residencia_doc: resp.comprovante_residencia_doc || null,
-      plano_saude_doc: resp.plano_saude_doc || null,
-      cartao_vacina_doc: resp.cartao_vacina_doc || null,
-      rg_expedicao: resp.rg_expedicao || null,
-      rg_orgao: resp.rg_orgao || null,
-    };
-    const { error: userUpdateError } = await supabase
-      .from('users')
-      .update({
-        phone: resp.telefone || null,
-        doc_type: resp.cpf ? 'CPF' : null,
-        doc_number: resp.cpf || null,
-        profession: resp.profissao || null,
-        civil_status: resp.estado_civil || null,
-        documents: documentsPatch,
-      })
-      .eq('id', solicitacao.family_id);
-    if (userUpdateError) throw new Error(`Responsável financeiro: ${userUpdateError.message}`);
-
-    // 2. Cria os alunos + vínculo do responsável financeiro
-    const newStudentIds = [];
-    for (const c of criancas) {
-      const horario = PERIODO_HORARIOS[c.periodo];
-      const { data: student, error: studentError } = await supabase
-        .from('students')
-        .insert({
-          name: c.nome,
-          birth_date: c.nascimento || null,
-          contracted_hours: c.ciclo ? parseFloat(c.ciclo) : null,
-          turno: c.turno || null,
-          periodo: c.periodo || null,
-          contracted_entry_time: horario?.entry || null,
-          contracted_exit_time: horario?.exit || null,
-          family_id: solicitacao.family_id,
-          school_id: solicitacao.school_id,
-          status: 'idle',
-        })
-        .select('id')
-        .single();
-      if (studentError) throw new Error(`Aluno ${c.nome}: ${studentError.message}`);
-      newStudentIds.push(student.id);
-
-      const { error: guardianLinkError } = await supabase.from('student_guardians').insert({
-        student_id: student.id,
-        guardian_id: solicitacao.family_id,
-        school_id: solicitacao.school_id,
-        is_primary: true,
-        is_financial: true,
-        relationship: 'Responsável Financeiro',
-      });
-      if (guardianLinkError) throw new Error(`Vínculo do responsável financeiro: ${guardianLinkError.message}`);
-    }
-
-    // 3. Segundo responsável: vincula se já existir conta com o e-mail, senão cria uma nova
+    // Segundo responsável: vincula se já existir conta com o e-mail, senão cria uma nova
     let segundoCredentials = null;
     const segundo = solicitacao.segundo_responsavel;
     if (segundo?.nome?.trim() && newStudentIds.length > 0) {
@@ -397,38 +333,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       }
     }
 
-    // 4. Autorizados (retirada/transporte) — vinculados à conta do responsável financeiro
-    const autorizadosToInsert = [];
-    (solicitacao.autorizados || []).forEach((a, i) => {
-      if (a.nome?.trim()) {
-        autorizadosToInsert.push({
-          family_id: solicitacao.family_id,
-          school_id: solicitacao.school_id,
-          name: a.nome,
-          relation: a.parentesco || 'Autorizado',
-          has_photo: false,
-          emergency_order: 2 + i,
-        });
-      }
-    });
-    const transporteOrderStart = 2 + autorizadosToInsert.length;
-    (solicitacao.transporte_autorizados || []).forEach((t, i) => {
-      if (t.nome?.trim()) {
-        autorizadosToInsert.push({
-          family_id: solicitacao.family_id,
-          school_id: solicitacao.school_id,
-          name: t.nome,
-          relation: 'Transporte',
-          has_photo: false,
-          emergency_order: transporteOrderStart + i,
-        });
-      }
-    });
-    if (autorizadosToInsert.length > 0) {
-      const { error: autorizadosError } = await supabase.from('authorized_persons').insert(autorizadosToInsert);
-      if (autorizadosError) throw new Error(`Autorizados: ${autorizadosError.message}`);
-    }
-
     return { segundoCredentials };
   };
 
@@ -436,11 +340,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
     setDecidingId(solicitacao.id);
     try {
       let segundoCredentials = null;
-      if (status === 'approved') {
-        const result = await convertSolicitacaoToRecords(solicitacao);
-        segundoCredentials = result.segundoCredentials;
-      }
-
       const patch = {
         status,
         reviewed_by: currentUser.id,
@@ -448,8 +347,16 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         rejection_reason: status === 'rejected' ? (reason || null) : null,
         updated_at: new Date().toISOString(),
       };
-      const { error: updateError } = await supabase.from('matricula_solicitacoes').update(patch).eq('id', solicitacao.id);
-      if (updateError) throw updateError;
+
+      if (status === 'approved') {
+        // approve_matricula já marca status='approved' dentro da própria transação —
+        // não precisa (e não deve) fazer um update solto aqui por cima.
+        const result = await convertSolicitacaoToRecords(solicitacao);
+        segundoCredentials = result.segundoCredentials;
+      } else {
+        const { error: updateError } = await supabase.from('matricula_solicitacoes').update(patch).eq('id', solicitacao.id);
+        if (updateError) throw updateError;
+      }
 
       setSolicitacoes(prev => prev.map(s => (s.id === solicitacao.id ? { ...s, ...patch } : s)));
       if (segundoCredentials) setNewGuardianCredentials(segundoCredentials);

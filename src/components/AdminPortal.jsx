@@ -1,31 +1,38 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { navigateTo } from '../utils/navigate';
-import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, QrCode, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
+import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
-import AdminMatriculas from './AdminMatriculas';
-import AdminFichaMedica from './AdminFichaMedica';
-import AdminCalendario from './AdminCalendario';
-import AdminComunicados from './AdminComunicados';
-import AdminMuralFotos from './AdminMuralFotos';
-import AdminCardapio from './AdminCardapio';
-import AdminCadastroFuncionarios from './AdminCadastroFuncionarios';
-import AdminGerenciarFuncionarios from './AdminGerenciarFuncionarios';
-import AdminCadastroComunicados from './AdminCadastroComunicados';
-import AdminUserRegistration from './AdminUserRegistration';
-import AdminUserManagement from './AdminUserManagement';
-import AdminDailyPresence from './AdminDailyPresence';
-import AdminStudentList from './AdminStudentList';
-import QRCodeScanner from './QRCodeScanner';
-import AdminFaceScanner from './AdminFaceScanner';
-import AdminPasswordLogin from './AdminPasswordLogin';
-import AdminHistory from './AdminHistory';
-import AdminSettings from './AdminSettings';
-import AdminKioskManagement from './AdminKioskManagement';
-import AdminRelatorioHorasExtras from './AdminRelatorioHorasExtras';
+import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
 import CheckinAlertModal from './CheckinAlertModal';
+
+// Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
+// — reduz bastante o carregamento inicial do painel (dezenas de telas, a
+// maioria acessada só ocasionalmente).
+const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
+const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
+const AdminCalendario = lazy(() => import('./AdminCalendario'));
+const AdminComunicados = lazy(() => import('./AdminComunicados'));
+const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
+const AdminCardapio = lazy(() => import('./AdminCardapio'));
+const AdminChat = lazy(() => import('./AdminChat'));
+const AdminCadastroFuncionarios = lazy(() => import('./AdminCadastroFuncionarios'));
+const AdminGerenciarFuncionarios = lazy(() => import('./AdminGerenciarFuncionarios'));
+const AdminCadastroComunicados = lazy(() => import('./AdminCadastroComunicados'));
+const AdminUserRegistration = lazy(() => import('./AdminUserRegistration'));
+const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
+const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
+const AdminStudentList = lazy(() => import('./AdminStudentList'));
+const QRCodeScanner = lazy(() => import('./QRCodeScanner'));
+const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
+const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
+const AdminHistory = lazy(() => import('./AdminHistory'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const AdminKioskManagement = lazy(() => import('./AdminKioskManagement'));
+const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
@@ -36,6 +43,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -56,6 +65,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showComunicados = features.comunicados === true && localPrefs.comunicados !== false;
   const showMural = features.mural === true && localPrefs.mural !== false;
   const showCardapio = features.cardapio === true && localPrefs.cardapio !== false;
+  const showChat = features.chat === true && localPrefs.chat !== false;
+  const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA em background ao montar o painel
   // Assim quando o scanner abrir, os modelos já estão na memória
@@ -87,7 +98,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 mt-2 shrink-0">Navegação Principal</p>
+          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0">Navegação Principal</p>
           <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
             <button
               onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
@@ -230,6 +241,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
 
         {/* INICIO */}
         {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} />}
@@ -436,39 +448,46 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* CONFIGURAÇÕES */}
         {adminTab === 'settings' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />}
+      </Suspense>
 
         {/* QR Scanner Modal — temporariamente desabilitado. Para reabilitar: remover o 'false &&' abaixo */}
         {false && isScannerOpen && createPortal(
-          <QRCodeScanner
-            mode="admin"
-            school_id={currentSchool?.id}
-            currentSchool={currentSchool}
-            students={students}
-            updateStudentStatus={updateStudentStatus}
-            onClose={() => setIsScannerOpen(false)}
-            isLandscape={false}
-          />,
+          <Suspense fallback={null}>
+            <QRCodeScanner
+              mode="admin"
+              school_id={currentSchool?.id}
+              currentSchool={currentSchool}
+              students={students}
+              updateStudentStatus={updateStudentStatus}
+              onClose={() => setIsScannerOpen(false)}
+              isLandscape={false}
+            />
+          </Suspense>,
           document.body
         )}
 
         {/* Face Scanner Modal */}
         {isFaceScannerOpen && createPortal(
-          <AdminFaceScanner
-            onClose={() => setIsFaceScannerOpen(false)}
-            updateStudentStatus={updateStudentStatus}
-            students={students}
-            currentUser={currentUser}
-          />,
+          <Suspense fallback={null}>
+            <AdminFaceScanner
+              onClose={() => setIsFaceScannerOpen(false)}
+              updateStudentStatus={updateStudentStatus}
+              students={students}
+              currentUser={currentUser}
+            />
+          </Suspense>,
           document.body
         )}
 
         {/* Password Login Modal */}
         {isPasswordLoginOpen && createPortal(
-          <AdminPasswordLogin
-            onClose={() => setIsPasswordLoginOpen(false)}
-            updateStudentStatus={updateStudentStatus}
-            currentUser={currentUser}
-          />,
+          <Suspense fallback={null}>
+            <AdminPasswordLogin
+              onClose={() => setIsPasswordLoginOpen(false)}
+              updateStudentStatus={updateStudentStatus}
+              currentUser={currentUser}
+            />
+          </Suspense>,
           document.body
         )}
 
@@ -479,6 +498,47 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             onDismiss={onDismissAlert}
             onGoToMonitor={onGoToMonitor}
           />,
+          document.body
+        )}
+
+        {/* Chat flutuante — acessível de qualquer aba, canto inferior direito */}
+        {showChat && createPortal(
+          <>
+            <button
+              onClick={() => {
+                setIsChatOpen(o => !o);
+                setIsChatExpanded(false);
+                if (isChatOpen) refreshChatUnread();
+              }}
+              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+              title="Chat"
+            >
+              {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
+              {!isChatOpen && chatUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                  {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                </span>
+              )}
+            </button>
+            {isChatOpen && (
+              <div className={`fixed z-40 border border-slate-200 shadow-2xl overflow-hidden bg-white animate-in fade-in duration-200 ${
+                isChatExpanded
+                  ? 'inset-3 sm:inset-6 rounded-3xl'
+                  : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-3xl slide-in-from-bottom-4'
+              }`}>
+                <button
+                  onClick={() => setIsChatExpanded(e => !e)}
+                  className="absolute top-4 right-4 z-10 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  title={isChatExpanded ? 'Recolher' : 'Expandir'}
+                >
+                  {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                </button>
+                <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingLogo logoUrl={currentSchool?.logo_url} size={56} /></div>}>
+                  <AdminChat currentUser={currentUser} currentSchool={currentSchool} />
+                </Suspense>
+              </div>
+            )}
+          </>,
           document.body
         )}
       </main>

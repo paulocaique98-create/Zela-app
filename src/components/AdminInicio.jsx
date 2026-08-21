@@ -4,9 +4,6 @@ import { useMemo } from 'react';
 import { navigateTo } from '../utils/navigate';
 
 export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-
   const features = currentSchool?.features_enabled || {};
   
   const ADMIN_MENUS = [
@@ -54,10 +51,7 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     <div className="h-full bg-slate-50 p-4 md:p-6 lg:p-8 xl:p-10 rounded-3xl overflow-y-auto lg:overflow-hidden flex flex-col">
       <div className="max-w-4xl mx-auto w-full mt-0 lg:my-auto py-2 lg:py-0">
         <div className="mb-6 lg:mb-8 shrink-0">
-          <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-            {greeting}, {currentUser?.name || 'Administrador'}! 👋
-          </h1>
-          <p className="text-slate-500 font-medium">O que você deseja acessar hoje?</p>
+          <h1 className="text-lg md:text-xl font-medium text-slate-500">O que você deseja acessar hoje?</h1>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
