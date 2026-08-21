@@ -15,6 +15,7 @@ const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
 const FamilyComunicados = lazy(() => import('./FamilyComunicados'));
 const FamilyMuralFotos = lazy(() => import('./FamilyMuralFotos'));
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
+const FamilyRelatorios = lazy(() => import('./FamilyRelatorios'));
 const FamilyChat = lazy(() => import('./FamilyChat'));
 const FamilyHome = lazy(() => import('./FamilyHome'));
 const FamilyHistory = lazy(() => import('./FamilyHistory'));
@@ -101,6 +102,7 @@ export default function FamilyPortal({
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
   const showChat = features.chat === true;
+  const showRelatorios = features.relatorios_pedagogicos === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   return (
@@ -220,6 +222,16 @@ export default function FamilyPortal({
                 <UtensilsCrossed size={18} /> Cardápio
               </button>
             )}
+
+            {/* RELATÓRIOS */}
+            {showRelatorios && (
+              <button
+                onClick={() => { setFamilyTab('relatorios'); registerClick('relatorios'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'relatorios' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <FileText size={18} /> Relatórios
+              </button>
+            )}
           </nav>
 
           {showConfiguracoes && (
@@ -273,6 +285,7 @@ export default function FamilyPortal({
           {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'relatorios' && <FamilyRelatorios currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'settings' && (
             <FamilySettings
               currentUser={currentUser}

@@ -29,6 +29,8 @@ const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
+const AdminRelatorios = lazy(() => import('./AdminRelatorios'));
+const AdminReportTemplates = lazy(() => import('./AdminReportTemplates'));
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
@@ -61,6 +63,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showMural = features.mural === true && localPrefs.mural !== false;
   const showCardapio = features.cardapio === true && localPrefs.cardapio !== false;
   const showChat = features.chat === true && localPrefs.chat !== false;
+  const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA em background ao montar o painel
@@ -219,6 +222,25 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <UtensilsCrossed size={18} /> Cardápio
               </button>
             )}
+
+            {/* RELATÓRIOS PEDAGÓGICOS */}
+            {showRelatorios && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('relatorios')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['relatorios', 'modelos-relatorios'].includes(adminTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FileText size={18} /> Relatórios</div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-40' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                    <button onClick={() => { setAdminTab('relatorios'); registerClick('relatorios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'relatorios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatórios</button>
+                    <button onClick={() => { setAdminTab('modelos-relatorios'); registerClick('modelos-relatorios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'modelos-relatorios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Modelos de Relatórios</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </nav>
 
           {/* CONFIGURAÇÕES (Fixo no footer) */}
@@ -248,6 +270,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'relatorios' && <AdminRelatorios currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'modelos-relatorios' && <AdminReportTemplates currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}

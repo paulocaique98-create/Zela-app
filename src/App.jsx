@@ -859,6 +859,7 @@ export default function App() {
                 <TeacherPortal
                   currentUser={currentUser}
                   currentSchool={currentSchool}
+                  students={students}
                   teacherTab={teacherTab}
                   setTeacherTab={setTeacherTab}
                   isMobileMenuOpen={isMobileMenuOpen}

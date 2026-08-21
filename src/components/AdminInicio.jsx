@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
@@ -19,6 +19,7 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     { key: 'cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'cardapio', feature: 'cardapio', defaultOn: false },
     { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario', feature: 'calendario', defaultOn: false },
     { key: 'comunicados', label: 'Comunicados', icon: Megaphone, tab: 'cadastro-comunicados', feature: 'comunicados', defaultOn: false },
+    { key: 'relatorios', label: 'Relatórios', icon: FileText, tab: 'relatorios', feature: 'relatorios_pedagogicos', defaultOn: false },
   ];
 
   const topMenus = useMemo(() => {

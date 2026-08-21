@@ -1,14 +1,17 @@
 import React, { lazy, Suspense } from 'react';
-import { Home, ClipboardList } from 'lucide-react';
+import { Home, ClipboardList, AlertCircle, FileText } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
+const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const TeacherObservacaoDiaria = lazy(() => import('./TeacherObservacaoDiaria'));
+const TeacherRelatorios = lazy(() => import('./TeacherRelatorios'));
 
 export default function TeacherPortal({
   currentUser, currentSchool,
+  students,
   teacherTab, setTeacherTab,
   isMobileMenuOpen, setIsMobileMenuOpen,
   onLogout,
@@ -43,9 +46,13 @@ export default function TeacherPortal({
     );
   }
 
+  const monitorCount = (students || []).filter(s => ['pending_entry', 'pending_exit'].includes(s.status)).length;
+
   const navItems = [
     { key: 'home', label: 'Início', icon: Home },
+    { key: 'monitor', label: 'Monitor', icon: AlertCircle, badge: monitorCount },
     { key: 'observacao-diaria', label: 'Observação Diária', icon: ClipboardList },
+    { key: 'relatorios', label: 'Relatórios', icon: FileText },
   ];
 
   return (
@@ -67,6 +74,9 @@ export default function TeacherPortal({
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${teacherTab === item.key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
                 <item.icon size={18} /> {item.label}
+                {!!item.badge && (
+                  <span className="ml-auto bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{item.badge}</span>
+                )}
               </button>
             ))}
           </nav>
@@ -79,8 +89,14 @@ export default function TeacherPortal({
           {teacherTab === 'home' && (
             <TeacherInicio currentUser={currentUser} currentSchool={currentSchool} setTeacherTab={setTeacherTab} />
           )}
+          {teacherTab === 'monitor' && (
+            <TeacherMonitor students={students || []} />
+          )}
           {teacherTab === 'observacao-diaria' && (
             <TeacherObservacaoDiaria currentUser={currentUser} currentSchool={currentSchool} />
+          )}
+          {teacherTab === 'relatorios' && (
+            <TeacherRelatorios currentUser={currentUser} currentSchool={currentSchool} />
           )}
         </Suspense>
       </main>
