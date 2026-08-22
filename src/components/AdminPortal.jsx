@@ -30,6 +30,7 @@ const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
+const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
@@ -296,7 +297,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-        {RELATORIOS_SUBMENU.map(r => adminTab === r.key && (
+        {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+        {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
           <AdminRelatorioPlaceholder key={r.key} title={r.label} />
         ))}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}

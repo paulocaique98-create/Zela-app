@@ -8,6 +8,7 @@ import { useMenuClicks } from '../hooks/useMenuClicks';
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
+const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -125,7 +126,8 @@ export default function TeacherPortal({
           {teacherTab === 'monitor' && (
             <TeacherMonitor students={students || []} authorized={authorized} />
           )}
-          {RELATORIOS_SUBMENU.map(r => teacherTab === r.key && (
+          {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => teacherTab === r.key && (
             <AdminRelatorioPlaceholder key={r.key} title={r.label} />
           ))}
         </Suspense>

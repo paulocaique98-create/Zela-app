@@ -5,8 +5,6 @@ import NotificationsDropdown from './NotificationsDropdown';
 export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onTriggerEmergency }) {
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
-  
-  // Tenta ler a logo da escola carregada do banco
   const schoolLogo = currentSchool?.logo_url || null;
 
   return (
@@ -51,21 +49,15 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
 
       {/* DIREITA: LOGO DA ESCOLA & SAIR */}
       <div className="flex justify-end items-center gap-3 flex-1 min-w-0">
-        
+
         {currentUser.role === 'admin' && currentSchool && (
-          <div className="hidden sm:flex items-center gap-3 mr-2 border-r border-slate-200 pr-4">
-            <div className="flex flex-col text-right">
-              <span className="text-xs font-bold text-slate-700">{currentSchool.name}</span>
-              <span className="text-[9px] text-slate-400 uppercase tracking-widest font-semibold">{currentUser.name}</span>
+          schoolLogo ? (
+            <img src={schoolLogo} alt="Logo da escola" className="w-9 h-9 object-cover rounded-full border border-slate-200 bg-white mr-2" />
+          ) : (
+            <div className="w-9 h-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 text-indigo-700 font-black text-sm mr-2">
+              {currentSchool.name?.charAt(0)}
             </div>
-            {schoolLogo ? (
-              <img src={schoolLogo} alt="School Logo" className="w-9 h-9 object-cover rounded-full border border-slate-200 bg-white" />
-            ) : (
-              <div className="w-9 h-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 text-indigo-700 font-black text-sm">
-                {currentSchool.name.charAt(0)}
-              </div>
-            )}
-          </div>
+          )
         )}
 
         {currentUser.role === 'family' && (
@@ -75,6 +67,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
               <p className="text-xs font-bold text-slate-700">{currentUser.name}</p>
             </div>
           </div>
+        )}
+
+        {currentUser.role === 'teacher' && (
+          <p className="text-xs font-bold text-slate-700 hidden sm:block mr-2 truncate max-w-[160px]">{currentUser.name}</p>
         )}
 
         <button 

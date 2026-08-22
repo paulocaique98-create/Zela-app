@@ -1,10 +1,20 @@
 import React, { useMemo } from 'react';
 import { AlertCircle, FileText, ArrowRight } from 'lucide-react';
 
+// Os 5 submenus de Relatórios viram atalhos próprios — quando um menu tem
+// submenu, é o submenu que aparece nos atalhos, nunca o menu-pai sozinho.
+const RELATORIOS_SUBMENU = [
+  { key: 'rel-mitigacao', label: 'Mitigação' },
+  { key: 'rel-obs-normalizacao', label: 'Observação de Normalização' },
+  { key: 'rel-obs-concentracao', label: 'Observação de Concentração' },
+  { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
+  { key: 'rel-semestral', label: 'Semestral' },
+];
+
 export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0 }) {
   const TEACHER_MENUS = [
     { key: 'monitor', label: 'Monitor', icon: AlertCircle, tab: 'monitor' },
-    { key: 'relatorios', label: 'Relatórios', icon: FileText, tab: 'rel-mitigacao' },
+    ...RELATORIOS_SUBMENU.map(r => ({ key: r.key, label: r.label, icon: FileText, tab: r.key })),
   ];
 
   const topMenus = useMemo(() => {

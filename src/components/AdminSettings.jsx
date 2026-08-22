@@ -8,8 +8,10 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
     name: currentSchool?.name || '',
     phone: currentSchool?.phone || '',
     address: currentSchool?.address || '',
+    city: currentSchool?.city || '',
+    director_name: currentSchool?.director_name || '',
   });
-  
+
   const [logoUrl, setLogoUrl] = useState(
     currentSchool?.logo_url || ''
   );
@@ -48,6 +50,8 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         name: currentSchool.name || '',
         phone: currentSchool.phone || '',
         address: currentSchool.address || '',
+        city: currentSchool.city || '',
+        director_name: currentSchool.director_name || '',
       });
       try {
         setLocalPrefs(JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool.id}`) || '{}'));
@@ -68,7 +72,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
       reader.readAsDataURL(file);
     }
   };
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -87,7 +91,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         name: formData.name,
         phone: formData.phone,
         address: formData.address,
-        logo_url: logoUrl || null
+        city: formData.city,
+        director_name: formData.director_name,
+        logo_url: logoUrl || null,
       };
 
       const { error } = await supabase
@@ -192,21 +198,23 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone de Contato</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Diretora Pedagógica</label>
                 <input
                   type="text"
-                  value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                  value={formData.director_name}
+                  onChange={e => setFormData({...formData, director_name: e.target.value})}
+                  placeholder="Ex: Vanessa Ramalho"
                   className="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Endereço Completo</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cidade</label>
                 <input
                   type="text"
-                  value={formData.address}
-                  onChange={e => setFormData({...formData, address: e.target.value})}
+                  value={formData.city}
+                  onChange={e => setFormData({...formData, city: e.target.value})}
+                  placeholder="Ex: Vitória"
                   className="w-full p-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm"
                 />
               </div>

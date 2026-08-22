@@ -23,6 +23,7 @@ const FamilyAuthorized = lazy(() => import('./FamilyAuthorized'));
 const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
 const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
 const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
+const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
 
 // Submenus do menu Relatórios visíveis para a família — só os relatórios que
 // a escola de fato compartilha com os responsáveis (os demais, como
@@ -200,6 +201,28 @@ export default function FamilyPortal({
               </div>
             )}
 
+            {/* RELATÓRIOS */}
+            {showRelatorios && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('relatorios')}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                      {FAMILY_RELATORIOS_SUBMENU.map(r => (
+                        <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* CALENDÁRIO ESCOLAR */}
             {showCalendario && (
               <button
@@ -238,28 +261,6 @@ export default function FamilyPortal({
               >
                 <UtensilsCrossed size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cardápio</span>
               </button>
-            )}
-
-            {/* RELATÓRIOS */}
-            {showRelatorios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('relatorios')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                      {FAMILY_RELATORIOS_SUBMENU.map(r => (
-                        <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
             )}
           </nav>
 
@@ -314,7 +315,8 @@ export default function FamilyPortal({
           {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-          {FAMILY_RELATORIOS_SUBMENU.map(r => familyTab === r.key && (
+          {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
           ))}
           {familyTab === 'settings' && (
