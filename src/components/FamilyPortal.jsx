@@ -122,16 +122,11 @@ export default function FamilyPortal({
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      {/* Espaçador: reserva a largura recolhida (ícones) no fluxo do layout,
-          enquanto o <aside> real flutua por cima ao expandir no hover */}
-      <div className="hidden md:block md:w-16 shrink-0" aria-hidden="true"></div>
-
       <aside
         onMouseLeave={() => setOpenAccordion(null)}
-        className={`group fixed md:absolute top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-30 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`group fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
-          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0 whitespace-nowrap md:hidden md:group-hover:block">Navegação Principal</p>
           <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-4">
             {/* INÍCIO */}
             <button
@@ -151,10 +146,12 @@ export default function FamilyPortal({
                   <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                    <button onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'formularios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                      <button onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                      <button onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -170,10 +167,12 @@ export default function FamilyPortal({
                   <div className="flex items-center gap-2"><Folders size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
-                    <button onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'gerenciamento' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                      <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
+                      <button onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -189,11 +188,13 @@ export default function FamilyPortal({
                   <div className="flex items-center gap-2"><ShieldCheck size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
-                    <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
-                    <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'checkin' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                      <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
+                      <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
+                      <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -249,11 +250,13 @@ export default function FamilyPortal({
                   <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
-                    {FAMILY_RELATORIOS_SUBMENU.map(r => (
-                      <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
-                    ))}
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                      {FAMILY_RELATORIOS_SUBMENU.map(r => (
+                        <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

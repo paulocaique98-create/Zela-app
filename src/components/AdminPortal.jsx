@@ -30,6 +30,7 @@ const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
+const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -41,7 +42,7 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
 ];
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
 
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
@@ -49,6 +50,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const [newArrival, setNewArrival] = useState(false);
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
+  const [isFaceEnrollmentOpen, setIsFaceEnrollmentOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
 
@@ -103,16 +105,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      {/* Espaçador: reserva a largura recolhida (ícones) no fluxo do layout,
-          enquanto o <aside> real flutua por cima ao expandir no hover */}
-      <div className="hidden md:block md:w-16 shrink-0" aria-hidden="true"></div>
-
       <aside
         onMouseLeave={() => setOpenAccordion(null)}
-        className={`group fixed md:absolute top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-30 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`group fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
-          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-2 mt-1 shrink-0 whitespace-nowrap md:hidden md:group-hover:block">Navegação Principal</p>
           <nav className="flex-1 flex flex-col gap-0.5 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-2">
             <button
               onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
@@ -133,13 +130,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <div className="flex items-center gap-2"><FolderPlus size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cadastros</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'cadastros' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'cadastros' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                    {showComunicados && (
-                      <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
-                    )}
-                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'cadastros' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
+                      <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                      {showComunicados && (
+                        <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                      )}
+                      <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -155,11 +154,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <div className="flex items-center gap-2"><Folders size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
-                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'gerenciamento' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
+                      <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                      <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
+                      <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -175,10 +176,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                    <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'formularios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
+                      <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                      <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -194,18 +197,20 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <div className="flex items-center gap-2"><ShieldCheck size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
-                    <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                      Monitor
-                      {monitorStudents.length > 0 && (
-                        <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
-                      )}
-                    </button>
-                    <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
-                    <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
-                    <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'checkin' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
+                      <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Monitor
+                        {monitorStudents.length > 0 && (
+                          <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
+                        )}
+                      </button>
+                      <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
+                      <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
+                      <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                      <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -221,11 +226,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
                   <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-60' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
-                    {RELATORIOS_SUBMENU.map(r => (
-                      <button key={r.key} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
-                    ))}
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
+                      {RELATORIOS_SUBMENU.map(r => (
+                        <button key={r.key} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -355,15 +362,25 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                       borderColor = "border-indigo-300"; bgColor = "bg-indigo-50";
                     }
 
+                    const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
+
                     return (
                       <div
                         key={student.id}
-                        className={`p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
+                        className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
                       >
-                        <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 ${badgeClass}`}>
+                        {requester?.photo_url && (
+                          <img
+                            src={requester.photo_url}
+                            alt={requester.name}
+                            title={requester.name}
+                            className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                          />
+                        )}
+                        <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
                           <Clock size={12} /> {badgeText}
                         </p>
-                        <h3 className="font-bold text-lg text-slate-800 mb-4">{student.name}</h3>
+                        <h3 className="font-bold text-lg text-slate-800 mb-4 pr-11">{student.name}</h3>
                         <div className="flex flex-col gap-2">
                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button
@@ -393,7 +410,16 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* AUTOATENDIMENTO */}
         {adminTab === 'kiosk' && (
-          <div className="h-full bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center overflow-hidden">
+          <div className="relative h-full bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center overflow-hidden">
+            {/* Configurações: cadastrar foto de responsáveis que esqueceram de fazer pelo Portal da Família */}
+            <button
+              onClick={() => setIsFaceEnrollmentOpen(true)}
+              title="Cadastrar foto de responsáveis"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition z-10"
+            >
+              <Settings size={20} />
+            </button>
+
             {/* Header */}
             <div className="text-center mb-5 sm:mb-8 shrink-0">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
@@ -470,6 +496,20 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               onClose={() => setIsFaceScannerOpen(false)}
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
+              students={students}
+              currentUser={currentUser}
+            />
+          </Suspense>,
+          document.body
+        )}
+
+        {/* Cadastro de Foto de Responsáveis */}
+        {isFaceEnrollmentOpen && createPortal(
+          <Suspense fallback={null}>
+            <AdminFaceEnrollment
+              onClose={() => setIsFaceEnrollmentOpen(false)}
+              authorized={authorized}
+              togglePhoto={togglePhoto}
               students={students}
               currentUser={currentUser}
             />

@@ -255,6 +255,7 @@ export default function App() {
         familyId: s.family_id,
         status: s.status,
         contractedHours: s.contracted_hours,
+        pendingRequesterId: s.pending_requester_id,
         todayRecord: {
           entry: parseShortTime(s.today_entry),
           exit: parseShortTime(s.today_exit),
@@ -447,6 +448,7 @@ export default function App() {
           familyId: s.family_id,
           status: sStatus,
           contractedHours: s.contracted_hours,
+          pendingRequesterId: s.pending_requester_id,
           todayRecord: {
             entry: parsedEntry,
             exit: parsedExit,
@@ -596,7 +598,7 @@ export default function App() {
     setAuthForm({ name: '', relation: 'Outro', emergencyOrder: '', isTemporary: false, temporaryUntil: '' });
   };
 
-  const updateStudentStatus = async (studentId, newStatus) => {
+  const updateStudentStatus = async (studentId, newStatus, requesterId = null) => {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
@@ -615,6 +617,14 @@ export default function App() {
     try {
       // 1. Atualiza o status atual do aluno na tabela students
       let studentUpdates = { status: newStatus };
+
+      // Guarda quem solicitou (pra foto no Monitor) ao entrar em pending, e
+      // limpa assim que a solicitação é resolvida (confirmada).
+      if (isRequestEntry || isRequestExit) {
+        studentUpdates.pending_requester_id = requesterId;
+      } else if (isConfirmEntry || isConfirmExit) {
+        studentUpdates.pending_requester_id = null;
+      }
 
       // Grava o horário exato da solicitação pelo pai/totem (ou direto pelo admin se não havia solicitação)
       let usedEntryStr = student.todayRecord.entry_full;
@@ -676,6 +686,7 @@ export default function App() {
         return {
           ...s,
           status: newStatus,
+          pendingRequesterId: (isRequestEntry || isRequestExit) ? requesterId : (isConfirmEntry || isConfirmExit) ? null : s.pendingRequesterId,
           todayRecord: {
             entry: parseShortTime(usedEntryStr) || s.todayRecord.entry,
             exit: parseShortTime(usedExitStr) || (isConfirmEntry ? null : s.todayRecord.exit),
@@ -715,13 +726,13 @@ export default function App() {
     try {
       const { error } = await supabase
         .from('students')
-        .update({ status: revertToStatus })
+        .update({ status: revertToStatus, pending_requester_id: null })
         .eq('id', studentId);
       if (error) throw error;
 
       // Atualiza apenas o status no estado local — preserva todayRecord intacto
       setStudents(prev => prev.map(s =>
-        s.id === studentId ? { ...s, status: revertToStatus } : s
+        s.id === studentId ? { ...s, status: revertToStatus, pendingRequesterId: null } : s
       ));
     } catch (err) {
       console.error('[Zela] Erro ao rejeitar solicitação:', err);
@@ -729,7 +740,7 @@ export default function App() {
     }
   };
 
-  const requestKioskAccess = async (studentIds) => {
+  const requestKioskAccess = async (studentIds, requesterId = null) => {
     if (!studentIds || studentIds.length === 0) return;
     for (const studentId of studentIds) {
       const student = students.find(s => s.id === studentId);
@@ -746,7 +757,7 @@ export default function App() {
         // Transição normal: novo status diferente do atual
         const { error } = await supabase
           .from('students')
-          .update({ status: newStatus })
+          .update({ status: newStatus, pending_requester_id: requesterId })
           .eq('id', studentId);
 
         if (error) {
@@ -754,7 +765,7 @@ export default function App() {
           throw new Error(error.message);
         }
 
-        await updateStudentStatus(studentId, newStatus);
+        await updateStudentStatus(studentId, newStatus, requesterId);
 
       } else if (newStatus === 'pending_entry' || newStatus === 'pending_exit') {
         // Aluno já está no status pending: re-disparar o evento Realtime
@@ -768,7 +779,7 @@ export default function App() {
 
         await supabase
           .from('students')
-          .update({ status: newStatus, [timestampField]: fullRecordStr })
+          .update({ status: newStatus, [timestampField]: fullRecordStr, pending_requester_id: requesterId })
           .eq('id', studentId);
         // Nota: não lança erro aqui — é um re-envio, não uma operação crítica
         console.info('[Zela] Re-disparando notificação Realtime para aluno já em status pending:', studentId);
@@ -847,6 +858,8 @@ export default function App() {
                   updateStudentStatus={updateStudentStatus}
                   rejectStudentStatus={rejectStudentStatus}
                   requestKioskAccess={requestKioskAccess}
+                  authorized={authorized}
+                  togglePhoto={togglePhoto}
                   onUpdateSchool={fetchData}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -860,6 +873,7 @@ export default function App() {
                   currentUser={currentUser}
                   currentSchool={currentSchool}
                   students={students}
+                  authorized={authorized}
                   teacherTab={teacherTab}
                   setTeacherTab={setTeacherTab}
                   isMobileMenuOpen={isMobileMenuOpen}

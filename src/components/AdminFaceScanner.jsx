@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, Sun, QrCode } from 'lucide-react';
+import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
@@ -158,23 +158,12 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
   const [labeledDescriptors, setLabeledDescriptors] = useState(null);
-  const [lowLightBoost, setLowLightBoost] = useState(
-    () => localStorage.getItem('zela_lowlight_boost') === 'true'
-  );
   const isDarkRef = useRef(false);
   const lastLuminanceCheckRef = useRef(0);
   const recentMatchesRef = useRef([]);
   // 'ok' | 'too-far' | 'off-center' | null — orienta o overlay de enquadramento
   const [framePosition, setFramePosition] = useState(null);
   const [noMatchReason, setNoMatchReason] = useState('');
-
-  const toggleLowLightBoost = () => {
-    setLowLightBoost(prev => {
-      const next = !prev;
-      localStorage.setItem('zela_lowlight_boost', String(next));
-      return next;
-    });
-  };
 
   const [matchedPerson, setMatchedPerson] = useState(null); // The authorized person detected
   const [matchStatus, setMatchStatus] = useState('idle'); // 'idle' | 'searching' | 'matched' | 'no-match'
@@ -399,9 +388,9 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           // Só paga o custo de pré-processamento em canvas quando necessário
           // (cena escura ou boost manual ligado) — mantém o caminho rápido em boa luz.
           let detectionInput = video;
-          if (isDarkRef.current || lowLightBoost) {
+          if (isDarkRef.current) {
             const luminance = getAverageLuminance(video);
-            detectionInput = enhanceForLowLight(video, video.videoWidth, video.videoHeight, luminance, lowLightBoost);
+            detectionInput = enhanceForLowLight(video, video.videoWidth, video.videoHeight, luminance, false);
           }
 
           // Depois de já confirmado, só precisamos monitorar a posição do rosto (mais
@@ -485,7 +474,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       cancelled = true;
       clearTimeout(timerId);
     };
-  }, [labeledDescriptors, modelsLoaded, cameraReady, error, authorizedList, students, capturedImage, lowLightBoost]);
+  }, [labeledDescriptors, modelsLoaded, cameraReady, error, authorizedList, students, capturedImage]);
 
   // Capture current frame and run face comparison
   const handleCaptureAndCompare = async () => {
@@ -512,11 +501,10 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       setMatchStatus('searching');
 
       // Pré-processamento adaptativo: só realça brilho/contraste na intensidade que a
-      // cena realmente precisa (ou no máximo se o boost manual estiver ligado), em vez
-      // do filtro fixo 1.8/1.3 anterior, que distorcia o rosto mesmo com boa iluminação
-      // e piorava a taxa de falso-positivo.
+      // cena realmente precisa, em vez do filtro fixo 1.8/1.3 anterior, que distorcia
+      // o rosto mesmo com boa iluminação e piorava a taxa de falso-positivo.
       const luminance = getAverageLuminance(video);
-      const processCanvas = enhanceForLowLight(video, video.videoWidth || 640, video.videoHeight || 480, luminance, lowLightBoost);
+      const processCanvas = enhanceForLowLight(video, video.videoWidth || 640, video.videoHeight || 480, luminance, false);
 
       // Detector mais preciso (SsdMobilenetv1) para a confirmação manual — não é
       // tempo-crítico como o loop ao vivo, então vale usar o modelo mais robusto.
@@ -586,7 +574,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
 
     setIsProcessingCapture(true);
     try {
-      await requestKioskAccess(matchedStudents.map(s => s.id));
+      await requestKioskAccess(matchedStudents.map(s => s.id), matchedPerson?.id || null);
       setActionDone(true); // Só aqui, após confirmação real do banco
     } catch (err) {
       console.error('Erro ao solicitar acesso:', err);
@@ -678,8 +666,8 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               da câmera (~60cm) para melhor precisão do reconhecimento. O tamanho grande
               exige aproximação — se o rosto não preencher o molde, está longe demais. */}
           {!capturedImage && !error && cameraReady && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className={`w-[45vw] max-w-[170px] aspect-[3/4] sm:w-[55%] sm:max-w-[320px] md:max-w-[360px] max-h-[80%] rounded-full border-4 transition-colors duration-300 ${
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 pt-16 pb-16 md:pt-0 md:pb-0">
+              <div className={`h-[96%] max-h-[360px] md:h-[82%] md:max-h-[420px] aspect-[3/4] rounded-full border-4 transition-colors duration-300 ${
                 matchStatus === 'matched' ? 'border-green-500' :
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
@@ -734,26 +722,13 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             <span className="truncate">
               {
                 isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
-                  matchStatus === 'matched' ? (matchedPerson ? `${matchedPerson.name} - ${matchedPerson.relation}` : 'BIOMETRIA APONTADA') :
+                  matchStatus === 'matched' ? (matchedPerson ? matchedPerson.name : 'BIOMETRIA APONTADA') :
                     matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
                       matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
               }
             </span>
           </div>
 
-          {/* Toggle de baixa luminosidade — reforça o realce de brilho/contraste
-              manualmente para ambientes de entrada mal iluminados */}
-          {!capturedImage && !error && (
-            <button
-              onClick={toggleLowLightBoost}
-              title="Reforçar realce para ambientes escuros"
-              className={`absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] font-bold uppercase backdrop-blur-md shadow-md transition-colors z-30 ${
-                lowLightBoost ? 'bg-amber-500 text-white' : 'bg-black/60 text-slate-200 hover:bg-black/70'
-              }`}
-            >
-              <Sun size={14} /> {lowLightBoost ? 'Baixa Luz ON' : 'Baixa Luz'}
-            </button>
-          )}
 
           {/* Botão principal da câmera: captura manual antes do match; depois de
               encontrar o responsável, vira a ação de check-in/check-out direto —
@@ -913,23 +888,6 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                     )}
                   </div>
                 </div>
-
-                {/* Reset button to clear confrontation and start live scans again */}
-                <button
-                  onClick={handleResetScanner}
-                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-2xl transition text-sm flex items-center justify-center gap-1.5 uppercase tracking-wider"
-                >
-                  <RefreshCw size={16} /> Limpar e Voltar
-                </button>
-
-                {/* Confirm access */}
-                <button
-                  onClick={handleRequestAccess}
-                  disabled={matchedStudents.length === 0 || isProcessingCapture}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-black py-4 rounded-2xl active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider"
-                >
-                  {matchedStudents.some(s => s.status === 'in_school') ? 'Realizar Check-out' : 'Realizar Check-in'}
-                </button>
               </div>
             )}
           </div>

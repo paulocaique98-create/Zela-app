@@ -4,7 +4,7 @@ import { AlertCircle, Bell, Car, Clock, Eye } from 'lucide-react';
 // Monitor do Professor — SOMENTE VISUALIZAÇÃO. Confirmar/cancelar check-in e
 // check-out é responsabilidade da Recepção/Admin; o professor só acompanha as
 // solicitações pendentes dos alunos das próprias turmas (já filtradas por RLS).
-export default function TeacherMonitor({ students }) {
+export default function TeacherMonitor({ students, authorized }) {
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
@@ -67,15 +67,25 @@ export default function TeacherMonitor({ students }) {
                 borderColor = "border-indigo-300"; bgColor = "bg-indigo-50";
               }
 
+              const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
+
               return (
                 <div
                   key={student.id}
-                  className={`p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
+                  className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
                 >
-                  <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 ${badgeClass}`}>
+                  {requester?.photo_url && (
+                    <img
+                      src={requester.photo_url}
+                      alt={requester.name}
+                      title={requester.name}
+                      className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                  )}
+                  <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
                     <Clock size={12} /> {badgeText}
                   </p>
-                  <h3 className="font-bold text-lg text-slate-800">{student.name}</h3>
+                  <h3 className="font-bold text-lg text-slate-800 pr-11">{student.name}</h3>
                 </div>
               );
             })}
