@@ -19,7 +19,7 @@ export default function AdminInicio({ currentUser, currentSchool, setAdminTab, c
     { key: 'cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'cardapio', feature: 'cardapio', defaultOn: false },
     { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario', feature: 'calendario', defaultOn: false },
     { key: 'comunicados', label: 'Comunicados', icon: Megaphone, tab: 'cadastro-comunicados', feature: 'comunicados', defaultOn: false },
-    { key: 'relatorios', label: 'Relatórios', icon: FileText, tab: 'relatorios', feature: 'relatorios_pedagogicos', defaultOn: false },
+    { key: 'relatorios', label: 'Relatórios', icon: FileText, tab: 'rel-mitigacao', feature: 'relatorios_pedagogicos', defaultOn: false },
   ];
 
   const topMenus = useMemo(() => {

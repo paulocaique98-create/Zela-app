@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Home, ClipboardList, AlertCircle, FileText } from 'lucide-react';
+import { Home, ClipboardList, AlertCircle } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
@@ -7,7 +7,6 @@ import LoadingLogo from './LoadingLogo';
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const TeacherObservacaoDiaria = lazy(() => import('./TeacherObservacaoDiaria'));
-const TeacherRelatorios = lazy(() => import('./TeacherRelatorios'));
 
 export default function TeacherPortal({
   currentUser, currentSchool,
@@ -52,30 +51,33 @@ export default function TeacherPortal({
     { key: 'home', label: 'Início', icon: Home },
     { key: 'monitor', label: 'Monitor', icon: AlertCircle, badge: monitorCount },
     { key: 'observacao-diaria', label: 'Observação Diária', icon: ClipboardList },
-    { key: 'relatorios', label: 'Relatórios', icon: FileText },
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
+    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in md:relative">
       {/* MENU LATERAL (SIDEBAR) */}
       <div
         className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0">Navegação Principal</p>
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
+      {/* Espaçador: reserva a largura recolhida (ícones) no fluxo do layout,
+          enquanto o <aside> real flutua por cima ao expandir no hover */}
+      <div className="hidden md:block md:w-16 shrink-0" aria-hidden="true"></div>
+
+      <aside className={`group fixed md:absolute top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-30 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
+          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0 whitespace-nowrap md:hidden md:group-hover:block">Navegação Principal</p>
+          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-4">
             {navItems.map(item => (
               <button
                 key={item.key}
                 onClick={() => { setTeacherTab(item.key); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${teacherTab === item.key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${teacherTab === item.key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <item.icon size={18} /> {item.label}
+                <item.icon size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">{item.label}</span>
                 {!!item.badge && (
-                  <span className="ml-auto bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{item.badge}</span>
+                  <span className="ml-auto bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 shrink-0 flex items-center justify-center animate-pulse md:hidden md:group-hover:flex">{item.badge}</span>
                 )}
               </button>
             ))}
@@ -94,9 +96,6 @@ export default function TeacherPortal({
           )}
           {teacherTab === 'observacao-diaria' && (
             <TeacherObservacaoDiaria currentUser={currentUser} currentSchool={currentSchool} />
-          )}
-          {teacherTab === 'relatorios' && (
-            <TeacherRelatorios currentUser={currentUser} currentSchool={currentSchool} />
           )}
         </Suspense>
       </main>

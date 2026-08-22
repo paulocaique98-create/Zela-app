@@ -29,8 +29,17 @@ const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
-const AdminRelatorios = lazy(() => import('./AdminRelatorios'));
-const AdminReportTemplates = lazy(() => import('./AdminReportTemplates'));
+const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
+
+// Submenus do menu Relatórios — cada um vira sua própria tela conforme for
+// implementado; por enquanto todos apontam para o placeholder "em construção".
+const RELATORIOS_SUBMENU = [
+  { key: 'rel-mitigacao', label: 'Mitigação' },
+  { key: 'rel-obs-normalizacao', label: 'Observação de Normalização' },
+  { key: 'rel-obs-concentracao', label: 'Observação de Concentração' },
+  { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
+  { key: 'rel-semestral', label: 'Semestral' },
+];
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, onLogout, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
@@ -86,7 +95,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   }, [monitorStudents.length]);
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
+    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in md:relative">
 
       {/* MENU LATERAL (SIDEBAR) */}
       <div
@@ -94,34 +103,43 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0">Navegação Principal</p>
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
+      {/* Espaçador: reserva a largura recolhida (ícones) no fluxo do layout,
+          enquanto o <aside> real flutua por cima ao expandir no hover */}
+      <div className="hidden md:block md:w-16 shrink-0" aria-hidden="true"></div>
+
+      <aside
+        onMouseLeave={() => setOpenAccordion(null)}
+        className={`group fixed md:absolute top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-30 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
+          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-2 mt-1 shrink-0 whitespace-nowrap md:hidden md:group-hover:block">Navegação Principal</p>
+          <nav className="flex-1 flex flex-col gap-0.5 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-2">
             <button
               onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
-              <Home size={18} /> Início
+              <Home size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Início</span>
             </button>
+
+            {/* Itens com submenu (accordion) sempre primeiro, depois os itens sem submenu */}
 
             {/* CADASTROS */}
             {showCadastros && (
               <div>
                 <button
                   onClick={() => toggleAccordion('cadastros')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab) || openAccordion === 'cadastros' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab) || openAccordion === 'cadastros' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><FolderPlus size={18} /> Cadastros</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'cadastros' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><FolderPlus size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cadastros</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'cadastros' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'cadastros' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
+                    <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
                     {showComunicados && (
-                      <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
+                      <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
                     )}
-                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                    <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
               </div>
@@ -132,16 +150,16 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div>
                 <button
                   onClick={() => toggleAccordion('gerenciamento')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['users', 'students', 'gerenciar-funcionarios'].includes(adminTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['users', 'students', 'gerenciar-funcionarios'].includes(adminTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><Folders size={18} /> Gerenciamento</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><Folders size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
-                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
+                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
+                    <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
+                    <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
+                    <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
                   </div>
                 </div>
               </div>
@@ -152,15 +170,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div>
                 <button
                   onClick={() => toggleAccordion('formularios')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(adminTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(adminTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><FileText size={18} /> Formulários</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                    <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
+                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
+                    <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
+                    <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
                   </div>
                 </div>
               </div>
@@ -171,23 +189,43 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div>
                 <button
                   onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosk', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosk', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><ShieldCheck size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
+                    <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
                       Monitor
                       {monitorStudents.length > 0 && (
                         <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
                       )}
                     </button>
-                    <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
-                    <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
-                    <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
+                    <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
+                    <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
+                    <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
+                    <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* RELATÓRIOS PEDAGÓGICOS */}
+            {showRelatorios && (
+              <div>
+                <button
+                  onClick={() => toggleAccordion('relatorios')}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${RELATORIOS_SUBMENU.some(r => r.key === adminTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-60' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1 whitespace-nowrap">
+                    {RELATORIOS_SUBMENU.map(r => (
+                      <button key={r.key} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -197,9 +235,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {showCalendario && (
               <button
                 onClick={() => { setAdminTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <CalendarDays size={18} /> Calendário
+                <CalendarDays size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Calendário</span>
               </button>
             )}
 
@@ -207,9 +245,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {showMural && (
               <button
                 onClick={() => { setAdminTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <ImageIcon size={18} /> Mural de Fotos
+                <ImageIcon size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Mural de Fotos</span>
               </button>
             )}
 
@@ -217,40 +255,21 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {showCardapio && (
               <button
                 onClick={() => { setAdminTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <UtensilsCrossed size={18} /> Cardápio
+                <UtensilsCrossed size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cardápio</span>
               </button>
-            )}
-
-            {/* RELATÓRIOS PEDAGÓGICOS */}
-            {showRelatorios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('relatorios')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['relatorios', 'modelos-relatorios'].includes(adminTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FileText size={18} /> Relatórios</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                    <button onClick={() => { setAdminTab('relatorios'); registerClick('relatorios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'relatorios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Relatórios</button>
-                    <button onClick={() => { setAdminTab('modelos-relatorios'); registerClick('modelos-relatorios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${adminTab === 'modelos-relatorios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Modelos de Relatórios</button>
-                  </div>
-                </div>
-              </div>
             )}
           </nav>
 
           {/* CONFIGURAÇÕES (Fixo no footer) */}
           {showConfiguracoes && (
-            <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
+            <div className="pt-2 mt-auto border-t border-slate-100 shrink-0">
               <button
                 onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <Settings size={18} /> Configurações
+                <Settings size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Configurações</span>
               </button>
             </div>
           )}
@@ -270,8 +289,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'relatorios' && <AdminRelatorios currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'modelos-relatorios' && <AdminReportTemplates currentUser={currentUser} currentSchool={currentSchool} />}
+        {RELATORIOS_SUBMENU.map(r => adminTab === r.key && (
+          <AdminRelatorioPlaceholder key={r.key} title={r.label} />
+        ))}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}

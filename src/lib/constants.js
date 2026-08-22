@@ -55,22 +55,3 @@ export const NIVEL_AUTONOMIA = [
   { value: 'parcial', label: 'Parcialmente autônomo' },
   { value: 'autonomo', label: 'Autônomo' },
 ];
-
-// Relatórios de Desempenho e Evolução (destinados à família) — status e tipos
-// de seção. Fluxo simplificado de 3 estados (RASCUNHO → PUBLICADO → ARQUIVADO):
-// cobre a regra obrigatória (rascunho nunca visível, publicação é ação
-// explícita) sem os estados intermediários EM_REVISAO/FINALIZADO, que só
-// fariam sentido com múltiplos níveis de permissão de professor — hoje o
-// sistema usa um papel único (role='teacher').
-export const REPORT_STATUS = [
-  { value: 'RASCUNHO', label: 'Rascunho', color: 'slate' },
-  { value: 'PUBLICADO', label: 'Publicado', color: 'green' },
-  { value: 'ARQUIVADO', label: 'Arquivado', color: 'amber' },
-];
-
-export const REPORT_SECTION_TYPES = [
-  { value: 'PRACTICAL_LIFE', label: 'Vida Prática' },
-  { value: 'COGNITIVE_ACADEMIC', label: 'Cognitivo e Acadêmico' },
-  { value: 'SOCIOEMOTIONAL', label: 'Socioemocional' },
-  { value: 'CUSTOM', label: 'Personalizada' },
-];

@@ -15,7 +15,6 @@ const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
 const FamilyComunicados = lazy(() => import('./FamilyComunicados'));
 const FamilyMuralFotos = lazy(() => import('./FamilyMuralFotos'));
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
-const FamilyRelatorios = lazy(() => import('./FamilyRelatorios'));
 const FamilyChat = lazy(() => import('./FamilyChat'));
 const FamilyHome = lazy(() => import('./FamilyHome'));
 const FamilyHistory = lazy(() => import('./FamilyHistory'));
@@ -23,6 +22,16 @@ const FamilySettings = lazy(() => import('./FamilySettings'));
 const FamilyAuthorized = lazy(() => import('./FamilyAuthorized'));
 const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
 const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
+const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
+
+// Submenus do menu Relatórios visíveis para a família — só os relatórios que
+// a escola de fato compartilha com os responsáveis (os demais, como
+// Observação de Normalização/Concentração e Mapa de Habilidades, são de uso
+// interno da equipe pedagógica e nunca aparecem aqui).
+const FAMILY_RELATORIOS_SUBMENU = [
+  { key: 'rel-semestral', label: 'Semestral' },
+  { key: 'rel-mitigacao', label: 'Mitigação' },
+];
 
 export default function FamilyPortal({ 
   currentUser, 
@@ -101,28 +110,35 @@ export default function FamilyPortal({
   const showComunicados = features.comunicados === true;
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
-  const showChat = features.chat === true;
   const showRelatorios = features.relatorios_pedagogicos === true;
+  const showChat = features.chat === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
+    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in md:relative">
       {/* MENU LATERAL (SIDEBAR) */}
-      <div 
-        className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+      <div
+        className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0">Navegação Principal</p>
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto pb-4">
+      {/* Espaçador: reserva a largura recolhida (ícones) no fluxo do layout,
+          enquanto o <aside> real flutua por cima ao expandir no hover */}
+      <div className="hidden md:block md:w-16 shrink-0" aria-hidden="true"></div>
+
+      <aside
+        onMouseLeave={() => setOpenAccordion(null)}
+        className={`group fixed md:absolute top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-30 transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
+          <p className="px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-3 mt-2 shrink-0 whitespace-nowrap md:hidden md:group-hover:block">Navegação Principal</p>
+          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-4">
             {/* INÍCIO */}
             <button
               onClick={() => { setFamilyTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
-              <Home size={18} /> Início
+              <Home size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Início</span>
             </button>
 
             {/* FORMULÁRIOS */}
@@ -130,13 +146,13 @@ export default function FamilyPortal({
               <div>
                 <button
                   onClick={() => toggleAccordion('formularios')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(familyTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(familyTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><FileText size={18} /> Formulários</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'formularios' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
                     <button onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
                     <button onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
                   </div>
@@ -149,13 +165,13 @@ export default function FamilyPortal({
               <div>
                 <button
                   onClick={() => toggleAccordion('gerenciamento')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['gerenciar-responsaveis', 'registration'].includes(familyTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['gerenciar-responsaveis', 'registration'].includes(familyTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><Folders size={18} /> Gerenciamento</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><Folders size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'gerenciamento' ? 'max-h-40' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
                     <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
                     <button onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
                   </div>
@@ -168,13 +184,13 @@ export default function FamilyPortal({
               <div>
                 <button
                   onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['acompanhamento', 'authorized', 'history'].includes(familyTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['acompanhamento', 'authorized', 'history'].includes(familyTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
                 >
-                  <div className="flex items-center gap-2"><ShieldCheck size={18} /> Check-in/out</div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-2"><ShieldCheck size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'checkin' ? 'max-h-60' : 'max-h-0'}`}>
-                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
                     <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
                     <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
                     <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
@@ -187,9 +203,9 @@ export default function FamilyPortal({
             {showCalendario && (
               <button
                 onClick={() => { setFamilyTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <CalendarDays size={18} /> Calendário Escolar
+                <CalendarDays size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Calendário Escolar</span>
               </button>
             )}
 
@@ -197,9 +213,9 @@ export default function FamilyPortal({
             {showComunicados && (
               <button
                 onClick={() => { setFamilyTab('comunicados'); registerClick('comunicados'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'comunicados' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'comunicados' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <Bell size={18} /> Comunicados
+                <Bell size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Comunicados</span>
               </button>
             )}
 
@@ -207,9 +223,9 @@ export default function FamilyPortal({
             {showMural && (
               <button
                 onClick={() => { setFamilyTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <ImageIcon size={18} /> Mural de Fotos
+                <ImageIcon size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Mural de Fotos</span>
               </button>
             )}
 
@@ -217,20 +233,30 @@ export default function FamilyPortal({
             {showCardapio && (
               <button
                 onClick={() => { setFamilyTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <UtensilsCrossed size={18} /> Cardápio
+                <UtensilsCrossed size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cardápio</span>
               </button>
             )}
 
             {/* RELATÓRIOS */}
             {showRelatorios && (
-              <button
-                onClick={() => { setFamilyTab('relatorios'); registerClick('relatorios'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'relatorios' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <FileText size={18} /> Relatórios
-              </button>
+              <div>
+                <button
+                  onClick={() => toggleAccordion('relatorios')}
+                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                >
+                  <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
+                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openAccordion === 'relatorios' ? 'max-h-40' : 'max-h-0'}`}>
+                  <div className="flex flex-col gap-1 pl-9 pr-2 py-1 whitespace-nowrap">
+                    {FAMILY_RELATORIOS_SUBMENU.map(r => (
+                      <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </nav>
 
@@ -238,9 +264,9 @@ export default function FamilyPortal({
             <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
               <button
                 onClick={() => { setFamilyTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
               >
-                <Settings size={18} /> Configurações
+                <Settings size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Configurações</span>
               </button>
             </div>
           )}
@@ -285,7 +311,9 @@ export default function FamilyPortal({
           {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-          {familyTab === 'relatorios' && <FamilyRelatorios currentUser={currentUser} currentSchool={currentSchool} />}
+          {FAMILY_RELATORIOS_SUBMENU.map(r => familyTab === r.key && (
+            <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
+          ))}
           {familyTab === 'settings' && (
             <FamilySettings
               currentUser={currentUser}
