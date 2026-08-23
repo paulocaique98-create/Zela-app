@@ -122,24 +122,21 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   return (
     <div className="h-full flex flex-col bg-white p-3 md:p-4 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-100 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-3 border-b border-slate-100 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600 shrink-0">
             <Settings size={22} />
           </div>
-          <div className="min-w-0">
-            <h2 className="text-xl font-black text-slate-800">Configurações da Escola</h2>
-            <p className="text-sm text-slate-500">Atualize informações e a identidade visual.</p>
-          </div>
+          <h2 className="text-xl font-black text-slate-800">Configurações da Escola</h2>
         </div>
         <button
           type="submit"
           form="admin-settings-form"
           disabled={isLoading}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 shrink-0"
         >
           <Save size={18} />
-          {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+          {isLoading ? 'Salvando' : 'Salvar Alterações'}
         </button>
       </div>
 

@@ -539,7 +539,7 @@ export default function App() {
     };
   }, [currentUser, currentPath]);
 
-  const togglePhoto = async (id, photoUrl = null, descriptorArray = null) => {
+  const togglePhoto = async (id, photoUrl = null, descriptorArray = null, consentGiven = false) => {
     try {
       const updates = { has_photo: !!photoUrl };
       if (photoUrl) {
@@ -552,6 +552,13 @@ export default function App() {
         updates.face_descriptor = JSON.stringify(descriptorArray);
       } else {
         updates.face_descriptor = null;
+      }
+
+      // Registro do consentimento LGPD — só grava a data na primeira vez que a
+      // pessoa (ou quem a representa) autoriza o uso da biometria; remover a
+      // foto não apaga esse histórico, é só a marca de que já foi autorizado.
+      if (photoUrl && descriptorArray && consentGiven) {
+        updates.biometric_consent_at = new Date().toISOString();
       }
 
       const { error } = await supabase.from('authorized_persons').update(updates).eq('id', id);
@@ -630,12 +637,23 @@ export default function App() {
       let usedEntryStr = student.todayRecord.entry_full;
       let usedExitStr = student.todayRecord.exit_full;
 
-      if (isRequestEntry || (isConfirmEntry && !student.todayRecord.entry)) {
+      // Só reaproveita o horário já gravado quando esta confirmação vem de uma
+      // solicitação pendente (pending_entry/pending_exit) — aí o horário certo
+      // é o do momento da solicitação, não o do clique de confirmação. Uma
+      // confirmação DIRETA (ex: botão "Registrar Saída" da Família, que pula a
+      // etapa de pendência) precisa sempre gravar o horário atual: usar
+      // "já existe um horário salvo" como critério fazia o 2º check-in/check-out
+      // do mesmo dia (ex: saiu e voltou) ser silenciosamente ignorado, porque o
+      // campo já tinha um valor de um ciclo anterior daquele mesmo dia.
+      const wasPendingEntry = student.status === 'pending_entry';
+      const wasPendingExit = student.status === 'pending_exit';
+
+      if (isRequestEntry || (isConfirmEntry && !wasPendingEntry)) {
         studentUpdates.today_entry = fullRecordStr;
         studentUpdates.today_exit = null;
         usedEntryStr = fullRecordStr;
         usedExitStr = null;
-      } else if (isRequestExit || (isConfirmExit && !student.todayRecord.exit)) {
+      } else if (isRequestExit || (isConfirmExit && !wasPendingExit)) {
         studentUpdates.today_exit = fullRecordStr;
         usedExitStr = fullRecordStr;
       }

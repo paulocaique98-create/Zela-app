@@ -229,7 +229,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-800 truncate">{isSupportThread ? 'Suporte Zela' : (activeThread.family?.name || 'Responsável')}</h2>
+            <h2 className="text-lg font-bold text-slate-800">{isSupportThread ? 'Suporte Zela' : (activeThread.family?.name || 'Responsável')}</h2>
             <p className="text-xs text-slate-400">{isSupportThread ? 'Equipe da plataforma Zela' : SETORES_ADMIN.find(s => s.value === activeThread.setor)?.label}</p>
           </div>
         </div>

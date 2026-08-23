@@ -3,6 +3,8 @@ import { ArrowLeft, Check, Loader2, Lock, Pencil, Send, Archive, FileDown } from
 import { supabase } from '../lib/supabase';
 import { MITIGACAO_SECTIONS, calcIdade, buildIntroducaoText } from '../lib/mitigacaoSections';
 import { printMitigacaoReport } from '../lib/printMitigacao';
+import { notifyFamilies } from '../lib/notifyFamilies';
+import { logAction } from '../lib/auditLog';
 
 const STATUS_LABEL = {
   RASCUNHO: { label: 'Rascunho', color: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -19,7 +21,7 @@ function formatDate(dateStr) {
 // Família (somente leitura, só quando publicado). O controle de quem pode
 // fazer o quê fica inteiramente nas props (canEdit/canPublish) — a validação
 // de verdade é sempre a RLS no banco.
-export default function MitigacaoReportEditor({ report, student, school, onBack, onSaved, canEdit, canPublish, readOnly, canPrint }) {
+export default function MitigacaoReportEditor({ report, student, school, currentUser, onBack, onSaved, canEdit, canPublish, readOnly, canPrint }) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(MITIGACAO_SECTIONS.map(s => [s.key, report[s.key] || '']))
   );
@@ -68,6 +70,26 @@ export default function MitigacaoReportEditor({ report, student, school, onBack,
         .eq('id', report.id);
       if (updateError) throw updateError;
       setStatus('PUBLICADO');
+
+      logAction({
+        schoolId: report.school_id,
+        actorId: currentUser?.id,
+        action: 'publish',
+        entityType: 'mitigacao_report',
+        entityId: report.id,
+        details: { student_name: student?.name },
+      });
+
+      const { data: guardianLinks } = await supabase.from('student_guardians').select('guardian_id').eq('student_id', report.student_id);
+      const { data: directStudent } = await supabase.from('students').select('family_id').eq('id', report.student_id).single();
+      const familyIds = [...new Set([...(guardianLinks || []).map(g => g.guardian_id), directStudent?.family_id].filter(Boolean))];
+      notifyFamilies({
+        type: 'relatorio',
+        title: 'Novo relatório disponível',
+        message: `Relatório de Mitigação${student ? ` — ${student.name}` : ''}`,
+        url: '/?tab=relatorios',
+        familyIds,
+      });
     } catch (err) {
       console.error('[MitigacaoReportEditor] Erro ao publicar:', err);
       setError('Não foi possível publicar o relatório.');
@@ -83,6 +105,14 @@ export default function MitigacaoReportEditor({ report, student, school, onBack,
       const { error: updateError } = await supabase.from('mitigacao_reports').update({ status: 'ARQUIVADO' }).eq('id', report.id);
       if (updateError) throw updateError;
       setStatus('ARQUIVADO');
+      logAction({
+        schoolId: report.school_id,
+        actorId: currentUser?.id,
+        action: 'archive',
+        entityType: 'mitigacao_report',
+        entityId: report.id,
+        details: { student_name: student?.name },
+      });
     } catch (err) {
       console.error('[MitigacaoReportEditor] Erro ao arquivar:', err);
       setError('Não foi possível arquivar o relatório.');
@@ -102,7 +132,7 @@ export default function MitigacaoReportEditor({ report, student, school, onBack,
           <ArrowLeft size={20} />
         </button>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-slate-800 truncate">Relatório de Mitigação</h2>
+          <h2 className="text-lg font-bold text-slate-800">Relatório de Mitigação</h2>
           <p className="text-xs text-slate-400">{student?.name}</p>
         </div>
         {canPrint && (

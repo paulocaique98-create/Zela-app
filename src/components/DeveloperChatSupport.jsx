@@ -130,8 +130,8 @@ export default function DeveloperChatSupport({ currentUser }) {
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-800 truncate">{activeThread.family?.name || 'Admin'}</h2>
-            <p className="text-xs text-slate-400 truncate">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
+            <h2 className="text-lg font-bold text-slate-800">{activeThread.family?.name || 'Admin'}</h2>
+            <p className="text-xs text-slate-400">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
           </div>
         </div>
 

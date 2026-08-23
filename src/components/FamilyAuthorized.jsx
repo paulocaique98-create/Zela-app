@@ -7,6 +7,7 @@ import ConfirmModal from './ConfirmModal';
 export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthModal, currentSchool }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
   const [confirmRemovePhotoId, setConfirmRemovePhotoId] = useState(null);
+  const [pendingConsent, setPendingConsent] = useState(null); // { person, file }
   const isBasic = currentSchool?.plan === 'basic';
   const limitReached = isBasic && authorized.length >= 2;
 
@@ -23,6 +24,38 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
       setConfirmRemovePhotoId(null);
     }
   };
+
+  // Só processa a foto (detecção facial + gravação) depois que o
+  // responsável confirma o consentimento LGPD explícito — ver modal abaixo.
+  const processCapture = async () => {
+    const { person, file } = pendingConsent;
+    setPendingConsent(null);
+    setIsProcessingId(person.id);
+    try {
+      await preloadFaceModels();
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const img = new Image();
+        img.src = reader.result;
+        img.onload = async () => {
+          const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+          if (detection) {
+            const descriptorArray = Array.from(detection.descriptor);
+            await togglePhoto(person.id, reader.result, descriptorArray, true);
+          } else {
+            alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
+          }
+          setIsProcessingId(null);
+        };
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao processar biometria.");
+      setIsProcessingId(null);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
@@ -63,35 +96,10 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
             </div>
           )}
           {authorized.map(person => {
-            const handleFileChange = async (e) => {
+            const handleFileChange = (e) => {
               const file = e.target.files[0];
-              if (file) {
-                setIsProcessingId(person.id);
-                try {
-                  await preloadFaceModels();
-                  const reader = new FileReader();
-                  reader.onloadend = async () => {
-                    const img = new Image();
-                    img.src = reader.result;
-                    img.onload = async () => {
-                      const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-                      if (detection) {
-                        const descriptorArray = Array.from(detection.descriptor);
-                        // Salva a foto (base64) e o descritor biométrico no banco de dados
-                        await togglePhoto(person.id, reader.result, descriptorArray);
-                      } else {
-                        alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
-                      }
-                      setIsProcessingId(null);
-                    };
-                  };
-                  reader.readAsDataURL(file);
-                } catch (err) {
-                  console.error(err);
-                  alert("Erro ao processar biometria.");
-                  setIsProcessingId(null);
-                }
-              }
+              if (file) setPendingConsent({ person, file });
+              e.target.value = ''; // permite selecionar o mesmo arquivo de novo se cancelar
             };
 
             const handleRemovePhoto = () => setConfirmRemovePhotoId(person.id);
@@ -144,7 +152,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <label className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto">
                       {isProcessingId === person.id ? (
-                         <><Loader2 size={14} className="animate-spin"/> Proc...</>
+                         <><Loader2 size={14} className="animate-spin"/> Processando</>
                       ) : (
                          <><Fingerprint size={14}/> {person.hasPhoto || person.has_biometrics ? 'Atualizar' : 'Cadastrar Biometria'}</>
                       )}
@@ -181,6 +189,16 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
           isLoading={isProcessingId === confirmRemovePhotoId}
           onConfirm={performRemovePhoto}
           onCancel={() => setConfirmRemovePhotoId(null)}
+        />
+      )}
+
+      {pendingConsent && (
+        <ConfirmModal
+          title="Consentimento para uso de biometria"
+          message={`Ao continuar, você autoriza o uso da foto e dos dados biométricos faciais de ${pendingConsent.person.name} exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD). Você pode remover essa autorização e os dados a qualquer momento.`}
+          danger={false}
+          onConfirm={processCapture}
+          onCancel={() => setPendingConsent(null)}
         />
       )}
     </div>

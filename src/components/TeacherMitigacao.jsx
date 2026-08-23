@@ -161,7 +161,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
             <button onClick={() => setShowCreateForm(false)} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
               <ArrowLeft size={20} />
             </button>
-            <h2 className="text-lg font-bold text-slate-800 truncate">Novo Relatório de Mitigação</h2>
+            <h2 className="text-lg font-bold text-slate-800">Novo Relatório de Mitigação</h2>
           </div>
           {turmas.length > 1 && (
             <select
@@ -301,7 +301,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-bold text-slate-800 text-sm truncate">{student?.name || 'Aluno removido'}</p>
+                    <p className="font-bold text-slate-800 text-sm">{student?.name || 'Aluno removido'}</p>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>

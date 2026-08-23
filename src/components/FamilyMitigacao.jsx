@@ -38,6 +38,15 @@ export default function FamilyMitigacao({ currentUser, currentSchool }) {
 
   const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
+  // Marca como lido (upsert) assim que o responsável abre o relatório.
+  const openReport = (report) => {
+    setActiveReport(report);
+    supabase
+      .from('mitigacao_report_reads')
+      .upsert({ report_id: report.id, family_user_id: currentUser.id }, { onConflict: 'report_id,family_user_id' })
+      .then(({ error }) => { if (error) console.warn('[FamilyMitigacao] Falha ao marcar leitura:', error.message); });
+  };
+
   if (activeReport) {
     return (
       <MitigacaoReportEditor
@@ -81,7 +90,7 @@ export default function FamilyMitigacao({ currentUser, currentSchool }) {
             return (
               <button
                 key={r.id}
-                onClick={() => setActiveReport(r)}
+                onClick={() => openReport(r)}
                 className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition text-left"
               >
                 <div className="min-w-0 flex-1">

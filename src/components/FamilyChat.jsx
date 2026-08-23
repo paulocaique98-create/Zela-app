@@ -214,7 +214,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
           <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 shrink-0">
             <Icon size={20} />
           </div>
-          <h2 className="text-lg font-bold text-slate-800 truncate">{setorInfo?.label}</h2>
+          <h2 className="text-lg font-bold text-slate-800">{setorInfo?.label}</h2>
         </div>
 
         {activeSetor !== 'suporte_zela' && (

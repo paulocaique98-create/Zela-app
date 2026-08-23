@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2 } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2, ScrollText } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
@@ -31,6 +31,7 @@ const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
+const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
@@ -108,9 +109,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       <aside
         onMouseLeave={() => setOpenAccordion(null)}
-        className={`group fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`group fixed md:relative top-[60px] md:top-0 left-0 h-[calc(100dvh-60px)] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="h-full bg-white p-3 pt-[68px] md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
+        <div className="h-full bg-white p-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
           <nav className="flex-1 flex flex-col gap-0.5 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-2">
             <button
               onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
@@ -272,7 +273,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
           {/* CONFIGURAÇÕES (Fixo no footer) */}
           {showConfiguracoes && (
-            <div className="pt-2 mt-auto border-t border-slate-100 shrink-0">
+            <div className="pt-2 mt-auto border-t border-slate-100 shrink-0 space-y-1">
+              <button
+                onClick={() => { setAdminTab('auditoria'); registerClick('auditoria'); setIsMobileMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'auditoria' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              >
+                <ScrollText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Auditoria</span>
+              </button>
               <button
                 onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
@@ -298,6 +305,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
           <AdminRelatorioPlaceholder key={r.key} title={r.label} />
         ))}

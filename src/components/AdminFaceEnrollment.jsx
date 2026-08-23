@@ -3,6 +3,7 @@ import { X, Camera, Loader2, UserX, Search, ArrowLeft, RefreshCw, Check } from '
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from './ConfirmModal';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
 
@@ -230,6 +231,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
   const [countdown, setCountdown] = useState(null);
   // null (sem rosto) | 'too-far' | 'too-close' | 'off-center' | 'ok'
   const [framePosition, setFramePosition] = useState(null);
+  const [showConsent, setShowConsent] = useState(false);
 
   // A câmera só é solicitada depois que a pessoa clica em "Iniciar Captura"
   // — nunca abre sozinha ao entrar na tela.
@@ -353,8 +355,15 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
     autoTriggeredRef.current = false;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!capturedImage) return;
+    setShowConsent(true);
+  };
+
+  // Só grava a biometria depois que o admin confirma o consentimento LGPD em
+  // nome do responsável — mesma exigência do fluxo de auto-cadastro da família.
+  const confirmSave = async () => {
+    setShowConsent(false);
     setIsSaving(true);
     setError('');
     try {
@@ -368,7 +377,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
         return;
       }
       const descriptorArray = Array.from(detection.descriptor);
-      await togglePhoto(person.id, capturedImage, descriptorArray);
+      await togglePhoto(person.id, capturedImage, descriptorArray, true);
       onDone();
     } catch (err) {
       console.error(err);
@@ -384,7 +393,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
           <button onClick={onCancel} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-base font-bold text-slate-800 truncate">{person.name}</h2>
+          <h2 className="text-base font-bold text-slate-800">{person.name}</h2>
         </div>
         <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
           <X size={20} />
@@ -423,7 +432,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
         {!error && cameraStarted && !capturedImage && (!modelsLoaded || !cameraReady) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 bg-slate-950/60">
             <Loader2 className="h-8 w-8 animate-spin mb-3" />
-            <p className="text-xs font-semibold">{!modelsLoaded ? 'Carregando IA de reconhecimento...' : 'Iniciando câmera...'}</p>
+            <p className="text-xs font-semibold">{!modelsLoaded ? 'Carregando IA de reconhecimento' : 'Iniciando câmera'}</p>
           </div>
         )}
 
@@ -492,6 +501,17 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
           </p>
         )}
       </div>
+
+      {showConsent && (
+        <ConfirmModal
+          title="Consentimento para uso de biometria"
+          message={`Ao continuar, você confirma que ${person.name} (ou seu responsável) autoriza o uso desta foto e dos dados biométricos faciais exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD).`}
+          danger={false}
+          isLoading={isSaving}
+          onConfirm={confirmSave}
+          onCancel={() => setShowConsent(false)}
+        />
+      )}
     </div>
   );
 }

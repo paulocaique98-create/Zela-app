@@ -30,7 +30,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <h1 className="font-bold text-lg tracking-tight leading-none text-indigo-950 flex items-center gap-1.5 truncate">
+          <h1 className="font-bold text-lg tracking-tight leading-none text-indigo-950 flex items-center gap-1.5 whitespace-nowrap">
             Zela <span className="font-normal text-slate-400">Portal</span>
           </h1>
         </div>
@@ -50,16 +50,6 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
       {/* DIREITA: LOGO DA ESCOLA & SAIR */}
       <div className="flex justify-end items-center gap-3 flex-1 min-w-0">
 
-        {currentUser.role === 'admin' && currentSchool && (
-          schoolLogo ? (
-            <img src={schoolLogo} alt="Logo da escola" className="w-9 h-9 object-cover rounded-full border border-slate-200 bg-white mr-2" />
-          ) : (
-            <div className="w-9 h-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 text-indigo-700 font-black text-sm mr-2">
-              {currentSchool.name?.charAt(0)}
-            </div>
-          )
-        )}
-
         {currentUser.role === 'family' && (
           <div className="flex items-center gap-1 md:gap-3 mr-1 md:mr-2 border-r border-slate-200 pr-4">
             <NotificationsDropdown currentUser={currentUser} />
@@ -70,7 +60,17 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
         )}
 
         {currentUser.role === 'teacher' && (
-          <p className="text-xs font-bold text-slate-700 hidden sm:block mr-2 truncate max-w-[160px]">{currentUser.name}</p>
+          <p className="text-xs font-bold text-slate-700 hidden sm:block mr-2">{currentUser.name}</p>
+        )}
+
+        {currentUser.role !== 'developer' && currentSchool && (
+          schoolLogo ? (
+            <img src={schoolLogo} alt="Logo da escola" className="w-9 h-9 object-cover rounded-full border border-slate-200 bg-white mr-2" />
+          ) : (
+            <div className="w-9 h-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100 text-indigo-700 font-black text-sm mr-2">
+              {currentSchool.name?.charAt(0)}
+            </div>
+          )
         )}
 
         <button 

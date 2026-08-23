@@ -203,7 +203,7 @@ export default function AdminUserManagement({ currentUser }) {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-bold text-slate-800 text-sm truncate" title={user.name}>{user.name}</h3>
+                      <h3 className="font-bold text-slate-800 text-sm">{user.name}</h3>
                       <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block bg-blue-100 text-blue-700">
                         Família
                       </span>

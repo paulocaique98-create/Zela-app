@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { FileText, Loader2, Search, Archive, Trash2 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FileText, Loader2, Search, Archive, Trash2, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import MitigacaoReportEditor from './MitigacaoReportEditor';
 import ConfirmModal from './ConfirmModal';
+import { logAction } from '../lib/auditLog';
+import { printMitigacaoReportsBulk } from '../lib/printMitigacao';
 
 const STATUS_BADGE = {
   RASCUNHO: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -29,6 +31,13 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
   const [confirmArchiveId, setConfirmArchiveId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [isProcessingId, setIsProcessingId] = useState(null);
+  // turmaFilter guarda o VALOR da turma selecionada (pode ser null/"" pra
+  // turmas sem nome cadastrado) — turmaFilterActive é quem diz se HÁ uma
+  // seleção ativa, pra não confundir "nenhum filtro" com "filtro = turma vazia"
+  // (um `turmaFilter &&` sozinho escondia o botão "Gerar turma" quando a turma
+  // selecionada tinha nome vazio/nulo).
+  const [turmaFilter, setTurmaFilter] = useState(null);
+  const [turmaFilterActive, setTurmaFilterActive] = useState(false);
 
   const studentsById = new Map(students.map(s => [s.id, s]));
 
@@ -80,10 +89,19 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
   const confirmDelete = async () => {
     const id = confirmDeleteId;
+    const student = studentsById.get(reports.find(r => r.id === id)?.student_id);
     setIsProcessingId(id);
     try {
       const { error: deleteError } = await supabase.from('mitigacao_reports').delete().eq('id', id);
       if (deleteError) throw deleteError;
+      logAction({
+        schoolId,
+        actorId: currentUser?.id,
+        action: 'delete',
+        entityType: 'mitigacao_report',
+        entityId: id,
+        details: { student_name: student?.name },
+      });
       await fetchAll();
     } catch (err) {
       console.error('[AdminMitigacao] Erro ao excluir:', err);
@@ -96,9 +114,36 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
   const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
+  // Resumo por turma: quantos alunos já têm relatório em rascunho/publicado,
+  // e quantos ainda não têm nenhum — ajuda a coordenação a ver rapidamente
+  // quem falta antes do fim do semestre.
+  const turmaSummary = useMemo(() => {
+    const byTurma = new Map();
+    students.forEach(s => {
+      if (!byTurma.has(s.turma)) byTurma.set(s.turma, { turma: s.turma, totalAlunos: 0, rascunho: 0, publicado: 0, arquivado: 0, semRelatorio: 0 });
+      byTurma.get(s.turma).totalAlunos += 1;
+    });
+    const reportedStudentIds = new Set();
+    reports.forEach(r => {
+      const student = studentsById.get(r.student_id);
+      if (!student) return;
+      const entry = byTurma.get(student.turma);
+      if (!entry) return;
+      if (r.status === 'RASCUNHO') entry.rascunho += 1;
+      else if (r.status === 'PUBLICADO') entry.publicado += 1;
+      else if (r.status === 'ARQUIVADO') entry.arquivado += 1;
+      reportedStudentIds.add(student.id);
+    });
+    students.forEach(s => {
+      if (!reportedStudentIds.has(s.id)) byTurma.get(s.turma).semRelatorio += 1;
+    });
+    return [...byTurma.values()].sort((a, b) => a.turma.localeCompare(b.turma));
+  }, [students, reports, studentsById]);
+
   const filteredReports = reports.filter(r => {
-    if (!searchTerm.trim()) return true;
     const student = studentsById.get(r.student_id);
+    if (turmaFilterActive && student?.turma !== turmaFilter) return false;
+    if (!searchTerm.trim()) return true;
     return student?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -108,9 +153,12 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
       <MitigacaoReportEditor
         report={activeReport}
         student={student}
+        school={currentSchool}
+        currentUser={currentUser}
         onBack={closeReport}
         canEdit={canEditPermission}
         canPublish={canEditPermission}
+        canPrint
       />
     );
   }
@@ -118,35 +166,95 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
   return (
     <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
-            <FileText size={22} />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
+              <FileText size={22} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold text-slate-800">Mitigação</h2>
+              <p className="text-slate-500 text-sm hidden sm:block">
+                {canEditPermission ? 'Revise, edite e publique os relatórios preenchidos pelas professoras.' : 'Acompanhamento dos relatórios de Mitigação da escola.'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Mitigação</h2>
-            <p className="text-slate-500 text-sm hidden sm:block">
-              {canEditPermission ? 'Revise, edite e publique os relatórios preenchidos pelas professoras.' : 'Acompanhamento dos relatórios de Mitigação da escola.'}
-            </p>
-          </div>
+          {/* No mobile o botão fica ao lado do título; no desktop ele migra pro
+              bloco de ações à direita (junto da busca) — ver abaixo. */}
+          {turmaFilterActive && (
+            <button
+              onClick={() => printMitigacaoReportsBulk({
+                reports: reports.filter(r => r.status === 'PUBLICADO' && studentsById.get(r.student_id)?.turma === turmaFilter),
+                studentsById,
+                school: currentSchool,
+              })}
+              className="sm:hidden flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2.5 rounded-xl transition text-xs shrink-0"
+              title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
+            >
+              <FileDown size={15} /> Gerar turma
+            </button>
+          )}
         </div>
-        {reports.length > 0 && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por aluno..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full sm:w-64"
-            />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {turmaFilterActive && (
+            <button
+              onClick={() => printMitigacaoReportsBulk({
+                reports: reports.filter(r => r.status === 'PUBLICADO' && studentsById.get(r.student_id)?.turma === turmaFilter),
+                studentsById,
+                school: currentSchool,
+              })}
+              className="hidden sm:flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2.5 rounded-xl transition text-xs shrink-0"
+              title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
+            >
+              <FileDown size={15} /> Gerar turma
+            </button>
+          )}
+          {reports.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por aluno..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full sm:w-64"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium mb-2">{error}</div>
         )}
+
+        {!isLoading && turmaSummary.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+            {turmaSummary.map(t => {
+              const isSelected = turmaFilterActive && turmaFilter === t.turma;
+              return (
+              <button
+                key={t.turma || '(sem-turma)'}
+                type="button"
+                onClick={() => {
+                  if (isSelected) { setTurmaFilterActive(false); setTurmaFilter(null); }
+                  else { setTurmaFilterActive(true); setTurmaFilter(t.turma); }
+                }}
+                className={`text-left p-3 rounded-xl border transition ${isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-50 hover:border-indigo-200'}`}
+              >
+                <p className="text-xs font-black text-slate-700">{t.turma || 'Sem turma'}</p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {t.publicado} publicado{t.publicado !== 1 ? 's' : ''} · {t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}
+                </p>
+                {t.semRelatorio > 0 && (
+                  <p className="text-[11px] text-amber-600 font-bold mt-0.5">{t.semRelatorio} sem relatório</p>
+                )}
+              </button>
+              );
+            })}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
@@ -171,7 +279,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                   className="min-w-0 flex-1 text-left"
                 >
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-bold text-slate-800 text-sm truncate">{student?.name || 'Aluno removido'}</p>
+                    <p className="font-bold text-slate-800 text-sm">{student?.name || 'Aluno removido'}</p>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>

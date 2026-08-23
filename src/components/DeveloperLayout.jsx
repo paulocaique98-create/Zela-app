@@ -28,8 +28,8 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:relative top-0 left-0 h-[100dvh] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full bg-gradient-to-b from-slate-900 to-indigo-950 p-3 pt-28 md:pt-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-800 flex flex-col overflow-y-auto">
+      <aside className={`fixed md:relative top-[60px] md:top-0 left-0 h-[calc(100dvh-60px)] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-full bg-gradient-to-b from-slate-900 to-indigo-950 p-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-800 flex flex-col overflow-y-auto">
           <p className="px-3 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 mt-2 shrink-0">
             Painel do Dev
           </p>

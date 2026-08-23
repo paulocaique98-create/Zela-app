@@ -154,7 +154,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
   const requestExit = () => setShowExitConfirm(true);
 
   const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial...');
+  const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial');
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
   const [labeledDescriptors, setLabeledDescriptors] = useState(null);
@@ -205,6 +205,13 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
   const [cameraReady, setCameraReady] = useState(false); // true quando stream de vídeo está ativo
   const [retryCount, setRetryCount] = useState(0); // incrementar refaz o init() (câmera falhou e o usuário pediu nova tentativa)
 
+  // Contagem regressiva de 3s antes de confirmar automaticamente a entrada/saída,
+  // seguindo exatamente a mesma lógica do Cadastro de Foto (AdminFaceEnrollment):
+  // só dispara depois do match ficar estável por 1s (evita contagem por match
+  // instantâneo/instável) e é cancelada se o match se perder no meio da contagem.
+  const [countdown, setCountdown] = useState(null);
+  const autoTriggeredRef = useRef(false);
+
   const retryInit = () => {
     setError(null);
     setCameraReady(false);
@@ -218,14 +225,14 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     async function init() {
       try {
         // 1. Aguarda modelos (já carregados em background pelo AdminPortal)
-        setLoadingText('Verificando modelos de IA...');
+        setLoadingText('Verificando modelos de IA');
         await preloadFaceModels(); // retorna imediatamente se já estiverem em cache
 
         if (!active) return;
         setModelsLoaded(true);
 
         // 2. Busca responsáveis com foto aprovada
-        setLoadingText('Buscando dados de responsáveis...');
+        setLoadingText('Buscando dados de responsáveis');
         const { data: authData, error: authError } = await supabase
           .from('authorized_persons')
           .select('*')
@@ -241,7 +248,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           return;
         }
 
-        setLoadingText(`Carregando biometrias...`);
+        setLoadingText(`Carregando biometrias`);
         const results = peopleWithBiometrics.map(person => {
           try {
             let desc = person.face_descriptor;
@@ -270,7 +277,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         setLabeledDescriptors(validLabeledDescriptors);
 
         // 5. Inicia câmera
-        setLoadingText('Iniciando câmera...');
+        setLoadingText('Iniciando câmera');
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' }
         });
@@ -566,11 +573,13 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     setFramePosition(null);
     setNoMatchReason('');
     recentMatchesRef.current = [];
+    setCountdown(null);
+    autoTriggeredRef.current = false;
     resetStuckTimer();
   };
 
   const handleRequestAccess = async () => {
-    if (!matchedStudents.length || isProcessingCapture) return;
+    if (!matchedStudents.length || isProcessingCapture || actionDone) return;
 
     setIsProcessingCapture(true);
     try {
@@ -584,6 +593,44 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       setIsProcessingCapture(false);
     }
   };
+
+  // Só dispara a contagem regressiva depois que o match ficar estável por 1s
+  // seguido — mesma lógica do Cadastro de Foto (evita que uma confirmação
+  // instável de um único frame já inicie a contagem).
+  useEffect(() => {
+    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || countdown !== null || autoTriggeredRef.current) return;
+    const timer = setTimeout(() => {
+      autoTriggeredRef.current = true;
+      setCountdown(3);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [matchStatus, actionDone, isProcessingCapture, countdown]);
+
+  useEffect(() => {
+    if (matchStatus !== 'matched' && countdown === null) {
+      autoTriggeredRef.current = false;
+    }
+  }, [matchStatus, countdown]);
+
+  // Cancela a contagem em andamento se o match se perder no meio dela (rosto
+  // saiu do molde, por exemplo) — mesmo princípio do Cadastro de Foto.
+  useEffect(() => {
+    if (matchStatus !== 'matched' && countdown !== null) {
+      setCountdown(null);
+    }
+  }, [matchStatus, countdown]);
+
+  // Contagem regressiva de 3s antes da confirmação automática.
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      handleRequestAccess();
+      setCountdown(null);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // Convert distance to similarity percentage
   const getSimilarityPercentage = (distance) => {
@@ -616,9 +663,9 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
               <p className="text-sm font-semibold">
-                {!modelsLoaded ? "Carregando IA de reconhecimento..." :
-                  !cameraReady ? "Iniciando câmera..." :
-                    !labeledDescriptors ? "Preparando biometrias..." : "Preparando sistema..."}
+                {!modelsLoaded ? "Carregando IA de reconhecimento" :
+                  !cameraReady ? "Iniciando câmera" :
+                    !labeledDescriptors ? "Preparando biometrias" : "Preparando sistema"}
               </p>
             </div>
           )}
@@ -667,12 +714,18 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               exige aproximação — se o rosto não preencher o molde, está longe demais. */}
           {!capturedImage && !error && cameraReady && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 pt-16 pb-16 md:pt-0 md:pb-0">
-              <div className={`h-[96%] max-h-[360px] md:h-[82%] md:max-h-[420px] aspect-[3/4] rounded-full border-4 transition-colors duration-300 ${
+              <div className={`relative h-[96%] max-h-[360px] md:h-[82%] md:max-h-[420px] aspect-[3/4] rounded-full border-4 transition-colors duration-300 flex items-center justify-center ${
                 matchStatus === 'matched' ? 'border-green-500' :
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
                       matchStatus === 'searching' ? 'border-indigo-600' : 'border-white/80'
-              }`}></div>
+              }`}>
+                {countdown !== null && (
+                  <span className="text-white text-7xl font-black drop-shadow-lg animate-in zoom-in duration-300" key={countdown}>
+                    {countdown}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -680,7 +733,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           {!capturedImage && !error && cameraReady && matchStatus === 'idle' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 gap-2 px-6 text-center">
               <span className="bg-black/60 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-xl shadow-md">
-                Calibrando Câmera...
+                Calibrando Câmera
               </span>
               <span className="bg-black/60 backdrop-blur-md text-slate-200 text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md">
                 Posicione o rosto dentro do molde
@@ -721,9 +774,9 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               }`}></span>
             <span className="truncate">
               {
-                isProcessingCapture ? 'ANALISANDO SNAPSHOT...' :
+                isProcessingCapture ? 'ANALISANDO SNAPSHOT' :
                   matchStatus === 'matched' ? (matchedPerson ? matchedPerson.name : 'BIOMETRIA APONTADA') :
-                    matchStatus === 'searching' ? 'VERIFICANDO ROSTO...' :
+                    matchStatus === 'searching' ? 'VERIFICANDO ROSTO' :
                       matchStatus === 'no-match' ? 'SEM CORRESPONDÊNCIA' : 'CÂMERA ATIVA'
               }
             </span>
@@ -775,7 +828,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
             {isProcessingCapture ? (
               <div className="text-center py-16 space-y-3">
                 <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mx-auto" />
-                <p className="text-sm font-bold text-slate-700">Fazendo confronto biométrico...</p>
+                <p className="text-sm font-bold text-slate-700">Fazendo confronto biométrico</p>
                 <p className="text-xs text-slate-400">Verificando face com banco de dados de responsáveis cadastrados.</p>
               </div>
             ) : matchStatus === 'no-match' ? (
@@ -812,7 +865,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
               <div className="text-center py-12 text-slate-400 space-y-3">
                 <Camera className="mx-auto h-12 w-12 text-slate-300 animate-pulse" />
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">Aguardando detecção...</p>
+                  <p className="text-sm font-semibold text-slate-700">Aguardando detecção</p>
                   <p className="text-xs mt-1 px-4 leading-relaxed">
                     Posicione o responsável ou clique no botão Capturar e Comparar na câmera para capturar uma foto manual de confronto.
                   </p>
