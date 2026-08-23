@@ -6,10 +6,10 @@ import { EVENTO_TIPOS } from '../lib/constants';
 const TIPO_BY_VALUE = Object.fromEntries(EVENTO_TIPOS.map(t => [t.value, t]));
 
 const COLOR_CLASSES = {
-  slate: 'bg-slate-100 text-slate-600 border-slate-200',
+  slate: 'bg-surface-container text-on-surface-variant border-outline-variant',
   red: 'bg-red-50 text-red-700 border-red-200',
   amber: 'bg-amber-50 text-amber-700 border-amber-200',
-  indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  indigo: 'bg-primary/10 text-primary border-primary/20',
   green: 'bg-green-50 text-green-700 border-green-200',
 };
 
@@ -70,55 +70,55 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
           <CalendarDays size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Calendário Escolar</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">Próximos eventos, feriados e reuniões da escola.</p>
+          <h2 className="text-h3 text-on-surface">Calendário Escolar</h2>
+          <p className="text-on-surface-variant text-small hidden sm:block">Próximos eventos, feriados e reuniões da escola.</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : groups.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <CalendarDays className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhum evento futuro cadastrado.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <CalendarDays className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhum evento futuro cadastrado.</p>
           </div>
         ) : (
           groups.map(group => (
             <div key={group.monthKey}>
-              <h3 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">{group.label}</h3>
+              <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-3">{group.label}</h3>
               <div className="space-y-2">
                 {group.items.map(ev => {
                   const tipo = TIPO_BY_VALUE[ev.event_type] || TIPO_BY_VALUE.geral;
                   const { day, weekday } = formatDayMonth(ev.event_date);
                   const isToday = ev.event_date === todayStr;
                   return (
-                    <div key={ev.id} className={`flex gap-3 p-3 sm:p-4 rounded-2xl border ${isToday ? 'border-indigo-300 bg-indigo-50/40' : 'border-slate-200'}`}>
-                      <div className={`shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center ${isToday ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-700'}`}>
+                    <div key={ev.id} className={`flex gap-3 p-3 sm:p-4 rounded-zela-lg border ${isToday ? 'border-primary/40 bg-primary/5' : 'border-outline-variant'}`}>
+                      <div className={`shrink-0 w-14 h-14 rounded-zela-md flex flex-col items-center justify-center ${isToday ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface'}`}>
                         <span className="text-lg font-black leading-none">{day}</span>
                         <span className="text-[9px] uppercase font-bold">{weekday}</span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-bold text-slate-800 text-sm">{ev.title}</h4>
+                          <h4 className="font-bold text-on-surface text-sm">{ev.title}</h4>
                           <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${COLOR_CLASSES[tipo.color]}`}>
                             {tipo.label}
                           </span>
                         </div>
                         {ev.description && (
-                          <p className="text-slate-500 text-xs mt-1 whitespace-pre-wrap">{ev.description}</p>
+                          <p className="text-on-surface-variant text-xs mt-1 whitespace-pre-wrap">{ev.description}</p>
                         )}
                       </div>
                     </div>

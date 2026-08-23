@@ -49,23 +49,23 @@ A Escola Montessori de Vitória (SenseKids) solicita sua autorização para uso 
 function LGPDModal({ alreadyAccepted, onAccept, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
-          <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-            <FileText size={20} className="text-indigo-600" /> Consentimento LGPD
+      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
+        <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
+          <h2 className="font-bold text-lg text-on-surface flex items-center gap-2">
+            <FileText size={20} className="text-primary" /> Consentimento LGPD
           </h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={20} /></button>
+          <button onClick={onClose} className="p-1.5 hover:bg-surface-container rounded-lg"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5">
-          <pre className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">{LGPD_TEXT}</pre>
+          <pre className="text-xs text-on-surface-variant leading-relaxed whitespace-pre-wrap font-sans">{LGPD_TEXT}</pre>
         </div>
-        <div className="p-5 border-t border-slate-100 shrink-0">
+        <div className="p-5 border-t border-outline-variant shrink-0">
           {alreadyAccepted ? (
-            <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm bg-green-50 py-3 rounded-xl border border-green-200">
+            <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm bg-green-50 py-3 rounded-zela-md border border-green-200">
               <Check size={18}/> Termo aceito
             </div>
           ) : (
-            <button onClick={onAccept} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+            <button onClick={onAccept} className="w-full bg-primary text-white font-bold py-3 rounded-zela-md hover:bg-primary-container transition flex items-center justify-center gap-2">
               <Check size={18}/> Li e Concordo
             </button>
           )}
@@ -88,23 +88,23 @@ function ImageUsageModal({ status, onRespond, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
-          <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-            <FileText size={20} className="text-indigo-600" /> Uso de Imagem
+      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
+        <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
+          <h2 className="font-bold text-lg text-on-surface flex items-center gap-2">
+            <FileText size={20} className="text-primary" /> Uso de Imagem
           </h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={20} /></button>
+          <button onClick={onClose} className="p-1.5 hover:bg-surface-container rounded-lg"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto flex-1 p-5">
-          <pre className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">{IMAGE_USAGE_TEXT}</pre>
+          <pre className="text-xs text-on-surface-variant leading-relaxed whitespace-pre-wrap font-sans">{IMAGE_USAGE_TEXT}</pre>
         </div>
-        <div className="p-5 border-t border-slate-100 shrink-0">
+        <div className="p-5 border-t border-outline-variant shrink-0">
           {status !== null && status !== undefined ? (
             <div className="space-y-3">
-              <div className={`flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-xl border ${status ? 'text-green-600 bg-green-50 border-green-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
+              <div className={`flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-zela-md border ${status ? 'text-green-600 bg-green-50 border-green-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
                 <Check size={18}/> {status ? 'Autorizado' : 'Não Autorizado'}
               </div>
-              <p className="text-center text-[10px] text-slate-400">
+              <p className="text-center text-[10px] text-on-surface-variant/70">
                 Para alterar esta escolha, procure a secretaria da escola.
               </p>
             </div>
@@ -113,14 +113,14 @@ function ImageUsageModal({ status, onRespond, onClose }) {
               <button 
                 onClick={() => handleAction(false)} 
                 disabled={isLoading}
-                className="flex-1 bg-white border border-red-200 text-red-600 font-bold py-3 rounded-xl hover:bg-red-50 transition flex items-center justify-center gap-2"
+                className="flex-1 bg-white border border-red-200 text-red-600 font-bold py-3 rounded-zela-md hover:bg-red-50 transition flex items-center justify-center gap-2"
               >
                 Não Autorizo
               </button>
               <button 
                 onClick={() => handleAction(true)} 
                 disabled={isLoading}
-                className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                className="flex-1 bg-primary text-white font-bold py-3 rounded-zela-md hover:bg-primary-container transition flex items-center justify-center gap-2"
               >
                 <Check size={18}/> Autorizo
               </button>
@@ -154,28 +154,28 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[70vh] md:max-h-[85vh] flex flex-col mt-16 md:mt-0">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
-          <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2"><Pencil size={18} className="text-indigo-600"/> Editar Dados</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={20}/></button>
+      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-sm max-h-[70vh] md:max-h-[85vh] flex flex-col mt-16 md:mt-0">
+        <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
+          <h2 className="font-bold text-lg text-on-surface flex items-center gap-2"><Pencil size={18} className="text-primary"/> Editar Dados</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-surface-container rounded-lg"><X size={20}/></button>
         </div>
         <div className="p-5 space-y-4 overflow-y-auto">
-          {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{error}</div>}
+          {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-zela-md border border-red-100">{error}</div>}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail de Acesso</label>
+            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">E-mail de Acesso</label>
             <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm focus:ring-2 focus:ring-primary outline-none" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone de Contato</label>
+            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Telefone de Contato</label>
             <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="(11) 90000-0000"
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm focus:ring-2 focus:ring-primary outline-none" />
           </div>
         </div>
-        <div className="p-5 border-t border-slate-100 flex gap-3 shrink-0">
-          <button onClick={onClose} className="flex-1 border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-50 text-sm">Cancelar</button>
-          <button onClick={handleSave} disabled={isLoading} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition text-sm disabled:opacity-70">
+        <div className="p-5 border-t border-outline-variant flex gap-3 shrink-0">
+          <button onClick={onClose} className="flex-1 border border-outline-variant text-on-surface-variant font-bold py-3 rounded-zela-md hover:bg-surface-container-low text-sm">Cancelar</button>
+          <button onClick={handleSave} disabled={isLoading} className="flex-1 bg-primary text-white font-bold py-3 rounded-zela-md hover:bg-primary-container transition text-sm disabled:opacity-70">
             {isLoading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
@@ -207,11 +207,11 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
   };
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="mb-6 shrink-0">
-        <h2 className="text-xl font-bold text-slate-800">Configurações</h2>
-        <p className="text-slate-500 text-sm">Gestão de autorizações e informações.</p>
+        <h2 className="text-h3 text-on-surface">Configurações</h2>
+        <p className="text-on-surface-variant text-small">Gestão de autorizações e informações.</p>
       </div>
 
       {/* Grid: Conta + Documentos - Scrollable */}
@@ -220,22 +220,22 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
         <div className="space-y-4">
 
           {/* Conta da Família */}
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-base text-slate-800 flex items-center gap-2 mb-4">
-              <User className="text-indigo-600" size={18}/> Conta da Família
+          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+            <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
+              <User className="text-primary" size={18}/> Conta da Família
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase">E-mail de Acesso</label>
-                <p className="text-sm font-medium text-slate-700 truncate">{currentUser.email}</p>
+                <label className="text-[10px] font-bold text-on-surface-variant/70 uppercase">E-mail de Acesso</label>
+                <p className="text-sm font-medium text-on-surface truncate">{currentUser.email}</p>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Telefone de Contato</label>
-                <p className="text-sm font-medium text-slate-700">{currentUser.phone || 'Não cadastrado'}</p>
+                <label className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Telefone de Contato</label>
+                <p className="text-sm font-medium text-on-surface">{currentUser.phone || 'Não cadastrado'}</p>
               </div>
               <button
                 onClick={() => setModal('edit')}
-                className="w-full mt-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl hover:bg-slate-50 text-sm transition flex items-center justify-center gap-2"
+                className="w-full mt-1 border border-outline-variant text-on-surface-variant font-bold py-2.5 rounded-zela-md hover:bg-surface-container-low text-sm transition flex items-center justify-center gap-2"
               >
                 <Pencil size={14}/> Editar Dados
               </button>
@@ -243,31 +243,31 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
           </div>
 
           {/* Documentos */}
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-base text-slate-800 flex items-center gap-2 mb-4">
-              <FileText className="text-indigo-600" size={18}/> Documentos
+          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+            <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
+              <FileText className="text-primary" size={18}/> Documentos
             </h3>
             <div className="space-y-2">
               <button
                 onClick={() => setModal('lgpd')}
-                className="w-full flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition group"
+                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
               >
-                <span className="text-sm font-medium text-slate-700">Consentimento LGPD</span>
+                <span className="text-sm font-medium text-on-surface">Consentimento LGPD</span>
                 <div className="flex items-center gap-2">
                   {lgpdAccepted ? (
                     <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Aceito</span>
                   ) : (
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                   )}
-                  <ChevronRight size={16} className="text-slate-400 group-hover:text-indigo-600 transition"/>
+                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
                 </div>
               </button>
 
               <button
                 onClick={() => setModal('image_usage')}
-                className="w-full flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition group"
+                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
               >
-                <span className="text-sm font-medium text-slate-700">Termo de Uso de Imagem</span>
+                <span className="text-sm font-medium text-on-surface">Termo de Uso de Imagem</span>
                 <div className="flex items-center gap-2">
                   {imageUsageStatus !== null && imageUsageStatus !== undefined ? (
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${imageUsageStatus ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
@@ -276,7 +276,7 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
                   ) : (
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                   )}
-                  <ChevronRight size={16} className="text-slate-400 group-hover:text-indigo-600 transition"/>
+                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
                 </div>
               </button>
             </div>
@@ -287,13 +287,13 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
         <div className="space-y-4">
           {/* Notificações Push */}
           {pushData && (
-            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-              <h3 className="font-bold text-base text-slate-800 flex items-center gap-2 mb-4">
-                <Bell className="text-indigo-600" size={18}/> Notificações Push
+            <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+              <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
+                <Bell className="text-primary" size={18}/> Notificações Push
               </h3>
               <div className="space-y-2">
                 {pushData.permission === 'denied' ? (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
+                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-zela-md">
                     <BellOff className="text-red-500 shrink-0" size={24} />
                     <div>
                       <p className="text-sm font-bold text-red-800">Notificações bloqueadas</p>
@@ -301,24 +301,24 @@ export default function FamilySettings({ currentUser, setCurrentUser, currentSch
                     </div>
                   </div>
                 ) : !pushData.isSubscribed ? (
-                  <div className="flex flex-col gap-3 p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="flex flex-col gap-3 p-4 bg-surface-container-low border border-outline-variant rounded-zela-md">
                     <div className="flex items-center gap-3">
-                      <Bell className="text-slate-400 shrink-0" size={24} />
+                      <Bell className="text-on-surface-variant/70 shrink-0" size={24} />
                       <div>
-                        <p className="text-sm font-bold text-slate-800">Ativar notificações</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Receba avisos de check-in e check-out no celular, mesmo com o portal fechado.</p>
+                        <p className="text-sm font-bold text-on-surface">Ativar notificações</p>
+                        <p className="text-xs text-on-surface-variant mt-0.5">Receba avisos de check-in e check-out no celular, mesmo com o portal fechado.</p>
                       </div>
                     </div>
                     <button 
                       onClick={pushData.subscribe} 
                       disabled={pushData.isLoading}
-                      className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm disabled:opacity-70"
+                      className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary-container transition text-sm disabled:opacity-70"
                     >
                       {pushData.isLoading ? 'Ativando...' : 'Ativar notificações'}
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+                  <div className="flex flex-col gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-zela-md">
                     <div className="flex items-center gap-3">
                       <BellRing className="text-emerald-500 shrink-0" size={24} />
                       <div>

@@ -211,12 +211,12 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-[999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+      <div className="w-full max-w-sm bg-white rounded-zela-xl overflow-hidden shadow-2xl flex flex-col">
 
         {/* Header */}
-        <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100">
-          <h3 className="font-bold flex items-center gap-2 text-lg text-slate-800">
-            <KeyRound size={20} className="text-indigo-600" />
+        <div className="flex justify-between items-center px-5 py-4 border-b border-outline-variant">
+          <h3 className="font-bold flex items-center gap-2 text-lg text-on-surface">
+            <KeyRound size={20} className="text-primary" />
             {step === 'pin' && 'Acesso por PIN'}
             {step === 'select' && 'Selecione o Responsável'}
             {step === 'confirm' && 'Confirmar Acesso'}
@@ -224,7 +224,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
           </h3>
           <button
             onClick={requestExit}
-            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+            className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition"
           >
             <X size={20} />
           </button>
@@ -238,8 +238,8 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
             <div className="text-center py-8 space-y-4 animate-in zoom-in">
               <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
               <div>
-                <h4 className="font-bold text-slate-800 text-lg">Solicitação Enviada!</h4>
-                <p className="text-slate-500 text-sm mt-1">Aguardando confirmação da recepção.</p>
+                <h4 className="font-bold text-on-surface text-lg">Solicitação Enviada!</h4>
+                <p className="text-on-surface-variant text-small mt-1">Aguardando confirmação da recepção.</p>
               </div>
             </div>
           )}
@@ -247,7 +247,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
           {/* ──── ETAPA: select (multi-match) ──── */}
           {step === 'select' && (
             <div className="space-y-3 animate-in fade-in">
-              <p className="text-sm text-slate-500 text-center">
+              <p className="text-small text-on-surface-variant text-center">
                 Mais de um responsável com este PIN. Selecione:
               </p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -256,25 +256,25 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     key={u.id}
                     disabled={isLoading}
                     onClick={() => loadStudentsForUser(u)}
-                    className="w-full flex items-center gap-3 p-3 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 active:scale-98 border border-slate-200 rounded-2xl transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 bg-surface-container-low hover:bg-primary/10 hover:border-indigo-300 active:scale-98 border border-outline-variant rounded-zela-lg transition-all text-left"
                   >
                     {u.photo_url ? (
                       <img src={u.photo_url} alt={u.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
                     ) : (
                       <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-base font-black text-indigo-600">
+                        <span className="text-base font-black text-primary">
                           {u.name?.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
-                    <span className="font-bold text-slate-800">{u.name}</span>
+                    <span className="font-bold text-on-surface">{u.name}</span>
                     {isLoading && <Loader2 size={16} className="ml-auto animate-spin text-indigo-400" />}
                   </button>
                 ))}
               </div>
               <button
                 onClick={() => { setStep('pin'); setPin(''); setError(''); }}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-2xl transition-all text-sm"
+                className="w-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-zela-lg transition-all text-sm"
               >
                 Voltar
               </button>
@@ -290,30 +290,30 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                   <img
                     src={familyPerson.photo_url}
                     alt={familyPerson.name}
-                    className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-4 border-indigo-100"
+                    className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-4 border-primary/10"
                   />
                 ) : (
-                  <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-black text-indigo-600">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-black text-primary">
                       {familyPerson?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <h4 className="font-bold text-lg text-slate-800">{familyPerson?.name}</h4>
-                <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mt-0.5">Autorizado(a)</p>
+                <h4 className="font-bold text-lg text-on-surface">{familyPerson?.name}</h4>
+                <p className="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-0.5">Autorizado(a)</p>
               </div>
 
               {/* Alunos vinculados */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Alunos Vinculados</p>
+              <div className="bg-surface-container-low p-4 rounded-zela-lg border border-outline-variant">
+                <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-3">Alunos Vinculados</p>
                 <div className="space-y-2">
                   {matchedStudents.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic text-center py-2">Nenhum aluno cadastrado neste perfil.</p>
+                    <p className="text-xs text-on-surface-variant italic text-center py-2">Nenhum aluno cadastrado neste perfil.</p>
                   ) : (
                     matchedStudents.map((student) => (
-                      <div key={student.id} className="p-3 bg-white border border-slate-100 rounded-xl flex justify-between items-center text-sm shadow-sm">
-                        <p className="font-bold text-slate-700">{student.name}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
+                      <div key={student.id} className="p-3 bg-white border border-outline-variant rounded-zela-md flex justify-between items-center text-sm shadow-sm">
+                        <p className="font-bold text-on-surface">{student.name}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' : 'bg-green-100 text-green-700'}`}>
                           {student.status === 'in_school' ? 'SAÍDA' : 'ENTRADA'}
                         </span>
                       </div>
@@ -323,7 +323,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm flex gap-2 items-start font-medium">
+                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
                   <ShieldAlert size={18} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -332,14 +332,14 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
               <div className="flex gap-3">
                 <button
                   onClick={() => { setStep('pin'); setPin(''); setError(''); }}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-2xl transition-all text-sm"
+                  className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3.5 rounded-zela-lg transition-all text-sm"
                 >
                   Voltar
                 </button>
                 <button
                   onClick={handleRequestAccess}
                   disabled={isLoading || matchedStudents.length === 0}
-                  className="flex-[2] bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-black py-3.5 rounded-2xl active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider flex justify-center items-center gap-2"
+                  className="flex-[2] bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-black py-3.5 rounded-zela-lg active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider flex justify-center items-center gap-2"
                 >
                   {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar'}
                 </button>
@@ -350,8 +350,8 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
           {/* ──── ETAPA: pin (teclado numérico) ──── */}
           {step === 'pin' && (
             <div className="space-y-4 animate-in fade-in">
-              <p className="text-sm text-slate-500 text-center font-medium">
-                Digite os <strong className="text-slate-700">4 primeiros dígitos</strong> do seu CPF
+              <p className="text-small text-on-surface-variant text-center font-medium">
+                Digite os <strong className="text-on-surface">4 primeiros dígitos</strong> do seu CPF
               </p>
 
               {/* Display dos 4 dígitos */}
@@ -359,12 +359,12 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 {[0, 1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all ${
+                    className={`w-12 h-12 rounded-zela-lg border-2 flex items-center justify-center transition-all ${
                       pin.length > i
-                        ? 'bg-indigo-600 border-indigo-600 scale-105'
+                        ? 'bg-primary border-indigo-600 scale-105'
                         : pin.length === i
-                        ? 'border-indigo-400 bg-indigo-50 animate-pulse'
-                        : 'border-slate-200 bg-slate-50'
+                        ? 'border-indigo-400 bg-primary/10 animate-pulse'
+                        : 'border-outline-variant bg-surface-container-low'
                     }`}
                   >
                     {pin.length > i ? (
@@ -378,7 +378,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
               {/* Erro */}
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm flex gap-2 items-start font-medium">
+                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
                   <ShieldAlert size={18} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -391,7 +391,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     key={digit}
                     onClick={() => handleKeyPress(String(digit))}
                     disabled={isLoading || pin.length >= 4}
-                    className="h-14 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-slate-700 text-xl font-black rounded-2xl transition-all shadow-sm border border-slate-200 hover:border-indigo-300 select-none"
+                    className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-indigo-300 select-none"
                   >
                     {digit}
                   </button>
@@ -401,7 +401,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={handleDelete}
                   disabled={isLoading || pin.length === 0}
-                  className="h-14 bg-slate-100 hover:bg-red-50 hover:text-red-500 active:scale-95 disabled:opacity-30 text-slate-500 rounded-2xl transition-all shadow-sm border border-slate-200 flex items-center justify-center select-none"
+                  className="h-14 bg-surface-container hover:bg-red-50 hover:text-red-500 active:scale-95 disabled:opacity-30 text-on-surface-variant rounded-zela-lg transition-all shadow-sm border border-outline-variant flex items-center justify-center select-none"
                 >
                   <Delete size={22} />
                 </button>
@@ -409,7 +409,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={() => handleKeyPress('0')}
                   disabled={isLoading || pin.length >= 4}
-                  className="h-14 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-slate-700 text-xl font-black rounded-2xl transition-all shadow-sm border border-slate-200 hover:border-indigo-300 select-none"
+                  className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-indigo-300 select-none"
                 >
                   0
                 </button>
@@ -417,13 +417,13 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={() => handleSearch()}
                   disabled={isLoading || pin.length < 4 || getLockRemainingSeconds() > 0}
-                  className="h-14 bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-black rounded-2xl transition-all shadow-md flex items-center justify-center select-none"
+                  className="h-14 bg-primary hover:bg-primary-container active:scale-95 disabled:bg-slate-200 disabled:text-on-surface-variant/70 text-white text-sm font-black rounded-zela-lg transition-all shadow-md flex items-center justify-center select-none"
                 >
                   {isLoading ? <Loader2 size={20} className="animate-spin" /> : 'OK'}
                 </button>
               </div>
 
-              <p className="text-center text-[10px] text-slate-400 font-medium">
+              <p className="text-center text-[10px] text-on-surface-variant/70 font-medium">
                 Exemplo: CPF 123.456… → PIN <strong>1234</strong>
               </p>
             </div>

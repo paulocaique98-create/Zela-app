@@ -44,7 +44,7 @@ function DocLink({ doc, label }) {
       type="button"
       onClick={open}
       disabled={isOpening}
-      className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+      className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
     >
       {isOpening ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
       {label}
@@ -73,8 +73,8 @@ function Field({ label, value }) {
   if (!value) return null;
   return (
     <div>
-      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
-      <p className="text-slate-700 font-medium">{value}</p>
+      <p className="text-[9px] font-bold text-on-surface-variant/70 uppercase tracking-wide">{label}</p>
+      <p className="text-on-surface font-medium">{value}</p>
     </div>
   );
 }
@@ -100,13 +100,13 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   const transporte = solicitacao.transporte_autorizados || [];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-outline-variant rounded-zela-lg overflow-hidden">
       <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between p-4 text-left">
         <div className="min-w-0">
-          <p className="font-bold text-slate-800 text-sm truncate">
+          <p className="font-bold text-on-surface text-sm truncate">
             {criancas.map(c => c.nome).join(', ') || 'Solicitação'}
           </p>
-          <p className="text-slate-400 text-xs mt-0.5">
+          <p className="text-on-surface-variant/70 text-xs mt-0.5">
             {resp.nome} — enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
           </p>
         </div>
@@ -114,20 +114,20 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
           <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
             <StatusIcon size={11} /> {status.label}
           </span>
-          {expanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+          {expanded ? <ChevronUp size={18} className="text-on-surface-variant/70" /> : <ChevronDown size={18} className="text-on-surface-variant/70" />}
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 sm:px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
+        <div className="px-4 sm:px-5 pb-5 space-y-4 border-t border-outline-variant pt-4">
           {solicitacao.status === 'rejected' && solicitacao.rejection_reason && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-xs font-medium">
+            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-xs font-medium">
               Motivo da rejeição: {solicitacao.rejection_reason}
             </div>
           )}
 
           <div className="space-y-2">
-            <h5 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-indigo-600" /> Responsável Financeiro</h5>
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-primary" /> Responsável Financeiro</h5>
             <PessoaFields pessoa={resp} />
             <div className="flex flex-wrap gap-2 pt-1">
               {DOC_FIELDS.map(({ key, label }) => <DocLink key={key} doc={resp[key]} label={label} />)}
@@ -136,15 +136,15 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
 
           {segundo && (
             <div className="space-y-2">
-              <h5 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-indigo-600" /> Segundo Responsável</h5>
+              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-primary" /> Segundo Responsável</h5>
               <PessoaFields pessoa={segundo} />
             </div>
           )}
 
           <div className="space-y-3">
-            <h5 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 uppercase tracking-wide"><Baby size={13} className="text-indigo-600" /> Crianças</h5>
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><Baby size={13} className="text-primary" /> Crianças</h5>
             {criancas.map((c, i) => (
-              <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+              <div key={i} className="bg-surface-container-low border border-outline-variant rounded-zela-md p-3 space-y-2">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                   <Field label="Nome" value={c.nome} />
                   <Field label="Nascimento" value={c.nascimento} />
@@ -163,7 +163,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
 
           {(autorizados.length > 0 || transporte.length > 0) && (
             <div className="space-y-2">
-              <h5 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 uppercase tracking-wide"><UserCheck size={13} className="text-indigo-600" /> Autorizados</h5>
+              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><UserCheck size={13} className="text-primary" /> Autorizados</h5>
               {autorizados.map((a, i) => (
                 <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                   <Field label="Nome" value={a.nome} />
@@ -173,15 +173,15 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
               ))}
               {transporte.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1 mb-1"><Car size={11} /> Autorizados pelo transporte</p>
-                  <p className="text-sm text-slate-700">{transporte.map(t => t.nome).join(', ')}</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant/70 uppercase tracking-wide flex items-center gap-1 mb-1"><Car size={11} /> Autorizados pelo transporte</p>
+                  <p className="text-sm text-on-surface">{transporte.map(t => t.nome).join(', ')}</p>
                 </div>
               )}
             </div>
           )}
 
           {solicitacao.status === 'pending' && (
-            <div className="pt-2 border-t border-slate-100 space-y-2">
+            <div className="pt-2 border-t border-outline-variant space-y-2">
               {showReject ? (
                 <div className="space-y-2">
                   <textarea
@@ -189,14 +189,14 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     onChange={e => setRejectReason(e.target.value)}
                     placeholder="Motivo da rejeição (visível para a família)"
                     rows={2}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                    className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   />
                   <div className="flex gap-2">
-                    <button onClick={() => setShowReject(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm transition">Cancelar</button>
+                    <button onClick={() => setShowReject(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
                     <button
                       onClick={() => onDecide(solicitacao, 'rejected', rejectReason)}
                       disabled={isDeciding || !rejectReason.trim()}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 text-white font-bold py-2 rounded-xl text-sm transition"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 text-white font-bold py-2 rounded-zela-md text-sm transition"
                     >
                       {isDeciding ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />} Confirmar Rejeição
                     </button>
@@ -207,14 +207,14 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                   <button
                     onClick={() => setShowReject(true)}
                     disabled={isDeciding}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-sm transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     <XCircle size={15} /> Rejeitar
                   </button>
                   <button
                     onClick={() => onDecide(solicitacao, 'approved')}
                     disabled={isDeciding}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-sm transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     {isDeciding ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />} Aprovar
                   </button>
@@ -386,14 +386,14 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const pendingCount = solicitacoes.filter(s => s.status === 'pending').length;
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
           <FileText size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Matrículas</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
+          <h2 className="text-h3 text-on-surface">Matrículas</h2>
+          <p className="text-on-surface-variant text-small hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
         </div>
       </div>
 
@@ -402,13 +402,13 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              tab === t.key ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-zela-md text-xs font-bold transition-all ${
+              tab === t.key ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-slate-200'
             }`}
           >
             {t.label}
             {t.key === 'pending' && pendingCount > 0 && (
-              <span className={`text-[10px] px-1.5 rounded-full ${tab === t.key ? 'bg-white/20' : 'bg-indigo-600 text-white'}`}>{pendingCount}</span>
+              <span className={`text-[10px] px-1.5 rounded-full ${tab === t.key ? 'bg-white/20' : 'bg-primary text-white'}`}>{pendingCount}</span>
             )}
           </button>
         ))}
@@ -416,16 +416,16 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <FileText className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhuma solicitação {TABS.find(t => t.key === tab)?.label.toLowerCase()}.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <FileText className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma solicitação {TABS.find(t => t.key === tab)?.label.toLowerCase()}.</p>
           </div>
         ) : (
           filtered.map(s => (
@@ -436,22 +436,22 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
 
       {newGuardianCredentials && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 relative">
+          <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-6 relative">
             <div className="mx-auto w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
               <KeyRound size={24} />
             </div>
-            <h3 className="text-xl font-bold text-center text-slate-800 mb-2">Acesso do 2º Responsável criado!</h3>
-            <p className="text-sm text-center text-slate-500 mb-6">
+            <h3 className="text-xl font-bold text-center text-on-surface mb-2">Acesso do 2º Responsável criado!</h3>
+            <p className="text-sm text-center text-on-surface-variant mb-6">
               Compartilhe essas credenciais com {newGuardianCredentials.name} para que ele(a) acesse o portal.
             </p>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-2">
+            <div className="bg-surface-container-low border border-outline-variant rounded-zela-md p-4 mb-4 space-y-2">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 text-sm">
-                <span className="font-semibold text-slate-500 shrink-0">E-mail:</span>
-                <span className="font-bold text-slate-800 break-all sm:text-right">{newGuardianCredentials.email}</span>
+                <span className="font-semibold text-on-surface-variant shrink-0">E-mail:</span>
+                <span className="font-bold text-on-surface break-all sm:text-right">{newGuardianCredentials.email}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-semibold text-slate-500">Senha:</span>
-                <span className="font-bold text-slate-800">{newGuardianCredentials.password}</span>
+                <span className="font-semibold text-on-surface-variant">Senha:</span>
+                <span className="font-bold text-on-surface">{newGuardianCredentials.password}</span>
               </div>
             </div>
             <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
@@ -463,11 +463,11 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
                 onClick={() => {
                   navigator.clipboard.writeText(`Acesso Portal Zela\nE-mail: ${newGuardianCredentials.email}\nSenha: ${newGuardianCredentials.password}`);
                 }}
-                className="w-full py-3 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition flex items-center justify-center gap-2"
+                className="w-full py-3 bg-primary/10 text-primary font-bold rounded-zela-md hover:bg-primary/20 transition flex items-center justify-center gap-2"
               >
                 <Copy size={16} /> Copiar credenciais
               </button>
-              <button onClick={() => setNewGuardianCredentials(null)} className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition">
+              <button onClick={() => setNewGuardianCredentials(null)} className="w-full py-3 bg-slate-800 text-white font-bold rounded-zela-md hover:bg-slate-900 transition">
                 Fechar
               </button>
             </div>

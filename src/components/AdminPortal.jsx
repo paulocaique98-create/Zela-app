@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2, ScrollText } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
 import CheckinAlertModal from './CheckinAlertModal';
+import { SidebarItem, SidebarGroup } from './SidebarNav';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
 // — reduz bastante o carregamento inicial do painel (dezenas de telas, a
@@ -38,8 +39,6 @@ const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 // implementado; por enquanto todos apontam para o placeholder "em construção".
 const RELATORIOS_SUBMENU = [
   { key: 'rel-mitigacao', label: 'Mitigação' },
-  { key: 'rel-obs-normalizacao', label: 'Observação de Normalização' },
-  { key: 'rel-obs-concentracao', label: 'Observação de Concentração' },
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
   { key: 'rel-semestral', label: 'Semestral' },
 ];
@@ -108,186 +107,119 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       ></div>
 
       <aside
-        onMouseLeave={() => setOpenAccordion(null)}
-        className={`group fixed md:relative top-[60px] md:top-0 left-0 h-[calc(100dvh-60px)] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`group fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 md:w-16 md:hover:w-[280px] shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="h-full bg-white p-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
-          <nav className="flex-1 flex flex-col gap-0.5 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-2">
-            <button
-              onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Home size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Início</span>
-            </button>
-
-            {/* Itens com submenu (accordion) sempre primeiro, depois os itens sem submenu */}
+        <div className="h-full flex flex-col min-h-0">
+          <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
+            <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }} />
 
             {/* CADASTROS */}
             {showCadastros && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('cadastros')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab) || openAccordion === 'cadastros' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FolderPlus size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cadastros</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'cadastros' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'cadastros' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
-                      <button onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'register' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                      {showComunicados && (
-                        <button onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-comunicados' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Comunicados</button>
-                      )}
-                      <button onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'cadastro-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Cadastros"
+                icon={FolderPlus}
+                isOpen={openAccordion === 'cadastros' || ['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab)}
+                onToggle={() => toggleAccordion('cadastros')}
+              >
+                <SidebarItem active={adminTab === 'register'} icon={FolderPlus} label="Usuários" onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} />
+                {showComunicados && (
+                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} />
+                )}
+                <SidebarItem active={adminTab === 'cadastro-funcionarios'} icon={Users} label="Funcionários" onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* GERENCIAMENTO */}
             {showGerenciamento && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('gerenciamento')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['users', 'students', 'gerenciar-funcionarios'].includes(adminTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><Folders size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'gerenciamento' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
-                      <button onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'users' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Usuários</button>
-                      <button onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'students' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Alunos</button>
-                      <button onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'gerenciar-funcionarios' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Funcionários</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Gerenciamento"
+                icon={Folders}
+                isOpen={openAccordion === 'gerenciamento' || ['users', 'students', 'gerenciar-funcionarios'].includes(adminTab)}
+                onToggle={() => toggleAccordion('gerenciamento')}
+              >
+                <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'students'} icon={Users} label="Alunos" onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'gerenciar-funcionarios'} icon={Users} label="Funcionários" onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* FORMULÁRIOS */}
             {showFormularios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('formularios')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(adminTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'formularios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
-                      <button onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                      <button onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Formulários"
+                icon={FileText}
+                isOpen={openAccordion === 'formularios' || ['matriculas', 'ficha-medica'].includes(adminTab)}
+                onToggle={() => toggleAccordion('formularios')}
+              >
+                <SidebarItem active={adminTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* CHECK-IN/OUT */}
             {showCheckin && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${['monitor', 'presence', 'history', 'kiosk', 'horas-extras'].includes(adminTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><ShieldCheck size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'checkin' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
-                      <button onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 flex items-center justify-between ${adminTab === 'monitor' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Monitor
-                        {monitorStudents.length > 0 && (
-                          <span className="bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-pulse">{monitorStudents.length}</span>
-                        )}
-                      </button>
-                      <button onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'kiosk' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autoatendimento</button>
-                      <button onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'presence' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Presença Diária</button>
-                      <button onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                      <button onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === 'horas-extras' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Horas Extras</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Check-in/out"
+                icon={ShieldCheck}
+                badge={monitorStudents.length > 0 ? monitorStudents.length : null}
+                isOpen={openAccordion === 'checkin' || ['monitor', 'kiosk', 'presence', 'history', 'horas-extras'].includes(adminTab)}
+                onToggle={() => toggleAccordion('checkin')}
+              >
+                <SidebarItem active={adminTab === 'monitor'} icon={ShieldCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'kiosk'} icon={Smartphone} label="Autoatendimento" onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* RELATÓRIOS PEDAGÓGICOS */}
             {showRelatorios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('relatorios')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${RELATORIOS_SUBMENU.some(r => r.key === adminTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FileText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-0.5 pl-9 pr-2 py-1">
-                      {RELATORIOS_SUBMENU.map(r => (
-                        <button key={r.key} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1 ${adminTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{r.label}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Relatórios"
+                icon={FileText}
+                isOpen={openAccordion === 'relatorios' || RELATORIOS_SUBMENU.some(r => r.key === adminTab)}
+                onToggle={() => toggleAccordion('relatorios')}
+              >
+                {RELATORIOS_SUBMENU.map(r => (
+                  <SidebarItem key={r.key} active={adminTab === r.key} icon={FileText} label={r.label} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} />
+                ))}
+              </SidebarGroup>
             )}
 
-            {/* CALENDÁRIO ESCOLAR */}
-            {showCalendario && (
-              <button
-                onClick={() => { setAdminTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO */}
+            {(showCalendario || showMural || showCardapio) && (
+              <SidebarGroup
+                label="Acadêmico"
+                icon={CalendarDays}
+                isOpen={openAccordion === 'academico' || ['calendario', 'mural-fotos', 'cardapio'].includes(adminTab)}
+                onToggle={() => toggleAccordion('academico')}
               >
-                <CalendarDays size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Calendário</span>
-              </button>
+                {showCalendario && (
+                  <SidebarItem active={adminTab === 'calendario'} icon={CalendarDays} label="Calendário" onClick={() => { setAdminTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }} />
+                )}
+                {showMural && (
+                  <SidebarItem active={adminTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => { setAdminTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }} />
+                )}
+                {showCardapio && (
+                  <SidebarItem active={adminTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => { setAdminTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }} />
+                )}
+              </SidebarGroup>
             )}
 
-            {/* MURAL DE FOTOS */}
-            {showMural && (
-              <button
-                onClick={() => { setAdminTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+            {/* SISTEMA */}
+            {showConfiguracoes && (
+              <SidebarGroup
+                label="Sistema"
+                icon={Settings}
+                isOpen={openAccordion === 'sistema' || ['auditoria', 'settings'].includes(adminTab)}
+                onToggle={() => toggleAccordion('sistema')}
               >
-                <ImageIcon size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Mural de Fotos</span>
-              </button>
-            )}
-
-            {/* CARDÁPIO */}
-            {showCardapio && (
-              <button
-                onClick={() => { setAdminTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <UtensilsCrossed size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cardápio</span>
-              </button>
+                <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => { setAdminTab('auditoria'); registerClick('auditoria'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
           </nav>
-
-          {/* CONFIGURAÇÕES (Fixo no footer) */}
-          {showConfiguracoes && (
-            <div className="pt-2 mt-auto border-t border-slate-100 shrink-0 space-y-1">
-              <button
-                onClick={() => { setAdminTab('auditoria'); registerClick('auditoria'); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'auditoria' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <ScrollText size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Auditoria</span>
-              </button>
-              <button
-                onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${adminTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <Settings size={17} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Configurações</span>
-              </button>
-            </div>
-          )}
         </div>
       </aside>
 
@@ -315,17 +247,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
-          <div className={`h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-slate-200'}`}>
+          <div className={`h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
 
             {/* Header do Monitor */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+                <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
                   <AlertCircle size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Monitor de Solicitações</h2>
-                  <p className="text-sm text-slate-500">Acompanhe as solicitações em tempo real</p>
+                  <h2 className="text-h3 text-on-surface">Monitor de Solicitações</h2>
+                  <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
                 </div>
               </div>
 
@@ -336,7 +268,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             {/* Alerta de nova chegada */}
             {newArrival && (
-              <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
+              <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-zela-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
                 <Bell className="text-amber-600 shrink-0 animate-bounce" size={22} />
                 <div>
                   <p className="font-bold text-amber-800">Nova atualização no painel!</p>
@@ -347,10 +279,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             {/* Cards dos alunos */}
             {monitorStudents.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                <Car className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <h3 className="text-slate-500 font-medium">Nenhuma solicitação no momento.</h3>
-                <p className="text-slate-400 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
+              <div className="flex-1 flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
+                <Car className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+                <h3 className="text-on-surface-variant font-medium">Nenhuma solicitação no momento.</h3>
+                <p className="text-on-surface-variant/70 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto min-h-0 pr-1">
@@ -365,11 +297,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                       cancelStatus = "idle";
                       borderColor = "border-green-300"; bgColor = "bg-green-50";
                     } else if (student.status === 'pending_exit') {
-                      badgeClass = "text-indigo-700"; badgeText = "Solicitação de Saída";
-                      btnClass = "bg-indigo-600 hover:bg-indigo-700 text-white"; btnText = "Confirmar Saída";
+                      badgeClass = "text-primary"; badgeText = "Solicitação de Saída";
+                      btnClass = "bg-primary hover:bg-primary-container text-white"; btnText = "Confirmar Saída";
                       btnActionStatus = "left";
                       cancelStatus = "in_school";
-                      borderColor = "border-indigo-300"; bgColor = "bg-indigo-50";
+                      borderColor = "border-primary/40"; bgColor = "bg-primary/5";
                     }
 
                     const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
@@ -377,7 +309,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     return (
                       <div
                         key={student.id}
-                        className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
+                        className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-zela-lg shadow-sm animate-in zoom-in-95 duration-300`}
                       >
                         {requester?.photo_url && (
                           <img
@@ -390,13 +322,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
                           <Clock size={12} /> {badgeText}
                         </p>
-                        <h3 className="font-bold text-lg text-slate-800 mb-4 pr-11">{student.name}</h3>
+                        <h3 className="font-bold text-lg text-on-surface mb-4 pr-11">{student.name}</h3>
                         <div className="flex flex-col gap-2">
                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button
                             title={student.status === 'pending_entry' ? 'Confirmar Check-in' : 'Confirmar Check-out'}
                             onClick={() => updateStudentStatus(student.id, btnActionStatus)}
-                            className={`w-full font-bold py-3 rounded-xl active:scale-95 transition-all shadow-sm ${btnClass}`}
+                            className={`w-full font-bold py-3 rounded-zela-md active:scale-95 transition-all shadow-sm ${btnClass}`}
                           >
                             {btnText}
                           </button>
@@ -404,7 +336,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                           <button
                             title="Rejeitar solicitação"
                             onClick={() => rejectStudentStatus(student.id, cancelStatus)}
-                            className="w-full font-semibold py-2 rounded-xl text-slate-500 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 active:scale-95 transition-all"
+                            className="w-full font-semibold py-2 rounded-zela-md text-on-surface-variant bg-surface-container-lowest border border-outline-variant hover:bg-red-50 hover:text-red-500 hover:border-red-200 active:scale-95 transition-all"
                           >
                             Cancelar Solicitação
                           </button>
@@ -420,24 +352,24 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* AUTOATENDIMENTO */}
         {adminTab === 'kiosk' && (
-          <div className="relative h-full bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center overflow-hidden">
+          <div className="relative h-full bg-surface-container-lowest p-5 sm:p-8 rounded-zela-xl shadow-sm border border-outline-variant flex flex-col items-center justify-center overflow-hidden">
             {/* Configurações: cadastrar foto de responsáveis que esqueceram de fazer pelo Portal da Família */}
             <button
               onClick={() => setIsFaceEnrollmentOpen(true)}
               title="Cadastrar foto de responsáveis"
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition z-10"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition z-10"
             >
               <Settings size={20} />
             </button>
 
             {/* Header */}
             <div className="text-center mb-5 sm:mb-8 shrink-0">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <ShieldCheck size={28} className="sm:hidden" />
                 <ShieldCheck size={32} className="hidden sm:block" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-1">Autoatendimento</h2>
-              <p className="text-slate-500 font-medium text-sm max-w-md mx-auto">
+              <h2 className="text-xl sm:text-2xl font-black text-on-surface mb-1">Autoatendimento</h2>
+              <p className="text-on-surface-variant font-medium text-sm max-w-md mx-auto">
                 Identifique-se
               </p>
             </div>
@@ -448,7 +380,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl shrink-0">
                 <button
                   onClick={() => setIsFaceScannerOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 rounded-2xl transition-all shadow-sm group"
+                  className="flex flex-row items-center justify-center gap-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 rounded-zela-lg transition-all shadow-sm group"
                 >
                   <Camera size={28} className="group-hover:scale-110 transition-transform shrink-0" />
                   <span className="font-black text-base sm:text-lg">Reconhecimento Facial</span>
@@ -456,7 +388,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 rounded-2xl transition-all shadow-sm group"
+                  className="flex flex-row items-center justify-center gap-3 bg-surface-container-low text-on-surface hover:bg-on-surface hover:text-white border-2 border-outline-variant hover:border-on-surface p-5 rounded-zela-lg transition-all shadow-sm group"
                 >
                   <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
                   <span className="font-black text-base sm:text-lg">Senha / PIN</span>
@@ -467,7 +399,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <div className="grid grid-cols-1 gap-3 w-full max-w-md shrink-0">
                 <button
                   onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-slate-50 text-slate-700 hover:bg-slate-800 hover:text-white border-2 border-slate-200 hover:border-slate-800 p-5 rounded-2xl transition-all shadow-sm group"
+                  className="flex flex-row items-center justify-center gap-3 bg-surface-container-low text-on-surface hover:bg-on-surface hover:text-white border-2 border-outline-variant hover:border-on-surface p-5 rounded-zela-lg transition-all shadow-sm group"
                 >
                   <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
                   <span className="font-black text-base sm:text-lg">Senha / PIN</span>
@@ -559,7 +491,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
               title="Chat"
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -570,14 +502,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-slate-200 shadow-2xl overflow-hidden bg-white animate-in fade-in duration-200 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 ${
                 isChatExpanded
-                  ? 'inset-3 sm:inset-6 rounded-3xl'
-                  : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-3xl slide-in-from-bottom-4'
+                  ? 'inset-3 sm:inset-6 rounded-zela-xl'
+                  : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-zela-xl slide-in-from-bottom-4'
               }`}>
                 <button
                   onClick={() => setIsChatExpanded(e => !e)}
-                  className="absolute top-4 right-4 z-10 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                  className="absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
                   title={isChatExpanded ? 'Recolher' : 'Expandir'}
                 >
                   {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}

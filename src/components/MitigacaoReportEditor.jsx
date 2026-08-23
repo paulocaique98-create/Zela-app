@@ -7,7 +7,7 @@ import { notifyFamilies } from '../lib/notifyFamilies';
 import { logAction } from '../lib/auditLog';
 
 const STATUS_LABEL = {
-  RASCUNHO: { label: 'Rascunho', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+  RASCUNHO: { label: 'Rascunho', color: 'bg-surface-container text-on-surface-variant border-outline-variant' },
   PUBLICADO: { label: 'Publicado', color: 'bg-green-50 text-green-700 border-green-200' },
   ARQUIVADO: { label: 'Arquivado', color: 'bg-amber-50 text-amber-700 border-amber-200' },
 };
@@ -126,19 +126,19 @@ export default function MitigacaoReportEditor({ report, student, school, current
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-slate-100 shrink-0">
-        <button onClick={onBack} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+        <button onClick={onBack} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
           <ArrowLeft size={20} />
         </button>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-slate-800">Relatório de Mitigação</h2>
-          <p className="text-xs text-slate-400">{student?.name}</p>
+          <h2 className="text-h3 text-on-surface">Relatório de Mitigação</h2>
+          <p className="text-xs text-on-surface-variant/70">{student?.name}</p>
         </div>
         {canPrint && (
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-xl transition text-xs shrink-0"
+            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2 rounded-zela-md transition text-xs shrink-0"
           >
             <FileDown size={15} /> Gerar Relatório
           </button>
@@ -150,25 +150,25 @@ export default function MitigacaoReportEditor({ report, student, school, current
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
         {/* Cabeçalho no formato do modelo em PDF */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-4">
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase">Nome</span><p className="text-sm font-semibold text-slate-700">{student?.name}</p></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase">Data</span><p className="text-sm font-semibold text-slate-700">{formatDate(report.created_at)}</p></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase">Turma</span><p className="text-sm font-semibold text-slate-700">{student?.turma}</p></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase">Idade</span><p className="text-sm font-semibold text-slate-700">{calcIdade(student?.birth_date)}</p></div>
-          <div className="sm:col-span-2"><span className="text-[10px] font-bold text-slate-400 uppercase">Guia Responsável</span><p className="text-sm font-semibold text-slate-700">{report.guia_responsavel}</p></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface-container-low border border-outline-variant rounded-zela-lg p-4">
+          <div><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Nome</span><p className="text-sm font-semibold text-on-surface">{student?.name}</p></div>
+          <div><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Data</span><p className="text-sm font-semibold text-on-surface">{formatDate(report.created_at)}</p></div>
+          <div><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Turma</span><p className="text-sm font-semibold text-on-surface">{student?.turma}</p></div>
+          <div><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Idade</span><p className="text-sm font-semibold text-on-surface">{calcIdade(student?.birth_date)}</p></div>
+          <div className="sm:col-span-2"><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Guia Responsável</span><p className="text-sm font-semibold text-on-surface">{report.guia_responsavel}</p></div>
           {report.reference_period && (
-            <div className="sm:col-span-2"><span className="text-[10px] font-bold text-slate-400 uppercase">Período</span><p className="text-sm font-semibold text-slate-700">{report.reference_period}</p></div>
+            <div className="sm:col-span-2"><span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Período</span><p className="text-sm font-semibold text-on-surface">{report.reference_period}</p></div>
           )}
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-xl text-xs font-medium">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         )}
 
         {/* Introdução — texto padrão do modelo, fixo e não editável */}
-        <div className="border border-slate-200 rounded-2xl p-4 bg-white">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Introdução</span>
-          <p className="text-sm text-slate-600 whitespace-pre-line mt-1.5 leading-relaxed">
+        <div className="border border-outline-variant rounded-zela-lg p-4 bg-white">
+          <span className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide">Introdução</span>
+          <p className="text-sm text-on-surface-variant whitespace-pre-line mt-1.5 leading-relaxed">
             {buildIntroducaoText(student?.name, report.reference_period)}
           </p>
         </div>
@@ -183,23 +183,23 @@ export default function MitigacaoReportEditor({ report, student, school, current
           const sectionEditable = canEdit && !readOnly && isDraft && isUnlocked;
 
           return (
-            <div key={section.key} className={`border rounded-2xl overflow-hidden transition-colors ${isUnlocked ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'}`}>
+            <div key={section.key} className={`border rounded-zela-lg overflow-hidden transition-colors ${isUnlocked ? 'border-outline-variant bg-white' : 'border-outline-variant bg-surface-container-low'}`}>
               <div
                 onClick={() => isUnlocked && setExpandedKey(isExpanded ? null : section.key)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 ${isUnlocked ? 'cursor-pointer hover:bg-slate-50' : 'cursor-not-allowed'}`}
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 ${isUnlocked ? 'cursor-pointer hover:bg-surface-container-low' : 'cursor-not-allowed'}`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${isUnlocked ? (values[section.key]?.trim() ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700') : 'bg-slate-200 text-slate-400'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${isUnlocked ? (values[section.key]?.trim() ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-primary') : 'bg-slate-200 text-on-surface-variant/70'}`}>
                     {isUnlocked && values[section.key]?.trim() ? <Check size={13} /> : stepNumber}
                   </span>
-                  <span className={`text-sm font-bold ${isUnlocked ? 'text-slate-800' : 'text-slate-400'}`}>{section.label}</span>
+                  <span className={`text-sm font-bold ${isUnlocked ? 'text-on-surface' : 'text-on-surface-variant/70'}`}>{section.label}</span>
                 </div>
-                {!isUnlocked && <Lock size={14} className="text-slate-300 shrink-0" />}
+                {!isUnlocked && <Lock size={14} className="text-outline-variant shrink-0" />}
                 {isUnlocked && sectionEditable && (
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setExpandedKey(section.key); }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg transition shrink-0"
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-indigo-800 hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition shrink-0"
                   >
                     <Pencil size={13} /> Editar
                   </button>
@@ -214,13 +214,13 @@ export default function MitigacaoReportEditor({ report, student, school, current
                     disabled={!sectionEditable}
                     rows={6}
                     placeholder={`Descreva ${section.label.toLowerCase()}...`}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 text-sm resize-none disabled:opacity-70"
+                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm resize-none disabled:opacity-70"
                   />
                   {sectionEditable && (
                     <button
                       onClick={() => handleSaveSection(index)}
                       disabled={savingKey === section.key || !values[section.key]?.trim()}
-                      className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
+                      className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 px-4 rounded-zela-md transition text-sm"
                     >
                       {savingKey === section.key ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                       Salvar Rascunho
@@ -234,12 +234,12 @@ export default function MitigacaoReportEditor({ report, student, school, current
       </div>
 
       {canPublish && isDraft && (
-        <div className="p-4 sm:p-5 border-t border-slate-100 shrink-0">
+        <div className="p-4 sm:p-5 border-t border-outline-variant shrink-0">
           <button
             onClick={handlePublish}
             disabled={!allStepsFilled || isPublishing}
             title={!allStepsFilled ? 'Preencha todas as seções antes de publicar' : ''}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition text-sm"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-3 rounded-zela-md transition text-sm"
           >
             {isPublishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             Publicar para a Família
@@ -247,11 +247,11 @@ export default function MitigacaoReportEditor({ report, student, school, current
         </div>
       )}
       {canPublish && status === 'PUBLICADO' && (
-        <div className="p-4 sm:p-5 border-t border-slate-100 shrink-0">
+        <div className="p-4 sm:p-5 border-t border-outline-variant shrink-0">
           <button
             onClick={handleArchive}
             disabled={isPublishing}
-            className="flex items-center gap-2 text-slate-400 hover:text-amber-600 font-bold text-sm transition"
+            className="flex items-center gap-2 text-on-surface-variant/70 hover:text-amber-600 font-bold text-sm transition"
           >
             <Archive size={16} /> Arquivar
           </button>

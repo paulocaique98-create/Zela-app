@@ -201,18 +201,18 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   if (!currentUser?.departamento && !currentUser?.chat_visibilidade_total) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center gap-4">
+      <div className="h-full flex flex-col items-center justify-center bg-white rounded-zela-xl border border-outline-variant shadow-sm p-8 text-center gap-4">
         <div>
-          <MessageCircle className="text-slate-300 w-12 h-12 mb-3 mx-auto" />
-          <h2 className="text-lg font-bold text-slate-800 mb-1">Nenhum departamento configurado</h2>
-          <p className="text-slate-500 text-sm max-w-sm">
+          <MessageCircle className="text-outline-variant w-12 h-12 mb-3 mx-auto" />
+          <h2 className="text-h3 text-on-surface mb-1">Nenhum departamento configurado</h2>
+          <p className="text-on-surface-variant text-small max-w-sm">
             Peça ao admin principal da escola para configurar seu departamento em Gestão de Usuários, para começar a ver as conversas do chat.
           </p>
         </div>
         <button
           onClick={openSupportThread}
           disabled={isOpeningSupport}
-          className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm disabled:opacity-60"
+          className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm disabled:opacity-60"
         >
           {isOpeningSupport ? <Loader2 size={16} className="animate-spin" /> : <LifeBuoy size={16} />}
           Falar com o Suporte Zela
@@ -223,14 +223,14 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   if (activeThread) {
     return (
-      <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-slate-100 shrink-0">
-          <button onClick={closeThread} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+      <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+          <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-800">{isSupportThread ? 'Suporte Zela' : (activeThread.family?.name || 'Responsável')}</h2>
-            <p className="text-xs text-slate-400">{isSupportThread ? 'Equipe da plataforma Zela' : SETORES_ADMIN.find(s => s.value === activeThread.setor)?.label}</p>
+            <h2 className="text-h3 text-on-surface">{isSupportThread ? 'Suporte Zela' : (activeThread.family?.name || 'Responsável')}</h2>
+            <p className="text-xs text-on-surface-variant/70">{isSupportThread ? 'Equipe da plataforma Zela' : SETORES_ADMIN.find(s => s.value === activeThread.setor)?.label}</p>
           </div>
         </div>
 
@@ -243,21 +243,21 @@ export default function AdminChat({ currentUser, currentSchool }) {
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
           {isLoadingThread ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
-              <MessageCircle className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-              <p className="text-sm font-semibold text-slate-600">Nenhuma mensagem ainda.</p>
+            <div className="text-center py-16 text-on-surface-variant/70">
+              <MessageCircle className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+              <p className="text-sm font-semibold text-on-surface-variant">Nenhuma mensagem ainda.</p>
             </div>
           ) : (
             messages.map(m => {
               const mine = m.sender_id === currentUser.id;
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 text-sm ${mine ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                  <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-slate-400'}`}>{formatTime(m.created_at)}</p>
+                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
                   </div>
                 </div>
               );
@@ -267,23 +267,23 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
         {error && (
           <div className="px-4 sm:px-5 pb-2">
-            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-xl text-xs font-medium">{error}</div>
+            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
           </div>
         )}
 
-        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-slate-100 shrink-0">
+        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-outline-variant shrink-0">
           <input
             type="text"
             value={body}
             onChange={e => setBody(e.target.value)}
             placeholder={canSend ? 'Digite sua mensagem...' : 'Envio bloqueado fora do horário comercial'}
             disabled={!canSend}
-            className="flex-1 min-w-0 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm disabled:opacity-60"
+            className="flex-1 min-w-0 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={isSending || !body.trim() || !canSend}
-            className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 shrink-0"
+            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             <span className="hidden sm:inline">Enviar</span>
@@ -296,22 +296,22 @@ export default function AdminChat({ currentUser, currentSchool }) {
   const filteredThreads = threads.filter(t => t.setor === tab);
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
             <MessageCircle size={22} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-xl font-bold text-slate-800">Chat</h2>
-            <p className="text-slate-500 text-sm hidden sm:block truncate">Converse com as famílias por setor.</p>
+            <h2 className="text-h3 text-on-surface">Chat</h2>
+            <p className="text-on-surface-variant text-small hidden sm:block truncate">Converse com as famílias por setor.</p>
           </div>
         </div>
         <button
           onClick={openSupportThread}
           disabled={isOpeningSupport}
           title="Falar com o Suporte Zela"
-          className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-bold transition-all active:scale-95 text-xs shrink-0 disabled:opacity-60"
+          className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-2 rounded-zela-md font-bold transition-all active:scale-95 text-xs shrink-0 disabled:opacity-60"
         >
           {isOpeningSupport ? <Loader2 size={14} className="animate-spin" /> : <LifeBuoy size={14} />}
           <span className="hidden sm:inline">{SUPORTE_ZELA_LABEL}</span>
@@ -325,11 +325,11 @@ export default function AdminChat({ currentUser, currentSchool }) {
               const i = allowedSetores.findIndex(s => s.value === tab);
               setTab(allowedSetores[(i - 1 + allowedSetores.length) % allowedSetores.length].value);
             }}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition shrink-0"
+            className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition shrink-0"
           >
             <ChevronLeft size={20} />
           </button>
-          <span key={tab} className="flex-1 text-center bg-indigo-50 text-indigo-700 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wide leading-tight animate-in fade-in duration-150">
+          <span key={tab} className="flex-1 text-center bg-primary/10 text-primary px-3 py-2 rounded-zela-md text-xs font-black uppercase tracking-wide leading-tight animate-in fade-in duration-150">
             {allowedSetores.find(s => s.value === tab)?.label}
           </span>
           <button
@@ -337,7 +337,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
               const i = allowedSetores.findIndex(s => s.value === tab);
               setTab(allowedSetores[(i + 1) % allowedSetores.length].value);
             }}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition shrink-0"
+            className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition shrink-0"
           >
             <ChevronRight size={20} />
           </button>
@@ -347,12 +347,12 @@ export default function AdminChat({ currentUser, currentSchool }) {
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : filteredThreads.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <MessageCircle className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhuma conversa neste setor ainda.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <MessageCircle className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma conversa neste setor ainda.</p>
           </div>
         ) : (
           filteredThreads.map(t => {
@@ -361,13 +361,13 @@ export default function AdminChat({ currentUser, currentSchool }) {
               <button
                 key={t.id}
                 onClick={() => openThread(t)}
-                className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition text-left"
+                className="w-full flex items-center gap-3 p-4 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-slate-800 text-sm truncate">{t.family?.name || 'Responsável'}</p>
-                  <p className="text-slate-400 text-xs">Atualizado em {formatTime(t.updated_at)}</p>
+                  <p className="font-bold text-on-surface text-sm truncate">{t.family?.name || 'Responsável'}</p>
+                  <p className="text-on-surface-variant/70 text-xs">Atualizado em {formatTime(t.updated_at)}</p>
                 </div>
-                {unread && <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />}
+                {unread && <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />}
               </button>
             );
           })

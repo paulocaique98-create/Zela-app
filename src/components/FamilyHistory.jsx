@@ -136,21 +136,21 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
             <History size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Histórico de Horários</h2>
-            <p className="text-sm text-slate-500">Registros de entrada e saída dos seus filhos</p>
+            <h2 className="text-h3 text-on-surface">Histórico de Horários</h2>
+            <p className="text-small text-on-surface-variant">Registros de entrada e saída dos seus filhos</p>
           </div>
         </div>
         <button
           onClick={() => alert('Exportação de PDF será implementada na próxima versão.')}
-          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-primary hover:bg-primary-container px-4 py-2.5 rounded-zela-md transition shadow-sm shrink-0"
         >
           <FileText size={16} /> Exportar Relatório
         </button>
@@ -160,23 +160,23 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
         <div className="flex flex-col sm:flex-row gap-3 mb-6 shrink-0">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
+              <Search className="h-4 w-4 text-on-surface-variant/70" />
             </div>
             <input
               type="text"
               placeholder="Buscar por aluno..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+              className="w-full pl-10 pr-8 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+              <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant/70 hover:text-on-surface-variant">
                 <X size={14} />
               </button>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-2xl shrink-0">
+          <div className="flex flex-wrap gap-2 p-1 bg-surface-container rounded-zela-lg shrink-0">
             {[
               { id: 'today', label: 'Hoje' },
               { id: '7days', label: 'Últimos 7 dias' },
@@ -186,8 +186,8 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
               <button
                 key={p.id}
                 onClick={() => setPeriod(p.id)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  period === p.id ? 'bg-white shadow-sm text-indigo-900' : 'text-slate-500 hover:text-slate-700'
+                className={`whitespace-nowrap px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all ${
+                  period === p.id ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 {p.label}
@@ -198,7 +198,7 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
                 type="date"
                 value={customDate}
                 onChange={e => setCustomDate(e.target.value)}
-                className="ml-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="ml-1 px-2 py-1 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
               />
             )}
           </div>
@@ -208,36 +208,36 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
         <div className="flex-1 overflow-y-auto min-h-0 pr-1">
           {isLoading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+          <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
             <CalendarDays className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-            <p className="text-slate-500 font-medium text-sm">Nenhum registro para este período.</p>
-            <p className="text-slate-400 text-xs mt-1">Os registros aparecem após o check-in ser realizado.</p>
+            <p className="text-on-surface-variant font-medium text-sm">Nenhum registro para este período.</p>
+            <p className="text-on-surface-variant/70 text-xs mt-1">Os registros aparecem após o check-in ser realizado.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[600px]">
               <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Responsável</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Ciclo</th>
-                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Excedente pós tolerância (15 min)</th>
+                <tr className="text-left border-b border-outline-variant">
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Data</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Aluno</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider hidden sm:table-cell">Responsável</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Entrada</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Saída</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Ciclo</th>
+                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider text-right">Excedente pós tolerância (15 min)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-outline-variant/30">
                 {filtered.map(log => (
-                  <tr key={log.key} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 pr-4 font-medium text-slate-600">{log.date}</td>
-                    <td className="py-3 pr-4 font-semibold text-slate-800">{log.studentName}</td>
-                    <td className="py-3 pr-4 text-slate-500 text-xs hidden sm:table-cell">{log.family}</td>
+                  <tr key={log.key} className="hover:bg-surface-container-low transition-colors">
+                    <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.date}</td>
+                    <td className="py-3 pr-4 font-semibold text-on-surface">{log.studentName}</td>
+                    <td className="py-3 pr-4 text-on-surface-variant text-xs hidden sm:table-cell">{log.family}</td>
                     <td className="py-3 pr-4">
-                      <span className="flex items-center gap-1 font-medium text-indigo-600">
+                      <span className="flex items-center gap-1 font-medium text-primary">
                         <LogIn size={13} /> {log.entry}
                       </span>
                     </td>
@@ -250,7 +250,7 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
                         <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
                       )}
                     </td>
-                    <td className="py-3 pr-4 font-medium text-slate-600">{log.contracted}</td>
+                    <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.contracted}</td>
                     <td className="py-3 text-right">
                       {log.duration === null ? (
                         <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase bg-amber-50 text-amber-600">—</span>

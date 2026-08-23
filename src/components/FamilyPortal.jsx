@@ -1,11 +1,12 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, ChevronDown, FolderPlus, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import FamilyInicio from './FamilyInicio';
+import { SidebarItem, SidebarGroup } from './SidebarNav';
 
 // Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
 // — mesmo padrão de code-splitting já usado no AdminPortal.
@@ -26,9 +27,8 @@ const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlacehold
 const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
 
 // Submenus do menu Relatórios visíveis para a família — só os relatórios que
-// a escola de fato compartilha com os responsáveis (os demais, como
-// Observação de Normalização/Concentração e Mapa de Habilidades, são de uso
-// interno da equipe pedagógica e nunca aparecem aqui).
+// a escola de fato compartilha com os responsáveis (o Mapa de Habilidades é
+// de uso interno da equipe pedagógica e nunca aparece aqui).
 const FAMILY_RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
   { key: 'rel-mitigacao', label: 'Mitigação' },
@@ -149,166 +149,101 @@ export default function FamilyPortal({
       ></div>
 
       <aside
-        onMouseLeave={() => setOpenAccordion(null)}
-        className={`group fixed md:relative top-[60px] md:top-0 left-0 h-[calc(100dvh-60px)] md:h-full w-64 md:w-16 md:hover:w-52 shrink-0 z-20 md:z-auto transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`group fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 md:w-16 md:hover:w-[280px] shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="h-full bg-white p-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-200 flex flex-col overflow-y-auto overflow-x-hidden">
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5 overflow-y-auto overflow-x-hidden pb-4">
-            {/* INÍCIO */}
-            <button
-              onClick={() => { setFamilyTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }}
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'home' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-            >
-              <Home size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Início</span>
-            </button>
+        <div className="h-full flex flex-col min-h-0">
+          <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
+            <SidebarItem active={familyTab === 'home'} icon={Home} label="Início" onClick={() => { setFamilyTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }} />
 
             {/* FORMULÁRIOS */}
             {showFormularios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('formularios')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['matriculas', 'ficha-medica'].includes(familyTab) || openAccordion === 'formularios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Formulários</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'formularios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'formularios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                      <button onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'matriculas' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Matrículas</button>
-                      <button onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'ficha-medica' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Ficha Médica</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Formulários"
+                icon={FileText}
+                isOpen={openAccordion === 'formularios' || ['matriculas', 'ficha-medica'].includes(familyTab)}
+                onToggle={() => toggleAccordion('formularios')}
+              >
+                <SidebarItem active={familyTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'ficha-medica'} icon={HeartPulse} label="Ficha Médica" onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* GERENCIAMENTO */}
             {showGerenciamento && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('gerenciamento')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['gerenciar-responsaveis', 'registration'].includes(familyTab) || openAccordion === 'gerenciamento' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><Folders size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Gerenciamento</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'gerenciamento' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'gerenciamento' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                      <button onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'gerenciar-responsaveis' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Gerenciar Responsáveis</button>
-                      <button onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'registration' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Dados Cadastrais</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Gerenciamento"
+                icon={Folders}
+                isOpen={openAccordion === 'gerenciamento' || ['gerenciar-responsaveis', 'registration'].includes(familyTab)}
+                onToggle={() => toggleAccordion('gerenciamento')}
+              >
+                <SidebarItem active={familyTab === 'gerenciar-responsaveis'} icon={Users} label="Responsáveis" onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'registration'} icon={ClipboardList} label="Dados Cadastrais" onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* CHECK-IN/OUT */}
             {showCheckin && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('checkin')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${['acompanhamento', 'authorized', 'history'].includes(familyTab) || openAccordion === 'checkin' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2"><ShieldCheck size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Check-in/out</span></div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'checkin' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'checkin' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                      <button onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'acompanhamento' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento Diário</button>
-                      <button onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'authorized' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Autorizados</button>
-                      <button onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 ${familyTab === 'history' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>Histórico Geral</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Check-in/out"
+                icon={ShieldCheck}
+                isOpen={openAccordion === 'checkin' || ['acompanhamento', 'authorized', 'history'].includes(familyTab)}
+                onToggle={() => toggleAccordion('checkin')}
+              >
+                <SidebarItem active={familyTab === 'acompanhamento'} icon={ShieldCheck} label="Acompanhamento" onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'authorized'} icon={QrCode} label="Autorizados" onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'history'} icon={ClipboardList} label="Histórico Geral" onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} />
+              </SidebarGroup>
             )}
 
             {/* RELATÓRIOS */}
             {showRelatorios && (
-              <div>
-                <button
-                  onClick={() => toggleAccordion('relatorios')}
-                  className={`w-full flex items-center md:justify-center md:group-hover:justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab) || openAccordion === 'relatorios' ? 'bg-slate-50 text-slate-800' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Relatórios</span>
-                    {mitigacaoUnread > 0 && (
-                      <span className="w-4 h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full shrink-0">{mitigacaoUnread}</span>
-                    )}
-                  </div>
-                  <ChevronDown size={14} className={`shrink-0 md:hidden md:group-hover:block transition-transform duration-200 ${openAccordion === 'relatorios' ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openAccordion === 'relatorios' ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-col gap-1 pl-9 pr-2 py-1">
-                      {FAMILY_RELATORIOS_SUBMENU.map(r => (
-                        <button key={r.key} onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} className={`text-left text-xs font-bold py-1.5 flex items-center gap-1.5 ${familyTab === r.key ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                          {r.label}
-                          {r.key === 'rel-mitigacao' && mitigacaoUnread > 0 && (
-                            <span className="w-4 h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full shrink-0">{mitigacaoUnread}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <SidebarGroup
+                label="Relatórios"
+                icon={FileText}
+                badge={mitigacaoUnread > 0 ? mitigacaoUnread : null}
+                isOpen={openAccordion === 'relatorios' || FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab)}
+                onToggle={() => toggleAccordion('relatorios')}
+              >
+                {FAMILY_RELATORIOS_SUBMENU.map(r => (
+                  <SidebarItem
+                    key={r.key}
+                    active={familyTab === r.key}
+                    icon={FileText}
+                    label={r.label}
+                    badge={r.key === 'rel-mitigacao' && mitigacaoUnread > 0 ? mitigacaoUnread : null}
+                    onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }}
+                  />
+                ))}
+              </SidebarGroup>
             )}
 
-            {/* CALENDÁRIO ESCOLAR */}
-            {showCalendario && (
-              <button
-                onClick={() => { setFamilyTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'calendario' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+            {/* ACADÊMICO */}
+            {(showCalendario || showComunicados || showMural || showCardapio) && (
+              <SidebarGroup
+                label="Acadêmico"
+                icon={CalendarDays}
+                isOpen={openAccordion === 'academico' || ['calendario', 'comunicados', 'mural-fotos', 'cardapio'].includes(familyTab)}
+                onToggle={() => toggleAccordion('academico')}
               >
-                <CalendarDays size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Calendário Escolar</span>
-              </button>
+                {showCalendario && (
+                  <SidebarItem active={familyTab === 'calendario'} icon={CalendarDays} label="Calendário Escolar" onClick={() => { setFamilyTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }} />
+                )}
+                {showComunicados && (
+                  <SidebarItem active={familyTab === 'comunicados'} icon={Bell} label="Comunicados" onClick={() => { setFamilyTab('comunicados'); registerClick('comunicados'); setIsMobileMenuOpen(false); }} />
+                )}
+                {showMural && (
+                  <SidebarItem active={familyTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => { setFamilyTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }} />
+                )}
+                {showCardapio && (
+                  <SidebarItem active={familyTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => { setFamilyTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }} />
+                )}
+              </SidebarGroup>
             )}
 
-            {/* COMUNICADOS */}
-            {showComunicados && (
-              <button
-                onClick={() => { setFamilyTab('comunicados'); registerClick('comunicados'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'comunicados' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <Bell size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Comunicados</span>
-              </button>
-            )}
-
-            {/* MURAL DE FOTOS */}
-            {showMural && (
-              <button
-                onClick={() => { setFamilyTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'mural-fotos' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <ImageIcon size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Mural de Fotos</span>
-              </button>
-            )}
-
-            {/* CARDÁPIO */}
-            {showCardapio && (
-              <button
-                onClick={() => { setFamilyTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'cardapio' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <UtensilsCrossed size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Cardápio</span>
-              </button>
+            {showConfiguracoes && (
+              <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => { setFamilyTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }} />
             )}
           </nav>
-
-          {showConfiguracoes && (
-            <div className="pt-4 mt-auto border-t border-slate-100 shrink-0">
-              <button
-                onClick={() => { setFamilyTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all md:justify-center md:group-hover:justify-start ${familyTab === 'settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
-              >
-                <Settings size={18} className="shrink-0" /> <span className="whitespace-nowrap md:hidden md:group-hover:inline">Configurações</span>
-              </button>
-            </div>
-          )}
         </div>
       </aside>
 
@@ -335,7 +270,7 @@ export default function FamilyPortal({
 
         {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} />}
 
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div></div>}>
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {/* REUTILIZANDO COMPONENTES EXISTENTES */}
           {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
           {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
@@ -377,7 +312,7 @@ export default function FamilyPortal({
               setIsChatExpanded(false);
               if (isChatOpen) refreshChatUnread();
             }}
-            className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+            className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
             title="Chat"
           >
             {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -388,19 +323,19 @@ export default function FamilyPortal({
             )}
           </button>
           {isChatOpen && (
-            <div className={`fixed z-40 border border-slate-200 shadow-2xl overflow-hidden bg-white animate-in fade-in duration-200 ${
+            <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 ${
               isChatExpanded
-                ? 'inset-3 sm:inset-6 rounded-3xl'
-                : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-3xl slide-in-from-bottom-4'
+                ? 'inset-3 sm:inset-6 rounded-zela-xl'
+                : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-zela-xl slide-in-from-bottom-4'
             }`}>
               <button
                 onClick={() => setIsChatExpanded(e => !e)}
-                className="absolute top-4 right-4 z-10 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                className="absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
                 title={isChatExpanded ? 'Recolher' : 'Expandir'}
               >
                 {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
               </button>
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>}>
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
                 <FamilyChat currentUser={currentUser} currentSchool={currentSchool} />
               </Suspense>
             </div>

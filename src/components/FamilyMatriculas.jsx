@@ -53,8 +53,8 @@ const emptyCrianca = () => ({
 const emptyAutorizado = () => ({ id: Date.now() + Math.random(), nome: '', telefone: '', parentesco: '' });
 const emptyTransporteAutorizado = () => ({ id: Date.now() + Math.random(), nome: '' });
 
-const inputCls = 'w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 text-sm';
-const labelCls = 'block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5';
+const inputCls = 'w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm';
+const labelCls = 'block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5';
 
 function DocUploadButton({ label, doc, onUpload, onRemove, isUploading }) {
   const inputId = `doc-${label.replace(/\s+/g, '-')}-${Math.random().toString(36).slice(2, 6)}`;
@@ -62,8 +62,8 @@ function DocUploadButton({ label, doc, onUpload, onRemove, isUploading }) {
     <div className="flex items-center gap-2">
       <label
         htmlFor={inputId}
-        className={`flex-1 flex items-center gap-2 border border-dashed rounded-xl px-3 py-2.5 text-xs font-bold cursor-pointer transition ${
-          doc ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-slate-300 hover:border-indigo-400 text-slate-500 hover:text-indigo-600'
+        className={`flex-1 flex items-center gap-2 border border-dashed rounded-zela-md px-3 py-2.5 text-xs font-bold cursor-pointer transition ${
+          doc ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-slate-300 hover:border-indigo-400 text-on-surface-variant hover:text-primary'
         } ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}
       >
         {isUploading ? <Loader2 size={14} className="animate-spin shrink-0" /> : doc ? <Check size={14} className="shrink-0" /> : <Upload size={14} className="shrink-0" />}
@@ -71,7 +71,7 @@ function DocUploadButton({ label, doc, onUpload, onRemove, isUploading }) {
         <input id={inputId} type="file" accept={ALLOWED_TYPES.join(',')} onChange={onUpload} className="hidden" disabled={isUploading} />
       </label>
       {doc && (
-        <button type="button" onClick={onRemove} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+        <button type="button" onClick={onRemove} className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
           <X size={16} />
         </button>
       )}
@@ -287,21 +287,21 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 shrink-0">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
             <FileText size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Matrículas</h2>
-            <p className="text-slate-500 text-sm hidden sm:block">Preencha e acompanhe as matrículas dos seus filhos.</p>
+            <h2 className="text-h3 text-on-surface">Matrículas</h2>
+            <p className="text-on-surface-variant text-small hidden sm:block">Preencha e acompanhe as matrículas dos seus filhos.</p>
           </div>
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
           >
             <Plus size={18} /> <span className="hidden sm:inline">Nova Solicitação</span>
           </button>
@@ -312,19 +312,19 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         {showForm ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-slate-800">Nova solicitação de Matrícula</h3>
-              <button type="button" onClick={resetForm} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+              <h3 className="font-bold text-on-surface">Nova solicitação de Matrícula</h3>
+              <button type="button" onClick={resetForm} className="p-1.5 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition">
                 <X size={20} />
               </button>
             </div>
 
             {formError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{formError}</div>
+              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
             )}
 
             {/* Responsável Financeiro */}
-            <section className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
-              <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2"><User size={16} className="text-indigo-600" /> Responsável Financeiro</h4>
+            <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+              <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><User size={16} className="text-primary" /> Responsável Financeiro</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className={labelCls}>Nome completo *</label>
@@ -383,10 +383,10 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             </section>
 
             {/* Segundo Responsável */}
-            <section className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+            <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
-                <span className="font-bold text-slate-800 text-sm flex items-center gap-2"><User size={16} className="text-indigo-600" /> Adicionar Segundo Responsável</span>
+                <span className="font-bold text-on-surface text-sm flex items-center gap-2"><User size={16} className="text-primary" /> Adicionar Segundo Responsável</span>
               </label>
               {temSegundo && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -435,13 +435,13 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
 
             {/* Crianças */}
             <section className="space-y-3">
-              <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2"><Baby size={16} className="text-indigo-600" /> Informações da Criança</h4>
+              <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><Baby size={16} className="text-primary" /> Informações da Criança</h4>
               {criancas.map((c, idx) => {
                 const periodoOptions = PERIODOS_POR_CICLO[Number(c.ciclo)] || [];
                 return (
-                  <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-indigo-600 uppercase tracking-wider">Criança {idx + 1}</span>
+                      <span className="text-xs font-black text-primary uppercase tracking-wider">Criança {idx + 1}</span>
                       {criancas.length > 1 && (
                         <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                           <Trash2 size={15} />
@@ -481,7 +481,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                       </div>
                       <div>
                         <label className={labelCls}>Turno</label>
-                        <input className={`${inputCls} bg-slate-100 text-slate-500`} value={c.turno} readOnly placeholder="Automático" />
+                        <input className={`${inputCls} bg-surface-container text-on-surface-variant`} value={c.turno} readOnly placeholder="Automático" />
                       </div>
                     </div>
                     <DocUploadButton
@@ -494,20 +494,20 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                   </div>
                 );
               })}
-              <button type="button" onClick={addCrianca} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold text-sm px-3 py-2">
+              <button type="button" onClick={addCrianca} className="flex items-center gap-2 text-primary hover:text-primary font-bold text-sm px-3 py-2">
                 <Plus size={16} /> Adicionar Criança
               </button>
             </section>
 
             {/* Autorizados */}
-            <section className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+            <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2"><UserCheck size={16} className="text-indigo-600" /> Informações do Autorizado</h4>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">{autorizados.length}/{maxAutorizados}</span>
+                <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><UserCheck size={16} className="text-primary" /> Informações do Autorizado</h4>
+                <span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">{autorizados.length}/{maxAutorizados}</span>
               </div>
               <div className="space-y-3">
                 {autorizados.map((a, idx) => (
-                  <div key={a.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-white border border-slate-200 rounded-xl p-3">
+                  <div key={a.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-white border border-outline-variant rounded-zela-md p-3">
                     <div>
                       <label className={labelCls}>Nome completo</label>
                       <input className={inputCls} value={a.nome} onChange={e => updateAutorizado(a.id, { nome: e.target.value })} />
@@ -533,7 +533,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                   </div>
                 ))}
                 {autorizados.length < maxAutorizados && (
-                  <button type="button" onClick={addAutorizado} className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-bold text-xs px-2 py-1">
+                  <button type="button" onClick={addAutorizado} className="flex items-center gap-1.5 text-primary hover:text-primary font-bold text-xs px-2 py-1">
                     <Plus size={14} /> Adicionar autorizado {temSegundo ? '(até 2 por responsável)' : ''}
                   </button>
                 )}
@@ -547,7 +547,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                   disabled={maxTransporte === 0}
                   className="w-4 h-4 accent-indigo-600 disabled:opacity-40"
                 />
-                <span className="font-bold text-slate-700 text-sm flex items-center gap-2"><Car size={15} className="text-indigo-600" /> Outros autorizados pelo transporte?</span>
+                <span className="font-bold text-on-surface text-sm flex items-center gap-2"><Car size={15} className="text-primary" /> Outros autorizados pelo transporte?</span>
               </label>
               {temTransporte && (
                 <div className="space-y-2 pt-1">
@@ -567,7 +567,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                     </div>
                   ))}
                   {transporteAutorizados.length < maxTransporte && (
-                    <button type="button" onClick={addTransporteAutorizado} className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-bold text-xs px-2 py-1">
+                    <button type="button" onClick={addTransporteAutorizado} className="flex items-center gap-1.5 text-primary hover:text-primary font-bold text-xs px-2 py-1">
                       <Plus size={14} /> Adicionar outro
                     </button>
                   )}
@@ -578,7 +578,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white px-5 py-3 rounded-xl font-bold transition-all active:scale-95 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
               Enviar Solicitação
@@ -587,16 +587,16 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         ) : (
           <>
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{error}</div>
+              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
             )}
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             ) : solicitacoes.length === 0 ? (
-              <div className="text-center py-16 text-slate-400">
-                <FileText className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <p className="text-sm font-semibold text-slate-600">Nenhuma solicitação enviada ainda.</p>
+              <div className="text-center py-16 text-on-surface-variant/70">
+                <FileText className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+                <p className="text-sm font-semibold text-on-surface-variant">Nenhuma solicitação enviada ainda.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -635,13 +635,13 @@ function SolicitacaoCard({ solicitacao, onDelete }) {
   const criancas = solicitacao.criancas || [];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-outline-variant rounded-zela-lg overflow-hidden">
       <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between p-4 text-left">
         <div className="min-w-0">
-          <p className="font-bold text-slate-800 text-sm truncate">
+          <p className="font-bold text-on-surface text-sm truncate">
             {criancas.map(c => c.nome).join(', ') || 'Solicitação'}
           </p>
-          <p className="text-slate-400 text-xs mt-0.5">
+          <p className="text-on-surface-variant/70 text-xs mt-0.5">
             Enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
           </p>
         </div>
@@ -649,24 +649,24 @@ function SolicitacaoCard({ solicitacao, onDelete }) {
           <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
             <StatusIcon size={11} /> {status.label}
           </span>
-          {expanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+          {expanded ? <ChevronUp size={18} className="text-on-surface-variant/70" /> : <ChevronDown size={18} className="text-on-surface-variant/70" />}
         </div>
       </button>
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-outline-variant pt-3">
           {solicitacao.status === 'rejected' && solicitacao.rejection_reason && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-xs font-medium">
+            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-xs font-medium">
               Motivo: {solicitacao.rejection_reason}
             </div>
           )}
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Responsável Financeiro</p>
-            <p className="text-sm text-slate-700">{solicitacao.responsavel_financeiro?.nome}</p>
+            <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Responsável Financeiro</p>
+            <p className="text-sm text-on-surface">{solicitacao.responsavel_financeiro?.nome}</p>
           </div>
           {criancas.map((c, i) => (
             <div key={i}>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Criança {i + 1}</p>
-              <p className="text-sm text-slate-700">{c.nome} — {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
+              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Criança {i + 1}</p>
+              <p className="text-sm text-on-surface">{c.nome} — {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
             </div>
           ))}
           {solicitacao.status === 'pending' && (

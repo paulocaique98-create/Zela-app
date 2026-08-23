@@ -16,13 +16,19 @@ function escapeHtml(str) {
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 const STYLES = `
+  /* Sem isso, a página herda a largura da JANELA (window.open abre do
+     tamanho da tela do usuário) em vez da largura real do papel — o PDF
+     exportado saía largo/paisagem em telas grandes. Trava o documento no
+     tamanho A4 independente do quão larga a janela do popup estiver. */
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; margin: 0; }
+  html, body { width: 210mm; max-width: 210mm; margin: 0 auto; overflow-x: hidden; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; }
   /* Tabela ocupando o documento inteiro: o <thead> é repetido pelo
      navegador no topo de CADA página impressa/PDF — é a forma mais
      confiável entre navegadores de ter um cabeçalho fixo por página
      (position:fixed não se repete de forma consistente na impressão). */
-  table.page { width: 100%; border-collapse: collapse; }
+  table.page { width: 100%; max-width: 210mm; border-collapse: collapse; table-layout: fixed; }
   table.page > thead > tr > td { padding: 24px 48px 12px; }
   table.page > tbody > tr > td { padding: 0 48px 32px; }
   .header-logo { text-align: center; }

@@ -125,7 +125,7 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={cameraFor ? undefined : onClose}>
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         {cameraFor ? (
@@ -138,17 +138,17 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
           />
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3 p-5 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600 shrink-0">
+                <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
                   <Camera size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-slate-800">Cadastrar Foto de Responsáveis</h2>
-                  <p className="text-xs text-slate-500">Apenas quem ainda não tem foto cadastrada</p>
+                  <h2 className="text-h3 text-on-surface">Cadastrar Foto de Responsáveis</h2>
+                  <p className="text-xs text-on-surface-variant">Apenas quem ainda não tem foto cadastrada</p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+              <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
                 <X size={20} />
               </button>
             </div>
@@ -156,13 +156,13 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
             {pending.length > 0 && (
               <div className="px-5 pt-4 shrink-0">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/70" />
                   <input
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Buscar por responsável ou criança"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                   />
                 </div>
               </div>
@@ -170,36 +170,36 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
 
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium">{error}</div>
               )}
 
               {pending.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                  <UserX className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-                  <p className="text-slate-500 font-medium">Todos os responsáveis já têm foto cadastrada</p>
+                <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
+                  <UserX className="mx-auto h-10 w-10 text-outline-variant mb-3" />
+                  <p className="text-on-surface-variant font-medium">Todos os responsáveis já têm foto cadastrada</p>
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                  <Search className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-                  <p className="text-slate-500 font-medium">Nenhum resultado para "{search}"</p>
+                <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
+                  <Search className="mx-auto h-10 w-10 text-outline-variant mb-3" />
+                  <p className="text-on-surface-variant font-medium">Nenhum resultado para "{search}"</p>
                 </div>
               ) : (
                 filtered.map(person => (
-                  <div key={person.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-slate-100 rounded-2xl bg-slate-50 gap-3">
+                  <div key={person.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
-                        <Camera size={16} className="text-slate-400" />
+                        <Camera size={16} className="text-on-surface-variant/70" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm text-slate-800 break-words">{person.name}</p>
-                        <p className="text-xs text-slate-400 break-words">
+                        <p className="font-bold text-sm text-on-surface break-words">{person.name}</p>
+                        <p className="text-xs text-on-surface-variant/70 break-words">
                           {person.relation}{(studentsByPersonId[person.id]?.length > 0) ? ` · ${studentsByPersonId[person.id].join(', ')}` : ''}
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => { setError(''); setCameraFor(person); }}
-                      className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm shrink-0 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition"
+                      className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-outline-variant px-3 py-2 rounded-lg shadow-sm shrink-0 text-primary hover:bg-primary/10 hover:border-primary/20 transition"
                     >
                       <Camera size={14} /> Cadastrar
                     </button>
@@ -388,14 +388,14 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
 
   return (
     <div className="flex flex-col h-[75vh] max-h-[560px]">
-      <div className="flex items-center justify-between gap-3 p-5 border-b border-slate-100 shrink-0">
+      <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={onCancel} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+          <button onClick={onCancel} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-base font-bold text-slate-800">{person.name}</h2>
+          <h2 className="text-base font-bold text-on-surface">{person.name}</h2>
         </div>
-        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+        <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
           <X size={20} />
         </button>
       </div>
@@ -466,20 +466,20 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
         })()}
       </div>
 
-      <div className="p-5 border-t border-slate-100 shrink-0">
+      <div className="p-5 border-t border-outline-variant shrink-0">
         {capturedImage ? (
           <div className="flex gap-2">
             <button
               onClick={handleRetake}
               disabled={isSaving}
-              className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition text-sm disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface font-bold py-3 rounded-zela-md transition text-sm disabled:opacity-60"
             >
               <RefreshCw size={16} /> Tirar Outra
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-sm disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm disabled:opacity-60"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {isSaving ? 'Salvando' : 'Confirmar'}
@@ -488,12 +488,12 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
         ) : !cameraStarted ? (
           <button
             onClick={handleStartCapture}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition text-sm"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm"
           >
             <Camera size={16} /> Iniciar Captura
           </button>
         ) : (
-          <p className="text-center text-xs font-semibold text-slate-400">
+          <p className="text-center text-xs font-semibold text-on-surface-variant/70">
             {countdown !== null ? `Capturando em ${countdown}` :
               framePosition === 'ok' ? 'Perfeito, capturando' :
               !cameraReady || !modelsLoaded ? 'Preparando câmera' :

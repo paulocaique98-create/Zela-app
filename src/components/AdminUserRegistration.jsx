@@ -68,14 +68,14 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
     onChange(student.id, patch);
   };
 
-  const inputCls = 'w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm';
-  const labelCls = 'block text-[10px] font-bold text-slate-500 uppercase mb-1 tracking-wide';
+  const inputCls = 'w-full p-2.5 bg-white border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm';
+  const labelCls = 'block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide';
 
   return (
-    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+    <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg space-y-3">
       {/* Cabeçalho do card */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-1.5">
+        <span className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
           <Baby size={14} /> Aluno {index + 1}
         </span>
         {canRemove && (
@@ -145,7 +145,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
 
       {/* Horário personalizado */}
       {student.is_custom_period && (
-        <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl animate-in fade-in duration-200">
+        <div className="grid grid-cols-2 gap-3 p-3 bg-primary/10 border border-primary/20 rounded-zela-md animate-in fade-in duration-200">
           <div>
             <label className={labelCls}>Entrada Personalizada *</label>
             <input type="time" required value={student.custom_entry}
@@ -701,19 +701,19 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
   const field = (label, required, node) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-1">{label}{required && ' *'}</label>
+      <label className="block text-xs font-semibold text-on-surface mb-1">{label}{required && ' *'}</label>
       {node}
     </div>
   );
 
-  const inputCls = 'w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium';
+  const inputCls = 'w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm font-medium';
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-8">
 
       {/* ── SEÇÃO 1: TIPO DE CONTA ── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2">
+        <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2">
           1. Tipo de Conta
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -727,12 +727,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
           {formData.role === 'family' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo de Responsável *</label>
+              <label className="block text-xs font-semibold text-on-surface mb-1">Tipo de Responsável *</label>
               <div className="flex gap-2">
                 {['Responsável', 'Responsável Financeiro'].map(t => (
                   <button key={t} type="button"
                     onClick={() => setGuardianType(t)}
-                    className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+                    className={`flex-1 py-3 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
                     {t}
                   </button>
                 ))}
@@ -742,7 +742,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
           {formData.role === 'admin' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Departamento (Chat) *</label>
+              <label className="block text-xs font-semibold text-on-surface mb-1">Departamento (Chat) *</label>
               <select required value={formData.departamento} onChange={e => setFormData({ ...formData, departamento: e.target.value })} className={inputCls}>
                 <option value="">Selecionar...</option>
                 {DEPARTAMENTOS_CHAT.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
@@ -753,7 +753,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
         {formData.role === 'teacher' && (
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Turma(s) que leciona *</label>
+            <label className="block text-xs font-semibold text-on-surface mb-1">Turma(s) que leciona *</label>
             <div className="flex flex-wrap gap-2">
               {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => {
                 const isSelected = formData.turmas.includes(t);
@@ -765,10 +765,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                       ...formData,
                       turmas: isSelected ? formData.turmas.filter(x => x !== t) : [...formData.turmas, t],
                     })}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
                       isSelected
-                        ? 'bg-indigo-600 border-indigo-600 text-white'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'
+                        ? 'bg-primary border-indigo-600 text-white'
+                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
                     }`}
                   >
                     {t}
@@ -783,21 +783,21 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         )}
 
         {formData.role === 'admin' && currentUser.is_primary_admin && (
-          <label className="flex items-center gap-2 cursor-pointer bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+          <label className="flex items-center gap-2 cursor-pointer bg-primary/10 border border-primary/10 rounded-zela-md p-3">
             <input
               type="checkbox"
               checked={formData.chat_visibilidade_total}
               onChange={e => setFormData({ ...formData, chat_visibilidade_total: e.target.checked })}
               className="w-4 h-4 accent-indigo-600"
             />
-            <span className="text-xs font-bold text-indigo-900">Visualiza e responde o chat de todos os departamentos</span>
+            <span className="text-xs font-bold text-primary">Visualiza e responde o chat de todos os departamentos</span>
           </label>
         )}
       </div>
 
       {/* ── SEÇÃO 2: DADOS DO RESPONSÁVEL ── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 flex items-center gap-2">
           <Users size={14} /> 2. Dados do Responsável
         </h3>
 
@@ -814,14 +814,14 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           )}
           {editingUser ? (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <KeyRound size={12} className="text-slate-400" /> Senha de Acesso
+              <label className="block text-xs font-semibold text-on-surface mb-1 flex items-center gap-1">
+                <KeyRound size={12} className="text-on-surface-variant/70" /> Senha de Acesso
               </label>
               <button
                 type="button"
                 onClick={handleSendResetEmail}
                 disabled={isLoading || resetSent}
-                className="w-full py-3 px-4 border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 border border-primary/20 text-primary hover:bg-primary/10 font-bold rounded-zela-md text-xs transition flex items-center justify-center gap-2"
               >
                 {resetSent ? 'E-mail de Redefinição Enviado!' : 'Enviar E-mail de Redefinição'}
               </button>
@@ -878,10 +878,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       {/* ── SEÇÃO 3: ALUNOS VINCULADOS ── */}
       {formData.role === 'family' && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 flex items-center justify-between">
             <span className="flex items-center gap-2"><Clock size={14} /> 3. Alunos Vinculados</span>
             <button type="button" onClick={handleAddStudent}
-              className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
+              className="text-primary hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition">
               <Plus size={13} /> Adicionar Aluno
             </button>
           </h3>
@@ -903,28 +903,28 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
       {/* ── SEÇÃO 4: 2º RESPONSÁVEL (Apenas Edição) ── */}
       {editingUser && formData.role === 'family' && (
-        <div className="space-y-4 pt-4 border-t border-slate-100">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+        <div className="space-y-4 pt-4 border-t border-outline-variant">
+          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
             <Users size={14} /> 4. 2º Responsável (Opcional)
           </h3>
           
           {secondGuardian ? (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+            <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-bold text-slate-800">{secondGuardian.name}</h4>
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md">
+                  <h4 className="font-bold text-on-surface">{secondGuardian.name}</h4>
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-primary px-2 py-0.5 rounded-md">
                     2º Responsável
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">{secondGuardian.email} • {secondGuardian.relationship}</p>
+                <p className="text-xs text-on-surface-variant">{secondGuardian.email} • {secondGuardian.relationship}</p>
               </div>
               <div className="flex gap-2 mt-3">
                 <button
                   type="button"
                   onClick={() => setConfirmSecondGuardianAction('remove')}
                   disabled={secondGuardianLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-on-surface-variant border border-slate-300 rounded-lg hover:bg-surface-container-low transition disabled:opacity-50"
                 >
                   <UserMinus size={14} /> Remover Vínculo
                 </button>
@@ -939,7 +939,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               </div>
             </div>
           ) : isAddingSecondGuardian ? (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 animate-in fade-in duration-200">
+            <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg space-y-4 animate-in fade-in duration-200">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {field('Nome Completo', true, <input type="text" value={secondGuardianForm.name} onChange={e => setSecondGuardianForm({...secondGuardianForm, name: e.target.value})} className={inputCls} placeholder="Nome do 2º Responsável" />)}
                 {field('E-mail Principal', true, <input type="email" value={secondGuardianForm.email} onChange={e => setSecondGuardianForm({...secondGuardianForm, email: e.target.value})} className={inputCls} placeholder="email@exemplo.com" />)}
@@ -959,10 +959,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 )}
               </div>
               <div className="flex gap-2 justify-end pt-2">
-                <button type="button" onClick={() => setIsAddingSecondGuardian(false)} className="px-4 py-2 border border-slate-200 text-slate-600 font-bold rounded-lg hover:bg-slate-100 text-xs transition">
+                <button type="button" onClick={() => setIsAddingSecondGuardian(false)} className="px-4 py-2 border border-outline-variant text-on-surface-variant font-bold rounded-lg hover:bg-surface-container text-xs transition">
                   Cancelar
                 </button>
-                <button type="button" onClick={handleCreateSecondGuardian} disabled={secondGuardianLoading || !secondGuardianForm.name || !secondGuardianForm.email || !secondGuardianForm.password || secondGuardianForm.password.length < 6} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-xs transition">
+                <button type="button" onClick={handleCreateSecondGuardian} disabled={secondGuardianLoading || !secondGuardianForm.name || !secondGuardianForm.email || !secondGuardianForm.password || secondGuardianForm.password.length < 6} className="px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-container disabled:opacity-50 text-xs transition">
                   {secondGuardianLoading ? 'Salvando...' : 'Salvar 2º Responsável'}
                 </button>
               </div>
@@ -971,7 +971,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             <button
               type="button"
               onClick={() => setIsAddingSecondGuardian(true)}
-              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-outline-variant rounded-zela-lg text-on-surface-variant font-bold hover:bg-surface-container-low hover:border-indigo-300 hover:text-primary transition flex items-center justify-center gap-2"
             >
               <Plus size={18} /> Cadastrar 2º Responsável
             </button>
@@ -980,14 +980,14 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       )}
 
       {/* ── SUBMIT ── */}
-      <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+      <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
         {editingUser && (
-          <button type="button" onClick={onClose} className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition text-sm">
+          <button type="button" onClick={onClose} className="px-6 py-3 border border-outline-variant text-on-surface-variant font-bold rounded-zela-md hover:bg-surface-container-low transition text-sm">
             Cancelar
           </button>
         )}
         <button type="submit" disabled={isLoading}
-          className="bg-indigo-600 text-white font-bold px-8 py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-md disabled:opacity-70 flex items-center gap-2">
+          className="bg-primary text-white font-bold px-8 py-3.5 rounded-zela-md hover:bg-primary-container transition shadow-md disabled:opacity-70 flex items-center gap-2">
           {isLoading ? 'Salvando...' : editingUser ? 'Salvar Alterações' : 'Finalizar Cadastro'}
         </button>
       </div>
@@ -1012,19 +1012,19 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   if (editingUser || forceModal) {
     return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50 shrink-0">
+          <div className="flex items-center justify-between p-5 border-b border-outline-variant bg-surface-container-low shrink-0">
             <div className="flex items-center gap-3">
-              <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+              <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
                 <UserPlus size={22} />
               </div>
               <div>
-                <h2 className="font-bold text-slate-800 text-lg">{editingUser ? 'Editar Cadastro do Usuário' : 'Criar Acesso de Login'}</h2>
-                <p className="text-xs text-slate-400">{editingUser ? 'Atualize as informações do perfil e alunos vinculados' : 'Complete os dados abaixo para criar o acesso ao sistema'}</p>
+                <h2 className="font-bold text-on-surface text-lg">{editingUser ? 'Editar Cadastro do Usuário' : 'Criar Acesso de Login'}</h2>
+                <p className="text-xs text-on-surface-variant/70">{editingUser ? 'Atualize as informações do perfil e alunos vinculados' : 'Complete os dados abaixo para criar o acesso ao sistema'}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-lg transition text-slate-500">
+            <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-lg transition text-on-surface-variant">
               <X size={20} />
             </button>
           </div>
@@ -1032,12 +1032,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           {/* Scrollable Body */}
           <div className="p-6 overflow-y-auto flex-1">
             {successMsg && (
-              <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl border border-green-200 flex items-center gap-2 font-medium">
+              <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-zela-md border border-green-200 flex items-center gap-2 font-medium">
                 <CheckCircle2 size={20} /> {successMsg}
               </div>
             )}
             {errorMsg && (
-              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium">{errorMsg}</div>
+              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-zela-md border border-red-200 font-medium">{errorMsg}</div>
             )}
 
             {formContent}
@@ -1050,13 +1050,13 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   }
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-8 rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="h-full flex flex-col bg-white p-5 md:p-8 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8 shrink-0">
-        <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600"><UserPlus size={24} /></div>
+        <div className="bg-indigo-100 p-3 rounded-zela-md text-primary"><UserPlus size={24} /></div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Cadastro de Novo Usuário</h2>
-          <p className="text-sm text-slate-500">Crie perfis para novas Famílias ou Administradores.</p>
+          <h2 className="text-h3 text-on-surface">Cadastro de Novo Usuário</h2>
+          <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou Administradores.</p>
         </div>
       </div>
 
@@ -1064,12 +1064,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-6">
         {/* Feedback */}
         {successMsg && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-xl border border-green-200 flex items-center gap-2 font-medium">
+          <div className="p-4 bg-green-50 text-green-700 rounded-zela-md border border-green-200 flex items-center gap-2 font-medium">
             <CheckCircle2 size={20} /> {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 font-medium">{errorMsg}</div>
+          <div className="p-4 bg-red-50 text-red-600 rounded-zela-md border border-red-200 font-medium">{errorMsg}</div>
         )}
 
         {formContent}

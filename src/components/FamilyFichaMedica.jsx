@@ -27,21 +27,21 @@ function YesNoListBlock({ block, value, items, onFlagChange, onItemsChange }) {
   const removeItem = (idx) => onItemsChange(items.length > 1 ? items.filter((_, i) => i !== idx) : ['']);
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+    <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="font-bold text-slate-800 text-sm">{block.question}</p>
+        <p className="font-bold text-on-surface text-sm">{block.question}</p>
         <div className="flex gap-1.5 shrink-0">
           <button
             type="button"
             onClick={() => onFlagChange(true)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${value ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${value ? 'bg-primary border-indigo-600 text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'}`}
           >
             SIM
           </button>
           <button
             type="button"
             onClick={() => onFlagChange(false)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${!value ? 'bg-slate-700 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${!value ? 'bg-slate-700 border-slate-700 text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-slate-400'}`}
           >
             NÃO
           </button>
@@ -57,7 +57,7 @@ function YesNoListBlock({ block, value, items, onFlagChange, onItemsChange }) {
                 value={text}
                 onChange={e => updateItem(idx, e.target.value)}
                 placeholder={block.placeholder}
-                className="flex-1 min-w-0 px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 text-sm uppercase placeholder:normal-case"
+                className="flex-1 min-w-0 px-3 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm uppercase placeholder:normal-case"
               />
               {items.length > 1 && (
                 <button type="button" onClick={() => removeItem(idx)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0">
@@ -66,7 +66,7 @@ function YesNoListBlock({ block, value, items, onFlagChange, onItemsChange }) {
               )}
             </div>
           ))}
-          <button type="button" onClick={addItem} className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-bold text-xs px-2 py-1">
+          <button type="button" onClick={addItem} className="flex items-center gap-1.5 text-primary hover:text-primary font-bold text-xs px-2 py-1">
             <Plus size={14} /> Adicionar outro
           </button>
         </div>
@@ -158,50 +158,50 @@ export default function FamilyFichaMedica({ currentUser, currentSchool, familySt
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
           <Heart size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Ficha Médica</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">Preencha e atualize a ficha médica dos seus filhos.</p>
+          <h2 className="text-h3 text-on-surface">Ficha Médica</h2>
+          <p className="text-on-surface-variant text-small hidden sm:block">Preencha e atualize a ficha médica dos seus filhos.</p>
         </div>
       </div>
 
       {students.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-400">
-          <Heart className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          <p className="text-sm font-semibold text-slate-600">Nenhum aluno vinculado a esta conta ainda.</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-on-surface-variant/70">
+          <Heart className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+          <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno vinculado a esta conta ainda.</p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
           {students.length > 1 && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
               <div className="relative">
                 <select
                   value={selectedStudentId || ''}
                   onChange={e => setSelectedStudentId(e.target.value)}
-                  className="w-full appearance-none px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 text-sm pr-9"
+                  className="w-full appearance-none px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-bold text-on-surface text-sm pr-9"
                 >
                   {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 pointer-events-none" />
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{error}</div>
+            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
           )}
           {successMsg && (
-            <div className="bg-green-50 border border-green-100 text-green-700 p-3 rounded-xl text-sm font-medium">{successMsg}</div>
+            <div className="bg-green-50 border border-green-100 text-green-700 p-3 rounded-zela-md text-sm font-medium">{successMsg}</div>
           )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : (
             <form onSubmit={handleSave} className="space-y-3">
@@ -219,7 +219,7 @@ export default function FamilyFichaMedica({ currentUser, currentSchool, familySt
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white px-5 py-3 rounded-xl font-bold transition-all active:scale-95 text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
               >
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
                 {fichaId ? 'Salvar alterações' : 'Salvar Ficha Médica'}

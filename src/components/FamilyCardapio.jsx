@@ -72,14 +72,14 @@ export default function FamilyCardapio({ currentUser, currentSchool }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
           <UtensilsCrossed size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Cardápio</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">
+          <h2 className="text-h3 text-on-surface">Cardápio</h2>
+          <p className="text-on-surface-variant text-small hidden sm:block">
             {activeCardapio ? activeCardapio.titulo : 'Cardápio da escola.'}
           </p>
         </div>
@@ -87,32 +87,32 @@ export default function FamilyCardapio({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : !activeCardapio || groups.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <UtensilsCrossed className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhum cardápio ativo no momento.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <UtensilsCrossed className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhum cardápio ativo no momento.</p>
           </div>
         ) : (
           groups.map(group => {
             const isToday = group.date === todayStr;
             return (
-              <div key={group.date} className={`rounded-2xl border p-4 ${isToday ? 'border-indigo-300 bg-indigo-50/40' : 'border-slate-200'}`}>
-                <h3 className={`text-sm font-bold mb-2.5 ${isToday ? 'text-indigo-700' : 'text-slate-800'}`}>
+              <div key={group.date} className={`rounded-zela-lg border p-4 ${isToday ? 'border-primary/40 bg-primary/5' : 'border-outline-variant'}`}>
+                <h3 className={`text-sm font-bold mb-2.5 ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                   {formatDateLabel(group.date)}
-                  {isToday && <span className="text-[9px] uppercase font-extrabold bg-indigo-600 text-white px-1.5 py-0.5 rounded-md ml-2 align-middle">Hoje</span>}
+                  {isToday && <span className="text-[9px] uppercase font-extrabold bg-primary text-white px-1.5 py-0.5 rounded-md ml-2 align-middle">Hoje</span>}
                 </h3>
                 <div className="space-y-2">
                   {group.items.map(item => (
                     <div key={item.id} className="text-xs">
-                      <span className="font-bold text-slate-500">{item.refeicao}: </span>
-                      <span className="text-slate-600">{item.descricao}</span>
+                      <span className="font-bold text-on-surface-variant">{item.refeicao}: </span>
+                      <span className="text-on-surface-variant">{item.descricao}</span>
                     </div>
                   ))}
                 </div>

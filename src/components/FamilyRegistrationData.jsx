@@ -100,30 +100,30 @@ export default function FamilyRegistrationData({ currentUser }) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
-  const inputCls = "w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm";
-  const labelCls = "block text-xs font-semibold text-slate-700 mb-1";
+  const inputCls = "w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm";
+  const labelCls = "block text-xs font-semibold text-on-surface mb-1";
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
         <div className="flex items-center justify-between mb-6 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+            <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
               <User size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800">Dados Cadastrais</h2>
-              <p className="text-sm text-slate-500">Mantenha suas informações e documentos atualizados.</p>
+              <h2 className="text-h3 text-on-surface">Dados Cadastrais</h2>
+              <p className="text-small text-on-surface-variant">Mantenha suas informações e documentos atualizados.</p>
             </div>
           </div>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="hidden md:flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition"
+            className="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-zela-md font-bold hover:bg-primary-container transition"
           >
             {isSaving ? <Loader2 size={18} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={18} /> : <Save size={18} />)}
             {saveSuccess ? 'Salvo!' : 'Salvar'}
@@ -133,7 +133,7 @@ export default function FamilyRegistrationData({ currentUser }) {
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-8">
           {/* Informações Pessoais */}
           <div>
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
               <User size={16} /> 1. Informações Pessoais
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -187,7 +187,7 @@ export default function FamilyRegistrationData({ currentUser }) {
 
           {/* Endereço */}
           <div>
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
               <MapPin size={16} /> 2. Endereço Completo
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
@@ -228,7 +228,7 @@ export default function FamilyRegistrationData({ currentUser }) {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white px-5 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition"
+            className="w-full flex justify-center items-center gap-2 bg-primary text-white px-5 py-3.5 rounded-zela-md font-bold hover:bg-primary-container transition"
           >
             {isSaving ? <Loader2 size={20} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={20} /> : <Save size={20} />)}
             {saveSuccess ? 'Salvo com sucesso!' : 'Salvar Alterações'}

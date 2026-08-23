@@ -28,25 +28,25 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:relative top-[60px] md:top-0 left-0 h-[calc(100dvh-60px)] md:h-full w-64 md:w-52 shrink-0 z-20 md:z-auto transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full bg-gradient-to-b from-slate-900 to-indigo-950 p-3 rounded-r-3xl md:rounded-3xl shadow-2xl md:shadow-sm border-r md:border border-slate-800 flex flex-col overflow-y-auto">
-          <p className="px-3 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 mt-2 shrink-0">
+      <aside className={`fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-64 md:w-[240px] shrink-0 z-20 md:z-auto bg-dev-bg border-r border-dev-border transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-full flex flex-col overflow-y-auto">
+          <p className="px-4 pt-4 pb-2 text-[11px] font-black text-dev-text-muted uppercase tracking-widest shrink-0">
             Painel do Dev
           </p>
-          <nav className="flex-1 flex flex-col gap-1 min-h-0 pr-0.5">
+          <nav className="flex-1 flex flex-col gap-1 min-h-0 px-4">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
-              
+
               if (!item.enabled) {
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 opacity-60 cursor-not-allowed"
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium text-dev-text-muted opacity-60 cursor-not-allowed"
                   >
-                    <Icon size={16} />
+                    <Icon size={18} />
                     {item.label}
-                    <span className="ml-auto bg-slate-800 text-[9px] px-1.5 py-0.5 rounded text-slate-400 font-bold uppercase tracking-wide">
+                    <span className="ml-auto bg-dev-surface-high text-[9px] px-1.5 py-0.5 rounded text-dev-text-muted font-bold uppercase tracking-wide">
                       Em breve
                     </span>
                   </div>
@@ -61,16 +61,16 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                     setIsMobileMenuOpen(false);
                     if (item.id === 'support') refreshChatUnread();
                   }}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-indigo-500/20 text-indigo-300'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      ? 'bg-dev-primary-container text-dev-primary'
+                      : 'text-dev-text-muted hover:bg-dev-surface hover:text-dev-text'
                   }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                   {item.label}
                   {item.id === 'support' && chatUnreadCount > 0 && (
-                    <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                    <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-error text-white text-[9px] font-black flex items-center justify-center">
                       {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                     </span>
                   )}
@@ -83,7 +83,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div></div>}>
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {activeTab === 'schools' && (
             <DeveloperPanel
               currentUser={currentUser}

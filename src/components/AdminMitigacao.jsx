@@ -7,7 +7,7 @@ import { logAction } from '../lib/auditLog';
 import { printMitigacaoReportsBulk } from '../lib/printMitigacao';
 
 const STATUS_BADGE = {
-  RASCUNHO: 'bg-slate-100 text-slate-600 border-slate-200',
+  RASCUNHO: 'bg-surface-container text-on-surface-variant border-outline-variant',
   PUBLICADO: 'bg-green-50 text-green-700 border-green-200',
   ARQUIVADO: 'bg-amber-50 text-amber-700 border-amber-200',
 };
@@ -164,16 +164,16 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600 shrink-0">
+            <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
               <FileText size={22} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-slate-800">Mitigação</h2>
-              <p className="text-slate-500 text-sm hidden sm:block">
+              <h2 className="text-h3 text-on-surface">Mitigação</h2>
+              <p className="text-on-surface-variant text-small hidden sm:block">
                 {canEditPermission ? 'Revise, edite e publique os relatórios preenchidos pelas professoras.' : 'Acompanhamento dos relatórios de Mitigação da escola.'}
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                 studentsById,
                 school: currentSchool,
               })}
-              className="sm:hidden flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2.5 rounded-xl transition text-xs shrink-0"
+              className="sm:hidden flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2.5 rounded-zela-md transition text-xs shrink-0"
               title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
             >
               <FileDown size={15} /> Gerar turma
@@ -202,7 +202,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                 studentsById,
                 school: currentSchool,
               })}
-              className="hidden sm:flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2.5 rounded-xl transition text-xs shrink-0"
+              className="hidden sm:flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2.5 rounded-zela-md transition text-xs shrink-0"
               title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
             >
               <FileDown size={15} /> Gerar turma
@@ -210,13 +210,13 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
           )}
           {reports.length > 0 && (
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/70" />
               <input
                 type="text"
                 placeholder="Buscar por aluno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full sm:w-64"
+                className="pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm w-full sm:w-64"
               />
             </div>
           )}
@@ -225,7 +225,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium mb-2">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
         )}
 
         {!isLoading && turmaSummary.length > 0 && (
@@ -240,10 +240,10 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                   if (isSelected) { setTurmaFilterActive(false); setTurmaFilter(null); }
                   else { setTurmaFilterActive(true); setTurmaFilter(t.turma); }
                 }}
-                className={`text-left p-3 rounded-xl border transition ${isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-50 hover:border-indigo-200'}`}
+                className={`text-left p-3 rounded-zela-md border transition ${isSelected ? 'border-indigo-400 bg-primary/10' : 'border-outline-variant bg-surface-container-low hover:border-primary/20'}`}
               >
-                <p className="text-xs font-black text-slate-700">{t.turma || 'Sem turma'}</p>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs font-black text-on-surface">{t.turma || 'Sem turma'}</p>
+                <p className="text-[11px] text-on-surface-variant mt-1">
                   {t.publicado} publicado{t.publicado !== 1 ? 's' : ''} · {t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}
                 </p>
                 {t.semRelatorio > 0 && (
@@ -257,12 +257,12 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : filteredReports.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <FileText className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <FileText className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">
               {reports.length === 0 ? 'Nenhuma professora criou um relatório ainda.' : 'Nenhum resultado encontrado.'}
             </p>
           </div>
@@ -272,19 +272,19 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
             return (
               <div
                 key={r.id}
-                className="w-full flex items-center gap-2 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition"
+                className="w-full flex items-center gap-2 p-4 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition"
               >
                 <button
                   onClick={() => setActiveReport(r)}
                   className="min-w-0 flex-1 text-left"
                 >
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-bold text-slate-800 text-sm">{student?.name || 'Aluno removido'}</p>
+                    <p className="font-bold text-on-surface text-sm">{student?.name || 'Aluno removido'}</p>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </div>
-                  <p className="text-slate-400 text-xs mt-0.5">
+                  <p className="text-on-surface-variant/70 text-xs mt-0.5">
                     {student?.turma} · Etapa {r.current_step}/8 · Atualizado em {formatDate(r.updated_at)}
                   </p>
                 </button>
@@ -295,7 +295,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                         onClick={() => setConfirmArchiveId(r.id)}
                         disabled={isProcessingId === r.id}
                         title="Arquivar relatório"
-                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition disabled:opacity-50"
+                        className="p-2 text-on-surface-variant/70 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition disabled:opacity-50"
                       >
                         {isProcessingId === r.id ? <Loader2 size={16} className="animate-spin" /> : <Archive size={16} />}
                       </button>
@@ -304,7 +304,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                       onClick={() => setConfirmDeleteId(r.id)}
                       disabled={isProcessingId === r.id}
                       title="Excluir relatório"
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+                      className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
                     >
                       <Trash2 size={16} />
                     </button>

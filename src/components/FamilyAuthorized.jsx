@@ -57,24 +57,24 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
   };
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
             <Users size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Autorizados</h2>
-            <p className="text-sm text-slate-500">Pessoas com permissão para retirar os alunos.</p>
+            <h2 className="text-h3 text-on-surface">Autorizados</h2>
+            <p className="text-small text-on-surface-variant">Pessoas com permissão para retirar os alunos.</p>
           </div>
         </div>
         <div className="text-right flex flex-col items-end shrink-0">
           <button
             onClick={onOpenAuthModal}
             disabled={limitReached}
-            className={`font-bold py-2.5 px-4 rounded-xl transition flex items-center gap-2 text-sm shadow-sm ${
-              limitReached ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            className={`font-bold py-2.5 px-4 rounded-zela-md transition flex items-center gap-2 text-sm shadow-sm ${
+              limitReached ? 'bg-slate-200 text-on-surface-variant/70 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-container'
             }`}
           >
             <Plus size={16}/> Novo Autorizado
@@ -89,10 +89,10 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-4">
         <div className="space-y-4">
           {authorized.length === 0 && (
-            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-              <Users className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-              <p className="text-slate-500 font-medium">Nenhum autorizado cadastrado.</p>
-              <p className="text-xs text-slate-400 mt-1">Adicione familiares que podem buscar seus filhos.</p>
+            <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
+              <Users className="mx-auto h-10 w-10 text-outline-variant mb-3" />
+              <p className="text-on-surface-variant font-medium">Nenhum autorizado cadastrado.</p>
+              <p className="text-xs text-on-surface-variant/70 mt-1">Adicione familiares que podem buscar seus filhos.</p>
             </div>
           )}
           {authorized.map(person => {
@@ -105,12 +105,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
             const handleRemovePhoto = () => setConfirmRemovePhotoId(person.id);
 
             return (
-              <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-slate-100 rounded-2xl bg-slate-50 gap-4 transition hover:border-slate-300">
+              <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-4 transition hover:border-slate-300">
                 {/* Avatar & Info */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer">
                     {isProcessingId === person.id ? (
-                      <Loader2 size={20} className="text-indigo-600 animate-spin"/>
+                      <Loader2 size={20} className="text-primary animate-spin"/>
                     ) : person.photo_url ? (
                       <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
                     ) : person.hasPhoto || person.has_biometrics ? (
@@ -118,7 +118,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                         <Fingerprint size={24} />
                       </div>
                     ) : (
-                      <Camera size={20} className="text-slate-400"/>
+                      <Camera size={20} className="text-on-surface-variant/70"/>
                     )}
                     <label className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white cursor-pointer transition">
                       <Camera size={18}/>
@@ -127,9 +127,9 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-base text-slate-800 truncate">{person.name}</p>
+                    <p className="font-bold text-base text-on-surface truncate">{person.name}</p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                      <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">{person.relation}</span>
+                      <span className="text-xs font-medium text-on-surface-variant bg-white border border-outline-variant px-2 py-0.5 rounded-lg">{person.relation}</span>
                       {person.emergencyOrder && (
                         <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-lg font-bold border border-red-100">
                           {person.emergencyOrder}º Emergência
@@ -145,12 +145,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                 </div>
 
                 {/* Status + Foto Action */}
-                <div className="flex flex-col sm:flex-col items-start sm:items-end justify-between w-full sm:w-auto gap-3 sm:gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-slate-200">
+                <div className="flex flex-col sm:flex-col items-start sm:items-end justify-between w-full sm:w-auto gap-3 sm:gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-outline-variant">
                   <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg ${person.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
                     {person.status === 'approved' ? 'Ativo' : 'Pendente'}
                   </span>
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <label className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto">
+                    <label className="text-xs text-primary font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-outline-variant px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto">
                       {isProcessingId === person.id ? (
                          <><Loader2 size={14} className="animate-spin"/> Processando</>
                       ) : (
@@ -174,8 +174,8 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
             );
           })}
         </div>
-        <div className="mt-4 p-4 bg-indigo-50 text-indigo-800 rounded-xl border border-indigo-100 text-sm flex gap-3">
-          <Camera className="shrink-0 text-indigo-600" />
+        <div className="mt-4 p-4 bg-primary/10 text-indigo-800 rounded-zela-md border border-primary/10 text-sm flex gap-3">
+          <Camera className="shrink-0 text-primary" />
           <p>
             <strong>Lembrete:</strong> É obrigatório anexar uma foto nítida do rosto do autorizado para o sistema de Reconhecimento Facial na recepção.
           </p>

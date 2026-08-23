@@ -21,24 +21,24 @@ export default function TeacherMonitor({ students, authorized }) {
   }, [monitorStudents.length]);
 
   return (
-    <div className={`h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-slate-200'}`}>
+    <div className={`h-full flex flex-col bg-white p-5 md:p-6 rounded-zela-xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
             <AlertCircle size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Monitor de Solicitações</h2>
-            <p className="text-sm text-slate-500">Acompanhe as solicitações em tempo real</p>
+            <h2 className="text-h3 text-on-surface">Monitor de Solicitações</h2>
+            <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
           </div>
         </div>
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wide bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shrink-0">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70 uppercase tracking-wide bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-zela-md shrink-0">
           <Eye size={13} /> Somente visualização
         </span>
       </div>
 
       {newArrival && (
-        <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
+        <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-zela-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
           <Bell className="text-amber-600 shrink-0 animate-bounce" size={22} />
           <div>
             <p className="font-bold text-amber-800">Nova atualização no painel!</p>
@@ -48,10 +48,10 @@ export default function TeacherMonitor({ students, authorized }) {
       )}
 
       {monitorStudents.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-          <Car className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          <h3 className="text-slate-500 font-medium">Nenhuma solicitação no momento.</h3>
-          <p className="text-slate-400 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
+        <div className="flex-1 flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
+          <Car className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+          <h3 className="text-on-surface-variant font-medium">Nenhuma solicitação no momento.</h3>
+          <p className="text-on-surface-variant/70 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto min-h-0 pr-1">
@@ -63,8 +63,8 @@ export default function TeacherMonitor({ students, authorized }) {
                 badgeClass = "text-green-700"; badgeText = "Solicitação de Entrada";
                 borderColor = "border-green-300"; bgColor = "bg-green-50";
               } else if (student.status === 'pending_exit') {
-                badgeClass = "text-indigo-700"; badgeText = "Solicitação de Saída";
-                borderColor = "border-indigo-300"; bgColor = "bg-indigo-50";
+                badgeClass = "text-primary"; badgeText = "Solicitação de Saída";
+                borderColor = "border-indigo-300"; bgColor = "bg-primary/10";
               }
 
               const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
@@ -72,7 +72,7 @@ export default function TeacherMonitor({ students, authorized }) {
               return (
                 <div
                   key={student.id}
-                  className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-2xl shadow-sm animate-in zoom-in-95 duration-300`}
+                  className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-zela-lg shadow-sm animate-in zoom-in-95 duration-300`}
                 >
                   {requester?.photo_url && (
                     <img
@@ -85,7 +85,7 @@ export default function TeacherMonitor({ students, authorized }) {
                   <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
                     <Clock size={12} /> {badgeText}
                   </p>
-                  <h3 className="font-bold text-lg text-slate-800 pr-11">{student.name}</h3>
+                  <h3 className="font-bold text-lg text-on-surface pr-11">{student.name}</h3>
                 </div>
               );
             })}

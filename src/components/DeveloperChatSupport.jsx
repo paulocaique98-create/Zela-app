@@ -124,35 +124,35 @@ export default function DeveloperChatSupport({ currentUser }) {
 
   if (activeThread) {
     return (
-      <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-slate-100 shrink-0">
-          <button onClick={closeThread} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+      <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+          <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-800">{activeThread.family?.name || 'Admin'}</h2>
-            <p className="text-xs text-slate-400">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
+            <h2 className="text-h3 text-on-surface">{activeThread.family?.name || 'Admin'}</h2>
+            <p className="text-xs text-on-surface-variant/70">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
           </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
           {isLoadingThread ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
-              <LifeBuoy className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-              <p className="text-sm font-semibold text-slate-600">Nenhuma mensagem ainda.</p>
+            <div className="text-center py-16 text-on-surface-variant/70">
+              <LifeBuoy className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+              <p className="text-sm font-semibold text-on-surface-variant">Nenhuma mensagem ainda.</p>
             </div>
           ) : (
             messages.map(m => {
               const mine = m.sender_role === 'developer';
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 text-sm ${mine ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                  <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-slate-400'}`}>{formatTime(m.created_at)}</p>
+                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
                   </div>
                 </div>
               );
@@ -162,22 +162,22 @@ export default function DeveloperChatSupport({ currentUser }) {
 
         {error && (
           <div className="px-4 sm:px-5 pb-2">
-            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-xl text-xs font-medium">{error}</div>
+            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
           </div>
         )}
 
-        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-slate-100 shrink-0">
+        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-outline-variant shrink-0">
           <input
             type="text"
             value={body}
             onChange={e => setBody(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 min-w-0 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            className="flex-1 min-w-0 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
           <button
             type="submit"
             disabled={isSending || !body.trim()}
-            className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl font-bold transition-all active:scale-95 shrink-0"
+            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             <span className="hidden sm:inline">Enviar</span>
@@ -188,26 +188,26 @@ export default function DeveloperChatSupport({ currentUser }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
-        <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
           <LifeBuoy size={22} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Suporte Zela</h2>
-          <p className="text-slate-500 text-sm hidden sm:block">Conversas de administradores de todas as escolas.</p>
+          <h2 className="text-h3 text-on-surface">Suporte Zela</h2>
+          <p className="text-on-surface-variant text-small hidden sm:block">Conversas de administradores de todas as escolas.</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : threads.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <LifeBuoy className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhuma conversa de suporte ainda.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <LifeBuoy className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma conversa de suporte ainda.</p>
           </div>
         ) : (
           threads.map(t => {
@@ -216,13 +216,13 @@ export default function DeveloperChatSupport({ currentUser }) {
               <button
                 key={t.id}
                 onClick={() => openThread(t)}
-                className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition text-left"
+                className="w-full flex items-center gap-3 p-4 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-slate-800 text-sm truncate">{t.family?.name || 'Admin'}</p>
-                  <p className="text-slate-400 text-xs truncate">{t.school?.school_code} — {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
+                  <p className="font-bold text-on-surface text-sm truncate">{t.family?.name || 'Admin'}</p>
+                  <p className="text-on-surface-variant/70 text-xs truncate">{t.school?.school_code} — {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
                 </div>
-                {unread && <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />}
+                {unread && <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />}
               </button>
             );
           })

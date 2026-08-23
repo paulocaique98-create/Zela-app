@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import MitigacaoReportEditor from './MitigacaoReportEditor';
 
 const STATUS_BADGE = {
-  RASCUNHO: 'bg-slate-100 text-slate-600 border-slate-200',
+  RASCUNHO: 'bg-surface-container text-on-surface-variant border-outline-variant',
   PUBLICADO: 'bg-green-50 text-green-700 border-green-200',
   ARQUIVADO: 'bg-amber-50 text-amber-700 border-amber-200',
 };
@@ -130,10 +130,10 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
 
   if (turmas.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center">
-        <FileText className="text-slate-300 w-12 h-12 mb-3" />
-        <h2 className="text-lg font-bold text-slate-800 mb-1">Nenhuma turma vinculada</h2>
-        <p className="text-slate-500 text-sm max-w-sm">
+      <div className="h-full flex flex-col items-center justify-center bg-white rounded-zela-xl border border-outline-variant shadow-sm p-8 text-center">
+        <FileText className="text-outline-variant w-12 h-12 mb-3" />
+        <h2 className="text-h3 text-on-surface mb-1">Nenhuma turma vinculada</h2>
+        <p className="text-on-surface-variant text-small max-w-sm">
           Peça à administração da escola para vincular sua(s) turma(s) no seu cadastro, para começar a criar relatórios.
         </p>
       </div>
@@ -155,19 +155,19 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
 
   if (showCreateForm) {
     return (
-      <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
+      <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setShowCreateForm(false)} className="p-2 -ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition shrink-0">
+            <button onClick={() => setShowCreateForm(false)} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
               <ArrowLeft size={20} />
             </button>
-            <h2 className="text-lg font-bold text-slate-800">Novo Relatório de Mitigação</h2>
+            <h2 className="text-h3 text-on-surface">Novo Relatório de Mitigação</h2>
           </div>
           {turmas.length > 1 && (
             <select
               value={selectedTurma}
               onChange={e => { setSelectedTurma(e.target.value); setCreateForm(prev => ({ ...prev, student_id: '' })); setStudentSearch(''); }}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-bold text-slate-700 shrink-0"
+              className="px-3 py-2 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-xs font-bold text-on-surface shrink-0"
             >
               <option value="">Todas as turmas</option>
               {turmas.map(t => <option key={t} value={t}>{t}</option>)}
@@ -176,7 +176,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
         </div>
         <form onSubmit={handleCreate} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
           <div ref={studentComboRef} className="relative">
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Aluno *</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Aluno *</label>
             <div className="relative">
               <input
                 type="text"
@@ -190,23 +190,23 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
                 }}
                 onFocus={() => selectedTurma && setIsStudentDropdownOpen(true)}
                 placeholder={selectedTurma ? `Buscar aluno da turma ${selectedTurma}...` : 'Selecione uma turma primeiro'}
-                className="w-full px-4 py-2.5 pr-9 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 pr-9 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm disabled:bg-surface-container disabled:text-on-surface-variant/70 disabled:cursor-not-allowed"
               />
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none" />
             </div>
             {isStudentDropdownOpen && selectedTurma && (
-              <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+              <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-outline-variant rounded-zela-md shadow-lg py-1">
                 {filteredStudents.length === 0 ? (
-                  <p className="px-4 py-2.5 text-sm text-slate-400">Nenhum aluno encontrado.</p>
+                  <p className="px-4 py-2.5 text-sm text-on-surface-variant/70">Nenhum aluno encontrado.</p>
                 ) : (
                   filteredStudents.map(s => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => selectStudent(s)}
-                      className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition"
+                      className="w-full text-left px-4 py-2.5 text-sm text-on-surface hover:bg-primary/10 hover:text-primary transition"
                     >
-                      {s.name} <span className="text-slate-400 text-xs">({s.turma})</span>
+                      {s.name} <span className="text-on-surface-variant/70 text-xs">({s.turma})</span>
                     </button>
                   ))
                 )}
@@ -215,39 +215,39 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Período</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Período</label>
               <select
                 value={createForm.periodo}
                 onChange={e => setCreateForm({ ...createForm, periodo: e.target.value })}
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               >
                 {PERIODOS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Ano</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Ano</label>
               <select
                 value={createForm.ano}
                 onChange={e => setCreateForm({ ...createForm, ano: Number(e.target.value) })}
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               >
                 {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Guia Responsável</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Guia Responsável</label>
             <input
               type="text"
               value={createForm.guia_responsavel}
               disabled
-              className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-600 cursor-not-allowed"
+              className="w-full px-4 py-2.5 bg-surface-container border border-outline-variant rounded-zela-md text-sm text-on-surface-variant cursor-not-allowed"
             />
           </div>
           <button
             type="submit"
             disabled={isCreating || !createForm.student_id}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
           >
             {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
             Criar e começar a preencher
@@ -258,20 +258,20 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-slate-100 shrink-0">
+    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
             <FileText size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Mitigação</h2>
-            <p className="text-slate-500 text-sm hidden sm:block">Relatórios de Mitigação dos seus alunos.</p>
+            <h2 className="text-h3 text-on-surface">Mitigação</h2>
+            <p className="text-on-surface-variant text-small hidden sm:block">Relatórios de Mitigação dos seus alunos.</p>
           </div>
         </div>
         <button
           onClick={openCreateForm}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 text-sm shrink-0"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm shrink-0"
         >
           <Plus size={18} /> Novo Relatório
         </button>
@@ -279,16 +279,16 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-sm font-medium mb-2">{error}</div>
+          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : reports.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <FileText className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-            <p className="text-sm font-semibold text-slate-600">Nenhum relatório criado ainda.</p>
+          <div className="text-center py-16 text-on-surface-variant/70">
+            <FileText className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhum relatório criado ainda.</p>
           </div>
         ) : (
           reports.map(r => {
@@ -297,16 +297,16 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
               <button
                 key={r.id}
                 onClick={() => setActiveReport(r)}
-                className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 rounded-2xl transition text-left"
+                className="w-full flex items-center gap-3 p-4 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-bold text-slate-800 text-sm">{student?.name || 'Aluno removido'}</p>
+                    <p className="font-bold text-on-surface text-sm">{student?.name || 'Aluno removido'}</p>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </div>
-                  <p className="text-slate-400 text-xs mt-0.5">Etapa {r.current_step}/8 · Atualizado em {formatDate(r.updated_at)}</p>
+                  <p className="text-on-surface-variant/70 text-xs mt-0.5">Etapa {r.current_step}/8 · Atualizado em {formatDate(r.updated_at)}</p>
                 </div>
               </button>
             );
