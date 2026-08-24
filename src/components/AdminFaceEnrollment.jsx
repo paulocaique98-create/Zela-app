@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Camera, Loader2, UserX, Search, ArrowLeft, RefreshCw, Check } from 'lucide-react';
+import { X, Camera, Loader2, UserX, Search, ArrowLeft, RefreshCw, Check, Trash2, ShieldCheck } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
@@ -61,9 +61,12 @@ function evaluateFramePosition(box, videoWidth, videoHeight, containerRect, oval
 // captura a foto AO VIVO pela câmera (nunca por upload de arquivo do
 // dispositivo — evita fotos antigas/de terceiros sendo usadas na biometria).
 export default function AdminFaceEnrollment({ authorized, togglePhoto, students, currentUser, onClose }) {
+  const [tab, setTab] = useState('pending'); // 'pending' | 'enrolled'
   const [search, setSearch] = useState('');
   const [studentsByPersonId, setStudentsByPersonId] = useState({});
   const [cameraFor, setCameraFor] = useState(null); // pessoa sendo fotografada agora
+  const [removeTarget, setRemoveTarget] = useState(null); // pessoa com remoção de foto pendente de confirmação
+  const [isRemoving, setIsRemoving] = useState(false);
   const [error, setError] = useState('');
 
   const pending = useMemo(
@@ -71,12 +74,22 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
     [authorized]
   );
 
+  // Quem já tem foto/biometria cadastrada — aba onde a escola pode remover
+  // uma foto pra liberar o responsável a cadastrar uma nova.
+  const enrolled = useMemo(
+    () => (authorized || []).filter(p => p.photo_url || p.hasPhoto || p.has_biometrics),
+    [authorized]
+  );
+
+  const activeList = tab === 'pending' ? pending : enrolled;
+
   // Monta um índice pessoa -> nomes dos filhos, pra permitir buscar tanto pelo
-  // nome do responsável quanto pelo nome da criança.
+  // nome do responsável quanto pelo nome da criança (usado nas duas abas).
   useEffect(() => {
     let cancelled = false;
     const buildIndex = async () => {
-      const familyIds = [...new Set(pending.map(p => p.family_id).filter(Boolean))];
+      const all = authorized || [];
+      const familyIds = [...new Set(all.map(p => p.family_id).filter(Boolean))];
       if (familyIds.length === 0) return;
 
       const byFamilyId = new Map();
@@ -99,7 +112,7 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
 
       if (cancelled) return;
       const index = {};
-      pending.forEach(p => {
+      all.forEach(p => {
         const names = new Set(byFamilyId.get(p.family_id) || []);
         guardianLinks.filter(l => l.guardian_id === p.family_id).forEach(l => {
           const name = studentsById.get(l.student_id);
@@ -111,16 +124,32 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
     };
     buildIndex();
     return () => { cancelled = true; };
-  }, [pending, students, currentUser?.school_id]);
+  }, [authorized, students, currentUser?.school_id]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return pending;
-    return pending.filter(p => {
+    if (!term) return activeList;
+    return activeList.filter(p => {
       if (p.name?.toLowerCase().includes(term)) return true;
       return (studentsByPersonId[p.id] || []).some(name => name.toLowerCase().includes(term));
     });
-  }, [pending, search, studentsByPersonId]);
+  }, [activeList, search, studentsByPersonId]);
+
+  // Remove a foto/biometria da pessoa — ela volta a aparecer em "Pendentes"
+  // e o responsável (ou a escola) pode cadastrar uma foto nova no lugar.
+  const confirmRemovePhoto = async () => {
+    if (!removeTarget) return;
+    setIsRemoving(true);
+    try {
+      await togglePhoto(removeTarget.id, null, null);
+      setRemoveTarget(null);
+    } catch (err) {
+      console.error(err);
+      setError('Erro ao remover a foto. Tente novamente.');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={cameraFor ? undefined : onClose}>
@@ -144,8 +173,8 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
                   <Camera size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-h3 text-on-surface">Cadastrar Foto de Responsáveis</h2>
-                  <p className="text-xs text-on-surface-variant">Apenas quem ainda não tem foto cadastrada</p>
+                  <h2 className="text-h3 text-on-surface">Biometria de Responsáveis</h2>
+                  <p className="text-xs text-on-surface-variant">Cadastre novas fotos ou remova uma já cadastrada</p>
                 </div>
               </div>
               <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
@@ -153,8 +182,30 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
               </button>
             </div>
 
-            {pending.length > 0 && (
-              <div className="px-5 pt-4 shrink-0">
+            {/* Abas: Pendentes (cadastrar) / Já Cadastrados (remover) */}
+            <div className="px-5 pt-4 shrink-0">
+              <div className="flex gap-1 p-1 bg-surface-container-low rounded-xl">
+                <button
+                  onClick={() => { setTab('pending'); setSearch(''); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg transition ${
+                    tab === 'pending' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <Camera size={14} /> Pendentes ({pending.length})
+                </button>
+                <button
+                  onClick={() => { setTab('enrolled'); setSearch(''); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg transition ${
+                    tab === 'enrolled' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <ShieldCheck size={14} /> Já Cadastrados ({enrolled.length})
+                </button>
+              </div>
+            </div>
+
+            {activeList.length > 0 && (
+              <div className="px-5 pt-3 shrink-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/70" />
                   <input
@@ -173,10 +224,12 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
                 <div className="p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium">{error}</div>
               )}
 
-              {pending.length === 0 ? (
+              {activeList.length === 0 ? (
                 <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
                   <UserX className="mx-auto h-10 w-10 text-outline-variant mb-3" />
-                  <p className="text-on-surface-variant font-medium">Todos os responsáveis já têm foto cadastrada</p>
+                  <p className="text-on-surface-variant font-medium">
+                    {tab === 'pending' ? 'Todos os responsáveis já têm foto cadastrada' : 'Nenhum responsável com foto cadastrada ainda'}
+                  </p>
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
@@ -187,8 +240,12 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
                 filtered.map(person => (
                   <div key={person.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
-                        <Camera size={16} className="text-on-surface-variant/70" />
+                      <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm overflow-hidden">
+                        {tab === 'enrolled' && person.photo_url ? (
+                          <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Camera size={16} className="text-on-surface-variant/70" />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-sm text-on-surface break-words">{person.name}</p>
@@ -197,12 +254,21 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => { setError(''); setCameraFor(person); }}
-                      className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-outline-variant px-3 py-2 rounded-lg shadow-sm shrink-0 text-primary hover:bg-primary/10 hover:border-primary/20 transition"
-                    >
-                      <Camera size={14} /> Cadastrar
-                    </button>
+                    {tab === 'pending' ? (
+                      <button
+                        onClick={() => { setError(''); setCameraFor(person); }}
+                        className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-outline-variant px-3 py-2 rounded-lg shadow-sm shrink-0 text-primary hover:bg-primary/10 hover:border-primary/20 transition"
+                      >
+                        <Camera size={14} /> Cadastrar
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { setError(''); setRemoveTarget(person); }}
+                        className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-red-200 px-3 py-2 rounded-lg shadow-sm shrink-0 text-red-600 hover:bg-red-50 transition"
+                      >
+                        <Trash2 size={14} /> Remover Foto
+                      </button>
+                    )}
                   </div>
                 ))
               )}
@@ -210,6 +276,18 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
           </>
         )}
       </div>
+
+      {removeTarget && (
+        <ConfirmModal
+          title="Remover foto cadastrada?"
+          message={`A foto e a biometria de ${removeTarget.name} serão apagadas. ${removeTarget.name} deixará de ser reconhecido(a) no check-in/check-out até que uma nova foto seja cadastrada.`}
+          confirmLabel="Remover Foto"
+          danger
+          isLoading={isRemoving}
+          onConfirm={confirmRemovePhoto}
+          onCancel={() => setRemoveTarget(null)}
+        />
+      )}
     </div>
   );
 }

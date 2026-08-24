@@ -594,6 +594,17 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     }
   };
 
+  // Após concluir o check-in/check-out, a tela "Escanear Próximo" fica parada
+  // esperando alguém tocar o botão manualmente — em kiosk, isso trava a fila.
+  // Depois de 3s parados nela, volta sozinha para o reconhecimento facial.
+  useEffect(() => {
+    if (!actionDone) return;
+    const timer = setTimeout(() => {
+      handleResetScanner();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [actionDone]);
+
   // Só dispara a contagem regressiva depois que o match ficar estável por 1s
   // seguido — mesma lógica do Cadastro de Foto (evita que uma confirmação
   // instável de um único frame já inicie a contagem).

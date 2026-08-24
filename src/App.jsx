@@ -470,7 +470,8 @@ export default function App() {
         has_biometrics: a.face_descriptor != null,
         status: a.status,
         emergencyOrder: a.emergency_order,
-        temporaryUntil: a.temporary_until
+        temporaryUntil: a.temporary_until,
+        family_id: a.family_id
       }));
       setAuthorized(formattedAuth);
 
