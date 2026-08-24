@@ -61,6 +61,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     setOpenAccordion(openAccordion === name ? null : name);
   };
 
+  // Controla o expandir/recolher da sidebar no desktop via estado (não só
+  // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
+  // item, mesmo que o mouse ainda esteja em cima do menu.
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const go = (tab) => {
+    setAdminTab(tab);
+    registerClick(tab);
+    setIsMobileMenuOpen(false);
+    setIsSidebarExpanded(false);
+  };
+
   const features = currentSchool?.features_enabled || {};
   const localPrefs = JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool?.id}`) || '{}');
 
@@ -107,25 +118,28 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       ></div>
 
       <aside
-        className={`group fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 md:w-16 md:hover:w-[280px] shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+        data-expanded={isSidebarExpanded}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
         <div className="h-full flex flex-col min-h-0">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
-            <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => { setAdminTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }} />
+            <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* CADASTROS */}
             {showCadastros && (
               <SidebarGroup
                 label="Cadastros"
                 icon={FolderPlus}
-                isOpen={openAccordion === 'cadastros' || ['register', 'cadastro-comunicados', 'cadastro-funcionarios'].includes(adminTab)}
+                isOpen={openAccordion === 'cadastros'}
                 onToggle={() => toggleAccordion('cadastros')}
               >
-                <SidebarItem active={adminTab === 'register'} icon={FolderPlus} label="Usuários" onClick={() => { setAdminTab('register'); registerClick('register'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'register'} icon={FolderPlus} label="Usuários" onClick={() => go('register')} />
                 {showComunicados && (
-                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => { setAdminTab('cadastro-comunicados'); registerClick('cadastro-comunicados'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
                 )}
-                <SidebarItem active={adminTab === 'cadastro-funcionarios'} icon={Users} label="Funcionários" onClick={() => { setAdminTab('cadastro-funcionarios'); registerClick('cadastro-funcionarios'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'cadastro-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('cadastro-funcionarios')} />
               </SidebarGroup>
             )}
 
@@ -134,12 +148,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <SidebarGroup
                 label="Gerenciamento"
                 icon={Folders}
-                isOpen={openAccordion === 'gerenciamento' || ['users', 'students', 'gerenciar-funcionarios'].includes(adminTab)}
+                isOpen={openAccordion === 'gerenciamento'}
                 onToggle={() => toggleAccordion('gerenciamento')}
               >
-                <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" onClick={() => { setAdminTab('users'); registerClick('users'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'students'} icon={Users} label="Alunos" onClick={() => { setAdminTab('students'); registerClick('students'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'gerenciar-funcionarios'} icon={Users} label="Funcionários" onClick={() => { setAdminTab('gerenciar-funcionarios'); registerClick('gerenciar-funcionarios'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" onClick={() => go('users')} />
+                <SidebarItem active={adminTab === 'students'} icon={Users} label="Alunos" onClick={() => go('students')} />
+                <SidebarItem active={adminTab === 'gerenciar-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('gerenciar-funcionarios')} />
               </SidebarGroup>
             )}
 
@@ -148,11 +162,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <SidebarGroup
                 label="Formulários"
                 icon={FileText}
-                isOpen={openAccordion === 'formularios' || ['matriculas', 'ficha-medica'].includes(adminTab)}
+                isOpen={openAccordion === 'formularios'}
                 onToggle={() => toggleAccordion('formularios')}
               >
-                <SidebarItem active={adminTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => { setAdminTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => { setAdminTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => go('matriculas')} />
+                <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => go('ficha-medica')} />
               </SidebarGroup>
             )}
 
@@ -162,14 +176,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 label="Check-in/out"
                 icon={ShieldCheck}
                 badge={monitorStudents.length > 0 ? monitorStudents.length : null}
-                isOpen={openAccordion === 'checkin' || ['monitor', 'kiosk', 'presence', 'history', 'horas-extras'].includes(adminTab)}
+                isOpen={openAccordion === 'checkin'}
                 onToggle={() => toggleAccordion('checkin')}
               >
-                <SidebarItem active={adminTab === 'monitor'} icon={ShieldCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => { setAdminTab('monitor'); registerClick('monitor'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'kiosk'} icon={Smartphone} label="Autoatendimento" onClick={() => { setAdminTab('kiosk'); registerClick('kiosk'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => { setAdminTab('presence'); registerClick('presence'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => { setAdminTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => { setAdminTab('horas-extras'); registerClick('horas-extras'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'monitor'} icon={ShieldCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => go('monitor')} />
+                <SidebarItem active={adminTab === 'kiosk'} icon={Smartphone} label="Autoatendimento" onClick={() => go('kiosk')} />
+                <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
+                <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
+                <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => go('horas-extras')} />
               </SidebarGroup>
             )}
 
@@ -178,11 +192,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <SidebarGroup
                 label="Relatórios"
                 icon={FileText}
-                isOpen={openAccordion === 'relatorios' || RELATORIOS_SUBMENU.some(r => r.key === adminTab)}
+                isOpen={openAccordion === 'relatorios'}
                 onToggle={() => toggleAccordion('relatorios')}
               >
                 {RELATORIOS_SUBMENU.map(r => (
-                  <SidebarItem key={r.key} active={adminTab === r.key} icon={FileText} label={r.label} onClick={() => { setAdminTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem key={r.key} active={adminTab === r.key} icon={FileText} label={r.label} onClick={() => go(r.key)} />
                 ))}
               </SidebarGroup>
             )}
@@ -192,17 +206,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
-                isOpen={openAccordion === 'academico' || ['calendario', 'mural-fotos', 'cardapio'].includes(adminTab)}
+                isOpen={openAccordion === 'academico'}
                 onToggle={() => toggleAccordion('academico')}
               >
                 {showCalendario && (
-                  <SidebarItem active={adminTab === 'calendario'} icon={CalendarDays} label="Calendário" onClick={() => { setAdminTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={adminTab === 'calendario'} icon={CalendarDays} label="Calendário" onClick={() => go('calendario')} />
                 )}
                 {showMural && (
-                  <SidebarItem active={adminTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => { setAdminTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={adminTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => go('mural-fotos')} />
                 )}
                 {showCardapio && (
-                  <SidebarItem active={adminTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => { setAdminTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={adminTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
                 )}
               </SidebarGroup>
             )}
@@ -212,11 +226,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               <SidebarGroup
                 label="Sistema"
                 icon={Settings}
-                isOpen={openAccordion === 'sistema' || ['auditoria', 'settings'].includes(adminTab)}
+                isOpen={openAccordion === 'sistema'}
                 onToggle={() => toggleAccordion('sistema')}
               >
-                <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => { setAdminTab('auditoria'); registerClick('auditoria'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => { setAdminTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => go('auditoria')} />
+                <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
               </SidebarGroup>
             )}
           </nav>
@@ -502,14 +516,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
                 isChatExpanded
-                  ? 'inset-3 sm:inset-6 rounded-zela-xl'
-                  : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-zela-xl slide-in-from-bottom-4'
+                  ? 'sm:inset-6 rounded-zela-xl'
+                  : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'
               }`}>
                 <button
                   onClick={() => setIsChatExpanded(e => !e)}
-                  className="absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
+                  className="hidden sm:block absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
                   title={isChatExpanded ? 'Recolher' : 'Expandir'}
                 >
                   {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}

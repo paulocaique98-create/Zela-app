@@ -121,6 +121,17 @@ export default function FamilyPortal({
     setOpenAccordion(openAccordion === name ? null : name);
   };
 
+  // Controla o expandir/recolher da sidebar no desktop via estado (não só
+  // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
+  // item, mesmo que o mouse ainda esteja em cima do menu.
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const go = (tab) => {
+    setFamilyTab(tab);
+    registerClick(tab);
+    setIsMobileMenuOpen(false);
+    setIsSidebarExpanded(false);
+  };
+
   const features = currentSchool?.features_enabled || {};
 
   // Dois grupos de flag por design: os módulos "core" (existiam antes do sistema
@@ -149,22 +160,25 @@ export default function FamilyPortal({
       ></div>
 
       <aside
-        className={`group fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 md:w-16 md:hover:w-[280px] shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+        data-expanded={isSidebarExpanded}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
         <div className="h-full flex flex-col min-h-0">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
-            <SidebarItem active={familyTab === 'home'} icon={Home} label="Início" onClick={() => { setFamilyTab('home'); registerClick('home'); setIsMobileMenuOpen(false); }} />
+            <SidebarItem active={familyTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* FORMULÁRIOS */}
             {showFormularios && (
               <SidebarGroup
                 label="Formulários"
                 icon={FileText}
-                isOpen={openAccordion === 'formularios' || ['matriculas', 'ficha-medica'].includes(familyTab)}
+                isOpen={openAccordion === 'formularios'}
                 onToggle={() => toggleAccordion('formularios')}
               >
-                <SidebarItem active={familyTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => { setFamilyTab('matriculas'); registerClick('matriculas'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={familyTab === 'ficha-medica'} icon={HeartPulse} label="Ficha Médica" onClick={() => { setFamilyTab('ficha-medica'); registerClick('ficha-medica'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => go('matriculas')} />
+                <SidebarItem active={familyTab === 'ficha-medica'} icon={HeartPulse} label="Ficha Médica" onClick={() => go('ficha-medica')} />
               </SidebarGroup>
             )}
 
@@ -173,11 +187,11 @@ export default function FamilyPortal({
               <SidebarGroup
                 label="Gerenciamento"
                 icon={Folders}
-                isOpen={openAccordion === 'gerenciamento' || ['gerenciar-responsaveis', 'registration'].includes(familyTab)}
+                isOpen={openAccordion === 'gerenciamento'}
                 onToggle={() => toggleAccordion('gerenciamento')}
               >
-                <SidebarItem active={familyTab === 'gerenciar-responsaveis'} icon={Users} label="Responsáveis" onClick={() => { setFamilyTab('gerenciar-responsaveis'); registerClick('gerenciar-responsaveis'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={familyTab === 'registration'} icon={ClipboardList} label="Dados Cadastrais" onClick={() => { setFamilyTab('registration'); registerClick('registration'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'gerenciar-responsaveis'} icon={Users} label="Responsáveis" onClick={() => go('gerenciar-responsaveis')} />
+                <SidebarItem active={familyTab === 'registration'} icon={ClipboardList} label="Dados Cadastrais" onClick={() => go('registration')} />
               </SidebarGroup>
             )}
 
@@ -186,12 +200,12 @@ export default function FamilyPortal({
               <SidebarGroup
                 label="Check-in/out"
                 icon={ShieldCheck}
-                isOpen={openAccordion === 'checkin' || ['acompanhamento', 'authorized', 'history'].includes(familyTab)}
+                isOpen={openAccordion === 'checkin'}
                 onToggle={() => toggleAccordion('checkin')}
               >
-                <SidebarItem active={familyTab === 'acompanhamento'} icon={ShieldCheck} label="Acompanhamento" onClick={() => { setFamilyTab('acompanhamento'); registerClick('acompanhamento'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={familyTab === 'authorized'} icon={QrCode} label="Autorizados" onClick={() => { setFamilyTab('authorized'); registerClick('authorized'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem active={familyTab === 'history'} icon={ClipboardList} label="Histórico Geral" onClick={() => { setFamilyTab('history'); registerClick('history'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem active={familyTab === 'acompanhamento'} icon={ShieldCheck} label="Acompanhamento" onClick={() => go('acompanhamento')} />
+                <SidebarItem active={familyTab === 'authorized'} icon={QrCode} label="Autorizados" onClick={() => go('authorized')} />
+                <SidebarItem active={familyTab === 'history'} icon={ClipboardList} label="Histórico Geral" onClick={() => go('history')} />
               </SidebarGroup>
             )}
 
@@ -201,7 +215,7 @@ export default function FamilyPortal({
                 label="Relatórios"
                 icon={FileText}
                 badge={mitigacaoUnread > 0 ? mitigacaoUnread : null}
-                isOpen={openAccordion === 'relatorios' || FAMILY_RELATORIOS_SUBMENU.some(r => r.key === familyTab)}
+                isOpen={openAccordion === 'relatorios'}
                 onToggle={() => toggleAccordion('relatorios')}
               >
                 {FAMILY_RELATORIOS_SUBMENU.map(r => (
@@ -211,7 +225,7 @@ export default function FamilyPortal({
                     icon={FileText}
                     label={r.label}
                     badge={r.key === 'rel-mitigacao' && mitigacaoUnread > 0 ? mitigacaoUnread : null}
-                    onClick={() => { setFamilyTab(r.key); registerClick(r.key); setIsMobileMenuOpen(false); }}
+                    onClick={() => go(r.key)}
                   />
                 ))}
               </SidebarGroup>
@@ -222,26 +236,26 @@ export default function FamilyPortal({
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
-                isOpen={openAccordion === 'academico' || ['calendario', 'comunicados', 'mural-fotos', 'cardapio'].includes(familyTab)}
+                isOpen={openAccordion === 'academico'}
                 onToggle={() => toggleAccordion('academico')}
               >
                 {showCalendario && (
-                  <SidebarItem active={familyTab === 'calendario'} icon={CalendarDays} label="Calendário Escolar" onClick={() => { setFamilyTab('calendario'); registerClick('calendario'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={familyTab === 'calendario'} icon={CalendarDays} label="Calendário Escolar" onClick={() => go('calendario')} />
                 )}
                 {showComunicados && (
-                  <SidebarItem active={familyTab === 'comunicados'} icon={Bell} label="Comunicados" onClick={() => { setFamilyTab('comunicados'); registerClick('comunicados'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={familyTab === 'comunicados'} icon={Bell} label="Comunicados" onClick={() => go('comunicados')} />
                 )}
                 {showMural && (
-                  <SidebarItem active={familyTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => { setFamilyTab('mural-fotos'); registerClick('mural-fotos'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={familyTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => go('mural-fotos')} />
                 )}
                 {showCardapio && (
-                  <SidebarItem active={familyTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => { setFamilyTab('cardapio'); registerClick('cardapio'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem active={familyTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
                 )}
               </SidebarGroup>
             )}
 
             {showConfiguracoes && (
-              <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => { setFamilyTab('settings'); registerClick('settings'); setIsMobileMenuOpen(false); }} />
+              <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
             )}
           </nav>
         </div>
@@ -252,12 +266,12 @@ export default function FamilyPortal({
         
         {/* BANNER NOTIFICAÇÕES PUSH */}
         {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2 text-amber-800 text-sm font-medium">
-              <Bell size={18} className="text-amber-600" />
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3 justify-between shrink-0">
+            <div className="flex items-center gap-2 text-amber-800 text-sm font-medium min-w-0 flex-1">
+              <Bell size={18} className="text-amber-600 shrink-0" />
               <span className="truncate">Ative as notificações para receber avisos de check-in</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
                 Ativar
               </button>
@@ -323,14 +337,14 @@ export default function FamilyPortal({
             )}
           </button>
           {isChatOpen && (
-            <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 ${
+            <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
               isChatExpanded
-                ? 'inset-3 sm:inset-6 rounded-zela-xl'
-                : 'bottom-24 right-5 w-[calc(100vw-2.5rem)] max-w-sm h-[70vh] max-h-[600px] sm:w-96 rounded-zela-xl slide-in-from-bottom-4'
+                ? 'sm:inset-6 rounded-zela-xl'
+                : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'
             }`}>
               <button
                 onClick={() => setIsChatExpanded(e => !e)}
-                className="absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
+                className="hidden sm:block absolute top-4 right-4 z-10 p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-sm transition"
                 title={isChatExpanded ? 'Recolher' : 'Expandir'}
               >
                 {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}

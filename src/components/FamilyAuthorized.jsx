@@ -196,6 +196,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
         <ConfirmModal
           title="Consentimento para uso de biometria"
           message={`Ao continuar, você autoriza o uso da foto e dos dados biométricos faciais de ${pendingConsent.person.name} exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD). Você pode remover essa autorização e os dados a qualquer momento.`}
+          confirmLabel="Concluir"
           danger={false}
           onConfirm={processCapture}
           onCancel={() => setPendingConsent(null)}

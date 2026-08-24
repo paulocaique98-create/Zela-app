@@ -252,95 +252,135 @@ export default function DeveloperPanel({ currentUser }) {
         </button>
       </div>
 
-      {/* Body: Table + Global Logo Config */}
+      {/* Body: Cards (mobile) / Table (desktop) + Global Logo Config */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-4">
-        {/* Table */}
-        <div className="bg-white rounded-zela-lg shadow-sm border border-outline-variant overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant text-xs uppercase tracking-wider font-bold">
-                  <th className="px-6 py-4">Código</th>
-                  <th className="px-6 py-4">Escola / Empresa</th>
-                  <th className="px-6 py-4">Plano</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Ações</th>
-                </tr>
-              </thead>
-            <tbody className="divide-y divide-outline-variant/30">
-              {isLoading ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-on-surface-variant">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-                    Carregando tenants...
-                  </td>
-                </tr>
-              ) : filteredSchools.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-on-surface-variant">
-                    Nenhuma escola encontrada.
-                  </td>
-                </tr>
-              ) : (
-                filteredSchools.map((school) => (
-                  <tr key={school.id} className={`hover:bg-surface-container-low transition ${!school.is_active ? 'opacity-60 bg-surface-container-low' : ''}`}>
-                    <td className="px-6 py-4">
-                      <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md text-sm border border-primary/10">
+        {isLoading ? (
+          <div className="bg-white rounded-zela-lg shadow-sm border border-outline-variant py-12 text-center text-on-surface-variant">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+            Carregando tenants...
+          </div>
+        ) : filteredSchools.length === 0 ? (
+          <div className="bg-white rounded-zela-lg shadow-sm border border-outline-variant py-12 text-center text-on-surface-variant">
+            Nenhuma escola encontrada.
+          </div>
+        ) : (
+          <>
+            {/* CARDS — mobile/tablet: nenhuma coluna escondida atrás de scroll horizontal */}
+            <div className="md:hidden space-y-3">
+              {filteredSchools.map((school) => (
+                <div key={school.id} className={`bg-white rounded-zela-lg shadow-sm border border-outline-variant p-4 ${!school.is_active ? 'opacity-60' : ''}`}>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md text-xs border border-primary/10">
                         {school.school_code}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-on-surface">{school.name}</p>
-                      <p className="text-xs text-on-surface-variant">{school.cnpj || 'Sem CNPJ'} • {school.email}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                          'bg-surface-container text-on-surface-variant border-outline-variant'
-                        }`}>
-                        {school.plan}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${school.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${school.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        {school.is_active ? 'Ativa' : 'Suspensa'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenModal(school)}
-                          className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
-                          title="Editar escola"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => toggleStatus(school.id, school.is_active)}
-                          className={`p-2 rounded-lg transition ${school.is_active
-                              ? 'text-on-surface-variant/70 hover:text-amber-600 hover:bg-amber-50'
-                              : 'text-on-surface-variant/70 hover:text-green-600 hover:bg-green-50'
-                            }`}
-                          title={school.is_active ? "Suspender acesso" : "Reativar acesso"}
-                        >
-                          <Power size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSchool(school.id, school.name, school.school_code)}
-                          className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition ml-2"
-                          title="Excluir escola permanentemente"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <p className="font-bold text-on-surface mt-2">{school.name}</p>
+                      <p className="text-xs text-on-surface-variant truncate">{school.cnpj || 'Sem CNPJ'} • {school.email}</p>
+                    </div>
+                    <span className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${school.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${school.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      {school.is_active ? 'Ativa' : 'Suspensa'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 pt-3 border-t border-outline-variant/60">
+                    <span className={`text-xs font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-surface-container text-on-surface-variant border-outline-variant'}`}>
+                      {school.plan}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleOpenModal(school)} className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition" title="Editar escola">
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => toggleStatus(school.id, school.is_active)}
+                        className={`p-2 rounded-lg transition ${school.is_active ? 'text-on-surface-variant/70 hover:text-amber-600 hover:bg-amber-50' : 'text-on-surface-variant/70 hover:text-green-600 hover:bg-green-50'}`}
+                        title={school.is_active ? 'Suspender acesso' : 'Reativar acesso'}
+                      >
+                        <Power size={18} />
+                      </button>
+                      <button onClick={() => handleDeleteSchool(school.id, school.name, school.school_code)} className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Excluir escola permanentemente">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* TABELA — desktop */}
+            <div className="hidden md:block bg-white rounded-zela-lg shadow-sm border border-outline-variant overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">Código</th>
+                      <th className="px-6 py-4">Escola / Empresa</th>
+                      <th className="px-6 py-4">Plano</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/30">
+                    {filteredSchools.map((school) => (
+                      <tr key={school.id} className={`hover:bg-surface-container-low transition ${!school.is_active ? 'opacity-60 bg-surface-container-low' : ''}`}>
+                        <td className="px-6 py-4">
+                          <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md text-sm border border-primary/10">
+                            {school.school_code}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-on-surface">{school.name}</p>
+                          <p className="text-xs text-on-surface-variant">{school.cnpj || 'Sem CNPJ'} • {school.email}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                              'bg-surface-container text-on-surface-variant border-outline-variant'
+                            }`}>
+                            {school.plan}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${school.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${school.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            {school.is_active ? 'Ativa' : 'Suspensa'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenModal(school)}
+                              className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                              title="Editar escola"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => toggleStatus(school.id, school.is_active)}
+                              className={`p-2 rounded-lg transition ${school.is_active
+                                  ? 'text-on-surface-variant/70 hover:text-amber-600 hover:bg-amber-50'
+                                  : 'text-on-surface-variant/70 hover:text-green-600 hover:bg-green-50'
+                                }`}
+                              title={school.is_active ? "Suspender acesso" : "Reativar acesso"}
+                            >
+                              <Power size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSchool(school.id, school.name, school.school_code)}
+                              className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition ml-2"
+                              title="Excluir escola permanentemente"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modal form */}
@@ -552,8 +592,6 @@ export default function DeveloperPanel({ currentUser }) {
           onCancel={() => setConfirmDeleteSchool(null)}
         />
       )}
-
-      </div>
     </div>
   );
 }

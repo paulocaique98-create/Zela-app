@@ -6,11 +6,17 @@ import { ChevronDown } from 'lucide-react';
 // não guarda estado próprio, só recebe onClick já resolvido pelo caller.
 // Compartilhado entre os portais (Admin, Família, Professor, Developer) para
 // manter a mesma sidebar retrátil (ícone-only, expande no hover) em todos.
+//
+// O expandir/recolher usa um grupo NOMEADO controlado por atributo de dados
+// (group-data-[expanded=true]/side:...) em vez do :hover puro do CSS — o
+// hover sozinho não dá pra "desligar" via JS enquanto o mouse ainda está em
+// cima do menu, e precisamos disso pra recolher no clique de um item mesmo
+// sem o mouse ter saído da sidebar.
 export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium transition-all md:justify-center md:group-hover:justify-start ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium transition-all md:justify-center md:group-data-[expanded=true]/side:justify-start ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
     >
       <span className="relative shrink-0">
         <Icon size={18} />
@@ -20,7 +26,7 @@ export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
           </span>
         ) : null}
       </span>
-      <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-hover:inline">{label}</span>
+      <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
     </button>
   );
 }
@@ -32,7 +38,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, child
     <div>
       <button
         onClick={onToggle}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium transition-all md:justify-center md:group-hover:justify-start ${isOpen ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-zela-md text-sm font-medium transition-all md:justify-center md:group-data-[expanded=true]/side:justify-start ${isOpen ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
       >
         <span className="relative shrink-0">
           <Icon size={18} />
@@ -42,10 +48,10 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, child
             </span>
           ) : null}
         </span>
-        <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-hover:inline">{label}</span>
-        <ChevronDown size={16} className={`shrink-0 transition-transform duration-200 md:hidden md:group-hover:block ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
+        <ChevronDown size={16} className={`shrink-0 transition-transform duration-200 md:hidden md:group-data-[expanded=true]/side:block ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      <div className={`md:hidden md:group-hover:grid grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+      <div className={`md:hidden md:group-data-[expanded=true]/side:grid grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="overflow-hidden">
           <div className="flex flex-col gap-0.5 pl-6 pr-1 pt-1 pb-1">
             {children}

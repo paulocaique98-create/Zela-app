@@ -506,6 +506,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
         <ConfirmModal
           title="Consentimento para uso de biometria"
           message={`Ao continuar, você confirma que ${person.name} (ou seu responsável) autoriza o uso desta foto e dos dados biométricos faciais exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD).`}
+          confirmLabel="Concluir"
           danger={false}
           isLoading={isSaving}
           onConfirm={confirmSave}
