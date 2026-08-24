@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { calcularHorasExtras } from '../utils/attendanceUtils';
+import { printHistoricoReport } from '../lib/printHistorico';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -22,7 +24,7 @@ function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('pt-BR');
 }
 
-export default function FamilyHistory({ currentUser, familyStudents }) {
+export default function FamilyHistory({ currentUser, familyStudents, currentSchool }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +60,7 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
           event_type,
           event_time,
           student_id,
-          students:student_id (name, contracted_hours, users:family_id(name))
+          students:student_id (name, turma, contracted_hours, contracted_exit_time, users:family_id(name))
         `);
 
       if (familyStudents && familyStudents.length > 0) {
@@ -91,20 +93,24 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
             const entryTime = new Date(ev.event_time);
             const nextExit = events.find((e, idx) => idx > i && e.event_type === 'exit');
             const exitTime = nextExit ? new Date(nextExit.event_time) : null;
-            const stayMins = exitTime ? Math.round((exitTime - entryTime) / 60000) : null;
-            const contractedMins = (ev.students?.contracted_hours || 0) * 60;
-            const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
+
+            // Excedente calculado sobre o HORÁRIO FIXO contratado de saída (não
+            // compensa entrada atrasada) — mesma regra e mesma função usadas no
+            // Relatório de Horas Extras, pra não ter duas verdades diferentes.
+            const calculo = calcularHorasExtras(nextExit?.event_time || null, ev.students?.contracted_exit_time);
 
             result.push({
               key: ev.id,
+              studentId: ev.student_id,
               studentName: ev.students?.name || '—',
+              turma: ev.students?.turma || '',
               family: ev.students?.users?.name || '—',
               date: formatDate(ev.event_time),
               entry: formatTime(ev.event_time),
               exit: exitTime ? formatTime(nextExit.event_time) : null,
               contracted: `${ev.students?.contracted_hours || 0}h`,
-              duration: stayMins !== null ? formatMinutes(stayMins) : null,
-              overtime: overtimeMins !== null && overtimeMins > 0 ? formatMinutes(overtimeMins) : null,
+              duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
+              overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
               rawTime: entryTime.getTime(),
             });
 
@@ -135,6 +141,19 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
     return !term || log.studentName.toLowerCase().includes(term);
   });
 
+  const PERIOD_LABELS = { today: 'Hoje', '7days': 'Últimos 7 dias', '30days': 'Últimos 30 dias' };
+  const periodLabel = period === 'custom' && customDate
+    ? formatDate(`${customDate}T00:00:00`)
+    : (PERIOD_LABELS[period] || 'Período selecionado');
+
+  const handleExport = () => {
+    printHistoricoReport({
+      records: filtered,
+      periodLabel,
+      school: currentSchool,
+    });
+  };
+
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header */}
@@ -149,8 +168,9 @@ export default function FamilyHistory({ currentUser, familyStudents }) {
           </div>
         </div>
         <button
-          onClick={() => alert('Exportação de PDF será implementada na próxima versão.')}
-          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-primary hover:bg-primary-container px-4 py-2.5 rounded-zela-md transition shadow-sm shrink-0"
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-primary hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-zela-md transition shadow-sm shrink-0"
         >
           <FileText size={16} /> Exportar Relatório
         </button>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { agruparEventosPorDia } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
+import { printHistoricoReport } from '../lib/printHistorico';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -60,7 +61,7 @@ export default function AdminHistory({ currentSchool }) {
           event_type,
           event_time,
           student_id,
-          students:student_id (name, turma, contracted_hours, users:family_id(name))
+          students:student_id (name, turma, contracted_hours, contracted_exit_time, users:family_id(name))
         `)
         .eq('school_id', schoolId)
         .gte('event_time', startDate)
@@ -76,25 +77,24 @@ export default function AdminHistory({ currentSchool }) {
       const result = groupedLogs.map(group => {
         const entryTime = group.entryLog ? new Date(group.entryLog.event_time) : null;
         const exitTime = group.exitLog ? new Date(group.exitLog.event_time) : null;
-        
-        let stayMins = null;
-        if (entryTime && exitTime) {
-          stayMins = Math.round((exitTime - entryTime) / 60000);
-        }
-        
-        const contractedMins = (group.studentData?.contracted_hours || 0) * 60;
-        const overtimeMins = stayMins !== null ? Math.max(0, stayMins - (contractedMins + 15)) : null;
+
+        // Excedente calculado sobre o HORÁRIO FIXO contratado de saída (não
+        // compensa entrada atrasada) — mesma regra e mesma função usadas no
+        // Relatório de Horas Extras, pra não ter duas verdades diferentes.
+        const calculo = calcularHorasExtras(group.exitLog?.event_time || null, group.studentData?.contracted_exit_time);
 
         return {
           key: `${group.student_id}_${group.date}`,
+          studentId: group.student_id,
           studentName: group.studentData?.name || '—',
+          turma: group.studentData?.turma || '',
           family: group.studentData?.users?.name || '—',
           date: formatDate(group.entryLog?.event_time || group.exitLog?.event_time),
           entry: entryTime ? formatTime(entryTime.toISOString()) : null,
           exit: exitTime ? formatTime(exitTime.toISOString()) : null,
           contracted: `${group.studentData?.contracted_hours || 0}h`,
-          duration: stayMins !== null ? formatMinutes(stayMins) : null,
-          overtime: overtimeMins !== null && overtimeMins > 0 ? formatMinutes(overtimeMins) : null,
+          duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
+          overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
           rawTime: entryTime ? entryTime.getTime() : (exitTime ? exitTime.getTime() : 0),
         };
       });
@@ -115,6 +115,19 @@ export default function AdminHistory({ currentSchool }) {
     return !term || log.studentName.toLowerCase().includes(term) || log.family.toLowerCase().includes(term);
   });
 
+  const PERIOD_LABELS = { today: 'Hoje', '7days': 'Últimos 7 dias', '30days': 'Últimos 30 dias' };
+  const periodLabel = period === 'custom' && customDate
+    ? formatDate(`${customDate}T00:00:00`)
+    : (PERIOD_LABELS[period] || 'Período selecionado');
+
+  const handleExport = () => {
+    printHistoricoReport({
+      records: filtered,
+      periodLabel,
+      school: currentSchool,
+    });
+  };
+
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header */}
@@ -129,8 +142,9 @@ export default function AdminHistory({ currentSchool }) {
           </div>
         </div>
         <button
-          onClick={() => alert('Exportação de PDF será implementada na próxima versão.')}
-          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
         >
           <FileText size={16} /> Exportar Relatório
         </button>

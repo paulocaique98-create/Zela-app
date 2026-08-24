@@ -166,7 +166,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           disabled={filtered.length === 0}
           className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0 w-full sm:w-auto"
         >
-          <Download size={16} /> Exportar CSV
+          <Download size={16} /> Exportar Relatório
         </button>
       </div>
 

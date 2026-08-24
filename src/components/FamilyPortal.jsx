@@ -289,7 +289,7 @@ export default function FamilyPortal({
           {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
           {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} />}
           {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
-          {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} />}
+          {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
           {familyTab === 'registration' && <FamilyRegistrationData currentUser={currentUser} />}
 
           {/* NOVOS PLACEHOLDERS */}
