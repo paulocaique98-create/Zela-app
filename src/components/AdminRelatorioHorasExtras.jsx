@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CalendarDays, Search, X, Clock, FileText, LogIn, LogOut, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
+import { printHorasExtrasReport } from '../lib/printHorasExtras';
 
 function formatTime(isoString) {
   if (!isoString) return '—';
@@ -120,31 +121,18 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   const totalValor = filtered.reduce((acc, log) => acc + log.valor, 0);
   const totalValorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor);
 
-  const exportCSV = () => {
-    const headers = ['Data', 'Aluno', 'Responsavel', 'Entrada', 'Saida', 'Horario Contratado Saida', 'Minutos Excedentes', 'Valor a Cobrar', 'Aprovado por'];
-    const rows = filtered.map(log => [
-      log.date,
-      `"${log.studentName}"`,
-      `"${log.family}"`,
-      log.entry || 'Pendente',
-      log.exit || 'Pendente',
-      log.contractedExit,
-      log.minutos_excedentes > 0 ? log.minutos_excedentes : 0,
-      log.valor.toFixed(2).replace('.', ','),
-      `"${log.approvedBy}"`
-    ]);
-    
-    const csvContent = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF for Excel UTF-8 BOM
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `relatorio_horas_extras_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const PERIOD_LABELS = { today: 'Hoje', '7days': '\u00DAltimos 7 dias', this_month: 'Este m\u00EAs' };
+  const periodLabel = period === 'custom' && customDate
+    ? formatDate(`${customDate}T00:00:00`)
+    : (PERIOD_LABELS[period] || 'Per\u00EDodo selecionado');
+
+  const handleExport = () => {
+    printHorasExtrasReport({
+      records: filtered,
+      periodLabel,
+      school: currentSchool,
+      totals: { totalRegistros, totalMinutosExcedentes, totalValorFormatado },
+    });
   };
 
   return (
@@ -162,7 +150,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         </div>
         
         <button
-          onClick={exportCSV}
+          onClick={handleExport}
           disabled={filtered.length === 0}
           className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0 w-full sm:w-auto"
         >
