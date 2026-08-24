@@ -618,14 +618,28 @@ export default function App() {
     }
   };
 
+  // Exclui o cadastro de Autorizado por completo (não só a foto) — a
+  // família pediu autonomia pra remover entradas erradas/de teste sem
+  // depender do Admin.
+  const deleteAuthorized = async (id) => {
+    const { error } = await supabase.from('authorized_persons').delete().eq('id', id);
+    if (error) throw error;
+    setAuthorized(prev => prev.filter(p => p.id !== id));
+  };
+
   const handleSaveAuth = async (newPerson) => {
     setAuthError('');
     try {
-      // Não deixa cadastrar um "Autorizado" com o mesmo nome de um
+      // Não deixa cadastrar um "Autorizado" com o mesmo nome de OUTRO
       // responsável que já tem login próprio (2º Responsável) vinculado aos
       // mesmos alunos — ele precisa cadastrar a própria biometria pela
       // conta dele em Autorizados, senão duas entradas pro mesmo rosto
       // travam o reconhecimento por ambiguidade (ver caso Hanaynna Schmitz).
+      // O autocadastro (responsável adicionando A SI MESMO) continua
+      // permitido de propósito — é o mecanismo já usado hoje por várias
+      // famílias pra fazer o próprio check-in por reconhecimento facial.
+      const nameTrim = newPerson.name.trim().toLowerCase();
+
       const studentIds = (students || []).map(s => s.id).filter(Boolean);
       if (studentIds.length > 0) {
         const { data: guardianLinks } = await supabase
@@ -641,7 +655,6 @@ export default function App() {
             .select('id, name')
             .in('id', otherGuardianIds);
 
-          const nameTrim = newPerson.name.trim().toLowerCase();
           const conflictingGuardian = (otherGuardians || []).find(g => g.name.trim().toLowerCase() === nameTrim);
           if (conflictingGuardian) {
             setAuthError(`"${newPerson.name}" já é o 2º Responsável cadastrado no sistema, com login próprio. Ele(a) mesmo(a) precisa cadastrar a biometria em Autorizados usando a própria conta — não é necessário adicioná-lo(a) aqui.`);
@@ -994,6 +1007,7 @@ export default function App() {
                   updateStudentStatus={updateStudentStatus}
                   authorized={authorized}
                   togglePhoto={togglePhoto}
+                  deleteAuthorized={deleteAuthorized}
                   onOpenAuthModal={() => { setAuthError(''); setIsAuthModalOpen(true); }}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}

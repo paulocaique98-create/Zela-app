@@ -4,9 +4,10 @@ import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import ConfirmModal from './ConfirmModal';
 
-export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthModal, currentSchool }) {
+export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, currentSchool }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
   const [confirmRemovePhotoId, setConfirmRemovePhotoId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [pendingConsent, setPendingConsent] = useState(null); // { person, file }
   const isBasic = currentSchool?.plan === 'basic';
   const limitReached = isBasic && authorized.length >= 2;
@@ -22,6 +23,22 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
     } finally {
       setIsProcessingId(null);
       setConfirmRemovePhotoId(null);
+    }
+  };
+
+  // Exclui o autorizado por completo (nome, foto e biometria) — diferente
+  // de "Remover Foto", que só limpa a biometria e mantém o cadastro.
+  const performDeleteAuthorized = async () => {
+    const personId = confirmDeleteId;
+    setIsProcessingId(personId);
+    try {
+      await deleteAuthorized(personId);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir autorizado.");
+    } finally {
+      setIsProcessingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -108,6 +125,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
             };
 
             const handleRemovePhoto = () => setConfirmRemovePhotoId(person.id);
+            const handleDeleteAuthorized = () => setConfirmDeleteId(person.id);
 
             return (
               <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-4 transition hover:border-slate-300">
@@ -165,14 +183,21 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
                     </label>
                     
                     {(person.hasPhoto || person.has_biometrics || person.photo_url) && (
-                      <button 
+                      <button
                         onClick={handleRemovePhoto}
                         disabled={isProcessingId === person.id}
-                        className="text-xs text-red-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-red-200 px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-50 w-full sm:w-auto"
+                        className="text-xs text-on-surface-variant font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-outline-variant px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-50 w-full sm:w-auto"
                       >
-                        <Trash2 size={14} /> Remover
+                        <Trash2 size={14} /> Remover Foto
                       </button>
                     )}
+                    <button
+                      onClick={handleDeleteAuthorized}
+                      disabled={isProcessingId === person.id}
+                      className="text-xs text-red-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-red-200 px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-50 w-full sm:w-auto"
+                    >
+                      <Trash2 size={14} /> Excluir
+                    </button>
                   </div>
                 </div>
               </div>
@@ -190,10 +215,21 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
       {confirmRemovePhotoId && (
         <ConfirmModal
           title="Remover biometria"
-          message="Tem certeza que deseja remover a foto e biometria deste autorizado? O acesso por biometria será revogado imediatamente."
+          message="Tem certeza que deseja remover a foto e biometria deste autorizado? O acesso por biometria será revogado imediatamente. O cadastro (nome/parentesco) continua existindo."
           isLoading={isProcessingId === confirmRemovePhotoId}
           onConfirm={performRemovePhoto}
           onCancel={() => setConfirmRemovePhotoId(null)}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Excluir autorizado"
+          message="Isso apaga o cadastro por completo — nome, foto e biometria. Esta ação não pode ser desfeita."
+          danger
+          isLoading={isProcessingId === confirmDeleteId}
+          onConfirm={performDeleteAuthorized}
+          onCancel={() => setConfirmDeleteId(null)}
         />
       )}
 
