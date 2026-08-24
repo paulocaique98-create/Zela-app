@@ -163,23 +163,16 @@ serve(async (req) => {
       throw new Error(`Erro ao vincular aos alunos: ${guardianError.message}`)
     }
 
-    // 7. Inserir em authorized_persons
-    const { error: apError } = await adminClient
-      .from('authorized_persons')
-      .insert([{
-        family_id: newUserId,
-        name,
-        relation: relationship || 'Responsável',
-        has_photo: false,
-        emergency_order: 1,
-        school_id
-      }])
+    // Esta função só cria o 2º Responsável (login próprio) — NÃO cria mais
+    // automaticamente um registro em authorized_persons pra essa pessoa.
+    // "Autorizados" agora é só quem qualquer um dos responsáveis (principal
+    // ou 2º) cadastrar manualmente ali dentro — se o 2º Responsável quiser
+    // aparecer no reconhecimento facial, ele mesmo cadastra a própria
+    // biometria em Autorizados usando o login dele. Evita duas biometrias
+    // pra mesma pessoa (uma auto-criada aqui + outra manual), que travava o
+    // reconhecimento por ambiguidade.
 
-    if (apError) {
-      throw new Error(`Erro ao criar registro em autorizados: ${apError.message}`)
-    }
-
-    // 8. E-mail de boas-vindas — best-effort: se o Resend falhar, não desfaz
+    // 7. E-mail de boas-vindas — best-effort: se o Resend falhar, não desfaz
     // a criação do responsável (ele já foi criado com sucesso e consegue
     // logar normalmente; o e-mail é só uma cortesia).
     try {

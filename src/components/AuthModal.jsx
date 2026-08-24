@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-export default function AuthModal({ authForm, setAuthForm, onClose, onSave }) {
+export default function AuthModal({ authForm, setAuthForm, onClose, onSave, error }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newPerson = {
@@ -28,6 +28,9 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave }) {
         </div>
         
         <form onSubmit={handleSubmit} className="p-5 md:p-6 space-y-4 overflow-y-auto h-full max-h-[calc(100vh-80px)] sm:max-h-none pb-20 sm:pb-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
+          )}
           <div>
             <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
             <input type="text" required value={authForm.name} onChange={e => setAuthForm({...authForm, name: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" placeholder="Ex: Carlos Silva" />

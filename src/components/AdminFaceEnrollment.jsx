@@ -459,7 +459,7 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
       onDone();
     } catch (err) {
       console.error(err);
-      setError('Erro ao processar a biometria.');
+      setError(err.message?.startsWith('Este rosto já está cadastrado') ? err.message : 'Erro ao processar a biometria.');
       setIsSaving(false);
     }
   };

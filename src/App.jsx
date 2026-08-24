@@ -19,6 +19,21 @@ const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const getBrasiliaDateStr = (date = new Date()) =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
+// Mesmo limiar (MATCH_THRESHOLD) usado no reconhecimento ao vivo
+// (AdminFaceScanner) — se duas biometrias ficam mais parecidas que isso,
+// abaixo desse valor o próprio reconhecimento já as trataria como a mesma
+// pessoa, então não faz sentido permitir cadastrar as duas.
+const FACE_DUPLICATE_THRESHOLD = 0.45;
+
+function euclideanDistance(a, b) {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum);
+}
+
 // Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
 const parseShortTime = (timeStr, todayDate = null) => {
   if (!timeStr) return null;
@@ -62,6 +77,7 @@ export default function App() {
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authForm, setAuthForm] = useState({ name: '', relation: 'Outro', emergencyOrder: '', isTemporary: false, temporaryUntil: '' });
+  const [authError, setAuthError] = useState('');
 
   // Emergency State
   const [isEmergency, setIsEmergency] = useState(false);
@@ -541,6 +557,37 @@ export default function App() {
   }, [currentUser, currentPath]);
 
   const togglePhoto = async (id, photoUrl = null, descriptorArray = null, consentGiven = false) => {
+    // Antes de gravar uma biometria nova, garante que esse rosto ainda não
+    // está cadastrado em OUTRO responsável da mesma escola — foi o que
+    // causou a Hanaynna Schmitz ficar irreconhecível: ela tinha duas
+    // biometrias cadastradas (uma em cada conta de família), e o
+    // reconhecimento ao vivo rejeita como "desconhecido" quando dois
+    // cadastros diferentes batem quase igual com o rosto capturado.
+    // Fica FORA do try/catch abaixo de propósito: precisa propagar o erro
+    // pro caller mostrar o aviso, não ser engolido silenciosamente.
+    if (photoUrl && descriptorArray) {
+      const { data: existing, error: existingError } = await supabase
+        .from('authorized_persons')
+        .select('id, name, face_descriptor')
+        .eq('school_id', currentUser.school_id)
+        .neq('id', id)
+        .not('face_descriptor', 'is', null);
+
+      if (!existingError) {
+        const duplicate = (existing || []).find(p => {
+          try {
+            const stored = typeof p.face_descriptor === 'string' ? JSON.parse(p.face_descriptor) : p.face_descriptor;
+            return euclideanDistance(descriptorArray, stored) < FACE_DUPLICATE_THRESHOLD;
+          } catch {
+            return false;
+          }
+        });
+        if (duplicate) {
+          throw new Error(`Este rosto já está cadastrado para "${duplicate.name.trim()}". Cada pessoa só pode ter uma biometria cadastrada no sistema — remova o cadastro duplicado antes de tentar novamente.`);
+        }
+      }
+    }
+
     try {
       const updates = { has_photo: !!photoUrl };
       if (photoUrl) {
@@ -572,7 +619,37 @@ export default function App() {
   };
 
   const handleSaveAuth = async (newPerson) => {
+    setAuthError('');
     try {
+      // Não deixa cadastrar um "Autorizado" com o mesmo nome de um
+      // responsável que já tem login próprio (2º Responsável) vinculado aos
+      // mesmos alunos — ele precisa cadastrar a própria biometria pela
+      // conta dele em Autorizados, senão duas entradas pro mesmo rosto
+      // travam o reconhecimento por ambiguidade (ver caso Hanaynna Schmitz).
+      const studentIds = (students || []).map(s => s.id).filter(Boolean);
+      if (studentIds.length > 0) {
+        const { data: guardianLinks } = await supabase
+          .from('student_guardians')
+          .select('guardian_id')
+          .in('student_id', studentIds)
+          .neq('guardian_id', currentUser.id);
+
+        const otherGuardianIds = [...new Set((guardianLinks || []).map(g => g.guardian_id))];
+        if (otherGuardianIds.length > 0) {
+          const { data: otherGuardians } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', otherGuardianIds);
+
+          const nameTrim = newPerson.name.trim().toLowerCase();
+          const conflictingGuardian = (otherGuardians || []).find(g => g.name.trim().toLowerCase() === nameTrim);
+          if (conflictingGuardian) {
+            setAuthError(`"${newPerson.name}" já é o 2º Responsável cadastrado no sistema, com login próprio. Ele(a) mesmo(a) precisa cadastrar a biometria em Autorizados usando a própria conta — não é necessário adicioná-lo(a) aqui.`);
+            return;
+          }
+        }
+      }
+
       const dbPerson = {
         family_id: currentUser.id,
         name: newPerson.name,
@@ -586,7 +663,12 @@ export default function App() {
 
       const { data, error } = await supabase.from('authorized_persons').insert([dbPerson]).select();
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        setAuthError('Erro ao cadastrar autorizado. Tente novamente.');
+        return;
+      }
+
+      if (data && data.length > 0) {
         const a = data[0];
         setAuthorized([...authorized, {
           id: a.id,
@@ -600,6 +682,8 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
+      setAuthError('Erro ao cadastrar autorizado. Tente novamente.');
+      return;
     }
 
     setIsAuthModalOpen(false);
@@ -910,7 +994,7 @@ export default function App() {
                   updateStudentStatus={updateStudentStatus}
                   authorized={authorized}
                   togglePhoto={togglePhoto}
-                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                  onOpenAuthModal={() => { setAuthError(''); setIsAuthModalOpen(true); }}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
@@ -927,6 +1011,7 @@ export default function App() {
           setAuthForm={setAuthForm}
           onClose={() => setIsAuthModalOpen(false)}
           onSave={handleSaveAuth}
+          error={authError}
         />
       )}
 

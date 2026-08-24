@@ -41,7 +41,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, onOpenAuthMo
           const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
           if (detection) {
             const descriptorArray = Array.from(detection.descriptor);
-            await togglePhoto(person.id, reader.result, descriptorArray, true);
+            try {
+              await togglePhoto(person.id, reader.result, descriptorArray, true);
+            } catch (err) {
+              console.error(err);
+              alert(err.message?.startsWith('Este rosto já está cadastrado') ? err.message : 'Erro ao processar biometria.');
+            }
           } else {
             alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
           }
