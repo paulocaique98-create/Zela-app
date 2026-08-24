@@ -24,6 +24,10 @@ const STYLES = `
   * { box-sizing: border-box; }
   html, body { width: 210mm; max-width: 210mm; margin: 0 auto; overflow-x: hidden; }
   body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; }
+  /* Texto sem espaços (ou com poucos) não tem onde quebrar por padrão —
+     sem isso ele ultrapassa a borda da página em vez de ir pra linha de
+     baixo, mesmo com a largura da página já travada em A4 acima. */
+  p, td, div { overflow-wrap: break-word; word-break: break-word; }
   /* Tabela ocupando o documento inteiro: o <thead> é repetido pelo
      navegador no topo de CADA página impressa/PDF — é a forma mais
      confiável entre navegadores de ter um cabeçalho fixo por página
@@ -34,7 +38,7 @@ const STYLES = `
   .header-logo { text-align: center; }
   .header-logo img { max-height: 56px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto; }
   h1 { text-align: center; font-size: 18px; margin: 12px 0 20px; }
-  table.info { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  table.info { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 24px; }
   table.info td { border: 1px solid #94a3b8; padding: 8px 10px; font-size: 13px; vertical-align: top; }
   table.info td strong { display: inline; }
   .intro { font-size: 13px; line-height: 1.5; margin-bottom: 24px; white-space: pre-line; }
