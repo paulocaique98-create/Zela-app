@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { sendEmail } from '../_shared/resend.ts'
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -178,6 +179,35 @@ serve(async (req) => {
       throw new Error(`Erro ao criar registro em autorizados: ${apError.message}`)
     }
 
+    // 8. E-mail de boas-vindas — best-effort: se o Resend falhar, não desfaz
+    // a criação do responsável (ele já foi criado com sucesso e consegue
+    // logar normalmente; o e-mail é só uma cortesia).
+    try {
+      const { data: schoolData } = await adminClient
+        .from('schools')
+        .select('name')
+        .eq('id', school_id)
+        .single()
+
+      const schoolName = schoolData?.name || 'Zela'
+      const emailResult = await sendEmail({
+        to: email,
+        subject: `Bem-vindo(a) ao ${schoolName} — Portal Zela`,
+        html: `
+          <div style="font-family: Arial, Helvetica, sans-serif; color: #1e293b; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #3525cd;">Bem-vindo(a), ${name}!</h2>
+            <p>Seu acesso ao Portal Zela da <strong>${schoolName}</strong> foi criado com sucesso.</p>
+            <p>Use o e-mail <strong>${email}</strong> e a senha cadastrada para entrar no portal e acompanhar entrada/saída, comunicados e demais informações do(a) aluno(a).</p>
+            <p style="color: #777587; font-size: 12px; margin-top: 24px;">Zela — Gestão Escolar Inteligente</p>
+          </div>
+        `,
+      })
+      if (!emailResult.ok) {
+        console.error('Falha ao enviar e-mail de boas-vindas:', emailResult.error)
+      }
+    } catch (emailErr) {
+      console.error('Erro inesperado ao enviar e-mail de boas-vindas:', emailErr)
+    }
 
     return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
