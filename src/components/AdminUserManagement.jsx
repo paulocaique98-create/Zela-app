@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
 import ConfirmModal from './ConfirmModal';
@@ -36,9 +37,20 @@ export default function AdminUserManagement({ currentUser }) {
 
       const { data: authData, error: authError } = await supabase
         .from('authorized_persons')
-        .select('id, name, relation, photo_url, family_id')
+        .select('id, name, relation, photo_url, photo_storage_path, family_id')
         .eq('school_id', currentUser.school_id);
       if (authError) throw authError;
+
+      // Leitura híbrida em lote (mesma lógica do App.jsx): Storage tem
+      // prioridade, cai pro base64 legado se a pessoa ainda não foi migrada
+      // ou se a signed URL falhar.
+      const pathsToResolve = (authData || []).map(a => a.photo_storage_path).filter(Boolean);
+      const signedUrlByPath = pathsToResolve.length > 0
+        ? await getAuthorizedPersonPhotoSignedUrls(pathsToResolve).catch(() => new Map())
+        : new Map();
+      const resolvePhotoUrl = (ap) => (ap.photo_storage_path
+        ? (signedUrlByPath.get(ap.photo_storage_path) || ap.photo_url || null)
+        : (ap.photo_url || null));
 
       const combinedData = usersData.map(user => {
         const familyAuths = (authData || []).filter(
@@ -49,7 +61,7 @@ export default function AdminUserManagement({ currentUser }) {
         ) || familyAuths.find(ap => ap.relation?.includes('(Titular)'));
         return {
           ...user,
-          photo_url: matchingAuth?.photo_url || null,
+          photo_url: matchingAuth ? resolvePhotoUrl(matchingAuth) : null,
           authorized: familyAuths,
           students: studentsData.filter(s => s.family_id === user.id),
         };

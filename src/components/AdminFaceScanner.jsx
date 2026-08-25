@@ -3,6 +3,7 @@ import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
+import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import ConfirmExitPassword from './ConfirmExitPassword';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
@@ -232,10 +233,15 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         setModelsLoaded(true);
 
         // 2. Busca responsáveis com foto aprovada
+        // Sem photo_url aqui de propósito — a comparação facial só usa
+        // face_descriptor, e photo_url guarda a foto em base64 (pode ser
+        // pesada). Ela é buscada à parte, só da pessoa reconhecida, em
+        // fetchMatchedPersonPhoto() — evita baixar a foto de TODOS os
+        // responsáveis da escola toda vez que o Autoatendimento abre.
         setLoadingText('Buscando dados de responsáveis');
         const { data: authData, error: authError } = await supabase
           .from('authorized_persons')
-          .select('*')
+          .select('id, name, relation, family_id, face_descriptor, status')
           .eq('school_id', currentUser.school_id);
 
         if (authError) throw authError;
@@ -317,6 +323,34 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error('Falha ao carregar imagem: ' + url.substring(0, 60)));
     });
+  };
+
+  // Busca a foto só da pessoa reconhecida (não de todos os cadastrados) —
+  // usada apenas para exibir o confronto visual na tela; nunca bloqueia o
+  // check-in em si (best-effort, se falhar simplesmente não mostra a foto).
+  const fetchMatchedPersonPhoto = async (personId) => {
+    try {
+      const { data } = await supabase
+        .from('authorized_persons')
+        .select('photo_url, photo_storage_path')
+        .eq('id', personId)
+        .single();
+
+      // Leitura híbrida: Storage tem prioridade; se a pessoa ainda não foi
+      // migrada (ou a signed URL falhar por qualquer motivo), cai pro
+      // photo_url legado — nunca deixa o preview quebrado.
+      let resolvedUrl = null;
+      if (data?.photo_storage_path) {
+        resolvedUrl = await getAuthorizedPersonPhotoSignedUrl(data.photo_storage_path).catch(() => null);
+      }
+      if (!resolvedUrl) resolvedUrl = data?.photo_url || null;
+
+      if (resolvedUrl) {
+        setMatchedPerson(prev => (prev && prev.id === personId ? { ...prev, photo_url: resolvedUrl } : prev));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar foto do responsável reconhecido:', err);
+    }
   };
 
   // Busca os alunos vinculados a um responsável reconhecido (1º e 2º Responsável)
@@ -460,6 +494,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                   setMatchStatus('matched');
                   if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
                   setShowAlternative(false);
+                  fetchMatchedPersonPhoto(person.id);
                   const studentsData = await fetchStudentsForPerson(person);
                   if (!cancelled) setMatchedStudents(studentsData);
                 }
@@ -546,6 +581,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
           setMatchedPerson(person);
           setMatchDistance(bestMatch.distance);
           setMatchStatus('matched');
+          fetchMatchedPersonPhoto(person.id);
           const studentsData = await fetchStudentsForPerson(person);
           setMatchedStudents(studentsData);
         } else {
@@ -899,8 +935,12 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                       </div>
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] font-extrabold text-primary uppercase mb-1">Cadastrado</span>
-                        <div className="w-full h-24 rounded-lg overflow-hidden border border-indigo-100">
-                          <img src={matchedPerson.photo_url} alt="Registrado" className="w-full h-full object-cover" />
+                        <div className="w-full h-24 rounded-lg overflow-hidden border border-indigo-100 flex items-center justify-center bg-surface-container">
+                          {matchedPerson.photo_url ? (
+                            <img src={matchedPerson.photo_url} alt="Registrado" className="w-full h-full object-cover" />
+                          ) : (
+                            <Loader2 size={20} className="text-primary animate-spin" />
+                          )}
                         </div>
                       </div>
 
@@ -915,8 +955,12 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                 {/* Person details */}
                 <div className="bg-white p-4 rounded-zela-lg border border-outline-variant shadow-sm flex items-center gap-3">
                   {!capturedImage && (
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-indigo-600 bg-surface-container shrink-0">
-                      <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-indigo-600 bg-surface-container shrink-0 flex items-center justify-center">
+                      {matchedPerson.photo_url ? (
+                        <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
+                      ) : (
+                        <Loader2 size={18} className="text-primary animate-spin" />
+                      )}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">

@@ -3,7 +3,7 @@ import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
-import { preloadFaceModels } from './lib/faceModels';
+import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { navigateTo } from './utils/navigate';
 
 const Login = lazy(() => import('./components/Login'));
@@ -393,7 +393,10 @@ export default function App() {
       }
 
       let studentsQuery = supabase.from('students').select('*').eq('school_id', currentUser.school_id);
-      let authQuery = supabase.from('authorized_persons').select('*').eq('school_id', currentUser.school_id);
+      let authQuery = supabase
+        .from('authorized_persons')
+        .select('id, name, relation, has_photo, photo_url, photo_storage_path, face_descriptor, status, emergency_order, temporary_until, family_id')
+        .eq('school_id', currentUser.school_id);
 
       if (currentUser.role === 'family') {
         const { data: guardianLinks, error: glError } = await supabase
@@ -476,13 +479,25 @@ export default function App() {
       setStudents(formattedStudents);
 
       // Authorized Persons (já carregado pelo Promise.all acima)
+      // Leitura híbrida: quem já tem photo_storage_path (Storage) usa signed
+      // URL; quem ainda só tem photo_url (base64 legado, registros antigos
+      // ainda não migrados) usa o valor direto; sem nenhum dos dois, sem
+      // foto. Busca as signed URLs em LOTE (uma chamada só, não uma por
+      // pessoa) pra não virar N+1 na tela que mais gente carrega no login.
+      const pathsToResolve = (authData || []).map(a => a.photo_storage_path).filter(Boolean);
+      const signedUrlByPath = pathsToResolve.length > 0
+        ? await getAuthorizedPersonPhotoSignedUrls(pathsToResolve).catch(() => new Map())
+        : new Map();
 
       const formattedAuth = (authData || []).map(a => ({
         id: a.id,
         name: a.name,
         relation: a.relation,
         hasPhoto: a.has_photo,
-        photo_url: a.photo_url,
+        photo_url: a.photo_storage_path
+          ? (signedUrlByPath.get(a.photo_storage_path) || a.photo_url || null) // signed URL falhou → cai pro base64 legado se existir, senão sem foto
+          : (a.photo_url || null), // fallback legado (registro ainda não migrado)
+        photo_storage_path: a.photo_storage_path,
         has_biometrics: a.face_descriptor != null,
         status: a.status,
         emergencyOrder: a.emergency_order,
@@ -508,9 +523,10 @@ export default function App() {
     setCurrentUser(user);
     localStorage.setItem('zela_user', JSON.stringify(user));
     setFamilyTab('home');
-
-    // Preload dos modelos faciais em background sem travar UI
-    preloadFaceModels().catch(console.error);
+    // Preload dos modelos de IA (~12,6MB) NÃO acontece mais aqui — família e
+    // professor nunca usam reconhecimento facial, e o Admin já pré-carrega
+    // sozinho ao montar o painel (AdminPortal.jsx), só quando o módulo de
+    // check-in está habilitado para a escola.
   };
 
   const handleLogout = () => {
@@ -590,9 +606,35 @@ export default function App() {
 
     try {
       const updates = { has_photo: !!photoUrl };
+
+      // Foto nova → vai pro Storage (nunca mais base64 em photo_url pra
+      // cadastro novo). photo_url de registros ANTIGOS não é tocado aqui —
+      // só é alterado no caminho de remoção explícita, abaixo.
       if (photoUrl) {
-        updates.photo_url = photoUrl;
+        try {
+          const path = await uploadAuthorizedPersonPhoto(currentUser.school_id, id, photoUrl);
+          updates.photo_storage_path = path;
+        } catch (uploadErr) {
+          console.error('Erro ao enviar foto pro Storage:', uploadErr);
+          throw new Error('Não foi possível salvar a foto. Tente novamente.');
+        }
       } else {
+        // Remoção explícita (chamada com photoUrl=null): limpa os dois
+        // formatos, novo e legado, já que a intenção aqui é remover a foto
+        // por completo. Se a pessoa tinha um arquivo no Storage, remove
+        // primeiro — só zera a referência no banco depois de confirmar.
+        const current = authorized.find(p => p.id === id);
+        if (current?.photo_storage_path) {
+          try {
+            await removeAuthorizedPersonPhoto(current.photo_storage_path);
+          } catch (removeErr) {
+            // Não bloqueia a remoção do cadastro por causa disso — só
+            // registra; pior caso é um arquivo órfão no bucket, não uma
+            // inconsistência visível pro usuário.
+            console.error('Erro ao remover arquivo do Storage (arquivo pode ter ficado órfão):', removeErr);
+          }
+        }
+        updates.photo_storage_path = null;
         updates.photo_url = null;
       }
 
@@ -610,11 +652,30 @@ export default function App() {
       }
 
       const { error } = await supabase.from('authorized_persons').update(updates).eq('id', id);
-      if (!error) {
-        setAuthorized(prev => prev.map(p => p.id === id ? { ...p, hasPhoto: !!photoUrl, has_biometrics: !!descriptorArray, photo_url: photoUrl } : p));
+      if (error) {
+        // Upload já confirmado, mas o UPDATE falhou — tenta desfazer o
+        // upload pra não deixar arquivo órfão nem estado divergente entre
+        // Storage e banco (ver regra de atomicidade).
+        if (updates.photo_storage_path) {
+          removeAuthorizedPersonPhoto(updates.photo_storage_path).catch(() => {});
+        }
+        throw new Error('Não foi possível salvar as alterações. Tente novamente.');
       }
+
+      const resolvedPhotoUrl = updates.photo_storage_path
+        ? await getAuthorizedPersonPhotoSignedUrl(updates.photo_storage_path).catch(() => null)
+        : (updates.photo_url !== undefined ? updates.photo_url : undefined);
+
+      setAuthorized(prev => prev.map(p => p.id === id ? {
+        ...p,
+        hasPhoto: !!photoUrl,
+        has_biometrics: !!descriptorArray,
+        photo_storage_path: updates.photo_storage_path,
+        ...(resolvedPhotoUrl !== undefined ? { photo_url: resolvedPhotoUrl } : {}),
+      } : p));
     } catch (err) {
       console.error(err);
+      throw err;
     }
   };
 

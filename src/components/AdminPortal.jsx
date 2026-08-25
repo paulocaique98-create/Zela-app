@@ -89,11 +89,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
-  // Pré-carrega os modelos de IA em background ao montar o painel
-  // Assim quando o scanner abrir, os modelos já estão na memória
+  // Pré-carrega os modelos de IA (~12,6MB) em background ao montar o painel,
+  // só se o módulo de check-in/reconhecimento facial estiver habilitado pra
+  // essa escola — admins de escolas sem esse módulo nunca abrem o scanner,
+  // então não faz sentido baixar os modelos. Assim, quando o scanner abrir
+  // (quem usa), os modelos já estão na memória.
   useEffect(() => {
+    if (!showCheckin) return;
     preloadFaceModels().catch(err => console.warn('[FaceModels] Erro no pré-carregamento:', err));
-  }, []);
+  }, [showCheckin]);
 
   // Detecta novo aluno "a caminho" via Realtime e dispara alerta visual
   useEffect(() => {

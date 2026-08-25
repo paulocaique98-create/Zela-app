@@ -41,15 +41,31 @@ export function useChatUnreadCount(currentUser, enabled) {
 
   useEffect(() => {
     if (!enabled || !currentUser?.id) return;
+
+    // Só escuta chat_threads (UPDATE) — um trigger no banco já atualiza
+    // updated_at da thread a cada mensagem nova (ver migration
+    // 20260903_add_chat_setores.sql), então o listener de chat_messages era
+    // redundante e, pior, não podia ser filtrado por escola (chat_messages
+    // não tem coluna school_id, só thread_id) — qualquer mensagem de
+    // QUALQUER escola do sistema disparava refresh() em todo mundo.
+    //
+    // Aqui dá pra filtrar de verdade: family_id pra família, school_id pra
+    // admin (ambos são colunas reais de chat_threads). Developer fica sem
+    // filtro de propósito — ele atende suporte de VÁRIAS escolas ao mesmo
+    // tempo, então não tem um único school_id que sirva de filtro.
+    const filter =
+      currentUser.role === 'family' ? `family_id=eq.${currentUser.id}` :
+      currentUser.role === 'admin' && currentUser.school_id ? `school_id=eq.${currentUser.school_id}` :
+      undefined;
+
     const channel = supabase
       .channel(`chat-unread-${currentUser.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => refresh())
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads' }, () => refresh())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads', ...(filter ? { filter } : {}) }, () => refresh())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, currentUser?.id, refresh]);
+  }, [enabled, currentUser?.id, currentUser?.role, currentUser?.school_id, refresh]);
 
   return { count, refresh };
 }
