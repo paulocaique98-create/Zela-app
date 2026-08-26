@@ -706,7 +706,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     if (matchStatus !== 'matched' || actionDone || isProcessingCapture || countdown !== null || autoTriggeredRef.current) return;
     const timer = setTimeout(() => {
       autoTriggeredRef.current = true;
-      setCountdown(3);
+      setCountdown(2);
     }, 1000);
     return () => clearTimeout(timer);
   }, [matchStatus, actionDone, isProcessingCapture, countdown]);
@@ -725,7 +725,7 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     }
   }, [matchStatus, countdown]);
 
-  // Contagem regressiva de 3s antes da confirmação automática.
+  // Contagem regressiva de 2s antes da confirmação automática.
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {

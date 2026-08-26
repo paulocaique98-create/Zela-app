@@ -385,11 +385,23 @@ export default function App() {
     try {
       let schoolPromise = Promise.resolve({ data: null });
       if (currentUser.school_id) {
-        schoolPromise = supabase
-          .from('schools')
-          .select('*')
-          .eq('id', currentUser.school_id)
-          .single();
+        // Envolve o builder do Supabase (que re-executa a query a cada
+        // .then() chamado) numa Promise real, executada uma única vez, para
+        // poder aplicar a logo assim que chegar sem esperar as consultas de
+        // alunos/autorizados — evita o ícone genérico da Zela aparecer por
+        // um instante antes da logo real da escola.
+        schoolPromise = (async () => {
+          const res = await supabase
+            .from('schools')
+            .select('*')
+            .eq('id', currentUser.school_id)
+            .single();
+          if (res.data) {
+            setCurrentSchool(res.data);
+            localStorage.setItem('zela_school', JSON.stringify(res.data));
+          }
+          return res;
+        })();
       }
 
       let studentsQuery = supabase.from('students').select('*').eq('school_id', currentUser.school_id);
