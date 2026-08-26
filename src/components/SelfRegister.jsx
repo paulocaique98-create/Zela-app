@@ -245,7 +245,7 @@ export default function SelfRegister() {
                     value={schoolCode}
                     onChange={e => setSchoolCode(e.target.value.toUpperCase())}
                     className={inputCls}
-                    placeholder="Ex: ZL001"
+                    placeholder="Código fornecido pela escola"
                   />
                   <p className="text-[11px] text-on-surface-variant/70 mt-1">Peça esse código à secretaria da escola.</p>
                 </div>
