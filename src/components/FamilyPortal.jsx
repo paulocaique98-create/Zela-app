@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -16,6 +16,7 @@ const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
 const FamilyComunicados = lazy(() => import('./FamilyComunicados'));
 const FamilyMuralFotos = lazy(() => import('./FamilyMuralFotos'));
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
+const FamilyDiario = lazy(() => import('./FamilyDiario'));
 const FamilyChat = lazy(() => import('./FamilyChat'));
 const FamilyHome = lazy(() => import('./FamilyHome'));
 const FamilyHistory = lazy(() => import('./FamilyHistory'));
@@ -147,6 +148,7 @@ export default function FamilyPortal({
   const showComunicados = features.comunicados === true;
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
+  const showDiario = features.diario === true;
   const showRelatorios = features.relatorios_pedagogicos === true;
   const showChat = features.chat === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
@@ -232,7 +234,7 @@ export default function FamilyPortal({
             )}
 
             {/* ACADÊMICO */}
-            {(showCalendario || showComunicados || showMural || showCardapio) && (
+            {(showCalendario || showComunicados || showMural || showCardapio || showDiario) && (
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
@@ -250,6 +252,9 @@ export default function FamilyPortal({
                 )}
                 {showCardapio && (
                   <SidebarItem active={familyTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
+                )}
+                {showDiario && (
+                  <SidebarItem active={familyTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
                 )}
               </SidebarGroup>
             )}
@@ -299,6 +304,7 @@ export default function FamilyPortal({
           {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />

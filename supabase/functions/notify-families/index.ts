@@ -89,6 +89,16 @@ serve(async (req) => {
       familyIds = (families || []).map(f => f.id);
     }
 
+    // Responsável cujo(s) filho(s) ainda não tiveram o 1º check-in real fica
+    // de fora dos avisos gerais do sistema (cardápio, mural, comunicados,
+    // calendário, diário) — só passa a receber a partir da liberação (ver
+    // is_guardian_released() e o trigger notify_on_attendance(), que fazem
+    // essa mesma checagem pro lado do check-in/check-out).
+    const releaseChecks = await Promise.all(
+      familyIds.map(id => adminClient.rpc('is_guardian_released', { p_guardian_id: id }))
+    );
+    familyIds = familyIds.filter((_, i) => releaseChecks[i].data === true);
+
     if (familyIds.length === 0) {
       return new Response(
         JSON.stringify({ success: true, notified: 0, pushed: 0 }),
@@ -105,6 +115,7 @@ serve(async (req) => {
         student_id: null,
         type,
         message: title,
+        url: url || null,
       })));
     if (insertError) throw insertError;
 

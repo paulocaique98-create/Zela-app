@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
-export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onTriggerEmergency }) {
+export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onTriggerEmergency, onNavigateTab }) {
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
@@ -55,7 +55,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
 
         {currentUser.role === 'family' && (
           <div className="flex items-center gap-1 md:gap-3 mr-1 md:mr-2 border-r border-outline-variant pr-4">
-            <NotificationsDropdown currentUser={currentUser} />
+            <NotificationsDropdown currentUser={currentUser} onNavigateTab={onNavigateTab} />
             <div className="text-right hidden sm:block pl-2">
               <p className="text-xs font-bold text-on-surface">{currentUser.name}</p>
             </div>

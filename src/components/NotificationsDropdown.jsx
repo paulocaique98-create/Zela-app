@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
+import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, BookOpen, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function NotificationsDropdown({ currentUser }) {
+// Extrai o valor de ?tab= de uma url tipo "/?tab=diario" — convenção já usada
+// pelas outras chamadas de notifyFamilies (cardápio, mural, comunicados),
+// mas até aqui nunca persistida/lida de volta pra navegar de verdade.
+function extractTab(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.searchParams.get('tab');
+  } catch {
+    return null;
+  }
+}
+
+export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -120,9 +133,19 @@ export default function NotificationsDropdown({ currentUser }) {
         return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
       case 'late_exit_15min_billing':
         return { icon: <AlertCircle size={18} className="text-red-600" />, bg: 'bg-red-100', dot: 'bg-red-500' };
+      case 'diario':
+        return { icon: <BookOpen size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
       case 'welcome':
       default:
         return { icon: <Info size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
+    }
+  };
+
+  const handleNotificationClick = (n) => {
+    const tab = extractTab(n.url);
+    if (tab && onNavigateTab) {
+      onNavigateTab(tab);
+      setIsOpen(false);
     }
   };
 
@@ -177,10 +200,12 @@ export default function NotificationsDropdown({ currentUser }) {
               <div className="space-y-1">
                 {notifications.map((n) => {
                   const style = getIconAndColor(n.type);
+                  const clickable = Boolean(extractTab(n.url));
                   return (
-                    <div 
-                      key={n.id} 
-                      className={`p-3 rounded-xl flex gap-3 transition-colors ${!n.read_at ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
+                    <div
+                      key={n.id}
+                      onClick={clickable ? () => handleNotificationClick(n) : undefined}
+                      className={`p-3 rounded-xl flex gap-3 transition-colors ${!n.read_at ? 'bg-slate-50' : 'hover:bg-slate-50'} ${clickable ? 'cursor-pointer' : ''}`}
                     >
                       <div className={`w-10 h-10 rounded-full flex shrink-0 items-center justify-center ${style.bg}`}>
                         {style.icon}

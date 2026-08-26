@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { UtensilsCrossed, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, ImageUp, AlertTriangle, ArrowLeft, Calendar } from 'lucide-react';
+import { UtensilsCrossed, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, ImageUp, AlertTriangle, ArrowLeft, Calendar, Download, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { REFEICOES } from '../lib/constants';
 import { parseDateTextList } from '../lib/pdfDateListParser';
 import { parseCardapioImageGrid } from '../lib/imageCardapioParser';
+import { parseCardapioComIA, expandCardapiosToCandidates } from '../lib/cardapioIaParser';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import ConfirmModal from './ConfirmModal';
 
@@ -35,10 +36,10 @@ const STATUS_CLASSES = {
 // linha pode conter a refeição junto com a descrição, ex: "Almoço: Arroz e feijão").
 function guessRefeicao(text) {
   const lower = text.toLowerCase();
-  if (lower.includes('café') || lower.includes('cafe')) return 'Café da Manhã';
-  if (lower.includes('lanche') && (lower.includes('tarde'))) return 'Lanche da Tarde';
-  if (lower.includes('lanche')) return 'Lanche da Manhã';
-  if (lower.includes('almoço') || lower.includes('almoco') || lower.includes('jantar')) return 'Almoço';
+  if (lower.includes('desjejum') || lower.includes('café') || lower.includes('cafe')) return 'Desjejum';
+  if (lower.includes('jantar')) return 'Jantar';
+  if (lower.includes('almoço') || lower.includes('almoco')) return 'Almoço';
+  if (lower.includes('lanche') || lower.includes('colação') || lower.includes('colacao')) return 'Lanche';
   return REFEICOES[0];
 }
 
@@ -91,6 +92,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
   const [confirmDeleteCardapioId, setConfirmDeleteCardapioId] = useState(null);
 
   const [selectedId, setSelectedId] = useState(null);
+  const [isModeloMenuOpen, setIsModeloMenuOpen] = useState(false);
 
   // Importação de mês completo: sobe um PDF/imagem com várias semanas e o sistema
   // já separa em um cardápio por semana (Segunda a Sábado), cada um com sua própria
@@ -100,7 +102,20 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
   const [monthImageProgress, setMonthImageProgress] = useState(0);
   const [monthImportError, setMonthImportError] = useState('');
   const [weekGroups, setWeekGroups] = useState(null);
+  const [weekGroupsFromIA, setWeekGroupsFromIA] = useState(false);
   const [isImportingMonth, setIsImportingMonth] = useState(false);
+
+  // Importação com IA (Grok): lê PDF em formato de tabela livre (dia da
+  // semana × refeição, sem data no texto — ex: cardápio real da
+  // nutricionista com "Cardápio 1/2/3/4" em rotação). Depois de a IA ler,
+  // o admin escolhe a partir de qual segunda-feira aplicar (e até quando);
+  // o resto do fluxo (revisão semanal, confirmação) reaproveita o mesmo
+  // weekGroups/handleConfirmMonthImport de baixo.
+  const [isParsingIA, setIsParsingIA] = useState(false);
+  const [iaError, setIaError] = useState('');
+  const [iaCardapios, setIaCardapios] = useState(null);
+  const [iaStartMonday, setIaStartMonday] = useState('');
+  const [iaEndDate, setIaEndDate] = useState('');
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
@@ -188,67 +203,120 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
     }
   };
 
-  const handleMonthPdfSelected = async (e) => {
+  // Botão único "Importar" — aceita tanto o PDF exportado a partir do
+  // Modelo quanto uma foto/print da tabela, e decide o parser certo pelo
+  // tipo do arquivo escolhido.
+  const handleMonthFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (file.type === 'application/pdf') {
+      setIsParsingMonthPdf(true);
+      setMonthImportError('');
+      try {
+        const candidates = await parseDateTextList(file, { mergeContinuationLines: true });
+        if (candidates.length === 0) {
+          setMonthImportError('Nenhuma data foi encontrada nesse PDF.');
+          return;
+        }
+        setWeekGroups(groupCandidatesByWeek(candidates.map((c, i) => ({
+          id: i,
+          date: c.date,
+          descricao: c.title,
+          refeicao: guessRefeicao(c.title),
+          selected: true,
+        }))));
+        setWeekGroupsFromIA(false);
+      } catch (err) {
+        console.error('[AdminCardapio] Erro ao processar PDF do mês:', err);
+        setMonthImportError('Não foi possível ler esse PDF.');
+      } finally {
+        setIsParsingMonthPdf(false);
+      }
+      return;
+    }
+
+    if (file.type.startsWith('image/')) {
+      setIsParsingMonthImage(true);
+      setMonthImageProgress(0);
+      setMonthImportError('');
+      try {
+        const candidates = await parseCardapioImageGrid(file, { onProgress: setMonthImageProgress });
+        if (candidates.length === 0) {
+          setMonthImportError('Não foi possível reconhecer nenhuma data nessa imagem.');
+          return;
+        }
+        setWeekGroups(groupCandidatesByWeek(candidates.map((c, i) => ({
+          id: i,
+          date: c.date,
+          descricao: c.descricao,
+          refeicao: c.refeicao || guessRefeicao(c.descricao),
+          selected: true,
+        }))));
+        setWeekGroupsFromIA(false);
+      } catch (err) {
+        console.error('[AdminCardapio] Erro ao processar imagem do mês:', err);
+        setMonthImportError('Não foi possível processar essa imagem.');
+      } finally {
+        setIsParsingMonthImage(false);
+      }
+      return;
+    }
+
+    setMonthImportError('Selecione um PDF ou uma imagem (JPG, PNG, etc).');
+  };
+
+  // Próxima segunda-feira a partir de hoje — sugestão inicial pro campo de
+  // data de início da importação com IA.
+  const getNextMonday = () => {
+    const d = new Date(`${todayStr}T12:00:00`);
+    const dow = d.getDay();
+    const diff = dow === 1 ? 0 : ((8 - dow) % 7 || 7);
+    d.setDate(d.getDate() + diff);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  };
+
+  const handleIaFileSelected = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     if (file.type !== 'application/pdf') {
-      setMonthImportError('Selecione um arquivo PDF.');
+      setIaError('Selecione um arquivo PDF.');
       return;
     }
-    setIsParsingMonthPdf(true);
-    setMonthImportError('');
+    setIsParsingIA(true);
+    setIaError('');
     try {
-      const candidates = await parseDateTextList(file);
-      if (candidates.length === 0) {
-        setMonthImportError('Nenhuma data foi encontrada nesse PDF.');
+      const result = await parseCardapioComIA(file);
+      if (!result.cardapios || result.cardapios.length === 0) {
+        setIaError('A IA não identificou nenhum cardápio nesse PDF.');
         return;
       }
-      setWeekGroups(groupCandidatesByWeek(candidates.map((c, i) => ({
-        id: i,
-        date: c.date,
-        descricao: c.title,
-        refeicao: guessRefeicao(c.title),
-        selected: true,
-      }))));
+      setIaCardapios(result.cardapios);
+      const start = getNextMonday();
+      setIaStartMonday(start);
+      const endSuggested = new Date(`${start}T12:00:00`);
+      endSuggested.setDate(endSuggested.getDate() + result.cardapios.length * 7 - 2);
+      setIaEndDate(`${endSuggested.getFullYear()}-${pad2(endSuggested.getMonth() + 1)}-${pad2(endSuggested.getDate())}`);
     } catch (err) {
-      console.error('[AdminCardapio] Erro ao processar PDF do mês:', err);
-      setMonthImportError('Não foi possível ler esse PDF.');
+      console.error('[AdminCardapio] Erro ao importar com IA:', err);
+      setIaError(err.message || 'Não foi possível processar esse PDF com a IA.');
     } finally {
-      setIsParsingMonthPdf(false);
+      setIsParsingIA(false);
     }
   };
 
-  const handleMonthImageSelected = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setMonthImportError('Selecione uma imagem (JPG, PNG, etc).');
+  const handleConfirmIaDates = () => {
+    if (!iaCardapios || !iaStartMonday || !iaEndDate) return;
+    const candidates = expandCardapiosToCandidates(iaCardapios, iaStartMonday, iaEndDate);
+    if (candidates.length === 0) {
+      setIaError('Nenhum item ficou dentro do período escolhido — ajuste as datas.');
       return;
     }
-    setIsParsingMonthImage(true);
-    setMonthImageProgress(0);
-    setMonthImportError('');
-    try {
-      const candidates = await parseCardapioImageGrid(file, { onProgress: setMonthImageProgress });
-      if (candidates.length === 0) {
-        setMonthImportError('Não foi possível reconhecer nenhuma data nessa imagem.');
-        return;
-      }
-      setWeekGroups(groupCandidatesByWeek(candidates.map((c, i) => ({
-        id: i,
-        date: c.date,
-        descricao: c.descricao,
-        refeicao: c.refeicao || guessRefeicao(c.descricao),
-        selected: true,
-      }))));
-    } catch (err) {
-      console.error('[AdminCardapio] Erro ao processar imagem do mês:', err);
-      setMonthImportError('Não foi possível processar essa imagem.');
-    } finally {
-      setIsParsingMonthImage(false);
-    }
+    setWeekGroups(groupCandidatesByWeek(candidates));
+    setWeekGroupsFromIA(true);
+    setIaCardapios(null);
   };
 
   const updateWeekGroup = (weekId, patch) => {
@@ -305,6 +373,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
       });
 
       setWeekGroups(null);
+      setWeekGroupsFromIA(false);
       await fetchCardapios();
     } catch (err) {
       console.error('[AdminCardapio] Erro ao importar o mês:', err);
@@ -341,17 +410,57 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             <p className="text-on-surface-variant text-small hidden sm:block">Crie cardápios mensais, com período de ativação opcional.</p>
           </div>
         </div>
-        {!showNewForm && !weekGroups && (
+        {!showNewForm && !weekGroups && !iaCardapios && (
           <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsModeloMenuOpen(v => !v)}
+                className="flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm w-full"
+              >
+                <Download size={18} className="shrink-0" />
+                <span className="truncate">Modelo</span>
+              </button>
+              {isModeloMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsModeloMenuOpen(false)} />
+                  <div className="absolute z-20 mt-1.5 w-64 bg-white border border-outline-variant rounded-zela-md shadow-lg overflow-hidden right-0">
+                    <a
+                      href="/modelos/Modelo_Cardapio_Simples_Zela.docx"
+                      download
+                      onClick={() => setIsModeloMenuOpen(false)}
+                      className="block px-4 py-3 hover:bg-primary/10 transition"
+                    >
+                      <div className="text-sm font-bold text-on-surface">Simples</div>
+                      <div className="text-xs text-on-surface-variant/70 mt-0.5">Tabela rápida — ideal pra nutricionista preencher</div>
+                    </a>
+                    <a
+                      href="/modelos/Modelo_Cardapio_Mensal_Zela.docx"
+                      download
+                      onClick={() => setIsModeloMenuOpen(false)}
+                      className="block px-4 py-3 hover:bg-primary/10 transition border-t border-outline-variant"
+                    >
+                      <div className="text-sm font-bold text-on-surface">Completo</div>
+                      <div className="text-xs text-on-surface-variant/70 mt-0.5">Com instruções e mês inteiro de exemplo</div>
+                    </a>
+                  </div>
+                </>
+              )}
+            </div>
             <label className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
-              {isParsingMonthPdf ? <Loader2 size={18} className="animate-spin shrink-0" /> : <FileUp size={18} className="shrink-0" />}
-              <span className="truncate">{isParsingMonthPdf ? 'Lendo PDF...' : 'Importar Mês (PDF)'}</span>
-              <input type="file" accept="application/pdf" onChange={handleMonthPdfSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
+              {(isParsingMonthPdf || isParsingMonthImage) ? <Loader2 size={18} className="animate-spin shrink-0" /> : <FileUp size={18} className="shrink-0" />}
+              <span className="truncate">
+                {isParsingMonthPdf ? 'Lendo PDF...' : isParsingMonthImage ? `Lendo imagem... ${Math.round(monthImageProgress * 100)}%` : 'Importar'}
+              </span>
+              <input type="file" accept="application/pdf,image/*" onChange={handleMonthFileSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
             </label>
-            <label className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
-              {isParsingMonthImage ? <Loader2 size={18} className="animate-spin shrink-0" /> : <ImageUp size={18} className="shrink-0" />}
-              <span className="truncate">{isParsingMonthImage ? `Lendo imagem... ${Math.round(monthImageProgress * 100)}%` : 'Importar Mês (Imagem)'}</span>
-              <input type="file" accept="image/*" onChange={handleMonthImageSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
+            <label
+              className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
+              title="Lê qualquer PDF de cardápio (tabela dia x refeição) usando IA, sem precisar seguir o modelo"
+            >
+              {isParsingIA ? <Loader2 size={18} className="animate-spin shrink-0" /> : <Sparkles size={18} className="shrink-0" />}
+              <span className="truncate">{isParsingIA ? 'Lendo com IA...' : 'Importar com IA'}</span>
+              <input type="file" accept="application/pdf" onChange={handleIaFileSelected} className="hidden" disabled={isParsingIA} />
             </label>
             <button
               onClick={() => setShowNewForm(true)}
@@ -370,8 +479,61 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
           </div>
         )}
 
+        {iaError && !iaCardapios && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {iaError}
+          </div>
+        )}
+
+        {iaCardapios && (
+          <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
+            <div className="flex justify-between items-start gap-3">
+              <div>
+                <h3 className="font-bold text-on-surface text-sm flex items-center gap-1.5"><Sparkles size={15} className="text-primary" /> A IA leu {iaCardapios.length} cardápio(s) nesse PDF</h3>
+                <p className="text-on-surface-variant text-xs mt-0.5">
+                  Esse cardápio não tem datas — só dias da semana. Escolha a partir de quando ele começa a valer; o sistema aplica os {iaCardapios.length} cardápio(s) em sequência, repetindo até a data final.
+                </p>
+              </div>
+              <button onClick={() => { setIaCardapios(null); setIaError(''); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+
+            {iaError && (
+              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{iaError}</div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Começa na segunda-feira</label>
+                <input type="date" value={iaStartMonday} onChange={e => setIaStartMonday(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Repete até</label>
+                <input type="date" value={iaEndDate} onChange={e => setIaEndDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm" />
+              </div>
+            </div>
+
+            <button
+              onClick={handleConfirmIaDates}
+              disabled={!iaStartMonday || !iaEndDate}
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+            >
+              <Check size={16} /> Gerar semanas pra revisão
+            </button>
+          </div>
+        )}
+
         {weekGroups && (
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
+            {weekGroupsFromIA && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
+                <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                Esses itens foram lidos por IA e podem conter erros — nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o cardápio fica visível pras famílias.
+              </div>
+            )}
             <div className="flex justify-between items-start gap-3">
               <div>
                 <h3 className="font-bold text-on-surface text-sm">Revisar importação do mês — {weekGroups.length} semana(s) detectada(s)</h3>
@@ -379,7 +541,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                   Cada semana vira um cardápio separado, já com ativação na segunda e desativação no sábado. Confira antes de confirmar.
                 </p>
               </div>
-              <button onClick={() => setWeekGroups(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => { setWeekGroups(null); setWeekGroupsFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
@@ -631,13 +793,12 @@ function CardapioDetail({ cardapio, currentUser, onBack, onCardapioUpdated }) {
       const { error: updateError } = await supabase.from('cardapios').update(patch).eq('id', cardapio.id);
       if (updateError) throw updateError;
 
-      notifyFamilies({
-        type: 'cardapio',
-        title: 'Cardápio atualizado',
-        message: patch.titulo,
-        url: '/?tab=cardapio',
-      });
-
+      // Sem notifyFamilies aqui de propósito: título/ativação/desativação
+      // são 3 campos que salvam (onBlur) de forma independente — notificar
+      // a cada um gerava várias notificações repetidas pra família por uma
+      // única edição de cabeçalho. Só "lançar" cardápio de verdade (criar
+      // novo ou importar) deve notificar — ver handleCreateCardapio e
+      // handleConfirmMonthImport.
       onCardapioUpdated(patch);
     } catch (err) {
       console.error('[CardapioDetail] Erro ao salvar cardápio:', err);
@@ -716,7 +877,7 @@ function CardapioDetail({ cardapio, currentUser, onBack, onCardapioUpdated }) {
     setIsParsingPdf(true);
     setImportError('');
     try {
-      const candidates = await parseDateTextList(file);
+      const candidates = await parseDateTextList(file, { mergeContinuationLines: true });
       if (candidates.length === 0) {
         setImportError('Nenhuma data foi encontrada nesse PDF. Se ele for uma tabela/imagem, cadastre os itens manualmente.');
         return;

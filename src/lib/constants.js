@@ -13,7 +13,11 @@ export const CARGOS_FUNCIONARIOS = [
   'Recepcionista',
 ];
 
-export const REFEICOES = ['Café da Manhã', 'Lanche da Manhã', 'Almoço', 'Lanche da Tarde'];
+// Nomenclatura real usada pela nutricionista da escola (documento oficial de
+// cardápio) — Desjejum, Almoço, Lanche, Jantar. Substituiu os nomes
+// inventados anteriormente (Café da Manhã/Lanche da Manhã/Lanche da Tarde),
+// que não batiam com o vocabulário real do cardápio.
+export const REFEICOES = ['Desjejum', 'Almoço', 'Lanche', 'Jantar'];
 
 // Chat interno: setores que a família pode escolher para conversar.
 // 'suporte_zela' é especial — não é respondido pela escola, vai para o

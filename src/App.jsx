@@ -1015,6 +1015,7 @@ export default function App() {
         onLogout={handleLogout}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onTriggerEmergency={triggerEmergency}
+        onNavigateTab={setFamilyTab}
       />
 
       <main className="flex-1 overflow-hidden flex flex-col p-3 sm:p-4 md:p-6 lg:p-6">

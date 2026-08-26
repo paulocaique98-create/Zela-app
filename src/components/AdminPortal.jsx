@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Monitor, Camera, ShieldHalf, Smartphone, Home, ChevronDown, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, Calendar, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
@@ -17,6 +17,7 @@ const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const AdminCardapio = lazy(() => import('./AdminCardapio'));
+const AdminDiario = lazy(() => import('./AdminDiario'));
 const AdminChat = lazy(() => import('./AdminChat'));
 const AdminCadastroFuncionarios = lazy(() => import('./AdminCadastroFuncionarios'));
 const AdminGerenciarFuncionarios = lazy(() => import('./AdminGerenciarFuncionarios'));
@@ -85,6 +86,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showComunicados = features.comunicados === true && localPrefs.comunicados !== false;
   const showMural = features.mural === true && localPrefs.mural !== false;
   const showCardapio = features.cardapio === true && localPrefs.cardapio !== false;
+  const showDiario = features.diario === true && localPrefs.diario !== false;
   const showChat = features.chat === true && localPrefs.chat !== false;
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
@@ -205,8 +207,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
-            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO */}
-            {(showCalendario || showMural || showCardapio) && (
+            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO */}
+            {(showCalendario || showMural || showCardapio || showDiario) && (
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
@@ -221,6 +223,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 )}
                 {showCardapio && (
                   <SidebarItem active={adminTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
+                )}
+                {showDiario && (
+                  <SidebarItem active={adminTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
                 )}
               </SidebarGroup>
             )}
@@ -254,6 +259,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'diario' && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (

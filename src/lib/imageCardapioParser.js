@@ -13,16 +13,15 @@ const DATE_RANGE_RE = /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*(?:a|à|até)\s*(\
 const STANDALONE_YEAR_RE = /\b(20\d{2})\b/;
 const WEEKDAY_RE = /^(segunda|terça|terca|quarta|quinta|sexta|sábado|sabado|domingo)(-feira)?\.?$/i;
 const MEAL_KEYWORDS = [
-  { re: /desjejum|café\s*da\s*manh[ãa]/i, refeicao: 'Café da Manhã' },
-  { re: /cola[çc][ãa]o/i, refeicao: 'Lanche da Manhã' },
+  { re: /desjejum|café\s*da\s*manh[ãa]/i, refeicao: 'Desjejum' },
   { re: /almo[çc]o/i, refeicao: 'Almoço' },
-  { re: /lanche\s*(da\s*)?tarde/i, refeicao: 'Lanche da Tarde' },
   { re: /jantar/i, refeicao: 'Jantar' },
+  { re: /lanche|cola[çc][ãa]o/i, refeicao: 'Lanche' },
 ];
 // Ordem "natural" das refeições do dia, usada como fallback quando não dá pra ler o
 // rótulo da linha (comum quando o rótulo vem rotacionado 90° na lateral da tabela —
 // OCR não lê texto rotacionado de forma confiável).
-const REFEICAO_ORDER_FALLBACK = ['Café da Manhã', 'Lanche da Manhã', 'Almoço', 'Lanche da Tarde', 'Jantar'];
+const REFEICAO_ORDER_FALLBACK = ['Desjejum', 'Almoço', 'Lanche', 'Jantar'];
 
 function pad2(n) {
   return String(n).padStart(2, '0');

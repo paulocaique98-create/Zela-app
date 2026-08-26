@@ -35,6 +35,7 @@ export default function DeveloperPanel({ currentUser }) {
     comunicados: false,
     mural: false,
     cardapio: false,
+    diario: false,
     chat: false,
     relatorios_pedagogicos: false,
     configuracoes: true
@@ -506,6 +507,7 @@ export default function DeveloperPanel({ currentUser }) {
                     { id: 'comunicados', label: 'Comunicados', desc: 'Envio e visualização de comunicados' },
                     { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
                     { id: 'cardapio', label: 'Cardápio', desc: 'Cardápio semanal da escola' },
+                    { id: 'diario', label: 'Diário', desc: 'Registro diário de refeições, sono e evacuação por aluno' },
                     { id: 'chat', label: 'Chat', desc: 'Chat interno por setor (Administrativo, Diretoria, Coordenação, Recepção e Suporte Zela)' },
                     { id: 'relatorios_pedagogicos', label: 'Módulo Pedagógico', desc: 'Portal do Professor: registros pedagógicos e relatórios de desenvolvimento' },
                     { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' }

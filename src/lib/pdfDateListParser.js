@@ -1,19 +1,4 @@
-// pdfjs-dist é ~1MB — carregado sob demanda (só quando o admin realmente importa um
-// PDF), pra não inflar o bundle inicial do painel admin com uma lib que a maioria
-// das sessões nunca usa.
-let _pdfjsLoadPromise = null;
-async function loadPdfjs() {
-  if (!_pdfjsLoadPromise) {
-    _pdfjsLoadPromise = Promise.all([
-      import('pdfjs-dist'),
-      import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-    ]).then(([pdfjsLib, workerUrlModule]) => {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrlModule.default;
-      return pdfjsLib;
-    });
-  }
-  return _pdfjsLoadPromise;
-}
+import { loadPdfjs } from './pdfjsLoader';
 
 const MONTHS = {
   janeiro: 1, jan: 1,
@@ -107,8 +92,14 @@ async function extractTextFromPdf(file) {
  * Varre as linhas de texto extraídas de um PDF em busca de datas e monta uma lista
  * de candidatos (data + título) pra revisão antes de importar. Usado tanto pelo
  * Calendário quanto pelo Cardápio — qualquer PDF no formato "data - descrição".
+ *
+ * mergeContinuationLines: opt-in (default false) — cola numa linha sem data
+ * o texto de uma linha subsequente também sem data (comum em células de
+ * tabela de cardápio com descrição longa, que quebra em 2 linhas visuais no
+ * PDF). Só o Cardápio ativa isso — no Calendário, texto solto entre eventos
+ * (rodapé, título de seção) não deveria virar continuação do evento anterior.
  */
-export async function parseDateTextList(file, { fallbackYear } = {}) {
+export async function parseDateTextList(file, { fallbackYear, mergeContinuationLines = false } = {}) {
   const currentYear = fallbackYear || new Date().getFullYear();
   const lines = await extractTextFromPdf(file);
 
@@ -118,10 +109,19 @@ export async function parseDateTextList(file, { fallbackYear } = {}) {
   const addCandidate = (dateStr, title, raw) => {
     const cleanedTitle = (title || '').trim() || 'Evento';
     const key = `${dateStr}|${cleanedTitle.toLowerCase()}`;
-    if (seen.has(key)) return;
+    if (seen.has(key)) return null;
     seen.add(key);
-    candidates.push({ date: dateStr, title: cleanedTitle, raw });
+    const candidate = { date: dateStr, title: cleanedTitle, raw };
+    candidates.push(candidate);
+    return candidate;
   };
+
+  // Referência ao último candidato criado por uma linha "data - descrição" —
+  // usada pra recolar linhas de continuação (quando um item de cardápio é
+  // longo demais e quebra dentro da mesma célula da tabela, virando uma
+  // linha extra sem data nenhuma no PDF; sem isso o final da descrição era
+  // silenciosamente descartado).
+  let lastCandidate = null;
 
   // Regex de "lista de feriados" oficial: "dd/mm [e dd/mm] - Descrição." — padrão
   // universal em calendários escolares brasileiros (FERIADOS, DATAS COMEMORATIVAS).
@@ -136,9 +136,22 @@ export async function parseDateTextList(file, { fallbackYear } = {}) {
       const dates = extractDatesFromSegment(leftPart, currentYear);
       const title = rightPart.trim().replace(/\.+$/, '').trim();
       if (dates.length > 0 && title) {
-        dates.forEach(dateStr => addCandidate(dateStr, title, line));
+        lastCandidate = null;
+        dates.forEach(dateStr => { lastCandidate = addCandidate(dateStr, title, line) || lastCandidate; });
         continue; // já tratado pelo padrão de lista — não roda o fallback genérico
       }
+    }
+
+    // Linha sem data nenhuma logo depois de um item "data - descrição": é
+    // continuação por quebra de linha, não um novo item — gruda no anterior.
+    if (mergeContinuationLines) {
+      const hasDate = Boolean(line.match(NUMERIC_DATE_RE) || line.match(NAMED_DATE_RE));
+      if (!hasDate && lastCandidate) {
+        const extra = line.trim();
+        if (extra) lastCandidate.title = `${lastCandidate.title} ${extra}`.replace(/\s{2,}/g, ' ');
+        continue;
+      }
+      lastCandidate = null;
     }
 
     // Fallback: linhas sem "data - título" claro (ex: datas soltas no meio de texto)
