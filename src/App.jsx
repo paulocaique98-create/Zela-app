@@ -12,6 +12,7 @@ const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
+const SelfRegister = lazy(() => import('./components/SelfRegister'));
 
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
@@ -995,6 +996,10 @@ export default function App() {
   // currentPath é atualizado por navigateTo() via popstate e pelo botão Voltar do navegador.
   if (currentPath === '/reset-password' || window.location.hash.includes('type=recovery')) {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><ResetPassword /></Suspense>;
+  }
+
+  if (currentPath === '/cadastro') {
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><SelfRegister /></Suspense>;
   }
 
   if (!currentUser) {

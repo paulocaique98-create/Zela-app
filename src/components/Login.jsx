@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { navigateTo } from '../utils/navigate';
 
 export default function Login({ onLogin }) {
   const [loginEmail, setLoginEmail] = useState('');
@@ -50,6 +51,11 @@ export default function Login({ onLogin }) {
       }
 
       if (users && users.length > 0) {
+        if (users[0].status === 'pending') {
+          await supabase.auth.signOut();
+          setLoginError('Seu cadastro está aguardando aprovação da escola. Você receberá acesso assim que for aprovado.');
+          return;
+        }
         onLogin(users[0]);
       } else {
         // Usuário não encontrado em public.users (excluído, inativo ou inexistente)
@@ -235,6 +241,13 @@ export default function Login({ onLogin }) {
                   </>
                 )}
               </button>
+
+              <div className="text-center mt-1">
+                <span className="text-small text-on-surface-variant">Novo por aqui? </span>
+                <button type="button" onClick={() => navigateTo('/cadastro')} className="text-small text-primary font-medium hover:underline underline-offset-4">
+                  Novo usuário?
+                </button>
+              </div>
             </form>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet } from 'lucide-react';
+import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import AdminUserRegistration from './AdminUserRegistration';
@@ -17,6 +17,9 @@ export default function AdminUserManagement({ currentUser }) {
   const [showImportModal, setShowImportModal] = useState(false);
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
   const [deletingUserId, setDeletingUserId] = useState(null);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
+  const [approvingUserId, setApprovingUserId] = useState(null);
+  const [confirmRejectUserId, setConfirmRejectUserId] = useState(null);
 
   const fetchUsersAndStudents = async () => {
     setIsLoading(true);
@@ -103,8 +106,47 @@ export default function AdminUserManagement({ currentUser }) {
     );
   };
 
-  // Busca em tempo real por nome OU email
+  // Aprovar um autocadastro (tela pública "Novo usuário?") — libera o login
+  // mudando status 'pending' -> 'active'. Trigger de proteção do banco não
+  // bloqueia essa coluna (só protege role/school_id/privilégios de admin).
+  const handleApproveUser = async (userId) => {
+    setApprovingUserId(userId);
+    try {
+      const { error } = await supabase.from('users').update({ status: 'active' }).eq('id', userId);
+      if (error) throw error;
+      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, status: 'active' } : u));
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao aprovar cadastro: ' + (err.message || 'Desconhecido'));
+    } finally {
+      setApprovingUserId(null);
+    }
+  };
+
+  const handleRejectUser = (userId) => setConfirmRejectUserId(userId);
+
+  const confirmRejectUser = async () => {
+    const userId = confirmRejectUserId;
+    setDeletingUserId(userId);
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', { body: { userId } });
+      if (error) throw error;
+      setUsersList(prev => prev.filter(u => u.id !== userId));
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao rejeitar cadastro: ' + (err.message || 'Desconhecido'));
+    } finally {
+      setDeletingUserId(null);
+      setConfirmRejectUserId(null);
+    }
+  };
+
+  const pendingCount = usersList.filter(u => u.status === 'pending').length;
+
+  // Busca em tempo real por nome OU email, dentro da aba ativa (Ativos/Pendentes)
   const filteredUsers = usersList.filter(user => {
+    const inTab = activeTab === 'pending' ? user.status === 'pending' : user.status !== 'pending';
+    if (!inTab) return false;
     const term = searchTerm.toLowerCase().trim();
     if (!term) return true;
     return (
@@ -127,6 +169,27 @@ export default function AdminUserManagement({ currentUser }) {
               {usersList.length} responsável{usersList.length !== 1 ? 'is' : ''} cadastrado{usersList.length !== 1 ? 's' : ''}
             </p>
           </div>
+        </div>
+
+        {/* Abas: Ativos / Pendentes de aprovação (autocadastro público) */}
+        <div className="flex gap-2 shrink-0">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-4 py-2 rounded-zela-md text-xs font-bold transition-all border ${activeTab === 'active' ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}
+          >
+            Ativos
+          </button>
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`relative px-4 py-2 rounded-zela-md text-xs font-bold transition-all border ${activeTab === 'pending' ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}
+          >
+            Pendentes
+            {pendingCount > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-black">
+                {pendingCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Campo de busca em tempo real */}
@@ -171,7 +234,9 @@ export default function AdminUserManagement({ currentUser }) {
           <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
             <Users className="h-12 w-12 text-slate-300 mb-3" />
             <h3 className="text-on-surface-variant font-medium text-small">
-              {searchTerm ? `Nenhum resultado para "${searchTerm}"` : 'Nenhum responsável cadastrado.'}
+              {searchTerm
+                ? `Nenhum resultado para "${searchTerm}"`
+                : activeTab === 'pending' ? 'Nenhum cadastro pendente de aprovação.' : 'Nenhum responsável cadastrado.'}
             </h3>
           </div>
         ) : (
@@ -195,9 +260,9 @@ export default function AdminUserManagement({ currentUser }) {
                       <Edit size={16} />
                     </button>
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => user.status === 'pending' ? handleRejectUser(user.id) : handleDeleteUser(user.id)}
                       className="p-1.5 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title="Excluir usuário"
+                      title={user.status === 'pending' ? 'Rejeitar cadastro' : 'Excluir usuário'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -214,11 +279,28 @@ export default function AdminUserManagement({ currentUser }) {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-on-surface text-sm">{user.name}</h3>
-                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit mt-0.5 inline-block bg-secondary/10 text-secondary">
-                        Família
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
+                          Família
+                        </span>
+                        {user.status === 'pending' && (
+                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-amber-100 text-amber-700">
+                            Pendente
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {user.status === 'pending' && (
+                    <button
+                      onClick={() => handleApproveUser(user.id)}
+                      disabled={approvingUserId === user.id}
+                      className="mb-4 flex items-center justify-center gap-2 w-full py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                    >
+                      <Check size={14} /> {approvingUserId === user.id ? 'Aprovando...' : 'Aprovar cadastro'}
+                    </button>
+                  )}
 
                   {/* Contatos */}
                   <div className="space-y-1.5 mb-4 flex-1">
@@ -275,6 +357,16 @@ export default function AdminUserManagement({ currentUser }) {
             setShowImportModal(false);
             fetchUsersAndStudents();
           }}
+        />
+      )}
+
+      {confirmRejectUserId && (
+        <ConfirmModal
+          title="Rejeitar cadastro"
+          message="Tem certeza que deseja rejeitar este cadastro? A conta e os alunos vinculados serão excluídos permanentemente."
+          isLoading={deletingUserId === confirmRejectUserId}
+          onConfirm={confirmRejectUser}
+          onCancel={() => setConfirmRejectUserId(null)}
         />
       )}
 
