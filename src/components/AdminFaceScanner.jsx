@@ -4,6 +4,7 @@ import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
+import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
 import ConfirmExitPassword from './ConfirmExitPassword';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
@@ -241,7 +242,10 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
         setLoadingText('Buscando dados de responsáveis');
         const { data: authData, error: authError } = await supabase
           .from('authorized_persons')
-          .select('id, name, relation, family_id, face_descriptor, status')
+          // face_descriptor_v2: só para o modo observador da Fase F (motor
+          // candidato Human, rodando em paralelo num Worker isolado, nunca
+          // usado pra decidir nada aqui) — ver humanShadowClient.js.
+          .select('id, name, relation, family_id, face_descriptor, face_descriptor_v2, status')
           .eq('school_id', currentUser.school_id);
 
         if (authError) throw authError;
@@ -349,6 +353,58 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       }
     } catch (err) {
       console.error('Erro ao buscar foto do responsável reconhecido:', err);
+    }
+  };
+
+  // FASE F (modo observador) do plano de migração de reconhecimento facial.
+  // Roda o motor candidato (Human, isolado num Worker — ver
+  // humanShadowClient.js) sobre o MESMO frame que o motor atual já
+  // confirmou de verdade, só pra registrar o que ele diria. NUNCA decide
+  // nada, NUNCA bloqueia nem atrasa o check-in real, NUNCA lança erro pra
+  // fora — qualquer falha aqui é só logada e ignorada.
+  const runHumanShadowComparison = async (video, faceApiMatchedId, schoolId, people) => {
+    try {
+      const t0 = performance.now();
+      const result = await detectViaHumanWorker(video);
+      const ms = Math.round(performance.now() - t0);
+
+      if (!result.ok || !result.descriptor) {
+        await supabase.from('shadow_face_recognition_log').insert({
+          school_id: schoolId,
+          faceapi_matched_person_id: faceApiMatchedId,
+          human_matched_person_id: null,
+          human_similarity: null,
+          agree: false,
+          human_detection_ms: ms,
+        });
+        return;
+      }
+
+      let best = null;
+      for (const person of people) {
+        if (!person.face_descriptor_v2) continue;
+        let candidateDescriptor;
+        try {
+          candidateDescriptor = JSON.parse(person.face_descriptor_v2);
+        } catch {
+          continue;
+        }
+        const similarity = cosineSimilarity(result.descriptor, candidateDescriptor);
+        if (!best || similarity > best.similarity) best = { id: person.id, similarity };
+      }
+
+      await supabase.from('shadow_face_recognition_log').insert({
+        school_id: schoolId,
+        faceapi_matched_person_id: faceApiMatchedId,
+        human_matched_person_id: best?.id || null,
+        human_similarity: best?.similarity ?? null,
+        agree: best?.id === faceApiMatchedId,
+        human_detection_ms: ms,
+      });
+    } catch (err) {
+      // Silencioso de propósito — o modo observador nunca pode afetar o
+      // fluxo real de reconhecimento/check-in.
+      console.error('[Shadow Human] erro (não afeta o check-in real):', err.message);
     }
   };
 
@@ -494,6 +550,9 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
                   if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
                   setShowAlternative(false);
                   fetchMatchedPersonPhoto(person.id);
+                  // Fase F — modo observador: nunca aguardado, nunca afeta o
+                  // fluxo real acima. Ver runHumanShadowComparison().
+                  runHumanShadowComparison(video, person.id, currentUser.school_id, authorizedList);
                   const studentsData = await fetchStudentsForPerson(person);
                   if (!cancelled) setMatchedStudents(studentsData);
                 }
