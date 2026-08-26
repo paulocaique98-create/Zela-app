@@ -332,18 +332,17 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
     try {
       const { data } = await supabase
         .from('authorized_persons')
-        .select('photo_url, photo_storage_path')
+        .select('photo_storage_path')
         .eq('id', personId)
         .single();
 
-      // Leitura híbrida: Storage tem prioridade; se a pessoa ainda não foi
-      // migrada (ou a signed URL falhar por qualquer motivo), cai pro
-      // photo_url legado — nunca deixa o preview quebrado.
+      // Foto vem exclusivamente do Storage. Se não houver
+      // photo_storage_path (sem foto cadastrada) ou a signed URL falhar,
+      // simplesmente não mostra a foto — não há mais fallback pra Base64.
       let resolvedUrl = null;
       if (data?.photo_storage_path) {
         resolvedUrl = await getAuthorizedPersonPhotoSignedUrl(data.photo_storage_path).catch(() => null);
       }
-      if (!resolvedUrl) resolvedUrl = data?.photo_url || null;
 
       if (resolvedUrl) {
         setMatchedPerson(prev => (prev && prev.id === personId ? { ...prev, photo_url: resolvedUrl } : prev));

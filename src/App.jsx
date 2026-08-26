@@ -395,7 +395,7 @@ export default function App() {
       let studentsQuery = supabase.from('students').select('*').eq('school_id', currentUser.school_id);
       let authQuery = supabase
         .from('authorized_persons')
-        .select('id, name, relation, has_photo, photo_url, photo_storage_path, face_descriptor, status, emergency_order, temporary_until, family_id')
+        .select('id, name, relation, has_photo, photo_storage_path, face_descriptor, status, emergency_order, temporary_until, family_id')
         .eq('school_id', currentUser.school_id);
 
       if (currentUser.role === 'family') {
@@ -479,11 +479,10 @@ export default function App() {
       setStudents(formattedStudents);
 
       // Authorized Persons (já carregado pelo Promise.all acima)
-      // Leitura híbrida: quem já tem photo_storage_path (Storage) usa signed
-      // URL; quem ainda só tem photo_url (base64 legado, registros antigos
-      // ainda não migrados) usa o valor direto; sem nenhum dos dois, sem
-      // foto. Busca as signed URLs em LOTE (uma chamada só, não uma por
-      // pessoa) pra não virar N+1 na tela que mais gente carrega no login.
+      // Foto vem exclusivamente do Storage via signed URL. Busca em LOTE
+      // (uma chamada só, não uma por pessoa) pra não virar N+1 na tela que
+      // mais gente carrega no login. Sem photo_storage_path = sem foto
+      // (placeholder), sem fallback pra Base64 legado.
       const pathsToResolve = (authData || []).map(a => a.photo_storage_path).filter(Boolean);
       const signedUrlByPath = pathsToResolve.length > 0
         ? await getAuthorizedPersonPhotoSignedUrls(pathsToResolve).catch(() => new Map())
@@ -494,9 +493,7 @@ export default function App() {
         name: a.name,
         relation: a.relation,
         hasPhoto: a.has_photo,
-        photo_url: a.photo_storage_path
-          ? (signedUrlByPath.get(a.photo_storage_path) || a.photo_url || null) // signed URL falhou → cai pro base64 legado se existir, senão sem foto
-          : (a.photo_url || null), // fallback legado (registro ainda não migrado)
+        photo_url: a.photo_storage_path ? (signedUrlByPath.get(a.photo_storage_path) || null) : null,
         photo_storage_path: a.photo_storage_path,
         has_biometrics: a.face_descriptor != null,
         status: a.status,
@@ -607,9 +604,9 @@ export default function App() {
     try {
       const updates = { has_photo: !!photoUrl };
 
-      // Foto nova → vai pro Storage (nunca mais base64 em photo_url pra
-      // cadastro novo). photo_url de registros ANTIGOS não é tocado aqui —
-      // só é alterado no caminho de remoção explícita, abaixo.
+      // Foto nova → vai pro Storage. photo_storage_path é o único campo
+      // usado pra referenciar a foto — a coluna legada photo_url não é
+      // mais lida nem escrita pelo código.
       if (photoUrl) {
         try {
           const path = await uploadAuthorizedPersonPhoto(currentUser.school_id, id, photoUrl);
@@ -619,10 +616,9 @@ export default function App() {
           throw new Error('Não foi possível salvar a foto. Tente novamente.');
         }
       } else {
-        // Remoção explícita (chamada com photoUrl=null): limpa os dois
-        // formatos, novo e legado, já que a intenção aqui é remover a foto
-        // por completo. Se a pessoa tinha um arquivo no Storage, remove
-        // primeiro — só zera a referência no banco depois de confirmar.
+        // Remoção explícita (chamada com photoUrl=null). Se a pessoa tinha
+        // um arquivo no Storage, remove primeiro — só zera a referência no
+        // banco depois de confirmar.
         const current = authorized.find(p => p.id === id);
         if (current?.photo_storage_path) {
           try {
@@ -635,7 +631,6 @@ export default function App() {
           }
         }
         updates.photo_storage_path = null;
-        updates.photo_url = null;
       }
 
       if (descriptorArray) {
@@ -664,14 +659,14 @@ export default function App() {
 
       const resolvedPhotoUrl = updates.photo_storage_path
         ? await getAuthorizedPersonPhotoSignedUrl(updates.photo_storage_path).catch(() => null)
-        : (updates.photo_url !== undefined ? updates.photo_url : undefined);
+        : null;
 
       setAuthorized(prev => prev.map(p => p.id === id ? {
         ...p,
         hasPhoto: !!photoUrl,
         has_biometrics: !!descriptorArray,
         photo_storage_path: updates.photo_storage_path,
-        ...(resolvedPhotoUrl !== undefined ? { photo_url: resolvedPhotoUrl } : {}),
+        photo_url: resolvedPhotoUrl,
       } : p));
     } catch (err) {
       console.error(err);

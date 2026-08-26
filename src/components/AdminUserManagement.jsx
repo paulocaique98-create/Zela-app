@@ -37,20 +37,18 @@ export default function AdminUserManagement({ currentUser }) {
 
       const { data: authData, error: authError } = await supabase
         .from('authorized_persons')
-        .select('id, name, relation, photo_url, photo_storage_path, family_id')
+        .select('id, name, relation, photo_storage_path, family_id')
         .eq('school_id', currentUser.school_id);
       if (authError) throw authError;
 
-      // Leitura híbrida em lote (mesma lógica do App.jsx): Storage tem
-      // prioridade, cai pro base64 legado se a pessoa ainda não foi migrada
-      // ou se a signed URL falhar.
+      // Resolução em lote (mesma lógica do App.jsx): foto vem exclusivamente
+      // do Storage; sem photo_storage_path ou signed URL indisponível =
+      // sem foto (placeholder).
       const pathsToResolve = (authData || []).map(a => a.photo_storage_path).filter(Boolean);
       const signedUrlByPath = pathsToResolve.length > 0
         ? await getAuthorizedPersonPhotoSignedUrls(pathsToResolve).catch(() => new Map())
         : new Map();
-      const resolvePhotoUrl = (ap) => (ap.photo_storage_path
-        ? (signedUrlByPath.get(ap.photo_storage_path) || ap.photo_url || null)
-        : (ap.photo_url || null));
+      const resolvePhotoUrl = (ap) => (ap.photo_storage_path ? (signedUrlByPath.get(ap.photo_storage_path) || null) : null);
 
       const combinedData = usersData.map(user => {
         const familyAuths = (authData || []).filter(

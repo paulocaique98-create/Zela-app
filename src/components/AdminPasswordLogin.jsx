@@ -258,15 +258,11 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     onClick={() => loadStudentsForUser(u)}
                     className="w-full flex items-center gap-3 p-3 bg-surface-container-low hover:bg-primary/10 hover:border-indigo-300 active:scale-98 border border-outline-variant rounded-zela-lg transition-all text-left"
                   >
-                    {u.photo_url ? (
-                      <img src={u.photo_url} alt={u.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-base font-black text-primary">
-                          {u.name?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-base font-black text-primary">
+                        {u.name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                     <span className="font-bold text-on-surface">{u.name}</span>
                     {isLoading && <Loader2 size={16} className="ml-auto animate-spin text-indigo-400" />}
                   </button>
@@ -286,19 +282,11 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
             <div className="space-y-4 animate-in fade-in">
               {/* Perfil do responsável */}
               <div className="text-center">
-                {familyPerson?.photo_url ? (
-                  <img
-                    src={familyPerson.photo_url}
-                    alt={familyPerson.name}
-                    className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-4 border-primary/10"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-black text-primary">
-                      {familyPerson?.name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-2xl font-black text-primary">
+                    {familyPerson?.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
                 <h4 className="font-bold text-lg text-on-surface">{familyPerson?.name}</h4>
                 <p className="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-0.5">Autorizado(a)</p>
               </div>
