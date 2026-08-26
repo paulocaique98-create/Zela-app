@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Loader2 } from 'lucide-react';
+import { CalendarDays, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { EVENTO_TIPOS } from '../lib/constants';
+import { formatRecorrencia } from '../lib/aulasEspeciaisUtils';
 
 const TIPO_BY_VALUE = Object.fromEntries(EVENTO_TIPOS.map(t => [t.value, t]));
 
@@ -26,6 +27,7 @@ function formatMonthLabel(dateStr) {
 
 export default function FamilyCalendario({ currentUser, currentSchool }) {
   const [eventos, setEventos] = useState([]);
+  const [aulas, setAulas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,15 +40,24 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
       setIsLoading(true);
       setError('');
       try {
-        const { data, error: fetchError } = await supabase
-          .from('eventos_calendario')
-          .select('*')
-          .eq('school_id', schoolId)
-          .gte('event_date', todayStr)
-          .order('event_date', { ascending: true });
+        const [eventosRes, aulasRes] = await Promise.all([
+          supabase
+            .from('eventos_calendario')
+            .select('*')
+            .eq('school_id', schoolId)
+            .gte('event_date', todayStr)
+            .order('event_date', { ascending: true }),
+          supabase
+            .from('aulas_especiais')
+            .select('*')
+            .eq('school_id', schoolId)
+            .order('nome', { ascending: true }),
+        ]);
 
-        if (fetchError) throw fetchError;
-        setEventos(data || []);
+        if (eventosRes.error) throw eventosRes.error;
+        if (aulasRes.error) throw aulasRes.error;
+        setEventos(eventosRes.data || []);
+        setAulas(aulasRes.data || []);
       } catch (err) {
         console.error('[FamilyCalendario] Erro ao buscar:', err);
         setError('Não foi possível carregar os eventos.');
@@ -127,6 +138,33 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
               </div>
             </div>
           ))
+        )}
+
+        {!isLoading && aulas.length > 0 && (
+          <div>
+            <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Sparkles size={12} /> Aulas Especiais
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[{ key: 'geral', label: 'Geral (todos os alunos)' }, { key: 'integral', label: 'Integral' }].map(grupo => {
+                const items = aulas.filter(a => a.categoria === grupo.key);
+                if (items.length === 0) return null;
+                return (
+                  <div key={grupo.key} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4">
+                    <p className="text-[10px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-2">{grupo.label}</p>
+                    <div className="space-y-2">
+                      {items.map(aula => (
+                        <div key={aula.id} className="flex justify-between items-baseline gap-2">
+                          <span className="text-sm font-bold text-on-surface">{aula.nome}</span>
+                          <span className="text-xs text-on-surface-variant text-right">{formatRecorrencia(aula)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>
