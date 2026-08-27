@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { setErrorLogContext } from './lib/errorLogger';
 import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
@@ -226,6 +227,13 @@ export default function App() {
       console.error('Erro ao buscar logo global:', e);
     }
   };
+
+  // Associa o usuário logado ao contexto de erro (client_error_logs) — não
+  // exibido em lugar nenhum da UI, só ajuda a rastrear de qual conta/escola
+  // um erro reportado veio, sem guardar dado sensível (nome/e-mail ficam de fora).
+  useEffect(() => {
+    setErrorLogContext(currentUser);
+  }, [currentUser?.id, currentUser?.role, currentUser?.school_id]);
 
   useEffect(() => {
     if (currentUser) {

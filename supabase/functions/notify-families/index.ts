@@ -38,6 +38,24 @@ serve(async (req) => {
       throw new Error('Acesso negado: apenas administradores podem notificar as famílias.');
     }
 
+    // Rate limit: cada chamada pode disparar push pra toda a escola de uma
+    // vez — sem limite, uma conta admin comprometida (ou um bug de loop no
+    // client) poderia bombardear todas as famílias repetidamente. Limite
+    // generoso porque ações legítimas (criar cardápio, comunicado, evento,
+    // mural, diário) já são naturalmente pouco frequentes.
+    const { data: rateLimitOk, error: rateLimitError } = await adminClient.rpc('check_rate_limit', {
+      p_key: `edge:notify-families:${caller.id}`,
+      p_limit: 30,
+      p_window_seconds: 300,
+    });
+    if (rateLimitError) throw rateLimitError;
+    if (!rateLimitOk) {
+      return new Response(JSON.stringify({ error: 'Muitas notificações em pouco tempo. Aguarde alguns minutos.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 429,
+      });
+    }
+
     const { type, title, message, url, turmas, family_ids } = await req.json();
     if (!type || !title || !message) {
       throw new Error('Campos obrigatórios: type, title, message');

@@ -6,6 +6,7 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
 const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
 const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
+const DeveloperLogs = lazy(() => import('./DeveloperLogs'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState('schools');
@@ -14,7 +15,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
   const navItems = [
     { id: 'schools', label: 'Gestão de Escolas', icon: Building2, enabled: true },
     { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: false },
-    { id: 'logs', label: 'Logs', icon: FileText, enabled: false },
+    { id: 'logs', label: 'Logs', icon: FileText, enabled: true },
     { id: 'support', label: 'Suporte', icon: LifeBuoy, enabled: true },
     { id: 'settings', label: 'Configurações', icon: Settings, enabled: true },
   ];
@@ -96,6 +97,9 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           )}
           {activeTab === 'support' && (
             <DeveloperChatSupport currentUser={currentUser} />
+          )}
+          {activeTab === 'logs' && (
+            <DeveloperLogs />
           )}
         </Suspense>
       </main>
