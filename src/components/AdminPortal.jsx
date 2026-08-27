@@ -142,9 +142,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 onToggle={() => toggleAccordion('cadastros')}
               >
                 <SidebarItem active={adminTab === 'register'} icon={FolderPlus} label="Usuários" onClick={() => go('register')} />
-                {showComunicados && (
-                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
-                )}
                 <SidebarItem active={adminTab === 'cadastro-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('cadastro-funcionarios')} />
               </SidebarGroup>
             )}
@@ -207,8 +204,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
-            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO */}
-            {(showCalendario || showMural || showCardapio || showDiario) && (
+            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO / COMUNICADOS */}
+            {(showCalendario || showMural || showCardapio || showDiario || showComunicados) && (
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
@@ -226,6 +223,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 )}
                 {showDiario && (
                   <SidebarItem active={adminTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
+                )}
+                {showComunicados && (
+                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
                 )}
               </SidebarGroup>
             )}
