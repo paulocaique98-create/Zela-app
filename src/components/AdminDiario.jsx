@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Check, Loader2, Minus, Plus, Search, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { REFEICOES, TURMAS } from '../lib/constants';
-import { splitCardapioItens } from '../lib/diarioUtils';
+import { splitCardapioItens, mealAsksComeuTudo, normalizeItemServido } from '../lib/diarioUtils';
 import { notifyFamilies } from '../lib/notifyFamilies';
 
 const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
@@ -25,10 +25,12 @@ function emptyRefeicaoState(slot, saved) {
   return {
     refeicao: slot.refeicao,
     itensDisponiveis: slot.itensDisponiveis,
-    itensSelecionados: saved?.itens_servidos || [],
+    itensSelecionados: (saved?.itens_servidos || []).map(normalizeItemServido),
     comeuTudo: saved?.comeu_tudo ?? null,
+    observacaoRecusa: saved?.observacao_recusa || '',
     repetiu: saved?.repetiu ?? false,
     vezesRepetiu: saved?.vezes_repetiu || 1,
+    observacaoRepeticao: saved?.observacao_repeticao || '',
   };
 }
 
@@ -87,6 +89,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
   const [sonoInicio, setSonoInicio] = useState('');
   const [sonoFim, setSonoFim] = useState('');
   const [evacuou, setEvacuou] = useState(null);
+  const [aparenciaEvacuacao, setAparenciaEvacuacao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [existingId, setExistingId] = useState(null);
   const [existingCreatedBy, setExistingCreatedBy] = useState(null);
@@ -136,6 +139,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
         setSonoInicio(entryRes.data?.sono_inicio?.slice(0, 5) || '');
         setSonoFim(entryRes.data?.sono_fim?.slice(0, 5) || '');
         setEvacuou(entryRes.data?.evacuou ?? null);
+        setAparenciaEvacuacao(entryRes.data?.aparencia_evacuacao || '');
         setObservacoes(entryRes.data?.observacoes || '');
         setExistingId(entryRes.data?.id || null);
         setExistingCreatedBy(entryRes.data?.created_by || null);
@@ -149,11 +153,23 @@ export default function AdminDiario({ currentUser, currentSchool }) {
     load();
   }, [selectedStudentId, selectedDate, schoolId]);
 
-  const toggleItem = (idx, item) => {
+  const toggleItem = (idx, nome) => {
     setRefeicoesState(prev => prev.map((r, i) => {
       if (i !== idx) return r;
-      const has = r.itensSelecionados.includes(item);
-      return { ...r, itensSelecionados: has ? r.itensSelecionados.filter(x => x !== item) : [...r.itensSelecionados, item] };
+      const has = r.itensSelecionados.some(x => x.nome === nome);
+      return {
+        ...r,
+        itensSelecionados: has
+          ? r.itensSelecionados.filter(x => x.nome !== nome)
+          : [...r.itensSelecionados, { nome, quantidade: '' }],
+      };
+    }));
+  };
+
+  const setItemQuantidade = (idx, nome, quantidade) => {
+    setRefeicoesState(prev => prev.map((r, i) => {
+      if (i !== idx) return r;
+      return { ...r, itensSelecionados: r.itensSelecionados.map(x => (x.nome === nome ? { ...x, quantidade } : x)) };
     }));
   };
 
@@ -174,13 +190,16 @@ export default function AdminDiario({ currentUser, currentSchool }) {
         refeicoes: refeicoesState.map(r => ({
           refeicao: r.refeicao,
           itens_servidos: r.itensSelecionados,
-          comeu_tudo: r.comeuTudo,
+          comeu_tudo: mealAsksComeuTudo(r.refeicao) ? r.comeuTudo : null,
+          observacao_recusa: mealAsksComeuTudo(r.refeicao) && r.comeuTudo === false ? (r.observacaoRecusa.trim() || null) : null,
           repetiu: r.repetiu,
           vezes_repetiu: r.repetiu ? r.vezesRepetiu : 0,
+          observacao_repeticao: r.repetiu ? (r.observacaoRepeticao.trim() || null) : null,
         })),
         sono_inicio: sonoInicio || null,
         sono_fim: sonoFim || null,
         evacuou,
+        aparencia_evacuacao: evacuou === true ? (aparenciaEvacuacao.trim() || null) : null,
         observacoes: observacoes.trim() || null,
         created_by: existingCreatedBy || currentUser.id,
         updated_by: currentUser.id,
@@ -325,7 +344,9 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                   Nenhum cardápio lançado para {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('pt-BR')} — só é possível preencher Sono, Evacuação e Observações.
                 </div>
               ) : (
-                refeicoesState.map((r, idx) => (
+                refeicoesState.map((r, idx) => {
+                  const pedeComeuTudo = mealAsksComeuTudo(r.refeicao);
+                  return (
                   <div key={r.refeicao} className="border border-outline-variant rounded-zela-lg p-5 space-y-4">
                     <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{idx + 1}ª Refeição — {r.refeicao}</span>
 
@@ -333,7 +354,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                       <label className="block text-xs font-semibold text-on-surface mb-2">Cardápio de hoje — o que a criança se serviu?</label>
                       <div className="flex flex-wrap gap-2">
                         {r.itensDisponiveis.map(item => {
-                          const active = r.itensSelecionados.includes(item);
+                          const active = r.itensSelecionados.some(x => x.nome === item);
                           return (
                             <button
                               key={item}
@@ -348,14 +369,45 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-on-surface mb-2">Comeu tudo que serviu?</label>
-                        <div className="flex gap-2">
-                          <button type="button" onClick={() => patchRefeicao(idx, { comeuTudo: true })} className={segCls(r.comeuTudo === true)}>Sim</button>
-                          <button type="button" onClick={() => patchRefeicao(idx, { comeuTudo: false })} className={segCls(r.comeuTudo === false)}>Não</button>
+                    {!pedeComeuTudo && r.itensSelecionados.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-on-surface">Quantidade por item (opcional)</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {r.itensSelecionados.map(item => (
+                            <div key={item.nome} className="flex items-center gap-2">
+                              <span className="text-xs text-on-surface-variant flex-1 min-w-0 truncate">{item.nome}</span>
+                              <input
+                                type="text"
+                                value={item.quantidade}
+                                onChange={e => setItemQuantidade(idx, item.nome, e.target.value)}
+                                placeholder="Ex: 1 unidade, meio prato..."
+                                className="w-40 px-2.5 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-xs text-on-surface"
+                              />
+                            </div>
+                          ))}
                         </div>
                       </div>
+                    )}
+
+                    <div className={`grid grid-cols-1 ${pedeComeuTudo ? 'sm:grid-cols-2' : ''} gap-4`}>
+                      {pedeComeuTudo && (
+                        <div>
+                          <label className="block text-xs font-semibold text-on-surface mb-2">Comeu tudo que serviu?</label>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => patchRefeicao(idx, { comeuTudo: true })} className={segCls(r.comeuTudo === true)}>Sim</button>
+                            <button type="button" onClick={() => patchRefeicao(idx, { comeuTudo: false })} className={segCls(r.comeuTudo === false)}>Não</button>
+                          </div>
+                          {r.comeuTudo === false && (
+                            <textarea
+                              value={r.observacaoRecusa}
+                              onChange={e => patchRefeicao(idx, { observacaoRecusa: e.target.value })}
+                              rows={2}
+                              placeholder="Ex.: O que a criança recusou?"
+                              className="w-full mt-2 px-3 py-2 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-xs text-on-surface resize-none"
+                            />
+                          )}
+                        </div>
+                      )}
                       <div>
                         <label className="block text-xs font-semibold text-on-surface mb-2">Repetiu?</label>
                         <div className="flex gap-2">
@@ -366,17 +418,27 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                     </div>
 
                     {r.repetiu && (
-                      <div className="max-w-[220px]">
-                        <label className="block text-xs font-semibold text-on-surface mb-2">Quantas vezes repetiu?</label>
-                        <div className="flex items-center gap-3 p-2 rounded-zela-md bg-surface-container-low border border-outline-variant w-fit">
-                          <button type="button" onClick={() => patchRefeicao(idx, { vezesRepetiu: Math.max(1, r.vezesRepetiu - 1) })} className="w-8 h-8 rounded-lg bg-white border border-outline-variant flex items-center justify-center text-primary hover:bg-primary/10 transition"><Minus size={14} /></button>
-                          <span className="text-sm font-bold text-on-surface w-4 text-center">{r.vezesRepetiu}</span>
-                          <button type="button" onClick={() => patchRefeicao(idx, { vezesRepetiu: r.vezesRepetiu + 1 })} className="w-8 h-8 rounded-lg bg-white border border-outline-variant flex items-center justify-center text-primary hover:bg-primary/10 transition"><Plus size={14} /></button>
+                      <div className="space-y-2">
+                        <div className="max-w-[220px]">
+                          <label className="block text-xs font-semibold text-on-surface mb-2">Quantas vezes repetiu?</label>
+                          <div className="flex items-center gap-3 p-2 rounded-zela-md bg-surface-container-low border border-outline-variant w-fit">
+                            <button type="button" onClick={() => patchRefeicao(idx, { vezesRepetiu: Math.max(1, r.vezesRepetiu - 1) })} className="w-8 h-8 rounded-lg bg-white border border-outline-variant flex items-center justify-center text-primary hover:bg-primary/10 transition"><Minus size={14} /></button>
+                            <span className="text-sm font-bold text-on-surface w-4 text-center">{r.vezesRepetiu}</span>
+                            <button type="button" onClick={() => patchRefeicao(idx, { vezesRepetiu: r.vezesRepetiu + 1 })} className="w-8 h-8 rounded-lg bg-white border border-outline-variant flex items-center justify-center text-primary hover:bg-primary/10 transition"><Plus size={14} /></button>
+                          </div>
                         </div>
+                        <textarea
+                          value={r.observacaoRepeticao}
+                          onChange={e => patchRefeicao(idx, { observacaoRepeticao: e.target.value })}
+                          rows={2}
+                          placeholder="Ex.: O que a criança repetiu?"
+                          className="w-full px-3 py-2 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-xs text-on-surface resize-none"
+                        />
                       </div>
                     )}
                   </div>
-                ))
+                  );
+                })
               )}
 
               <div className="border border-outline-variant rounded-zela-lg p-5">
@@ -397,8 +459,20 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                 <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Evacuação</span>
                 <div className="flex gap-2 mt-3 max-w-[320px]">
                   <button type="button" onClick={() => setEvacuou(true)} className={segCls(evacuou === true)}>Sim</button>
-                  <button type="button" onClick={() => setEvacuou(false)} className={segCls(evacuou === false)}>Não</button>
+                  <button type="button" onClick={() => { setEvacuou(false); setAparenciaEvacuacao(''); }} className={segCls(evacuou === false)}>Não</button>
                 </div>
+                {evacuou === true && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-semibold text-on-surface mb-1.5">Aparência da evacuação</label>
+                    <input
+                      type="text"
+                      value={aparenciaEvacuacao}
+                      onChange={e => setAparenciaEvacuacao(e.target.value)}
+                      placeholder="Ex.: Normal, pastosa, líquida..."
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm text-on-surface"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

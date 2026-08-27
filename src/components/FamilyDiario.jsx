@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Loader2, User } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Loader2, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatRefeicaoTexto, formatSonoTexto, formatEvacuacaoTexto } from '../lib/diarioUtils';
+
+const pad2 = (n) => String(n).padStart(2, '0');
+const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
 function formatDateCard(dateStr) {
   const d = new Date(`${dateStr}T12:00:00`);
@@ -12,11 +15,33 @@ function formatDateCard(dateStr) {
   };
 }
 
+// Todos os dias do mês (YYYY-MM), sem incluir dias futuros — não faz sentido
+// mostrar/selecionar um dia que ainda não aconteceu.
+function buildMonthDays(monthStr) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  const today = todayStr();
+  const days = [];
+  for (let d = 1; d <= lastDay; d++) {
+    const dateStr = `${year}-${pad2(month)}-${pad2(d)}`;
+    if (dateStr > today) break;
+    days.push(dateStr);
+  }
+  return days;
+}
+
+function formatMonthLabel(monthStr) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const label = new Date(year, month - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export default function FamilyDiario({ familyStudents }) {
   const students = familyStudents || [];
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(todayStr().slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState(todayStr());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,21 +49,38 @@ export default function FamilyDiario({ familyStudents }) {
     if (!selectedStudentId && students.length > 0) setSelectedStudentId(students[0].id);
   }, [students]);
 
+  const monthDays = useMemo(() => buildMonthDays(selectedMonth), [selectedMonth]);
+  const isCurrentMonth = selectedMonth === todayStr().slice(0, 7);
+
+  const changeMonth = (delta) => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const d = new Date(year, month - 1 + delta, 1);
+    const newMonth = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+    if (newMonth > todayStr().slice(0, 7)) return; // sem meses futuros
+    setSelectedMonth(newMonth);
+  };
+
   useEffect(() => {
     const load = async () => {
-      if (!selectedStudentId) return;
+      if (!selectedStudentId || !selectedMonth) return;
       setIsLoading(true);
       setError('');
       try {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const monthStart = `${year}-${pad2(month)}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const monthEnd = `${year}-${pad2(month)}-${pad2(lastDay)}`;
         const { data, error: fetchError } = await supabase
           .from('diario_entries')
           .select('*')
           .eq('student_id', selectedStudentId)
-          .order('entry_date', { ascending: false })
-          .limit(30);
+          .gte('entry_date', monthStart)
+          .lte('entry_date', monthEnd)
+          .order('entry_date', { ascending: true });
         if (fetchError) throw fetchError;
         setEntries(data || []);
-        setSelectedDate(data?.[0]?.entry_date || null);
+        const days = buildMonthDays(selectedMonth);
+        setSelectedDate(prev => (days.includes(prev) ? prev : days[days.length - 1] || null));
       } catch (err) {
         console.error('[FamilyDiario] Erro ao carregar:', err);
         setError('Não foi possível carregar o diário.');
@@ -47,20 +89,39 @@ export default function FamilyDiario({ familyStudents }) {
       }
     };
     load();
-  }, [selectedStudentId]);
+  }, [selectedStudentId, selectedMonth]);
 
   const selectedEntry = useMemo(() => entries.find(e => e.entry_date === selectedDate) || null, [entries, selectedDate]);
+  const hasAnyDataThisEntry = selectedEntry && (
+    (selectedEntry.refeicoes || []).length > 0 ||
+    selectedEntry.sono_inicio ||
+    selectedEntry.evacuou !== null ||
+    selectedEntry.observacoes
+  );
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <BookOpen size={22} />
+      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
+            <BookOpen size={22} />
+          </div>
+          <div>
+            <h2 className="text-h3 text-on-surface">Diário</h2>
+            <p className="text-on-surface-variant text-small hidden sm:block">Acompanhe o dia a dia do seu filho(a) na escola.</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Diário</h2>
-          <p className="text-on-surface-variant text-small hidden sm:block">Acompanhe o dia a dia do seu filho(a) na escola.</p>
-        </div>
+        {students.length > 0 && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => changeMonth(-1)} className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition" title="Mês anterior">
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-sm font-bold text-on-surface w-32 text-center">{formatMonthLabel(selectedMonth)}</span>
+            <button onClick={() => changeMonth(1)} disabled={isCurrentMonth} className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition" title="Próximo mês">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
 
       {students.length === 0 ? (
@@ -89,32 +150,34 @@ export default function FamilyDiario({ familyStudents }) {
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
-          ) : entries.length === 0 ? (
-            <div className="text-center py-16 text-on-surface-variant/70">
-              <BookOpen className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-              <p className="text-sm font-semibold text-on-surface-variant">Nenhum registro de diário ainda.</p>
-            </div>
           ) : (
             <>
               <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
-                {entries.map(entry => {
-                  const { weekday, day, month } = formatDateCard(entry.entry_date);
-                  const isSelected = entry.entry_date === selectedDate;
+                {[...monthDays].reverse().map(dateStr => {
+                  const { weekday, day, month } = formatDateCard(dateStr);
+                  const isSelected = dateStr === selectedDate;
+                  const temLancamento = entries.some(e => e.entry_date === dateStr);
                   return (
                     <button
-                      key={entry.entry_date}
-                      onClick={() => setSelectedDate(entry.entry_date)}
-                      className={`shrink-0 w-20 h-24 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'bg-white border border-outline-variant text-primary/40 hover:border-indigo-300'}`}
+                      key={dateStr}
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`shrink-0 w-16 h-20 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all relative ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : temLancamento ? 'bg-white border border-outline-variant text-primary/40 hover:border-indigo-300' : 'bg-surface-container-low border border-dashed border-outline-variant text-on-surface-variant/40 hover:border-indigo-300'}`}
                     >
-                      <span className="text-xs font-semibold">{weekday}</span>
-                      <span className="text-2xl font-bold">{day}</span>
-                      <span className="text-[11px] font-medium">{month}</span>
+                      <span className="text-[11px] font-semibold">{weekday}</span>
+                      <span className="text-xl font-bold">{day}</span>
+                      <span className="text-[10px] font-medium">{month}</span>
+                      {temLancamento && !isSelected && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />}
                     </button>
                   );
                 })}
               </div>
 
-              {selectedEntry && (
+              {!selectedEntry || !hasAnyDataThisEntry ? (
+                <div className="text-center py-16 text-on-surface-variant/70">
+                  <BookOpen className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+                  <p className="text-sm font-semibold text-on-surface-variant">Nenhum lançamento pra esse dia.</p>
+                </div>
+              ) : (
                 <div className="flex flex-col">
                   {(selectedEntry.refeicoes || []).map((r, idx) => (
                     <div key={r.refeicao} className="py-4 border-b border-surface-container-low">
@@ -131,10 +194,10 @@ export default function FamilyDiario({ familyStudents }) {
                     </div>
                   )}
 
-                  {formatEvacuacaoTexto(selectedEntry.evacuou) && (
+                  {formatEvacuacaoTexto(selectedEntry.evacuou, selectedEntry.aparencia_evacuacao) && (
                     <div className="py-4 border-b border-surface-container-low">
                       <div className="text-[13px] text-on-surface-variant/70 mb-1.5">Evacuação</div>
-                      <div className="text-[15px] text-on-surface">{formatEvacuacaoTexto(selectedEntry.evacuou)}</div>
+                      <div className="text-[15px] text-on-surface">{formatEvacuacaoTexto(selectedEntry.evacuou, selectedEntry.aparencia_evacuacao)}</div>
                     </div>
                   )}
 
