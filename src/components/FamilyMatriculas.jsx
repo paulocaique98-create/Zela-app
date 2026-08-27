@@ -101,7 +101,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const limits = { autorizados_por_responsavel: 2, autorizados_transporte: 1, ...(currentSchool?.limits || {}) };
+  const limits = { autorizados_por_responsavel: 2, autorizados_transporte: 1, ...currentSchool?.limits };
   const maxAutorizados = limits.autorizados_por_responsavel * (temSegundo ? 2 : 1);
   const maxTransporte = limits.autorizados_transporte;
 
@@ -252,8 +252,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         status: 'pending',
         responsavel_financeiro: responsavel,
         segundo_responsavel: temSegundo ? segundoResponsavel : null,
-        criancas: criancas.filter(c => c.nome.trim()).map(({ id, ...rest }) => rest),
-        autorizados: autorizados.filter(a => a.nome.trim()).map(({ id, ...rest }) => rest),
+        criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, ...rest }) => rest),
+        autorizados: autorizados.filter(a => a.nome.trim()).map(({ id: _id, ...rest }) => rest),
         transporte_autorizados: temTransporte ? transporteAutorizados.filter(t => t.nome.trim()).map(t => ({ nome: t.nome })) : [],
       };
       const { error: insertError } = await supabase.from('matricula_solicitacoes').insert(payload);
@@ -506,7 +506,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 <span className="text-[10px] font-bold text-on-surface-variant/70 uppercase">{autorizados.length}/{maxAutorizados}</span>
               </div>
               <div className="space-y-3">
-                {autorizados.map((a, idx) => (
+                {autorizados.map((a) => (
                   <div key={a.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-white border border-outline-variant rounded-zela-md p-3">
                     <div>
                       <label className={labelCls}>Nome completo</label>

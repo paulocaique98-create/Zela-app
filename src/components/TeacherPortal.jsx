@@ -24,7 +24,6 @@ export default function TeacherPortal({
   students, authorized,
   teacherTab, setTeacherTab,
   isMobileMenuOpen, setIsMobileMenuOpen,
-  onLogout,
 }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const [openAccordion, setOpenAccordion] = useState(null);

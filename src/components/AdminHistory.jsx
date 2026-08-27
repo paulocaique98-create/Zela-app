@@ -67,7 +67,14 @@ export default function AdminHistory({ currentSchool }) {
         .gte('event_time', startDate)
         .lte('event_time', endDate)
         .order('student_id')
-        .order('event_time');
+        .order('event_time')
+        // Sem paginação de verdade aqui de propósito: agruparEventosPorDia
+        // precisa do par entrada/saída completo de cada aluno no período pra
+        // combinar certo — uma página "no meio" cortaria um evento da sua
+        // dupla. Já é limitado pelo período (hoje/7/30 dias); esse teto é só
+        // uma rede de segurança pra uma escola muito grande em 30 dias não
+        // travar o navegador com um payload gigante.
+        .limit(20000);
 
       if (error) throw error;
 

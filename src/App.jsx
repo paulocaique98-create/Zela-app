@@ -5,7 +5,6 @@ import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
-import { navigateTo } from './utils/navigate';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -137,7 +136,7 @@ export default function App() {
           ctx.resume();
           window._zelaAudioUnlocked = true;
           console.info('[Zela] Audio context desbloqueado.');
-        } catch (e) {
+        } catch {
           // AudioContext não suportado no browser — silent fail
         }
       }
@@ -420,7 +419,7 @@ export default function App() {
         .eq('school_id', currentUser.school_id);
 
       if (currentUser.role === 'family') {
-        const { data: guardianLinks, error: glError } = await supabase
+        const { data: guardianLinks } = await supabase
           .from('student_guardians')
           .select('student_id')
           .eq('guardian_id', currentUser.id);
@@ -786,7 +785,6 @@ export default function App() {
 
     const now = new Date();
     const nowStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const nowShortStr = nowStr.substring(0, 5);
     const dateStr = getBrasiliaDateStr(now);
     const fullRecordStr = `${dateStr}|${nowStr}`;
 
@@ -871,6 +869,7 @@ export default function App() {
           event_time: eventTimeIso,
           recorded_by: currentUser.id,
         }]);
+        if (logError) console.error('Erro ao registrar log de presença:', logError);
       }
 
       // 3. Atualiza estado local do React

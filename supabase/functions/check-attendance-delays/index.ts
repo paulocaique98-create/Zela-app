@@ -1,17 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Interface para facilitar a tipagem
-interface Student {
-  id: string
-  school_id: string
-  family_id: string
-  name: string
-  status: string
-  contracted_entry_time: string | null
-  contracted_exit_time: string | null
-}
-
 serve(async (req) => {
   // Só o backend (cron/scheduler com a service role key) pode disparar esta função —
   // sem isso, qualquer chamador externo poderia forçar execuções extras e duplicar notificações.

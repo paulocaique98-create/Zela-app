@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MapPin, Camera, Save, CheckCircle2, Loader2, FileText } from 'lucide-react';
+import { User, MapPin, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Não há mais documentos solicitados aqui

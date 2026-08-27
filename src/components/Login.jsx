@@ -127,7 +127,7 @@ export default function Login({ onLogin }) {
         <div className="relative z-10 max-w-md shrink-0">
           <Quote className="text-primary/40 mb-3" size={32} />
           <p className="text-h3 text-on-surface leading-relaxed">
-            Controle de entrada, saída e comunicação escolar em um só lugar — com segurança para cada aluno.
+            Controle de entrada, saída e comunicação escolar em um só lugar com segurança para cada aluno.
           </p>
         </div>
       </div>

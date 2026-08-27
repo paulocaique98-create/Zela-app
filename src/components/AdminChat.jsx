@@ -1,15 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Loader2, ArrowLeft, Send, Clock, Building2, GraduationCap, Users2, Contact, ChevronLeft, ChevronRight, LifeBuoy } from 'lucide-react';
+import { MessageCircle, Loader2, ArrowLeft, Send, Clock, ChevronLeft, ChevronRight, LifeBuoy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { notifyChatMessage } from '../lib/notifyChatMessage';
-
-const SETOR_ICONS = {
-  administrativo: Building2,
-  diretoria_pedagogica: GraduationCap,
-  coordenacao: Users2,
-  recepcao: Contact,
-};
 
 const SETORES_ADMIN = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 const SUPORTE_ZELA_LABEL = SETORES_CHAT.find(s => s.value === 'suporte_zela')?.label || 'Suporte Zela';

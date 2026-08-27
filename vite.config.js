@@ -6,11 +6,15 @@ import compression from 'vite-plugin-compression'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     compression({
       algorithm: 'gzip',
       ext: '.gz',
     })
   ],
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.js'],
+  },
 })

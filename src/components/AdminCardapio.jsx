@@ -735,7 +735,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
 }
 
 // ── Detalhe de um cardápio: título/período editáveis + itens (data/refeição/descrição) ──
-function CardapioDetail({ cardapio, currentUser, onBack, onCardapioUpdated }) {
+function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
   const [itens, setItens] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');

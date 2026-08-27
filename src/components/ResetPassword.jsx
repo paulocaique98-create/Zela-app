@@ -12,7 +12,7 @@ export default function ResetPassword() {
   useEffect(() => {
     // Escuta a troca do token na URL, que o Supabase faz automaticamente
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, _session) => {
         if (event === 'PASSWORD_RECOVERY') {
           console.log('[ResetPassword] Recuperação iniciada.');
         }

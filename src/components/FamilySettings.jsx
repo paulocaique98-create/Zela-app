@@ -185,7 +185,7 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
-export default function FamilySettings({ currentUser, setCurrentUser, currentSchool, pushData }) {
+export default function FamilySettings({ currentUser, setCurrentUser, pushData }) {
   const [modal, setModal] = useState(null); // null | 'edit' | 'lgpd' | 'image_usage'
   const [lgpdAccepted, setLgpdAccepted] = useState(!!currentUser.lgpd_accepted);
   const [imageUsageStatus, setImageUsageStatus] = useState(currentUser.image_usage_accepted);

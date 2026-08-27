@@ -15,10 +15,14 @@ function extractTab(url) {
   }
 }
 
+const PAGE_SIZE = 30;
+
 export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -78,11 +82,40 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
       .select('*')
       .eq('family_id', currentUser.id)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .order('id', { ascending: false })
+      .limit(PAGE_SIZE);
 
     if (!error && data) {
       setNotifications(data);
+      setHasMore(data.length === PAGE_SIZE);
     }
+  };
+
+  // Busca notificações mais antigas que a última já carregada (paginação
+  // por cursor, mais segura que offset aqui — a lista realtime insere itens
+  // novos no topo, o que deslocaria um offset numérico). Cursor composto
+  // (created_at, id): duas notificações inseridas no mesmo lote podem
+  // compartilhar o exato mesmo created_at — um cursor só por data faria
+  // "created_at < X" não encontrar nada nesse empate, travando a paginação
+  // antes da lista acabar de verdade.
+  const loadMoreNotifications = async () => {
+    const oldest = notifications[notifications.length - 1];
+    if (!oldest) return;
+    setIsLoadingMore(true);
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('family_id', currentUser.id)
+      .or(`created_at.lt.${oldest.created_at},and(created_at.eq.${oldest.created_at},id.lt.${oldest.id})`)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(PAGE_SIZE);
+
+    if (!error && data) {
+      setNotifications(prev => [...prev, ...data]);
+      setHasMore(data.length === PAGE_SIZE);
+    }
+    setIsLoadingMore(false);
   };
 
   const markAllAsRead = async () => {
@@ -228,9 +261,21 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
             )}
           </div>
           
-          <div className="p-2 border-t border-slate-100 bg-slate-50 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Histórico Completo</p>
-          </div>
+          {notifications.length > 0 && (
+            <div className="p-2 border-t border-slate-100 bg-slate-50 text-center">
+              {hasMore ? (
+                <button
+                  onClick={loadMoreNotifications}
+                  disabled={isLoadingMore}
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest disabled:opacity-60 py-1"
+                >
+                  {isLoadingMore ? 'Carregando...' : 'Carregar mais'}
+                </button>
+              ) : (
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Histórico Completo</p>
+              )}
+            </div>
+          )}
           </div>
         </>
       )}

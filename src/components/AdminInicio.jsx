@@ -2,7 +2,7 @@ import React from 'react';
 import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText } from 'lucide-react';
 import { useMemo } from 'react';
 
-export default function AdminInicio({ currentUser, currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
+export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
   const features = currentSchool?.features_enabled || {};
   
   const ADMIN_MENUS = [

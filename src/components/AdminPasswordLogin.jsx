@@ -32,7 +32,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
   // Rate-limit contra força bruta: PIN de 4 dígitos tem só 10.000 combinações e o
   // totem é um dispositivo público — sem isso, dava pra tentar todas em minutos.
-  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
 
   const getLockRemainingSeconds = () => {

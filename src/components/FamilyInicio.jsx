@@ -2,7 +2,7 @@ import React from 'react';
 import { Home, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
 import { useMemo } from 'react';
 
-export default function FamilyInicio({ currentUser, currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
+export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
   const features = currentSchool?.features_enabled || {};
 
   const FAMILY_MENUS = [

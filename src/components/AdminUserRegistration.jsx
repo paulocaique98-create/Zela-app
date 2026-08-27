@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
-import { supabase, supabaseAuthHelper } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { TURMAS, SETORES_CHAT } from '../lib/constants';
 import ConfirmModal from './ConfirmModal';
 
@@ -190,7 +190,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     departamento: '',
     chat_visibilidade_total: false,
     turmas: [],
-    ...(initialData || {}),
+    ...initialData,
   });
 
   const [students, setStudents] = useState([emptyStudent()]);
@@ -665,7 +665,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             if (studErr) {
               if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
                 console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
-                const baseSt = studentsToInsert.map(({ birth_date, turno, periodo, ...rest }) => rest);
+                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, ...rest }) => rest);
                 const { error: studErr2 } = await supabase.from('students').insert(baseSt);
                 if (studErr2) throw studErr2;
               } else {

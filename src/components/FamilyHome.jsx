@@ -1,7 +1,7 @@
 import React from 'react';
-import { Car, CheckCircle2, Clock, LogOut } from 'lucide-react';
+import { CheckCircle2, LogOut } from 'lucide-react';
 
-export default function FamilyHome({ currentUser, familyStudents, updateStudentStatus }) {
+export default function FamilyHome({ familyStudents, updateStudentStatus }) {
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-6 flex justify-between items-start shrink-0">

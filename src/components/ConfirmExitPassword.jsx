@@ -20,7 +20,7 @@ export default function ConfirmExitPassword({ email, onConfirm, onCancel }) {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
       onConfirm();
-    } catch (err) {
+    } catch {
       setError('Senha incorreta.');
     } finally {
       setIsLoading(false);

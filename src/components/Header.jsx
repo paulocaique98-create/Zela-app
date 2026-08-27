@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
-export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onTriggerEmergency, onNavigateTab }) {
+export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onNavigateTab }) {
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;

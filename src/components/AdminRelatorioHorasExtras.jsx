@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Search, X, Clock, FileText, LogIn, LogOut, Download } from 'lucide-react';
+import { Search, X, Clock, FileText, LogIn, LogOut, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';

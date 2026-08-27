@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, supabaseAuthHelper } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { Building2, Search, Plus, Edit2, Power, X, Trash2, AlertTriangle } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
-export default function DeveloperPanel({ currentUser }) {
+export default function DeveloperPanel() {
   const [schools, setSchools] = useState([]);
   const [confirmDeleteSchool, setConfirmDeleteSchool] = useState(null); // { id, name, code }
   const [isDeletingSchool, setIsDeletingSchool] = useState(false);
@@ -82,8 +82,8 @@ export default function DeveloperPanel({ currentUser }) {
         is_active: school.is_active,
         notes: school.notes || ''
       });
-      setFeaturesEnabled({ ...defaultFeatures, ...(school.features_enabled || {}) });
-      setLimits({ ...defaultLimits, ...(school.limits || {}) });
+      setFeaturesEnabled({ ...defaultFeatures, ...school.features_enabled });
+      setLimits({ ...defaultLimits, ...school.limits });
     } else {
       setEditingSchool(null);
       setFormData({

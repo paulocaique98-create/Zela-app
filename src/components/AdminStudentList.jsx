@@ -1,46 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import { GraduationCap, Search, X, Users, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { GraduationCap, Search, X, Users, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
+
+const PAGE_SIZE = 30;
 
 export default function AdminStudentList({ currentUser }) {
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
 
-  const fetchStudents = async () => {
-    setIsLoading(true);
+  // Contagem por turma é uma query separada e leve (só a coluna `turma`,
+  // sem os outros campos) pra alimentar os badges dos filtros sem precisar
+  // carregar a lista inteira de alunos — evita que o "Alunos matriculados"
+  // e os contadores por turma dependam da paginação da tabela abaixo.
+  const [turmaCounts, setTurmaCounts] = useState({});
+  const [totalCount, setTotalCount] = useState(0);
+
+  const fetchCounts = useCallback(async () => {
+    if (!currentUser?.school_id) return;
+    const { data, error } = await supabase
+      .from('students')
+      .select('turma')
+      .eq('school_id', currentUser.school_id);
+    if (error) {
+      console.error('Erro ao buscar contagem de alunos:', error);
+      return;
+    }
+    const counts = {};
+    (data || []).forEach(s => { counts[s.turma] = (counts[s.turma] || 0) + 1; });
+    setTurmaCounts(counts);
+    setTotalCount((data || []).length);
+  }, [currentUser?.school_id]);
+
+  // Busca uma página de alunos já filtrada no servidor por turma/nome — só
+  // os PAGE_SIZE primeiros resultados trafegam, em vez da escola inteira.
+  const fetchPage = useCallback(async (offset, { append } = { append: false }) => {
+    if (!currentUser?.school_id) return;
+    if (append) setIsLoadingMore(true); else setIsLoading(true);
     try {
-      // Busca alunos com dados da família vinculada
-      const { data, error } = await supabase
+      let query = supabase
         .from('students')
         .select('id, name, turma, contracted_hours, contracted_entry_time, status, family_id, users:family_id(name, email, phone)')
         .eq('school_id', currentUser.school_id)
-        .order('name', { ascending: true });
+        .order('name', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
 
+      if (selectedTurma !== 'Todas as Turmas') query = query.eq('turma', selectedTurma);
+      if (searchTerm.trim()) query = query.ilike('name', `%${searchTerm.trim()}%`);
+
+      const { data, error } = await query;
       if (error) throw error;
-      setStudents(data || []);
+
+      setStudents(prev => (append ? [...prev, ...(data || [])] : (data || [])));
+      setHasMore((data || []).length === PAGE_SIZE);
     } catch (err) {
       console.error('Erro ao buscar alunos:', err);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
+  }, [currentUser?.school_id, selectedTurma, searchTerm]);
+
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
+
+  // Refaz a primeira página sempre que o filtro de turma ou a busca muda —
+  // debounce simples na busca pra não disparar uma query a cada tecla.
+  useEffect(() => {
+    const timer = setTimeout(() => fetchPage(0), searchTerm ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [fetchPage, searchTerm, selectedTurma]);
+
+  const handleRefresh = () => {
+    fetchCounts();
+    fetchPage(0);
   };
 
-  useEffect(() => { fetchStudents(); }, []);
-
-  const turmaOptions = TURMAS;
-
-  const filtered = students.filter(s => {
-    const term = searchTerm.toLowerCase().trim();
-    const matchesSearch = !term || (s.name && s.name.toLowerCase().includes(term));
-    const matchesTurma = selectedTurma === 'Todas as Turmas' || s.turma === selectedTurma;
-    return matchesSearch && matchesTurma;
-  });
-
-  const countPerTurma = (turma) =>
-    students.filter(s => s.turma === turma).length;
+  const handleLoadMore = () => fetchPage(students.length, { append: true });
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -53,12 +92,12 @@ export default function AdminStudentList({ currentUser }) {
           <div>
             <h2 className="text-h3 text-on-surface">Lista de Alunos</h2>
             <p className="text-small text-on-surface-variant">
-              {students.length} aluno{students.length !== 1 ? 's' : ''} matriculado{students.length !== 1 ? 's' : ''}
+              {totalCount} aluno{totalCount !== 1 ? 's' : ''} matriculado{totalCount !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
         <button
-          onClick={fetchStudents}
+          onClick={handleRefresh}
           disabled={isLoading}
           className="flex items-center gap-2 text-small font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-4 py-2 rounded-zela-md transition disabled:opacity-50 shrink-0"
         >
@@ -87,7 +126,7 @@ export default function AdminStudentList({ currentUser }) {
         </div>
 
         <div className="flex gap-2 p-1 bg-surface-container rounded-zela-lg overflow-x-auto shrink-0 max-w-full">
-          {turmaOptions.map(turma => (
+          {TURMAS.map(turma => (
             <button
               key={turma}
               onClick={() => setSelectedTurma(turma)}
@@ -99,7 +138,7 @@ export default function AdminStudentList({ currentUser }) {
               {turma}
               {turma !== 'Todas as Turmas' && (
                 <span className="ml-1 text-[9px] bg-surface-container-high text-on-surface-variant rounded-full px-1.5 py-0.5">
-                  {countPerTurma(turma)}
+                  {turmaCounts[turma] || 0}
                 </span>
               )}
             </button>
@@ -113,7 +152,7 @@ export default function AdminStudentList({ currentUser }) {
           <div className="flex justify-center items-center h-full py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : students.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
             <Users className="h-10 w-10 text-slate-300 mb-3" />
             <p className="text-on-surface-variant font-medium text-small">Nenhum aluno encontrado.</p>
@@ -131,7 +170,7 @@ export default function AdminStudentList({ currentUser }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
-                {filtered.map(student => (
+                {students.map(student => (
                   <tr key={student.id} className="hover:bg-surface-container-low transition-colors">
                     {/* Nome */}
                     <td className="py-3 pr-4">
@@ -187,10 +226,21 @@ export default function AdminStudentList({ currentUser }) {
                 ))}
               </tbody>
             </table>
+            {hasMore && (
+              <div className="flex justify-center py-4">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="flex items-center gap-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 px-5 py-2.5 rounded-zela-md transition disabled:opacity-60"
+                >
+                  {isLoadingMore ? <Loader2 size={14} className="animate-spin" /> : null}
+                  {isLoadingMore ? 'Carregando...' : 'Carregar mais alunos'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-

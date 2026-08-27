@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  FileText, Loader2, X, Check, Clock, CheckCircle2, XCircle,
+  FileText, Loader2, Clock, CheckCircle2, XCircle,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';

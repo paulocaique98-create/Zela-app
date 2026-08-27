@@ -1,5 +1,3 @@
-const CACHE_NAME = 'zela-portal-v1';
-
 self.addEventListener('push', function(event) {
   if (!event.data) return;
   

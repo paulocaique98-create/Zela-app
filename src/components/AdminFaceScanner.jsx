@@ -147,7 +147,7 @@ function findSecureMatch(descriptor, labeledDescriptors) {
   return { label: bestLabel, distance: bestDistance };
 }
 
-export default function AdminFaceScanner({ onClose, updateStudentStatus, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
+export default function AdminFaceScanner({ onClose, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
   const videoRef = useRef(null);
 
   // Sair do Autoatendimento exige confirmar a senha da conta — a tela fica exposta
@@ -156,7 +156,6 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
   const requestExit = () => setShowExitConfirm(true);
 
   const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [loadingText, setLoadingText] = useState('Carregando modelos de Inteligência Artificial');
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
   const [labeledDescriptors, setLabeledDescriptors] = useState(null);
@@ -315,19 +314,6 @@ export default function AdminFaceScanner({ onClose, updateStudentStatus, request
       }
     };
   }, [retryCount]);
-
-  // Helper para carregar imagem — evita crossOrigin em data: URLs (causa erro em alguns browsers)
-  const loadImage = (url) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      if (!url.startsWith('data:')) {
-        img.crossOrigin = 'anonymous'; // só define CORS para URLs externas
-      }
-      img.src = url;
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Falha ao carregar imagem: ' + url.substring(0, 60)));
-    });
-  };
 
   // Busca a foto só da pessoa reconhecida (não de todos os cadastrados) —
   // usada apenas para exibir o confronto visual na tela; nunca bloqueia o

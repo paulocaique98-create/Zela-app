@@ -84,7 +84,7 @@ export default function AdminUserManagement({ currentUser }) {
     setDeletingUserId(userId);
     try {
       // Chama a Edge Function para excluir o usuário dos dois ambientes (auth e public)
-      const { data, error } = await supabase.functions.invoke('delete-user', {
+      const { error } = await supabase.functions.invoke('delete-user', {
         body: { userId }
       });
 

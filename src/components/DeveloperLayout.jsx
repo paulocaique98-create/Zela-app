@@ -8,7 +8,7 @@ const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
 const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
 const DeveloperLogs = lazy(() => import('./DeveloperLogs'));
 
-export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, onLogout }) {
+export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen }) {
   const [activeTab, setActiveTab] = useState('schools');
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
 

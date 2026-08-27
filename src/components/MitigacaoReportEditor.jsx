@@ -21,7 +21,7 @@ function formatDate(dateStr) {
 // Família (somente leitura, só quando publicado). O controle de quem pode
 // fazer o quê fica inteiramente nas props (canEdit/canPublish) — a validação
 // de verdade é sempre a RLS no banco.
-export default function MitigacaoReportEditor({ report, student, school, currentUser, onBack, onSaved, canEdit, canPublish, readOnly, canPrint }) {
+export default function MitigacaoReportEditor({ report, student, school, currentUser, onBack, canEdit, canPublish, readOnly, canPrint }) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(MITIGACAO_SECTIONS.map(s => [s.key, report[s.key] || '']))
   );
