@@ -15,8 +15,9 @@ function formatDateCard(dateStr) {
   };
 }
 
-// Todos os dias do mês (YYYY-MM), sem incluir dias futuros — não faz sentido
-// mostrar/selecionar um dia que ainda não aconteceu.
+// Dias úteis do mês (YYYY-MM) — a escola não funciona fim de semana, então
+// não faz sentido lançar/exibir diário nesses dias. Sem incluir dias
+// futuros — não faz sentido mostrar/selecionar um dia que ainda não aconteceu.
 function buildMonthDays(monthStr) {
   const [year, month] = monthStr.split('-').map(Number);
   const lastDay = new Date(year, month, 0).getDate();
@@ -25,6 +26,8 @@ function buildMonthDays(monthStr) {
   for (let d = 1; d <= lastDay; d++) {
     const dateStr = `${year}-${pad2(month)}-${pad2(d)}`;
     if (dateStr > today) break;
+    const dow = new Date(year, month - 1, d).getDay(); // 0=domingo, 6=sábado
+    if (dow === 0 || dow === 6) continue;
     days.push(dateStr);
   }
   return days;
@@ -36,10 +39,12 @@ function formatMonthLabel(monthStr) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-export default function FamilyDiario({ familyStudents }) {
+export default function FamilyDiario({ currentUser, currentSchool, familyStudents }) {
   const students = familyStudents || [];
+  const schoolId = currentSchool?.id || currentUser?.school_id;
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [feriados, setFeriados] = useState(new Map()); // event_date -> title
   const [selectedMonth, setSelectedMonth] = useState(todayStr().slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [isLoading, setIsLoading] = useState(false);
@@ -70,15 +75,28 @@ export default function FamilyDiario({ familyStudents }) {
         const monthStart = `${year}-${pad2(month)}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const monthEnd = `${year}-${pad2(month)}-${pad2(lastDay)}`;
-        const { data, error: fetchError } = await supabase
-          .from('diario_entries')
-          .select('*')
-          .eq('student_id', selectedStudentId)
-          .gte('entry_date', monthStart)
-          .lte('entry_date', monthEnd)
-          .order('entry_date', { ascending: true });
-        if (fetchError) throw fetchError;
-        setEntries(data || []);
+        const [entriesRes, feriadosRes] = await Promise.all([
+          supabase
+            .from('diario_entries')
+            .select('*')
+            .eq('student_id', selectedStudentId)
+            .gte('entry_date', monthStart)
+            .lte('entry_date', monthEnd)
+            .order('entry_date', { ascending: true }),
+          schoolId
+            ? supabase
+                .from('eventos_calendario')
+                .select('event_date, title')
+                .eq('school_id', schoolId)
+                .eq('event_type', 'feriado')
+                .gte('event_date', monthStart)
+                .lte('event_date', monthEnd)
+            : Promise.resolve({ data: [], error: null }),
+        ]);
+        if (entriesRes.error) throw entriesRes.error;
+        if (feriadosRes.error) throw feriadosRes.error;
+        setEntries(entriesRes.data || []);
+        setFeriados(new Map((feriadosRes.data || []).map(ev => [ev.event_date, ev.title])));
         const days = buildMonthDays(selectedMonth);
         setSelectedDate(prev => (days.includes(prev) ? prev : days[days.length - 1] || null));
       } catch (err) {
@@ -89,7 +107,7 @@ export default function FamilyDiario({ familyStudents }) {
       }
     };
     load();
-  }, [selectedStudentId, selectedMonth]);
+  }, [selectedStudentId, selectedMonth, schoolId]);
 
   const selectedEntry = useMemo(() => entries.find(e => e.entry_date === selectedDate) || null, [entries, selectedDate]);
   const hasAnyDataThisEntry = selectedEntry && (
@@ -152,21 +170,23 @@ export default function FamilyDiario({ familyStudents }) {
             </div>
           ) : (
             <>
-              <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
+              <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {[...monthDays].reverse().map(dateStr => {
                   const { weekday, day, month } = formatDateCard(dateStr);
                   const isSelected = dateStr === selectedDate;
                   const temLancamento = entries.some(e => e.entry_date === dateStr);
+                  const feriadoTitulo = feriados.get(dateStr);
                   return (
                     <button
                       key={dateStr}
                       onClick={() => setSelectedDate(dateStr)}
-                      className={`shrink-0 w-16 h-20 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all relative ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : temLancamento ? 'bg-white border border-outline-variant text-primary/40 hover:border-indigo-300' : 'bg-surface-container-low border border-dashed border-outline-variant text-on-surface-variant/40 hover:border-indigo-300'}`}
+                      title={feriadoTitulo || undefined}
+                      className={`shrink-0 w-16 h-20 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all relative ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : feriadoTitulo ? 'bg-red-50 border border-red-200 text-red-600 hover:border-red-300' : temLancamento ? 'bg-white border border-outline-variant text-primary/40 hover:border-indigo-300' : 'bg-surface-container-low border border-dashed border-outline-variant text-on-surface-variant/40 hover:border-indigo-300'}`}
                     >
                       <span className="text-[11px] font-semibold">{weekday}</span>
                       <span className="text-xl font-bold">{day}</span>
                       <span className="text-[10px] font-medium">{month}</span>
-                      {temLancamento && !isSelected && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />}
+                      {temLancamento && !isSelected && <span className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${feriadoTitulo ? 'bg-red-500' : 'bg-primary'}`} />}
                     </button>
                   );
                 })}
@@ -175,7 +195,14 @@ export default function FamilyDiario({ familyStudents }) {
               {!selectedEntry || !hasAnyDataThisEntry ? (
                 <div className="text-center py-16 text-on-surface-variant/70">
                   <BookOpen className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-                  <p className="text-sm font-semibold text-on-surface-variant">Nenhum lançamento pra esse dia.</p>
+                  {feriados.get(selectedDate) ? (
+                    <>
+                      <p className="text-sm font-bold text-red-600">Feriado — {feriados.get(selectedDate)}</p>
+                      <p className="text-xs text-on-surface-variant/70 mt-1">Sem aula, sem lançamento nesse dia.</p>
+                    </>
+                  ) : (
+                    <p className="text-sm font-semibold text-on-surface-variant">Nenhum lançamento pra esse dia.</p>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col">
@@ -183,7 +210,7 @@ export default function FamilyDiario({ familyStudents }) {
                     <div key={r.refeicao} className="py-4 border-b border-surface-container-low">
                       <div className="text-[13px] text-on-surface-variant/70 mb-1.5">{idx + 1}ª Refeição</div>
                       <div className="text-[15px] font-bold text-on-surface mb-0.5">{r.refeicao}:</div>
-                      <div className="text-[15px] text-on-surface-variant leading-relaxed">{formatRefeicaoTexto(r)}</div>
+                      <div className="text-[15px] text-on-surface-variant leading-relaxed whitespace-pre-line">{formatRefeicaoTexto(r)}</div>
                     </div>
                   ))}
 

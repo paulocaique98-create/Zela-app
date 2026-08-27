@@ -39,21 +39,26 @@ export function normalizeItemServido(item) {
 }
 
 // Gera o texto exibido pra família a partir de um item do jsonb `refeicoes`.
+// Desjejum/Lanche (sem a pergunta "comeu tudo") usam "Comeu X." numa linha só;
+// Almoço/Jantar usam "Serviu-se com X." e quebram cada frase (itens/comeu
+// tudo/repetiu) em uma linha própria, mais fácil de ler. As observações
+// entram DENTRO da frase, antes do ponto final — "Não comeu tudo o que
+// serviu (X)." não "...serviu. (X)".
 export function formatRefeicaoTexto(r) {
   if (!r) return '';
   const itens = (r.itens_servidos || []).map(normalizeItemServido);
   const itensText = joinWithE(itens.map(i => (i.quantidade ? `${i.nome} (${i.quantidade})` : i.nome)));
-  let texto = itensText ? `Serviu-se com ${itensText}.` : 'Sem lançamento de itens.';
-  if (r.comeu_tudo === true) texto += ' Comeu tudo o que serviu.';
+  const principal = mealAsksComeuTudo(r.refeicao);
+  const verbo = principal ? 'Serviu-se com' : 'Comeu';
+  const linhas = [itensText ? `${verbo} ${itensText}.` : 'Sem lançamento de itens.'];
+  if (r.comeu_tudo === true) linhas.push('Comeu tudo o que serviu.');
   else if (r.comeu_tudo === false) {
-    texto += ' Não comeu tudo o que serviu.';
-    if (r.observacao_recusa) texto += ` (${r.observacao_recusa})`;
+    linhas.push(r.observacao_recusa ? `Não comeu tudo o que serviu (${r.observacao_recusa}).` : 'Não comeu tudo o que serviu.');
   }
   if (r.repetiu) {
-    texto += ` Repetiu ${r.vezes_repetiu || 1}x.`;
-    if (r.observacao_repeticao) texto += ` (${r.observacao_repeticao})`;
+    linhas.push(r.observacao_repeticao ? `Repetiu ${r.vezes_repetiu || 1}x (${r.observacao_repeticao}).` : `Repetiu ${r.vezes_repetiu || 1}x.`);
   }
-  return texto;
+  return principal ? linhas.join('\n') : linhas.join(' ');
 }
 
 export function formatSonoTexto(sonoInicio, sonoFim) {
