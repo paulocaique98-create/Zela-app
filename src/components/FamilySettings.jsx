@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
+import { User, FileText, ChevronRight, X, Check, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import PushNotificationsCard from './PushNotificationsCard';
 
 // ─── Texto do LGPD ────────────────────────────────────────────────────────────
 const LGPD_TEXT = `TERMO DE CONSENTIMENTO — PROTEÇÃO DE DADOS (LGPD)
@@ -285,59 +286,9 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
 
         {/* COLUNA 2 */}
         <div className="space-y-4">
-          {/* Notificações Push */}
-          {pushData && (
-            <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
-              <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
-                <Bell className="text-primary" size={18}/> Notificações Push
-              </h3>
-              <div className="space-y-2">
-                {pushData.permission === 'denied' ? (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-zela-md">
-                    <BellOff className="text-red-500 shrink-0" size={24} />
-                    <div>
-                      <p className="text-sm font-bold text-red-800">Notificações bloqueadas</p>
-                      <p className="text-xs text-red-600 mt-0.5">Habilite nas configurações do seu navegador para receber avisos.</p>
-                    </div>
-                  </div>
-                ) : !pushData.isSubscribed ? (
-                  <div className="flex flex-col gap-3 p-4 bg-surface-container-low border border-outline-variant rounded-zela-md">
-                    <div className="flex items-center gap-3">
-                      <Bell className="text-on-surface-variant/70 shrink-0" size={24} />
-                      <div>
-                        <p className="text-sm font-bold text-on-surface">Ativar notificações</p>
-                        <p className="text-xs text-on-surface-variant mt-0.5">Receba avisos de check-in e check-out no celular, mesmo com o portal fechado.</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={pushData.subscribe} 
-                      disabled={pushData.isLoading}
-                      className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary-container transition text-sm disabled:opacity-70"
-                    >
-                      {pushData.isLoading ? 'Ativando...' : 'Ativar notificações'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-zela-md">
-                    <div className="flex items-center gap-3">
-                      <BellRing className="text-emerald-500 shrink-0" size={24} />
-                      <div>
-                        <p className="text-sm font-bold text-emerald-800 flex items-center gap-1"><Check size={14} /> Ativas</p>
-                        <p className="text-xs text-emerald-600 mt-0.5">Neste dispositivo.</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={pushData.unsubscribe} 
-                      disabled={pushData.isLoading}
-                      className="w-full border border-emerald-200 text-emerald-700 font-bold py-2.5 rounded-lg hover:bg-emerald-100 transition text-sm disabled:opacity-70"
-                    >
-                      {pushData.isLoading ? 'Desativando...' : 'Desativar'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Notificações Push — lógica/estados centralizados em PushNotificationsCard,
+              compartilhado com AdminSettings.jsx (evita 2 implementações divergentes). */}
+          {pushData && <PushNotificationsCard pushData={pushData} />}
         </div>
       </div>
       </div>

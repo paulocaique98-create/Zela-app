@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Save, Upload, AlertCircle, Building2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import PushNotificationsCard from './PushNotificationsCard';
 
 export default function AdminSettings({ currentUser, currentSchool, onUpdate }) {
   const fileInputRef = useRef(null);
+  const pushData = usePushNotifications(currentUser, currentSchool);
   const [formData, setFormData] = useState({
     name: currentSchool?.name || '',
     phone: currentSchool?.phone || '',
@@ -248,6 +251,16 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
                 <p className="text-small text-on-surface-variant italic col-span-full">Nenhum módulo customizável disponível.</p>
               )}
             </div>
+          </div>
+
+          {/* Notificações Push — botões são type="button" (ver
+              PushNotificationsCard) de propósito: essa seção fica dentro do
+              form de "Salvar Alterações" só por causa do layout com scroll,
+              mas ativar/desativar push é uma ação própria, não deve disparar
+              o submit do form da escola. Mesmo componente usado em
+              FamilySettings.jsx, pra não duplicar a lógica de estados. */}
+          <div className="pt-3 border-t border-outline-variant">
+            <PushNotificationsCard pushData={pushData} />
           </div>
 
           {errorMsg && (
