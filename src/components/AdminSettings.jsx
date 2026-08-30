@@ -36,6 +36,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
     { id: 'comunicados', label: 'Comunicados', desc: 'Mural de recados', core: false },
     { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos das turmas', core: false },
     { id: 'cardapio', label: 'Cardápio', desc: 'Lanches e refeições', core: false },
+    { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e configuração do gateway de pagamento', core: false },
   ];
 
   const availableModules = allModules.filter(mod => {

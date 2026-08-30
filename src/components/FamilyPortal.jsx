@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -26,6 +26,7 @@ const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
 const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
 const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
 const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
+const FamilyFinanceiro = lazy(() => import('./FamilyFinanceiro'));
 
 // Submenus do menu Relatórios visíveis para a família — só os relatórios que
 // a escola de fato compartilha com os responsáveis (o Mapa de Habilidades é
@@ -116,6 +117,22 @@ export default function FamilyPortal({
   // Os alunos já vêm filtrados corretamente do App.jsx (via student_guardians ou family_id)
   const familyStudents = students;
 
+  // Menu Financeiro só aparece pra quem é de fato o responsável FINANCEIRO
+  // (student_guardians.is_financial=true — Fase 6) — não todo responsável
+  // vê cobrança. Reavalia sempre que troca de usuário/escola, já que a
+  // mesma sessão pode logar em contas diferentes.
+  const [isFinancialGuardian, setIsFinancialGuardian] = useState(false);
+  useEffect(() => {
+    if (!currentUser?.id) { setIsFinancialGuardian(false); return; }
+    let cancelled = false;
+    supabase.rpc('is_financial_guardian').then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) { console.error('Erro ao checar responsável financeiro:', error); setIsFinancialGuardian(false); return; }
+      setIsFinancialGuardian(!!data);
+    });
+    return () => { cancelled = true; };
+  }, [currentUser?.id]);
+
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);
   const toggleAccordion = (name) => {
@@ -151,6 +168,7 @@ export default function FamilyPortal({
   const showDiario = features.diario === true;
   const showRelatorios = features.relatorios_pedagogicos === true;
   const showChat = features.chat === true;
+  const showFinanceiro = features.financeiro === true && isFinancialGuardian;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   return (
@@ -259,6 +277,11 @@ export default function FamilyPortal({
               </SidebarGroup>
             )}
 
+            {/* FINANCEIRO */}
+            {showFinanceiro && (
+              <SidebarItem active={familyTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
+            )}
+
             {showConfiguracoes && (
               <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
             )}
@@ -306,6 +329,7 @@ export default function FamilyPortal({
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
           ))}

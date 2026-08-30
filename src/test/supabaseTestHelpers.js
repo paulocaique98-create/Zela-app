@@ -13,7 +13,10 @@ let seq = 0;
 // rodadas paralelas/repetidas sem precisar de um UUID inteiro no e-mail.
 function uniqueSuffix() {
   seq += 1;
-  return `${Date.now().toString(36)}${seq}`;
+  // Date.now() sozinho colide entre arquivos de teste rodando em paralelo
+  // no mesmo milissegundo — random garante unicidade mesmo nesse caso.
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${Date.now().toString(36)}${seq}${random}`;
 }
 
 // Cria um usuário de teste descartável completo (auth.users + public.users)

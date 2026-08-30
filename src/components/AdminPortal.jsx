@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, Wallet } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import AdminInicio from './AdminInicio';
@@ -35,6 +35,7 @@ const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
+const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -89,6 +90,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showDiario = features.diario === true && localPrefs.diario !== false;
   const showChat = features.chat === true && localPrefs.chat !== false;
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
+  const showFinanceiro = features.financeiro === true && localPrefs.financeiro !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA (~12,6MB) em background só quando o admin
@@ -235,6 +237,11 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
+            {/* FINANCEIRO */}
+            {showFinanceiro && (
+              <SidebarItem active={adminTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
+            )}
+
             {/* SISTEMA */}
             {showConfiguracoes && (
               <SidebarGroup
@@ -273,6 +280,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'financeiro' && <AdminFinanceiro currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (

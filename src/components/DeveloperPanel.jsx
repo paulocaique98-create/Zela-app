@@ -38,7 +38,8 @@ export default function DeveloperPanel() {
     diario: false,
     chat: false,
     relatorios_pedagogicos: false,
-    configuracoes: true
+    configuracoes: true,
+    financeiro: false
   };
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
@@ -510,7 +511,8 @@ export default function DeveloperPanel() {
                     { id: 'diario', label: 'Diário', desc: 'Registro diário de refeições, sono e evacuação por aluno' },
                     { id: 'chat', label: 'Chat', desc: 'Chat interno por setor (Administrativo, Diretoria, Coordenação, Recepção e Suporte Zela)' },
                     { id: 'relatorios_pedagogicos', label: 'Módulo Pedagógico', desc: 'Portal do Professor: registros pedagógicos e relatórios de desenvolvimento' },
-                    { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' }
+                    { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' },
+                    { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e integração com gateway de pagamento (Asaas)' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-outline-variant rounded-zela-md bg-white hover:bg-surface-container-low transition">
                       <div className="flex-1">
