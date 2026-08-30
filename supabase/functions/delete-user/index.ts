@@ -71,21 +71,32 @@ serve(async (req) => {
       throw new Error('Você não pode excluir sua própria conta por aqui.')
     }
 
-    // (Opcional, mas recomendado): Verificar se o usuário a ser excluído pertence à mesma escola do admin
+    // Verificar se o usuário a ser excluído pertence à mesma escola do admin.
+    // Achado de auditoria (Fase 17): a checagem era `if (targetData && ...)`
+    // — falha ABERTA: se o SELECT não encontrasse a linha (single() sem
+    // match/erro), a validação inteira era pulada em silêncio e a exclusão
+    // seguia sem NENHUMA checagem de posse. Corrigido pra negar por padrão
+    // quando o alvo não é encontrado, em vez de simplesmente ignorar.
     if (callerData.role !== 'developer') {
-      const { data: targetData } = await adminClient
+      const { data: targetData, error: targetError } = await adminClient
         .from('users')
         .select('school_id, role')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
 
-      if (targetData && targetData.school_id !== callerData.school_id) {
+      if (targetError) throw targetError
+
+      if (!targetData) {
+        throw new Error('Acesso negado: usuário não encontrado.')
+      }
+
+      if (targetData.school_id !== callerData.school_id) {
         throw new Error('Acesso negado: o usuário não pertence a sua escola')
       }
 
       // Um admin não pode excluir outro admin — evita bloqueio acidental/mal-intencionado
       // da escola inteira. Só o developer (suporte) pode remover contas de admin.
-      if (targetData && targetData.role === 'admin') {
+      if (targetData.role === 'admin') {
         throw new Error('Acesso negado: apenas o suporte pode excluir contas de administrador.')
       }
     }

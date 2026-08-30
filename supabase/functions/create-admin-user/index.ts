@@ -24,7 +24,7 @@ serve(async (req) => {
     // Verify if requester is admin or developer
     const { data: userData } = await supabaseClient
       .from('users')
-      .select('role, school_id')
+      .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
 
@@ -50,10 +50,49 @@ serve(async (req) => {
 
     const { email, password, name, role, school_id, extra_fields } = await req.json();
 
+    // Achado de auditoria (Fase 17): `role` vinha direto do body sem
+    // validação nenhuma — qualquer admin conseguia se autopromover a
+    // 'developer' (super-admin cross-escola) só chamando esta function com
+    // um payload diferente do que a tela manda. Esta function NUNCA cria
+    // 'developer' — nenhuma tela legítima do projeto faz isso por aqui (nem
+    // AdminUserRegistration.jsx nem DeveloperPanel.jsx — sempre 'admin' ou
+    // 'teacher'); se um developer precisar ser criado, é feito por outro
+    // caminho, fora deste endpoint.
+    if (role !== 'admin' && role !== 'teacher') {
+      throw new Error('role deve ser "admin" ou "teacher".');
+    }
+
     // Se for admin, só pode criar para a própria escola
     let finalSchoolId = school_id;
     if (userData.role === 'admin') {
       finalSchoolId = userData.school_id;
+    }
+
+    // Allowlist explícita — nunca espalhar extra_fields direto no insert()
+    // (achado de auditoria: um `...extra_fields` aceitava QUALQUER coluna de
+    // `users`, incluindo is_primary_admin/chat_visibilidade_total). Mesma
+    // regra de quem pode conceder chat_visibilidade_total já aplicada pela
+    // trigger protect_admin_privilege_columns em UPDATE — replicada aqui à
+    // mão porque esta function usa service_role (INSERT nunca passa pela
+    // trigger, que só cobre UPDATE).
+    const ef = extra_fields || {};
+    const safeExtraFields: Record<string, unknown> = {
+      phone: ef.phone ?? null,
+      phone2: ef.phone2 ?? null,
+      doc_type: ef.doc_type ?? null,
+      doc_number: ef.doc_number ?? null,
+      profession: ef.profession ?? null,
+      civil_status: ef.civil_status ?? null,
+      guardian_type: ef.guardian_type ?? null,
+    };
+    if (role === 'admin') {
+      safeExtraFields.departamento = ef.departamento ?? null;
+      if (userData.role === 'developer' || userData.is_primary_admin) {
+        safeExtraFields.chat_visibilidade_total = !!ef.chat_visibilidade_total;
+      }
+    }
+    if (role === 'teacher') {
+      safeExtraFields.turmas = Array.isArray(ef.turmas) ? ef.turmas : [];
     }
 
     const supabaseAdmin = createClient(
@@ -83,7 +122,7 @@ serve(async (req) => {
         email,
         role,
         school_id: finalSchoolId,
-        ...extra_fields
+        ...safeExtraFields
       })
       .select()
       .single();

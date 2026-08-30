@@ -73,7 +73,7 @@ const CENTER_TOLERANCE_X = 0.26;
 const CENTER_TOLERANCE_Y = 0.32;
 
 // Avalia se o rosto detectado está bem posicionado (perto e dentro do molde central)
-function evaluateFramePosition(box, videoWidth, videoHeight) {
+export function evaluateFramePosition(box, videoWidth, videoHeight) {
   const faceWidthRatio = box.width / videoWidth;
   const cx = (box.x + box.width / 2) / videoWidth;
   const cy = (box.y + box.height / 2) / videoHeight;
@@ -120,7 +120,7 @@ function enhanceForLowLight(source, width, height, luminance, boost) {
 // Substitui o FaceMatcher padrão por uma versão com verificação de ambiguidade:
 // rejeita o match se a segunda melhor correspondência estiver perigosamente próxima
 // da primeira (rostos parecidos), em vez de simplesmente aceitar a menor distância.
-function findSecureMatch(descriptor, labeledDescriptors) {
+export function findSecureMatch(descriptor, labeledDescriptors) {
   let bestLabel = 'unknown';
   let bestDistance = Infinity;
   let secondBestDistance = Infinity;
