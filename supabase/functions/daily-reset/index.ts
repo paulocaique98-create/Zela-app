@@ -5,10 +5,14 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    // Segredo DEDICADO (não a service_role key da plataforma, que não dá pra
+    // conhecer/comparar de fora com exatidão) — mesmo padrão do token de
+    // webhook do Asaas: um valor que nós mesmos definimos e comparamos.
+    const dailyResetAuthKey = Deno.env.get('DAILY_RESET_AUTH_KEY')
     const reqAuth = req.headers.get('Authorization')
 
     // Basic security check to prevent unauthorized external calls
-    if (reqAuth !== `Bearer ${supabaseKey}`) {
+    if (!dailyResetAuthKey || reqAuth !== `Bearer ${dailyResetAuthKey}`) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
     }
     
