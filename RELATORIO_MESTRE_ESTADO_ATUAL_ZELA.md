@@ -608,11 +608,45 @@ o roadmap P0→P3 proposto na seção 35-40.
 - **Commit**: `54dde02` — pushado.
 - Migration: `20260831f_edge_function_logs.sql`.
 
-### Pendente
-P1.4 — decisão sobre `check-attendance-delays` (JWT em texto puro no
-comando do cron) — ainda não decidido/corrigido.
+### P1.4 — JWT em texto puro no check-attendance-delays (2026-08-31) — ✅ CONCLUÍDO
+- `check-attendance-delays-job` (jobid=1) tinha a service_role key REAL
+  em texto puro dentro de `cron.job.command` desde a criação. A function
+  em si não mudou (continua comparando `Authorization` contra
+  `SUPABASE_SERVICE_ROLE_KEY`) — só o caminho de entrega: mesma key
+  gravada em `cron_secrets` via RPC autenticado, lida via
+  `get_cron_secret()` no comando do cron.
+- **Testado ao vivo**: execução natural seguinte do job (roda a cada 5
+  min) retornou 200.
+- **Commit**: `166fc2f` — pushado, CI verde.
+- Migration: `20260831g_fix_check_attendance_delays_cron_secret.sql`.
+
+### Complementos do P1.5 (2026-08-31) — ✅ CONCLUÍDO
+- `OBSERVABILIDADE.md`: documento com queries prontas pra consultar
+  `client_error_logs`/`cron_job_logs`/`edge_function_logs`, cobertura
+  atual e o que ainda não está instrumentado.
+- `send-financial-reminders` agora também grava em `cron_job_logs` (até
+  então só `daily-reset-job` tinha essa visibilidade) — testado ao vivo,
+  log gravado corretamente.
+- **Commit**: `8a70c39` — pushado, CI verde.
+
+### Guarda de regressão pro bug de grant em PUBLIC (2026-08-31) — ✅ CONCLUÍDO
+- O mesmo bug (Postgres concede `EXECUTE` a `PUBLIC` por padrão na
+  criação de função; `GRANT ... TO service_role` sozinho não revoga) se
+  repetiu **3 vezes** nesta mesma sessão (P0.1, P0.2, P1.5), sempre pego
+  manualmente antes do deploy. Automatizado: RPC dedicada
+  `list_security_definer_grantees()` (service_role-only) + 10 testes (um
+  por função interna conhecida) confirmando que nenhuma tem `EXECUTE`
+  liberado pra `anon`/`authenticated`. Roda no CI a cada push — a 4ª
+  ocorrência, se acontecer, quebra o build em vez de esperar alguém
+  notar.
+- **Commit**: `f548736` — pushado.
+
+### Estado atual do CI (verificado via API, não só pela existência do workflow)
+5 execuções consecutivas com `conclusion: success` desde a correção do
+Node 20→22 (commits `f22ac72` até `f548736`). **133/133 testes passando.**
 
 ### Próximo item do roadmap
-P1.4 (decisão pendente) ou P2 (paginação de chat, idempotência do Totem,
-compressão de imagem, RLS adversarial das tabelas restantes, retenção
-LGPD).
+P2 — paginação de chat, idempotência do Totem (stale-state), compressão
+de imagem no upload, teste adversarial nas tabelas de RLS restantes
+(`comunicados`, `mural_fotos`, `matricula_solicitacoes`), retenção/expurgo
+LGPD.
