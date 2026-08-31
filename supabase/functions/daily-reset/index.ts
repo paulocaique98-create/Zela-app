@@ -32,13 +32,39 @@ serve(async (req) => {
 
     if (error) throw error
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    // Monitoramento mínimo (P0.1): grava o resultado via RPC (PostgREST) —
+    // não SQL solto dentro do comando do cron, que é o padrão comprovado
+    // instável neste projeto. Falha ao logar não deve derrubar o reset em
+    // si (é só observabilidade).
+    try {
+      await supabase.rpc('log_cron_job_run', {
+        p_job_name: 'daily-reset-job',
+        p_status_code: 200,
+        p_detail: `studentsUpdated:${data?.length || 0}`,
+      })
+    } catch (_) { /* observabilidade não pode derrubar o reset em si */ }
+
+    return new Response(JSON.stringify({
+      success: true,
       message: 'Reset diário concluído com sucesso.',
       studentsUpdated: data?.length || 0
     }), { headers: { 'Content-Type': 'application/json' } })
 
   } catch (err: any) {
+    // Melhor esforço: tenta logar a falha também (sem quebrar se o rpc falhar).
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      if (supabaseUrl && supabaseKey) {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
+        await supabaseAdmin.rpc('log_cron_job_run', {
+          p_job_name: 'daily-reset-job',
+          p_status_code: 500,
+          p_detail: String(err.message).slice(0, 500),
+        })
+      }
+    } catch (_) { /* ignora — não deixa o log mascarar o erro original */ }
+
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 })
