@@ -542,5 +542,54 @@ o roadmap P0→P3 proposto na seção 35-40.
 - **Commit**: `02d5979` — pushado.
 - Migration: `20260831e_fix_chat_threads_family_school_id_check.sql`.
 
+### CORREÇÃO CRÍTICA — P0.3 estava com o CI de verdade FALHANDO (2026-08-31)
+- **O usuário desconfiou corretamente**: apesar do P0.3 ter sido marcado
+  concluído, todas as 6 execuções do workflow desde `ad47043` estavam
+  **falhando de verdade** (confirmado via badge SVG do workflow e via API
+  do GitHub — nunca verificado a fundo antes, só a duração das execuções,
+  que era enganosamente rápida por falhar cedo).
+- **Causa raiz** (lida direto do log da execução via GitHub): `Node.js
+  detected but native WebSocket not found` — `@supabase/realtime-js`
+  (chamado no import de `src/lib/supabase.js`, que até os testes
+  puramente unitários acabam importando de leve) exige WebSocket nativo,
+  só disponível a partir do **Node 22**. O workflow tinha fixado
+  `node-version: '20'`.
+- **Corrigido**: `node-version: '22'`. **Confirmado via API do GitHub**:
+  a execução do commit `f22ac72` (o fix) tem `conclusion: success` — CI
+  realmente verde agora, não só "parece" verde.
+- **Lição registrada**: validar localmente (mesmo sem `.env`) não é
+  suficiente pra confiar no CI — a diferença de versão do Node só
+  aparece rodando de verdade no ambiente do GitHub Actions. Daqui pra
+  frente, todo push que toque no workflow deve ser conferido via API
+  (`actions/runs`), não só pela duração ou pela existência do arquivo.
+- **Commit**: `f22ac72` — pushado, confirmado verde.
+
+### P1.3 — Testes de webhooks Asaas (2026-08-31) — ✅ CONCLUÍDO
+- 9 testes unitários (`src/test/processPaymentEvent.test.js`) cobrindo a
+  lógica real de `processPaymentEvent.ts` (compartilhada entre
+  `payment-webhook` e `process-payment-webhook`), mockando a dependência
+  Deno-only (`sendFamilyNotification.ts`) pra isolar só a lógica de
+  negócio — sem rede, sem push de verdade.
+- Cobertura: cobrança avulsa confirmada como paga (mapeia status, marca
+  `paid_at`, notifica só na transição pra `PAID`); reenvio de evento já
+  `PAID` não notifica de novo; cobrança avulsa sem `Payment` criado pelo
+  backend não processa às cegas; recorrência resolve contrato pela
+  `subscription` e cria cobrança nova; recorrência sem contrato
+  correspondente **nesta escola** não processa às cegas (nunca confia no
+  payload pra decidir a quem pertence); estorno mapeia certo sem
+  notificação de pagamento; payload malformado não lança exceção; falha
+  ao notificar nunca derruba a sincronização da cobrança.
+- Idempotência real (evento duplicado do Asaas) vive ANTES de
+  `processPaymentEvent`, em `payment-webhook/index.ts` (chave única +
+  upsert `ignoreDuplicates`) — guarda de regressão textual confirma que
+  esse mecanismo continua no lugar, já que não dá pra unit-testar isso
+  isoladamente sem reimplementar o `serve()` inteiro do Deno.
+- **121/121 testes passando** (com `.env`); suíte sem `.env` também
+  limpa.
+- **Commit**: `1b83add` — pushado, CI em andamento no momento do
+  registro.
+
 ### Próximo item do roadmap
-P1.3 — testes de webhooks Asaas (lógica dos handlers).
+P1.5 — observabilidade backend básica (Edge Functions) + log do job
+financeiro (P1.4 ainda pendente de decisão — JWT em texto puro no
+`check-attendance-delays`).
