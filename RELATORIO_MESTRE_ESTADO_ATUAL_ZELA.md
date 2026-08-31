@@ -364,3 +364,60 @@ LIMITAÇÕES DA AUDITORIA:
 - Push notification e daily-reset-job real em produção não puderam ser observados "falhando ao vivo" — a conclusão é estrutural/lógica, não um log de incidente real.
 - LGPD avaliada só tecnicamente, sem revisão jurídica.
 ```
+
+## 44. Changelog pós-auditoria — execução do Prompt Mestre de Evolução (P0)
+
+Registro incremental das correções aplicadas depois do relatório, seguindo
+o roadmap P0→P3 proposto na seção 35-40.
+
+### P0.1 — `daily-reset-job` (2026-08-31) — ✅ CONCLUÍDO
+- **Achado**: D6 (seção 25) confirmado — o comando do cron lia
+  `vault.decrypted_secrets` direto numa sessão de SQL solta, padrão já
+  comprovado instável (Fase 13).
+- **Correção**: segredo `DAILY_RESET_AUTH_KEY` rotacionado, gravado em
+  `cron_secrets` via RPC autenticado (`set_cron_secret`); comando do cron
+  passou a ler via `public.get_cron_secret('daily_reset_auth_key')`.
+- **Monitoramento** (fecha o item 2 do escopo do P0.1): tabela
+  `cron_job_logs` (RLS: só `developer` lê) + função `log_cron_job_run()`,
+  chamada via RPC pela própria Edge Function `daily-reset` ao final de
+  cada execução (sucesso ou falha) — não de dentro do comando SQL do cron
+  (tentativa inicial com polling de `net._http_response` na mesma
+  sessão/transação do cron não se mostrou confiável).
+- **Testado em produção**: `200 {"success":true,"studentsUpdated":53}` na
+  correção inicial; log gravado corretamente (`status_code:200`) após o
+  ajuste de monitoramento.
+- **Commits**: `de5392b` (correção), `18f8bc0` (monitoramento) — ambos
+  pushados para `main`.
+- Migrations: `20260831_fix_daily_reset_cron_vault_pattern.sql`,
+  `20260831b_cron_job_run_log_monitoring.sql`.
+
+### P0.5 — `send-financial-reminders-job` (2026-08-31) — ✅ CONCLUÍDO
+- **Achado NOVO** (fora do escopo original do relatório, encontrado
+  durante o P0.1): o comando do cron (jobid=4) tinha o placeholder literal
+  `<SUA_SERVICE_ROLE_KEY_AQUI>` nunca preenchido — o job rodava todo dia e
+  falhava com 401 silenciosamente desde a Fase 13. **Nenhum lembrete de
+  cobrança "vence em 2 dias" foi enviado de verdade em produção até
+  hoje.**
+- **Correção**: a função já era desenhada (Fase 13) pra confiar na
+  verificação de JWT do gateway (`verify_jwt=true`) em vez de um segredo
+  customizado — então a correção foi gravar a service_role key real em
+  `cron_secrets` (nome `financial_reminders_auth_key`) via RPC, e o
+  comando do cron passou a ler via
+  `public.get_cron_secret('financial_reminders_auth_key')`. Nenhum
+  segredo em texto puro no comando.
+- **Schedule corrigido**: estava `0 9 * * *` (6h BRT, fora de horário
+  comercial) → `0 12 * * *` (9h BRT).
+- **Testado**: chamada direta à Edge Function retornou
+  `200 {"success":true,"total":0,"reminded":0}` — sem efeito colateral
+  real (confirmado por query antes do teste: zero cobranças com
+  vencimento em 2 dias no momento). Não foi possível testar disparando
+  via `net.http_post` dentro do SQL do cron — bloqueado pelo
+  classificador de ações do Claude Code por ser um envio potencialmente
+  irreversível a famílias reais; o teste via chamada HTTP direta cobre o
+  mesmo caminho de autenticação.
+- **Commit**: `e337b15` — **push pendente** (bloqueado pelo classificador
+  do Claude Code; precisa ser rodado manualmente).
+- Migration: `20260831c_fix_financial_reminders_cron.sql`.
+
+### Próximo item do roadmap
+P0.2 — revisão individual das 20 funções `SECURITY DEFINER` restantes.
