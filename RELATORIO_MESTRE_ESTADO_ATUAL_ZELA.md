@@ -520,5 +520,27 @@ o roadmap P0→P3 proposto na seção 35-40.
 - **101/101 testes passando** (com `.env` real).
 - **Commit**: `cd9ba75` — pushado.
 
+### P1.2 — Testes de chat e storage (2026-08-31) — ✅ CONCLUÍDO
+- 11 testes de integração (`src/test/chatAndStorageIsolation.test.js`)
+  cobrindo isolamento multi-tenant de chat (`chat_threads`/
+  `chat_messages`) e storage (bucket `person-photos`) — nunca testados
+  adversarialmente antes.
+- **Achado real corrigido**: a policy "Familias gerenciam suas proprias
+  threads" checava só `family_id = auth.uid()` e role, **nunca
+  `school_id`** — qualquer família conseguia criar uma `chat_thread`
+  marcada com `school_id` de **outra** escola e, por ser "sua"
+  (`family_id = auth.uid()`), inserir mensagens nela. Na prática: um
+  usuário de uma escola conseguia mandar mensagem direto pro admin de
+  outra escola, se passando por família dela. Corrigido adicionando
+  `school_id = get_my_school_id()` ao `WITH CHECK`.
+- Storage: confirmado que os 4 buckets continuam privados (`public:
+  false` — guarda de regressão), acesso legítimo preservado, família de
+  outra escola não baixa/lista/sobe arquivo na pasta de outra escola.
+- **Testado ao vivo**: reproduzido o vazamento antes da correção (insert
+  com sucesso), confirmado bloqueado depois.
+- **112/112 testes passando**.
+- **Commit**: `02d5979` — pushado.
+- Migration: `20260831e_fix_chat_threads_family_school_id_check.sql`.
+
 ### Próximo item do roadmap
-P1.2 — testes de chat e storage.
+P1.3 — testes de webhooks Asaas (lógica dos handlers).
