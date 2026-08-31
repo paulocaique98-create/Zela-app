@@ -932,29 +932,85 @@ export default function App() {
     }
   };
 
+  // P2.2 (achado da auditoria): calcular a transição a partir do `status`
+  // guardado no state em memória (populado via Realtime, que pode
+  // atrasar) e escrever sem nenhuma condição fazia dois totens em
+  // sequência rápida (ou um totem + o Monitor confirmando ao mesmo
+  // tempo) conseguirem calcular a MESMA transição a partir de um estado
+  // já ultrapassado — ex: aluno já virou 'in_school' num totem, mas o
+  // segundo totem ainda via 'idle' na memória e reenviava 'pending_entry'
+  // por cima. Fix: UPDATE condicional (`.eq('status', ...)` no valor que
+  // foi lido) + `.select('id')` pra saber se realmente aplicou; se 0
+  // linhas afetadas, reconsulta o status real no banco e recalcula a
+  // transição em cima do valor atual antes de tentar de novo (1 retry).
+  const computeKioskTransition = (currentStatus) => {
+    if (['idle', 'left', 'absent'].includes(currentStatus)) return 'pending_entry';
+    if (currentStatus === 'in_school') return 'pending_exit';
+    return currentStatus;
+  };
+
   const requestKioskAccess = async (studentIds, requesterId = null) => {
     if (!studentIds || studentIds.length === 0) return;
     for (const studentId of studentIds) {
       const student = students.find(s => s.id === studentId);
       if (!student) continue;
 
-      let newStatus = student.status;
-      if (['idle', 'left', 'absent'].includes(student.status)) {
-        newStatus = 'pending_entry';
-      } else if (student.status === 'in_school') {
-        newStatus = 'pending_exit';
-      }
+      let baseStatus = student.status;
+      let newStatus = computeKioskTransition(baseStatus);
 
-      if (newStatus !== student.status) {
-        // Transição normal: novo status diferente do atual
-        const { error } = await supabase
+      if (newStatus !== baseStatus) {
+        // Transição normal: novo status diferente do atual — UPDATE
+        // condicional ao status lido, com 1 retry contra o valor real do
+        // banco se outro totem/sessão já tiver mudado o status entre a
+        // leitura e a escrita.
+        let { data: updated, error } = await supabase
           .from('students')
           .update({ status: newStatus, pending_requester_id: requesterId })
-          .eq('id', studentId);
+          .eq('id', studentId)
+          .eq('status', baseStatus)
+          .select('id');
 
         if (error) {
           console.error('Erro ao atualizar status do aluno:', error);
           throw new Error(error.message);
+        }
+
+        if (!updated || updated.length === 0) {
+          // Concorrência: o status mudou entre a leitura em memória e a
+          // escrita. Reconsulta o valor real e recalcula em cima dele.
+          const { data: freshStudent, error: freshError } = await supabase
+            .from('students')
+            .select('status')
+            .eq('id', studentId)
+            .single();
+          if (freshError || !freshStudent) {
+            console.error('[Zela] Concorrência no check-in: não foi possível reconsultar o status atual:', freshError);
+            continue;
+          }
+          baseStatus = freshStudent.status;
+          newStatus = computeKioskTransition(baseStatus);
+          if (newStatus === baseStatus) {
+            // O estado real já não permite mais essa transição (ex: outro
+            // totem já resolveu a solicitação) — nada a fazer.
+            console.info('[Zela] Concorrência no check-in: transição já não é mais válida pro status atual, ignorando.', studentId);
+            continue;
+          }
+          const retry = await supabase
+            .from('students')
+            .update({ status: newStatus, pending_requester_id: requesterId })
+            .eq('id', studentId)
+            .eq('status', baseStatus)
+            .select('id');
+          if (retry.error) {
+            console.error('Erro ao atualizar status do aluno (retry):', retry.error);
+            throw new Error(retry.error.message);
+          }
+          if (!retry.data || retry.data.length === 0) {
+            // Colisão dupla (extremamente raro) — desiste desta iteração
+            // em vez de sobrescrever um estado que já mudou de novo.
+            console.warn('[Zela] Concorrência no check-in: 2ª colisão seguida, desistindo desta tentativa.', studentId);
+            continue;
+          }
         }
 
         await updateStudentStatus(studentId, newStatus, requesterId);
