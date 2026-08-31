@@ -462,10 +462,41 @@ o roadmap P0→P3 proposto na seção 35-40.
   do Claude Code; precisa ser rodado manualmente).
 - Migration: `20260831d_p0_2_security_definer_review.sql`.
 
-### Push pendente (ação manual necessária)
-3 commits aguardando `git push origin main` — bloqueados pelo
-classificador de ações do Claude Code (não é possível contornar a partir
-daqui): `e337b15`, `306498f`. Rodar manualmente.
+### P0.3 — CI/CD mínimo (2026-08-31) — ✅ CONCLUÍDO
+- Workflow `.github/workflows/ci.yml`: roda em todo push/PR pra `main` —
+  `npm ci` → `npm run lint` → `npm test` → `npm run build`. Sem nenhum
+  secret no workflow (testes de integração exigem `.env` local e pulam
+  sozinhos sem credenciais — comportamento esperado, não uma falha).
+- **2 achados corrigidos durante a validação local do pipeline** (rodei
+  `npm test` sem `.env`, simulando CI, antes de commitar):
+  1. `src/lib/supabase.js` quebrava `createClient()` sem env vars — 2
+     suítes de teste puramente unitárias falhavam por importarem,
+     indiretamente, este módulo. Fallback pra URL/key placeholder só
+     ativa quando as env vars reais estão ausentes (nunca mascara
+     configuração de produção — Vercel sempre injeta as reais).
+  2. **Regressão do P0.2**: `create-admin-user` chamava `check_rate_limit`
+     com o client autenticado do PRÓPRIO chamador, não `service_role` —
+     quebrou depois de eu revogar `EXECUTE` direto de `authenticated`
+     naquela função (vetor de DoS). Todas as outras 9 Edge Functions do
+     projeto já chamavam via `adminClient`; esta era a única
+     inconsistente. Corrigida pra alinhar com o padrão do resto do
+     projeto — não reabre a falha de segurança.
+- **Testado**: 94/94 testes passando com `.env` real (depois de mais uma
+  rodada — 1 falha isolada foi a flakiness já documentada de concorrência
+  na Admin API, confirmada não-real ao rodar de novo); suíte completa
+  passando sem `.env`. Deploy de `create-admin-user` confirmado.
+- **Commit**: `ad47043` — **pushado**.
+- Push também confirmado pros commits pendentes do P0.5/P0.2
+  (`e337b15`, `306498f`, `a0d6360`) — tudo sincronizado com `main`.
+
+### P0.4 — Teste de fumaça financeiro com R$1,00 real — ⏸️ ADIADO PARA P1 (decisão do usuário, 2026-08-31)
+- **Verificado antes de perguntar**: só existe conta Asaas configurada em
+  `school_gateway_accounts` pra ZL002 "TESTE LTDA", em **sandbox**.
+  Nenhuma escola tem chave de produção (`$aact_prod_...`) cadastrada —
+  fisicamente impossível rodar o teste de R$1,00 real agora.
+- **Decisão do usuário**: adiar para P1, sem previsão de escola real
+  indo pra produção nas próximas semanas. `FASE_18_DEPLOY_CONTROLADO.md`
+  já documenta o checklist completo pra quando isso mudar.
 
 ### Próximo item do roadmap
-P0.3 — CI/CD mínimo (pipeline de testes + lint).
+P1.1 — testes automatizados de autenticação (login e resolução de role).
