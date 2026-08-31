@@ -645,8 +645,53 @@ o roadmap P0→P3 proposto na seção 35-40.
 5 execuções consecutivas com `conclusion: success` desde a correção do
 Node 20→22 (commits `f22ac72` até `f548736`). **133/133 testes passando.**
 
+### P0.4 — decisão mantida
+Confirmado com o usuário: sem previsão de escola real indo pra produção,
+adiamento pra P1 continua válido — nenhuma ação nova.
+
+### P2.2 — Idempotência real no fluxo de check-in do Totem (2026-08-31) — ✅ CONCLUÍDO
+- `requestKioskAccess` (App.jsx) calculava a transição de status a partir
+  do `status` em memória (populado via Realtime, que pode atrasar) e
+  escrevia sem nenhuma condição — dois totens em sequência rápida (ou
+  totem + Monitor confirmando ao mesmo tempo) podiam calcular a MESMA
+  transição em cima de um estado já ultrapassado e se sobrescrever.
+- **Corrigido**: UPDATE condicional (`.eq('status', valor lido)`) +
+  `.select()` pra saber se realmente aplicou. Se 0 linhas afetadas
+  (perdeu a corrida), reconsulta o status real no banco e recalcula a
+  transição em cima dele antes de tentar de novo (1 retry); se a
+  transição já não faz mais sentido pro estado real, desiste sem
+  sobrescrever nada.
+- `AdminFaceScanner` (Totem via reconhecimento facial) já delega pra
+  essa mesma função via prop — cobertura automática.
+- **Testado**: 2 testes de integração reproduzindo a corrida real no
+  nível do banco (dois "totens" concorrentes via `Promise.all`) —
+  confirma exatamente 1 dos 2 aplica a transição, e que o perdedor
+  recalcula certo em cima do estado real.
+- **Commit**: `4fbb315` — pushado, CI verde.
+
+### P2.4 — Teste adversarial nas tabelas de RLS restantes (2026-08-31) — ✅ CONCLUÍDO
+- 10 testes de integração cobrindo `comunicados`, `mural_fotos` e
+  `matricula_solicitacoes` — nunca testados adversarialmente antes (só
+  lida a estrutura da policy).
+- **Achado real corrigido**: a policy "Familias gerenciam suas
+  solicitacoes pendentes" (`matricula_solicitacoes`, FOR ALL) só checava
+  `status='pending'` no `WITH CHECK` (INSERT/UPDATE), nunca no `USING` —
+  família conseguia **deletar a própria solicitação de matrícula mesmo
+  depois do admin já ter aprovado/rejeitado**, apagando a trilha de
+  auditoria da decisão. Corrigido: `USING` também exige
+  `status='pending'`.
+- **Testado ao vivo**: reproduzido o vazamento antes da correção (delete
+  com sucesso numa solicitação `'rejected'`), confirmado bloqueado
+  depois; acesso legítimo (editar/apagar enquanto `pending`) preservado.
+- **Achado operacional corrigido no mesmo commit**: `fileParallelism:
+  false` no Vitest — com o crescimento da suíte de integração, rodar
+  todo arquivo em paralelo passou a estourar rate limit real da Auth
+  Admin API do Supabase (3 suítes falhando na mesma rodada, deixou de
+  ser um caso isolado). Mais lento (~118s local), mas sem flakiness.
+- **145/145 testes passando**.
+- **Commit**: `15ce82d` — pushado, CI em andamento no momento do
+  registro.
+
 ### Próximo item do roadmap
-P2 — paginação de chat, idempotência do Totem (stale-state), compressão
-de imagem no upload, teste adversarial nas tabelas de RLS restantes
-(`comunicados`, `mural_fotos`, `matricula_solicitacoes`), retenção/expurgo
-LGPD.
+P2.5 (LGPD) → P2.1 (paginação de chat) → P2.3 (compressão de imagem),
+nessa ordem (decisão do usuário).
