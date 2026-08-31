@@ -3,6 +3,7 @@ import { Image as ImageIcon, Loader2, Trash2, X, Upload, Users, ChevronLeft, Che
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { uploadFile, removeFile, getSignedUrls, buildSafeFileName } from '../lib/storage';
+import { compressImage } from '../lib/imageCompression';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import ConfirmModal from './ConfirmModal';
 
@@ -151,8 +152,9 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
       const turmasValue = sendToAll ? null : selectedTurmas;
       const rows = [];
       for (const file of pendingFiles) {
-        const path = `${schoolId}/${buildSafeFileName(file)}`;
-        await uploadFile(BUCKET, path, file);
+        const compressed = await compressImage(file);
+        const path = `${schoolId}/${buildSafeFileName(compressed)}`;
+        await uploadFile(BUCKET, path, compressed);
         rows.push({
           school_id: schoolId,
           storage_path: path,

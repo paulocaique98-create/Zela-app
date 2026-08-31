@@ -3,6 +3,7 @@ import { Megaphone, Loader2, Trash2, Pencil, X, Check, Plus, Users, Paperclip, F
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
+import { compressImage } from '../lib/imageCompression';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import ConfirmModal from './ConfirmModal';
 
@@ -171,10 +172,11 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
       // Sobe os arquivos novos pro Storage antes de salvar a linha do comunicado.
       const uploadedAttachments = [];
       for (const file of pendingFiles) {
-        const fileName = buildSafeFileName(file);
+        const compressed = await compressImage(file);
+        const fileName = buildSafeFileName(compressed);
         const path = `${schoolId}/${comunicadoId}/${fileName}`;
-        await uploadFile(BUCKET, path, file);
-        uploadedAttachments.push({ path, name: file.name, type: file.type, size: file.size });
+        await uploadFile(BUCKET, path, compressed);
+        uploadedAttachments.push({ path, name: file.name, type: compressed.type, size: compressed.size });
       }
       const attachmentsValue = [...existingAttachments, ...uploadedAttachments];
 

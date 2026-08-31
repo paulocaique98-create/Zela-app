@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
+import { compressImage } from '../lib/imageCompression';
 import ConfirmModal from './ConfirmModal';
 
 const BUCKET = 'matriculas-docs';
@@ -159,8 +160,9 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     setUploadingKey(docKey);
     setFormError('');
     try {
-      const path = `${schoolId}/${currentUser.id}/${requestId}/${docKey}-${buildSafeFileName(file)}`;
-      await uploadFile(BUCKET, path, file);
+      const compressed = await compressImage(file);
+      const path = `${schoolId}/${currentUser.id}/${requestId}/${docKey}-${buildSafeFileName(compressed)}`;
+      await uploadFile(BUCKET, path, compressed);
       setResponsavel(prev => ({ ...prev, [docKey]: { path, name: file.name } }));
     } catch (err) {
       console.error('[FamilyMatriculas] Erro ao subir documento:', err);
@@ -183,8 +185,9 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     setUploadingKey(uploadKey);
     setFormError('');
     try {
-      const path = `${schoolId}/${currentUser.id}/${requestId}/certidao-${criancaId}-${buildSafeFileName(file)}`;
-      await uploadFile(BUCKET, path, file);
+      const compressed = await compressImage(file);
+      const path = `${schoolId}/${currentUser.id}/${requestId}/certidao-${criancaId}-${buildSafeFileName(compressed)}`;
+      await uploadFile(BUCKET, path, compressed);
       setCriancas(prev => prev.map(c => (c.id === criancaId ? { ...c, certidao_doc: { path, name: file.name } } : c)));
     } catch (err) {
       console.error('[FamilyMatriculas] Erro ao subir certidão:', err);
