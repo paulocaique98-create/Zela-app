@@ -76,6 +76,18 @@ serve(async (req) => {
       }
     }
 
+    // P1.5 (complemento): mesmo log de execução do daily-reset-job (P0.1),
+    // pra dar visibilidade de "rodou ou não rodou" também pro job de
+    // lembretes financeiros — o mais crítico dos dois em termos de
+    // dinheiro parado se falhar silenciosamente.
+    try {
+      await adminClient.rpc('log_cron_job_run', {
+        p_job_name: 'send-financial-reminders-job',
+        p_status_code: 200,
+        p_detail: `total:${charges?.length || 0},reminded:${reminded}`,
+      });
+    } catch (_) { /* observabilidade não pode derrubar o job em si */ }
+
     return new Response(JSON.stringify({ success: true, total: charges?.length || 0, reminded }), {
       headers: { 'Content-Type': 'application/json' },
     });
@@ -83,7 +95,13 @@ serve(async (req) => {
     try {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      await logEdgeError(createClient(supabaseUrl, serviceKey), 'send-financial-reminders', err.message || String(err));
+      const adminClientForLog = createClient(supabaseUrl, serviceKey);
+      await logEdgeError(adminClientForLog, 'send-financial-reminders', err.message || String(err));
+      await adminClientForLog.rpc('log_cron_job_run', {
+        p_job_name: 'send-financial-reminders-job',
+        p_status_code: 500,
+        p_detail: String(err.message || err).slice(0, 500),
+      });
     } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
