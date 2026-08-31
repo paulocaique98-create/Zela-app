@@ -54,12 +54,18 @@ serve(async (req) => {
     // validação nenhuma — qualquer admin conseguia se autopromover a
     // 'developer' (super-admin cross-escola) só chamando esta function com
     // um payload diferente do que a tela manda. Esta function NUNCA cria
-    // 'developer' — nenhuma tela legítima do projeto faz isso por aqui (nem
-    // AdminUserRegistration.jsx nem DeveloperPanel.jsx — sempre 'admin' ou
-    // 'teacher'); se um developer precisar ser criado, é feito por outro
-    // caminho, fora deste endpoint.
-    if (role !== 'admin' && role !== 'teacher') {
-      throw new Error('role deve ser "admin" ou "teacher".');
+    // 'developer' — nenhuma tela legítima do projeto faz isso por aqui; se um
+    // developer precisar ser criado, é feito por outro caminho, fora deste
+    // endpoint.
+    //
+    // CORREÇÃO (regressão real, achada em produção no mesmo dia): a
+    // primeira versão desta trava só aceitava 'admin'/'teacher' — mas
+    // AdminUserRegistration.jsx usa ESTA MESMA function pra cadastrar
+    // responsável (família) também, mandando role:'family' (linha ~620 do
+    // componente). A trava original quebrou o cadastro de qualquer
+    // responsável novo. 'family' é role legítimo aqui.
+    if (role !== 'admin' && role !== 'teacher' && role !== 'family') {
+      throw new Error('role deve ser "admin", "teacher" ou "family".');
     }
 
     // Se for admin, só pode criar para a própria escola
