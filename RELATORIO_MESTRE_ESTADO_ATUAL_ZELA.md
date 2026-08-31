@@ -498,5 +498,27 @@ o roadmap P0→P3 proposto na seção 35-40.
   indo pra produção nas próximas semanas. `FASE_18_DEPLOY_CONTROLADO.md`
   já documenta o checklist completo pra quando isso mudar.
 
+### P1.1 — Testes automatizados de autenticação (2026-08-31) — ✅ CONCLUÍDO
+- 7 testes de integração (`src/test/authLoginRoleResolution.test.js`)
+  cobrindo o mecanismo real por trás de `Login.jsx`: `signInWithPassword`
+  → `SELECT public.users WHERE id=auth.uid()` → o `role` dessa linha
+  decide autorização em todo o app.
+- Cobertura: os 4 perfis principais (admin/teacher/family/developer),
+  usuário sem linha em `public.users` (conta removida — tratado como não
+  autorizado), `status='pending'`.
+- **Teste mais importante**: forjar `user_metadata.role` via
+  `auth.updateUser()` (mesma classe de vulnerabilidade já achada e
+  corrigida nesta auditoria) — confirmado que **não muda** a role real
+  resolvida no login nem o que `get_my_role()` (usada em toda RLS)
+  enxerga. A fonte de verdade é sempre `public.users`, nunca o JWT.
+- Ajuste no helper de teste: `supabaseTestHelpers.createTestUser` agora
+  também expõe `authClient` (o client que de fato logou) — o client
+  existente usa um Authorization header fixo e nunca tinha sessão real no
+  GoTrue interno, então métodos como `updateUser`/`getSession` não
+  funcionavam nele (achado durante a escrita deste teste, não um bug de
+  produção — só do harness de teste).
+- **101/101 testes passando** (com `.env` real).
+- **Commit**: `cd9ba75` — pushado.
+
 ### Próximo item do roadmap
-P1.1 — testes automatizados de autenticação (login e resolução de role).
+P1.2 — testes de chat e storage.
