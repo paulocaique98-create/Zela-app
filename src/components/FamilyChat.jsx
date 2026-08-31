@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Loader2, ArrowLeft, Send, Clock, Building2, GraduationCap, Users2, Contact } from 'lucide-react';
+import { MessageCircle, Loader2, ArrowLeft, Send, Clock, Building2, GraduationCap, Users2, Contact, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { notifyChatMessage } from '../lib/notifyChatMessage';
+
+// P2.1 — ver AdminChat.jsx pro mesmo padrão de paginação.
+const PAGE_SIZE = 50;
 
 // Suporte Zela não aparece pra família — só admins podem abrir conversa com o
 // time Zela (ver AdminChat.jsx).
@@ -29,12 +32,15 @@ export default function FamilyChat({ currentUser, currentSchool }) {
   const [activeThread, setActiveThread] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [body, setBody] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
 
   const channelRef = useRef(null);
   const scrollRef = useRef(null);
+  const appendedRef = useRef(true);
 
   const fetchThreadList = async () => {
     if (!currentUser?.id) return;
@@ -114,9 +120,13 @@ export default function FamilyChat({ currentUser, currentSchool }) {
         .from('chat_messages')
         .select('*')
         .eq('thread_id', thread.id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
       if (msgsError) throw msgsError;
-      setMessages(msgs || []);
+      const page = (msgs || []).slice().reverse();
+      appendedRef.current = true;
+      setMessages(page);
+      setHasMoreOlder(page.length === PAGE_SIZE);
 
       const { error: readError } = await supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', thread.id);
       if (readError) console.warn('[FamilyChat] Falha ao marcar conversa como lida:', readError);
@@ -128,10 +138,39 @@ export default function FamilyChat({ currentUser, currentSchool }) {
     }
   };
 
+  const loadOlderMessages = async () => {
+    if (!activeThread || messages.length === 0 || isLoadingOlder) return;
+    setIsLoadingOlder(true);
+    const el = scrollRef.current;
+    const prevScrollHeight = el?.scrollHeight || 0;
+    try {
+      const { data: older, error: olderError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('thread_id', activeThread.id)
+        .lt('created_at', messages[0].created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+      if (olderError) throw olderError;
+      const page = (older || []).slice().reverse();
+      appendedRef.current = false;
+      setMessages(prev => [...page, ...prev]);
+      setHasMoreOlder(page.length === PAGE_SIZE);
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
+      });
+    } catch (err) {
+      console.error('[FamilyChat] Erro ao carregar mensagens anteriores:', err);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
+
   const closeThread = () => {
     setActiveSetor(null);
     setActiveThread(null);
     setMessages([]);
+    setHasMoreOlder(false);
     fetchThreadList();
   };
 
@@ -147,6 +186,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
       .channel(`chat-thread-${activeThread.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         if (payload.new.thread_id !== activeThread.id) return;
+        appendedRef.current = true;
         setMessages(prev => (prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]));
         if (payload.new.sender_role !== 'family') {
           supabase.from('chat_threads').update({ family_last_read_at: new Date().toISOString() }).eq('id', activeThread.id)
@@ -167,6 +207,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
   }, [activeThread?.id]);
 
   useEffect(() => {
+    if (!appendedRef.current) return;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
@@ -182,6 +223,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
         .select()
         .single();
       if (sendError) throw sendError;
+      appendedRef.current = true;
       setMessages(prev => (prev.some(m => m.id === data.id) ? prev : [...prev, data]));
       setBody('');
       notifyChatMessage(activeThread.id);
@@ -234,17 +276,31 @@ export default function FamilyChat({ currentUser, currentSchool }) {
               <p className="text-sm font-semibold text-on-surface-variant">Envie a primeira mensagem para {setorInfo?.label}.</p>
             </div>
           ) : (
-            messages.map(m => {
-              const mine = m.sender_role === 'family';
-              return (
-                <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
-                    <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
-                  </div>
+            <>
+              {hasMoreOlder && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    onClick={loadOlderMessages}
+                    disabled={isLoadingOlder}
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-zela-md transition disabled:opacity-60"
+                  >
+                    {isLoadingOlder ? <Loader2 size={14} className="animate-spin" /> : <ChevronUp size={14} />}
+                    Carregar mensagens anteriores
+                  </button>
                 </div>
-              );
-            })
+              )}
+              {messages.map(m => {
+                const mine = m.sender_role === 'family';
+                return (
+                  <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
+                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                      <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
 

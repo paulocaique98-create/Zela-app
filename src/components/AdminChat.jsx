@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Loader2, ArrowLeft, Send, Clock, ChevronLeft, ChevronRight, LifeBuoy } from 'lucide-react';
+import { MessageCircle, Loader2, ArrowLeft, Send, Clock, ChevronLeft, ChevronRight, LifeBuoy, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { notifyChatMessage } from '../lib/notifyChatMessage';
+
+// P2.1 (Prompt Mestre de Evolução) — o chat carregava o histórico
+// inteiro de uma conversa sem limit(), degradando com uso prolongado.
+// Carrega as últimas PAGE_SIZE mensagens; "Carregar mensagens
+// anteriores" busca a página seguinte pra trás.
+const PAGE_SIZE = 50;
 
 const SETORES_ADMIN = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 const SUPORTE_ZELA_LABEL = SETORES_CHAT.find(s => s.value === 'suporte_zela')?.label || 'Suporte Zela';
@@ -29,6 +35,8 @@ export default function AdminChat({ currentUser, currentSchool }) {
   const [activeThread, setActiveThread] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [body, setBody] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +44,10 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   const channelRef = useRef(null);
   const scrollRef = useRef(null);
+  // true = a mudança em `messages` foi um append (nova mensagem no fim) e
+  // deve rolar pro fundo; false = foi um prepend de mensagens antigas, e
+  // a posição de rolagem precisa ser preservada em vez de pular.
+  const appendedRef = useRef(true);
 
   useEffect(() => {
     const timer = setInterval(() => setInBusinessHours(isBusinessHoursNow()), 60000);
@@ -93,9 +105,13 @@ export default function AdminChat({ currentUser, currentSchool }) {
         .from('chat_messages')
         .select('*')
         .eq('thread_id', thread.id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
       if (msgsError) throw msgsError;
-      setMessages(msgs || []);
+      const page = (msgs || []).slice().reverse();
+      appendedRef.current = true;
+      setMessages(page);
+      setHasMoreOlder(page.length === PAGE_SIZE);
       const { error: readError } = await supabase.from('chat_threads').update({ staff_last_read_at: new Date().toISOString() }).eq('id', thread.id);
       if (readError) console.warn('[AdminChat] Falha ao marcar conversa como lida:', readError);
     } catch (err) {
@@ -106,9 +122,40 @@ export default function AdminChat({ currentUser, currentSchool }) {
     }
   };
 
+  const loadOlderMessages = async () => {
+    if (!activeThread || messages.length === 0 || isLoadingOlder) return;
+    setIsLoadingOlder(true);
+    const el = scrollRef.current;
+    const prevScrollHeight = el?.scrollHeight || 0;
+    try {
+      const { data: older, error: olderError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('thread_id', activeThread.id)
+        .lt('created_at', messages[0].created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+      if (olderError) throw olderError;
+      const page = (older || []).slice().reverse();
+      appendedRef.current = false;
+      setMessages(prev => [...page, ...prev]);
+      setHasMoreOlder(page.length === PAGE_SIZE);
+      // Preserva a posição visual: mantém o mesmo ponto de leitura em vez
+      // de pular pro topo depois de inserir mensagens antigas acima.
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
+      });
+    } catch (err) {
+      console.error('[AdminChat] Erro ao carregar mensagens anteriores:', err);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
+
   const closeThread = () => {
     setActiveThread(null);
     setMessages([]);
+    setHasMoreOlder(false);
     fetchThreads();
   };
 
@@ -145,6 +192,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
       .channel(`chat-thread-admin-${activeThread.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         if (payload.new.thread_id !== activeThread.id) return;
+        appendedRef.current = true;
         setMessages(prev => (prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]));
       })
       .subscribe();
@@ -159,6 +207,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
   }, [activeThread?.id]);
 
   useEffect(() => {
+    if (!appendedRef.current) return; // prepend de mensagens antigas -- não rola
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
@@ -177,6 +226,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
         .select()
         .single();
       if (sendError) throw sendError;
+      appendedRef.current = true;
       setMessages(prev => (prev.some(m => m.id === data.id) ? prev : [...prev, data]));
       setBody('');
       notifyChatMessage(activeThread.id);
@@ -244,7 +294,20 @@ export default function AdminChat({ currentUser, currentSchool }) {
               <p className="text-sm font-semibold text-on-surface-variant">Nenhuma mensagem ainda.</p>
             </div>
           ) : (
-            messages.map(m => {
+            <>
+              {hasMoreOlder && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    onClick={loadOlderMessages}
+                    disabled={isLoadingOlder}
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-zela-md transition disabled:opacity-60"
+                  >
+                    {isLoadingOlder ? <Loader2 size={14} className="animate-spin" /> : <ChevronUp size={14} />}
+                    Carregar mensagens anteriores
+                  </button>
+                </div>
+              )}
+              {messages.map(m => {
               const mine = m.sender_id === currentUser.id;
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
@@ -254,7 +317,8 @@ export default function AdminChat({ currentUser, currentSchool }) {
                   </div>
                 </div>
               );
-            })
+              })}
+            </>
           )}
         </div>
 
