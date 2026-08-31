@@ -589,7 +589,30 @@ o roadmap P0→P3 proposto na seção 35-40.
 - **Commit**: `1b83add` — pushado, CI em andamento no momento do
   registro.
 
+### P1.5 — Observabilidade backend básica (2026-08-31) — ✅ CONCLUÍDO
+- Tabela `edge_function_logs` (RLS: só `developer` lê) +
+  `log_edge_function_error()`, chamada via RPC pelas próprias Edge
+  Functions — mesmo padrão comprovado confiável de `log_cron_job_run`
+  (P0.1).
+- Instrumentado: `payment-webhook` (o mais crítico — falha silenciosa
+  aqui significa dinheiro não sincronizado), `create-avulsa-charge`,
+  `create-financial-contract`, `send-financial-reminders`.
+- **Regressão auto-corrigida de novo**: a função nova nasceu com grant
+  padrão do Postgres pra `PUBLIC` — mesma classe de bug já repetida no
+  P0.1/P0.2 nesta sessão. Corrigida com `REVOKE` explícito antes mesmo de
+  qualquer deploy (nunca chegou a ficar exposta em produção).
+- **Testado ao vivo**: erro real forçado em `create-avulsa-charge`
+  (aluno inexistente) gravou log corretamente; RLS confirmada (admin não
+  lê nem grava direto, só via `service_role`).
+- **123/123 testes passando**.
+- **Commit**: `54dde02` — pushado.
+- Migration: `20260831f_edge_function_logs.sql`.
+
+### Pendente
+P1.4 — decisão sobre `check-attendance-delays` (JWT em texto puro no
+comando do cron) — ainda não decidido/corrigido.
+
 ### Próximo item do roadmap
-P1.5 — observabilidade backend básica (Edge Functions) + log do job
-financeiro (P1.4 ainda pendente de decisão — JWT em texto puro no
-`check-attendance-delays`).
+P1.4 (decisão pendente) ou P2 (paginação de chat, idempotência do Totem,
+compressão de imagem, RLS adversarial das tabelas restantes, retenção
+LGPD).
