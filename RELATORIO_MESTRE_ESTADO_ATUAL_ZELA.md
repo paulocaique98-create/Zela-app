@@ -692,6 +692,64 @@ adiamento pra P1 continua válido — nenhuma ação nova.
 - **Commit**: `15ce82d` — pushado, CI em andamento no momento do
   registro.
 
+### P2.5 — Retenção/expurgo de dados sensíveis LGPD (2026-08-31) — ✅ CONCLUÍDO
+- `LGPD_RETENCAO.md`: dados sensíveis identificados (biometria facial em
+  `authorized_persons`, `fichas_medicas`, docs de matrícula, logs
+  operacionais), prazos de retenção propostos (marcados como sugestão
+  técnica — precisam confirmação jurídica/direção da escola).
+- **Achado tranquilizador**: `authorized_persons.family_id` e
+  `fichas_medicas.student_id` têm `ON DELETE CASCADE` reais (confirmado
+  via `pg_constraint`) — biometria/ficha médica já é removida
+  automaticamente quando aluno/família são excluídos, sem resíduo órfão
+  no fluxo normal.
+- Duas tabelas legadas identificadas: `medical_records` (0 linhas, sem
+  código referenciando) — **apagada**, decisão explícita do usuário;
+  `_fase8_backup_photo_url` (20 linhas, dado real) — **mantida**, também
+  decisão explícita (precisa de mais deliberação antes de apagar dado
+  real).
+- **Commit**: `6b8ee3a` — pushado, CI verde.
+
+### P2.1 — Paginação de chat (2026-08-31) — ✅ CONCLUÍDO
+- `AdminChat`, `DeveloperChatSupport` e `FamilyChat` carregavam o
+  histórico inteiro de uma thread sem `limit()`. Corrigido nos 3: carrega
+  as últimas 50 mensagens (desc+limit+reverse), com botão "Carregar
+  mensagens anteriores" (`.lt('created_at', ...)` na mais antiga já
+  carregada). Posição de rolagem preservada ao carregar mensagens
+  antigas; novas mensagens continuam rolando pro fundo normalmente.
+- **Testado**: 2 testes de integração exercitando o padrão de query
+  contra uma thread real com 3 páginas — confirma reconstrução completa
+  do histórico sem duplicar/pular.
+- **Commit**: `6d5d823` — pushado, CI verde.
+
+### P2.3 — Compressão de imagem no upload (2026-08-31) — ✅ CONCLUÍDO
+- `compressImage()` (`src/lib/imageCompression.js`): redimensiona (máx
+  1600px no maior lado) e recodifica via canvas antes do upload — só
+  imagens, nunca PDF/GIF, só troca o arquivo se o resultado realmente
+  ficar menor. Best-effort: qualquer falha cai de volta pro arquivo
+  original, nunca bloqueia o upload.
+- Aplicado em `AdminMuralFotos`, `AdminComunicados` e `FamilyMatriculas`
+  (RG/certidão).
+- **Decisão consciente de escopo**: NÃO aplicado na foto biométrica de
+  reconhecimento facial (`uploadAuthorizedPersonPhoto`) — comprimir a
+  imagem que alimenta o `face-api.js` exigiria validar que a qualidade
+  reduzida não degrada a taxa de acerto do motor (o próprio escopo do
+  P2.3 pede esse teste), fora do escopo de uma passada mecânica.
+- **Testado**: 4 testes unitários cobrindo as garantias de segurança
+  (não-imagem/GIF/null passam intocados; ambiente sem suporte a Canvas
+  cai pro arquivo original sem lançar exceção).
+- **151/151 testes passando**.
+- **Commit**: `f487250` — pushado, CI em andamento no momento do
+  registro.
+
+### Estado atual do CI (verificado via API)
+Sequência contínua de execuções com `conclusion: success` desde a
+correção do Node 20→22. **151/151 testes passando.**
+
+### P2 — COMPLETO (5/5)
+P2.1, P2.2, P2.3, P2.4, P2.5 — todos concluídos, testados ao vivo,
+commitados e pushados nesta sessão.
+
 ### Próximo item do roadmap
-P2.5 (LGPD) → P2.1 (paginação de chat) → P2.3 (compressão de imagem),
-nessa ordem (decisão do usuário).
+P3 (decisão de produto e expansão estratégica) — requer decisão de
+negócio do usuário, não é trabalho técnico mecânico. Ver seção 35-40 do
+relatório original pro contexto completo.
