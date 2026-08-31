@@ -51,7 +51,12 @@ export async function createTestUser({ role, schoolId, extra = {} }) {
     global: { headers: { Authorization: `Bearer ${session.session.access_token}` } },
   });
 
-  return { id: authUser.user.id, email, client: userClient, token: session.session.access_token };
+  // `client` (acima) é só um header fixo — suficiente pra testar RLS via
+  // .from()/.rpc(), mas o client interno do GoTrue nele não tem sessão
+  // nenhuma (nunca passou por signInWithPassword/setSession). Testes que
+  // precisem de métodos reais de auth (updateUser, getSession, signOut)
+  // devem usar `authClient`, que é o client que de fato logou.
+  return { id: authUser.user.id, email, client: userClient, authClient: anonClient, token: session.session.access_token };
 }
 
 export async function deleteTestUser(id) {
