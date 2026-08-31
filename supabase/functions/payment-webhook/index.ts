@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { processPaymentEvent } from '../_shared/processPaymentEvent.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Fase 8 — Webhook do Asaas, multi-tenant (Opção A: 1 conta Asaas por
 // escola). Como cada escola tem sua PRÓPRIA conta, cada uma configura seu
@@ -116,6 +117,9 @@ serve(async (req) => {
         await processPaymentEvent(adminClient, inserted);
       } catch (syncErr) {
         console.error('[payment-webhook] Erro ao sincronizar evento pra financial_charges:', syncErr);
+        await logEdgeError(adminClient, 'payment-webhook', (syncErr as Error)?.message || String(syncErr), {
+          gatewayEventId, eventType,
+        }, schoolId);
       }
     }
 
@@ -123,6 +127,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ received: true, duplicate: isDuplicate }), { status: 200, headers: JSON_HEADERS });
   } catch (err) {
     console.error('[payment-webhook] Erro ao processar webhook:', err);
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      await logEdgeError(createClient(supabaseUrl, serviceKey), 'payment-webhook', (err as Error)?.message || String(err));
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: 'Internal error' }), { status: 500, headers: JSON_HEADERS });
   }
 });

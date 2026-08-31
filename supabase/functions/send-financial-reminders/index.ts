@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { sendFamilyNotification, centsToBRL } from '../_shared/sendFamilyNotification.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Fase 13 — lembrete "2 dias antes do vencimento". Pensada pra rodar 1x/dia
 // via pg_cron (mesmo mecanismo já usado por daily-reset/check-attendance-delays).
@@ -79,6 +80,11 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      await logEdgeError(createClient(supabaseUrl, serviceKey), 'send-financial-reminders', err.message || String(err));
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 });

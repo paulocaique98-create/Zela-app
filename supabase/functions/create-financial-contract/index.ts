@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Fase 9 — Recorrência Automática, parte 1: Matrícula/contrato → plano
 // financeiro → assinatura real no Asaas. Recorrência é nativa do Asaas
@@ -207,6 +208,9 @@ serve(async (req) => {
     // uma nova tentativa (a constraint única só bloqueia contratos 'active').
     if (reservedContractId && adminClient) {
       await adminClient.from('financial_contracts').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', reservedContractId);
+    }
+    if (adminClient) {
+      await logEdgeError(adminClient, 'create-financial-contract', err.message || String(err), { reservedContractId });
     }
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400,
