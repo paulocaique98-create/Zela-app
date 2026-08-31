@@ -1,0 +1,41 @@
+name: CI
+
+# P0.3 (Prompt Mestre de Evolução). Roda em todo push/PR pra main.
+# Propositalmente NÃO recebe nenhum secret do repositório: os testes de
+# integração (src/test/*.test.js) exigem credenciais reais do Supabase via
+# .env local (ver src/test/envForTests.js) e pulam sozinhos quando esse
+# arquivo não existe (hasIntegrationCredentials=false) — é o comportamento
+# esperado aqui, não uma falha a corrigir. O CI cobre os testes unitários,
+# o lint e a garantia de que o frontend compila.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Lint, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes (unitários — testes de integração pulam sem credenciais)
+        run: npm test
+
+      - name: Build
+        run: npm run build

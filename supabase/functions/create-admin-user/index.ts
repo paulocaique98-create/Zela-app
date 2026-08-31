@@ -35,7 +35,18 @@ serve(async (req) => {
     // Rate limit: a chave usa o id do caller já validado pelo JWT acima, nunca
     // um valor vindo do corpo da requisição — não dá pra "gastar" o limite de
     // outra pessoa por aqui.
-    const { data: rateLimitOk, error: rateLimitError } = await supabaseClient.rpc('check_rate_limit', {
+    //
+    // IMPORTANTE (achado do P0.2): check_rate_limit precisa ser chamada com
+    // o client service_role, nunca com o client autenticado do próprio
+    // chamador — desde a revisão das funções SECURITY DEFINER, o EXECUTE
+    // direto foi revogado de `authenticated` (aceitava p_key arbitrário,
+    // virava vetor de DoS direcionado). Todas as outras Edge Functions do
+    // projeto já chamavam via adminClient; esta era a única inconsistente.
+    const supabaseAdminForRateLimit = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const { data: rateLimitOk, error: rateLimitError } = await supabaseAdminForRateLimit.rpc('check_rate_limit', {
       p_key: `edge:create-admin-user:${user.id}`,
       p_limit: 15,
       p_window_seconds: 60,
