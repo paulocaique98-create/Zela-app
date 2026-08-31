@@ -419,5 +419,53 @@ o roadmap P0→P3 proposto na seção 35-40.
   do Claude Code; precisa ser rodado manualmente).
 - Migration: `20260831c_fix_financial_reminders_cron.sql`.
 
+### P0.2 — Revisão individual das 20 funções `SECURITY DEFINER` (2026-08-31) — ✅ CONCLUÍDO
+- Levantadas as 27 funções `SECURITY DEFINER` de `public` (5 já eram
+  service_role-only desde as Fases 13/17). Corpo de todas as outras 22
+  lido via `pg_get_functiondef` e revisado uma a uma com olhar
+  adversarial (uso de `auth.uid()`, validação de `school_id`, parâmetros
+  manipuláveis, grants desnecessários).
+- **4 achados corrigidos**:
+  1. `check_rate_limit` — aceitava `p_key` arbitrário vindo do cliente:
+     qualquer autenticado podia esgotar o rate limit de PIN/chat de
+     **outro** usuário/escola (DoS direcionado). Restrito a
+     postgres/service_role — só é usada internamente por outras funções
+     SECURITY DEFINER, nenhum uso legítimo client-side.
+  2. `find_school_by_webhook_token` — oráculo de força bruta pra token de
+     webhook, exposto a `anon`. Restrito a service_role (só o Edge
+     Function `payment-webhook` usa).
+  3. `get_student_guardians` — **vazamento cross-tenant real**: devolvia
+     guardiões (ids, relação, se é financeiro) de **qualquer** aluno de
+     **qualquer** escola, sem checar vínculo do chamador. Único uso real
+     (`FamilyGerenciarResponsaveis.jsx`) sempre é "meu próprio filho" —
+     adicionada checagem interna (guardião do aluno OU admin/developer da
+     mesma escola), fail-closed (vazio, não erro).
+  4. `is_guardian_released` — grant a `authenticated` nunca foi
+     necessário (único chamador real é o Edge Function `notify-families`
+     via service_role). Revogado.
+- **Regressão auto-corrigida**: `log_cron_job_run` (criada no P0.1, nesta
+  mesma sessão) tinha ficado com o grant padrão do Postgres pra `PUBLIC`
+  não revogado — mesma classe de bug já documentada nesta auditoria.
+  Corrigido antes de seguir a revisão.
+- **18 funções restantes confirmadas seguras** (todas `auth.uid()`-scoped
+  ou com checagem de role/escola já embutida, ex.: `get_my_role`,
+  `get_my_school_id`, `is_guardian_of`, `delete_school_and_users` — esta
+  última mantém grant a `authenticated` mas só executa se
+  `get_my_role() = 'developer'`, mesmo padrão fail-closed já usado em
+  `create-admin-user`).
+- **Testado ao vivo**: 2 escolas/famílias descartáveis via Admin API —
+  família real vendo os próprios dados (preservado), família de outra
+  escola tentando ver aluno alheio (vazio, corrigido), chamada direta a
+  `check_rate_limit`/`find_school_by_webhook_token` por `authenticated`
+  (permission denied, corrigido). Cleanup confirmado sem resíduo.
+- **Commit**: `306498f` — **push pendente** (bloqueado pelo classificador
+  do Claude Code; precisa ser rodado manualmente).
+- Migration: `20260831d_p0_2_security_definer_review.sql`.
+
+### Push pendente (ação manual necessária)
+3 commits aguardando `git push origin main` — bloqueados pelo
+classificador de ações do Claude Code (não é possível contornar a partir
+daqui): `e337b15`, `306498f`. Rodar manualmente.
+
 ### Próximo item do roadmap
-P0.2 — revisão individual das 20 funções `SECURITY DEFINER` restantes.
+P0.3 — CI/CD mínimo (pipeline de testes + lint).
