@@ -749,7 +749,43 @@ correção do Node 20→22. **151/151 testes passando.**
 P2.1, P2.2, P2.3, P2.4, P2.5 — todos concluídos, testados ao vivo,
 commitados e pushados nesta sessão.
 
+### P0.4 — reconfirmado, sem mudança (2026-08-31)
+Verificado de novo antes de fechar o ciclo: `school_gateway_accounts`
+continua só com ZL002 "TESTE LTDA" em sandbox. Nenhuma escola tem chave
+de produção (`$aact_prod_...`) cadastrada — o teste de fumaça com R$1,00
+real segue fisicamente impossível de rodar agora. **Não é um bloqueador
+ativo**: é uma pendência que só passa a existir de verdade no dia em que
+uma escola real decidir trocar sandbox por produção — nesse momento,
+`FASE_18_DEPLOY_CONTROLADO.md` já tem o checklist completo (seção 3.3),
+e o teste deve ser executado **antes** de qualquer contrato de mensalidade
+real ser criado.
+
+### P3 — Decisão formalizada (2026-08-31)
+**Decisão do usuário**: adiar a decisão de posicionamento (P3.1 —
+segurança+módulos vs. ERP completo vs. meio-termo). Não é uma recusa
+definitiva, é um adiamento consciente até haver mais dado de demanda real
+de clientes.
+- **Gatilho pra revisitar**: quando houver uma segunda escola real usando
+  o sistema em produção (hoje só ZL001 é escola real ativa, conforme
+  identificado nesta auditoria), ou em no máximo **90 dias a partir de
+  2026-08-31** (2026-11-29) — o que vier primeiro.
+- **Consequência prática**: P3.2 (núcleo acadêmico — `academic_years`,
+  `grades`, `classes`, `enrollments` como entidades próprias) fica
+  **fora de escopo** até essa decisão ser tomada. Nenhum trabalho técnico
+  nessa direção deve começar antes disso.
+- Isso NÃO bloqueia manutenção, correções de bug, nem evolução dos
+  módulos já existentes (financeiro, chat, comunicados, etc.) — só
+  bloqueia uma expansão estrutural do modelo de dados acadêmico.
+
+### Ciclo de evolução do Prompt Mestre — ENCERRADO (2026-08-31)
+**P0 (5/5) → P1 (5/5) → P2 (5/5) → P3 (decisão formalizada, adiada com
+gatilho de revisão)**. Todas as pendências técnicas bloqueadoras foram
+resolvidas, testadas ao vivo e verificadas via CI real (não só
+localmente). O sistema está num estado maduro pra uso e expansão
+gradual — próximo trabalho técnico deve vir de necessidade real
+(bug reportado, novo requisito de cliente), não de um roadmap de
+auditoria pendente.
+
 ### Próximo item do roadmap
-P3 (decisão de produto e expansão estratégica) — requer decisão de
-negócio do usuário, não é trabalho técnico mecânico. Ver seção 35-40 do
+Nenhum item bloqueador pendente. Ver seção 35-40 do
 relatório original pro contexto completo.
