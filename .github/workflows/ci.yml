@@ -25,7 +25,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22, não 20: vite/vitest/oxlint aceitam >=20.19, mas
+          # @supabase/realtime-js (chamado no import de src/lib/supabase.js,
+          # inclusive pelos testes puramente unitários que só importam esse
+          # módulo de leve) exige WebSocket nativo, só disponível a partir
+          # do Node 22 -- em Node 20 falha no import com "Node.js detected
+          # but native WebSocket not found" (achado real: 1ª execução real
+          # do CI falhou exatamente nisso).
+          node-version: '22'
           cache: 'npm'
 
       - name: Instalar dependências
