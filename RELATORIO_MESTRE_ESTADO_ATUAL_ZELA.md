@@ -1119,3 +1119,53 @@ Sem imagem configurada, comportamento visual permanece idêntico ao
 atual (fallback automático).
 
 **200/200 testes passando.**
+
+## 54. Visibilidade de cadastros pendentes pro admin (2026-09-01)
+
+Pedido do usuário: hoje a escola só descobre que um responsável se
+autocadastrou (fica `status='pending'`, sem conseguir fazer check-in
+até aprovação) entrando manualmente em Usuários > Pendentes. Implementadas
+3 opções sugeridas (das 5 levantadas), robustas — não só UI, o backend
+antes simplesmente não notificava ninguém.
+
+**1. Badge de contagem** — `usePendingUsersCount.js` (novo hook,
+realtime, mesmo padrão de `useChatUnreadCount.js`), badge no item
+"Usuários" do menu lateral do `AdminPortal`, sempre visível.
+
+**2. Card de destaque na tela inicial** (`AdminInicio.jsx`) — só
+aparece com `pendingUsersCount > 0`, clicável, pula direto pra aba
+Pendentes (`AdminUserManagement` ganhou prop `initialTab`). Badge
+também reforçado no atalho "Gestão de Usuários" do grid.
+
+**3. Notificação (push + in-app)** — `supabase/functions/_shared/notifyAdmins.ts`
+(generalização de `sendFamilyNotification.ts` pra N destinatários),
+chamado por `self-register-family` depois de criar o usuário pendente.
+Reaproveita `notifications.family_id` como "id do destinatário"
+genérico (a RLS de leitura de admin já era escopada por `school_id`,
+não por `family_id` — descoberta útil que evitou precisar de RLS nova).
+
+**Achado ao implementar — 2 lacunas reais que tornavam a opção 3
+inerte sem elas**:
+- `NotificationsDropdown.jsx` (o sino do Header) já existia, já
+  funcionava tecnicamente pra qualquer role via RLS, mas tinha um
+  bloqueio artificial (`role !== 'family'`) nunca removido — o sino do
+  admin sempre existiu na tela, sempre vazio, sem ninguém perceber.
+- `usePushNotifications` nunca era chamado no `AdminPortal` — nenhum
+  admin jamais teria uma inscrição de push registrada, então
+  `notifyAdmins` nunca teria pra quem mandar. Corrigido com o mesmo
+  banner dispensável já usado em `FamilyPortal.jsx`.
+- **Bug preexistente encontrado e corrigido no caminho**: `onNavigateTab`
+  do `Header` estava fixo em `setFamilyTab` pra QUALQUER role — clicar
+  numa notificação como admin não navegava pra lugar nenhum (chamava o
+  setter errado). Corrigido pra ser role-aware.
+
+**Testado ao vivo, de ponta a ponta, pela rota real**: chamada real a
+`self-register-family` (Edge Function pública) → notificação aparece
+pro admin (mesma query do dropdown) → admin marca como lida → contagem
+bate → admin de outra escola não vê nada disso. 2 testes automatizados
+formalizando isso.
+
+**202/202 testes passando** (suíte completa, já incluindo os 2 novos).
+
+Commit `b64c3f2` — CI verde
+(https://github.com/paulocaique98-create/Zela-app/actions/runs/33510490907).
