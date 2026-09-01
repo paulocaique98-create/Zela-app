@@ -945,3 +945,18 @@ Fases 1 e 2 completas, incluindo os 2 achados críticos de autorização
 encontrados no caminho (`schools` e `financial_*`). Nenhum item
 pendente conhecido além do que está listado na seção 8 de
 `METODO_PEDAGOGICO.md` (melhorias futuras, não bloqueadoras).
+
+## 47. P3 — Decisão de posicionamento REVOGADA (2026-09-01)
+
+A decisão de adiamento do P3 (seção 44, "P3 — Decisão formalizada",
+2026-08-31) foi **explicitamente revogada pelo usuário** nesta mesma
+sessão, ao pedir a implementação de `subjects`/`class_subjects`
+(matérias/disciplinas) — item que estava textualmente listado como fora
+de escopo ("P3.2 fica fora de escopo até essa decisão ser tomada").
+Confirmado via pergunta direta antes de iniciar qualquer trabalho: **sim,
+decisão deliberada de seguir para ERP completo**, não engano/mensagem
+fora de contexto.
+
+**Novo estado do P3.1**: Zela passa a evoluir na direção de ERP escolar
+completo. `P3.2` (núcleo acadêmico) está **destravado**, começando pelo
+módulo de Matérias/Disciplinas como primeiro passo.

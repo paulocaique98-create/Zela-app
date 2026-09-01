@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, Wallet } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, Wallet } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
@@ -36,6 +37,7 @@ const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
+const AdminSubjects = lazy(() => import('./AdminSubjects'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -75,6 +77,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   };
 
   const features = currentSchool?.features_enabled || {};
+  const { terminology } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
   const localPrefs = JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool?.id}`) || '{}');
 
   const showCadastros = features.cadastros !== false && localPrefs.cadastros !== false;
@@ -91,6 +94,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showChat = features.chat === true && localPrefs.chat !== false;
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
   const showFinanceiro = features.financeiro === true && localPrefs.financeiro !== false;
+  const showMaterias = features.materias === true && localPrefs.materias !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA (~12,6MB) em background só quando o admin
@@ -231,6 +235,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {showDiario && (
                   <SidebarItem active={adminTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
                 )}
+                {showMaterias && (
+                  <SidebarItem active={adminTab === 'materias'} icon={BookMarked} label={`${terminology.subject}s`} onClick={() => go('materias')} />
+                )}
                 {showComunicados && (
                   <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
                 )}
@@ -272,6 +279,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'diario' && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'materias' && <AdminSubjects currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (

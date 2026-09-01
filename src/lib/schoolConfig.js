@@ -11,13 +11,13 @@ import { TURMAS } from './constants';
 // campo.
 export const PEDAGOGICAL_METHOD_DEFAULTS = {
   tradicional: {
-    terminology: { teacher: 'Professor(a)', student: 'Aluno', class: 'Turma' },
+    terminology: { teacher: 'Professor(a)', student: 'Aluno', class: 'Turma', subject: 'Matéria' },
   },
   montessori: {
-    terminology: { teacher: 'Guia', student: 'Aluno', class: 'Agrupamento' },
+    terminology: { teacher: 'Guia', student: 'Aluno', class: 'Agrupamento', subject: 'Área de Conhecimento' },
   },
   personalizado: {
-    terminology: { teacher: 'Professor(a)', student: 'Aluno', class: 'Turma' },
+    terminology: { teacher: 'Professor(a)', student: 'Aluno', class: 'Turma', subject: 'Matéria' },
   },
 };
 
