@@ -270,7 +270,38 @@ como fundação de dados real, mas ainda não é consumida por nada além
 do backfill automático. A decisão de estender a normalização pro resto
 do sistema (Fase 2+) permanece em aberto.
 
-## 14. O que ainda não existe
+## 15. Transferência de turma (`student_transfers`)
+
+Migration `20260901h_add_student_transfer.sql`. Recorte inicial de
+"rematrícula/transferência" — **decisão de escopo deliberada**:
+"rematrícula" completa (renovação de matrícula pra um novo ano letivo)
+exigiria a entidade `academic_years`, que não existe e não foi
+decidida — maior que o núcleo acadêmico inteiro construído até agora.
+O que **é** construído: mover um aluno de turma dentro da mesma escola
+(progressão de idade, reorganização, correção), com trilha de
+auditoria. **Não exige a normalização completa de turmas (Fase 2 da
+trilha B)** — continua usando `students.turma` (texto), só com
+histórico de mudança registrado.
+
+- **RPC `transfer_student_class(p_student_id, p_new_turma, p_reason)`**
+  — atualiza `students.turma` E grava o log em `student_transfers`
+  numa operação atômica. `SECURITY DEFINER` (replica manualmente a
+  checagem "admin da mesma escola do aluno", mesmo padrão de
+  `delete_school_and_users`) porque `student_transfers` não tem policy
+  de INSERT pra ninguém — só a RPC grava.
+- **`student_transfers`**: `from_class_name`, `to_class_name`,
+  `reason` (opcional), `transferred_by`, `transferred_at`. RLS: só
+  leitura, admin da própria escola.
+- **Frontend**: `AdminStudentList.jsx` ganhou 2 ações por aluno —
+  "Transferir de turma" (modal com dropdown de `schoolTurmas` +
+  motivo opcional) e "Histórico" (lista as transferências anteriores).
+- **Testado ao vivo antes dos testes formais**: admin transfere com
+  sucesso (log gravado com motivo); admin de outra escola, professor e
+  família bloqueados; transferir pra mesma turma dá erro claro;
+  histórico isolado por escola. 6 testes automatizados formalizando
+  isso.
+
+## 16. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"
   e "Matéria" são customizáveis hoje; "Aluno" segue fixo por método,
@@ -286,6 +317,10 @@ do sistema (Fase 2+) permanece em aberto.
   eliminaria a dívida técnica da seção 9, mas é uma migração mais
   invasiva (toca `users.turmas`, `class_subjects.class_name`,
   `mural_fotos.turmas`, `comunicados.turmas`, `class_attendance.class_name`);
-  não decidida ainda (trilha B do roadmap).
-- Rematrícula/transferência, boletim/histórico consolidado, planejamento
-  de aulas — ainda fora de escopo, não iniciados.
+  não decidida ainda (trilha B, Fase 2+).
+- Rematrícula formal (renovação de matrícula pra um novo ano letivo) —
+  exige `academic_years` como entidade, ainda não decidido. Transferência
+  de turma (seção 15) cobre a parte que já era possível construir sem
+  isso.
+- Boletim/histórico escolar consolidado, planejamento de aulas — ainda
+  fora de escopo, não iniciados.
