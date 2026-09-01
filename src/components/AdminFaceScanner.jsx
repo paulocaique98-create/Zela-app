@@ -226,7 +226,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     async function init() {
       try {
         // 1. Aguarda modelos (já carregados em background pelo AdminPortal)
-        setLoadingText('Verificando modelos de IA');
         await preloadFaceModels(); // retorna imediatamente se já estiverem em cache
 
         if (!active) return;
@@ -238,7 +237,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         // pesada). Ela é buscada à parte, só da pessoa reconhecida, em
         // fetchMatchedPersonPhoto() — evita baixar a foto de TODOS os
         // responsáveis da escola toda vez que o Autoatendimento abre.
-        setLoadingText('Buscando dados de responsáveis');
         const { data: authData, error: authError } = await supabase
           .from('authorized_persons')
           // face_descriptor_v2: só para o modo observador da Fase F (motor
@@ -257,7 +255,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           return;
         }
 
-        setLoadingText(`Carregando biometrias`);
         const results = peopleWithBiometrics.map(person => {
           try {
             let desc = person.face_descriptor;
@@ -285,8 +282,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         // (ver findSecureMatch) — substitui o FaceMatcher padrão do face-api.js.
         setLabeledDescriptors(validLabeledDescriptors);
 
-        // 5. Inicia câmera
-        setLoadingText('Iniciando câmera');
+        // 5. Inicia câmera (o texto "Iniciando câmera" já é mostrado pela UI
+        // derivada de modelsLoaded/cameraReady, ver render mais abaixo)
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' }
         });
