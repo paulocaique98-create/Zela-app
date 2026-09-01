@@ -52,7 +52,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           event_time,
           student_id,
           recorded_by,
-          students:student_id (name, contracted_exit_time, users:family_id(name)),
+          students:student_id (name, contracted_exit_time, extra_hours, users:family_id(name)),
           users:recorded_by (name)
         `)
         .eq('school_id', schoolId)
@@ -69,11 +69,11 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         const entryTimeIso = group.entryLog ? group.entryLog.event_time : null;
         const exitTimeIso = group.exitLog ? group.exitLog.event_time : null;
         const contractedExitTime = group.studentData?.contracted_exit_time;
-        
+
         // Incluindo nome do funcionário que aprovou o checkout
         const approvedBy = group.exitLog?.users?.name || group.entryLog?.users?.name || '—';
 
-        const calculo = calcularHorasExtras(exitTimeIso, contractedExitTime);
+        const calculo = calcularHorasExtras(exitTimeIso, contractedExitTime, group.studentData?.extra_hours);
 
         return {
           key: `${group.student_id}_${group.date}`,

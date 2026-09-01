@@ -1391,3 +1391,68 @@ na imagem (no-op seguro); tentativa de admin comum mudar a imagem via
 API direta continua bloqueada pela trigger (proteção intacta, não foi
 enfraquecida pela mudança de UI). Suíte completa: 211/211 passando
 (mudança só de UI/estado, sem alterar contrato de banco/RPC).
+
+## 61. Horas adicionais por aluno, por dia da semana (2026-09-01)
+
+Pedido: no cadastro de alunos, o admin principal poder configurar horas
+adicionais em dias específicos (ex.: fica 2h a mais toda segunda),
+alterando o ciclo e a tolerância de check-out desse dia.
+
+**Achado antes de desenhar o schema**: hoje não existe NENHUMA noção de
+"ciclo por dia da semana" -- a tolerância de check-out e a cobrança
+automática de hora extra (`check-attendance-delays`,
+`AdminRelatorioHorasExtras.jsx`/`attendanceUtils.js`) usam um único
+horário fixo (`students.contracted_exit_time`), igual todo dia. A
+feature não é "somar a um ciclo que já varia por dia" -- é criar essa
+variação do zero, e ela precisa entrar nos DOIS lugares que hoje
+calculam excedente (o cron de notificação/cobrança E o relatório de
+horas extras), senão o relatório ficaria cobrando hora extra todo dia
+de um aluno cujo horário estendido é, na verdade, o combinado.
+
+**Modelo de dados**: `students.extra_hours` (jsonb, default `{}`).
+Chaves fixas em português sem acento (`segunda`...`domingo`), valor em
+horas (0 a 4, múltiplos de 0.5), validado no banco por
+`is_valid_extra_hours()` + CHECK constraint (defesa em profundidade --
+não depende só da validação do cliente).
+
+**Permissão**: só admin principal (ou developer), mesmo padrão de
+`schools.turmas`/`login_image_url` -- trigger
+`protect_student_extra_hours` (cobre INSERT e UPDATE; sem ela, a policy
+"Admins acessam alunos da escola" é `FOR ALL` sem restrição de coluna,
+e qualquer admin comum configuraria cobrança de hora extra pra qualquer
+aluno).
+
+**Lógica de tolerância**: nova função compartilhada (duplicada em
+`src/utils/attendanceUtils.js` e
+`supabase/functions/_shared/extraHours.ts`, mesmo padrão de duplicação
+já aceito no projeto entre o cron Deno e o cálculo do frontend) deriva
+o dia da semana da data (imune a fuso -- `Date.UTC` + `getUTCDay`,
+nunca `getDay()` local) e desloca o horário contratado efetivo daquele
+dia antes de aplicar a tolerância/cobrança. Integrado em
+`check-attendance-delays` (Edge Function, deployada) e em
+`calcularHorasExtras` (usada pelo relatório) -- sem extras configuradas
+pro dia, o resultado é idêntico ao anterior (regressão coberta em
+teste).
+
+**Frontend**: checkbox "Horas adicionais" no `StudentCard` de
+`AdminUserRegistration.jsx` (Cadastro de Usuários), visível só pro
+admin principal/developer -- SelfRegister.jsx tem seu próprio
+`StudentCard` separado (não compartilhado), então a família nunca vê
+esse campo nem por engano. Ao marcar, expande os 7 dias com campo
+numérico (0-4h, passo 0.5) e um resumo do horário efetivo.
+
+**Testado**: 9 testes unitários puros (`extraHoursAttendance.test.js`)
+cobrindo dia sem extras (regressão idêntica ao comportamento anterior),
+dia com extras, casos de borda (0.5h/2h/4h), e o cálculo de dia da
+semana pra datas conhecidas. 4 testes de integração ao vivo
+(`studentExtraHours.test.js`): permissão (admin principal x comum x
+família, nada muda nas tentativas bloqueadas), validação de
+faixa/formato no banco (negativo, acima de 4h, granularidade inválida,
+chave de dia inválida -- todos rejeitados pela CHECK constraint),
+bloqueio no INSERT (não só UPDATE), isolamento multi-tenant. Suíte
+completa: 224/224 passando.
+
+**Fora do escopo desta rodada** (não pedido, não implementado): editar
+`extra_hours` de um aluno já existente fora do fluxo de Cadastro de
+Usuários (ex.: `AdminStudentList.jsx`, que tem sua própria edição de
+turma) -- só o "Cadastro de Novos Usuários" pedido ganhou a UI.

@@ -2,6 +2,42 @@
  * Utilitários para processamento de logs de check-in/out
  */
 
+// Horas adicionais por aluno, por dia da semana (students.extra_hours) --
+// desloca o horário de saída CONTRATADO efetivo naquele dia específico,
+// então a tolerância/cobrança de hora extra passa a valer a partir do
+// horário já ajustado, não do horário contratado fixo. Chaves em
+// português sem acento (mesma convenção da coluna no banco).
+const EXTRA_HOURS_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']; // índice = Date.getUTCDay()
+
+// Deriva o dia da semana de uma string "YYYY-MM-DD" de forma imune a fuso
+// horário -- new Date(dateStr).getDay() usaria meia-noite UTC e converteria
+// pro fuso LOCAL do dispositivo, podendo "virar o dia" errado; construir via
+// Date.UTC(y,m,d) e ler getUTCDay() sempre dá o dia de semana daquela data
+// específica, não importa onde o código rodar.
+export function getDayKeyFromDateStr(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return EXTRA_HOURS_DAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+}
+
+// Horas extras configuradas pro aluno naquele dia específico (0 se não
+// houver, se o valor não for número, ou se extraHours for null/undefined).
+export function getExtraHoursForDay(extraHours, dayKey) {
+  if (!extraHours || typeof extraHours !== 'object') return 0;
+  const val = extraHours[dayKey];
+  return typeof val === 'number' && val > 0 ? val : 0;
+}
+
+// Soma as horas extras do dia ao horário contratado ("HH:MM" ou "HH:MM:SS"),
+// devolvendo o horário de saída EFETIVO daquele dia no mesmo formato "HH:MM".
+export function applyExtraHoursToTime(contractedTime, extraHoursForDay) {
+  if (!contractedTime) return contractedTime;
+  const [h, m] = contractedTime.split(':').map(Number);
+  const totalMinutes = h * 60 + m + Math.round(extraHoursForDay * 60);
+  const eh = Math.floor(totalMinutes / 60) % 24;
+  const em = totalMinutes % 60;
+  return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+}
+
 /**
  * Agrupa os logs de frequência por dia e por aluno.
  * Regra de negócio:
@@ -74,9 +110,13 @@ export function agruparEventosPorDia(logs) {
  * 
  * @param {string|null} exitTimeIso - O horário real de saída em formato ISO.
  * @param {string|null} contractedExitTime - O horário contratado no formato "HH:MM".
+ * @param {Object|null} extraHours - students.extra_hours (opcional) -- se o dia da
+ *   saída tiver horas extras configuradas, o horário contratado usado no cálculo é
+ *   deslocado por elas antes de aplicar a tolerância (ex.: contratado 15h + 2h de
+ *   extra na segunda = tolerância conta a partir de 17h nesse dia específico).
  * @returns {Object} - { minutos_excedentes, valor, valorFormatado, dentro_tolerancia, sem_saida }
  */
-export function calcularHorasExtras(exitTimeIso, contractedExitTime) {
+export function calcularHorasExtras(exitTimeIso, contractedExitTime, extraHours = null) {
   if (!exitTimeIso) {
     return { minutos_excedentes: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_saida: true };
   }
@@ -96,7 +136,14 @@ export function calcularHorasExtras(exitTimeIso, contractedExitTime) {
   // em vez de usar setHours(), que interpretaria o horário no fuso do dispositivo local
   // e produziria cobranças erradas para admins fora do fuso de Brasília.
   const brasiliaDateStr = exitDate.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-  const [hours, minutes] = contractedExitTime.split(':').map(Number);
+
+  // Horário contratado EFETIVO daquele dia -- soma as horas extras do dia da
+  // semana correspondente (se houver) antes de calcular a tolerância.
+  const dayKey = getDayKeyFromDateStr(brasiliaDateStr);
+  const extraForDay = getExtraHoursForDay(extraHours, dayKey);
+  const effectiveExitTime = extraForDay > 0 ? applyExtraHoursToTime(contractedExitTime, extraForDay) : contractedExitTime;
+
+  const [hours, minutes] = effectiveExitTime.split(':').map(Number);
   const hh = String(hours).padStart(2, '0');
   const mm = String(minutes).padStart(2, '0');
   const contractedDate = new Date(`${brasiliaDateStr}T${hh}:${mm}:00-03:00`);

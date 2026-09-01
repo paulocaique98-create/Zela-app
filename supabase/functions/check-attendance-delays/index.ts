@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getEffectiveExitTime } from '../_shared/extraHours.ts'
 
 serve(async (req) => {
   // Só o backend (cron/scheduler com a service role key) pode disparar esta função —
@@ -52,7 +53,7 @@ serve(async (req) => {
     // Obter todos os alunos com horários contratados ativos
     const { data: students, error: stdError } = await supabase
       .from('students')
-      .select('id, school_id, family_id, name, status, contracted_entry_time, contracted_exit_time')
+      .select('id, school_id, family_id, name, status, contracted_entry_time, contracted_exit_time, extra_hours')
       // Vamos checar apenas alunos que tenham ao menos 1 dos horários cadastrados
       .or('contracted_entry_time.not.is.null,contracted_exit_time.not.is.null')
 
@@ -145,7 +146,12 @@ serve(async (req) => {
       // --- CHECAGEM DE SAÍDA ---
       // Só faz sentido se o aluno já entrou (tem entry log) e não tem exit log
       if (student.contracted_exit_time && hasEntryLog && !hasExitLog) {
-        const exitMinutes = timeToMinutes(student.contracted_exit_time)
+        // Horário contratado EFETIVO de hoje -- soma as horas extras do dia
+        // da semana correspondente (students.extra_hours), se houver. Sem
+        // extras configuradas pro dia, é igual ao contracted_exit_time de
+        // sempre (comportamento inalterado pra quem não usa a feature).
+        const effectiveExitTime = getEffectiveExitTime(student.contracted_exit_time, todayStr, student.extra_hours)
+        const exitMinutes = timeToMinutes(effectiveExitTime)
 
         // 15 minutos (Aviso de Cobrança)
         if (currentMinutesOfDay >= exitMinutes + 15 && !newStatus.notified_late_exit_15_billing) {

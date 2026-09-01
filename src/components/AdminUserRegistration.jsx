@@ -4,6 +4,7 @@ import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, 
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { applyExtraHoursToTime } from '../utils/attendanceUtils';
 import ConfirmModal from './ConfirmModal';
 
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
@@ -36,6 +37,23 @@ const PERIODOS_POR_CICLO_TURNO = {
 const DOC_TYPES = ['CPF', 'RG', 'CNH', 'Passaporte'];
 const ESTADO_CIVIL = ['Solteiro(a)', 'Casado(a)', 'Separado(a)', 'Divorciado(a)', 'Viúvo(a)'];
 
+// Horas adicionais por aluno, por dia da semana (students.extra_hours) --
+// desloca o ciclo/tolerância de check-out naquele dia específico. Só o
+// admin PRINCIPAL da escola (ou developer) pode configurar -- protegido
+// também no banco (trigger protect_student_extra_hours), então mesmo que
+// a UI falhasse em esconder o campo pra outro role, a escrita seria
+// bloqueada. Chaves em português sem acento, mesma convenção da coluna.
+const DIAS_EXTRA_HORAS = [
+  { key: 'segunda', label: 'Segunda' },
+  { key: 'terca', label: 'Terça' },
+  { key: 'quarta', label: 'Quarta' },
+  { key: 'quinta', label: 'Quinta' },
+  { key: 'sexta', label: 'Sexta' },
+  { key: 'sabado', label: 'Sábado' },
+  { key: 'domingo', label: 'Domingo' },
+];
+const MAX_HORAS_EXTRA_DIA = 4;
+
 // ──────────────────────────────────────────────────────────
 // Estado inicial de um aluno em branco
 // ──────────────────────────────────────────────────────────
@@ -50,12 +68,13 @@ const emptyStudent = () => ({
   custom_entry: '',
   custom_exit: '',
   is_custom_period: false,
+  extra_hours: {},
 });
 
 // ──────────────────────────────────────────────────────────
 // Sub-componente: card de aluno
 // ──────────────────────────────────────────────────────────
-function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) {
+function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, canManageExtraHours = false }) {
   const turnos = student.ciclo ? TURNOS_POR_CICLO[Number(student.ciclo)] || [] : [];
   const periodos = (student.ciclo && student.turno)
     ? PERIODOS_POR_CICLO_TURNO[Number(student.ciclo)]?.[student.turno] || []
@@ -68,6 +87,28 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) 
     if (field === 'periodo') patch = { ...patch, is_custom_period: value === '__custom__', custom_entry: '', custom_exit: '' };
     onChange(student.id, patch);
   };
+
+  const hasExtraHours = Object.keys(student.extra_hours || {}).length > 0;
+
+  const setExtraHoursEnabled = (enabled) => {
+    onChange(student.id, { extra_hours: enabled ? (student.extra_hours || {}) : {} });
+  };
+
+  const setExtraHoursForDay = (dayKey, value) => {
+    const parsed = value === '' ? undefined : Math.min(MAX_HORAS_EXTRA_DIA, Math.max(0, Number(value)));
+    const next = { ...student.extra_hours };
+    if (parsed === undefined || parsed === 0) {
+      delete next[dayKey];
+    } else {
+      next[dayKey] = parsed;
+    }
+    onChange(student.id, { extra_hours: next });
+  };
+
+  // Horário efetivo do dia (ciclo contratado + extra) só pro resumo visual
+  // -- não recalcula nada real, é só o mesmo horário de saída já escolhido
+  // (custom_exit ou o fim do período selecionado) deslocado pra exibição.
+  const baseExitTime = student.is_custom_period ? student.custom_exit : (student.periodo || '').split(' às ')[1];
 
   const inputCls = 'w-full p-2.5 bg-white border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm';
   const labelCls = 'block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide';
@@ -159,6 +200,52 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) 
               onChange={e => set('custom_exit', e.target.value)}
               className={inputCls} />
           </div>
+        </div>
+      )}
+
+      {/* Horas adicionais por dia da semana -- só admin principal/developer */}
+      {canManageExtraHours && (
+        <div className="pt-3 border-t border-outline-variant">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hasExtraHours}
+              onChange={e => setExtraHoursEnabled(e.target.checked)}
+              className="w-4 h-4 rounded accent-primary"
+            />
+            <span className="text-xs font-bold text-on-surface">Horas adicionais</span>
+          </label>
+
+          {hasExtraHours && (
+            <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-zela-md space-y-1.5 animate-in fade-in duration-200">
+              {DIAS_EXTRA_HORAS.map(dia => {
+                const valor = student.extra_hours?.[dia.key] || 0;
+                const efetivo = valor > 0 && baseExitTime ? applyExtraHoursToTime(baseExitTime, valor) : null;
+                return (
+                  <div key={dia.key} className="flex items-center gap-2">
+                    <span className="w-16 text-xs text-on-surface-variant shrink-0">{dia.label}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max={MAX_HORAS_EXTRA_DIA}
+                      step="0.5"
+                      value={valor || ''}
+                      onChange={e => setExtraHoursForDay(dia.key, e.target.value)}
+                      placeholder="0"
+                      className="w-16 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
+                    />
+                    <span className="text-[11px] text-on-surface-variant/70">h</span>
+                    {efetivo && (
+                      <span className="text-[11px] text-primary font-medium">
+                        (ciclo {baseExitTime} + {valor}h = saída {efetivo})
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              <p className="text-[10px] text-on-surface-variant/60 pt-1">Máximo {MAX_HORAS_EXTRA_DIA}h/dia, em intervalos de 30min. Afeta a tolerância de check-out e a cobrança automática de hora extra nesse dia.</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -299,6 +386,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             custom_entry: custom_entry,
             custom_exit: custom_exit,
             is_custom_period: is_custom_period,
+            extra_hours: s.extra_hours || {},
           };
         });
         setStudents(loadedStudents);
@@ -546,6 +634,11 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               periodo: periodStr || null,
               contracted_entry_time: entryTime,
               contracted_exit_time: exitTime,
+              // extra_hours só é alterado de verdade pra quem vê o campo na UI
+              // (admin principal/developer) -- pra qualquer outro role, s.extra_hours
+              // nunca diverge do que foi carregado, então isso é um no-op seguro
+              // mesmo que a trigger de proteção do banco recuse a mudança.
+              extra_hours: s.extra_hours || {},
             };
 
             const isExisting = typeof s.id === 'string';
@@ -657,6 +750,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 ...(s.birth_date ? { birth_date: s.birth_date } : {}),
                 ...(s.turno ? { turno: s.turno } : {}),
                 ...(periodStr ? { periodo: periodStr } : {}),
+                // Só envia extra_hours se de fato tiver algo -- pra quem não vê o
+                // campo (não é admin principal/developer), fica de fora do insert
+                // e a coluna cai no default '{}' do banco, sem depender de RLS.
+                ...(s.extra_hours && Object.keys(s.extra_hours).length > 0 ? { extra_hours: s.extra_hours } : {}),
 
               };
             });
@@ -667,7 +764,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             if (studErr) {
               if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
                 console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
-                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, ...rest }) => rest);
+                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, extra_hours: _eh, ...rest }) => rest);
                 const { error: studErr2 } = await supabase.from('students').insert(baseSt);
                 if (studErr2) throw studErr2;
               } else {
@@ -898,6 +995,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 onRemove={handleRemoveStudent}
                 canRemove={students.length > 1}
                 turmas={schoolTurmas}
+                canManageExtraHours={currentUser?.role === 'developer' || currentUser?.is_primary_admin === true}
               />
             ))}
           </div>
