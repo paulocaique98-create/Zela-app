@@ -960,3 +960,31 @@ fora de contexto.
 **Novo estado do P3.1**: Zela passa a evoluir na direção de ERP escolar
 completo. `P3.2` (núcleo acadêmico) está **destravado**, começando pelo
 módulo de Matérias/Disciplinas como primeiro passo.
+
+## 48. Módulo de Matérias/Disciplinas — CONCLUÍDO (2026-09-01, commit `dde164b`)
+
+Primeiro passo do núcleo acadêmico. Modelo: `subjects` (matérias/áreas de
+conhecimento por escola) + `class_subjects` (associação matéria × turma,
+via `class_name` texto — `schools.turmas` ainda não é normalizada,
+decisão deliberada de não aumentar escopo agora; migrar pra `class_id`
+se/quando isso mudar).
+
+**RLS**: admin gerencia (CRUD completo) as da própria escola; professor
+ativo só lê as das turmas que leciona (`get_my_turmas()`); família sem
+acesso. Mesmo padrão de `report_sections` (sem cláusula `developer`
+explícita nas tabelas operacionais — convenção já estabelecida).
+
+**Contratação por módulo**: `features_enabled.materias`, mesmo padrão de
+financeiro/diário/etc — developer habilita por escola no
+`DeveloperPanel`.
+
+**Terminologia**: `custom_config.terminology.subject` ("Matéria" no
+tradicional/personalizado, "Área de Conhecimento" no Montessori).
+
+**Frontend**: `AdminSubjects.jsx` — CRUD completo + seleção de turmas
+via chips, integrado ao `AdminPortal` com lazy-load.
+
+**Testado**: 11 testes de integração — isolamento multi-tenant,
+permissões por role (admin CRUD completo, professor só lê as próprias
+turmas, família sem acesso), unicidade de nome por escola, cascade
+delete das associações. **178/178 testes passando.**
