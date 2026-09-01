@@ -988,3 +988,37 @@ via chips, integrado ao `AdminPortal` com lazy-load.
 permissões por role (admin CRUD completo, professor só lê as próprias
 turmas, família sem acesso), unicidade de nome por escola, cascade
 delete das associações. **178/178 testes passando.**
+
+## 49. Trilha A — Frequência formal + vínculo Diário×Matéria (2026-09-01, commit `8adb34c`)
+
+Segundo passo do núcleo acadêmico, seguindo a ordem recomendada pelo
+usuário (trilha A antes da normalização de turmas).
+
+**Desvio deliberado da proposta original**: a tabela `assessments`
+(avaliações) pedida não foi criada — `pedagogical_records` (Diário
+Pedagógico) já cobre essa necessidade (`content jsonb`, `record_type`
+extensível, RLS madura), e as turmas reais do sistema (Nido/Kids I/Kids
+II) são educação infantil, onde a LDB não prevê nota numérica, só
+avaliação descritiva — exatamente o que já existia. Construir uma
+tabela paralela duplicaria funcionalidade real. Em vez disso:
+`pedagogical_records.subject_id` (nullable, `ON DELETE SET NULL`).
+
+**`class_attendance`** (frequência formal/chamada letiva, distinta do
+check-in de segurança já existente): 1 registro por aluno/dia, RLS
+espelhando `pedagogical_records` (admin só lê; professor cria/lê/edita/
+apaga só das próprias turmas e próprios registros).
+
+**Frontend**: `TeacherFrequencia.jsx` (chamada) + `AdminFrequencia.jsx`
+(acompanhamento, só leitura), atrás do módulo "Módulo Pedagógico" já
+existente.
+
+**Testado**: 7 testes de integração — upsert legítimo, professor de
+outra turma bloqueado, idempotência do upsert, admin só-leitura,
+isolamento entre escolas, `subject_id` aceito e `ON DELETE SET NULL`
+confirmado. **186/186 testes passando.**
+
+### Estado do núcleo acadêmico (P3.2)
+Concluído: Matérias/Disciplinas (seção 48), Frequência formal + vínculo
+Diário×Matéria (seção 49). Pendente, sem decisão de início: trilha B
+(normalização de `schools.turmas` numa tabela `classes`), rematrícula/
+transferência, boletim/histórico consolidado, planejamento de aulas.
