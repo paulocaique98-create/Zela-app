@@ -1,9 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { navigateTo } from '../utils/navigate';
 
 export default function Login({ onLogin }) {
+  // Imagem central customizável pelo developer (ConfiguracoesPanel) --
+  // fica em system_settings (mesmo padrão de global_logo). Login.jsx é
+  // visto por usuários NÃO autenticados, então lê via a policy pública
+  // restrita a essa única chave (ver migration 20260901i). Sem valor
+  // configurado, cai no gradiente/ícone padrão (comportamento atual,
+  // inalterado).
+  const [loginImageUrl, setLoginImageUrl] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    supabase.from('system_settings').select('value').eq('key', 'login_image_url').maybeSingle()
+      .then(({ data }) => { if (active && data?.value) setLoginImageUrl(data.value); })
+      .catch(() => {}); // best-effort -- nunca bloqueia a tela de login
+    return () => { active = false; };
+  }, []);
+
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -118,10 +134,16 @@ export default function Login({ onLogin }) {
         </div>
 
         <div className="relative z-10 flex-1 min-h-0 my-6 flex items-center justify-center">
-          <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl bg-gradient-to-br from-primary via-secondary to-tertiary relative flex items-center justify-center">
-            <ShieldCheck className="text-white/15" size={140} strokeWidth={1} />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/30 via-transparent to-transparent" />
-          </div>
+          {loginImageUrl ? (
+            <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl">
+              <img src={loginImageUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl bg-gradient-to-br from-primary via-secondary to-tertiary relative flex items-center justify-center">
+              <ShieldCheck className="text-white/15" size={140} strokeWidth={1} />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/30 via-transparent to-transparent" />
+            </div>
+          )}
         </div>
 
         <div className="relative z-10 max-w-md shrink-0">

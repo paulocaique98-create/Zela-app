@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Settings, ShieldAlert, Palette, Shield, Zap, Bell, Server } from 'lucide-react';
+import { Settings, ShieldAlert, ImageIcon, Palette, Shield, Zap, Bell, Server } from 'lucide-react';
 
 export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
   const [activeTab, setActiveTab] = useState('appearance');
@@ -51,6 +51,55 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
     }
   };
   // -------------------------
+
+  // --- IMAGEM DA TELA DE LOGIN ---
+  // Mesmo padrão de global_logo, mas exposto por uma policy de leitura
+  // PÚBLICA restrita a essa chave (Login.jsx é visto por usuário não
+  // autenticado -- ver migration 20260901i).
+  const [loginImage, setLoginImage] = useState('');
+  const [loginImageSaving, setLoginImageSaving] = useState(false);
+  const [loginImageMsg, setLoginImageMsg] = useState('');
+
+  useEffect(() => {
+    const fetchLoginImage = async () => {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'login_image_url')
+        .maybeSingle();
+      if (data) setLoginImage(data.value);
+    };
+    fetchLoginImage();
+  }, []);
+
+  const handleSaveLoginImage = async () => {
+    setLoginImageSaving(true);
+    setLoginImageMsg('');
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({ key: 'login_image_url', value: loginImage || '' }, { onConflict: 'key' });
+      if (error) throw error;
+      setLoginImageMsg('Imagem salva com sucesso!');
+    } catch (e) {
+      setLoginImageMsg('Erro ao salvar: ' + e.message);
+    } finally {
+      setLoginImageSaving(false);
+      setTimeout(() => setLoginImageMsg(''), 3000);
+    }
+  };
+
+  const handleLoginImageFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLoginImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  // -------------------------------
 
   const tabs = [
     { id: 'appearance', label: 'Aparência (Logo)', icon: Palette },
@@ -149,6 +198,56 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
                 </div>
                 {logoMsg && (
                   <p className={`text-xs font-medium mt-1 ${logoMsg.startsWith('Erro') ? 'text-red-600' : 'text-green-600'}`}>{logoMsg}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ABA: APARÊNCIA — imagem da tela de login */}
+        {activeTab === 'appearance' && (
+          <div className="bg-white border border-outline-variant rounded-zela-lg p-6 shadow-sm mb-4 max-w-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="w-16 h-16 bg-surface-container-low border border-outline-variant rounded-zela-md flex items-center justify-center shrink-0 shadow-sm overflow-hidden p-2">
+                {loginImage ? (
+                  <img src={loginImage} alt="Imagem de Login" className="w-full h-full object-cover rounded" />
+                ) : (
+                  <ImageIcon className="text-on-surface-variant/70" size={32} />
+                )}
+              </div>
+              <div className="flex-1 w-full space-y-2">
+                <h3 className="text-sm font-bold text-on-surface">Imagem da Tela de Login</h3>
+                <p className="text-xs text-on-surface-variant">Substitui a ilustração padrão (gradiente com escudo) no painel esquerdo da tela de login. Se não for definida, mantém o padrão atual.</p>
+                <div className="flex gap-2 items-center mt-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLoginImageFileChange}
+                    className="block w-full text-small text-on-surface-variant
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-xs file:font-bold
+                      file:bg-primary/10 file:text-primary
+                      hover:file:bg-indigo-100 cursor-pointer"
+                  />
+                  {loginImage && (
+                    <button
+                      onClick={() => setLoginImage('')}
+                      className="px-3 text-red-500 text-xs font-bold hover:bg-red-50 rounded-zela-md transition h-9 shrink-0"
+                    >
+                      Remover
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSaveLoginImage}
+                    disabled={loginImageSaving}
+                    className="px-4 py-2 bg-primary hover:bg-primary-container disabled:opacity-60 text-white font-bold rounded-lg transition text-xs whitespace-nowrap h-9 shrink-0"
+                  >
+                    {loginImageSaving ? 'Salvando...' : 'Salvar Imagem'}
+                  </button>
+                </div>
+                {loginImageMsg && (
+                  <p className={`text-xs font-medium mt-1 ${loginImageMsg.startsWith('Erro') ? 'text-red-600' : 'text-green-600'}`}>{loginImageMsg}</p>
                 )}
               </div>
             </div>
