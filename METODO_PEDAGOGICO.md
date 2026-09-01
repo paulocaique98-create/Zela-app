@@ -227,7 +227,50 @@ sem (`null`), e professor de turma alheia bloqueado mesmo enviando um
 `subject_id` válido (a restrição é sempre via `student_id` →
 `students.turma`, nunca pela matéria).
 
-## 12. O que ainda não existe
+## 13. Trilha B, Fase 1 — `classes` normalizada (2026-09-01)
+
+Migration `20260901g_normalize_classes_phase1.sql`. **Escopo
+deliberadamente reduzido**: a normalização completa (`students.turma`,
+`users.turmas`, `mural_fotos.turmas`, `comunicados.turmas` + ~8
+componentes de frontend) é um projeto grande, com risco real de
+regressão em fluxos críticos — `students.turma` alimenta
+`get_my_turmas()`/RLS de professor e o matching do reconhecimento
+facial do Totem. Fase 1 resolve só a dívida que a própria sessão de
+hoje introduziu (`class_subjects`, `class_attendance`), sem tocar em
+nada pré-existente.
+
+**Como funciona**: `classes` (`id`, `school_id`, `name`, `UNIQUE
+(school_id, name)`) é alimentada **automaticamente** por uma trigger
+(`resolve_class_id_from_name`, `SECURITY DEFINER`) em
+`class_subjects`/`class_attendance` — toda vez que uma linha é gravada
+com um `class_name`, a trigger resolve (ou cria, se for turma inédita)
+a linha correspondente em `classes` e preenche `class_id`
+automaticamente. **Nenhum componente de frontend precisou mudar** —
+`AdminSubjects.jsx`/`TeacherFrequencia.jsx` continuam escrevendo só
+`class_name`, exatamente como antes.
+
+- **Backfill**: 15 turmas reais migradas (união de todo `class_name`/
+  `turma` já usado em `students`, `users.turmas`, `class_subjects`,
+  `class_attendance`, `mural_fotos.turmas`, `comunicados.turmas` — não
+  só `schools.turmas`, que muitas escolas nunca chegaram a configurar
+  explicitamente).
+- **RLS**: só leitura, admin/professor da própria escola. Sem nenhuma
+  policy de escrita — a única forma de popular `classes` é via a
+  trigger (que roda como o dono da função/postgres, superuser, ignora
+  RLS).
+- **Testado ao vivo antes dos testes formais**: turma inédita cria
+  `classes` automaticamente; a mesma turma usada em duas tabelas
+  diferentes reaproveita o mesmo `class_id` sem duplicar. 4 testes
+  automatizados formalizando isso + isolamento multi-tenant.
+
+**O que a Fase 1 NÃO faz**: não adiciona `class_id` em `students`,
+`users`, `mural_fotos` ou `comunicados`; não muda nenhuma tela pra
+exibir/filtrar por `class_id` em vez de `class_name`. `classes` existe
+como fundação de dados real, mas ainda não é consumida por nada além
+do backfill automático. A decisão de estender a normalização pro resto
+do sistema (Fase 2+) permanece em aberto.
+
+## 14. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"
   e "Matéria" são customizáveis hoje; "Aluno" segue fixo por método,
