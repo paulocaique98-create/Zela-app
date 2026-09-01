@@ -53,6 +53,34 @@ runIf('Configuração pedagógica por escola', () => {
     }
   });
 
+  it('CRÍTICO — admin NÃO consegue se auto-escalar via is_active/plan/features_enabled/limits (achado real durante varredura de policies conflitantes)', async () => {
+    const schoolId = await createTestSchool();
+    await adminClient.from('schools').update({ is_active: false, plan: 'basic', features_enabled: { financeiro: false } }).eq('id', schoolId);
+    const admin = await createTestUser({ role: 'admin', schoolId });
+    try {
+      const r1 = await admin.client.from('schools').update({ is_active: true }).eq('id', schoolId).select();
+      expect(r1.data ?? []).toEqual([]);
+
+      const r2 = await admin.client.from('schools').update({ plan: 'pro' }).eq('id', schoolId).select();
+      expect(r2.data ?? []).toEqual([]);
+
+      const r3 = await admin.client.from('schools').update({ features_enabled: { financeiro: true } }).eq('id', schoolId).select();
+      expect(r3.data ?? []).toEqual([]);
+
+      const r4 = await admin.client.from('schools').update({ limits: { autorizados_por_responsavel: 999 } }).eq('id', schoolId).select();
+      expect(r4.data ?? []).toEqual([]);
+
+      // Confirma no banco que nada mudou de verdade.
+      const { data: unchanged } = await adminClient.from('schools').select('is_active, plan, features_enabled').eq('id', schoolId).single();
+      expect(unchanged.is_active).toBe(false);
+      expect(unchanged.plan).toBe('basic');
+      expect(unchanged.features_enabled.financeiro).toBe(false);
+    } finally {
+      await deleteTestUser(admin.id);
+      await deleteTestSchool(schoolId);
+    }
+  });
+
   it('admin AINDA consegue editar outros campos da própria escola (nome) — trigger não bloqueia campos não-pedagógicos', async () => {
     const schoolId = await createTestSchool();
     const admin = await createTestUser({ role: 'admin', schoolId });
