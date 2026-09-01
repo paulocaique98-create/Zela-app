@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GraduationCap, Search, X, Users, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { TURMAS } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 
 const PAGE_SIZE = 30;
 
 export default function AdminStudentList({ currentUser }) {
+  const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
+  const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
+
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -126,7 +129,7 @@ export default function AdminStudentList({ currentUser }) {
         </div>
 
         <div className="flex gap-2 p-1 bg-surface-container rounded-zela-lg overflow-x-auto shrink-0 max-w-full">
-          {TURMAS.map(turma => (
+          {turmaOptions.map(turma => (
             <button
               key={turma}
               onClick={() => setSelectedTurma(turma)}

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TURMAS, SETORES_CHAT } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import ConfirmModal from './ConfirmModal';
 
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
@@ -170,6 +171,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
 // Componente principal
 // ──────────────────────────────────────────────────────────
 export default function AdminUserRegistration({ currentUser, editingUser, initialData, forceModal, onClose, onSaved }) {
+  const { turmas: schoolTurmas, terminology } = useSchoolConfig(currentUser?.school_id);
   const [guardianType, setGuardianType] = useState('Responsável'); // 'Responsável' | 'Responsável Financeiro'
   const [resetSent, setResetSent] = useState(false);
 
@@ -753,9 +755,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
         {formData.role === 'teacher' && (
           <div>
-            <label className="block text-xs font-semibold text-on-surface mb-1">Turma(s) que leciona *</label>
+            <label className="block text-xs font-semibold text-on-surface mb-1">{terminology.class}(s) que leciona *</label>
             <div className="flex flex-wrap gap-2">
-              {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => {
+              {schoolTurmas.map(t => {
                 const isSelected = formData.turmas.includes(t);
                 return (
                   <button
