@@ -1313,3 +1313,11 @@ depois, não só ausência de erro no retorno); RPC devolve a imagem
 certa por código com normalização de minúsculo/espaço, `null` pra
 código inexistente e pra escola sem imagem própria (sem vazar imagem
 de outra escola). Suíte completa: 209/209 passando.
+
+**Follow-up (mesmo dia)**: adicionada compressão no cliente
+(`compressImage`, mesmo helper já usado em mural/comunicados/matrícula)
+antes de converter pra base64, com limite de 2MB pós-compressão. Sem
+essa etapa, uma foto de celular sem compressão (3-5MB comum) infla a
+linha da escola e pesa no carregamento da tela de login, que baixa a
+imagem inteira via `get_school_login_image` toda vez que alguém
+preenche o código.

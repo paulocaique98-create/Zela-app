@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { compressImage } from '../lib/imageCompression';
+
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 
 // Gestão de turmas pela própria escola (admin principal) -- antes disso, só
 // o developer podia adicionar/remover uma turma (schools.turmas), deixando
@@ -216,6 +219,7 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
   const fileInputRef = useRef(null);
   const [imageUrl, setImageUrl] = useState(currentSchool?.login_image_url || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
@@ -225,12 +229,30 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
 
   const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
 
-  const handleFileChange = (e) => {
+  // Comprime antes de converter pra base64 -- guardado numa coluna text, uma
+  // foto de celular sem compressão (3-5MB comum) infla a linha da escola e
+  // pesa no carregamento da tela de login (que baixa a linha inteira via
+  // get_school_login_image toda vez que alguém abre com o código
+  // preenchido). MAX_IMAGE_SIZE é o limite PÓS-compressão -- se ainda assim
+  // passar disso (imagem já pequena mas de dimensão exótica, por exemplo),
+  // bloqueia com mensagem clara em vez de gravar uma linha gigante.
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (!file) return;
+    setError('');
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImage(file, { maxDimension: 1200 });
+      if (compressed.size > MAX_IMAGE_SIZE) {
+        setError(`Imagem muito grande (${(compressed.size / 1024 / 1024).toFixed(1)}MB mesmo após compressão). Tente uma imagem menor.`);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => setImageUrl(reader.result);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressed);
+    } finally {
+      setIsCompressing(false);
+      e.target.value = ''; // permite re-selecionar o mesmo arquivo depois de um erro
     }
   };
 
@@ -276,13 +298,14 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} disabled={isCompressing} className="hidden" />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition shrink-0"
+              disabled={isCompressing}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition shrink-0 disabled:opacity-50"
             >
-              <Upload size={13} /> {imageUrl ? 'Trocar imagem' : 'Enviar imagem'}
+              {isCompressing ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} {isCompressing ? 'Comprimindo...' : (imageUrl ? 'Trocar imagem' : 'Enviar imagem')}
             </button>
             {imageUrl && (
               <button
