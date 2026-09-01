@@ -14,6 +14,11 @@ describe('PEDAGOGICAL_METHOD_DEFAULTS', () => {
     expect(PEDAGOGICAL_METHOD_DEFAULTS.montessori.terminology.teacher).toBe('Guia');
   });
 
+  it('montessori usa "Área de Conhecimento" no lugar de "Matéria" (AdminSubjects.jsx)', () => {
+    expect(PEDAGOGICAL_METHOD_DEFAULTS.tradicional.terminology.subject).toBe('Matéria');
+    expect(PEDAGOGICAL_METHOD_DEFAULTS.montessori.terminology.subject).toBe('Área de Conhecimento');
+  });
+
   it('personalizado cai no vocabulário tradicional por padrão (escola ainda não customizou nada)', () => {
     expect(PEDAGOGICAL_METHOD_DEFAULTS.personalizado.terminology.class).toBe('Turma');
   });

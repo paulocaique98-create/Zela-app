@@ -67,8 +67,8 @@ const { method, terminology, turmas, loading } = useSchoolConfig(schoolId);
 ```
 
 - `method`: `'tradicional' | 'montessori' | 'personalizado'`.
-- `terminology`: objeto `{ teacher, student, class }`, já com defaults do
-  método + overrides de `custom_config` aplicados.
+- `terminology`: objeto `{ teacher, student, class, subject }`, já com
+  defaults do método + overrides de `custom_config` aplicados.
 - `turmas`: array pronto pra usar (já resolvido: dado real da escola, ou
   fallback `TURMAS` se ainda não configurado).
 
@@ -76,7 +76,8 @@ const { method, terminology, turmas, loading } = useSchoolConfig(schoolId);
 disponível via `currentUser`/`currentSchool`):
 `AdminStudentList`, `AdminUserRegistration` (turmas do professor +
 turma do aluno na criação), `AdminDiario`, `AdminMuralFotos`,
-`AdminComunicados`.
+`AdminComunicados`, `AdminSubjects` (label "Matéria"/"Área de
+Conhecimento" + seleção de turmas, ver seção 9).
 
 **Onde NÃO se aplica diretamente — rota pública**: `SelfRegister.jsx`
 (autocadastro, `/cadastro`, sem login) não pode usar `useSchoolConfig`
@@ -115,17 +116,65 @@ da UI (`pedagogicalMethod`, `turmasInput`, `customClassLabel`) fica
 deliberadamente separado de `formData` — nunca é espalhado direto num
 insert/update (evita mandar campos que não existem na tabela).
 
-## 8. O que ainda não existe
+## 9. Matérias/Disciplinas (`subjects` / `class_subjects`)
 
-- Editor de terminologia granular (só o label de "Turma" é
-  customizável hoje; "Professor"/"Guia" e "Aluno" seguem fixos por
-  método, sem override).
+Migration `20260901e_add_subjects_module.sql`. Primeiro módulo do
+núcleo acadêmico (P3.2, destravado em 2026-09-01 — decisão de
+adiamento revogada pelo usuário, ver `RELATORIO_MESTRE_ESTADO_ATUAL_ZELA.md`
+seções 47-48).
+
+| Tabela | O que é |
+|---|---|
+| `subjects` | Matérias/áreas de conhecimento da escola (`name`, `description`, `color`) |
+| `class_subjects` | Associação matéria × turma — `subject_id` + `class_name` (texto, não FK — ver dívida técnica abaixo) |
+
+- **Contratação por módulo**: `features_enabled.materias`, mesmo padrão
+  de financeiro/diário — developer habilita por escola no
+  `DeveloperPanel`.
+- **RLS**: admin gerencia (CRUD completo) as da própria escola;
+  professor ativo só lê as das turmas que leciona (`get_my_turmas()`);
+  família sem acesso a nenhuma das duas tabelas.
+- **Terminologia**: usa `terminology.subject` e `terminology.class` do
+  `useSchoolConfig` em todos os textos do `AdminSubjects.jsx` (título,
+  descrição, placeholder, labels) — uma escola Montessori vê "Áreas de
+  Conhecimento" em vez de "Matérias" automaticamente, sem configuração
+  extra além do `pedagogical_method` já definido.
+
+### Dívida técnica conhecida: `class_subjects.class_name` é texto, não FK
+
+`schools.turmas` ainda é `text[]`, não uma tabela normalizada — então
+`class_subjects` associa por **nome da turma** (`class_name text`), não
+por um `class_id` de verdade. Funcional e simples pra agora, mas frágil:
+se o developer renomear/remover uma turma no `DeveloperPanel` depois que
+matérias já foram associadas a ela, a associação antiga fica "órfã"
+silenciosamente (não há constraint pra impedir isso, já que
+`class_name` não referencia `schools.turmas` de nenhum jeito
+verificável em SQL).
+
+**Quando `schools.turmas` for normalizada** (uma tabela `classes` de
+verdade — trilha B do roadmap, ainda não decidida), migrar
+`class_subjects.class_name` → `class_subjects.class_id uuid REFERENCES
+classes(id)`. Até lá, essa é uma limitação aceita conscientemente.
+
+## 10. O que ainda não existe
+
+- Editor de terminologia granular (só os labels de "Turma", "Professor"
+  e "Matéria" são customizáveis hoje; "Aluno" segue fixo por método,
+  sem override).
 - Migração de dados antigos: se uma escola já tinha `mural_fotos.turmas`/
   `comunicados.turmas` gravados com valores da constante global e depois
   configura turmas diferentes via `DeveloperPanel`, os itens antigos
   podem ficar "órfãos" (o array antigo não bate com nenhuma turma nova).
   **Comportamento aceitável nesta fase** — não há conversão automática;
-  se acontecer na prática, o developer ajusta manualmente.
-- Habilitar/desabilitar módulos por método (ex.: esconder "Notas" no
-  Montessori) — só faz sentido quando o núcleo acadêmico existir (P3.2,
-  hoje adiado).
+  se acontecer na prática, o developer ajusta manualmente. Mesmo
+  comportamento se aplica a `class_subjects` (ver seção 9).
+- Vínculo entre `pedagogical_records` (Diário) e `subjects` — próximo
+  passo natural pra habilitar relatórios por área no Montessori, ainda
+  não implementado.
+- Normalização de `schools.turmas` numa tabela `classes` de verdade —
+  eliminaria a dívida técnica da seção 9, mas é uma migração mais
+  invasiva (toca `users.turmas`, `class_subjects.class_name`,
+  `mural_fotos.turmas`, `comunicados.turmas`); não decidida ainda.
+- Habilitar/desabilitar outros módulos acadêmicos por método (ex.: notas
+  numéricas vs. registros descritivos) — depende de frequência/
+  avaliações existirem primeiro.
