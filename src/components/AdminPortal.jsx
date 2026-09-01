@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, Wallet } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSchoolConfig } from '../lib/schoolConfig';
@@ -38,6 +38,7 @@ const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
+const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -238,6 +239,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {showMaterias && (
                   <SidebarItem active={adminTab === 'materias'} icon={BookMarked} label={`${terminology.subject}s`} onClick={() => go('materias')} />
                 )}
+                {showRelatorios && (
+                  <SidebarItem active={adminTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
+                )}
                 {showComunicados && (
                   <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
                 )}
@@ -280,6 +284,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'diario' && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'materias' && <AdminSubjects currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (

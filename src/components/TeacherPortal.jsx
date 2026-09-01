@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, AlertCircle, FileText } from 'lucide-react';
+import { Home, AlertCircle, FileText, ClipboardCheck } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { SidebarItem, SidebarGroup } from './SidebarNav';
@@ -10,6 +10,7 @@ const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
+const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -88,6 +89,7 @@ export default function TeacherPortal({
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={teacherTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
             <SidebarItem active={teacherTab === 'monitor'} icon={AlertCircle} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
+            <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
 
             <SidebarGroup
               label="Relatórios"
@@ -111,6 +113,9 @@ export default function TeacherPortal({
           )}
           {teacherTab === 'monitor' && (
             <TeacherMonitor students={students || []} authorized={authorized} />
+          )}
+          {teacherTab === 'frequencia' && (
+            <TeacherFrequencia currentUser={currentUser} currentSchool={currentSchool} />
           )}
           {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => teacherTab === r.key && (

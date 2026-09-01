@@ -156,7 +156,46 @@ verdade — trilha B do roadmap, ainda não decidida), migrar
 `class_subjects.class_name` → `class_subjects.class_id uuid REFERENCES
 classes(id)`. Até lá, essa é uma limitação aceita conscientemente.
 
-## 10. O que ainda não existe
+## 11. Frequência formal (`class_attendance`) e vínculo Diário × Matéria
+
+Migration `20260901f_add_attendance_and_subject_link.sql` (trilha A do
+núcleo acadêmico).
+
+**Decisão de escopo**: a proposta original pedia uma tabela `assessments`
+(avaliações) separada, com nota numérica no tradicional e registro
+descritivo no Montessori. Não foi criada — `pedagogical_records` (Diário
+Pedagógico) já é essa peça (`content jsonb`, `record_type` extensível,
+RLS madura). Criar uma tabela paralela duplicaria funcionalidade. Além
+disso, `schools.turmas` das escolas reais hoje é educação infantil
+(Nido/Kids I/Kids II) — a LDB não prevê nota numérica pra essa faixa
+etária, só avaliação descritiva, que é exatamente o que já existe. Em
+vez disso: **`pedagogical_records.subject_id`** (nullable, `ON DELETE
+SET NULL` — apagar uma matéria nunca apaga histórico pedagógico real,
+só desvincula) foi adicionado, permitindo (opcionalmente) ligar uma
+observação a uma matéria/área específica.
+
+**`class_attendance`** — frequência formal (chamada letiva), distinta do
+check-in/out de segurança (Totem/Monitor, que já existia). Um registro
+por aluno por dia (`UNIQUE(student_id, date)`), status `presente
+| ausente | atrasado | justificado`. RLS mesmo padrão de
+`pedagogical_records`: admin só lê; professor cria/lê/edita/apaga
+(upsert por `(student_id, date)`) só os alunos das turmas que leciona,
+e só os próprios registros (`recorded_by = auth.uid()`).
+
+**Limitação conhecida**: se duas turmas diferentes tiverem professores
+diferentes mas — por algum motivo — dois professores tentarem registrar
+frequência do MESMO aluno no MESMO dia (co-docência, substituição), o
+segundo só consegue se for o mesmo `recorded_by` do primeiro registro
+(a RLS de UPDATE exige `recorded_by = auth.uid()`). Comportamento aceito
+por ora — não é o caso comum (1 turma = 1-2 professores fixos), mas
+documentado caso vire um problema real.
+
+**Frontend**: `TeacherFrequencia.jsx` (professor marca presença por
+turma/dia) e `AdminFrequencia.jsx` (admin acompanha, só leitura) — ambos
+atrás do módulo "Módulo Pedagógico" (`features_enabled.relatorios_pedagogicos`,
+mesmo gate que já existia pro `TeacherPortal` inteiro).
+
+## 12. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"
   e "Matéria" são customizáveis hoje; "Aluno" segue fixo por método,
@@ -168,13 +207,10 @@ classes(id)`. Até lá, essa é uma limitação aceita conscientemente.
   **Comportamento aceitável nesta fase** — não há conversão automática;
   se acontecer na prática, o developer ajusta manualmente. Mesmo
   comportamento se aplica a `class_subjects` (ver seção 9).
-- Vínculo entre `pedagogical_records` (Diário) e `subjects` — próximo
-  passo natural pra habilitar relatórios por área no Montessori, ainda
-  não implementado.
 - Normalização de `schools.turmas` numa tabela `classes` de verdade —
   eliminaria a dívida técnica da seção 9, mas é uma migração mais
   invasiva (toca `users.turmas`, `class_subjects.class_name`,
-  `mural_fotos.turmas`, `comunicados.turmas`); não decidida ainda.
-- Habilitar/desabilitar outros módulos acadêmicos por método (ex.: notas
-  numéricas vs. registros descritivos) — depende de frequência/
-  avaliações existirem primeiro.
+  `mural_fotos.turmas`, `comunicados.turmas`, `class_attendance.class_name`);
+  não decidida ainda (trilha B do roadmap).
+- Rematrícula/transferência, boletim/histórico consolidado, planejamento
+  de aulas — ainda fora de escopo, não iniciados.
