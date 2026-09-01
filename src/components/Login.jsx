@@ -25,19 +25,53 @@ export default function Login({ onLogin }) {
   // autocadastro) e, se tiver imagem configurada, ela substitui a global.
   // Sem código informado (ou escola sem imagem própria), cai na global; sem
   // nenhuma das duas, cai no gradiente padrão (comportamento inalterado).
+  //
+  // Achado: o código, até aqui, só servia pra buscar a imagem -- nada
+  // impedia alguém de digitar o código de OUTRA escola e logar com a
+  // imagem errada aparecendo (não vazava dado nenhum, já que a RPC só
+  // devolve a imagem, mas gerava confusão visual). Agora o código
+  // informado é VALIDADO contra a escola real do usuário logo depois da
+  // autenticação (ver handleLogin) -- se não bater, a sessão é encerrada
+  // na hora. A validação é sempre feita DEPOIS de autenticar (nunca
+  // antes, nem por RPC anônima) -- não expõe se um e-mail existe nem faz
+  // enumeração de código de escola.
+  const SCHOOL_CODE_STORAGE_KEY = 'zela_school_code';
   const [schoolCode, setSchoolCode] = useState('');
+  const [savedSchoolCode, setSavedSchoolCode] = useState(null);
   const [schoolImageUrl, setSchoolImageUrl] = useState(null);
   const displayedImageUrl = schoolImageUrl || loginImageUrl;
 
-  const fetchSchoolImage = async () => {
-    const code = schoolCode.trim();
-    if (!code) { setSchoolImageUrl(null); return; }
+  useEffect(() => {
+    let stored = null;
     try {
-      const { data } = await supabase.rpc('get_school_login_image', { p_school_code: code });
+      stored = localStorage.getItem(SCHOOL_CODE_STORAGE_KEY);
+    } catch {
+      // localStorage indisponível (modo privado restrito, etc.) -- segue
+      // sem memorizar, campo aparece normalmente.
+    }
+    if (stored) {
+      setSavedSchoolCode(stored);
+      setSchoolCode(stored);
+      fetchSchoolImageFor(stored);
+    }
+  }, []);
+
+  const fetchSchoolImageFor = async (code) => {
+    const trimmed = (code || '').trim();
+    if (!trimmed) { setSchoolImageUrl(null); return; }
+    try {
+      const { data } = await supabase.rpc('get_school_login_image', { p_school_code: trimmed });
       setSchoolImageUrl(data || null);
     } catch {
       setSchoolImageUrl(null); // best-effort -- nunca bloqueia o login
     }
+  };
+
+  const handleTrocarEscola = () => {
+    try { localStorage.removeItem(SCHOOL_CODE_STORAGE_KEY); } catch { /* melhor esforço */ }
+    setSavedSchoolCode(null);
+    setSchoolCode('');
+    setSchoolImageUrl(null);
   };
 
   const [loginEmail, setLoginEmail] = useState('');
@@ -92,6 +126,35 @@ export default function Login({ onLogin }) {
           setLoginError('Seu cadastro está aguardando aprovação da escola. Você receberá acesso assim que for aprovado.');
           return;
         }
+
+        // 2.5. Valida o código de escola informado (se algum) contra a
+        // escola REAL do usuário autenticado -- só depois de autenticar,
+        // nunca antes (não expõe nada a quem não provou a senha ainda).
+        // developer não tem school_id -- código informado é ignorado
+        // pra esse role (não faz sentido "validar contra uma escola" pra
+        // quem gerencia todas).
+        const enteredCode = schoolCode.trim();
+        if (enteredCode && users[0].role !== 'developer') {
+          const { data: schoolRow, error: schoolErr } = await supabase
+            .from('schools')
+            .select('school_code')
+            .eq('id', users[0].school_id)
+            .maybeSingle();
+          if (schoolErr) {
+            console.error('[Login] Erro ao validar código da escola:', schoolErr);
+            // Falha ao consultar não deve travar quem tem tudo certo --
+            // segue sem bloquear (mesma filosofia best-effort da imagem).
+          } else if (schoolRow && schoolRow.school_code.toUpperCase() !== enteredCode.toUpperCase()) {
+            await supabase.auth.signOut();
+            setLoginError('O código de escola informado não corresponde à sua instituição. Verifique e tente novamente.');
+            return;
+          }
+        }
+        try { localStorage.setItem(SCHOOL_CODE_STORAGE_KEY, enteredCode || ''); } catch { /* melhor esforço */ }
+        if (!enteredCode) {
+          try { localStorage.removeItem(SCHOOL_CODE_STORAGE_KEY); } catch { /* melhor esforço */ }
+        }
+
         onLogin(users[0]);
       } else {
         // Usuário não encontrado em public.users (excluído, inativo ou inexistente)
@@ -224,19 +287,28 @@ export default function Login({ onLogin }) {
             </form>
           ) : (
             <form onSubmit={handleLogin} className="flex flex-col gap-5 w-full">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-label text-on-surface-variant/70" htmlFor="school-code">Código da escola (opcional)</label>
-                <input
-                  id="school-code"
-                  type="text"
-                  value={schoolCode}
-                  onChange={e => setSchoolCode(e.target.value)}
-                  onBlur={fetchSchoolImage}
-                  className="w-full bg-surface-container-lowest text-on-surface text-body px-4 py-2.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm uppercase"
-                  placeholder="Ex: ZL001"
-                  maxLength={10}
-                />
-              </div>
+              {savedSchoolCode ? (
+                <div className="flex items-center justify-between text-small text-on-surface-variant bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md px-4 py-2.5">
+                  <span>Escola: <strong className="text-on-surface">{savedSchoolCode}</strong></span>
+                  <button type="button" onClick={handleTrocarEscola} className="text-primary font-medium hover:underline underline-offset-4">
+                    Trocar
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-label text-on-surface-variant/70" htmlFor="school-code">Código da escola (opcional)</label>
+                  <input
+                    id="school-code"
+                    type="text"
+                    value={schoolCode}
+                    onChange={e => setSchoolCode(e.target.value)}
+                    onBlur={() => fetchSchoolImageFor(schoolCode)}
+                    className="w-full bg-surface-container-lowest text-on-surface text-body px-4 py-2.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm uppercase"
+                    placeholder="Ex: ZL001"
+                    maxLength={10}
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-label text-on-surface" htmlFor="email">E-mail</label>

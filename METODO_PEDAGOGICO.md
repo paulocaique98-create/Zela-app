@@ -451,6 +451,31 @@ certa por código (com normalização de minúsculo/espaço), `null` pra
 código inexistente e pra escola sem imagem própria (sem vazar a imagem
 de outra escola).
 
+## 16.9. Validação do código de escola no login + memorização local (2026-09-01)
+
+O campo "Código da escola" de 16.8 só servia pra buscar a imagem --
+nada impedia digitar o código de outra escola e logar vendo a imagem
+errada (sem vazamento de dado, mas confuso).
+
+**Implementado**: o código é validado contra a escola REAL do usuário,
+sempre DEPOIS da autenticação (nunca por RPC anônima -- não permite
+enumerar e-mail nem código de escola por tentativa/erro). Compara
+`schools.school_code` (pelo `school_id` do usuário logado) com o
+código informado; se não bater, `signOut()` imediato + erro.
+`developer` (sem `school_id` próprio) ignora a validação. Código
+válido é salvo em `localStorage` (`zela_school_code`): em visitas
+seguintes o campo vira um rótulo "Escola: ZL001" com link "Trocar" --
+conveniência de UX, nunca substitui a validação real (que roda de novo
+a cada login mesmo com o código memorizado).
+
+**Testado ao vivo + 2 testes automatizados**
+(`loginSchoolCodeValidation.test.js`, replicando a sequência de
+queries de `handleLogin` contra o Supabase Auth real -- o projeto não
+usa Testing Library, então não monta `Login.jsx` diretamente): código
+correto mantém sessão; código errado encerra sessão; sem código não
+valida (comportamento anterior preservado); normalização de
+minúsculo/espaço; developer ignora a validação.
+
 ## 17. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"

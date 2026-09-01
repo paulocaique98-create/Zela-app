@@ -1321,3 +1321,39 @@ essa etapa, uma foto de celular sem compressão (3-5MB comum) infla a
 linha da escola e pesa no carregamento da tela de login, que baixa a
 imagem inteira via `get_school_login_image` toda vez que alguém
 preenche o código.
+
+## 59. Validação do código de escola no login + memorização local (2026-09-01)
+
+Achado: o campo "Código da escola" (58) só servia pra buscar a imagem
+-- nada impedia alguém de digitar o código de OUTRA escola e logar
+vendo a imagem errada. Não vazava nenhum dado (a RPC só devolve a
+imagem), mas gerava confusão visual.
+
+**Implementado**: o código informado agora é validado contra a escola
+REAL do usuário, sempre DEPOIS da autenticação (nunca antes, nunca por
+RPC anônima -- não expõe se um e-mail existe nem permite enumerar
+código de escola por tentativa/erro). Em `handleLogin`, logo após
+buscar o perfil em `public.users`: se um código foi informado e o
+usuário não é `developer` (que não tem `school_id` próprio pra validar
+contra), busca `schools.school_code` pelo `school_id` do usuário e
+compara. Se não bater, `signOut()` imediato + mensagem de erro; nada é
+persistido. Se bater (ou nenhum código foi informado), login segue
+normal.
+
+**Memorização local**: código salvo em `localStorage`
+(`zela_school_code`) só depois de validado com sucesso -- em visitas
+seguintes, o campo vira um rótulo "Escola: ZL001" com um link
+"Trocar" (limpa o storage e volta a mostrar o campo). Puramente uma
+conveniência de UX; nunca substitui a validação real, que roda de
+novo a cada login mesmo com o código memorizado.
+
+**Testado ao vivo + 2 testes automatizados**
+(`loginSchoolCodeValidation.test.js`): código correto mantém a sessão;
+código errado encerra a sessão; sem código informado não valida nada
+(comportamento anterior preservado); normalização de minúsculo/espaço;
+developer ignora a validação. Como o projeto não usa Testing Library
+em nenhum componente, os testes replicam a mesma sequência de queries
+de `handleLogin` contra o Supabase Auth real, em vez de montar
+`Login.jsx`. Suíte completa: 211/211 passando (1 falha isolada de
+flakiness de rede em `studentTransferModule.test.js`, não relacionada,
+confirmada passando ao rodar sozinha).
