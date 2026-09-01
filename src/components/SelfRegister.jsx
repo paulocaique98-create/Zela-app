@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Mail, Lock, Plus, Trash2, Baby, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
@@ -33,7 +33,7 @@ const emptyStudent = () => ({
 const inputCls = 'w-full p-3 bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm font-medium transition-all';
 const labelCls = 'block text-xs font-semibold text-on-surface mb-1';
 
-function StudentCard({ student, index, onChange, onRemove, canRemove }) {
+function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) {
   const turnos = student.ciclo ? TURNOS_POR_CICLO[Number(student.ciclo)] || [] : [];
   const periodos = (student.ciclo && student.turno)
     ? PERIODOS_POR_CICLO_TURNO[Number(student.ciclo)]?.[student.turno] || []
@@ -77,7 +77,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
           <label className={labelCls}>Turma</label>
           <select value={student.turma} onChange={e => set('turma', e.target.value)} className={inputCls}>
             <option value="">Selecionar...</option>
-            {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => <option key={t} value={t}>{t}</option>)}
+            {turmas.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
@@ -125,6 +125,31 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
 
 export default function SelfRegister() {
   const [schoolCode, setSchoolCode] = useState('');
+  // Turmas da escola, resolvidas pelo código digitado (rota pública, sem
+  // login -- schools não tem policy de leitura pra anon, então usa a RPC
+  // get_turmas_by_school_code, que só devolve o array de turmas, nada
+  // mais). Cai no fallback (TURMAS, a constante global) até o código ser
+  // digitado ou se a escola ainda não tiver configurado nada.
+  const [schoolTurmas, setSchoolTurmas] = useState(TURMAS.filter(t => t !== 'Todas as Turmas'));
+
+  useEffect(() => {
+    const code = schoolCode.trim();
+    if (code.length < 3) {
+      setSchoolTurmas(TURMAS.filter(t => t !== 'Todas as Turmas'));
+      return;
+    }
+    let active = true;
+    const timer = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('get_turmas_by_school_code', { p_school_code: code });
+      if (!active) return;
+      if (!error && data && data.length > 0) {
+        setSchoolTurmas(data);
+      } else {
+        setSchoolTurmas(TURMAS.filter(t => t !== 'Todas as Turmas'));
+      }
+    }, 400); // debounce -- não busca a cada tecla digitada
+    return () => { active = false; clearTimeout(timer); };
+  }, [schoolCode]);
   const [guardianType, setGuardianType] = useState('Responsável');
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', phone: '',
@@ -329,7 +354,7 @@ export default function SelfRegister() {
                   </h3>
                   <div className="space-y-4">
                     {students.map((student, idx) => (
-                      <StudentCard key={student.id} student={student} index={idx} onChange={handleStudentChange} onRemove={handleRemoveStudent} canRemove={students.length > 1} />
+                      <StudentCard key={student.id} student={student} index={idx} onChange={handleStudentChange} onRemove={handleRemoveStudent} canRemove={students.length > 1} turmas={schoolTurmas} />
                     ))}
                   </div>
                 </div>

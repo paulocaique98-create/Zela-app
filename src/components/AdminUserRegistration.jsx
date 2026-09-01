@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { TURMAS, SETORES_CHAT } from '../lib/constants';
+import { SETORES_CHAT } from '../lib/constants';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import ConfirmModal from './ConfirmModal';
 
@@ -55,7 +55,7 @@ const emptyStudent = () => ({
 // ──────────────────────────────────────────────────────────
 // Sub-componente: card de aluno
 // ──────────────────────────────────────────────────────────
-function StudentCard({ student, index, onChange, onRemove, canRemove }) {
+function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) {
   const turnos = student.ciclo ? TURNOS_POR_CICLO[Number(student.ciclo)] || [] : [];
   const periodos = (student.ciclo && student.turno)
     ? PERIODOS_POR_CICLO_TURNO[Number(student.ciclo)]?.[student.turno] || []
@@ -109,7 +109,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove }) {
           <label className={labelCls}>Turma</label>
           <select value={student.turma} onChange={e => set('turma', e.target.value)} className={inputCls}>
             <option value="">Selecionar...</option>
-            {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => (
+            {turmas.map(t => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
@@ -897,6 +897,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 onChange={handleStudentChange}
                 onRemove={handleRemoveStudent}
                 canRemove={students.length > 1}
+                turmas={schoolTurmas}
               />
             ))}
           </div>
