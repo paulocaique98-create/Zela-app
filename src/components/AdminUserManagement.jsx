@@ -166,7 +166,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           <div>
             <h2 className="text-h3 text-on-surface">Gestão de Usuários</h2>
             <p className="text-small text-on-surface-variant">
-              {usersList.length} responsável{usersList.length !== 1 ? 'is' : ''} cadastrado{usersList.length !== 1 ? 's' : ''}
+              {usersList.length} {usersList.length !== 1 ? 'responsáveis' : 'responsável'} cadastrado{usersList.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
