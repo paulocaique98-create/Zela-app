@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Image as ImageIcon, Loader2, Trash2, X, Upload, Users, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { TURMAS } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrls, buildSafeFileName } from '../lib/storage';
 import { compressImage } from '../lib/imageCompression';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import ConfirmModal from './ConfirmModal';
 
-const TURMA_OPTIONS = TURMAS.filter(t => t !== 'Todas as Turmas');
 const BUCKET = 'mural-fotos';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
@@ -30,6 +29,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
+  const { turmas: TURMA_OPTIONS } = useSchoolConfig(schoolId);
   const lightboxFoto = lightboxIndex !== null ? fotos[lightboxIndex] : null;
 
   const showPrev = useCallback(() => {

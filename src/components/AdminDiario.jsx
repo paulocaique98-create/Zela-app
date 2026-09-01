@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Check, Loader2, Minus, Plus, Search, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { REFEICOES, TURMAS } from '../lib/constants';
+import { REFEICOES } from '../lib/constants';
 import { splitCardapioItens, mealAsksComeuTudo, normalizeItemServido } from '../lib/diarioUtils';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import { useSchoolConfig } from '../lib/schoolConfig';
 
 const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
@@ -39,6 +40,7 @@ const segCls = (active) =>
 
 export default function AdminDiario({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
+  const { turmas: schoolTurmas } = useSchoolConfig(schoolId);
 
   // Busca os alunos por conta própria (mesmo padrão de AdminStudentList.jsx)
   // em vez de usar o `students` que o AdminPortal repassa — aquele é uma
@@ -287,7 +289,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                 className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
               >
                 <option value="">Todas as turmas</option>
-                {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => <option key={t} value={t}>{t}</option>)}
+                {schoolTurmas.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div className="sm:col-span-2 relative">

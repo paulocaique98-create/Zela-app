@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Megaphone, Loader2, Trash2, Pencil, X, Check, Plus, Users, Paperclip, FileText, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { TURMAS } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
 import { compressImage } from '../lib/imageCompression';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import ConfirmModal from './ConfirmModal';
-
-const TURMA_OPTIONS = TURMAS.filter(t => t !== 'Todas as Turmas');
 
 const BUCKET = 'comunicados-anexos';
 const MAX_FILES = 5;
@@ -47,6 +45,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
   const [openingPath, setOpeningPath] = useState(null);
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
+  const { turmas: TURMA_OPTIONS } = useSchoolConfig(schoolId);
 
   const fetchComunicados = async () => {
     if (!schoolId) return;
