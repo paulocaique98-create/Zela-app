@@ -1097,3 +1097,25 @@ passo é a escola Montessori real usar matérias/frequência/observação
 vinculável/transferência de turma em produção por 2-4 semanas antes de
 decidir o que vem depois (provavelmente normalização de turmas, se a
 validação confirmar essa necessidade).
+
+## 53. Imagem customizável da tela de login (2026-09-01, commit `b5e1ddb`)
+
+Fora do núcleo acadêmico (pausa mantida) — pedido de branding/UX:
+developer pode substituir a ilustração padrão (gradiente + escudo) do
+painel esquerdo da tela de login por uma imagem própria, via
+`ConfiguracoesPanel` (aba Aparência), mesmo padrão já usado pra "Logo
+Global" (`system_settings`, upload → base64 → upsert).
+
+**Achado ao implementar**: `Login.jsx` é visto por usuário **não
+autenticado** (é o ponto de entrada), mas a leitura de
+`system_settings` só era liberada pra `authenticated`. Em vez de abrir
+leitura da tabela toda pra `anon` (superfície maior que o necessário —
+mesma classe de exposição já caçada várias vezes nesta sessão), nova
+policy restrita **só** à chave `login_image_url`. Testado ao vivo com
+client anônimo real: lê a chave específica, bloqueado em outras chaves
+(`global_logo`), bloqueado pra escrever. 3 testes automatizados.
+
+Sem imagem configurada, comportamento visual permanece idêntico ao
+atual (fallback automático).
+
+**200/200 testes passando.**
