@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { notifyAdmins } from '../_shared/notifyAdmins.ts'
 
 // self-register-family — endpoint PÚBLICO (sem JWT de chamador): usado pela
 // tela "Novo usuário?" da tela de login, onde ninguém está autenticado ainda.
@@ -162,6 +163,24 @@ serve(async (req) => {
       emergency_order: 1,
       school_id: schoolId,
     }])
+
+    // 5. Avisa os admins da escola — antes disso, um cadastro pendente só
+    // era descoberto se alguém entrasse manualmente em Usuários > Pendentes.
+    // Best-effort: falha ao notificar nunca derruba o cadastro em si (já
+    // está tudo gravado nos passos anteriores).
+    try {
+      await notifyAdmins(adminClient, {
+        schoolId,
+        type: 'pending_registration',
+        message: `${name} se cadastrou e aguarda aprovação.`,
+        url: '/?tab=users',
+        pushTitle: 'Novo cadastro pendente',
+        pushBody: `${name} está aguardando aprovação para acessar o Zela.`,
+        pushTag: 'pending-registration',
+      })
+    } catch (notifyErr) {
+      console.error('[self-register-family] Erro ao notificar admins:', notifyErr)
+    }
 
     return new Response(JSON.stringify({
       success: true,

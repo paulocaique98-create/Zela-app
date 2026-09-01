@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
+import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
@@ -50,6 +52,23 @@ const RELATORIOS_SUBMENU = [
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
+  const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
+  const pushData = usePushNotifications(currentUser, currentSchool);
+  const [dismissedPush, setDismissedPush] = useState(
+    localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true'
+  );
+  const dismissPushBanner = () => {
+    localStorage.setItem(`zela_push_dismissed_${currentUser?.id}`, 'true');
+    setDismissedPush(true);
+  };
+  // Permite ao card de "cadastros pendentes" (AdminInicio) pular direto
+  // pra aba Pendentes de Usuários, em vez de só abrir a tela na aba
+  // padrão (Ativos) e deixar o admin procurar.
+  const [usersInitialTab, setUsersInitialTab] = useState('active');
+  const goToPendingUsers = () => {
+    setUsersInitialTab('pending');
+    go('users');
+  };
 
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
@@ -167,7 +186,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 isOpen={openAccordion === 'gerenciamento'}
                 onToggle={() => toggleAccordion('gerenciamento')}
               >
-                <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" onClick={() => go('users')} />
+                <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" badge={pendingUsersCount > 0 ? pendingUsersCount : null} onClick={() => go('users')} />
                 <SidebarItem active={adminTab === 'students'} icon={Users} label="Alunos" onClick={() => go('students')} />
                 <SidebarItem active={adminTab === 'gerenciar-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('gerenciar-funcionarios')} />
               </SidebarGroup>
@@ -272,10 +291,29 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0 h-full flex flex-col">
+      {/* BANNER NOTIFICAÇÕES PUSH — mesmo padrão de FamilyPortal.jsx.
+          Sem isso, notifyAdmins() nunca tem pra quem mandar push (a
+          escola nunca teria se inscrito). */}
+      {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3 justify-between shrink-0">
+          <div className="flex items-center gap-2 text-amber-800 text-sm font-medium min-w-0 flex-1">
+            <Bell size={18} className="text-amber-600 shrink-0" />
+            <span className="truncate">Ative as notificações para saber na hora quando um responsável se cadastrar</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+              Ativar
+            </button>
+            <button onClick={dismissPushBanner} className="text-amber-500 hover:text-amber-700 p-1 rounded-md hover:bg-amber-100 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
       <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
 
         {/* INICIO */}
-        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} />}
+        {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} pendingUsersCount={pendingUsersCount} onGoToPendingUsers={goToPendingUsers} />}
 
         {/* NOVOS PLACEHOLDERS */}
         {adminTab === 'matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
@@ -464,7 +502,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} />}
 
         {/* GESTÃO */}
-        {adminTab === 'users' && <AdminUserManagement currentUser={currentUser} />}
+        {adminTab === 'users' && <AdminUserManagement currentUser={currentUser} initialTab={usersInitialTab} />}
 
         {/* LISTA DE ALUNOS */}
         {adminTab === 'students' && <AdminStudentList currentUser={currentUser} />}

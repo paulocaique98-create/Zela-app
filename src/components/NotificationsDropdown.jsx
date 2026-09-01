@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, BookOpen, X } from 'lucide-react';
+import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, BookOpen, UserRoundPlus, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Extrai o valor de ?tab= de uma url tipo "/?tab=diario" — convenção já usada
@@ -26,7 +26,11 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    if (!currentUser || currentUser.role !== 'family') return;
+    // family_id na tabela `notifications` é reaproveitado como "id do
+    // destinatário" -- também vale pra admin (ver notifyAdmins.ts), então
+    // a mesma query .eq('family_id', currentUser.id) funciona sem
+    // nenhuma mudança pros dois papéis.
+    if (!currentUser || (currentUser.role !== 'family' && currentUser.role !== 'admin')) return;
 
     fetchNotifications();
 
@@ -168,6 +172,8 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
         return { icon: <AlertCircle size={18} className="text-red-600" />, bg: 'bg-red-100', dot: 'bg-red-500' };
       case 'diario':
         return { icon: <BookOpen size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
+      case 'pending_registration':
+        return { icon: <UserRoundPlus size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
       case 'welcome':
       default:
         return { icon: <Info size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
@@ -226,7 +232,9 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
                 </div>
                 <h4 className="font-bold text-slate-700">Bem-vindo ao Portal Zela!</h4>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  Aqui você receberá avisos de check-in, check-out e lembretes importantes sobre o horário do seu filho.
+                  {currentUser?.role === 'admin'
+                    ? 'Aqui você receberá avisos de novos cadastros e outros eventos importantes da escola.'
+                    : 'Aqui você receberá avisos de check-in, check-out e lembretes importantes sobre o horário do seu filho.'}
                 </p>
               </div>
             ) : (

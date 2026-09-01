@@ -1078,7 +1078,18 @@ export default function App() {
         onLogout={handleLogout}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onTriggerEmergency={triggerEmergency}
-        onNavigateTab={setFamilyTab}
+        onNavigateTab={
+          // Header/NotificationsDropdown é compartilhado entre papéis, mas
+          // "navegar pra uma aba" significa uma aba DIFERENTE dependendo de
+          // quem está logado. Achado ao liberar o sino de notificações pra
+          // admin: isso estava fixo em setFamilyTab pra qualquer role --
+          // clicar numa notificação de admin não teria efeito nenhum
+          // (chamaria o setter errado, o estado que a tela realmente lê
+          // pra decidir o que mostrar nunca mudava).
+          currentUser?.role === 'admin' ? setAdminTab
+          : currentUser?.role === 'teacher' ? setTeacherTab
+          : setFamilyTab
+        }
       />
 
       <main className="flex-1 overflow-hidden flex flex-col p-3 sm:p-4 md:p-6 lg:p-6">

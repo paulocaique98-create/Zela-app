@@ -9,7 +9,7 @@ import ConfirmModal from './ConfirmModal';
 // Gestão de Usuários = só Responsáveis (família). Contas de Admin/Professor (com
 // login) ficam em Gerenciamento > Funcionários, junto do resto do cadastro de
 // equipe — evita misturar "responsável de aluno" com "equipe da escola".
-export default function AdminUserManagement({ currentUser }) {
+export default function AdminUserManagement({ currentUser, initialTab = 'active' }) {
   const [usersList, setUsersList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,7 +17,7 @@ export default function AdminUserManagement({ currentUser }) {
   const [showImportModal, setShowImportModal] = useState(false);
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
   const [deletingUserId, setDeletingUserId] = useState(null);
-  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
+  const [activeTab, setActiveTab] = useState(initialTab); // 'active' | 'pending'
   const [approvingUserId, setApprovingUserId] = useState(null);
   const [confirmRejectUserId, setConfirmRejectUserId] = useState(null);
 

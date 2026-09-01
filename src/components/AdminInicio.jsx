@@ -1,8 +1,8 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText, UserRoundPlus } from 'lucide-react';
 import { useMemo } from 'react';
 
-export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0 }) {
+export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0, pendingUsersCount = 0, onGoToPendingUsers = () => {} }) {
   const features = currentSchool?.features_enabled || {};
   
   const ADMIN_MENUS = [
@@ -50,6 +50,26 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
   return (
     <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
+        {pendingUsersCount > 0 && (
+          <button
+            onClick={onGoToPendingUsers}
+            className="w-full mb-6 lg:mb-8 shrink-0 flex items-center gap-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-zela-lg p-4 sm:p-5 text-left transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-full bg-amber-100 group-hover:bg-amber-200 text-amber-600 flex items-center justify-center shrink-0 transition-colors">
+              <UserRoundPlus size={22} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-amber-900 text-sm sm:text-base">
+                {pendingUsersCount} cadastro{pendingUsersCount !== 1 ? 's' : ''} aguardando aprovação
+              </p>
+              <p className="text-xs sm:text-small text-amber-700 mt-0.5">
+                {pendingUsersCount === 1 ? 'Este responsável' : 'Esses responsáveis'} só {pendingUsersCount === 1 ? 'consegue' : 'conseguem'} fazer check-in depois de aprovado{pendingUsersCount !== 1 ? 's' : ''}.
+              </p>
+            </div>
+            <ArrowRight size={18} className="text-amber-600 shrink-0" />
+          </button>
+        )}
+
         <div className="mb-6 lg:mb-8 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Ações Rápidas</h1>
           <p className="text-small text-on-surface-variant mt-1">O que você deseja acessar hoje?</p>
@@ -66,6 +86,11 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
               {menu.key === 'monitor' && monitorCount > 0 && (
                 <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
                   {monitorCount}
+                </span>
+              )}
+              {menu.key === 'users' && pendingUsersCount > 0 && (
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
+                  {pendingUsersCount}
                 </span>
               )}
               {menu.key === 'notificacoes' && unreadNotifications > 0 && (
