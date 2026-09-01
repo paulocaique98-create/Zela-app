@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil } from 'lucide-react';
+import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Gestão de turmas pela própria escola (admin principal) -- antes disso, só
@@ -201,6 +201,117 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Imagem de login por escola (admin principal) -- antes disso, a imagem
+// central da tela de login era só GLOBAL (developer, ConfiguracoesPanel),
+// a mesma pra qualquer escola. schools.login_image_url deixa cada escola
+// ter a própria (a global vira fallback, usada quando a escola não
+// configurou nenhuma ou quando ninguém informa o código dela na tela de
+// login). Mesmo padrão de upload já usado pra logo_url: base64 direto
+// numa coluna text, sem Storage.
+function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
+  const fileInputRef = useRef(null);
+  const [imageUrl, setImageUrl] = useState(currentSchool?.login_image_url || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setImageUrl(currentSchool?.login_image_url || '');
+  }, [currentSchool?.login_image_url]);
+
+  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImageUrl(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError('');
+    setMsg('');
+    try {
+      const { error: updateError } = await supabase
+        .from('schools')
+        .update({ login_image_url: imageUrl || null })
+        .eq('id', currentUser.school_id);
+      if (updateError) throw updateError;
+      setMsg('Imagem de login atualizada com sucesso!');
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setMsg(''), 3000);
+    }
+  };
+
+  if (!canManage) return null;
+
+  return (
+    <div className="pt-3 border-t border-outline-variant">
+      <div className="mb-2">
+        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><ImageIcon size={15} className="text-primary" /> Imagem de Login</h3>
+        <p className="text-xs text-on-surface-variant">
+          Aparece do lado esquerdo da tela de login quando alguém informa o código desta escola.
+          Sem imagem própria configurada, a tela de login usa a imagem padrão do sistema.
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="w-24 h-24 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant flex items-center justify-center shrink-0 overflow-hidden">
+          {imageUrl ? (
+            <img src={imageUrl} alt="Imagem de login" className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon className="text-slate-300" size={28} />
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition shrink-0"
+            >
+              <Upload size={13} /> {imageUrl ? 'Trocar imagem' : 'Enviar imagem'}
+            </button>
+            {imageUrl && (
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                title="Remover imagem"
+                className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || imageUrl === (currentSchool?.login_image_url || '')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition disabled:opacity-50 shrink-0"
+            >
+              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Salvar
+            </button>
+          </div>
+          {msg && <p className="text-xs text-green-700 font-medium">{msg}</p>}
+          {error && (
+            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2 max-w-sm">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -423,6 +534,8 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
           </div>
 
           <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
+
+          <LoginImageSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
 
           {/* PERSONALIZAÇÃO DO MENU LOCAL */}
           <div className="pt-3 border-t border-outline-variant">

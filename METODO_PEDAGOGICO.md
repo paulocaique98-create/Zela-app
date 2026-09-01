@@ -416,6 +416,41 @@ não duplicou a linha); bloqueio de renomear pra nome já existente e de
 renomear turma inexistente; admin comum/professor/família bloqueados
 sem alterar nada; isolamento multi-tenant.
 
+## 16.8. Imagem de login por escola (2026-09-01)
+
+Antes disso, a imagem central da tela de login era só GLOBAL
+(`system_settings.login_image_url`, editável só pelo developer em
+`ConfiguracoesPanel.jsx`), a mesma pra qualquer escola.
+
+**Implementado**: nova coluna `schools.login_image_url`, no mesmo grupo
+de permissão de `turmas` (admin principal ou developer, mesma extensão
+da trigger `protect_school_pedagogical_columns`). UI em
+`AdminSettings.jsx` (seção "Imagem de Login"), mesmo padrão de upload
+já usado em `logo_url`: base64 direto numa coluna text, sem Storage
+(decisão deliberada de manter a mesma convenção já estabelecida pra
+imagem de marca pequena e não sensível, em vez do bucket + signed URL
+cogitado inicialmente).
+
+Nova RPC pública `get_school_login_image(p_school_code)`, mesmo padrão
+de `get_turmas_by_school_code`: `SECURITY DEFINER`, devolve só o texto
+da imagem (nunca a linha inteira de `schools`), `null` se o código não
+existir ou a escola não tiver imagem própria. `Login.jsx` ganhou um
+campo opcional "Código da escola": ao perder o foco, busca a imagem
+da escola e substitui a imagem global; sem código informado (ou escola
+sem imagem própria), cai na global; sem nenhuma das duas, cai no
+gradiente padrão (comportamento original, inalterado).
+
+**Testado ao vivo + 2 testes automatizados**
+(`schoolLoginImage.test.js`): admin principal grava, admin comum e
+professor bloqueados (confirmado por linhas afetadas = 0, não só
+ausência de erro: `class_attendance` no item 16.7 mostrou que "sem
+erro" não é garantia de "sem escrita"; aqui a tabela é a mesma
+`schools` de 16.6, que JÁ tem policy de UPDATE pra admin, então o
+bloqueio real é 100% da trigger, não da RLS); RPC devolve a imagem
+certa por código (com normalização de minúsculo/espaço), `null` pra
+código inexistente e pra escola sem imagem própria (sem vazar a imagem
+de outra escola).
+
 ## 17. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"

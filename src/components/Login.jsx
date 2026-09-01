@@ -20,6 +20,26 @@ export default function Login({ onLogin }) {
     return () => { active = false; };
   }, []);
 
+  // Imagem PRÓPRIA da escola (get_school_login_image), por cima da global
+  // acima -- a escola informa o código dela (mesmo formato ZLxxx usado no
+  // autocadastro) e, se tiver imagem configurada, ela substitui a global.
+  // Sem código informado (ou escola sem imagem própria), cai na global; sem
+  // nenhuma das duas, cai no gradiente padrão (comportamento inalterado).
+  const [schoolCode, setSchoolCode] = useState('');
+  const [schoolImageUrl, setSchoolImageUrl] = useState(null);
+  const displayedImageUrl = schoolImageUrl || loginImageUrl;
+
+  const fetchSchoolImage = async () => {
+    const code = schoolCode.trim();
+    if (!code) { setSchoolImageUrl(null); return; }
+    try {
+      const { data } = await supabase.rpc('get_school_login_image', { p_school_code: code });
+      setSchoolImageUrl(data || null);
+    } catch {
+      setSchoolImageUrl(null); // best-effort -- nunca bloqueia o login
+    }
+  };
+
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -134,9 +154,9 @@ export default function Login({ onLogin }) {
         </div>
 
         <div className="relative z-10 flex-1 min-h-0 my-6 flex items-center justify-center">
-          {loginImageUrl ? (
+          {displayedImageUrl ? (
             <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl">
-              <img src={loginImageUrl} alt="" className="w-full h-full object-cover" />
+              <img src={displayedImageUrl} alt="" className="w-full h-full object-cover" />
             </div>
           ) : (
             <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl bg-gradient-to-br from-primary via-secondary to-tertiary relative flex items-center justify-center">
@@ -204,6 +224,20 @@ export default function Login({ onLogin }) {
             </form>
           ) : (
             <form onSubmit={handleLogin} className="flex flex-col gap-5 w-full">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-label text-on-surface-variant/70" htmlFor="school-code">Código da escola (opcional)</label>
+                <input
+                  id="school-code"
+                  type="text"
+                  value={schoolCode}
+                  onChange={e => setSchoolCode(e.target.value)}
+                  onBlur={fetchSchoolImage}
+                  className="w-full bg-surface-container-lowest text-on-surface text-body px-4 py-2.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm uppercase"
+                  placeholder="Ex: ZL001"
+                  maxLength={10}
+                />
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-label text-on-surface" htmlFor="email">E-mail</label>
                 <div className="relative">

@@ -1283,3 +1283,33 @@ envolvidas (incluindo `classes.id` permanecendo o mesmo, provando que
 não duplicou a linha); bloqueio de nome já existente e de turma
 inexistente; admin comum/professor/família bloqueados sem alterar
 nada; isolamento multi-tenant. Suíte completa: 207/207 passando.
+
+## 58. Imagem de login por escola (2026-09-01)
+
+A imagem central da tela de login era só GLOBAL
+(`system_settings.login_image_url`, developer). Nova coluna
+`schools.login_image_url`, mesmo grupo de permissão de `turmas` (admin
+principal ou developer). Decisão de implementação: seguindo a
+convenção já estabelecida em `schools.logo_url` (base64 numa coluna
+text, não Storage + signed URL como o plano original cogitava): é
+mais simples e suficiente pra uma imagem decorativa não sensível.
+Global vira fallback: usada quando nenhum código de escola é
+informado no login, ou quando a escola não configurou imagem própria.
+
+Nova RPC pública `get_school_login_image(p_school_code)` (mesmo padrão
+de `get_turmas_by_school_code`): devolve só o texto da imagem, nunca a
+linha inteira de `schools`; `null` se o código não existir ou a escola
+não tiver imagem. `Login.jsx` ganhou um campo opcional "Código da
+escola": ao perder o foco, busca e substitui a imagem global pela da
+escola. UI de upload em `AdminSettings.jsx` (seção "Imagem de Login"),
+visível só pro admin principal, mesmo padrão de upload já usado em
+`logo_url`.
+
+**Testado ao vivo + 2 testes automatizados**
+(`schoolLoginImage.test.js`): admin principal grava; admin comum
+bloqueado pela trigger (erro explícito); professor bloqueado pela RLS
+de `schools` (0 linhas afetadas, sem erro; confirmado via SELECT
+depois, não só ausência de erro no retorno); RPC devolve a imagem
+certa por código com normalização de minúsculo/espaço, `null` pra
+código inexistente e pra escola sem imagem própria (sem vazar imagem
+de outra escola). Suíte completa: 209/209 passando.
