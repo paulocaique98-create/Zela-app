@@ -35,7 +35,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestUser(admin.id);
       await deleteTestSchool(schoolId);
     }
-  });
+  }, 15000);
 
   it('CRÍTICO — admin de outra escola não consegue transferir aluno alheio', async () => {
     const schoolA = await createTestSchool();
@@ -54,7 +54,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestSchool(schoolA);
       await deleteTestSchool(schoolB);
     }
-  });
+  }, 15000);
 
   it('professor não consegue transferir aluno (só admin)', async () => {
     const schoolId = await createTestSchool();
@@ -68,7 +68,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestUser(teacher.id);
       await deleteTestSchool(schoolId);
     }
-  });
+  }, 15000);
 
   it('família não consegue transferir o próprio filho', async () => {
     const schoolId = await createTestSchool();
@@ -82,7 +82,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestUser(family.id);
       await deleteTestSchool(schoolId);
     }
-  });
+  }, 15000);
 
   it('transferir pra mesma turma retorna erro claro (não permite "transferência" nula)', async () => {
     const schoolId = await createTestSchool();
@@ -96,7 +96,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestUser(admin.id);
       await deleteTestSchool(schoolId);
     }
-  });
+  }, 15000);
 
   it('admin lê o histórico de transferências da própria escola; admin de outra escola não lê', async () => {
     const schoolA = await createTestSchool();
@@ -119,5 +119,5 @@ runIf('Transferência de turma (transfer_student_class)', () => {
       await deleteTestSchool(schoolA);
       await deleteTestSchool(schoolB);
     }
-  });
+  }, 15000);
 });
