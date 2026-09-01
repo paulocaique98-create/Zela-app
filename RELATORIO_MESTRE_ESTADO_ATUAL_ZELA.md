@@ -921,8 +921,27 @@ auto-escalando via `financial_*` (`c67056a`). Todos confirmados
 exploráveis ao vivo antes da correção, e bloqueados depois, com teste
 de regressão formal.
 
-### Pendente (ordem combinada com o usuário)
-3. Estender `useSchoolConfig` pra mais 3-4 componentes-chave
-   (`AdminDiario`, `FamilyPortal`, mural/comunicados).
-4. Documentação da feature (`OBSERVABILIDADE.md`-style, explicando
-   fallback e como configurar).
+### Item 3 — extensão de useSchoolConfig (commits `ba30997`, `89f39b2`)
+`AdminUserRegistration` (turma do aluno na criação, além das turmas do
+professor já feitas na Fase 1), `SelfRegister` (autocadastro **público**
+— achado durante a implementação: `schools` não tem policy de leitura
+pra `anon`, então não dava pra usar `useSchoolConfig` direto; criada RPC
+dedicada `get_turmas_by_school_code`, testada ao vivo com client 100%
+anônimo, confirmando que só devolve o array de turmas e não abre
+nenhuma brecha de leitura ampla), `AdminDiario`, `AdminMuralFotos`,
+`AdminComunicados`. Confirmado que nenhum componente do lado família
+precisava de mudança (segmentação já é via overlap de array na RLS,
+não via constante). **167/167 testes passando.**
+
+### Item 4 — documentação (commit `291d847`)
+`METODO_PEDAGOGICO.md`: modelo de dados, fallback, edição restrita a
+developer (com o achado crítico relacionado), hook `useSchoolConfig`
+(onde está aplicado e onde não se aplica), RPC pública (com nota de
+segurança), UI do DeveloperPanel, e pendências conhecidas (terminologia
+granular, migração de dados órfãos, habilitar módulo por método).
+
+### Feature "Flexibilidade de Método Pedagógico" — CONCLUÍDA (2026-09-01)
+Fases 1 e 2 completas, incluindo os 2 achados críticos de autorização
+encontrados no caminho (`schools` e `financial_*`). Nenhum item
+pendente conhecido além do que está listado na seção 8 de
+`METODO_PEDAGOGICO.md` (melhorias futuras, não bloqueadoras).
