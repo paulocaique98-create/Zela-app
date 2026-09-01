@@ -26,6 +26,15 @@ export default function DeveloperPanel() {
   const [saveError, setSaveError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Flexibilidade de Método Pedagógico — Fase 2 (UI). Ficam FORA de
+  // formData de propósito: são só estado de edição da UI (turmas como
+  // texto separado por vírgula, label de turma personalizado), nunca
+  // devem ser espalhados direto num insert/update do Supabase (colunas
+  // reais são pedagogical_method/custom_config/turmas).
+  const [pedagogicalMethod, setPedagogicalMethod] = useState('tradicional');
+  const [turmasInput, setTurmasInput] = useState('');
+  const [customClassLabel, setCustomClassLabel] = useState('');
+
   const defaultFeatures = {
     cadastros: true,
     gerenciamento: true,
@@ -85,6 +94,9 @@ export default function DeveloperPanel() {
       });
       setFeaturesEnabled({ ...defaultFeatures, ...school.features_enabled });
       setLimits({ ...defaultLimits, ...school.limits });
+      setPedagogicalMethod(school.pedagogical_method || 'tradicional');
+      setTurmasInput((school.turmas || []).join(', '));
+      setCustomClassLabel(school.custom_config?.terminology?.class || '');
     } else {
       setEditingSchool(null);
       setFormData({
@@ -93,6 +105,9 @@ export default function DeveloperPanel() {
       setFeaturesEnabled(defaultFeatures);
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
+      setPedagogicalMethod('tradicional');
+      setTurmasInput('');
+      setCustomClassLabel('');
       setSaveError('');
       setSuccessMsg('');
     }
@@ -130,11 +145,19 @@ export default function DeveloperPanel() {
     setSaveError('');
     setSuccessMsg('');
     try {
+      // Turmas: texto "Nido, Kids I, Kids II" -> array, aparadas e sem
+      // itens vazios (vírgula sobrando não vira turma "").
+      const turmas = turmasInput.split(',').map(t => t.trim()).filter(Boolean);
+      const custom_config = customClassLabel.trim()
+        ? { terminology: { class: customClassLabel.trim() } }
+        : {};
+      const pedagogicalFields = { pedagogical_method: pedagogicalMethod, turmas, custom_config };
+
       if (editingSchool) {
         // Update apenas dados da escola
         const { error } = await supabase
           .from('schools')
-          .update({ ...formData, features_enabled: featuresEnabled, limits })
+          .update({ ...formData, features_enabled: featuresEnabled, limits, ...pedagogicalFields })
           .eq('id', editingSchool.id);
 
         if (error) throw error;
@@ -153,7 +176,7 @@ export default function DeveloperPanel() {
         const schoolCode = await generateSchoolCode();
         const { data: newSchool, error: schoolError } = await supabase
           .from('schools')
-          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled, limits }])
+          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled, limits, ...pedagogicalFields }])
           .select()
           .single();
 
@@ -447,6 +470,46 @@ export default function DeveloperPanel() {
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Notas Internas da Zela</label>
                   <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary"></textarea>
+                </div>
+
+                {/* Método pedagógico — só developer edita (protect_school_pedagogical_columns_trigger) */}
+                <div className="md:col-span-2 border-t border-outline-variant pt-4 mt-2">
+                  <p className="text-xs font-black text-primary uppercase tracking-wider mb-3">Método Pedagógico</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Método</label>
+                      <select value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary bg-white">
+                        <option value="tradicional">Tradicional</option>
+                        <option value="montessori">Montessori</option>
+                        <option value="personalizado">Personalizado</option>
+                      </select>
+                    </div>
+                    {pedagogicalMethod === 'personalizado' && (
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nome para "Turma"</label>
+                        <input
+                          type="text"
+                          value={customClassLabel}
+                          onChange={e => setCustomClassLabel(e.target.value)}
+                          placeholder="Ex: Agrupamento, Ambiente..."
+                          className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    )}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Turmas / Agrupamentos (separados por vírgula)</label>
+                      <input
+                        type="text"
+                        value={turmasInput}
+                        onChange={e => setTurmasInput(e.target.value)}
+                        placeholder="Ex: Nido, Kids I, Kids II"
+                        className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary"
+                      />
+                      <p className="text-[11px] text-on-surface-variant/70 mt-1">
+                        Vazio = a escola usa a lista padrão do sistema até alguém configurar isso aqui.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Responsável da escola — apenas no cadastro */}
