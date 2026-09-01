@@ -107,7 +107,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
             {criancas.map(c => c.nome).join(', ') || 'Solicitação'}
           </p>
           <p className="text-on-surface-variant/70 text-xs mt-0.5">
-            {resp.nome} — enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
+            {resp.nome} · enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -375,7 +375,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
     } catch (err) {
       console.error('[AdminMatriculas] Erro ao decidir solicitação:', err);
       setError(status === 'approved'
-        ? `Não foi possível concluir a aprovação: ${err.message || 'erro desconhecido'}. Nada foi notificado — confira o que já foi criado antes de tentar de novo.`
+        ? `Não foi possível concluir a aprovação: ${err.message || 'erro desconhecido'}. Nada foi notificado. Confira o que já foi criado antes de tentar de novo.`
         : 'Não foi possível registrar a decisão.');
     } finally {
       setDecidingId(null);

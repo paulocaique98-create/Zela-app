@@ -333,7 +333,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
         notifyFamilies({
           type: 'calendario',
           title: 'Novo evento no calendário',
-          message: `${payload.title} — ${formatDateLabel(payload.event_date)}`,
+          message: `${payload.title} · ${formatDateLabel(payload.event_date)}`,
           url: '/?tab=calendario',
         });
       }
@@ -416,7 +416,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
     try {
       const candidates = await parseDateTextList(file);
       if (candidates.length === 0) {
-        setImportError('Nenhuma data foi encontrada nesse PDF. Ele pode estar em formato de imagem (não é possível extrair texto automaticamente) — cadastre os eventos manualmente.');
+        setImportError('Nenhuma data foi encontrada nesse PDF. Ele pode estar em formato de imagem (não é possível extrair texto automaticamente). Cadastre os eventos manualmente.');
         return;
       }
       setImportCandidates(candidates.map((c, i) => ({ ...c, id: i, selected: true, event_type: 'geral' })));
@@ -690,14 +690,14 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             {importFromIA && (
               <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
                 <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-                Esses eventos foram lidos por IA e podem conter erros — nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o calendário fica visível pras famílias.
+                Esses eventos foram lidos por IA e podem conter erros. Nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o calendário fica visível pras famílias.
               </div>
             )}
             <div className="flex justify-between items-start gap-3">
               <div>
                 <h3 className="font-bold text-on-surface text-sm">Revisar eventos encontrados no PDF</h3>
                 <p className="text-on-surface-variant text-xs mt-0.5">
-                  {importCandidates.length} evento(s) detectado(s). Confira as datas e títulos antes de importar — a extração automática pode errar em PDFs com layout complexo.
+                  {importCandidates.length} evento(s) detectado(s). Confira as datas e títulos antes de importar: a extração automática pode errar em PDFs com layout complexo.
                 </p>
               </div>
               <button onClick={() => { setImportCandidates(null); setImportFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
@@ -912,7 +912,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
               <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-              A IA também encontrou aulas especiais nesse PDF — confira antes de importar.
+              A IA também encontrou aulas especiais nesse PDF. Confira antes de importar.
             </div>
             <div className="flex justify-between items-start gap-3">
               <h3 className="font-bold text-on-surface text-sm">{iaAulaCandidates.length} aula(s) especial(is) detectada(s)</h3>
@@ -937,7 +937,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                       className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-xs font-bold text-on-surface mb-1"
                     />
                     <p className="text-[11px] text-on-surface-variant/70">
-                      {c.categoria === 'integral' ? 'Integral' : 'Geral'} — {formatRecorrencia(c)}
+                      {c.categoria === 'integral' ? 'Integral' : 'Geral'} · {formatRecorrencia(c)}
                     </p>
                   </div>
                 </div>

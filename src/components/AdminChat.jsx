@@ -279,7 +279,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
         {!isSupportThread && !inBusinessHours && (
           <div className="bg-amber-50 border-b border-amber-100 text-amber-700 px-4 sm:px-5 py-2 text-xs font-semibold flex items-center gap-2 shrink-0">
-            <Clock size={14} className="shrink-0" /> Fora do horário comercial (07h-19h) — só é possível ler, envio de mensagem está bloqueado.
+            <Clock size={14} className="shrink-0" /> Fora do horário comercial (07h-19h): só é possível ler, envio de mensagem está bloqueado.
           </div>
         )}
 

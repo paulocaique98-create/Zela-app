@@ -225,7 +225,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
       {confirmDeleteId && (
         <ConfirmModal
           title="Excluir autorizado"
-          message="Isso apaga o cadastro por completo — nome, foto e biometria. Esta ação não pode ser desfeita."
+          message="Isso apaga o cadastro por completo: nome, foto e biometria. Esta ação não pode ser desfeita."
           danger
           isLoading={isProcessingId === confirmDeleteId}
           onConfirm={performDeleteAuthorized}

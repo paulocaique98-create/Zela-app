@@ -616,7 +616,7 @@ export default function App() {
           }
         });
         if (duplicate) {
-          throw new Error(`Este rosto já está cadastrado para "${duplicate.name.trim()}". Cada pessoa só pode ter uma biometria cadastrada no sistema — remova o cadastro duplicado antes de tentar novamente.`);
+          throw new Error(`Este rosto já está cadastrado para "${duplicate.name.trim()}". Cada pessoa só pode ter uma biometria cadastrada no sistema. Remova o cadastro duplicado antes de tentar novamente.`);
         }
       }
     }
@@ -733,7 +733,7 @@ export default function App() {
 
           const conflictingGuardian = (otherGuardians || []).find(g => g.name.trim().toLowerCase() === nameTrim);
           if (conflictingGuardian) {
-            setAuthError(`"${newPerson.name}" já é o 2º Responsável cadastrado no sistema, com login próprio. Ele(a) mesmo(a) precisa cadastrar a biometria em Autorizados usando a própria conta — não é necessário adicioná-lo(a) aqui.`);
+            setAuthError(`"${newPerson.name}" já é o 2º Responsável cadastrado no sistema, com login próprio. Ele(a) mesmo(a) precisa cadastrar a biometria em Autorizados usando a própria conta. Não é necessário adicioná-lo(a) aqui.`);
             return;
           }
         }

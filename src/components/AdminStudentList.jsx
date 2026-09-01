@@ -323,7 +323,7 @@ export default function AdminStudentList({ currentUser }) {
             </div>
             <div className="p-5 space-y-4">
               <p className="text-sm text-on-surface-variant">
-                <strong className="text-on-surface">{transferTarget.name}</strong> — turma atual: <strong className="text-on-surface">{transferTarget.turma || 'não definida'}</strong>
+                <strong className="text-on-surface">{transferTarget.name}</strong> · turma atual: <strong className="text-on-surface">{transferTarget.turma || 'não definida'}</strong>
               </p>
               <div>
                 <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nova turma *</label>
@@ -352,7 +352,7 @@ export default function AdminStudentList({ currentUser }) {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setHistoryTarget(null)}>
           <div onClick={e => e.stopPropagation()} className="bg-white rounded-zela-xl shadow-xl w-full max-w-sm max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-outline-variant">
-              <h3 className="text-h3 text-on-surface">Histórico — {historyTarget.name}</h3>
+              <h3 className="text-h3 text-on-surface">Histórico · {historyTarget.name}</h3>
               <button onClick={() => setHistoryTarget(null)} className="p-1.5 text-on-surface-variant/70 hover:text-on-surface rounded-lg"><X size={18} /></button>
             </div>
             <div className="p-5 space-y-2">

@@ -197,7 +197,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
                   <BookOpen className="mx-auto h-12 w-12 text-outline-variant mb-3" />
                   {feriados.get(selectedDate) ? (
                     <>
-                      <p className="text-sm font-bold text-red-600">Feriado — {feriados.get(selectedDate)}</p>
+                      <p className="text-sm font-bold text-red-600">Feriado · {feriados.get(selectedDate)}</p>
                       <p className="text-xs text-on-surface-variant/70 mt-1">Sem aula, sem lançamento nesse dia.</p>
                     </>
                   ) : (

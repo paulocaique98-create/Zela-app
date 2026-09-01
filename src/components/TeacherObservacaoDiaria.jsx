@@ -335,7 +335,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 <div className="flex justify-between items-start gap-3">
                   <div className="min-w-0">
                     <h4 className="font-bold text-on-surface">{student?.name || 'Aluno removido'}</h4>
-                    <p className="text-on-surface-variant text-xs mt-0.5">{formatDate(r.record_date)}{student?.turma ? ` — ${student.turma}` : ''}</p>
+                    <p className="text-on-surface-variant text-xs mt-0.5">{formatDate(r.record_date)}{student?.turma ? ` · ${student.turma}` : ''}</p>
                   </div>
                   {r.author_id === currentUser.id && (
                     <button

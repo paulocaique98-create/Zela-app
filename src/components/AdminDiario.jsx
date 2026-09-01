@@ -233,7 +233,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
       if (familyIdSet.size > 0) {
         notifyFamilies({
           type: 'diario',
-          title: `Diário atualizado — ${aluno?.name || 'seu filho(a)'}`,
+          title: `Diário atualizado · ${aluno?.name || 'seu filho(a)'}`,
           message: 'Um novo lançamento no Diário está disponível.',
           url: '/?tab=diario',
           familyIds: Array.from(familyIdSet),
@@ -318,7 +318,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                         onMouseDown={() => selecionarAluno(s)}
                         className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary/10 transition ${s.id === selectedStudentId ? 'bg-primary/10 font-bold text-primary' : 'text-on-surface'}`}
                       >
-                        {s.name}{s.turma ? <span className="text-on-surface-variant/70 font-normal"> — {s.turma}</span> : ''}
+                        {s.name}{s.turma ? <span className="text-on-surface-variant/70 font-normal"> · {s.turma}</span> : ''}
                       </button>
                     ))
                   )}
@@ -343,17 +343,17 @@ export default function AdminDiario({ currentUser, currentSchool }) {
             <>
               {refeicoesState.length === 0 ? (
                 <div className="bg-surface-container-low border border-dashed border-outline-variant rounded-zela-lg p-4 text-sm text-on-surface-variant/70">
-                  Nenhum cardápio lançado para {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('pt-BR')} — só é possível preencher Sono, Evacuação e Observações.
+                  Nenhum cardápio lançado para {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('pt-BR')}. Só é possível preencher Sono, Evacuação e Observações.
                 </div>
               ) : (
                 refeicoesState.map((r, idx) => {
                   const pedeComeuTudo = mealAsksComeuTudo(r.refeicao);
                   return (
                   <div key={r.refeicao} className="border border-outline-variant rounded-zela-lg p-5 space-y-4">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{idx + 1}ª Refeição — {r.refeicao}</span>
+                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{idx + 1}ª Refeição · {r.refeicao}</span>
 
                     <div>
-                      <label className="block text-xs font-semibold text-on-surface mb-2">Cardápio de hoje — o que a criança se serviu?</label>
+                      <label className="block text-xs font-semibold text-on-surface mb-2">Cardápio de hoje: o que a criança se serviu?</label>
                       <div className="flex flex-wrap gap-2">
                         {r.itensDisponiveis.map(item => {
                           const active = r.itensSelecionados.some(x => x.nome === item);

@@ -76,7 +76,7 @@ function buildReportBodyHtml(report, student, school, sectionValues) {
   `).join('');
 
   return `
-    <h1>RELATÓRIO DE MITIGAÇÃO${report.reference_period ? ' — ' + escapeHtml(report.reference_period).toUpperCase() : ''}</h1>
+    <h1>RELATÓRIO DE MITIGAÇÃO${report.reference_period ? ' · ' + escapeHtml(report.reference_period).toUpperCase() : ''}</h1>
 
     <table class="info">
       <tr>
@@ -154,7 +154,7 @@ function openPrintWindow(title, bodyHtml, logoHtml) {
 export function printMitigacaoReport({ report, student, school, sectionValues }) {
   const logoHtml = buildHeaderLogoHtml(school);
   const bodyHtml = buildReportBodyHtml(report, student, school, sectionValues);
-  const win = openPrintWindow(`Relatório de Mitigação — ${student?.name || ''}`, bodyHtml, logoHtml);
+  const win = openPrintWindow(`Relatório de Mitigação · ${student?.name || ''}`, bodyHtml, logoHtml);
   if (!win) return;
   // Pequeno delay pra garantir que a logo (se remota) carregue antes do print.
   setTimeout(() => win.print(), 400);

@@ -173,7 +173,7 @@ export default function DeveloperChatSupport({ currentUser }) {
           </button>
           <div className="min-w-0">
             <h2 className="text-h3 text-on-surface">{activeThread.family?.name || 'Admin'}</h2>
-            <p className="text-xs text-on-surface-variant/70">{activeThread.school?.school_code} — {activeThread.school?.name}</p>
+            <p className="text-xs text-on-surface-variant/70">{activeThread.school?.school_code} · {activeThread.school?.name}</p>
           </div>
         </div>
 
@@ -276,7 +276,7 @@ export default function DeveloperChatSupport({ currentUser }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-on-surface text-sm truncate">{t.family?.name || 'Admin'}</p>
-                  <p className="text-on-surface-variant/70 text-xs truncate">{t.school?.school_code} — {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
+                  <p className="text-on-surface-variant/70 text-xs truncate">{t.school?.school_code} · {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
                 </div>
                 {unread && <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />}
               </button>

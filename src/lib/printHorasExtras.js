@@ -90,7 +90,7 @@ function buildBodyHtml({ records, periodLabel, school, totals }) {
       <div class="header-logo">${buildHeaderLogoHtml(school)}</div>
       <div class="header-title" style="flex:1; text-align:center;">
         <h1>Relatório de Horas Extras</h1>
-        <p>${escapeHtml(school?.name || '')} — ${escapeHtml(periodLabel)}</p>
+        <p>${escapeHtml(school?.name || '')} · ${escapeHtml(periodLabel)}</p>
       </div>
       <div class="header-meta">Gerado em<br/>${generatedAt}</div>
     </div>
@@ -118,7 +118,7 @@ function buildBodyHtml({ records, periodLabel, school, totals }) {
       <tbody>${rowsHtml || `<tr><td colspan="9" style="text-align:center;padding:24px;color:#777587;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
     </table>
 
-    <p class="footer-note">Zela — Gestão Escolar Inteligente</p>
+    <p class="footer-note">Zela · Gestão Escolar Inteligente</p>
   `;
 }
 
@@ -152,7 +152,7 @@ function openPrintWindow(title, bodyHtml) {
 
 export function printHorasExtrasReport({ records, periodLabel, school, totals }) {
   const bodyHtml = buildBodyHtml({ records, periodLabel, school, totals });
-  const win = openPrintWindow(`Relatório de Horas Extras — ${school?.name || ''}`.trim(), bodyHtml);
+  const win = openPrintWindow(`Relatório de Horas Extras · ${school?.name || ''}`.trim(), bodyHtml);
   if (!win) return;
   setTimeout(() => win.print(), 400);
 }

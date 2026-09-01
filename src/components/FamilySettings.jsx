@@ -3,9 +3,9 @@ import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing
 import { supabase } from '../lib/supabase';
 
 // ─── Texto do LGPD ────────────────────────────────────────────────────────────
-const LGPD_TEXT = `TERMO DE CONSENTIMENTO — PROTEÇÃO DE DADOS (LGPD)
+const LGPD_TEXT = `TERMO DE CONSENTIMENTO: PROTEÇÃO DE DADOS (LGPD)
 
-A Escola Montessori de Virtória (SenseKids), em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD), informa:
+A Escola Montessori de Virtória (SenseKids), em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018, LGPD), informa:
 
 1. DADOS COLETADOS
    Coletamos nome, e-mail, telefone, imagem facial e dados de saúde dos alunos exclusivamente para fins de segurança, controle de presença e comunicação escolar.

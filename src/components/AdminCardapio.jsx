@@ -311,7 +311,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
     if (!iaCardapios || !iaStartMonday || !iaEndDate) return;
     const candidates = expandCardapiosToCandidates(iaCardapios, iaStartMonday, iaEndDate);
     if (candidates.length === 0) {
-      setIaError('Nenhum item ficou dentro do período escolhido — ajuste as datas.');
+      setIaError('Nenhum item ficou dentro do período escolhido. Ajuste as datas.');
       return;
     }
     setWeekGroups(groupCandidatesByWeek(candidates));
@@ -377,7 +377,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
       await fetchCardapios();
     } catch (err) {
       console.error('[AdminCardapio] Erro ao importar o mês:', err);
-      setMonthImportError('Não foi possível concluir a importação. Alguns cardápios podem já ter sido criados — confira a lista.');
+      setMonthImportError('Não foi possível concluir a importação. Alguns cardápios podem já ter sido criados: confira a lista.');
     } finally {
       setIsImportingMonth(false);
     }
@@ -432,7 +432,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                       className="block px-4 py-3 hover:bg-primary/10 transition"
                     >
                       <div className="text-sm font-bold text-on-surface">Simples</div>
-                      <div className="text-xs text-on-surface-variant/70 mt-0.5">Tabela rápida — ideal pra nutricionista preencher</div>
+                      <div className="text-xs text-on-surface-variant/70 mt-0.5">Tabela rápida, ideal pra nutricionista preencher</div>
                     </a>
                     <a
                       href="/modelos/Modelo_Cardapio_Mensal_Zela.docx"
@@ -491,7 +491,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
               <div>
                 <h3 className="font-bold text-on-surface text-sm flex items-center gap-1.5"><Sparkles size={15} className="text-primary" /> A IA leu {iaCardapios.length} cardápio(s) nesse PDF</h3>
                 <p className="text-on-surface-variant text-xs mt-0.5">
-                  Esse cardápio não tem datas — só dias da semana. Escolha a partir de quando ele começa a valer; o sistema aplica os {iaCardapios.length} cardápio(s) em sequência, repetindo até a data final.
+                  Esse cardápio não tem datas, só dias da semana. Escolha a partir de quando ele começa a valer; o sistema aplica os {iaCardapios.length} cardápio(s) em sequência, repetindo até a data final.
                 </p>
               </div>
               <button onClick={() => { setIaCardapios(null); setIaError(''); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
@@ -531,12 +531,12 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             {weekGroupsFromIA && (
               <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
                 <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-                Esses itens foram lidos por IA e podem conter erros — nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o cardápio fica visível pras famílias.
+                Esses itens foram lidos por IA e podem conter erros. Nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o cardápio fica visível pras famílias.
               </div>
             )}
             <div className="flex justify-between items-start gap-3">
               <div>
-                <h3 className="font-bold text-on-surface text-sm">Revisar importação do mês — {weekGroups.length} semana(s) detectada(s)</h3>
+                <h3 className="font-bold text-on-surface text-sm">Revisar importação do mês · {weekGroups.length} semana(s) detectada(s)</h3>
                 <p className="text-on-surface-variant text-xs mt-0.5">
                   Cada semana vira um cardápio separado, já com ativação na segunda e desativação no sábado. Confira antes de confirmar.
                 </p>
@@ -656,7 +656,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                 />
               </div>
             </div>
-            <p className="text-[11px] text-on-surface-variant/70">Deixe em branco pra não limitar o período — o cardápio fica sempre ativo (ou até você editar depois).</p>
+            <p className="text-[11px] text-on-surface-variant/70">Deixe em branco pra não limitar o período: o cardápio fica sempre ativo (ou até você editar depois).</p>
             <button
               type="submit"
               disabled={isSavingNew || !newTitulo.trim()}
@@ -1045,7 +1045,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
               <div>
                 <h3 className="font-bold text-on-surface text-sm">Revisar itens encontrados</h3>
                 <p className="text-on-surface-variant text-xs mt-0.5">
-                  {importCandidates.length} item(ns) detectado(s). Confira data, refeição e descrição antes de importar — a leitura automática pode errar, principalmente em imagens.
+                  {importCandidates.length} item(ns) detectado(s). Confira data, refeição e descrição antes de importar: a leitura automática pode errar, principalmente em imagens.
                 </p>
               </div>
               <button onClick={() => setImportCandidates(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">

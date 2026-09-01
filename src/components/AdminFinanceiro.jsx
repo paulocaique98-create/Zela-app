@@ -366,7 +366,7 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
             <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição (opcional)</label>
             <input
               type="text"
-              placeholder="Ex: Mensalidade — Turma Infantil II"
+              placeholder="Ex: Mensalidade · Turma Infantil II"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
               className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
@@ -634,7 +634,7 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
           <h3 className="font-black text-lg text-on-surface">Nova cobrança avulsa</h3>
           <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
         </div>
-        <p className="text-xs text-on-surface-variant -mt-2 mb-4">Cobrança única, fora da mensalidade — taxa de matrícula, material, multa etc.</p>
+        <p className="text-xs text-on-surface-variant -mt-2 mb-4">Cobrança única, fora da mensalidade: taxa de matrícula, material, multa etc.</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
@@ -853,7 +853,7 @@ function ConfigTab({ currentUser }) {
           <h3 className="text-sm font-bold text-on-surface">Conta Asaas desta escola</h3>
         </div>
         <p className="text-xs text-on-surface-variant mb-3">
-          Cada escola usa sua própria conta Asaas — o dinheiro cai direto para ela, nunca para outra escola.
+          Cada escola usa sua própria conta Asaas: o dinheiro cai direto para ela, nunca para outra escola.
           {!isLoadingStatus && gatewayStatus.asaas && (
             <span className="block mt-1 text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={13} /> Configurada em {new Date(gatewayStatus.asaas.updated_at).toLocaleString('pt-BR')}</span>
           )}
@@ -885,7 +885,7 @@ function ConfigTab({ currentUser }) {
           <h3 className="text-sm font-bold text-on-surface">Token de webhook</h3>
         </div>
         <p className="text-xs text-on-surface-variant mb-3">
-          Ao criar o webhook no painel Asaas desta escola, defina um token (authToken) e cole-o aqui — é assim que sabemos que um evento recebido pertence a esta escola.
+          Ao criar o webhook no painel Asaas desta escola, defina um token (authToken) e cole-o aqui: é assim que sabemos que um evento recebido pertence a esta escola.
           {!isLoadingStatus && gatewayStatus.asaas_webhook && (
             <span className="block mt-1 text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={13} /> Configurado em {new Date(gatewayStatus.asaas_webhook.updated_at).toLocaleString('pt-BR')}</span>
           )}
@@ -925,7 +925,7 @@ function ConfigTab({ currentUser }) {
           </button>
         </div>
         <p className="text-xs text-on-surface-variant mb-3">
-          O desconto é específico de cada responsável financeiro já cadastrado nesta escola — aplicado automaticamente conforme o ciclo escolhido ao criar o contrato dele.
+          O desconto é específico de cada responsável financeiro já cadastrado nesta escola, aplicado automaticamente conforme o ciclo escolhido ao criar o contrato dele.
         </p>
 
         {discountMsg.text && (
@@ -1077,7 +1077,7 @@ function DescontoResponsavelModal({ currentUser, existingRow, excludeGuardianIds
                 disabled={isLoadingGuardians}
               >
                 <option value="">{isLoadingGuardians ? 'Carregando...' : 'Selecione um responsável'}</option>
-                {guardians.map(g => <option key={g.id} value={g.id}>{g.name} — {g.email}</option>)}
+                {guardians.map(g => <option key={g.id} value={g.id}>{g.name} · {g.email}</option>)}
               </select>
             )}
             {!existingRow && !isLoadingGuardians && guardians.length === 0 && (

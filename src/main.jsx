@@ -31,7 +31,7 @@ class ErrorBoundary extends Component {
         }}>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1e1b4b' }}>Algo deu errado</h1>
           <p style={{ color: '#64748b', maxWidth: '360px' }}>
-            Encontramos um erro inesperado. Nossa equipe já foi avisada — tente recarregar a página.
+            Encontramos um erro inesperado. Nossa equipe já foi avisada. Tente recarregar a página.
           </p>
           <button
             onClick={() => window.location.reload()}

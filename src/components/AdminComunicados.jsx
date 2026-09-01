@@ -323,7 +323,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
 
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">
-                <Paperclip size={12} /> Anexos (imagem, PDF, Word — até {MAX_FILES}, 15MB cada)
+                <Paperclip size={12} /> Anexos (imagem, PDF, Word, até {MAX_FILES}, 15MB cada)
               </label>
 
               {(existingAttachments.length > 0 || pendingFiles.length > 0) && (

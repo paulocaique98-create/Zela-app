@@ -669,7 +669,7 @@ function SolicitacaoCard({ solicitacao, onDelete }) {
           {criancas.map((c, i) => (
             <div key={i}>
               <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Criança {i + 1}</p>
-              <p className="text-sm text-on-surface">{c.nome} — {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
+              <p className="text-sm text-on-surface">{c.nome} · {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
             </div>
           ))}
           {solicitacao.status === 'pending' && (

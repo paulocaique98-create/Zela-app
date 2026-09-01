@@ -86,7 +86,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
       notifyFamilies({
         type: 'relatorio',
         title: 'Novo relatório disponível',
-        message: `Relatório de Mitigação${student ? ` — ${student.name}` : ''}`,
+        message: `Relatório de Mitigação${student ? ` · ${student.name}` : ''}`,
         url: '/?tab=relatorios',
         familyIds,
       });

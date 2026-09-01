@@ -132,7 +132,7 @@ function buildStudentPageHtml(studentRecords, periodLabel, isLast) {
         <tbody>${rowsHtml || `<tr><td colspan="5" style="text-align:center;padding:24px;color:#777587;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
       </table>
 
-      ${isLast ? '<p class="footer-note">Zela — Gestão Escolar Inteligente</p>' : ''}
+      ${isLast ? '<p class="footer-note">Zela · Gestão Escolar Inteligente</p>' : ''}
     </div>
   `;
 }
@@ -165,7 +165,7 @@ function buildBodyHtml({ records, periodLabel, school }) {
       <div class="header-logo">${buildHeaderLogoHtml(school)}</div>
       <div class="header-title" style="flex:1; text-align:center;">
         <h1>Histórico Geral</h1>
-        <p>${escapeHtml(school?.name || '')} — ${escapeHtml(periodLabel)}</p>
+        <p>${escapeHtml(school?.name || '')} · ${escapeHtml(periodLabel)}</p>
       </div>
       <div class="header-meta">Gerado em<br/>${generatedAt}</div>
     </div>
@@ -207,7 +207,7 @@ function openPrintWindow(title, bodyHtml) {
 // for um único aluno (ex: busca por nome), sai só a página dele.
 export function printHistoricoReport({ records, periodLabel, school }) {
   const bodyHtml = buildBodyHtml({ records, periodLabel, school });
-  const win = openPrintWindow(`Histórico Geral — ${school?.name || ''}`.trim(), bodyHtml);
+  const win = openPrintWindow(`Histórico Geral · ${school?.name || ''}`.trim(), bodyHtml);
   if (!win) return;
   setTimeout(() => win.print(), 400);
 }

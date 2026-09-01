@@ -394,10 +394,10 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
               <p className="text-xs text-slate-400">
                 {step === 'upload' && 'Carregue o arquivo modelo preenchido'}
                 {step === 'preview' &&
-                  `${parsedRows.length} registro${parsedRows.length !== 1 ? 's' : ''} encontrado${parsedRows.length !== 1 ? 's' : ''} — revise antes de importar`}
+                  `${parsedRows.length} registro${parsedRows.length !== 1 ? 's' : ''} encontrado${parsedRows.length !== 1 ? 's' : ''}, revise antes de importar`}
                 {step === 'importing' && `Processando… ${progress}%`}
                 {step === 'done' &&
-                  `Concluído — ${successCount} importado${successCount !== 1 ? 's' : ''}, ${errorCount} erro${errorCount !== 1 ? 's' : ''}`}
+                  `Concluído: ${successCount} importado${successCount !== 1 ? 's' : ''}, ${errorCount} erro${errorCount !== 1 ? 's' : ''}`}
               </p>
             </div>
           </div>
@@ -677,7 +677,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                 <div className="border border-red-200 rounded-2xl overflow-hidden">
                   <div className="bg-red-50 px-4 py-2.5 border-b border-red-200">
                     <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">
-                      Registros com erro — verifique e corrija no arquivo
+                      Registros com erro: verifique e corrija no arquivo
                     </p>
                   </div>
                   <div className="divide-y divide-red-100 max-h-48 overflow-y-auto">
