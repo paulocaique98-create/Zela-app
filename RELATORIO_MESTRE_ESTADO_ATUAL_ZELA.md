@@ -1017,8 +1017,35 @@ outra turma bloqueado, idempotência do upsert, admin só-leitura,
 isolamento entre escolas, `subject_id` aceito e `ON DELETE SET NULL`
 confirmado. **186/186 testes passando.**
 
+## 50. Pontos de atenção da trilha A + Trilha B Fase 1 (2026-09-01, commits `b48fc96`, `ea4efad`)
+
+Revisão pedida pelo usuário sobre a trilha A, endereçada antes de
+iniciar a trilha B:
+- Dívida de `class_name` texto documentada explicitamente como
+  abrangendo 3 tabelas (`class_subjects`, `class_attendance`,
+  `users.turmas`), com nota de não adiar indefinidamente se boletim/
+  rematrícula/planejamento entrarem em pauta.
+- 2 novos testes: RLS de `pedagogical_records` confirmada intacta sem
+  `subject_id`, e professor de turma alheia bloqueado mesmo com
+  `subject_id` válido (restrição sempre via `student_id` → turma).
+- Terminologia confirmada em `TeacherFrequencia`/`AdminFrequencia`
+  (`terminology.class`); documentado por que "Frequência" em si não é
+  uma chave de `terminology` (neutro entre métodos).
+
+**Trilha B, Fase 1** (`classes` normalizada, ver `METODO_PEDAGOGICO.md`
+seção 13): escopo deliberadamente reduzido — resolve só a dívida que a
+sessão de hoje introduziu (`class_subjects`/`class_attendance`), via
+trigger automática que popula `classes` sem exigir NENHUMA mudança de
+frontend. Normalização completa (`students.turma`, `users.turmas`,
+mural/comunicados + ~8 componentes) permanece não iniciada — risco real
+de regressão em fluxos críticos (reconhecimento facial do Totem usa
+`students.turma`), decisão de avançar pra Fase 2 ainda em aberto.
+
+**191/191 testes passando.**
+
 ### Estado do núcleo acadêmico (P3.2)
 Concluído: Matérias/Disciplinas (seção 48), Frequência formal + vínculo
-Diário×Matéria (seção 49). Pendente, sem decisão de início: trilha B
-(normalização de `schools.turmas` numa tabela `classes`), rematrícula/
+Diário×Matéria (seção 49), `classes` normalizada Fase 1 (seção 50).
+Pendente, sem decisão de início: normalização completa de turmas
+(Fase 2+, tocaria `students`/`users`/frontend), rematrícula/
 transferência, boletim/histórico consolidado, planejamento de aulas.
