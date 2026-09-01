@@ -140,21 +140,37 @@ seções 47-48).
   Conhecimento" em vez de "Matérias" automaticamente, sem configuração
   extra além do `pedagogical_method` já definido.
 
-### Dívida técnica conhecida: `class_subjects.class_name` é texto, não FK
+### Dívida técnica — `class_name` texto em 3 tabelas, não FK
 
-`schools.turmas` ainda é `text[]`, não uma tabela normalizada — então
-`class_subjects` associa por **nome da turma** (`class_name text`), não
-por um `class_id` de verdade. Funcional e simples pra agora, mas frágil:
-se o developer renomear/remover uma turma no `DeveloperPanel` depois que
-matérias já foram associadas a ela, a associação antiga fica "órfã"
-silenciosamente (não há constraint pra impedir isso, já que
-`class_name` não referencia `schools.turmas` de nenhum jeito
-verificável em SQL).
+`schools.turmas` ainda é `text[]`, não uma tabela normalizada. Toda
+tabela do núcleo acadêmico criada até agora associa por **nome da
+turma** (`class_name text`), não por um `class_id` de verdade:
+
+| Tabela | Coluna |
+|---|---|
+| `class_subjects` | `class_name` |
+| `class_attendance` | `class_name` |
+| `users` (professor) | `turmas text[]` (já existia antes desta feature) |
+
+Funcional e simples pra agora, mas frágil: se o developer renomear/
+remover uma turma no `DeveloperPanel` depois que matérias/frequência já
+foram associadas a ela, a associação antiga fica "órfã" silenciosamente
+(não há constraint pra impedir isso, já que `class_name` não referencia
+`schools.turmas` de nenhum jeito verificável em SQL).
+
+**A dívida cresce a cada tabela nova que depender de turma** (a próxima
+seria `pedagogical_records` — já tem `student_id`, que resolve `turma`
+indiretamente via `students.turma`, então não soma à lista acima; mas
+qualquer feature que grave `class_name` direto, tipo planejamento de
+aulas, entraria na mesma lista).
 
 **Quando `schools.turmas` for normalizada** (uma tabela `classes` de
-verdade — trilha B do roadmap, ainda não decidida), migrar
-`class_subjects.class_name` → `class_subjects.class_id uuid REFERENCES
-classes(id)`. Até lá, essa é uma limitação aceita conscientemente.
+verdade — trilha B do roadmap, ainda não decidida), migrar as 3 colunas
+acima → `class_id uuid REFERENCES classes(id)`. Até lá, essa é uma
+limitação aceita conscientemente — **não deve ser adiada indefinidamente
+se boletim/rematrícula/planejamento de aulas entrarem em pauta**, porque
+essas dependem de turma como entidade de verdade (ex.: rematrícula pra
+turma do próximo ano letivo não faz sentido com `text[]`).
 
 ## 11. Frequência formal (`class_attendance`) e vínculo Diário × Matéria
 
@@ -172,7 +188,11 @@ etária, só avaliação descritiva, que é exatamente o que já existe. Em
 vez disso: **`pedagogical_records.subject_id`** (nullable, `ON DELETE
 SET NULL` — apagar uma matéria nunca apaga histórico pedagógico real,
 só desvincula) foi adicionado, permitindo (opcionalmente) ligar uma
-observação a uma matéria/área específica.
+observação a uma matéria/área específica. RLS de `pedagogical_records`
+não mudou (a coluna nova não é referenciada em nenhuma policy) —
+confirmado com/sem `subject_id` e com professor de outra turma bloqueado
+mesmo passando `subject_id` (a restrição é sempre por `student_id` →
+`students.turma`, nunca pela matéria).
 
 **`class_attendance`** — frequência formal (chamada letiva), distinta do
 check-in/out de segurança (Totem/Monitor, que já existia). Um registro
@@ -193,7 +213,19 @@ documentado caso vire um problema real.
 **Frontend**: `TeacherFrequencia.jsx` (professor marca presença por
 turma/dia) e `AdminFrequencia.jsx` (admin acompanha, só leitura) — ambos
 atrás do módulo "Módulo Pedagógico" (`features_enabled.relatorios_pedagogicos`,
-mesmo gate que já existia pro `TeacherPortal` inteiro).
+mesmo gate que já existia pro `TeacherPortal` inteiro). Ambos usam
+`terminology.class` (turma/agrupamento) em todos os textos. O rótulo
+"Frequência" em si **não** é uma chave de `terminology` — é
+propositalmente neutro entre métodos (não é como "Turma"/"Professor",
+que têm nomes realmente diferentes no Montessori; "Frequência"/"Chamada"
+não muda por método pedagógico, muda no máximo por preferência de
+escola — fora de escopo por ora).
+
+**Testado** (além do CRUD básico): RLS de `pedagogical_records`
+confirmada intacta com a coluna nova — insere com `subject_id`, insere
+sem (`null`), e professor de turma alheia bloqueado mesmo enviando um
+`subject_id` válido (a restrição é sempre via `student_id` →
+`students.turma`, nunca pela matéria).
 
 ## 12. O que ainda não existe
 

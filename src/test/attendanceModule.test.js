@@ -102,10 +102,49 @@ runIf('pedagogical_records.subject_id — vínculo com matéria/área', () => {
       expect(error).toBeNull();
       expect(data.subject_id).toBe(subject.id);
       await adminClient.from('pedagogical_records').delete().eq('id', data.id);
+
+      // subject_id é opcional -- observação geral, sem matéria, continua
+      // funcionando exatamente igual (RLS não muda com a coluna nova).
+      const { data: withoutSubject, error: errorNoSubject } = await teacher.client
+        .from('pedagogical_records')
+        .insert({
+          school_id: schoolId, student_id: student.id, author_id: teacher.id,
+          record_type: 'DAILY_OBSERVATION', record_date: new Date().toISOString().slice(0, 10),
+          content: { atividade: 'Teste sem matéria' },
+        })
+        .select().single();
+      expect(errorNoSubject).toBeNull();
+      expect(withoutSubject.subject_id).toBeNull();
+      await adminClient.from('pedagogical_records').delete().eq('id', withoutSubject.id);
     } finally {
       await adminClient.from('students').delete().eq('id', student.id);
       await adminClient.from('subjects').delete().eq('id', subject.id);
       await deleteTestUser(teacher.id);
+      await deleteTestSchool(schoolId);
+    }
+  });
+
+  it('CRÍTICO — a restrição de turma em pedagogical_records continua valendo com subject_id presente (professor de outra turma bloqueado)', async () => {
+    const schoolId = await createTestSchool();
+    const teacherOutraTurma = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'ativo', turmas: ['Infantil II'] } });
+    const { data: student } = await adminClient.from('students').insert({ name: 'Aluno PR3 Vitest', school_id: schoolId, turma: 'Infantil I' }).select('id').single();
+    const { data: subject } = await adminClient.from('subjects').insert({ school_id: schoolId, name: 'Linguagem Vitest' }).select('id').single();
+
+    try {
+      const { data, error } = await teacherOutraTurma.client
+        .from('pedagogical_records')
+        .insert({
+          school_id: schoolId, student_id: student.id, author_id: teacherOutraTurma.id,
+          record_type: 'DAILY_OBSERVATION', record_date: new Date().toISOString().slice(0, 10),
+          content: {}, subject_id: subject.id,
+        })
+        .select();
+      expect(data ?? []).toEqual([]);
+      expect(error).not.toBeNull();
+    } finally {
+      await adminClient.from('students').delete().eq('id', student.id);
+      await adminClient.from('subjects').delete().eq('id', subject.id);
+      await deleteTestUser(teacherOutraTurma.id);
       await deleteTestSchool(schoolId);
     }
   });
