@@ -301,7 +301,36 @@ histórico de mudança registrado.
   histórico isolado por escola. 6 testes automatizados formalizando
   isso.
 
-## 16. O que ainda não existe
+## 16.5. Granularidade de módulos: `features_enabled.frequencia` (2026-09-01)
+
+Achado antes da fase de validação: `Matérias` já tinha flag própria
+(`features_enabled.materias`), mas `Frequência` estava presa à flag do
+Módulo Pedagógico inteiro (`relatorios_pedagogicos`) — uma escola não
+conseguia habilitar Frequência sem habilitar Relatórios (Mitigação/Mapa
+de Habilidades/Semestral) junto, nem o contrário. Pior: o
+`TeacherPortal` inteiro (Início, Monitor, tudo) só renderizava se
+`relatorios_pedagogicos` estivesse ativo — uma escola só-Frequência
+via professor não conseguia acessar nada.
+
+**Corrigido**: nova flag `features_enabled.frequencia`, independente.
+`TeacherPortal` passa a renderizar se `relatorios_pedagogicos ||
+frequencia` (qualquer um dos dois), com "Relatórios" e "Frequência"
+cada um mostrado só com sua própria flag dentro do portal. No
+`AdminPortal`, Matérias e Frequência já viviam dentro do grupo
+"Acadêmico" existente (junto com Calendário/Mural/Cardápio/Diário/
+Comunicados) — só precisou trocar a condição da Frequência de
+`relatorios_pedagogicos` pra `frequencia`. `DeveloperPanel.jsx` ganhou
+o checkbox correspondente.
+
+**Testado ao vivo**: as 4 combinações de `{materias, frequencia}`
+gravam corretamente em `features_enabled` (mesmo caminho de escrita do
+`DeveloperPanel`, restrito a developer pela trigger de proteção). Não
+há teste de renderização automatizado (o projeto não usa Testing
+Library em nenhum componente) — a lógica é booleana direta, verificada
+por leitura de código + lint/build limpos, mesmo padrão já usado pras
+outras flags.
+
+## 17. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"
   e "Matéria" são customizáveis hoje; "Aluno" segue fixo por método,

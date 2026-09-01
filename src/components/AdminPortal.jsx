@@ -96,6 +96,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
   const showFinanceiro = features.financeiro === true && localPrefs.financeiro !== false;
   const showMaterias = features.materias === true && localPrefs.materias !== false;
+  const showFrequencia = features.frequencia === true && localPrefs.frequencia !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA (~12,6MB) em background só quando o admin
@@ -216,8 +217,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
-            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO / COMUNICADOS */}
-            {(showCalendario || showMural || showCardapio || showDiario || showComunicados) && (
+            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO / MATÉRIAS / FREQUÊNCIA / COMUNICADOS */}
+            {(showCalendario || showMural || showCardapio || showDiario || showMaterias || showFrequencia || showComunicados) && (
               <SidebarGroup
                 label="Acadêmico"
                 icon={CalendarDays}
@@ -239,7 +240,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {showMaterias && (
                   <SidebarItem active={adminTab === 'materias'} icon={BookMarked} label={`${terminology.subject}s`} onClick={() => go('materias')} />
                 )}
-                {showRelatorios && (
+                {showFrequencia && (
                   <SidebarItem active={adminTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
                 )}
                 {showComunicados && (

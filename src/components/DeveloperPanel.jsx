@@ -49,7 +49,8 @@ export default function DeveloperPanel() {
     relatorios_pedagogicos: false,
     configuracoes: true,
     financeiro: false,
-    materias: false
+    materias: false,
+    frequencia: false
   };
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
@@ -577,7 +578,8 @@ export default function DeveloperPanel() {
                     { id: 'relatorios_pedagogicos', label: 'Módulo Pedagógico', desc: 'Portal do Professor: registros pedagógicos e relatórios de desenvolvimento' },
                     { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' },
                     { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e integração com gateway de pagamento (Asaas)' },
-                    { id: 'materias', label: 'Matérias/Disciplinas', desc: 'Cadastro de matérias (ou áreas de conhecimento) e associação com turmas' }
+                    { id: 'materias', label: 'Matérias/Disciplinas', desc: 'Cadastro de matérias (ou áreas de conhecimento) e associação com turmas' },
+                    { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-outline-variant rounded-zela-md bg-white hover:bg-surface-container-low transition">
                       <div className="flex-1">

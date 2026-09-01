@@ -40,7 +40,15 @@ export default function TeacherPortal({
     setIsSidebarExpanded(false);
   };
   const isBlocked = currentUser?.teacher_status && currentUser.teacher_status !== 'ativo';
-  const moduleEnabled = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
+  const showRelatorios = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
+  const showFrequencia = currentSchool?.features_enabled?.frequencia === true;
+  // O portal do professor só existia atrás da flag do Módulo Pedagógico
+  // inteiro -- uma escola que só contratou Frequência (ex: Montessori sem
+  // os relatórios formais) ficava sem acesso a NADA aqui, incluindo
+  // Início/Monitor. Agora basta QUALQUER um dos dois módulos acadêmicos
+  // estar ativo; cada item específico (Relatórios/Frequência) continua
+  // com sua própria flag dentro do portal.
+  const moduleEnabled = showRelatorios || showFrequencia;
 
   if (!moduleEnabled) {
     return (
@@ -89,18 +97,22 @@ export default function TeacherPortal({
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={teacherTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
             <SidebarItem active={teacherTab === 'monitor'} icon={AlertCircle} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
-            <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
+            {showFrequencia && (
+              <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
+            )}
 
-            <SidebarGroup
-              label="Relatórios"
-              icon={FileText}
-              isOpen={openAccordion === 'relatorios'}
-              onToggle={() => toggleAccordion('relatorios')}
-            >
-              {RELATORIOS_SUBMENU.map(r => (
-                <SidebarItem key={r.key} active={teacherTab === r.key} icon={FileText} label={r.label} onClick={() => go(r.key)} />
-              ))}
-            </SidebarGroup>
+            {showRelatorios && (
+              <SidebarGroup
+                label="Relatórios"
+                icon={FileText}
+                isOpen={openAccordion === 'relatorios'}
+                onToggle={() => toggleAccordion('relatorios')}
+              >
+                {RELATORIOS_SUBMENU.map(r => (
+                  <SidebarItem key={r.key} active={teacherTab === r.key} icon={FileText} label={r.label} onClick={() => go(r.key)} />
+                ))}
+              </SidebarGroup>
+            )}
           </nav>
         </div>
       </aside>
