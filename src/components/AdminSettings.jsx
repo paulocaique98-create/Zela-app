@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2 } from 'lucide-react';
+import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Gestão de turmas pela própria escola (admin principal) -- antes disso, só
@@ -14,6 +14,10 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
   const [isSaving, setIsSaving] = useState(false);
   const [removingTurma, setRemovingTurma] = useState(null);
   const [error, setError] = useState('');
+  const [editingTurma, setEditingTurma] = useState(null); // nome original sendo editado
+  const [editValue, setEditValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameError, setRenameError] = useState('');
 
   useEffect(() => {
     setTurmas(currentSchool?.turmas || []);
@@ -52,6 +56,40 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
     setRemovingTurma(null);
   };
 
+  const openRenameModal = (turma) => {
+    setEditingTurma(turma);
+    setEditValue(turma);
+    setRenameError('');
+  };
+
+  const closeRenameModal = () => {
+    setEditingTurma(null);
+    setEditValue('');
+    setRenameError('');
+  };
+
+  const handleRename = async () => {
+    const trimmed = editValue.trim();
+    if (!trimmed || trimmed === editingTurma) {
+      closeRenameModal();
+      return;
+    }
+    setIsRenaming(true);
+    setRenameError('');
+    const { data, error: rpcError } = await supabase.rpc('rename_school_turma', {
+      p_old_name: editingTurma,
+      p_new_name: trimmed,
+    });
+    setIsRenaming(false);
+    if (rpcError) {
+      setRenameError(rpcError.message);
+      return;
+    }
+    setTurmas(data.turmas);
+    if (onUpdate) onUpdate();
+    closeRenameModal();
+  };
+
   if (!canManage) return null;
 
   return (
@@ -60,14 +98,23 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><School size={15} className="text-primary" /> Turmas</h3>
         <p className="text-xs text-on-surface-variant">
           As turmas cadastradas aqui aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural/comunicados/frequência.
-          Uma turma só pode ser removida se não estiver mais em uso em nenhum desses lugares.
+          Use o lápis pra corrigir o nome de uma turma (atualiza todos os registros vinculados automaticamente) ou o X pra remover uma turma que não está mais em uso.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-3">
         {turmas.map(turma => (
-          <span key={turma} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm font-medium text-on-surface">
+          <span key={turma} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm font-medium text-on-surface">
             {turma}
+            <button
+              type="button"
+              onClick={() => openRenameModal(turma)}
+              disabled={removingTurma === turma}
+              title={`Renomear ${turma}`}
+              className="p-0.5 text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 rounded-full transition disabled:opacity-50"
+            >
+              <Pencil size={12} />
+            </button>
             <button
               type="button"
               onClick={() => handleRemoveTurma(turma)}
@@ -108,6 +155,50 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
           <AlertCircle size={14} className="shrink-0 mt-0.5" />
           {error}
+        </div>
+      )}
+
+      {editingTurma && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40" onClick={closeRenameModal}>
+          <div className="bg-white rounded-zela-lg shadow-2xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
+            <h4 className="text-sm font-bold text-on-surface mb-1">Renomear turma</h4>
+            <p className="text-xs text-on-surface-variant mb-3">
+              Renomear "{editingTurma}" atualiza automaticamente todos os registros vinculados: alunos, professores, mural de fotos, comunicados, matérias e frequência.
+            </p>
+            <input
+              type="text"
+              autoFocus
+              value={editValue}
+              onChange={e => setEditValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRename(); } if (e.key === 'Escape') closeRenameModal(); }}
+              disabled={isRenaming}
+              className="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm mb-2"
+            />
+            {renameError && (
+              <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                {renameError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                type="button"
+                onClick={closeRenameModal}
+                disabled={isRenaming}
+                className="px-3 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low rounded-zela-md transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleRename}
+                disabled={isRenaming || !editValue.trim()}
+                className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white hover:bg-primary-container rounded-zela-md text-sm font-bold transition disabled:opacity-50"
+              >
+                {isRenaming ? <Loader2 size={15} className="animate-spin" /> : null} Salvar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -356,8 +356,8 @@ permitir remover (ou renomear, que pro sistema é indistinguível de
 `class_attendance.class_name`, todas escopadas pela escola do
 chamador; se qualquer uma tiver a turma em uso, a operação inteira é
 bloqueada com uma mensagem listando onde. Renomear uma turma em uso
-não é suportado ainda (exigiria migrar os dados nas 6 tabelas); fica
-como trabalho futuro se a necessidade aparecer na prática.
+tem sua própria RPC dedicada (`rename_school_turma`, ver 16.7)
+justamente pra não exigir esse bloqueio.
 
 **Testado ao vivo + 3 testes automatizados**
 (`schoolTurmasManagement.test.js`): admin principal adiciona/remove
@@ -367,6 +367,54 @@ role sem policy de UPDATE, sem erro nenhum; a função precisou de uma
 checagem explícita de permissão pra não devolver sucesso falso);
 bloqueio de remoção nas 6 fontes de uso, uma por vez; isolamento
 multi-tenant entre escolas diferentes.
+
+## 16.7. Renomear turma com propagação (2026-09-01)
+
+`update_school_turmas` (16.6) trata qualquer nome que "sumiu da lista"
+como remoção e bloqueia se a turma estiver em uso, mesmo quando é só
+um erro de digitação (ex.: "Kids I" -> "Kids l"). Isso travava o admin
+sem saída pra um caso comum e sem gravidade nenhuma.
+
+**Implementado**: nova RPC `rename_school_turma(p_old_name,
+p_new_name)`, com botão de lápis em cada chip da seção "Turmas"
+(`AdminSettings.jsx`), abrindo um modal com aviso explícito de que a
+mudança se propaga pra todos os registros vinculados. Mesma
+restrição de permissão de `update_school_turmas` (admin principal ou
+developer), validada explicitamente dentro da função. Numa única
+transação, troca o nome em `classes.name`, `students.turma`,
+`users.turmas` (professor), `mural_fotos.turmas`, `comunicados.turmas`,
+`class_subjects.class_name`, `class_attendance.class_name` e por
+último `schools.turmas`. Bloqueia se o nome novo já existir (evita
+duplicidade) ou se o nome antigo não existir na lista da escola.
+
+**2 achados reais durante o teste ao vivo**:
+- **Ordem de escrita em `classes` importa.** Essa tabela é alimentada
+  automaticamente por uma trigger em `class_subjects`/
+  `class_attendance` (`resolve_class_id_from_name`, ver 13) que roda em
+  todo UPDATE de `class_name` e cria uma linha nova se não achar o nome
+  já existente. Renomear `classes` só DEPOIS de atualizar
+  `class_subjects`/`class_attendance` faria a trigger achar o nome novo
+  inexistente ainda e criar uma linha duplicada: daí a renomeação de
+  `classes` bateria de frente com ela (`UNIQUE (school_id, name)`) e a
+  transação inteira falharia com um erro de banco cru. Corrigido
+  renomeando `classes` PRIMEIRO: a trigger encontra a linha já
+  renomeada e só reaproveita o id, sem inserir nada.
+- **`class_attendance` não tem NENHUMA policy de UPDATE pra admin** (só
+  leitura). Com a função em `SECURITY INVOKER` (padrão), a escrita
+  nessa tabela específica afetava 0 linhas SILENCIOSAMENTE por RLS,
+  mesma classe de bug do achado em 16.6, mas numa tabela sem nenhuma
+  policy de escrita pra contornar com checagem de row-count. Corrigido
+  tornando a função `SECURITY DEFINER`, seguro porque a checagem de
+  permissão explícita (developer ou admin principal) roda ANTES de
+  qualquer escrita, mesmo padrão já usado em
+  `protect_school_pedagogical_columns`/`resolve_class_id_from_name`.
+
+**Testado ao vivo + 2 testes automatizados**
+(`schoolTurmaRename.test.js`): propagação conferida nas 8 tabelas
+envolvidas (incluindo `classes.id` permanecendo o mesmo, provando que
+não duplicou a linha); bloqueio de renomear pra nome já existente e de
+renomear turma inexistente; admin comum/professor/família bloqueados
+sem alterar nada; isolamento multi-tenant.
 
 ## 17. O que ainda não existe
 

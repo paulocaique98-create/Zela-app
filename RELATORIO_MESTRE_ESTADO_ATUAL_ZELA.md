@@ -1244,3 +1244,42 @@ fontes de uso; isolamento multi-tenant entre escolas diferentes;
 developer continua usando o caminho direto já existente (UPDATE em
 `schools.turmas` via `DeveloperPanel.jsx`, não a RPC — developer não
 tem `school_id` próprio pra RPC resolver).
+
+## 57. Renomear turma com propagação (2026-09-01)
+
+A RPC de 56 tratava turma "sumida da lista" como remoção e bloqueava
+se estivesse em uso, mesmo quando era só um erro de digitação. Nova
+RPC `rename_school_turma(p_old_name, p_new_name)`, com botão de lápis
+em cada chip de `AdminSettings.jsx` abrindo um modal com aviso da
+propagação. Mesma restrição de permissão (admin principal ou
+developer). Numa única transação, troca o nome em `classes.name`,
+`students.turma`, `users.turmas` (professor), `mural_fotos.turmas`,
+`comunicados.turmas`, `class_subjects.class_name`,
+`class_attendance.class_name` e por último `schools.turmas`. Bloqueia
+se o nome novo já existir ou se o antigo não existir na lista da
+escola.
+
+**2 achados reais no teste ao vivo**:
+1. **Ordem de escrita em `classes` importa.** Essa tabela é alimentada
+   automaticamente por uma trigger em `class_subjects`/
+   `class_attendance` que roda em todo UPDATE de `class_name` e cria
+   linha nova se não achar o nome já existente. Renomear `classes`
+   DEPOIS das outras tabelas faria a trigger criar uma linha duplicada
+   com o nome novo, e a renomeação de `classes` bateria de frente com
+   ela (UNIQUE constraint), derrubando a transação inteira com erro de
+   banco cru. Corrigido renomeando `classes` PRIMEIRO.
+2. **`class_attendance` não tem NENHUMA policy de UPDATE pra admin**
+   (só leitura). Com a função em SECURITY INVOKER (padrão), a escrita
+   nessa tabela específica afetava 0 linhas silenciosamente por RLS,
+   mesma classe de bug do item 56, mas dessa vez numa tabela sem
+   nenhuma policy de escrita pra usar como base pra checagem de
+   row-count. Corrigido tornando a função SECURITY DEFINER, seguro
+   porque a checagem explícita de permissão roda antes de qualquer
+   escrita.
+
+**Testado ao vivo + 2 testes automatizados**
+(`schoolTurmaRename.test.js`): propagação conferida nas 8 tabelas
+envolvidas (incluindo `classes.id` permanecendo o mesmo, provando que
+não duplicou a linha); bloqueio de nome já existente e de turma
+inexistente; admin comum/professor/família bloqueados sem alterar
+nada; isolamento multi-tenant. Suíte completa: 207/207 passando.
