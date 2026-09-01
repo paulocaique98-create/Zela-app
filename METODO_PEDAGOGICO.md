@@ -330,6 +330,44 @@ Library em nenhum componente) — a lógica é booleana direta, verificada
 por leitura de código + lint/build limpos, mesmo padrão já usado pras
 outras flags.
 
+## 16.6. Gestão de turmas pela própria escola (2026-09-01)
+
+Até aqui, `schools.turmas` só podia ser alterado pelo developer
+(`DeveloperPanel.jsx`, trigger `protect_school_pedagogical_columns`),
+deixando a escola dependente de suporte manual pra algo básico como
+abrir uma turma nova.
+
+**Implementado**: o admin PRINCIPAL da escola (`users.is_primary_admin
+= true`) agora pode adicionar e remover turmas direto em Configurações
+da Escola (`AdminSettings.jsx`, seção "Turmas"). Um admin comum
+(não-principal), professor ou família continuam bloqueados. A trigger
+`protect_school_pedagogical_columns` foi ajustada pra abrir exceção só
+na coluna `turmas`, só pra esse caso; as demais colunas protegidas
+(`pedagogical_method`, `custom_config`, `is_active`,
+`features_enabled`, `limits`, `plan`) seguem exclusivas do developer,
+sem nenhuma mudança.
+
+A escrita não é um UPDATE direto: passa pela RPC
+`update_school_turmas(p_turmas text[])`, que valida uso antes de
+permitir remover (ou renomear, que pro sistema é indistinguível de
+"removeu uma e adicionou outra") uma turma. Verifica referências em
+`students.turma`, `users.turmas` (professor), `mural_fotos.turmas`,
+`comunicados.turmas`, `class_subjects.class_name` e
+`class_attendance.class_name`, todas escopadas pela escola do
+chamador; se qualquer uma tiver a turma em uso, a operação inteira é
+bloqueada com uma mensagem listando onde. Renomear uma turma em uso
+não é suportado ainda (exigiria migrar os dados nas 6 tabelas); fica
+como trabalho futuro se a necessidade aparecer na prática.
+
+**Testado ao vivo + 3 testes automatizados**
+(`schoolTurmasManagement.test.js`): admin principal adiciona/remove
+turma livre; admin comum, professor e família são bloqueados (achado
+no caminho: a RLS de `schools` silenciosamente afeta 0 linhas pra
+role sem policy de UPDATE, sem erro nenhum; a função precisou de uma
+checagem explícita de permissão pra não devolver sucesso falso);
+bloqueio de remoção nas 6 fontes de uso, uma por vez; isolamento
+multi-tenant entre escolas diferentes.
+
 ## 17. O que ainda não existe
 
 - Editor de terminologia granular (só os labels de "Turma", "Professor"

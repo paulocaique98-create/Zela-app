@@ -1,6 +1,118 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Upload, AlertCircle, Building2, Trash2 } from 'lucide-react';
+import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+
+// Gestão de turmas pela própria escola (admin principal) -- antes disso, só
+// o developer podia adicionar/remover uma turma (schools.turmas), deixando
+// a escola dependente de suporte manual pra algo tão básico quanto abrir
+// uma turma nova. A RPC update_school_turmas valida uso antes de permitir
+// remover: bloqueia se a turma ainda estiver associada a algum aluno,
+// professor, mural, comunicado, matéria ou frequência.
+function TurmasSection({ currentUser, currentSchool, onUpdate }) {
+  const [turmas, setTurmas] = useState(currentSchool?.turmas || []);
+  const [newTurma, setNewTurma] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [removingTurma, setRemovingTurma] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setTurmas(currentSchool?.turmas || []);
+  }, [currentSchool?.turmas]);
+
+  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+
+  const saveTurmas = async (nextTurmas) => {
+    setError('');
+    const { data, error: rpcError } = await supabase.rpc('update_school_turmas', { p_turmas: nextTurmas });
+    if (rpcError) {
+      setError(rpcError.message);
+      return false;
+    }
+    setTurmas(data.turmas);
+    if (onUpdate) onUpdate();
+    return true;
+  };
+
+  const handleAddTurma = async () => {
+    const trimmed = newTurma.trim();
+    if (!trimmed) return;
+    if (turmas.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+      setError('Essa turma já existe.');
+      return;
+    }
+    setIsSaving(true);
+    const ok = await saveTurmas([...turmas, trimmed]);
+    setIsSaving(false);
+    if (ok) setNewTurma('');
+  };
+
+  const handleRemoveTurma = async (turma) => {
+    setRemovingTurma(turma);
+    await saveTurmas(turmas.filter(t => t !== turma));
+    setRemovingTurma(null);
+  };
+
+  if (!canManage) return null;
+
+  return (
+    <div className="pt-3 border-t border-outline-variant">
+      <div className="mb-2">
+        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><School size={15} className="text-primary" /> Turmas</h3>
+        <p className="text-xs text-on-surface-variant">
+          As turmas cadastradas aqui aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural/comunicados/frequência.
+          Uma turma só pode ser removida se não estiver mais em uso em nenhum desses lugares.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-3">
+        {turmas.map(turma => (
+          <span key={turma} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm font-medium text-on-surface">
+            {turma}
+            <button
+              type="button"
+              onClick={() => handleRemoveTurma(turma)}
+              disabled={removingTurma === turma}
+              title={`Remover ${turma}`}
+              className="p-0.5 text-on-surface-variant/60 hover:text-red-600 hover:bg-red-50 rounded-full transition disabled:opacity-50"
+            >
+              {removingTurma === turma ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+            </button>
+          </span>
+        ))}
+        {turmas.length === 0 && (
+          <p className="text-xs text-on-surface-variant italic">Nenhuma turma cadastrada ainda.</p>
+        )}
+      </div>
+
+      <div className="flex gap-2 max-w-sm">
+        <input
+          type="text"
+          value={newTurma}
+          onChange={e => setNewTurma(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTurma(); } }}
+          placeholder="Ex: Kids III"
+          disabled={isSaving}
+          className="flex-1 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+        />
+        <button
+          type="button"
+          onClick={handleAddTurma}
+          disabled={isSaving || !newTurma.trim()}
+          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-zela-md text-sm font-bold transition disabled:opacity-50 shrink-0"
+        >
+          {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
+        </button>
+      </div>
+
+      {error && (
+        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
+          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminSettings({ currentUser, currentSchool, onUpdate }) {
   const fileInputRef = useRef(null);
@@ -218,6 +330,8 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
               </div>
             </div>
           </div>
+
+          <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
 
           {/* PERSONALIZAÇÃO DO MENU LOCAL */}
           <div className="pt-3 border-t border-outline-variant">

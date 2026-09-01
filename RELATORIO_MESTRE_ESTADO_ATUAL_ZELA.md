@@ -1169,3 +1169,78 @@ formalizando isso.
 
 Commit `b64c3f2` — CI verde
 (https://github.com/paulocaique98-create/Zela-app/actions/runs/33510490907).
+
+## 55. Correção de texto: pluralização quebrada + travessão em frases (2026-09-01, commits `acd27cd`, `2b5e068`)
+
+Achado pelo usuário na tela de Gestão de Usuários: "67 responsávelis
+cadastrados" (o código concatenava `'is'` direto em "responsável":
+pluralização irregular do português, não é só sufixo). Corrigido pra
+usar as duas formas completas (`responsável`/`responsáveis`).
+
+No caminho, o usuário pediu pra também remover o uso de "—" (travessão)
+juntando frases em texto voltado ao usuário. Considera isso um "tique"
+de IA. Varredura completa em `src/` (agente em background): ~55
+ocorrências reais trocadas por pontuação mais natural (":" ou nova
+frase, ou " · " pra pares rótulo+valor, mesmo padrão já usado em
+`AdminUserManagement.jsx`), preservando os usos de "—" como placeholder
+de valor vazio (`{value || '—'}`) e os que estão em comentário de
+código. Preferência registrada na memória do agente pra nunca mais
+introduzir esse padrão.
+
+**Testado**: lint + build limpos, 202/202 testes (1 falha isolada de
+flakiness de rede em `studentTransferModule.test.js`, não relacionada
+ao texto, não reproduzida na rodada seguinte). Commits `acd27cd`
+(varredura) e `2b5e068` (typo), CI verde
+(https://github.com/paulocaique98-create/Zela-app/actions/runs/33515273656).
+
+## 56. Gestão de turmas pela própria escola (2026-09-01)
+
+Até aqui, `schools.turmas` só podia ser alterado pelo developer:
+qualquer escola que precisasse abrir/fechar uma turma dependia de
+suporte manual. O usuário pediu autonomia pra escola gerenciar isso
+sozinha, com segurança.
+
+**Decisão de permissão**: só o admin PRINCIPAL da escola
+(`users.is_primary_admin = true`) pode gerenciar turmas. Evita que
+múltiplos admins (ex.: um admin do financeiro) mudem a estrutura
+acadêmica sem coordenação. Admin comum, professor e família continuam
+bloqueados.
+
+**Migration** `20260923_admin_manage_school_turmas.sql`:
+- Trigger `protect_school_pedagogical_columns` ajustada: abre exceção
+  só na coluna `turmas`, só pro admin principal (ou developer). As
+  outras colunas protegidas (`pedagogical_method`, `custom_config`,
+  `is_active`, `features_enabled`, `limits`, `plan`) seguem exclusivas
+  do developer, sem nenhuma mudança.
+- Nova RPC `update_school_turmas(p_turmas text[])`: normaliza a lista
+  (apara espaço, remove vazio/duplicata), e pra cada turma que sairia
+  da lista (removida ou "renomeada", do ponto de vista de validação é
+  o mesmo caso), verifica uso em `students.turma`, `users.turmas`
+  (professor), `mural_fotos.turmas`, `comunicados.turmas`,
+  `class_subjects.class_name` e `class_attendance.class_name`. Se
+  houver qualquer referência, bloqueia a operação inteira com uma
+  mensagem listando onde a turma está em uso. Renomear turma em uso
+  não é suportado ainda (exigiria migrar dado nas 6 tabelas).
+
+**Achado real durante o teste ao vivo**: a checagem de permissão
+inicial confiava só na RLS de `schools` (que já restringe UPDATE a
+admin/developer) mais a trigger. Só que pra role sem NENHUMA policy de
+UPDATE (professor, família), o UPDATE afeta 0 linhas SILENCIOSAMENTE,
+sem erro nenhum, e a função teria devolvido sucesso mesmo sem gravar
+nada. Corrigido com uma checagem explícita de permissão logo no início
+da função, antes de qualquer validação de uso.
+
+**Frontend**: nova seção "Turmas" em `AdminSettings.jsx` (Configurações
+da Escola), visível só pro admin principal — chips com as turmas
+atuais (cada uma com botão de remover) + campo pra adicionar uma nova,
+usando a RPC pra tudo.
+
+**Testado ao vivo + 3 testes automatizados**
+(`schoolTurmasManagement.test.js`, 205/205 na suíte completa): admin
+principal adiciona/remove turma livre e normaliza duplicata/espaço;
+admin comum, professor e família bloqueados (nada é alterado nessas
+tentativas); bloqueio de remoção testado uma turma por vez nas 6
+fontes de uso; isolamento multi-tenant entre escolas diferentes;
+developer continua usando o caminho direto já existente (UPDATE em
+`schools.turmas` via `DeveloperPanel.jsx`, não a RPC — developer não
+tem `school_id` próprio pra RPC resolver).
