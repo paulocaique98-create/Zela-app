@@ -208,6 +208,52 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
     });
   });
 
+  describe('CRÍTICO — admin não pode escrever nas próprias cobranças/contratos além do permitido (achado real, mesma escola)', () => {
+    it('admin não consegue marcar a própria cobrança como PAID sem pagar de verdade', async () => {
+      const { data } = await adminA.client.from('financial_charges').update({ status: 'PAID', paid_at: new Date().toISOString() }).eq('id', chargeA).select();
+      expect(data ?? []).toEqual([]);
+      const { data: unchanged } = await adminClient.from('financial_charges').select('status').eq('id', chargeA).single();
+      expect(unchanged.status).toBe('PENDING');
+    });
+
+    it('admin não consegue reescrever o valor do próprio contrato', async () => {
+      const { data } = await adminA.client.from('financial_contracts').update({ base_monthly_amount_cents: 1 }).eq('id', contractA).select();
+      expect(data ?? []).toEqual([]);
+      const { data: unchanged } = await adminClient.from('financial_contracts').select('base_monthly_amount_cents').eq('id', contractA).single();
+      expect(unchanged.base_monthly_amount_cents).toBe(50000);
+    });
+
+    it('admin AINDA consegue ler as próprias cobranças/contratos (acesso legítimo preservado)', async () => {
+      const { data: charges } = await adminA.client.from('financial_charges').select('id').eq('id', chargeA);
+      expect(charges).toHaveLength(1);
+      const { data: contracts } = await adminA.client.from('financial_contracts').select('id').eq('id', contractA);
+      expect(contracts).toHaveLength(1);
+    });
+
+    it('admin AINDA consegue cancelar o próprio contrato (único write legítimo, usado por AdminFinanceiro.jsx)', async () => {
+      // Aluno + contrato descartáveis só pra este teste (studentA já tem
+      // um contrato 'active' -- contractA -- e a tabela tem unique
+      // constraint de 1 contrato ativo por aluno).
+      const { data: disposableStudent } = await adminClient.from('students').insert({
+        name: 'Vitest Fin Disposable', school_id: schoolA, family_id: familyA.id, turma: 'Infantil I',
+      }).select('id').single();
+      const { data: disposable, error: insertErr } = await adminClient.from('financial_contracts').insert({
+        school_id: schoolA, student_id: disposableStudent.id, financial_guardian_id: familyA.id,
+        billing_cycle: 'MONTHLY', base_monthly_amount_cents: 50000, amount_cents: 50000,
+        first_due_date: '2027-01-01', status: 'active', gateway: 'asaas',
+      }).select('id').single();
+      if (insertErr) throw insertErr;
+      try {
+        const { data, error } = await adminA.client.from('financial_contracts').update({ status: 'cancelled' }).eq('id', disposable.id).select();
+        expect(error).toBeNull();
+        expect(data?.[0]?.status).toBe('cancelled');
+      } finally {
+        await adminClient.from('financial_contracts').delete().eq('id', disposable.id);
+        await adminClient.from('students').delete().eq('id', disposableStudent.id);
+      }
+    });
+  });
+
   describe('usuário órfão (sem escola)', () => {
     it('não vê nenhum contrato, cobrança ou desconto financeiro de nenhuma escola', async () => {
       const orfao = await createTestUser({ role: 'family', schoolId: null });
