@@ -1043,9 +1043,31 @@ de regressão em fluxos críticos (reconhecimento facial do Totem usa
 
 **191/191 testes passando.**
 
+## 51. Transferência de turma (2026-09-01, commit `27b009a`)
+
+Decisão do usuário: atacar rematrícula/transferência agora, aceitando
+reabrir a discussão da Fase 2 da trilha B. **Recorte deliberado**:
+rematrícula completa (novo ano letivo) exigiria `academic_years`
+(entidade não decidida, maior que o núcleo acadêmico inteiro já
+construído) — o que foi construído é a parte que já entrega valor real
+sem essa dependência: mover aluno de turma dentro da mesma escola, com
+trilha de auditoria. Não exigiu tocar na normalização de turmas.
+
+RPC `transfer_student_class` (atômica: `students.turma` + log em
+`student_transfers`, `SECURITY DEFINER`). Frontend em
+`AdminStudentList.jsx` (ação "Transferir de turma" + "Histórico").
+
+**Testado ao vivo antes dos testes formais**: 7 cenários confirmados
+(admin transfere com sucesso, log gravado com motivo; admin de outra
+escola/professor/família bloqueados; mesma turma dá erro claro;
+histórico isolado por escola). 6 testes automatizados.
+
+**197/197 testes passando.**
+
 ### Estado do núcleo acadêmico (P3.2)
 Concluído: Matérias/Disciplinas (seção 48), Frequência formal + vínculo
-Diário×Matéria (seção 49), `classes` normalizada Fase 1 (seção 50).
-Pendente, sem decisão de início: normalização completa de turmas
-(Fase 2+, tocaria `students`/`users`/frontend), rematrícula/
-transferência, boletim/histórico consolidado, planejamento de aulas.
+Diário×Matéria (seção 49), `classes` normalizada Fase 1 (seção 50),
+Transferência de turma (seção 51). Pendente, sem decisão de início:
+normalização completa de turmas (Fase 2+, tocaria `students`/`users`/
+frontend), rematrícula formal (exige `academic_years`), boletim/
+histórico consolidado, planejamento de aulas.
