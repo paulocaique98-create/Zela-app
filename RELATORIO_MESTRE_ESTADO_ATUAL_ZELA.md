@@ -836,6 +836,91 @@ policy decorativa (`check_expr = false`, nunca concede nada) — inofensiva.
 
 **160/160 testes passando.**
 
+### CRÍTICO #2 — mesmo padrão em financial_charges/financial_contracts (commit `c67056a`)
+Consolidação pedida pelo usuário: investigar `financial_*` especificamente,
+já que a classe de bug (policy `FOR ALL` de admin sem restrição de coluna)
+tinha acabado de aparecer duas vezes seguidas. **Achado mais grave da
+sessão inteira**: `financial_charges` e `financial_contracts` tinham a
+mesma policy `FOR ALL` sem restrição nenhuma.
+
+**Confirmado ao vivo, explorável, ANTES da correção**:
+- Admin conseguia marcar a **própria cobrança como `PAID`** via UPDATE
+  direto (`.from('financial_charges').update({status:'PAID'})`), **sem
+  pagar nada de verdade** — bypass total do fluxo real de pagamento via
+  Asaas.
+- Admin conseguia **reescrever o valor de um contrato** pra qualquer
+  coisa (ex.: R$0,01), sem limite.
+
+Confirmado que nenhum código legítimo do frontend faz essas escritas —
+toda criação/atualização de cobrança passa por Edge Functions
+(`create-avulsa-charge`, `create-financial-contract`, `payment-webhook`)
+com `service_role`. O único write direto legítimo achado:
+`AdminFinanceiro.jsx` cancela contrato (`status → 'cancelled'`).
+
+**Correção**:
+- `financial_charges`: vira somente-leitura pra admin (nunca escrevia
+  de verdade).
+- `financial_contracts`: trigger (`protect_financial_contract_admin_updates`,
+  mesmo padrão de `protect_admin_privilege_columns`/
+  `protect_school_pedagogical_columns`) restringe a escrita de admin
+  exclusivamente à transição `status → 'cancelled'` — qualquer outra
+  coluna mudando (valor, aluno, gateway, etc.) é bloqueada.
+
+**Testado ao vivo**: os 2 exploits reproduzidos e confirmados ANTES da
+correção; confirmados bloqueados DEPOIS; leitura e cancelamento
+legítimo confirmados preservados. 4 novos testes formalizando a
+regressão em `financialTenantIsolation.test.js`.
+
+**164/164 testes passando.**
+
+## 46. Changelog consolidado — rastreabilidade da sessão de 2026-08-31/09-01
+
+Lista completa de commits desta sessão (do primeiro fix do P0.1 até aqui),
+em ordem cronológica, pra rastreabilidade:
+
+| Commit | Resumo |
+|---|---|
+| `de5392b` | P0.1 — daily-reset-job usa get_cron_secret() |
+| `18f8bc0` | P0.1 — monitoramento (cron_job_logs) |
+| `e337b15` | P0.5 — send-financial-reminders-job corrigido |
+| `306498f` | P0.2 — revisão das 20 SECURITY DEFINER |
+| `a0d6360` | docs — P0.2 |
+| `ad47043` | P0.3 — CI/CD (com bug: Node 20) |
+| `e379efe` | docs — P0.3/P0.4 |
+| `cd9ba75` | P1.1 — testes de autenticação |
+| `45d82ee` | docs — P1.1 |
+| `02d5979` | P1.2 — chat/storage + vazamento em chat_threads |
+| `9bad694` | docs — P1.2 |
+| `f22ac72` | **fix crítico** — CI Node 20→22 (CI estava falhando desde sempre) |
+| `1b83add` | P1.3 — testes de webhook Asaas |
+| `ccda7a4` | docs — CI fix + P1.3 |
+| `54dde02` | P1.5 — observabilidade (edge_function_logs) |
+| `e20a32e` | docs — P1.5 |
+| `166fc2f` | P1.4 — JWT em texto puro (check-attendance-delays) |
+| `8a70c39` | complementos P1.5 |
+| `f548736` | guarda de regressão de grants em PUBLIC |
+| `ac6093e` | docs — P1.4/P1.5/guarda |
+| `9f1370b`* | (ver abaixo — reordenado) |
+| `6b8ee3a` | P2.5 — LGPD + remove medical_records |
+| `6d5d823` | P2.1 — paginação de chat |
+| `f487250` | P2.3 — compressão de imagem |
+| `cfdc084` | docs — P2 completo |
+| `0b46e90` | docs — P3 formalizado, ciclo encerrado |
+| `dc2077f` | fix — bug real em produção (setLoadingText, AdminFaceScanner) |
+| `7dbe545` | feat — Fase 1 método pedagógico (schema + RLS) |
+| `d639fbb` | feat — UI DeveloperPanel método pedagógico |
+| `d0a4916` | **fix crítico** — auto-escalação admin via schools |
+| `9f1370b` | docs — Fase 1 + UI + crítico #1 |
+| `c67056a` | **fix crítico** — auto-escalação admin via financial_charges/contracts |
+
+**3 achados críticos de autorização nesta sessão** (fora do escopo
+original P0-P3, encontrados durante trabalho de feature/varredura
+preventiva): CI genuinamente quebrado desde a criação (`f22ac72`),
+admin se auto-escalando via `schools` (`d0a4916`), admin se
+auto-escalando via `financial_*` (`c67056a`). Todos confirmados
+exploráveis ao vivo antes da correção, e bloqueados depois, com teste
+de regressão formal.
+
 ### Pendente (ordem combinada com o usuário)
 3. Estender `useSchoolConfig` pra mais 3-4 componentes-chave
    (`AdminDiario`, `FamilyPortal`, mural/comunicados).
