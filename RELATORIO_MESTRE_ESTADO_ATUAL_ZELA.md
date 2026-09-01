@@ -1064,10 +1064,36 @@ histórico isolado por escola). 6 testes automatizados.
 
 **197/197 testes passando.**
 
+## 52. Granularidade de módulos — `features_enabled.frequencia` (2026-09-01, commit `3a5bcc3`)
+
+Achado do usuário antes de iniciar a fase de validação: `Frequência`
+estava presa à flag `relatorios_pedagogicos` (Módulo Pedagógico
+inteiro), impedindo combinações independentes (ex.: só Frequência, sem
+Relatórios). Mais grave: `TeacherPortal` inteiro (Início/Monitor/tudo)
+só renderizava com `relatorios_pedagogicos` ativo — uma escola
+só-Frequência deixava o professor sem acesso a nada no portal dele.
+
+Corrigido: nova flag `features_enabled.frequencia`, independente.
+`TeacherPortal` passa a renderizar com `relatorios_pedagogicos ||
+frequencia`; cada item (Relatórios/Frequência) atrás da própria flag
+dentro do portal. `AdminPortal`: Matérias/Frequência já viviam no
+grupo "Acadêmico" existente — só a condição da Frequência mudou.
+`DeveloperPanel` ganhou o checkbox correspondente. Testado ao vivo: as
+4 combinações de `{materias, frequencia}` gravam corretamente.
+**197/197 testes passando.**
+
 ### Estado do núcleo acadêmico (P3.2)
 Concluído: Matérias/Disciplinas (seção 48), Frequência formal + vínculo
 Diário×Matéria (seção 49), `classes` normalizada Fase 1 (seção 50),
-Transferência de turma (seção 51). Pendente, sem decisão de início:
-normalização completa de turmas (Fase 2+, tocaria `students`/`users`/
-frontend), rematrícula formal (exige `academic_years`), boletim/
-histórico consolidado, planejamento de aulas.
+Transferência de turma (seção 51), granularidade de módulos (seção 52).
+Pendente, sem decisão de início: normalização completa de turmas
+(Fase 2+, tocaria `students`/`users`/frontend), rematrícula formal
+(exige `academic_years`), boletim/histórico consolidado, planejamento
+de aulas.
+
+### Fase de validação (decisão do usuário, 2026-09-01)
+Desenvolvimento de novas funcionalidades acadêmicas pausado — próximo
+passo é a escola Montessori real usar matérias/frequência/observação
+vinculável/transferência de turma em produção por 2-4 semanas antes de
+decidir o que vem depois (provavelmente normalização de turmas, se a
+validação confirmar essa necessidade).
