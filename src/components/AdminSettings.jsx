@@ -215,17 +215,21 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
 // configurou nenhuma ou quando ninguém informa o código dela na tela de
 // login). Mesmo padrão de upload já usado pra logo_url: base64 direto
 // numa coluna text, sem Storage.
-function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
+//
+// Controlado pelo pai (AdminSettings): valor e setter vêm por prop, sem
+// save próprio. Achado ao investigar "não consigo trocar a imagem": essa
+// seção tinha um botão "Salvar" PRÓPRIO, separado do botão "Salvar
+// Alterações" do topo da tela -- mesmo estando dentro do mesmo <form>,
+// era type="button" (não submit), então clicar no botão do topo (o
+// comportamento esperado nessa tela, que já salva nome/telefone/logo)
+// nunca persistia a imagem trocada. O preview mudava, o usuário clicava
+// no botão errado (o óbvio, de cima), e a imagem voltava pra antiga no
+// próximo carregamento -- sem erro nenhum visível. Corrigido: agora é só
+// mais um campo do mesmo formulário único, com um só "Salvar".
+function LoginImageSection({ currentUser, imageUrl, onImageChange }) {
   const fileInputRef = useRef(null);
-  const [imageUrl, setImageUrl] = useState(currentSchool?.login_image_url || '');
-  const [isSaving, setIsSaving] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    setImageUrl(currentSchool?.login_image_url || '');
-  }, [currentSchool?.login_image_url]);
 
   const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
 
@@ -248,31 +252,11 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
         return;
       }
       const reader = new FileReader();
-      reader.onloadend = () => setImageUrl(reader.result);
+      reader.onloadend = () => onImageChange(reader.result);
       reader.readAsDataURL(compressed);
     } finally {
       setIsCompressing(false);
       e.target.value = ''; // permite re-selecionar o mesmo arquivo depois de um erro
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    setError('');
-    setMsg('');
-    try {
-      const { error: updateError } = await supabase
-        .from('schools')
-        .update({ login_image_url: imageUrl || null })
-        .eq('id', currentUser.school_id);
-      if (updateError) throw updateError;
-      setMsg('Imagem de login atualizada com sucesso!');
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsSaving(false);
-      setTimeout(() => setMsg(''), 3000);
     }
   };
 
@@ -285,6 +269,7 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
         <p className="text-xs text-on-surface-variant">
           Aparece do lado esquerdo da tela de login quando alguém informa o código desta escola.
           Sem imagem própria configurada, a tela de login usa a imagem padrão do sistema.
+          Escolha o arquivo e clique em "Salvar Alterações" no topo da tela pra confirmar.
         </p>
       </div>
 
@@ -310,23 +295,14 @@ function LoginImageSection({ currentUser, currentSchool, onUpdate }) {
             {imageUrl && (
               <button
                 type="button"
-                onClick={() => setImageUrl('')}
+                onClick={() => onImageChange('')}
                 title="Remover imagem"
                 className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
               >
                 <Trash2 size={14} />
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving || imageUrl === (currentSchool?.login_image_url || '')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition disabled:opacity-50 shrink-0"
-            >
-              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Salvar
-            </button>
           </div>
-          {msg && <p className="text-xs text-green-700 font-medium">{msg}</p>}
           {error && (
             <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2 max-w-sm">
               <AlertCircle size={14} className="shrink-0 mt-0.5" />
@@ -352,6 +328,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   const [logoUrl, setLogoUrl] = useState(
     currentSchool?.logo_url || ''
   );
+  const [loginImageUrl, setLoginImageUrl] = useState(currentSchool?.login_image_url || '');
 
   const features = currentSchool?.features_enabled || {};
   const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
@@ -384,6 +361,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   useEffect(() => {
     if (currentSchool) {
       setLogoUrl(currentSchool.logo_url || '');
+      setLoginImageUrl(currentSchool.login_image_url || '');
       setFormData({
         name: currentSchool.name || '',
         phone: currentSchool.phone || '',
@@ -425,6 +403,10 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
 
 
       // 2. Update Supabase
+      // login_image_url incluída sempre -- pra quem não é admin principal/
+      // developer, LoginImageSection nem renderiza (o estado nunca diverge
+      // do valor de currentSchool), então isso nunca aciona a checagem da
+      // trigger de proteção pra esses roles; é um no-op inofensivo.
       const updates = {
         name: formData.name,
         phone: formData.phone,
@@ -432,6 +414,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         city: formData.city,
         director_name: formData.director_name,
         logo_url: logoUrl || null,
+        login_image_url: loginImageUrl || null,
       };
 
       const { error } = await supabase
@@ -558,7 +541,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
 
           <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
 
-          <LoginImageSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
+          <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} />
 
           {/* PERSONALIZAÇÃO DO MENU LOCAL */}
           <div className="pt-3 border-t border-outline-variant">

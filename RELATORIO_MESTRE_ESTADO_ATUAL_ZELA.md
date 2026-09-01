@@ -1357,3 +1357,37 @@ de `handleLogin` contra o Supabase Auth real, em vez de montar
 `Login.jsx`. Suíte completa: 211/211 passando (1 falha isolada de
 flakiness de rede em `studentTransferModule.test.js`, não relacionada,
 confirmada passando ao rodar sozinha).
+
+## 60. Bug real: "não consigo trocar a imagem de login" (2026-09-01)
+
+Usuário reportou não conseguir substituir a imagem de login (58) por
+outra. Investigação com teste ao vivo direto no banco (não só leitura
+de código) descartou permissão/RLS/trigger de cara: admin principal
+troca e remove a imagem sem nenhum problema via API. O bug estava na
+UI de `AdminSettings.jsx`: `LoginImageSection` tinha um botão "Salvar"
+PRÓPRIO, separado do botão "Salvar Alterações" do topo da tela --
+mesmo os dois estando dentro do mesmo `<form>`, o botão da seção era
+`type="button"` (não `submit`), então clicar no botão de cima (o
+comportamento óbvio e esperado nessa tela, que já salva nome/telefone/
+logo) nunca persistia a troca de imagem. O preview mudava
+normalmente, dando a falsa impressão de que funcionou -- só depois de
+recarregar a página é que a imagem antiga reaparecia, sem nenhum erro
+visível no caminho todo.
+
+**Corrigido**: `LoginImageSection` virou um componente totalmente
+controlado (valor e setter vêm por prop do pai, sem save próprio); o
+valor agora entra no mesmo objeto `updates` do `handleSave` único da
+tela, junto com nome/telefone/endereço/logo. Um clique em "Salvar
+Alterações" salva tudo, sem exceção. Seguro incluir
+`login_image_url` incondicionalmente nesse update único mesmo pra
+admin comum: `LoginImageSection` só renderiza pra admin
+principal/developer, então pra qualquer outro role o valor nunca
+diverge do que já estava salvo -- a trigger de proteção nunca vê uma
+mudança de verdade nesse campo vinda de quem não pode alterá-lo.
+
+**Testado ao vivo**: admin principal salva nome+telefone+imagem juntos
+numa única chamada; admin comum salva o resto do formulário sem tocar
+na imagem (no-op seguro); tentativa de admin comum mudar a imagem via
+API direta continua bloqueada pela trigger (proteção intacta, não foi
+enfraquecida pela mudança de UI). Suíte completa: 211/211 passando
+(mudança só de UI/estado, sem alterar contrato de banco/RPC).
