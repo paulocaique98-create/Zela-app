@@ -789,3 +789,55 @@ auditoria pendente.
 ### Próximo item do roadmap
 Nenhum item bloqueador pendente. Ver seção 35-40 do
 relatório original pro contexto completo.
+
+---
+
+## 45. Feature — Flexibilidade de Método Pedagógico (2026-09-01)
+
+Trabalho fora do ciclo P0-P3 (novo requisito de produto), seguindo o
+mesmo rigor: investigar antes de codar, testar ao vivo, documentar.
+
+### Fase 1 — Modelo de dados (commit `7dbe545`)
+`schools.pedagogical_method`/`custom_config`/`turmas` (turmas viram dado
+por escola, não mais a constante global `TURMAS`). Confirmado antes de
+implementar: `get_my_turmas()` já lia de `users.turmas` livremente, sem
+tabela de vínculo — zero mudança de RLS necessária nesse ponto. Achado
+durante a implementação: `schools` tinha 2 policies de UPDATE
+permissivas conflitantes (admin já editava a própria escola mesmo com
+uma policy "só developer" presente — permissivas do mesmo comando são
+OR'd). Resolvido com trigger dedicada, restringindo só as 3 colunas
+novas a developer.
+
+### UI no DeveloperPanel (commit `d639fbb`)
+Formulário de criar/editar escola ganhou seção de método pedagógico
+(dropdown + campo de turmas separadas por vírgula + label customizado
+pra "personalizado"). Testado ao vivo com developer autenticado de
+verdade (não service_role) — insert e update funcionando.
+
+### CRÍTICO — auto-escalação de admin via `schools` (commit `d0a4916`)
+Varredura preventiva de policies conflitantes (motivada pelo achado
+acima) encontrou a MESMA classe de bug, **mais grave**, nos campos
+comerciais de `schools`: `is_active`, `features_enabled`, `limits`,
+`plan`. **Confirmado ao vivo, explorável**: um admin comum conseguia
+reativar a própria escola desativada, auto-habilitar módulos contratados
+(ex.: financeiro) sem contrato, trocar o próprio plano `basic`→`pro`, e
+inflar os próprios limites — tudo sem nenhuma intervenção do developer.
+Corrigido estendendo a mesma trigger. Confirmado que nenhuma tela de
+admin no frontend edita `schools` diretamente (só `DeveloperPanel.jsx`),
+então a correção não quebra nada real.
+
+Restante da varredura (`attendance_logs`, `authorized_persons`,
+`chat_messages`, `chat_threads`, `student_guardians`, `students`,
+`reports`, `mitigacao_reports`, `report_sections`, `matricula_solicitacoes`):
+padrão normal de múltiplas policies por ator distinto (cada uma
+restrita à própria fatia) — nenhum outro achado. Um nome que parecia
+suspeito (`attendance_logs`: "Impedir insert direto no histórico") é uma
+policy decorativa (`check_expr = false`, nunca concede nada) — inofensiva.
+
+**160/160 testes passando.**
+
+### Pendente (ordem combinada com o usuário)
+3. Estender `useSchoolConfig` pra mais 3-4 componentes-chave
+   (`AdminDiario`, `FamilyPortal`, mural/comunicados).
+4. Documentação da feature (`OBSERVABILIDADE.md`-style, explicando
+   fallback e como configurar).
