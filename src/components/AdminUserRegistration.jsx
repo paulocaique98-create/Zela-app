@@ -88,10 +88,19 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
     onChange(student.id, patch);
   };
 
-  const hasExtraHours = Object.keys(student.extra_hours || {}).length > 0;
+  // Achado real ("não consigo clicar no checkbox"): usar só
+  // `Object.keys(extra_hours).length > 0` como estado do checkbox quebra o
+  // primeiro clique -- marcar a caixa num aluno sem nenhum dia configurado
+  // ainda grava extra_hours: {} de novo (continua vazio), e o checkbox
+  // volta sozinho pra desmarcado antes da área expandir. Precisa de um
+  // estado PRÓPRIO pra "quero configurar", independente de já ter algum
+  // dia preenchido. Inicializa marcado se o aluno já tiver horas extras
+  // salvas (edição), senão desmarcado.
+  const [showExtraHours, setShowExtraHours] = useState(Object.keys(student.extra_hours || {}).length > 0);
 
   const setExtraHoursEnabled = (enabled) => {
-    onChange(student.id, { extra_hours: enabled ? (student.extra_hours || {}) : {} });
+    setShowExtraHours(enabled);
+    if (!enabled) onChange(student.id, { extra_hours: {} });
   };
 
   const setExtraHoursForDay = (dayKey, value) => {
@@ -209,14 +218,14 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={hasExtraHours}
+              checked={showExtraHours}
               onChange={e => setExtraHoursEnabled(e.target.checked)}
               className="w-4 h-4 rounded accent-primary"
             />
             <span className="text-xs font-bold text-on-surface">Horas adicionais</span>
           </label>
 
-          {hasExtraHours && (
+          {showExtraHours && (
             <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-zela-md space-y-1.5 animate-in fade-in duration-200">
               {DIAS_EXTRA_HORAS.map(dia => {
                 const valor = student.extra_hours?.[dia.key] || 0;

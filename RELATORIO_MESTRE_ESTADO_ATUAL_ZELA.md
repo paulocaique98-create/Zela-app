@@ -1456,3 +1456,15 @@ completa: 224/224 passando.
 `extra_hours` de um aluno já existente fora do fluxo de Cadastro de
 Usuários (ex.: `AdminStudentList.jsx`, que tem sua própria edição de
 turma) -- só o "Cadastro de Novos Usuários" pedido ganhou a UI.
+
+**Bug real reportado pelo usuário ("não consigo clicar no checkbox")**:
+o estado do checkbox era derivado inteiramente de
+`Object.keys(extra_hours).length > 0`. Marcar a caixa num aluno sem
+nenhum dia configurado ainda gravava `extra_hours: {}` de novo
+(continuava vazio), e o checkbox voltava sozinho pra desmarcado antes
+da área expandir -- parecia travado, mas na verdade resetava a cada
+clique. Corrigido com um estado próprio (`showExtraHours`) pra "quero
+configurar", independente de já existir algum dia preenchido --
+inicializa marcado só se o aluno já tiver horas extras salvas (edição).
+Suíte completa: 224/224 (mudança só de estado local do componente, sem
+tocar em banco/RPC).
