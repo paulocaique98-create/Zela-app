@@ -4,7 +4,6 @@ import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, 
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { useSchoolConfig } from '../lib/schoolConfig';
-import { applyExtraHoursToTime } from '../utils/attendanceUtils';
 import ConfirmModal from './ConfirmModal';
 
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
@@ -34,16 +33,33 @@ const PERIODOS_POR_CICLO_TURNO = {
   },
 };
 
+// Remove overrides de dia INCOMPLETOS (só entrada ou só saída preenchida --
+// acontece enquanto o admin ainda está digitando) antes de salvar. Um dia
+// parcial gravado como está seria rejeitado inteiro pela CHECK constraint
+// do banco (is_valid_weekly_schedule exige os dois campos), então é melhor
+// simplesmente tratá-lo como "sem override ainda" do que deixar o salvar
+// inteiro falhar por causa de um dia que o admin não terminou de preencher.
+function sanitizeWeeklySchedule(ws) {
+  if (!ws || typeof ws !== 'object') return {};
+  const clean = {};
+  for (const [day, val] of Object.entries(ws)) {
+    if (val && val.entry && val.exit) clean[day] = { entry: val.entry, exit: val.exit };
+  }
+  return clean;
+}
+
 const DOC_TYPES = ['CPF', 'RG', 'CNH', 'Passaporte'];
 const ESTADO_CIVIL = ['Solteiro(a)', 'Casado(a)', 'Separado(a)', 'Divorciado(a)', 'Viúvo(a)'];
 
-// Horas adicionais por aluno, por dia da semana (students.extra_hours) --
-// desloca o ciclo/tolerância de check-out naquele dia específico. Só o
-// admin PRINCIPAL da escola (ou developer) pode configurar -- protegido
-// também no banco (trigger protect_student_extra_hours), então mesmo que
-// a UI falhasse em esconder o campo pra outro role, a escrita seria
-// bloqueada. Chaves em português sem acento, mesma convenção da coluna.
-const DIAS_EXTRA_HORAS = [
+// Horários personalizados por dia da semana (students.weekly_schedule) --
+// entrada E saída podem ser sobrescritas num dia específico (ex.: quarta o
+// aluno entra 1h mais cedo, ou fica 2h a mais na saída). Sem override, o
+// dia usa o horário-base do ciclo/período escolhido acima. Só o admin
+// PRINCIPAL da escola (ou developer) pode configurar -- protegido também
+// no banco (trigger protect_student_weekly_schedule), então mesmo que a UI
+// falhasse em esconder o campo pra outro role, a escrita seria bloqueada.
+// Chaves em português sem acento, mesma convenção da coluna.
+const DIAS_SEMANA_HORARIO = [
   { key: 'segunda', label: 'Segunda' },
   { key: 'terca', label: 'Terça' },
   { key: 'quarta', label: 'Quarta' },
@@ -52,7 +68,6 @@ const DIAS_EXTRA_HORAS = [
   { key: 'sabado', label: 'Sábado' },
   { key: 'domingo', label: 'Domingo' },
 ];
-const MAX_HORAS_EXTRA_DIA = 4;
 
 // ──────────────────────────────────────────────────────────
 // Estado inicial de um aluno em branco
@@ -68,7 +83,7 @@ const emptyStudent = () => ({
   custom_entry: '',
   custom_exit: '',
   is_custom_period: false,
-  extra_hours: {},
+  weekly_schedule: {},
 });
 
 // ──────────────────────────────────────────────────────────
@@ -88,36 +103,42 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
     onChange(student.id, patch);
   };
 
-  // Achado real ("não consigo clicar no checkbox"): usar só
-  // `Object.keys(extra_hours).length > 0` como estado do checkbox quebra o
-  // primeiro clique -- marcar a caixa num aluno sem nenhum dia configurado
-  // ainda grava extra_hours: {} de novo (continua vazio), e o checkbox
-  // volta sozinho pra desmarcado antes da área expandir. Precisa de um
-  // estado PRÓPRIO pra "quero configurar", independente de já ter algum
-  // dia preenchido. Inicializa marcado se o aluno já tiver horas extras
-  // salvas (edição), senão desmarcado.
-  const [showExtraHours, setShowExtraHours] = useState(Object.keys(student.extra_hours || {}).length > 0);
+  // Mesmo achado real do checkbox anterior ("não consigo clicar"): usar só
+  // `Object.keys(weekly_schedule).length > 0` como estado do checkbox
+  // quebraria o primeiro clique (marcar sem nenhum dia ainda preenchido
+  // gravaria {} de novo, e o checkbox voltaria sozinho pra desmarcado).
+  // Estado PRÓPRIO pra "quero configurar", independente de já ter algum
+  // dia preenchido. Inicializa marcado se o aluno já tiver horários
+  // próprios salvos (edição), senão desmarcado.
+  const [showWeeklySchedule, setShowWeeklySchedule] = useState(Object.keys(student.weekly_schedule || {}).length > 0);
 
-  const setExtraHoursEnabled = (enabled) => {
-    setShowExtraHours(enabled);
-    if (!enabled) onChange(student.id, { extra_hours: {} });
+  const setWeeklyScheduleEnabled = (enabled) => {
+    setShowWeeklySchedule(enabled);
+    if (!enabled) onChange(student.id, { weekly_schedule: {} });
   };
 
-  const setExtraHoursForDay = (dayKey, value) => {
-    const parsed = value === '' ? undefined : Math.min(MAX_HORAS_EXTRA_DIA, Math.max(0, Number(value)));
-    const next = { ...student.extra_hours };
-    if (parsed === undefined || parsed === 0) {
-      delete next[dayKey];
-    } else {
-      next[dayKey] = parsed;
-    }
-    onChange(student.id, { extra_hours: next });
-  };
-
-  // Horário efetivo do dia (ciclo contratado + extra) só pro resumo visual
-  // -- não recalcula nada real, é só o mesmo horário de saída já escolhido
-  // (custom_exit ou o fim do período selecionado) deslocado pra exibição.
+  // Horário-base do ciclo/período escolhido acima -- usado como valor
+  // padrão exibido em cada dia sem override (não é gravado até o admin
+  // realmente digitar um horário diferente pro dia).
+  const baseEntryTime = student.is_custom_period ? student.custom_entry : (student.periodo || '').split(' às ')[0];
   const baseExitTime = student.is_custom_period ? student.custom_exit : (student.periodo || '').split(' às ')[1];
+
+  const setDayOverride = (dayKey, field, value) => {
+    const next = { ...student.weekly_schedule };
+    const current = next[dayKey] || { entry: baseEntryTime || '', exit: baseExitTime || '' };
+    // Mantém o override parcial no estado local enquanto o admin digita (só
+    // entrada, ou só saída ainda) -- a validação de "precisa dos dois
+    // preenchidos" acontece no banco (is_valid_weekly_schedule) na hora de
+    // salvar, então um campo vazio no meio da digitação não é bloqueado aqui.
+    next[dayKey] = { ...current, [field]: value };
+    onChange(student.id, { weekly_schedule: next });
+  };
+
+  const clearDayOverride = (dayKey) => {
+    const next = { ...student.weekly_schedule };
+    delete next[dayKey];
+    onChange(student.id, { weekly_schedule: next });
+  };
 
   const inputCls = 'w-full p-2.5 bg-white border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm';
   const labelCls = 'block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide';
@@ -212,47 +233,54 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
         </div>
       )}
 
-      {/* Horas adicionais por dia da semana -- só admin principal/developer */}
+      {/* Horários personalizados por dia da semana -- só admin principal/developer */}
       {canManageExtraHours && (
         <div className="pt-3 border-t border-outline-variant">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={showExtraHours}
-              onChange={e => setExtraHoursEnabled(e.target.checked)}
+              checked={showWeeklySchedule}
+              onChange={e => setWeeklyScheduleEnabled(e.target.checked)}
               className="w-4 h-4 rounded accent-primary"
             />
-            <span className="text-xs font-bold text-on-surface">Horas adicionais</span>
+            <span className="text-xs font-bold text-on-surface">Horários personalizados por dia</span>
           </label>
 
-          {showExtraHours && (
+          {showWeeklySchedule && (
             <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-zela-md space-y-1.5 animate-in fade-in duration-200">
-              {DIAS_EXTRA_HORAS.map(dia => {
-                const valor = student.extra_hours?.[dia.key] || 0;
-                const efetivo = valor > 0 && baseExitTime ? applyExtraHoursToTime(baseExitTime, valor) : null;
+              {DIAS_SEMANA_HORARIO.map(dia => {
+                const override = student.weekly_schedule?.[dia.key];
+                const hasOverride = Boolean(override);
                 return (
                   <div key={dia.key} className="flex items-center gap-2">
                     <span className="w-16 text-xs text-on-surface-variant shrink-0">{dia.label}</span>
                     <input
-                      type="number"
-                      min="0"
-                      max={MAX_HORAS_EXTRA_DIA}
-                      step="0.5"
-                      value={valor || ''}
-                      onChange={e => setExtraHoursForDay(dia.key, e.target.value)}
-                      placeholder="0"
-                      className="w-16 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
+                      type="time"
+                      value={override?.entry ?? ''}
+                      onChange={e => setDayOverride(dia.key, 'entry', e.target.value)}
+                      placeholder={baseEntryTime || '--:--'}
+                      className="w-24 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
                     />
-                    <span className="text-[11px] text-on-surface-variant/70">h</span>
-                    {efetivo && (
-                      <span className="text-[11px] text-primary font-medium">
-                        (ciclo {baseExitTime} + {valor}h = saída {efetivo})
-                      </span>
+                    <span className="text-[11px] text-on-surface-variant/70">às</span>
+                    <input
+                      type="time"
+                      value={override?.exit ?? ''}
+                      onChange={e => setDayOverride(dia.key, 'exit', e.target.value)}
+                      placeholder={baseExitTime || '--:--'}
+                      className="w-24 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
+                    />
+                    {hasOverride ? (
+                      <button type="button" onClick={() => clearDayOverride(dia.key)} title="Voltar ao horário padrão"
+                        className="text-[11px] text-on-surface-variant/60 hover:text-red-600 underline underline-offset-2 shrink-0">
+                        padrão
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-on-surface-variant/50 shrink-0">(padrão: {baseEntryTime || '--:--'} às {baseExitTime || '--:--'})</span>
                     )}
                   </div>
                 );
               })}
-              <p className="text-[10px] text-on-surface-variant/60 pt-1">Máximo {MAX_HORAS_EXTRA_DIA}h/dia, em intervalos de 30min. Afeta a tolerância de check-out e a cobrança automática de hora extra nesse dia.</p>
+              <p className="text-[10px] text-on-surface-variant/60 pt-1">Deixe em branco pra usar o horário padrão do ciclo/período acima. Preencha entrada E saída pra sobrescrever o dia -- afeta a tolerância de check-in/check-out e a cobrança automática de hora extra nesse dia.</p>
             </div>
           )}
         </div>
@@ -395,7 +423,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             custom_entry: custom_entry,
             custom_exit: custom_exit,
             is_custom_period: is_custom_period,
-            extra_hours: s.extra_hours || {},
+            weekly_schedule: s.weekly_schedule || {},
           };
         });
         setStudents(loadedStudents);
@@ -643,11 +671,11 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               periodo: periodStr || null,
               contracted_entry_time: entryTime,
               contracted_exit_time: exitTime,
-              // extra_hours só é alterado de verdade pra quem vê o campo na UI
-              // (admin principal/developer) -- pra qualquer outro role, s.extra_hours
+              // weekly_schedule só é alterado de verdade pra quem vê o campo na UI
+              // (admin principal/developer) -- pra qualquer outro role, s.weekly_schedule
               // nunca diverge do que foi carregado, então isso é um no-op seguro
               // mesmo que a trigger de proteção do banco recuse a mudança.
-              extra_hours: s.extra_hours || {},
+              weekly_schedule: sanitizeWeeklySchedule(s.weekly_schedule),
             };
 
             const isExisting = typeof s.id === 'string';
@@ -759,10 +787,11 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 ...(s.birth_date ? { birth_date: s.birth_date } : {}),
                 ...(s.turno ? { turno: s.turno } : {}),
                 ...(periodStr ? { periodo: periodStr } : {}),
-                // Só envia extra_hours se de fato tiver algo -- pra quem não vê o
-                // campo (não é admin principal/developer), fica de fora do insert
-                // e a coluna cai no default '{}' do banco, sem depender de RLS.
-                ...(s.extra_hours && Object.keys(s.extra_hours).length > 0 ? { extra_hours: s.extra_hours } : {}),
+                // Só envia weekly_schedule se de fato tiver algum dia completo
+                // (entrada + saída) -- pra quem não vê o campo (não é admin
+                // principal/developer), fica de fora do insert e a coluna cai
+                // no default '{}' do banco, sem depender de RLS.
+                ...(Object.keys(sanitizeWeeklySchedule(s.weekly_schedule)).length > 0 ? { weekly_schedule: sanitizeWeeklySchedule(s.weekly_schedule) } : {}),
 
               };
             });
@@ -773,7 +802,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             if (studErr) {
               if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
                 console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
-                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, extra_hours: _eh, ...rest }) => rest);
+                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, weekly_schedule: _ws, ...rest }) => rest);
                 const { error: studErr2 } = await supabase.from('students').insert(baseSt);
                 if (studErr2) throw studErr2;
               } else {

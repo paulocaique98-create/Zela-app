@@ -1468,3 +1468,58 @@ configurar", independente de já existir algum dia preenchido --
 inicializa marcado só se o aluno já tiver horas extras salvas (edição).
 Suíte completa: 224/224 (mudança só de estado local do componente, sem
 tocar em banco/RPC).
+
+## 62. Refinamento: horários personalizados por dia + cobrança de entrada antecipada (2026-09-01)
+
+Refinamento do pedido 61 (poucas horas depois, mesma sessão): a cobrança
+de hora extra deve considerar tanto entrada ANTECIPADA quanto saída
+TARDIA, e a escola precisa ajustar entrada E saída por dia (não só
+somar horas na saída). `students.extra_hours` (um número por dia, só
+afetando a saída) não modelava isso -- **substituído** por
+`students.weekly_schedule` (jsonb: por dia, `null`/ausente = usa o
+horário-base, ou `{entry, exit}` = override completo daquele dia).
+Nenhuma escola real chegou a usar `extra_hours` (lançado poucas horas
+antes, mesma sessão) -- superseder foi seguro, não é migração de dado
+real. A migration `20260927_weekly_schedule_and_billing_config.sql`
+remove `extra_hours` (coluna, trigger, função de validação) por
+completo antes de criar a nova estrutura.
+
+**Config de cobrança por escola** (`schools.billing_config`, jsonb):
+valores que eram fixos no código (tolerância de 15min pro check-out,
+R$30/h) viram configuráveis, com esses mesmos números como default --
+nenhuma escola muda de comportamento até o admin mexer explicitamente.
+Novo campo `early_checkin_tolerance_min` (default 5min) e
+`charge_early_checkin` (liga/desliga a cobrança de entrada antecipada
+independente da de saída tardia). Protegido pela mesma trigger de
+`turmas`/`login_image_url` (`protect_school_pedagogical_columns`,
+estendida), admin principal ou developer.
+
+**Lógica de tolerância/cobrança** (`attendanceUtils.js` +
+`_shared/extraHours.ts`, mesmo padrão de duplicação Deno/frontend já
+aceito no projeto): `calcularHorasExtras` (saída) reescrita pra usar
+`weekly_schedule` + `billing_config`; nova função
+`calcularEntradaAntecipada` (entrada), simétrica, cobrando quando o
+check-in acontece antes do horário efetivo do dia menos a tolerância.
+`check-attendance-delays` (Edge Function, deployada) ganhou a checagem
+de entrada antecipada, com sua própria flag de dedupe
+(`daily_attendance_status.notified_early_checkin_billing`) e busca a
+`billing_config` da escola de cada aluno num único round-trip.
+`AdminRelatorioHorasExtras.jsx` (relatório) agora soma os dois lados no
+total do dia e destaca visualmente quando o check-in gerou cobrança.
+
+**Frontend**: checkbox "Horas adicionais" virou "Horários personalizados
+por dia" no `StudentCard` -- cada dia tem dois campos de horário
+(entrada e saída), com "padrão" mostrando o horário-base do ciclo/
+período quando não há override. Overrides parciais (só entrada ou só
+saída) são filtrados no cliente antes de salvar
+(`sanitizeWeeklySchedule`) -- salvar assim seria rejeitado inteiro pela
+CHECK constraint do banco, então é tratado como "sem override ainda"
+em vez de deixar o salvar completo falhar por um dia incompleto.
+
+**Testado ao vivo + testes automatizados**: 14 testes unitários puros
+(`weeklyScheduleAttendance.test.js`: resolução de horário efetivo,
+regressão sem override, billing_config configurável, entrada
+antecipada com tolerância/desconto por dia/toggle) + 5 de integração ao
+vivo (`weeklyScheduleAndBillingConfig.test.js`: permissão em
+`weekly_schedule` e `billing_config`, validação de formato/faixa,
+bloqueio de INSERT). Suíte completa: 230/230 passando.

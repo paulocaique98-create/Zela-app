@@ -1,42 +1,71 @@
-// Horas adicionais por aluno, por dia da semana (students.extra_hours) --
-// desloca o horário de saída CONTRATADO efetivo naquele dia específico.
-// Mesma lógica de src/utils/attendanceUtils.js (frontend), duplicada aqui
-// porque Deno (Edge Functions) e o bundle do Vite não compartilham módulo
-// -- mesmo padrão já aceito no projeto pra essa dupla implementação (ver
-// calcularHorasExtras/check-attendance-delays, já duplicadas antes desta
-// mudança). Qualquer ajuste na regra de negócio precisa ser espelhado nos
-// dois lugares.
+// Horários personalizados por dia da semana (students.weekly_schedule) +
+// config de cobrança por escola (schools.billing_config). Mesma lógica de
+// src/utils/attendanceUtils.js (frontend), duplicada aqui porque Deno
+// (Edge Functions) e o bundle do Vite não compartilham módulo -- mesmo
+// padrão já aceito no projeto pra essa dupla implementação. Qualquer
+// ajuste na regra de negócio precisa ser espelhado nos dois lugares.
 
-const EXTRA_HOURS_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'] as const;
+const WEEK_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'] as const;
+
+export interface DaySchedule {
+  entry: string;
+  exit: string;
+}
+
+export interface BillingConfig {
+  early_checkin_tolerance_min: number;
+  late_checkout_tolerance_min: number;
+  hourly_rate_cents: number;
+  charge_early_checkin: boolean;
+}
+
+export const DEFAULT_BILLING_CONFIG: BillingConfig = {
+  early_checkin_tolerance_min: 5,
+  late_checkout_tolerance_min: 15,
+  hourly_rate_cents: 3000,
+  charge_early_checkin: true,
+}
+
+export function mergeBillingConfig(schoolBillingConfig: Partial<BillingConfig> | null | undefined): BillingConfig {
+  return { ...DEFAULT_BILLING_CONFIG, ...(schoolBillingConfig || {}) }
+}
 
 // Deriva o dia da semana de uma string "YYYY-MM-DD" de forma imune a fuso
 // horário (Date.UTC + getUTCDay, nunca setHours/getDay locais).
 export function getDayKeyFromDateStr(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return EXTRA_HOURS_DAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return WEEK_DAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]
 }
 
-export function getExtraHoursForDay(extraHours: Record<string, number> | null | undefined, dayKey: string): number {
-  if (!extraHours || typeof extraHours !== 'object') return 0;
-  const val = extraHours[dayKey];
-  return typeof val === 'number' && val > 0 ? val : 0;
+function normalizeTime(t: string | null | undefined): string | null {
+  return t ? t.slice(0, 5) : (t ?? null)
 }
 
-// Soma as horas extras do dia ao horário contratado ("HH:MM" ou "HH:MM:SS"),
-// devolvendo o horário de saída EFETIVO daquele dia no formato "HH:MM".
-export function applyExtraHoursToTime(contractedTime: string, extraHoursForDay: number): string {
-  if (!contractedTime) return contractedTime;
-  const [h, m] = contractedTime.split(':').map(Number);
-  const totalMinutes = h * 60 + m + Math.round(extraHoursForDay * 60);
-  const eh = Math.floor(totalMinutes / 60) % 24;
-  const em = totalMinutes % 60;
-  return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+// Horário efetivo (entrada, saída) do dia -- override de
+// weeklySchedule[dayKey] se existir e válido, senão o horário-base.
+export function getEffectiveSchedule(
+  weeklySchedule: Record<string, DaySchedule> | null | undefined,
+  dayKey: string,
+  baseEntry: string | null,
+  baseExit: string | null,
+): { entry: string | null; exit: string | null } {
+  const override = weeklySchedule && typeof weeklySchedule === 'object' ? weeklySchedule[dayKey] : null
+  if (override && override.entry && override.exit) {
+    return { entry: normalizeTime(override.entry), exit: normalizeTime(override.exit) }
+  }
+  return { entry: normalizeTime(baseEntry), exit: normalizeTime(baseExit) }
 }
 
-// Atalho: horário contratado + extras do dia -> horário efetivo daquele dia.
-export function getEffectiveExitTime(contractedTime: string | null, todayStr: string, extraHours: Record<string, number> | null | undefined): string | null {
-  if (!contractedTime) return contractedTime;
-  const dayKey = getDayKeyFromDateStr(todayStr);
-  const extraForDay = getExtraHoursForDay(extraHours, dayKey);
-  return extraForDay > 0 ? applyExtraHoursToTime(contractedTime, extraForDay) : contractedTime;
+// Atalho: horário-base + weekly_schedule do dia -> horário de SAÍDA efetivo daquele dia.
+export function getEffectiveExitTime(contractedExitTime: string | null, todayStr: string, weeklySchedule: Record<string, DaySchedule> | null | undefined): string | null {
+  if (!contractedExitTime) return contractedExitTime
+  const dayKey = getDayKeyFromDateStr(todayStr)
+  return getEffectiveSchedule(weeklySchedule, dayKey, null, contractedExitTime).exit
+}
+
+// Atalho: horário-base + weekly_schedule do dia -> horário de ENTRADA efetivo daquele dia.
+export function getEffectiveEntryTime(contractedEntryTime: string | null, todayStr: string, weeklySchedule: Record<string, DaySchedule> | null | undefined): string | null {
+  if (!contractedEntryTime) return contractedEntryTime
+  const dayKey = getDayKeyFromDateStr(todayStr)
+  return getEffectiveSchedule(weeklySchedule, dayKey, contractedEntryTime, null).entry
 }

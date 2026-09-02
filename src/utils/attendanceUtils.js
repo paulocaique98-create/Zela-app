@@ -2,12 +2,28 @@
  * Utilitários para processamento de logs de check-in/out
  */
 
-// Horas adicionais por aluno, por dia da semana (students.extra_hours) --
-// desloca o horário de saída CONTRATADO efetivo naquele dia específico,
-// então a tolerância/cobrança de hora extra passa a valer a partir do
-// horário já ajustado, não do horário contratado fixo. Chaves em
-// português sem acento (mesma convenção da coluna no banco).
-const EXTRA_HOURS_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']; // índice = Date.getUTCDay()
+// Horários personalizados por dia da semana (students.weekly_schedule) --
+// substituiu a versão anterior (extra_hours, só somava minutos à saída):
+// agora entrada E saída podem ser sobrescritas por dia específico. Um dia
+// ausente da chave (ou o valor todo null/undefined) usa o horário-base do
+// aluno (contracted_entry_time/contracted_exit_time), comportamento de
+// sempre. Chaves em português sem acento (mesma convenção da coluna).
+const WEEK_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']; // índice = Date.getUTCDay()
+
+// Config de cobrança de hora extra por escola (schools.billing_config) --
+// esses eram valores fixos no código; viram configuráveis, com esses
+// mesmos números como default (nenhuma escola muda de comportamento até
+// o admin mexer explicitamente na tela de Configurações).
+export const DEFAULT_BILLING_CONFIG = {
+  early_checkin_tolerance_min: 5,
+  late_checkout_tolerance_min: 15,
+  hourly_rate_cents: 3000, // R$ 30,00
+  charge_early_checkin: true,
+};
+
+export function mergeBillingConfig(schoolBillingConfig) {
+  return { ...DEFAULT_BILLING_CONFIG, ...schoolBillingConfig };
+}
 
 // Deriva o dia da semana de uma string "YYYY-MM-DD" de forma imune a fuso
 // horário -- new Date(dateStr).getDay() usaria meia-noite UTC e converteria
@@ -16,26 +32,32 @@ const EXTRA_HOURS_DAY_KEYS = ['domingo', 'segunda', 'terca', 'quarta', 'quinta',
 // específica, não importa onde o código rodar.
 export function getDayKeyFromDateStr(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
-  return EXTRA_HOURS_DAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return WEEK_DAY_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
 }
 
-// Horas extras configuradas pro aluno naquele dia específico (0 se não
-// houver, se o valor não for número, ou se extraHours for null/undefined).
-export function getExtraHoursForDay(extraHours, dayKey) {
-  if (!extraHours || typeof extraHours !== 'object') return 0;
-  const val = extraHours[dayKey];
-  return typeof val === 'number' && val > 0 ? val : 0;
+// Horário efetivo (entrada e saída) do aluno naquele dia -- override de
+// weekly_schedule[dayKey] se existir e válido, senão o horário-base.
+// baseEntry/baseExit podem vir como "HH:MM" ou "HH:MM:SS" (o banco grava
+// contracted_*_time como time, retorna com segundos); normaliza pra "HH:MM".
+function normalizeTime(t) {
+  return t ? t.slice(0, 5) : t;
 }
 
-// Soma as horas extras do dia ao horário contratado ("HH:MM" ou "HH:MM:SS"),
-// devolvendo o horário de saída EFETIVO daquele dia no mesmo formato "HH:MM".
-export function applyExtraHoursToTime(contractedTime, extraHoursForDay) {
-  if (!contractedTime) return contractedTime;
-  const [h, m] = contractedTime.split(':').map(Number);
-  const totalMinutes = h * 60 + m + Math.round(extraHoursForDay * 60);
-  const eh = Math.floor(totalMinutes / 60) % 24;
-  const em = totalMinutes % 60;
-  return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+export function getEffectiveSchedule(weeklySchedule, dayKey, baseEntry, baseExit) {
+  const override = weeklySchedule && typeof weeklySchedule === 'object' ? weeklySchedule[dayKey] : null;
+  if (override && override.entry && override.exit) {
+    return { entry: normalizeTime(override.entry), exit: normalizeTime(override.exit) };
+  }
+  return { entry: normalizeTime(baseEntry), exit: normalizeTime(baseExit) };
+}
+
+// Constrói o instante (Date) equivalente a um horário "HH:MM" na data
+// (string "YYYY-MM-DD") informada, fixando o offset -03:00 (Brasil não
+// observa horário de verão atualmente) -- nunca usar setHours(), que
+// interpretaria o horário no fuso do dispositivo local e produziria
+// cálculos errados pra admins fora do fuso de Brasília.
+function instantFromBrasiliaTime(dateStr, timeHHMM) {
+  return new Date(`${dateStr}T${timeHHMM}:00-03:00`);
 }
 
 /**
@@ -43,7 +65,7 @@ export function applyExtraHoursToTime(contractedTime, extraHoursForDay) {
  * Regra de negócio:
  * - Usar sempre o PRIMEIRO evento de 'entry' do dia como entrada oficial.
  * - Usar sempre o ÚLTIMO evento de 'exit' do dia como saída oficial.
- * 
+ *
  * @param {Array} logs - Array de objetos brutos retornados do supabase (attendance_logs).
  * @returns {Array} - Array de objetos agrupados: { student_id, date, studentData, entryLog, exitLog }
  */
@@ -97,26 +119,31 @@ export function agruparEventosPorDia(logs) {
   return result;
 }
 
+function formatCurrency(valor) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+}
+
 /**
  * Calcula as horas excedentes baseado no horário de saída real e o contratado.
- * 
- * Exemplos da Regra de Negócio:
+ *
+ * Exemplos da Regra de Negócio (com a tolerância/valor padrão):
  * Tolerância = 15 minutos. Valor da hora = R$ 30,00.
  * - 18:00 contratado + 15min tolerância = 18:15 é o limite.
  * - Check-out às 18:10 -> 10min -> tolerância não ultrapassada -> 0 excedente = R$ 0,00
  * - Check-out às 18:20 -> tolerância (18:15) ultrapassada. Calcula desde 18:15: 18:20 - 18:15 = 5 min excedentes -> 1 hora cheia = R$ 30,00
  * - Check-out às 19:00 -> tolerância ultrapassada. Calcula desde 18:15: 19:00 - 18:15 = 45 min excedentes -> 1 hora cheia = R$ 30,00
  * - Check-out às 19:16 -> tolerância ultrapassada. 19:16 - 18:15 = 61 min excedentes -> 2 horas cheias = R$ 60,00
- * 
+ *
  * @param {string|null} exitTimeIso - O horário real de saída em formato ISO.
- * @param {string|null} contractedExitTime - O horário contratado no formato "HH:MM".
- * @param {Object|null} extraHours - students.extra_hours (opcional) -- se o dia da
- *   saída tiver horas extras configuradas, o horário contratado usado no cálculo é
- *   deslocado por elas antes de aplicar a tolerância (ex.: contratado 15h + 2h de
- *   extra na segunda = tolerância conta a partir de 17h nesse dia específico).
+ * @param {string|null} contractedExitTime - O horário-base contratado ("HH:MM" ou "HH:MM:SS").
+ * @param {Object|null} weeklySchedule - students.weekly_schedule (opcional) -- se o dia
+ *   da saída tiver um horário próprio configurado, ele substitui o horário-base antes
+ *   de aplicar a tolerância.
+ * @param {Object|null} billingConfig - schools.billing_config (opcional, mesclado com
+ *   DEFAULT_BILLING_CONFIG) -- tolerância e valor da hora configuráveis por escola.
  * @returns {Object} - { minutos_excedentes, valor, valorFormatado, dentro_tolerancia, sem_saida }
  */
-export function calcularHorasExtras(exitTimeIso, contractedExitTime, extraHours = null) {
+export function calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule = null, billingConfig = null) {
   if (!exitTimeIso) {
     return { minutos_excedentes: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_saida: true };
   }
@@ -126,53 +153,89 @@ export function calcularHorasExtras(exitTimeIso, contractedExitTime, extraHours 
     return { minutos_excedentes: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_saida: false };
   }
 
-  const VALOR_POR_HORA = 30.00;
-  const MINUTOS_TOLERANCIA = 15;
-
+  const config = mergeBillingConfig(billingConfig);
   const exitDate = new Date(exitTimeIso);
-
-  // O horário contratado vem como "HH:MM" em horário de Brasília. Construímos o instante
-  // equivalente fixando o offset -03:00 (Brasil não observa horário de verão atualmente),
-  // em vez de usar setHours(), que interpretaria o horário no fuso do dispositivo local
-  // e produziria cobranças erradas para admins fora do fuso de Brasília.
   const brasiliaDateStr = exitDate.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-
-  // Horário contratado EFETIVO daquele dia -- soma as horas extras do dia da
-  // semana correspondente (se houver) antes de calcular a tolerância.
   const dayKey = getDayKeyFromDateStr(brasiliaDateStr);
-  const extraForDay = getExtraHoursForDay(extraHours, dayKey);
-  const effectiveExitTime = extraForDay > 0 ? applyExtraHoursToTime(contractedExitTime, extraForDay) : contractedExitTime;
 
-  const [hours, minutes] = effectiveExitTime.split(':').map(Number);
-  const hh = String(hours).padStart(2, '0');
-  const mm = String(minutes).padStart(2, '0');
-  const contractedDate = new Date(`${brasiliaDateStr}T${hh}:${mm}:00-03:00`);
+  const { exit: effectiveExitTime } = getEffectiveSchedule(weeklySchedule, dayKey, null, contractedExitTime);
+  const contractedDate = instantFromBrasiliaTime(brasiliaDateStr, effectiveExitTime);
 
   const diffMs = exitDate.getTime() - contractedDate.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes <= MINUTOS_TOLERANCIA) {
-    return { 
-      minutos_excedentes: 0, 
-      valor: 0, 
-      valorFormatado: 'R$ 0,00', 
-      dentro_tolerancia: true, 
-      sem_saida: false 
+  if (diffMinutes <= config.late_checkout_tolerance_min) {
+    return {
+      minutos_excedentes: 0,
+      valor: 0,
+      valorFormatado: 'R$ 0,00',
+      dentro_tolerancia: true,
+      sem_saida: false
     };
   }
 
   // Passou da tolerância: calcular os minutos excedentes APÓS a tolerância (ex: se saiu 18:20 e tolerância ia até 18:15, cobrar 5 minutos)
-  const minutosExcedentesCobranca = diffMinutes - MINUTOS_TOLERANCIA;
-  
+  const minutosExcedentesCobranca = diffMinutes - config.late_checkout_tolerance_min;
+
   const horasCobradas = Math.ceil(minutosExcedentesCobranca / 60);
-  const valor = horasCobradas * VALOR_POR_HORA;
-  const valorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  const valor = horasCobradas * (config.hourly_rate_cents / 100);
 
   return {
     minutos_excedentes: minutosExcedentesCobranca,
     valor: valor,
-    valorFormatado: valorFormatado,
+    valorFormatado: formatCurrency(valor),
     dentro_tolerancia: false,
     sem_saida: false
+  };
+}
+
+/**
+ * Calcula a cobrança de check-in ANTECIPADO -- simétrico a calcularHorasExtras,
+ * mas do lado da entrada: se o aluno chegar mais de `early_checkin_tolerance_min`
+ * minutos ANTES do horário de entrada contratado/efetivo daquele dia, cobra a
+ * partir desse ponto. Ativado por `billingConfig.charge_early_checkin` (a escola
+ * pode desligar a cobrança desse lado sem desligar a de saída tardia).
+ *
+ * @param {string|null} entryTimeIso - O horário real de entrada em formato ISO.
+ * @param {string|null} contractedEntryTime - O horário-base contratado ("HH:MM" ou "HH:MM:SS").
+ * @param {Object|null} weeklySchedule - students.weekly_schedule (opcional).
+ * @param {Object|null} billingConfig - schools.billing_config (opcional).
+ * @returns {Object} - { minutos_antecipados, valor, valorFormatado, dentro_tolerancia, sem_entrada }
+ */
+export function calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule = null, billingConfig = null) {
+  if (!entryTimeIso) {
+    return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: true };
+  }
+
+  const config = mergeBillingConfig(billingConfig);
+
+  if (!contractedEntryTime || !config.charge_early_checkin) {
+    return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: false };
+  }
+
+  const entryDate = new Date(entryTimeIso);
+  const brasiliaDateStr = entryDate.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const dayKey = getDayKeyFromDateStr(brasiliaDateStr);
+
+  const { entry: effectiveEntryTime } = getEffectiveSchedule(weeklySchedule, dayKey, contractedEntryTime, null);
+  const contractedDate = instantFromBrasiliaTime(brasiliaDateStr, effectiveEntryTime);
+
+  // Diferença em minutos de QUANTO ANTES o aluno chegou (positivo = chegou antes).
+  const diffMinutes = Math.floor((contractedDate.getTime() - entryDate.getTime()) / 60000);
+
+  if (diffMinutes <= config.early_checkin_tolerance_min) {
+    return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: false };
+  }
+
+  const minutosAntecipadosCobranca = diffMinutes - config.early_checkin_tolerance_min;
+  const horasCobradas = Math.ceil(minutosAntecipadosCobranca / 60);
+  const valor = horasCobradas * (config.hourly_rate_cents / 100);
+
+  return {
+    minutos_antecipados: minutosAntecipadosCobranca,
+    valor: valor,
+    valorFormatado: formatCurrency(valor),
+    dentro_tolerancia: false,
+    sem_entrada: false
   };
 }

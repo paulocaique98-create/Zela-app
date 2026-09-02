@@ -18,7 +18,7 @@ runIf('Imagem de login por escola (login_image_url + get_school_login_image)', (
     try {
       let r = await regularAdmin.client.from('schools').update({ login_image_url: 'data:image/png;base64,AAA' }).eq('id', school).select();
       expect(r.error).toBeTruthy();
-      expect(r.error.message).toContain('turmas ou a imagem de login');
+      expect(r.error.message).toContain('imagem de login');
 
       r = await teacher.client.from('schools').update({ login_image_url: 'data:image/png;base64,AAA' }).eq('id', school).select();
       expect(r.data ?? []).toHaveLength(0); // RLS bloqueia silenciosamente -- confirma que nada foi escrito

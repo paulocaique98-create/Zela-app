@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon } from 'lucide-react';
+import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
+import { mergeBillingConfig } from '../utils/attendanceUtils';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 
@@ -315,6 +316,58 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange }) {
   );
 }
 
+// Config de cobrança de hora extra por escola (schools.billing_config) --
+// valores que eram fixos no código (tolerância de 15min pro check-out,
+// R$30/h) viram configuráveis por escola, com esses mesmos números como
+// default. Controlado pelo pai, mesmo padrão de LoginImageSection: entra no
+// mesmo "Salvar Alterações" único da tela, sem botão próprio (o bug de
+// "não consigo trocar a imagem" foi exatamente um botão de salvar separado
+// que não persistia -- não repetir aqui).
+function BillingConfigSection({ currentUser, config, onConfigChange }) {
+  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  if (!canManage) return null;
+
+  const set = (field, value) => onConfigChange({ ...config, [field]: value });
+
+  const inputCls = 'w-24 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm text-center';
+
+  return (
+    <div className="pt-3 border-t border-outline-variant">
+      <div className="mb-2">
+        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><Clock size={15} className="text-primary" /> Cobrança de Hora Extra</h3>
+        <p className="text-xs text-on-surface-variant">
+          Margens de tolerância e valor da hora usados no cálculo automático de cobrança (check-in antecipado e check-out tardio).
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+        <div>
+          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Tolerância check-in (min)</label>
+          <input type="number" min="0" max="60" value={config.early_checkin_tolerance_min}
+            onChange={e => set('early_checkin_tolerance_min', Number(e.target.value))} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Tolerância check-out (min)</label>
+          <input type="number" min="0" max="60" value={config.late_checkout_tolerance_min}
+            onChange={e => set('late_checkout_tolerance_min', Number(e.target.value))} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Valor da hora (R$)</label>
+          <input type="number" min="0" step="0.01" value={(config.hourly_rate_cents / 100).toFixed(2)}
+            onChange={e => set('hourly_rate_cents', Math.round(Number(e.target.value) * 100))} className={inputCls} />
+        </div>
+      </div>
+
+      <label className="flex items-center gap-2 cursor-pointer select-none mt-3">
+        <input type="checkbox" checked={config.charge_early_checkin}
+          onChange={e => set('charge_early_checkin', e.target.checked)}
+          className="w-4 h-4 rounded accent-primary" />
+        <span className="text-xs font-medium text-on-surface">Cobrar também check-in antecipado (além de check-out tardio)</span>
+      </label>
+    </div>
+  );
+}
+
 export default function AdminSettings({ currentUser, currentSchool, onUpdate }) {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -329,6 +382,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
     currentSchool?.logo_url || ''
   );
   const [loginImageUrl, setLoginImageUrl] = useState(currentSchool?.login_image_url || '');
+  const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
 
   const features = currentSchool?.features_enabled || {};
   const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
@@ -362,6 +416,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
     if (currentSchool) {
       setLogoUrl(currentSchool.logo_url || '');
       setLoginImageUrl(currentSchool.login_image_url || '');
+      setBillingConfig(mergeBillingConfig(currentSchool.billing_config));
       setFormData({
         name: currentSchool.name || '',
         phone: currentSchool.phone || '',
@@ -403,10 +458,11 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
 
 
       // 2. Update Supabase
-      // login_image_url incluída sempre -- pra quem não é admin principal/
-      // developer, LoginImageSection nem renderiza (o estado nunca diverge
-      // do valor de currentSchool), então isso nunca aciona a checagem da
-      // trigger de proteção pra esses roles; é um no-op inofensivo.
+      // login_image_url/billing_config incluídos sempre -- pra quem não é
+      // admin principal/developer, as seções correspondentes nem renderizam
+      // (o estado nunca diverge do valor de currentSchool), então isso
+      // nunca aciona a checagem da trigger de proteção pra esses roles; é
+      // um no-op inofensivo.
       const updates = {
         name: formData.name,
         phone: formData.phone,
@@ -415,6 +471,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         director_name: formData.director_name,
         logo_url: logoUrl || null,
         login_image_url: loginImageUrl || null,
+        billing_config: billingConfig,
       };
 
       const { error } = await supabase
@@ -542,6 +599,8 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
           <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
 
           <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} />
+
+          <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} />
 
           {/* PERSONALIZAÇÃO DO MENU LOCAL */}
           <div className="pt-3 border-t border-outline-variant">

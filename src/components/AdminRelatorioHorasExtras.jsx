@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Clock, FileText, LogIn, LogOut, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
 
 function formatTime(isoString) {
@@ -52,7 +52,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           event_time,
           student_id,
           recorded_by,
-          students:student_id (name, contracted_exit_time, extra_hours, users:family_id(name)),
+          students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, users:family_id(name)),
           users:recorded_by (name)
         `)
         .eq('school_id', schoolId)
@@ -64,16 +64,27 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
       if (error) throw error;
 
       const groupedLogs = agruparEventosPorDia(rawLogs);
+      const billingConfig = mergeBillingConfig(currentSchool?.billing_config);
 
       const result = groupedLogs.map(group => {
         const entryTimeIso = group.entryLog ? group.entryLog.event_time : null;
         const exitTimeIso = group.exitLog ? group.exitLog.event_time : null;
+        const contractedEntryTime = group.studentData?.contracted_entry_time;
         const contractedExitTime = group.studentData?.contracted_exit_time;
+        const weeklySchedule = group.studentData?.weekly_schedule;
 
         // Incluindo nome do funcionário que aprovou o checkout
         const approvedBy = group.exitLog?.users?.name || group.entryLog?.users?.name || '—';
 
-        const calculo = calcularHorasExtras(exitTimeIso, contractedExitTime, group.studentData?.extra_hours);
+        // Cobrança considera os dois lados: check-in ANTECIPADO (antes da
+        // entrada contratada/efetiva do dia, com margem) e check-out
+        // TARDIO (já existia) -- somados no total do dia.
+        const calculoSaida = calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule, billingConfig);
+        const calculoEntrada = calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule, billingConfig);
+
+        const minutos_excedentes = calculoSaida.minutos_excedentes + calculoEntrada.minutos_antecipados;
+        const valor = calculoSaida.valor + calculoEntrada.valor;
+        const dentro_tolerancia = calculoSaida.dentro_tolerancia && calculoEntrada.dentro_tolerancia;
 
         return {
           key: `${group.student_id}_${group.date}`,
@@ -84,7 +95,13 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           exit: exitTimeIso ? formatTime(exitTimeIso) : null,
           contractedExit: contractedExitTime || '—',
           approvedBy: approvedBy,
-          ...calculo,
+          minutos_excedentes,
+          valor,
+          valorFormatado: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor),
+          dentro_tolerancia,
+          sem_saida: calculoSaida.sem_saida,
+          excessoEntrada: !calculoEntrada.dentro_tolerancia,
+          excessoSaida: !calculoSaida.dentro_tolerancia,
           rawTime: entryTimeIso ? new Date(entryTimeIso).getTime() : (exitTimeIso ? new Date(exitTimeIso).getTime() : 0),
         };
       });
@@ -145,7 +162,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-800">Relatório de Horas Extras</h2>
-            <p className="text-sm text-slate-500">Cobrança por hora cheia após 15 min de tolerância</p>
+            <p className="text-sm text-slate-500">Cobrança por hora cheia, entrada antecipada e saída tardia (tolerância configurável em Configurações)</p>
           </div>
         </div>
         
@@ -269,7 +286,10 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                   let excessClass = "text-slate-400";
                   let valorClass = "text-green-600";
                   
-                  if (!log.dentro_tolerancia && !log.sem_saida) {
+                  // Excesso agora pode vir do check-in antecipado (independente de já ter
+                  // saída registrada) ou do check-out tardio (exige saída registrada).
+                  const temExcesso = log.excessoEntrada || (log.excessoSaida && !log.sem_saida);
+                  if (temExcesso) {
                     rowClass = "bg-amber-50/50 hover:bg-amber-50 transition-colors";
                     excessText = `${Math.floor(log.minutos_excedentes / 60)}h ${log.minutos_excedentes % 60}min`;
                     excessClass = "text-amber-600 font-bold";
@@ -283,7 +303,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                       <td className="py-3 pr-4 text-slate-500 text-xs">{log.family}</td>
                       <td className="py-3 pr-4">
                         {log.entry ? (
-                          <span className="flex items-center gap-1 font-medium text-indigo-600">
+                          <span className={`flex items-center gap-1 font-medium ${log.excessoEntrada ? 'text-rose-600' : 'text-indigo-600'}`} title={log.excessoEntrada ? 'Check-in antecipado além da tolerância' : undefined}>
                             <LogIn size={13} /> {log.entry}
                           </span>
                         ) : (
@@ -307,10 +327,10 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                         </span>
                       </td>
                       <td className={`py-3 pr-4 text-right ${excessClass}`}>
-                        {log.sem_saida ? '—' : excessText}
+                        {log.sem_saida && !log.excessoEntrada ? '—' : excessText}
                       </td>
                       <td className={`py-3 pr-4 text-right ${valorClass}`}>
-                        {log.sem_saida ? '—' : log.valorFormatado}
+                        {log.sem_saida && !log.excessoEntrada ? '—' : log.valorFormatado}
                       </td>
                       <td className="py-3 text-right">
                         <span className="text-[10px] text-slate-400 bg-slate-50 border border-slate-100 px-2 py-1 rounded-md">
