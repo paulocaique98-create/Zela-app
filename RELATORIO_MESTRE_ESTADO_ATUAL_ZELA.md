@@ -1523,3 +1523,26 @@ antecipada com tolerância/desconto por dia/toggle) + 5 de integração ao
 vivo (`weeklyScheduleAndBillingConfig.test.js`: permissão em
 `weekly_schedule` e `billing_config`, validação de formato/faixa,
 bloqueio de INSERT). Suíte completa: 230/230 passando.
+
+## 63. Configurações da Escola: abas horizontais (2026-09-01)
+
+Reorganização de UI pedida: Turmas, Imagem de Login, Cobrança de Hora
+Extra e Personalizar Menu (empilhadas verticalmente, tela ficando
+longa) viraram abas horizontais dentro de "Configurações da Escola".
+"Dados da Escola" (logo, nome, telefone, endereço, diretora) continua
+sempre visível acima das abas, sem mudança.
+
+Continuam dentro do mesmo `<form>` único (`handleSave`/"Salvar
+Alterações" do topo) -- trocar de aba só troca o que fica visível, sem
+nenhum save próprio por aba (mesma lição do bug da imagem de login: um
+botão de salvar separado por seção é exatamente o padrão que causou
+aquele bug). Abas Turmas/Imagem de Login/Cobrança são ocultadas
+inteiramente pra quem não é admin principal/developer (evitaria clicar
+numa aba e ver conteúdo vazio); "Personalizar Menu" continua disponível
+pra qualquer admin. Aba inicial: "Turmas" pro admin principal/
+developer, "Personalizar Menu" pra admin comum.
+
+Mudança só de UI/estado local (`activeConfigTab`), sem alterar
+contrato de banco/RPC nem lógica de permissão. Suíte completa: 230/230
+passando (nenhum teste novo necessário -- comportamento de dados
+inalterado).

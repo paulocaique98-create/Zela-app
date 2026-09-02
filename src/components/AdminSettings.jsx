@@ -12,7 +12,7 @@ const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 // uma turma nova. A RPC update_school_turmas valida uso antes de permitir
 // remover: bloqueia se a turma ainda estiver associada a algum aluno,
 // professor, mural, comunicado, matéria ou frequência.
-function TurmasSection({ currentUser, currentSchool, onUpdate }) {
+function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false }) {
   const [turmas, setTurmas] = useState(currentSchool?.turmas || []);
   const [newTurma, setNewTurma] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -97,7 +97,7 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
   if (!canManage) return null;
 
   return (
-    <div className="pt-3 border-t border-outline-variant">
+    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
       <div className="mb-2">
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><School size={15} className="text-primary" /> Turmas</h3>
         <p className="text-xs text-on-surface-variant">
@@ -227,7 +227,7 @@ function TurmasSection({ currentUser, currentSchool, onUpdate }) {
 // no botão errado (o óbvio, de cima), e a imagem voltava pra antiga no
 // próximo carregamento -- sem erro nenhum visível. Corrigido: agora é só
 // mais um campo do mesmo formulário único, com um só "Salvar".
-function LoginImageSection({ currentUser, imageUrl, onImageChange }) {
+function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = false }) {
   const fileInputRef = useRef(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState('');
@@ -264,7 +264,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange }) {
   if (!canManage) return null;
 
   return (
-    <div className="pt-3 border-t border-outline-variant">
+    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
       <div className="mb-2">
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><ImageIcon size={15} className="text-primary" /> Imagem de Login</h3>
         <p className="text-xs text-on-surface-variant">
@@ -323,7 +323,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange }) {
 // mesmo "Salvar Alterações" único da tela, sem botão próprio (o bug de
 // "não consigo trocar a imagem" foi exatamente um botão de salvar separado
 // que não persistia -- não repetir aqui).
-function BillingConfigSection({ currentUser, config, onConfigChange }) {
+function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = false }) {
   const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
   if (!canManage) return null;
 
@@ -332,7 +332,7 @@ function BillingConfigSection({ currentUser, config, onConfigChange }) {
   const inputCls = 'w-24 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm text-center';
 
   return (
-    <div className="pt-3 border-t border-outline-variant">
+    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
       <div className="mb-2">
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><Clock size={15} className="text-primary" /> Cobrança de Hora Extra</h3>
         <p className="text-xs text-on-surface-variant">
@@ -383,6 +383,8 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   );
   const [loginImageUrl, setLoginImageUrl] = useState(currentSchool?.login_image_url || '');
   const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
+  const canManageSchool = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const [activeConfigTab, setActiveConfigTab] = useState(canManageSchool ? 'turmas' : 'menu');
 
   const features = currentSchool?.features_enabled || {};
   const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
@@ -596,40 +598,76 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
             </div>
           </div>
 
-          <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} />
-
-          <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} />
-
-          <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} />
-
-          {/* PERSONALIZAÇÃO DO MENU LOCAL */}
+          {/* Abas horizontais: Turmas / Imagem de Login / Cobrança de Hora Extra /
+              Personalizar Menu -- continuam dentro do mesmo <form>, só trocando o
+              que fica visível; nenhuma delas tem save próprio (mesmo "Salvar
+              Alterações" único do topo salva a aba ativa e as outras já editadas). */}
           <div className="pt-3 border-t border-outline-variant">
-            <div className="mb-2">
-              <h3 className="text-sm font-bold text-on-surface">Personalizar Menu</h3>
-              <p className="text-xs text-on-surface-variant">Escolha quais módulos ficarão visíveis para você nesta tela. Esta configuração afeta apenas o seu navegador.</p>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {[
+                ...(canManageSchool ? [
+                  { id: 'turmas', label: 'Turmas' },
+                  { id: 'login_image', label: 'Imagem de Login' },
+                  { id: 'billing', label: 'Cobrança de Hora Extra' },
+                ] : []),
+                { id: 'menu', label: 'Personalizar Menu' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveConfigTab(tab.id)}
+                  className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-bold transition-all shrink-0 ${
+                    activeConfigTab === tab.id
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
-              {availableModules.map(mod => {
-                const isVisible = localPrefs[mod.id] !== false; // default true if available
-                return (
-                  <div key={mod.id} className="flex items-start gap-2 p-2 border border-outline-variant rounded-zela-md bg-white hover:bg-surface-container-low transition">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-on-surface">{mod.label}</p>
-                      <p className="text-xs text-on-surface-variant/70 mt-0.5">{mod.desc}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLocalPrefs(prev => ({ ...prev, [mod.id]: !isVisible }))}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisible ? 'bg-primary' : 'bg-slate-200'}`}
-                    >
-                      <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isVisible ? 'translate-x-2' : '-translate-x-2'}`} />
-                    </button>
+            <div className="mt-3">
+              {activeConfigTab === 'turmas' && (
+                <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} noBorder />
+              )}
+              {activeConfigTab === 'login_image' && (
+                <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} noBorder />
+              )}
+              {activeConfigTab === 'billing' && (
+                <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} noBorder />
+              )}
+              {activeConfigTab === 'menu' && (
+                <div>
+                  <div className="mb-2">
+                    <h3 className="text-sm font-bold text-on-surface">Personalizar Menu</h3>
+                    <p className="text-xs text-on-surface-variant">Escolha quais módulos ficarão visíveis para você nesta tela. Esta configuração afeta apenas o seu navegador.</p>
                   </div>
-                );
-              })}
-              {availableModules.length === 0 && (
-                <p className="text-small text-on-surface-variant italic col-span-full">Nenhum módulo customizável disponível.</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
+                    {availableModules.map(mod => {
+                      const isVisible = localPrefs[mod.id] !== false; // default true if available
+                      return (
+                        <div key={mod.id} className="flex items-start gap-2 p-2 border border-outline-variant rounded-zela-md bg-white hover:bg-surface-container-low transition">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-on-surface">{mod.label}</p>
+                            <p className="text-xs text-on-surface-variant/70 mt-0.5">{mod.desc}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setLocalPrefs(prev => ({ ...prev, [mod.id]: !isVisible }))}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisible ? 'bg-primary' : 'bg-slate-200'}`}
+                          >
+                            <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isVisible ? 'translate-x-2' : '-translate-x-2'}`} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    {availableModules.length === 0 && (
+                      <p className="text-small text-on-surface-variant italic col-span-full">Nenhum módulo customizável disponível.</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
