@@ -569,32 +569,68 @@ export default function App() {
     supabase.auth.signOut().catch(() => { });
   };
 
-  // Temporizador de inatividade (10 minutos)
+  // Temporizador de inatividade (30 minutos).
+  //
+  // Antes disso só resetava com mousemove/keypress/etc — eventos que SÓ
+  // disparam com a aba em primeiro plano. Trocar de aba do navegador (ex:
+  // checar e-mail) por mais de alguns minutos deixava a aba do Zela "quieta"
+  // e o timer, que seguia contando em segundo plano, deslogava sozinho —
+  // a pessoa voltava e encontrava a tela de login sem ter feito nada de
+  // errado. O Totem nunca sofria isso só porque é um dispositivo físico
+  // tocado o tempo todo, nunca por proteção explícita.
+  //
+  // Fix: guarda o instante real da última atividade (lastActivityAt) e
+  // reavalia o tempo decorrido de verdade sempre que a aba volta a ficar
+  // visível — não confia apenas no setTimeout disparar no momento exato
+  // (navegadores atrasam/"throttlam" timers de abas em segundo plano).
+  // Autoatendimento/Totem (adminTab === 'kiosk') fica isento por completo:
+  // é tela pública, nunca deve travar no meio de um check-in.
   useEffect(() => {
+    const INACTIVITY_MS = 30 * 60 * 1000; // 30 minutos
     let inactivityTimer;
+    let lastActivityAt = Date.now();
 
-    const resetTimer = () => {
+    const isKioskScreen = () => currentUser?.role === 'admin' && adminTabRef.current === 'kiosk';
+
+    const scheduleCheck = () => {
       clearTimeout(inactivityTimer);
-      if (!currentUser) return;
+      if (!currentUser || isKioskScreen()) return;
 
-      inactivityTimer = setTimeout(() => {
+      const remaining = INACTIVITY_MS - (Date.now() - lastActivityAt);
+      if (remaining <= 0) {
         handleLogout();
         // Reload intencional após inatividade — limpa todo o estado do app
         window.location.reload();
-      }, 600000); // 10 minutos (600.000 ms)
+        return;
+      }
+      inactivityTimer = setTimeout(scheduleCheck, remaining);
+    };
+
+    const markActive = () => {
+      lastActivityAt = Date.now();
+      scheduleCheck();
+    };
+
+    // Reavalia ao voltar o foco — cobre tanto "só troquei de aba e voltei
+    // rápido" (não desloga) quanto "fiquei ausente mais que o limite"
+    // (desloga imediatamente, sem esperar o setTimeout atrasado disparar).
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') scheduleCheck();
     };
 
     // Eventos que indicam atividade do usuário
     const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
 
     if (currentUser) {
-      events.forEach(event => window.addEventListener(event, resetTimer));
-      resetTimer(); // Inicia o contador logo de cara
+      events.forEach(event => window.addEventListener(event, markActive));
+      document.addEventListener('visibilitychange', handleVisibility);
+      scheduleCheck(); // Inicia o contador logo de cara
     }
 
     return () => {
       clearTimeout(inactivityTimer);
-      events.forEach(event => window.removeEventListener(event, resetTimer));
+      events.forEach(event => window.removeEventListener(event, markActive));
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [currentUser, currentPath]);
 
