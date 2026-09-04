@@ -5,6 +5,7 @@ import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
+import { useWakeLock } from '../hooks/useWakeLock';
 import ConfirmExitPassword from './ConfirmExitPassword';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
@@ -149,6 +150,11 @@ export function findSecureMatch(descriptor, labeledDescriptors) {
 
 export default function AdminFaceScanner({ onClose, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
   const videoRef = useRef(null);
+
+  // Mantém a tela do dispositivo sempre acesa enquanto esta tela estiver
+  // aberta — reclamação da escola: a tela apagava sozinha (economia de
+  // energia do SO/navegador) no meio do reconhecimento facial.
+  useWakeLock(true);
 
   // Sair do Autoatendimento exige confirmar a senha da conta — a tela fica exposta
   // pra qualquer pessoa durante o check-in (ver ConfirmExitPassword).

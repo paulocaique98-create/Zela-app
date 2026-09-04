@@ -3,6 +3,7 @@ import { X, Camera, Loader2, UserX, Search, ArrowLeft, RefreshCw, Check, Trash2,
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
+import { useWakeLock } from '../hooks/useWakeLock';
 import ConfirmModal from './ConfirmModal';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
@@ -310,6 +311,10 @@ function CameraCapture({ person, togglePhoto, onDone, onCancel, onClose }) {
   // null (sem rosto) | 'too-far' | 'too-close' | 'off-center' | 'ok'
   const [framePosition, setFramePosition] = useState(null);
   const [showConsent, setShowConsent] = useState(false);
+
+  // Mesma proteção do AdminFaceScanner: mantém a tela acesa enquanto a
+  // câmera de cadastro está ativa.
+  useWakeLock(cameraStarted);
 
   // A câmera só é solicitada depois que a pessoa clica em "Iniciar Captura"
   // — nunca abre sozinha ao entrar na tela.
