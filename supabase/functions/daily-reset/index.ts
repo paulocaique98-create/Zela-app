@@ -26,7 +26,7 @@ serve(async (req) => {
     // Filtra apenas aqueles que já não estão no estado inicial para não rodar um update gigante à toa
     const { data, error } = await supabase
       .from('students')
-      .update({ status: 'idle', today_entry: null, today_exit: null })
+      .update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null })
       .or('status.neq.idle,today_entry.not.is.null,today_exit.not.is.null')
       .select('id')
 

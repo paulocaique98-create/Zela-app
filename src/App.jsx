@@ -287,6 +287,9 @@ export default function App() {
           // Preserva os valores completos para usar como horário original na confirmação
           entry_full: s.today_entry || null,
           exit_full: s.today_exit || null,
+          // Instante exato — ver comentário equivalente em fetchData().
+          entry_at: s.today_entry_at || null,
+          exit_at: s.today_exit_at || null,
         },
       };
     };
@@ -476,7 +479,7 @@ export default function App() {
         if (!parsedEntry && s.today_entry) {
           sStatus = 'idle';
           // Opcional: Atualizar no banco em background
-          supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null }).eq('id', s.id)
+          supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
             .then(({ error }) => {
               if (error) console.error('[Zela] Falha ao resetar status do aluno para idle:', s.id, error);
             });
@@ -493,7 +496,12 @@ export default function App() {
             entry: parsedEntry,
             exit: parsedExit,
             entry_full: s.today_entry,
-            exit_full: s.today_exit
+            exit_full: s.today_exit,
+            // Instante exato (timestamptz) — fonte de verdade pro event_time
+            // gravado em attendance_logs na confirmação (ver updateStudentStatus).
+            // entry_full/exit_full (coluna `time`, sem data) NÃO servem pra isso.
+            entry_at: s.today_entry_at || null,
+            exit_at: s.today_exit_at || null,
           }
         };
       });
@@ -810,6 +818,13 @@ export default function App() {
       // Grava o horário exato da solicitação pelo pai/totem (ou direto pelo admin se não havia solicitação)
       let usedEntryStr = student.todayRecord.entry_full;
       let usedExitStr = student.todayRecord.exit_full;
+      // Instante exato (timestamptz) — ver comentário na migration
+      // 20260904_add_today_entry_exit_timestamptz.sql: today_entry/today_exit
+      // são colunas `time` (sem data) e perdem a data/hora completa ao ir e
+      // voltar do banco, então NUNCA devem ser usadas pra calcular
+      // attendance_logs.event_time — usar sempre entry_at/exit_at.
+      let usedEntryAt = student.todayRecord.entry_at || null;
+      let usedExitAt = student.todayRecord.exit_at || null;
 
       // Só reaproveita o horário já gravado quando esta confirmação vem de uma
       // solicitação pendente (pending_entry/pending_exit) — aí o horário certo
@@ -825,11 +840,17 @@ export default function App() {
       if (isRequestEntry || (isConfirmEntry && !wasPendingEntry)) {
         studentUpdates.today_entry = fullRecordStr;
         studentUpdates.today_exit = null;
+        studentUpdates.today_entry_at = now.toISOString();
+        studentUpdates.today_exit_at = null;
         usedEntryStr = fullRecordStr;
         usedExitStr = null;
+        usedEntryAt = now.toISOString();
+        usedExitAt = null;
       } else if (isRequestExit || (isConfirmExit && !wasPendingExit)) {
         studentUpdates.today_exit = fullRecordStr;
+        studentUpdates.today_exit_at = now.toISOString();
         usedExitStr = fullRecordStr;
+        usedExitAt = now.toISOString();
       }
 
       const { error } = await supabase.from('students').update(studentUpdates).eq('id', studentId);
@@ -837,29 +858,28 @@ export default function App() {
 
       // 2. Se for confirmação de entrada ou saída, insere log imutável usando o horário da solicitação original!
       if (isConfirmEntry || isConfirmExit) {
-        let eventTimeIso = now.toISOString();
+        let eventTimeIso = now.toISOString(); // fallback final: horário da confirmação (só se nada melhor for encontrado)
 
-        // Busca o horário salvo (pode estar no estado local ou precisar ir ao banco)
-        let recordStr = isConfirmEntry ? usedEntryStr : usedExitStr;
+        // Busca o instante salvo (pode estar no estado local ou precisar ir ao banco)
+        let recordAt = isConfirmEntry ? usedEntryAt : usedExitAt;
 
-        // Fallback: se o estado local não tem o horário completo (veio via Realtime antigo), busca no banco
-        if (!recordStr) {
+        // Fallback: se o estado local não tem o instante (ex: sessão recarregada
+        // entre a solicitação e a confirmação), busca no banco — today_entry_at/
+        // today_exit_at são timestamptz, então chegam intactos, sem o problema
+        // de perda de data que today_entry/today_exit (time) têm.
+        if (!recordAt) {
           const { data: freshStudent } = await supabase
             .from('students')
-            .select('today_entry, today_exit')
+            .select('today_entry_at, today_exit_at')
             .eq('id', studentId)
             .single();
           if (freshStudent) {
-            recordStr = isConfirmEntry ? freshStudent.today_entry : freshStudent.today_exit;
+            recordAt = isConfirmEntry ? freshStudent.today_entry_at : freshStudent.today_exit_at;
           }
         }
 
-        if (recordStr && recordStr.includes('|')) {
-          const [datePart, timePart] = recordStr.split('|');
-          const localDate = new Date(`${datePart}T${timePart}`);
-          if (!isNaN(localDate.getTime())) {
-            eventTimeIso = localDate.toISOString();
-          }
+        if (recordAt) {
+          eventTimeIso = recordAt;
         }
 
         const { error: logError } = await supabase.from('attendance_logs').insert([{
@@ -886,6 +906,8 @@ export default function App() {
             // Mantém os valores completos: se a confirmação não mudou, preserva o anterior
             entry_full: usedEntryStr || s.todayRecord.entry_full,
             exit_full: isConfirmEntry ? null : (usedExitStr || s.todayRecord.exit_full),
+            entry_at: usedEntryAt || s.todayRecord.entry_at,
+            exit_at: isConfirmEntry ? null : (usedExitAt || s.todayRecord.exit_at),
           },
         };
       }));
