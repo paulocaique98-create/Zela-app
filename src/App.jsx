@@ -5,6 +5,7 @@ import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
+import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -1014,6 +1015,13 @@ export default function App() {
         }
 
         await updateStudentStatus(studentId, newStatus, requesterId);
+
+        // Notifica a família (in-app + push) NO MOMENTO da solicitação —
+        // não espera a recepção confirmar no Monitor, que pode levar horas.
+        // Best-effort: nunca deve travar o fluxo de reconhecimento no totem.
+        if (newStatus === 'pending_entry' || newStatus === 'pending_exit') {
+          notifyCheckinRequest({ studentId, eventType: newStatus });
+        }
 
       } else if (newStatus === 'pending_entry' || newStatus === 'pending_exit') {
         // Aluno já está no status pending: re-disparar o evento Realtime

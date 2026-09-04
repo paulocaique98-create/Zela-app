@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, BookOpen, UserRoundPlus, X } from 'lucide-react';
+import { Bell, CheckCircle2, AlertTriangle, AlertCircle, Info, BookOpen, UserRoundPlus, X, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Extrai o valor de ?tab= de uma url tipo "/?tab=diario" — convenção já usada
@@ -164,6 +164,11 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
       case 'checkin_confirmed':
       case 'checkout_confirmed':
         return { icon: <CheckCircle2 size={18} className="text-emerald-600" />, bg: 'bg-emerald-100', dot: 'bg-emerald-500' };
+      case 'checkin_requested':
+      case 'checkout_requested':
+        // Reconhecimento no totem já aconteceu, mas ainda aguarda a recepção
+        // confirmar no Monitor — cor âmbar (ver notify-checkin-request).
+        return { icon: <Clock size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
       case 'late_entry_5min':
       case 'late_exit_5min':
       case 'late_exit_10min_warning':
