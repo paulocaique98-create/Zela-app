@@ -97,13 +97,16 @@ export default function AdminDailyPresence({ currentUser }) {
           ))}
         </div>
 
-        {/* Sub-menu de Turmas */}
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit overflow-x-auto max-w-full">
+        {/* Sub-menu de Turmas -- mesma largura da linha de cards acima, com
+            as abas se distribuindo por igual nesse espaço (antes era
+            w-fit, só do tamanho do conteúdo, ficando bem mais estreito e
+            desalinhado do resto da tela). */}
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-full overflow-x-auto">
           {turmaOptions.map(turma => (
             <button
               key={turma}
               onClick={() => setSelectedTurma(turma)}
-              className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              className={`flex-1 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                 selectedTurma === turma
                   ? 'bg-white shadow-sm text-indigo-900'
                   : 'text-slate-500 hover:text-slate-700'
@@ -137,7 +140,18 @@ export default function AdminDailyPresence({ currentUser }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            {/* Larguras fixas por coluna (table-fixed) -- sem isso o navegador
+                deixava a última coluna esticar até o fim, com o conteúdo
+                colado à esquerda e uma faixa enorme de espaço vazio à
+                direita, em vez de distribuir o espaço entre as colunas. */}
+            <table className="w-full text-sm table-fixed">
+              <colgroup>
+                <col className="w-[32%]" />
+                <col className="w-[20%] hidden sm:table-column" />
+                <col className="w-[16%]" />
+                <col className="w-[16%] hidden md:table-column" />
+                <col className="w-[16%]" />
+              </colgroup>
               <thead>
                 <tr className="text-left border-b border-slate-100">
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
@@ -153,17 +167,17 @@ export default function AdminDailyPresence({ currentUser }) {
                   return (
                     <tr key={student.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3 pr-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center shrink-0 border border-indigo-100">
                             <span className="text-indigo-600 font-bold text-xs">
                               {student.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <span className="font-semibold text-slate-800">{student.name}</span>
+                          <span className="font-semibold text-slate-800 truncate">{student.name}</span>
                         </div>
                       </td>
                       <td className="py-3 pr-4 hidden sm:table-cell">
-                        <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-md">
+                        <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-md truncate inline-block max-w-full">
                           {student.turma || '—'}
                         </span>
                       </td>
