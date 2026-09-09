@@ -52,6 +52,21 @@ function sanitizeWeeklySchedule(ws) {
 const DOC_TYPES = ['CPF', 'RG', 'CNH', 'Passaporte'];
 const ESTADO_CIVIL = ['Solteiro(a)', 'Casado(a)', 'Separado(a)', 'Divorciado(a)', 'Viúvo(a)'];
 
+// Mapa período (texto) -> horário de entrada/saída contratado. Única fonte
+// de verdade -- antes existia uma cópia local disso só no fluxo de EDIÇÃO de
+// aluno, e o fluxo de CRIAÇÃO de família nova (mais abaixo) nunca a usava,
+// deixando contracted_entry_time/exit_time em branco mesmo com período
+// preenchido (bug real: sumia o horário contratado do Relatório de Horas
+// Extras pra todo aluno cadastrado nesse fluxo).
+const PERIODO_HORARIOS_BASE = {
+  '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
+  '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
+  '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
+  '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
+  '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
+  '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
+};
+
 // Horários personalizados por dia da semana (students.weekly_schedule) --
 // entrada E saída podem ser sobrescritas num dia específico (ex.: quarta o
 // aluno entra 1h mais cedo, ou fica 2h a mais na saída). Sem override, o
@@ -656,24 +671,15 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               ? `${s.custom_entry} às ${s.custom_exit}`
               : s.periodo;
 
-            const PERIODO_HORARIOS = {
-              '07:00 às 13:00': { entry: '07:00:00', exit: '13:00:00' },
-              '07:00 às 15:00': { entry: '07:00:00', exit: '15:00:00' },
-              '07:00 às 17:00': { entry: '07:00:00', exit: '17:00:00' },
-              '09:00 às 19:00': { entry: '09:00:00', exit: '19:00:00' },
-              '11:00 às 19:00': { entry: '11:00:00', exit: '19:00:00' },
-              '13:00 às 19:00': { entry: '13:00:00', exit: '19:00:00' },
-            };
-
             let entryTime = null;
             let exitTime = null;
 
             if (s.is_custom_period && s.custom_entry && s.custom_exit) {
               entryTime = `${s.custom_entry}:00`;
               exitTime = `${s.custom_exit}:00`;
-            } else if (s.periodo && PERIODO_HORARIOS[s.periodo]) {
-              entryTime = PERIODO_HORARIOS[s.periodo].entry;
-              exitTime = PERIODO_HORARIOS[s.periodo].exit;
+            } else if (s.periodo && PERIODO_HORARIOS_BASE[s.periodo]) {
+              entryTime = PERIODO_HORARIOS_BASE[s.periodo].entry;
+              exitTime = PERIODO_HORARIOS_BASE[s.periodo].exit;
             }
 
             const studentData = {
@@ -791,6 +797,24 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               const periodStr = s.is_custom_period
                 ? `${s.custom_entry} às ${s.custom_exit}`
                 : s.periodo;
+
+              // Mesma lógica do fluxo de EDIÇÃO (3b acima) -- sem isso, todo
+              // aluno criado por aqui (nova família) ficava com
+              // contracted_entry_time/exit_time em branco, mesmo com período
+              // preenchido (personalizado ou não). Isso deixava o horário
+              // contratado sumir em relatórios que dependem dessas colunas
+              // (ex: Relatório de Horas Extras), mesmo o período aparecendo
+              // certinho no cadastro.
+              let entryTime = null;
+              let exitTime = null;
+              if (s.is_custom_period && s.custom_entry && s.custom_exit) {
+                entryTime = `${s.custom_entry}:00`;
+                exitTime = `${s.custom_exit}:00`;
+              } else if (s.periodo && PERIODO_HORARIOS_BASE[s.periodo]) {
+                entryTime = PERIODO_HORARIOS_BASE[s.periodo].entry;
+                exitTime = PERIODO_HORARIOS_BASE[s.periodo].exit;
+              }
+
               // Campos base garantidos
               return {
                 name: s.name,
@@ -799,6 +823,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 family_id: newUser.id,
                 status: 'idle',
                 school_id: currentUser.school_id,
+                contracted_entry_time: entryTime,
+                contracted_exit_time: exitTime,
                 // Campos extras (ignorados pelo Supabase se coluna não existir)
                 ...(s.birth_date ? { birth_date: s.birth_date } : {}),
                 ...(s.turno ? { turno: s.turno } : {}),
