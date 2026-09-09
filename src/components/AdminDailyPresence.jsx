@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-
-import { TURMAS } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 
 const STATUS_CONFIG = {
   in_school: { label: 'Na escola',  cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
@@ -12,6 +11,36 @@ const STATUS_CONFIG = {
 };
 
 export default function AdminDailyPresence({ currentUser }) {
+  // Turmas cadastradas oficialmente em Gestão de Turmas (schools.turmas).
+  const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
+
+  // Turmas que já estão de fato gravadas em algum aluno -- pega direto do
+  // cadastro do aluno, não só da lista oficial da escola. Existem alunos
+  // antigos com o texto da turma digitado de um jeito que não bate mais com
+  // o texto oficial atual (ex: aluno com "Kids I", escola tem "Kids I -
+  // Matutino"); juntando as duas fontes, nenhuma turma em uso fica de fora
+  // do menu de seleção, mesmo as que a lista oficial não cobre mais.
+  const [studentTurmas, setStudentTurmas] = useState([]);
+  useEffect(() => {
+    if (!currentUser?.school_id) return;
+    let active = true;
+    supabase
+      .from('students')
+      .select('turma')
+      .eq('school_id', currentUser.school_id)
+      .not('turma', 'is', null)
+      .then(({ data, error }) => {
+        if (!active || error) return;
+        setStudentTurmas([...new Set((data || []).map(s => s.turma).filter(Boolean))]);
+      });
+    return () => { active = false; };
+  }, [currentUser?.school_id]);
+
+  const turmaOptions = [
+    'Todas as Turmas',
+    ...[...new Set([...schoolTurmas, ...studentTurmas])].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+  ];
+
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,7 +121,7 @@ export default function AdminDailyPresence({ currentUser }) {
 
         {/* Sub-menu de Turmas */}
         <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit overflow-x-auto max-w-full">
-          {TURMAS.map(turma => (
+          {turmaOptions.map(turma => (
             <button
               key={turma}
               onClick={() => setSelectedTurma(turma)}

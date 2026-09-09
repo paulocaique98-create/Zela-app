@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Loader2, Trash2, Pencil, X, Check, Plus, Search, Phone, Mail, Briefcase, KeyRound, GraduationCap, Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { CARGOS_FUNCIONARIOS, TURMAS, SETORES_CHAT } from '../lib/constants';
+import { CARGOS_FUNCIONARIOS, SETORES_CHAT } from '../lib/constants';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import { formatPersonName } from '../utils/formatName';
 import ConfirmModal from './ConfirmModal';
 import AdminUserRegistration from './AdminUserRegistration';
@@ -49,6 +50,10 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
   const [isSavingTurmas, setIsSavingTurmas] = useState(false);
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
+  // Turmas de verdade da escola (não a lista fixa do constants.js) -- senão
+  // uma turma criada pela própria escola (Gestão de Turmas) nunca aparecia
+  // aqui pra atribuir a um professor.
+  const { turmas: schoolTurmas } = useSchoolConfig(schoolId);
 
   const fetchFuncionarios = async () => {
     if (!schoolId) return;
@@ -598,7 +603,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             </div>
 
             <div className="flex flex-wrap gap-2 mb-5">
-              {TURMAS.filter(t => t !== 'Todas as Turmas').map(t => {
+              {schoolTurmas.map(t => {
                 const isSelected = turmasDraft.includes(t);
                 return (
                   <button
