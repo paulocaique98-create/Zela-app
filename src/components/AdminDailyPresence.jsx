@@ -11,35 +11,13 @@ const STATUS_CONFIG = {
 };
 
 export default function AdminDailyPresence({ currentUser }) {
-  // Turmas cadastradas oficialmente em Gestão de Turmas (schools.turmas).
+  // Turmas cadastradas oficialmente em Gestão de Turmas (schools.turmas) --
+  // a MESMA lista usada no cadastro de aluno (Novo Usuário > Alunos
+  // vinculados > Turma), pra não duplicar opção quando o texto gravado num
+  // aluno antigo não bate mais com o texto oficial atual (ex: "Kids I" e
+  // "Kids I - Matutino" apareceriam como duas turmas diferentes).
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
-
-  // Turmas que já estão de fato gravadas em algum aluno -- pega direto do
-  // cadastro do aluno, não só da lista oficial da escola. Existem alunos
-  // antigos com o texto da turma digitado de um jeito que não bate mais com
-  // o texto oficial atual (ex: aluno com "Kids I", escola tem "Kids I -
-  // Matutino"); juntando as duas fontes, nenhuma turma em uso fica de fora
-  // do menu de seleção, mesmo as que a lista oficial não cobre mais.
-  const [studentTurmas, setStudentTurmas] = useState([]);
-  useEffect(() => {
-    if (!currentUser?.school_id) return;
-    let active = true;
-    supabase
-      .from('students')
-      .select('turma')
-      .eq('school_id', currentUser.school_id)
-      .not('turma', 'is', null)
-      .then(({ data, error }) => {
-        if (!active || error) return;
-        setStudentTurmas([...new Set((data || []).map(s => s.turma).filter(Boolean))]);
-      });
-    return () => { active = false; };
-  }, [currentUser?.school_id]);
-
-  const turmaOptions = [
-    'Todas as Turmas',
-    ...[...new Set([...schoolTurmas, ...studentTurmas])].sort((a, b) => a.localeCompare(b, 'pt-BR')),
-  ];
+  const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
 
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
   const [allStudents, setAllStudents] = useState([]);
