@@ -88,6 +88,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
         return {
           key: `${group.student_id}_${group.date}`,
+          studentId: group.student_id,
           studentName: group.studentData?.name || '—',
           family: group.studentData?.users?.name || '—',
           date: formatDate(entryTimeIso || exitTimeIso),
@@ -148,7 +149,6 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
       records: filtered,
       periodLabel,
       school: currentSchool,
-      totals: { totalRegistros, totalMinutosExcedentes, totalValorFormatado },
     });
   };
 

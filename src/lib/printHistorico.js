@@ -2,12 +2,14 @@
 // (Família) — mesmo mecanismo comprovado do relatório de Mitigação
 // (window.open + print nativo do navegador, sem depender de lib de PDF).
 //
-// Regra importante: quando o relatório sai sem um aluno específico
-// selecionado (filtro/busca vazios ou combinando vários alunos), cada
-// aluno vira sua PRÓPRIA página (page-break-after), com cabeçalho próprio
-// (Aluno / Turma / Responsável Financeiro) — nunca mistura horários de
-// alunos diferentes na mesma tabela. Se o filtro já aponta pra um único
-// aluno, sai só a página dele.
+// Cada aluno vira sua PRÓPRIA tabela, com o cabeçalho completo (marca,
+// título, escola, data de geração) dentro do <thead> dessa tabela — o
+// navegador repete automaticamente esse <thead> em toda página que a
+// tabela ocupar na impressão, então o cabeçalho nunca some mesmo se um
+// aluno tiver muitos registros e ocupar mais de uma folha. Folha em pé
+// (retrato), não mais deitada: layout anterior dependia do navegador
+// respeitar a orientação configurada, e o "Salvar como PDF" nem sempre
+// respeitava isso.
 
 function escapeHtml(str) {
   return (str || '')
@@ -20,119 +22,140 @@ function escapeHtml(str) {
 }
 
 const STYLES = `
-  /* Sem isso a página herda a largura da janela do popup em vez do papel —
-     mesma correção aplicada no relatório de Mitigação. */
-  @page { size: A4 landscape; margin: 0; }
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; }
-  html, body { width: 297mm; max-width: 297mm; margin: 0 auto; overflow-x: hidden; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; }
+  html, body { width: 210mm; max-width: 210mm; margin: 0 auto; overflow-x: hidden; }
+  body { font-family: "Source Sans 3", Arial, Helvetica, sans-serif; color: #1b1a30; }
   p, td, div, th { overflow-wrap: break-word; word-break: break-word; }
 
-  table.page { width: 100%; max-width: 297mm; border-collapse: collapse; table-layout: fixed; }
-  table.page > thead > tr > td { padding: 20px 36px 8px; }
-  table.page > tbody > tr > td { padding: 0 36px 28px; }
+  table.student-sheet { width: 100%; max-width: 210mm; border-collapse: collapse; table-layout: fixed; margin-bottom: 0; }
+  table.student-sheet > thead > tr > td { padding: 22px 28px 14px; }
+  table.student-sheet > tbody > tr > td { padding: 0 28px 24px; }
+  .sheet-wrap { page-break-after: always; }
+  .sheet-wrap:last-child { page-break-after: auto; }
 
-  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 3px solid #3525cd; padding-bottom: 12px; margin-bottom: 4px; }
-  .header-logo img { max-height: 44px; max-width: 180px; object-fit: contain; }
-  .header-title h1 { margin: 0; font-size: 20px; color: #0b1c30; }
-  .header-title p { margin: 2px 0 0; font-size: 12px; color: #464555; }
-  .header-meta { text-align: right; font-size: 11px; color: #777587; }
+  .letterhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 2.5px solid #3525cd; padding-bottom: 12px; margin-bottom: 4px; }
+  .lh-brand { display: flex; align-items: center; gap: 10px; }
+  .lh-mark { width: 26px; height: 26px; border-radius: 7px; background: #3525cd; flex-shrink: 0; }
+  .lh-brand-name { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 14px; color: #1b1a30; }
+  .lh-brand-name span { color: #8b88a8; font-weight: 400; }
+  .lh-title { text-align: center; flex: 1; }
+  .lh-eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: #3525cd; margin: 0 0 3px; }
+  .lh-title h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; margin: 0; font-size: 18px; color: #1b1a30; }
+  .lh-title p { margin: 3px 0 0; font-size: 10px; color: #8b88a8; }
+  .lh-meta { text-align: right; font-size: 9px; color: #8b88a8; line-height: 1.4; }
+  .lh-meta b { display: block; font-size: 10px; color: #5b5876; }
 
-  /* Cabeçalho do ALUNO — repete no topo de cada página, evita misturar
-     um aluno com o outro mesmo folheando o PDF fora de ordem. */
-  table.student-info { width: 100%; border-collapse: collapse; margin: 16px 0 20px; }
-  table.student-info td { border: 1px solid #94a3b8; padding: 8px 12px; font-size: 12px; vertical-align: top; }
-  table.student-info td strong { display: inline; }
+  .student-card { background: #f6f5ff; border: 1px solid #e1e2f2; border-radius: 10px; padding: 12px 16px; margin: 16px 0 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .student-card .name { font-weight: 700; font-size: 15px; color: #1b1a30; }
+  .student-card .meta-line { font-size: 11px; color: #5b5876; margin-top: 2px; }
+  .student-card .seq { font-size: 9px; color: #8b88a8; white-space: nowrap; }
 
-  .summary { display: flex; gap: 12px; margin-bottom: 20px; }
-  .summary .card { flex: 1; background: #f8f9ff; border: 1px solid #d3e4fe; border-radius: 10px; padding: 10px 14px; }
-  .summary .card .label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #777587; }
-  .summary .card .value { font-size: 20px; font-weight: 700; color: #3525cd; margin-top: 2px; }
+  .stats { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stats .stat { flex: 1; background: #ffffff; border: 1px solid #e1e2f2; border-radius: 8px; padding: 10px 14px; }
+  .stats .stat .lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8b88a8; }
+  .stats .stat .val { font-family: "Fraunces", Georgia, serif; font-size: 19px; font-weight: 600; color: #1b1a30; margin-top: 2px; }
+  .stats .stat.warn .val { color: #9a5b00; }
 
   table.data { width: 100%; border-collapse: collapse; font-size: 11px; }
-  table.data thead th { text-align: left; background: #eff4ff; color: #464555; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 2px solid #c7c4d8; }
-  table.data tbody td { padding: 7px 10px; border-bottom: 1px solid #eff4ff; vertical-align: top; }
-  table.data tbody tr:nth-child(even) { background: #fafbff; }
-  .badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; }
-  .badge-ok { background: #dcfce7; color: #15803d; }
-  .badge-over { background: #fee2e2; color: #b91c1c; }
-  .badge-open { background: #fef3c7; color: #b45309; }
+  table.data thead th { text-align: left; background: #eeecfd; color: #5b5876; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; }
+  table.data thead th:first-child { border-radius: 6px 0 0 6px; }
+  table.data thead th:last-child { border-radius: 0 6px 6px 0; }
+  table.data tbody td { padding: 8px 10px; border-bottom: 1px solid #e1e2f2; vertical-align: top; }
+  table.data tbody tr:nth-child(even) { background: #f9f9ff; }
+  .pill { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 9px; border-radius: 999px; }
+  .pill-ok { background: #e3f6e8; color: #1a7d3a; }
+  .pill-over { background: #fde7e7; color: #b91c1c; }
+  .pill-open { background: #fff3de; color: #9a5b00; }
 
-  .footer-note { margin-top: 16px; font-size: 9px; color: #777587; text-align: right; }
-
-  .student-page { page-break-after: always; }
-  .student-page:last-child { page-break-after: auto; }
+  .sheet-footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid #e1e2f2; display: flex; justify-content: space-between; font-size: 9px; color: #8b88a8; }
 
   @media print {
-    table.page > thead > tr > td { padding: 12px 24px 6px; }
-    table.page > tbody > tr > td { padding: 0 24px 20px; }
+    table.student-sheet > thead > tr > td { padding: 16px 22px 10px; }
+    table.student-sheet > tbody > tr > td { padding: 0 22px 18px; }
   }
 `;
 
-function buildHeaderLogoHtml(school) {
-  return school?.logo_url
-    ? `<img src="${escapeHtml(school.logo_url)}" alt="${escapeHtml(school?.name || '')}" />`
-    : `<span style="font-weight:700;font-size:16px;">${escapeHtml(school?.name || '')}</span>`;
+function buildLetterheadHtml({ title, subtitle, generatedAt }) {
+  return `
+    <div class="letterhead">
+      <div class="lh-brand">
+        <div class="lh-mark"></div>
+        <div class="lh-brand-name">Zela <span>Portal</span></div>
+      </div>
+      <div class="lh-title">
+        <p class="lh-eyebrow">${escapeHtml(subtitle)}</p>
+        <h1>${escapeHtml(title)}</h1>
+      </div>
+      <div class="lh-meta">Gerado em<br/><b>${escapeHtml(generatedAt)}</b></div>
+    </div>
+  `;
 }
 
-function statusBadgeHtml(r) {
-  if (r.duration === null) return `<span class="badge badge-open">Em andamento</span>`;
-  if (r.overtime) return `<span class="badge badge-over">+${escapeHtml(r.overtime)}</span>`;
-  return `<span class="badge badge-ok">Ok</span>`;
+function statusPillHtml(r) {
+  if (r.duration === null) return `<span class="pill pill-open">Em andamento</span>`;
+  if (r.overtime) return `<span class="pill pill-over">Excedente de ${escapeHtml(r.overtime)}</span>`;
+  return `<span class="pill pill-ok">Dentro do horário</span>`;
 }
 
-// Monta a página de UM aluno: cabeçalho (Aluno/Turma/Responsável
-// Financeiro) + resumo + tabela só com os registros dele. O rodapé só
-// entra na última página — colocá-lo fora do último .student-page fazia
-// o navegador abrir uma página extra em branco só pra essa linha.
-function buildStudentPageHtml(studentRecords, periodLabel, isLast) {
+// Monta a folha de UM aluno inteira, com cabeçalho próprio no <thead> pra
+// repetir em toda página que essa tabela ocupar na impressão.
+function buildStudentSheetHtml(studentRecords, { school, periodLabel, generatedAt, index, total, isEmpty }) {
   const first = studentRecords[0];
-  const total = studentRecords.length;
-  const dias = new Set(studentRecords.map(r => r.date)).size;
-  const excedentes = studentRecords.filter(r => r.overtime).length;
+  const totalRegistros = isEmpty ? 0 : studentRecords.length;
+  const dias = isEmpty ? 0 : new Set(studentRecords.map(r => r.date)).size;
+  const excedentes = isEmpty ? 0 : studentRecords.filter(r => r.overtime).length;
 
-  const rowsHtml = studentRecords.map(r => `
+  const rowsHtml = isEmpty ? '' : studentRecords.map(r => `
     <tr>
       <td>${escapeHtml(r.date)}</td>
-      <td>${escapeHtml(r.entry) || '—'}</td>
-      <td>${escapeHtml(r.exit) || '—'}</td>
+      <td>${escapeHtml(r.entry) || '•'}</td>
+      <td>${escapeHtml(r.exit) || '•'}</td>
       <td>${escapeHtml(r.contracted)}</td>
-      <td>${statusBadgeHtml(r)}</td>
+      <td>${statusPillHtml(r)}</td>
     </tr>
   `).join('');
 
   return `
-    <div class="student-page">
-      <table class="student-info">
-        <tr>
-          <td style="width:40%;"><strong>ALUNO:</strong> ${escapeHtml(first.studentName)}</td>
-          <td><strong>TURMA:</strong> ${escapeHtml(first.turma) || '—'}</td>
-        </tr>
-        <tr>
-          <td colspan="2"><strong>RESPONSÁVEL FINANCEIRO:</strong> ${escapeHtml(first.family) || '—'}</td>
-        </tr>
-      </table>
-
-      <div class="summary">
-        <div class="card"><div class="label">Registros</div><div class="value">${total}</div></div>
-        <div class="card"><div class="label">Dias no período</div><div class="value">${dias}</div></div>
-        <div class="card"><div class="label">Com excedente</div><div class="value">${excedentes}</div></div>
-      </div>
-
-      <table class="data">
+    <div class="sheet-wrap">
+      <table class="student-sheet">
         <thead>
-          <tr>
-            <th>Data</th>
-            <th>Entrada</th>
-            <th>Saída</th>
-            <th>Ciclo</th>
-            <th>Status</th>
-          </tr>
+          <tr><td>${buildLetterheadHtml({
+            title: 'Histórico Geral',
+            subtitle: `${school?.name || ''} · ${periodLabel}`,
+            generatedAt,
+          })}</td></tr>
         </thead>
-        <tbody>${rowsHtml || `<tr><td colspan="5" style="text-align:center;padding:24px;color:#777587;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
-      </table>
+        <tbody>
+          <tr><td>
+            <div class="student-card">
+              <div>
+                <div class="name">${escapeHtml(first.studentName)}</div>
+                <div class="meta-line">${first.turma ? `Turma ${escapeHtml(first.turma)} · ` : ''}Responsável financeiro ${escapeHtml(first.family) || 'não informado'}</div>
+              </div>
+              <div class="seq">Aluno ${index} de ${total}</div>
+            </div>
 
-      ${isLast ? '<p class="footer-note">Zela · Gestão Escolar Inteligente</p>' : ''}
+            <div class="stats">
+              <div class="stat"><div class="lbl">Registros</div><div class="val">${totalRegistros}</div></div>
+              <div class="stat"><div class="lbl">Dias no período</div><div class="val">${dias}</div></div>
+              <div class="stat warn"><div class="lbl">Com excedente</div><div class="val">${excedentes}</div></div>
+            </div>
+
+            <table class="data">
+              <thead>
+                <tr><th>Data</th><th>Entrada</th><th>Saída</th><th>Ciclo</th><th>Status</th></tr>
+              </thead>
+              <tbody>${rowsHtml || `<tr><td colspan="5" style="text-align:center;padding:24px;color:#8b88a8;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
+            </table>
+
+            <div class="sheet-footer">
+              <span>Zela, Gestão Escolar Inteligente</span>
+              <span>Aluno ${index} de ${total}</span>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
     </div>
   `;
 }
@@ -140,8 +163,8 @@ function buildStudentPageHtml(studentRecords, periodLabel, isLast) {
 function buildBodyHtml({ records, periodLabel, school }) {
   const generatedAt = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  // Agrupa por aluno (id se disponível, senão nome) — cada grupo vira uma
-  // página própria, na ordem em que já apareciam na tela.
+  // Agrupa por aluno (id se disponível, senão nome) — cada grupo vira sua
+  // própria folha, na ordem em que já apareciam na tela.
   const groups = [];
   const indexByKey = new Map();
   records.forEach(r => {
@@ -153,25 +176,11 @@ function buildBodyHtml({ records, periodLabel, school }) {
     groups[indexByKey.get(key)].push(r);
   });
 
-  const pagesHtml = groups.length > 0
-    ? groups.map((g, i) => buildStudentPageHtml(g, periodLabel, i === groups.length - 1)).join('')
-    : buildStudentPageHtml([{ studentName: '—', turma: '', family: '' }], periodLabel, true).replace(
-        /<tbody>.*<\/tbody>/s,
-        `<tbody><tr><td colspan="5" style="text-align:center;padding:24px;color:#777587;">Nenhum registro no período selecionado.</td></tr></tbody>`
-      );
+  if (groups.length === 0) {
+    return buildStudentSheetHtml([{ studentName: 'Nenhum aluno encontrado', turma: '', family: '' }], { school, periodLabel, generatedAt, index: 1, total: 1, isEmpty: true });
+  }
 
-  return `
-    <div class="header-row">
-      <div class="header-logo">${buildHeaderLogoHtml(school)}</div>
-      <div class="header-title" style="flex:1; text-align:center;">
-        <h1>Histórico Geral</h1>
-        <p>${escapeHtml(school?.name || '')} · ${escapeHtml(periodLabel)}</p>
-      </div>
-      <div class="header-meta">Gerado em<br/>${generatedAt}</div>
-    </div>
-
-    ${pagesHtml}
-  `;
+  return groups.map((g, i) => buildStudentSheetHtml(g, { school, periodLabel, generatedAt, index: i + 1, total: groups.length })).join('');
 }
 
 function openPrintWindow(title, bodyHtml) {
@@ -186,15 +195,10 @@ function openPrintWindow(title, bodyHtml) {
     <head>
       <meta charset="utf-8" />
       <title>${escapeHtml(title)}</title>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" />
       <style>${STYLES}</style>
     </head>
-    <body>
-      <table class="page">
-        <tbody>
-          <tr><td>${bodyHtml}</td></tr>
-        </tbody>
-      </table>
-    </body>
+    <body>${bodyHtml}</body>
     </html>
   `);
   win.document.close();
@@ -203,11 +207,14 @@ function openPrintWindow(title, bodyHtml) {
 }
 
 // `records` já vem filtrado pela tela (busca + período). Se os registros
-// pertencerem a mais de um aluno, cada um sai em página separada; se já
-// for um único aluno (ex: busca por nome), sai só a página dele.
+// pertencerem a mais de um aluno, cada um sai em sua própria folha; se já
+// for um único aluno (ex: busca por nome), sai só a folha dele.
 export function printHistoricoReport({ records, periodLabel, school }) {
   const bodyHtml = buildBodyHtml({ records, periodLabel, school });
-  const win = openPrintWindow(`Histórico Geral · ${school?.name || ''}`.trim(), bodyHtml);
+  const win = openPrintWindow(`Histórico Geral, ${school?.name || ''}`.trim(), bodyHtml);
   if (!win) return;
-  setTimeout(() => win.print(), 400);
+  // Espera a fonte carregar antes de imprimir, senão o navegador às vezes
+  // imprime com a fonte de sistema já que a folha do Google Fonts ainda não
+  // tinha aplicado no momento do print.
+  setTimeout(() => win.print(), 500);
 }
