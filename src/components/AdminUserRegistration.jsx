@@ -60,14 +60,14 @@ const ESTADO_CIVIL = ['Solteiro(a)', 'Casado(a)', 'Separado(a)', 'Divorciado(a)'
 // no banco (trigger protect_student_weekly_schedule), então mesmo que a UI
 // falhasse em esconder o campo pra outro role, a escrita seria bloqueada.
 // Chaves em português sem acento, mesma convenção da coluna.
+// Só dias úteis (segunda a sexta) -- a escola não funciona aos fins de
+// semana, então não faz sentido oferecer override de horário nesses dias.
 const DIAS_SEMANA_HORARIO = [
   { key: 'segunda', label: 'Segunda' },
   { key: 'terca', label: 'Terça' },
   { key: 'quarta', label: 'Quarta' },
   { key: 'quinta', label: 'Quinta' },
   { key: 'sexta', label: 'Sexta' },
-  { key: 'sabado', label: 'Sábado' },
-  { key: 'domingo', label: 'Domingo' },
 ];
 
 // ──────────────────────────────────────────────────────────
