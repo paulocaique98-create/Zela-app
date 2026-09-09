@@ -163,16 +163,47 @@ serve(async (req) => {
       throw new Error(`Erro ao vincular aos alunos: ${guardianError.message}`)
     }
 
-    // Esta função só cria o 2º Responsável (login próprio) — NÃO cria mais
-    // automaticamente um registro em authorized_persons pra essa pessoa.
-    // "Autorizados" agora é só quem qualquer um dos responsáveis (principal
-    // ou 2º) cadastrar manualmente ali dentro — se o 2º Responsável quiser
-    // aparecer no reconhecimento facial, ele mesmo cadastra a própria
-    // biometria em Autorizados usando o login dele. Evita duas biometrias
-    // pra mesma pessoa (uma auto-criada aqui + outra manual), que travava o
-    // reconhecimento por ambiguidade.
+    // 7. Cria um placeholder em authorized_persons pra esse 2º Responsável,
+    // sob a PRÓPRIA conta dele (family_id = newUserId) — SEM foto/biometria.
+    // Isso é o que faz ele aparecer em "Pendentes" no Cadastro de Biometria;
+    // sem isso, o 2º Responsável nunca aparece lá e a escola não tem como
+    // saber que falta cadastrar a biometria dele (bug real: vários 2º
+    // responsáveis ficaram invisíveis nessa tela por meses).
+    //
+    // Isso foi removido antes (commit cad8a0a) por causa do caso Hanaynna
+    // Schmitz: ela tinha DUAS biometrias cadastradas (uma auto-criada aqui,
+    // outra adicionada manualmente pelo marido em Autorizados dele) e isso
+    // travava o reconhecimento por ambiguidade. MAS o mesmo commit também
+    // adicionou a proteção real contra esse problema — togglePhoto() em
+    // App.jsx já bloqueia salvar qualquer biometria cujo rosto bata com o de
+    // outra pessoa já cadastrada na escola, e handleSaveAuth() já bloqueia
+    // cadastrar manualmente um Autorizado com o mesmo nome de um 2º
+    // Responsável com login próprio vinculado aos mesmos alunos. Como este
+    // placeholder nunca carrega foto/descritor sozinho, ele não pode causar
+    // ambiguidade — só existe pra aparecer em Pendentes até alguém (a
+    // própria pessoa, logada, ou a escola) cadastrar a foto de verdade.
+    //
+    // Best-effort: se falhar, não desfaz a criação da conta (que já
+    // funciona e permite login) — só fica sem aparecer em Pendentes até
+    // alguém adicionar manualmente depois.
+    let authorizedPersonCreated = true
+    const { error: apError } = await adminClient
+      .from('authorized_persons')
+      .insert([{
+        family_id: newUserId,
+        name,
+        relation: relationship || 'Responsável',
+        has_photo: false,
+        emergency_order: 1,
+        school_id
+      }])
 
-    // 7. E-mail de boas-vindas — best-effort: se o Resend falhar, não desfaz
+    if (apError) {
+      console.error('Falha ao criar placeholder em authorized_persons para 2º responsável:', apError.message)
+      authorizedPersonCreated = false
+    }
+
+    // 8. E-mail de boas-vindas — best-effort: se o Resend falhar, não desfaz
     // a criação do responsável (ele já foi criado com sucesso e consegue
     // logar normalmente; o e-mail é só uma cortesia).
     try {
@@ -202,7 +233,7 @@ serve(async (req) => {
       console.error('Erro inesperado ao enviar e-mail de boas-vindas:', emailErr)
     }
 
-    return new Response(JSON.stringify({ success: true, user: newAuthUser.user }), {
+    return new Response(JSON.stringify({ success: true, user: newAuthUser.user, authorized_person_created: authorizedPersonCreated }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

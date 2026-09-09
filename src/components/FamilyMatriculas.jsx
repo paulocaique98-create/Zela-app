@@ -6,6 +6,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
 import { compressImage } from '../lib/imageCompression';
+import { formatPersonName } from '../utils/formatName';
 import ConfirmModal from './ConfirmModal';
 
 const BUCKET = 'matriculas-docs';
@@ -248,16 +249,18 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     setIsSubmitting(true);
     setFormError('');
     try {
+      // Normaliza nomes (Título) no envio — independente de como a família
+      // digitou (CAIXA ALTA, minúsculo, misturado).
       const payload = {
         id: requestId,
         school_id: schoolId,
         family_id: currentUser.id,
         status: 'pending',
-        responsavel_financeiro: responsavel,
-        segundo_responsavel: temSegundo ? segundoResponsavel : null,
-        criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, ...rest }) => rest),
-        autorizados: autorizados.filter(a => a.nome.trim()).map(({ id: _id, ...rest }) => rest),
-        transporte_autorizados: temTransporte ? transporteAutorizados.filter(t => t.nome.trim()).map(t => ({ nome: t.nome })) : [],
+        responsavel_financeiro: { ...responsavel, nome: formatPersonName(responsavel.nome) },
+        segundo_responsavel: temSegundo ? { ...segundoResponsavel, nome: formatPersonName(segundoResponsavel.nome) } : null,
+        criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, ...rest }) => ({ ...rest, nome: formatPersonName(rest.nome) })),
+        autorizados: autorizados.filter(a => a.nome.trim()).map(({ id: _id, ...rest }) => ({ ...rest, nome: formatPersonName(rest.nome) })),
+        transporte_autorizados: temTransporte ? transporteAutorizados.filter(t => t.nome.trim()).map(t => ({ nome: formatPersonName(t.nome) })) : [],
       };
       const { error: insertError } = await supabase.from('matricula_solicitacoes').insert(payload);
       if (insertError) throw insertError;

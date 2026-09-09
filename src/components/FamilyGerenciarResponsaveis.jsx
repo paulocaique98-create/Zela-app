@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, UserMinus, Trash2, ShieldCheck, CheckCircle2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
+import { formatPersonName } from '../utils/formatName';
 
 export default function FamilyGerenciarResponsaveis({ currentUser, familyStudents, currentSchool }) {
   const [secondGuardian, setSecondGuardian] = useState(null);
@@ -89,6 +90,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
         },
         body: JSON.stringify({
           ...formData,
+          name: formatPersonName(formData.name),
           school_id: currentSchool.id,
           student_ids: studentIds,
           is_financial: false
@@ -97,10 +99,16 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
       
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Erro ao criar 2º Responsável');
-      
+      if (result.authorized_person_created === false) {
+        // Não bloqueia o fluxo por isso — só avisa no console pra não
+        // repetir silenciosamente o bug de 2º responsável invisível em
+        // Pendentes no Cadastro de Biometria.
+        console.warn('[FamilyGerenciarResponsaveis] Placeholder em Autorizados não foi criado para', formData.name);
+      }
+
       setSecondGuardian({
         id: result.user.id,
-        name: formData.name,
+        name: formatPersonName(formData.name),
         email: formData.email,
         phone: formData.phone,
         relationship: formData.relationship

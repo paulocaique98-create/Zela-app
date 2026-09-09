@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Users, Loader2, Trash2, Pencil, X, Check, Plus, Search, Phone, Mail, Briefcase, KeyRound, GraduationCap, Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CARGOS_FUNCIONARIOS, TURMAS, SETORES_CHAT } from '../lib/constants';
+import { formatPersonName } from '../utils/formatName';
 import ConfirmModal from './ConfirmModal';
 import AdminUserRegistration from './AdminUserRegistration';
 
@@ -176,7 +177,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
     setError('');
     try {
       const payload = {
-        name: form.name.trim(),
+        name: formatPersonName(form.name),
         cargo: form.cargo.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,

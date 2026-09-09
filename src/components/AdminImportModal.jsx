@@ -6,6 +6,12 @@ import {
   Loader2, AlertTriangle, ArrowLeft, Play,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatPersonName } from '../utils/formatName';
+
+// Campos de nome vindos da planilha — normalizados (Título) antes de usar,
+// independente de como vieram no arquivo (comum vir tudo em CAIXA ALTA de
+// exportações de outros sistemas).
+const NAME_FIELDS = ['Nome Completo *', 'Nome Aluno 1 *', 'Nome Aluno 2', '2º Nome Completo'];
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 const PERIODO_MAP = {
@@ -183,7 +189,10 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
     setResults(initial);
 
     for (let i = 0; i < parsedRows.length; i++) {
-      const row = parsedRows[i];
+      const row = { ...parsedRows[i] };
+      NAME_FIELDS.forEach(field => {
+        if (row[field]) row[field] = formatPersonName(row[field]);
+      });
 
       // Marca como processando
       setResults((prev) =>
@@ -323,7 +332,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
               prev.map((r, idx) => (idx === i ? { ...r, msg: `Criando 2º Responsável: ${nome2}...` } : r))
             );
             
-            const { error: funcError2 } = await supabase.functions.invoke(
+            const { data: data2, error: funcError2 } = await supabase.functions.invoke(
               'create-family-user',
               {
                 body: {
@@ -339,9 +348,14 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                 }
               }
             );
-            
+
             if (funcError2) {
               msg2 = `⚠️ 1º Responsável criado, mas 2º falhou: ${funcError2.message}`;
+            } else if (data2?.authorized_person_created === false) {
+              // Não impede a importação — só avisa pra não repetir
+              // silenciosamente o bug de 2º responsável invisível em
+              // Pendentes no Cadastro de Biometria.
+              msg2 = `⚠️ 2º Responsável criado, mas o registro em Autorizados falhou — adicionar manualmente.`;
             }
           } else {
             msg2 = `⚠️ 1º Responsável criado. 2º ignorado (campos incompletos).`;

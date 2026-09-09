@@ -6,6 +6,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { getSignedUrl } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import { formatPersonName } from '../utils/formatName';
 
 const BUCKET = 'matriculas-docs';
 
@@ -270,6 +271,32 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   // chamada à API de Auth, não dá pra rodar dentro de uma function SQL) e só
   // acontece depois que o núcleo já foi confirmado com sucesso.
   const convertSolicitacaoToRecords = async (solicitacao) => {
+    // Normaliza os nomes (Título) da solicitação ANTES de aprovar — cobre
+    // solicitações antigas enviadas antes da normalização existir no
+    // formulário da família (FamilyMatriculas.jsx já normaliza no envio,
+    // mas isso não corrige o que já estava pendente no banco). A RPC lê os
+    // campos direto do banco, então o ajuste precisa ser salvo aqui antes
+    // de chamá-la.
+    const normalizedPatch = {
+      responsavel_financeiro: solicitacao.responsavel_financeiro
+        ? { ...solicitacao.responsavel_financeiro, nome: formatPersonName(solicitacao.responsavel_financeiro.nome) }
+        : solicitacao.responsavel_financeiro,
+      segundo_responsavel: solicitacao.segundo_responsavel
+        ? { ...solicitacao.segundo_responsavel, nome: formatPersonName(solicitacao.segundo_responsavel.nome) }
+        : solicitacao.segundo_responsavel,
+      criancas: (solicitacao.criancas || []).map(c => ({ ...c, nome: formatPersonName(c.nome) })),
+      autorizados: (solicitacao.autorizados || []).map(a => ({ ...a, nome: formatPersonName(a.nome) })),
+      transporte_autorizados: (solicitacao.transporte_autorizados || []).map(t => ({ ...t, nome: formatPersonName(t.nome) })),
+    };
+    const { error: normalizeError } = await supabase
+      .from('matricula_solicitacoes')
+      .update(normalizedPatch)
+      .eq('id', solicitacao.id);
+    if (normalizeError) throw new Error(`Não foi possível normalizar os nomes antes de aprovar: ${normalizeError.message}`);
+    // Reflete a normalização no objeto local usado no restante desta função
+    // (ex: segundo.nome logo abaixo, antes de recarregar a lista do banco).
+    solicitacao = { ...solicitacao, ...normalizedPatch };
+
     const { data: rpcResult, error: rpcError } = await supabase.rpc('approve_matricula', {
       p_solicitacao_id: solicitacao.id,
     });
@@ -322,6 +349,12 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         });
         const result = await response.json();
         if (!response.ok) throw new Error(`2º responsável: ${result.error || 'erro ao criar conta'}`);
+        if (result.authorized_person_created === false) {
+          // Não bloqueia a aprovação da matrícula por isso — só avisa no
+          // console pra não repetir silenciosamente o bug de 2º responsável
+          // invisível em Pendentes no Cadastro de Biometria.
+          console.warn(`[AdminMatriculas] Placeholder em Autorizados não foi criado para ${segundo.nome} — adicionar manualmente se necessário.`);
+        }
 
         await supabase.from('users').update({
           doc_type: segundo.cpf ? 'CPF' : null,

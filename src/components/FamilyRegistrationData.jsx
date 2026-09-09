@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, MapPin, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatPersonName } from '../utils/formatName';
 
 // Não há mais documentos solicitados aqui
 
@@ -67,7 +68,7 @@ export default function FamilyRegistrationData({ currentUser }) {
       const { error } = await supabase
         .from('users')
         .update({
-          name: formData.name,
+          name: formatPersonName(formData.name),
           phone: formData.phone,
           phone2: formData.phone2,
           doc_type: formData.doc_type,

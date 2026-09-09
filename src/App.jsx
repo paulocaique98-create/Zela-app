@@ -6,6 +6,7 @@ import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
+import { formatPersonName } from './utils/formatName';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -786,7 +787,7 @@ export default function App() {
 
       const dbPerson = {
         family_id: currentUser.id,
-        name: newPerson.name,
+        name: formatPersonName(newPerson.name),
         relation: newPerson.relation,
         has_photo: newPerson.hasPhoto || false,
 

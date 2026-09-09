@@ -3,6 +3,7 @@ import { ShieldCheck, Mail, Lock, Plus, Trash2, Baby, CheckCircle2, ArrowLeft } 
 import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { navigateTo } from '../utils/navigate';
+import { formatPersonName } from '../utils/formatName';
 
 // Tela pública de autocadastro de Responsável — chega aqui por "/cadastro",
 // sem estar logado (ver App.jsx, mesmo padrão de rota pública já usado por
@@ -171,7 +172,7 @@ export default function SelfRegister() {
 
     try {
       const studentsPayload = students.map(s => ({
-        name: s.name,
+        name: formatPersonName(s.name),
         birth_date: s.birth_date,
         turma: s.turma || null,
         contracted_hours: s.ciclo ? parseFloat(s.ciclo) : 6,
@@ -182,7 +183,7 @@ export default function SelfRegister() {
       const { data, error } = await supabase.functions.invoke('self-register-family', {
         body: {
           school_code: schoolCode,
-          name: formData.name,
+          name: formatPersonName(formData.name),
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
           phone: formData.phone,

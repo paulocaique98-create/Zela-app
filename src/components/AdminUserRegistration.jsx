@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
+import { formatPersonName } from '../utils/formatName';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import ConfirmModal from './ConfirmModal';
 
@@ -478,25 +479,34 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         },
         body: JSON.stringify({
           ...secondGuardianForm,
+          name: formatPersonName(secondGuardianForm.name),
           school_id: currentUser.school_id,
           student_ids: studentIds,
           is_financial: false
         })
       });
-      
+
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Erro ao criar 2º Responsável');
-      
+
       setSecondGuardian({
         id: result.user.id,
-        name: secondGuardianForm.name,
+        name: formatPersonName(secondGuardianForm.name),
         email: secondGuardianForm.email,
         phone: secondGuardianForm.phone,
         relationship: secondGuardianForm.relationship
       });
       setIsAddingSecondGuardian(false);
-      setSuccessMsg('2º Responsável criado com sucesso!');
-      
+      // authorized_person_created === false: a conta foi criada normalmente,
+      // mas o placeholder em "Autorizados" (que faz a pessoa aparecer em
+      // Pendentes no Cadastro de Biometria) falhou — avisa pra não repetir
+      // silenciosamente o bug de responsáveis invisíveis em Pendentes.
+      setSuccessMsg(
+        result.authorized_person_created === false
+          ? '2º Responsável criado, mas não foi possível gerar o registro em Autorizados automaticamente — adicione manualmente em "Autorizados" se quiser que apareça em Pendentes.'
+          : '2º Responsável criado com sucesso!'
+      );
+
       // Limpa a msg após 5s
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err) {
@@ -586,13 +596,19 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     setErrorMsg('');
     setSuccessMsg('');
 
+    // Normaliza nomes (Título — 1ª letra maiúscula, resto minúsculo) no
+    // momento de salvar, independente de como foram digitados no formulário
+    // (CAIXA ALTA, minúsculo, misturado etc).
+    const normalizedName = formatPersonName(formData.name);
+    const normalizedStudents = students.map(s => ({ ...s, name: formatPersonName(s.name) }));
+
     try {
       if (editingUser) {
         // 1. Atualizar usuário na tabela users
         const { error: userError } = await supabase
           .from('users')
           .update({
-            name: formData.name,
+            name: normalizedName,
             email: formData.email.trim().toLowerCase(),
             phone: formData.phone1,
             role: formData.role,
@@ -623,7 +639,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         // 3. Atualizar alunos vinculados (apenas se for família)
         if (formData.role === 'family') {
           const existingStudentIds = (editingUser.students || []).map(s => s.id);
-          const currentStudentIds = students.map(s => s.id);
+          const currentStudentIds = normalizedStudents.map(s => s.id);
 
           // 3a. Deletar alunos que foram removidos do formulário
           const removedStudentIds = existingStudentIds.filter(id => !currentStudentIds.includes(id));
@@ -633,7 +649,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           }
 
           // 3b. Atualizar ou inserir alunos atuais
-          for (const s of students) {
+          for (const s of normalizedStudents) {
             if (!s.name.trim()) continue;
 
             const periodStr = s.is_custom_period
@@ -696,7 +712,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           if (titularAuth) {
             await supabase.from('authorized_persons')
               .update({
-                name: formData.name,
+                name: normalizedName,
                 relation: `${guardianType} (Titular)`
               })
               .eq('id', titularAuth.id);
@@ -707,7 +723,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         if (onSaved) {
           onSaved({
             ...editingUser,
-            name: formData.name,
+            name: normalizedName,
             email: formData.email,
             phone: formData.phone1,
             phone2: formData.phone2,
@@ -717,7 +733,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             civil_status: formData.civil_status,
             role: formData.role,
             guardian_type: guardianType,
-            students: formData.role === 'family' ? students.filter(s => s.name.trim() !== '').map(s => ({
+            students: formData.role === 'family' ? normalizedStudents.filter(s => s.name.trim() !== '').map(s => ({
               id: s.id,
               name: s.name,
               turma: s.turma,
@@ -753,7 +769,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           body: {
             email: formData.email.trim().toLowerCase(),
             password: formData.password,
-            name: formData.name,
+            name: normalizedName,
             role: formData.role,
             school_id: currentUser.school_id,
             extra_fields: extraFields
@@ -769,7 +785,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
         // 3. Inserir alunos vinculados (apenas para família)
         if (formData.role === 'family') {
-          const studentsToInsert = students
+          const studentsToInsert = normalizedStudents
             .filter(s => s.name.trim() !== '')
             .map(s => {
               const periodStr = s.is_custom_period
