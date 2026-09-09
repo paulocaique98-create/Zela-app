@@ -73,9 +73,21 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const [adminTab, setAdminTab] = useState('home');
-  const [familyTab, setFamilyTab] = useState('home'); // home | history | settings
-  const [teacherTab, setTeacherTab] = useState('home');
+  // A navegação do Zela é por estado (não por URL) -- sem persistir isso em
+  // algum lugar, um F5/refresh sempre reseta a aba pro estado inicial
+  // ('home'), mesmo que a pessoa estivesse no meio de um cadastro/relatório
+  // específico. Guarda a última aba em sessionStorage (dura enquanto a aba
+  // do navegador ficar aberta, some ao fechar -- não é algo que precise
+  // sobreviver entre dias/dispositivos) e limpa no logout, pra o próximo
+  // usuário a logar no mesmo navegador não herdar a aba de outra pessoa.
+  const [adminTab, setAdminTab] = useState(() => sessionStorage.getItem('zela_admin_tab') || 'home');
+  const [familyTab, setFamilyTab] = useState(() => sessionStorage.getItem('zela_family_tab') || 'home'); // home | history | settings
+  const [teacherTab, setTeacherTab] = useState(() => sessionStorage.getItem('zela_teacher_tab') || 'home');
+
+  useEffect(() => { sessionStorage.setItem('zela_admin_tab', adminTab); }, [adminTab]);
+  useEffect(() => { sessionStorage.setItem('zela_family_tab', familyTab); }, [familyTab]);
+  useEffect(() => { sessionStorage.setItem('zela_teacher_tab', teacherTab); }, [teacherTab]);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -566,6 +578,12 @@ export default function App() {
     setStudents([]);
     setAuthorized([]);
     localStorage.removeItem('zela_user');
+    // Limpa a última aba lembrada -- senão o próximo usuário a logar nesse
+    // mesmo navegador (conta diferente) herdaria a aba de quem saiu.
+    sessionStorage.removeItem('zela_admin_tab');
+    sessionStorage.removeItem('zela_family_tab');
+    sessionStorage.removeItem('zela_teacher_tab');
+    sessionStorage.removeItem('zela_developer_tab');
     // Faz o logoff do Auth Supabase por garantia
     supabase.auth.signOut().catch(() => { });
   };
