@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check } from 'lucide-react';
+import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check, UserRoundCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import AdminUserRegistration from './AdminUserRegistration';
@@ -38,6 +38,16 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         .eq('school_id', currentUser.school_id);
       if (studentsError) throw studentsError;
 
+      // 2º Responsável não tem aluno vinculado por family_id (isso é exclusivo
+      // do titular) — o vínculo dele mora aqui, em student_guardians. Usado só
+      // pra exibir "Pai/Mãe de <aluno>" no card de quem não é titular de nenhum
+      // aluno diretamente (ver render abaixo).
+      const { data: guardianLinksData, error: guardianLinksError } = await supabase
+        .from('student_guardians')
+        .select('guardian_id, student_id, relationship')
+        .eq('school_id', currentUser.school_id);
+      if (guardianLinksError) throw guardianLinksError;
+
       const { data: authData, error: authError } = await supabase
         .from('authorized_persons')
         .select('id, name, relation, photo_storage_path, family_id')
@@ -60,11 +70,25 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         const matchingAuth = familyAuths.find(
           ap => ap.name.toLowerCase().trim() === user.name.toLowerCase().trim()
         ) || familyAuths.find(ap => ap.relation?.includes('(Titular)'));
+        const ownStudents = studentsData.filter(s => s.family_id === user.id);
+
+        // Só monta o vínculo de 2º responsável pra quem não é titular de
+        // nenhum aluno — o titular já mostra a lista completa via ownStudents.
+        const guardianLinks = ownStudents.length === 0
+          ? (guardianLinksData || []).filter(g => g.guardian_id === user.id)
+          : [];
+        const linkedStudents = guardianLinks
+          .map(g => studentsData.find(s => s.id === g.student_id))
+          .filter(Boolean);
+        const guardianRelationship = guardianLinks[0]?.relationship || null;
+
         return {
           ...user,
           photo_url: matchingAuth ? resolvePhotoUrl(matchingAuth) : null,
           authorized: familyAuths,
-          students: studentsData.filter(s => s.family_id === user.id),
+          students: ownStudents,
+          linkedStudents,
+          guardianRelationship,
         };
       });
       setUsersList(combinedData);
@@ -283,6 +307,11 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
                           Família
                         </span>
+                        {user.linkedStudents?.length > 0 && (
+                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-primary/10 text-primary">
+                            2º Responsável
+                          </span>
+                        )}
                         {user.status === 'pending' && (
                           <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-amber-100 text-amber-700">
                             Pendente
@@ -316,8 +345,8 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                     )}
                   </div>
 
-                  {/* Alunos vinculados */}
-                  {user.students?.length > 0 && (
+                  {/* Alunos vinculados (titular) */}
+                  {user.students?.length > 0 ? (
                     <div className="mt-auto pt-3 border-t border-outline-variant">
                       <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2 flex items-center gap-1">
                         <GraduationCap size={11}/> Alunos ({user.students.length})
@@ -329,6 +358,20 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                           </span>
                         ))}
                       </div>
+                    </div>
+                  ) : user.linkedStudents?.length > 0 && (
+                    /* 2º Responsável — mesma posição/altura do bloco de Alunos
+                       acima (mt-auto + border-t), mas só o vínculo com o(s)
+                       aluno(s) já cadastrado(s) pelo titular, sem repetir a
+                       lista inteira de chips. */
+                    <div className="mt-auto pt-3 border-t border-outline-variant">
+                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
+                        <UserRoundCheck size={13} className="text-primary shrink-0"/>
+                        {user.guardianRelationship || 'Responsável'} de{' '}
+                        <span className="font-semibold text-on-surface">
+                          {user.linkedStudents.map(s => s.name).join(', ')}
+                        </span>
+                      </p>
                     </div>
                   )}
                 </div>
