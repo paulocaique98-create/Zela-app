@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw } from 'lucide-react';
+import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 
@@ -97,11 +97,32 @@ export default function AdminDailyPresence({ currentUser }) {
           ))}
         </div>
 
-        {/* Sub-menu de Turmas -- mesma largura da linha de cards acima, com
-            as abas se distribuindo por igual nesse espaço (antes era
-            w-fit, só do tamanho do conteúdo, ficando bem mais estreito e
-            desalinhado do resto da tela). */}
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-full overflow-x-auto">
+        {/* Seletor de turma no mobile -- substitui o scroll horizontal de
+            abas (ruim de usar no celular) por um menu nativo de escolha,
+            mesma largura do botão Atualizar (w-full nesse tamanho de tela). */}
+        <div className="relative sm:hidden">
+          <select
+            value={selectedTurma}
+            onChange={e => setSelectedTurma(e.target.value)}
+            className="w-full appearance-none bg-slate-100 border border-slate-200 rounded-2xl pl-4 pr-10 py-2.5 text-sm font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {turmaOptions.map(turma => (
+              <option key={turma} value={turma}>
+                {turma}
+                {turma !== 'Todas as Turmas'
+                  ? ` (${allStudents.filter(s => s.turma === turma && s.status !== 'idle').length})`
+                  : ''}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+        </div>
+
+        {/* Sub-menu de Turmas (telas maiores) -- mesma largura da linha de
+            cards acima, com as abas se distribuindo por igual nesse espaço
+            (antes era w-fit, só do tamanho do conteúdo, ficando bem mais
+            estreito e desalinhado do resto da tela). */}
+        <div className="hidden sm:flex gap-2 p-1 bg-slate-100 rounded-2xl w-full overflow-x-auto">
           {turmaOptions.map(turma => (
             <button
               key={turma}
