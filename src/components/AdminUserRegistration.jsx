@@ -705,11 +705,25 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               const { error: updErr } = await supabase.from('students').update(studentData).eq('id', s.id);
               if (updErr) throw updErr;
             } else {
-              const { error: insErr } = await supabase.from('students').insert([{
+              const { data: novoAluno, error: insErr } = await supabase.from('students').insert([{
                 ...studentData,
                 status: 'idle'
-              }]);
+              }]).select('id').single();
               if (insErr) throw insErr;
+              // Vincula o titular ao aluno novo em student_guardians (mesmo
+              // motivo do fluxo de criação -- sem isso o aluno fica ligado
+              // só por students.family_id).
+              if (novoAluno?.id) {
+                const { error: sgErr } = await supabase.from('student_guardians').insert([{
+                  student_id: novoAluno.id,
+                  guardian_id: editingUser.id,
+                  school_id: currentUser.school_id,
+                  is_primary: true,
+                  is_financial: true,
+                  relationship: guardianType || 'Responsável',
+                }]);
+                if (sgErr) console.error('[Cadastro] Falha ao vincular titular ao aluno novo em student_guardians:', sgErr.message);
+              }
             }
           }
 
@@ -838,19 +852,42 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               };
             });
 
+          let insertedStudentIds = [];
           if (studentsToInsert.length > 0) {
-            const { error: studErr } = await supabase.from('students').insert(studentsToInsert);
+            const { data: insertedStudents, error: studErr } = await supabase.from('students').insert(studentsToInsert).select('id');
             // Se o erro for de coluna inexistente, tenta sem os campos extras
             if (studErr) {
               if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
                 console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
                 const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, weekly_schedule: _ws, ...rest }) => rest);
-                const { error: studErr2 } = await supabase.from('students').insert(baseSt);
+                const { data: insertedStudents2, error: studErr2 } = await supabase.from('students').insert(baseSt).select('id');
                 if (studErr2) throw studErr2;
+                insertedStudentIds = (insertedStudents2 || []).map(s => s.id);
               } else {
                 throw studErr;
               }
+            } else {
+              insertedStudentIds = (insertedStudents || []).map(s => s.id);
             }
+          }
+
+          // 3b. Vincular o titular aos alunos em student_guardians -- os
+          // outros fluxos (matrícula, importação em massa) ja fazem isso;
+          // só o "Novo Usuário" nao fazia, deixando o aluno ligado ao
+          // responsável só por students.family_id, sem linha aqui. Varias
+          // features resolvem "quem é responsável por quem" por essa tabela.
+          if (insertedStudentIds.length > 0) {
+            const { error: sgErr } = await supabase.from('student_guardians').insert(
+              insertedStudentIds.map(sId => ({
+                student_id: sId,
+                guardian_id: newUser.id,
+                school_id: currentUser.school_id,
+                is_primary: true,
+                is_financial: true,
+                relationship: guardianType || 'Responsável',
+              }))
+            );
+            if (sgErr) console.error('[Cadastro] Falha ao vincular titular em student_guardians:', sgErr.message);
           }
 
           // 4. Adicionar o titular como autorizado
