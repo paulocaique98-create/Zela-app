@@ -88,9 +88,16 @@ export function evaluateFramePosition(box, videoWidth, videoHeight) {
   return 'ok';
 }
 
+// Canvases reaproveitados entre frames. O loop de detecção roda ~5x/s por
+// minutos a fio num totem; criar `document.createElement('canvas')` a cada
+// frame (um deles do tamanho cheio do vídeo) acumulava lixo de memória
+// suficiente pra travar/derrubar a aba em dispositivos de baixo poder.
+const _lumCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+const _enhanceCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+
 // Mede a luminância média de um frame de vídeo/canvas de forma barata (amostra pequena)
 function getAverageLuminance(source, sampleSize = 24) {
-  const canvas = document.createElement('canvas');
+  const canvas = _lumCanvas || document.createElement('canvas');
   canvas.width = sampleSize;
   canvas.height = sampleSize;
   const ctx = canvas.getContext('2d');
@@ -106,7 +113,7 @@ function getAverageLuminance(source, sampleSize = 24) {
 // Gera um canvas com realce de brilho/contraste proporcional ao quão escura está a cena
 // (ou forçado no máximo se `boost` estiver ativo pelo toggle manual do totem).
 function enhanceForLowLight(source, width, height, luminance, boost) {
-  const canvas = document.createElement('canvas');
+  const canvas = _enhanceCanvas || document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
@@ -317,6 +324,65 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       }
     };
   }, [retryCount]);
+
+  // Recarrega as biometrias sem reabrir o app. Antes, uma foto cadastrada
+  // com a tela do totem já aberta só passava a ser reconhecida depois de
+  // fechar e abrir o aplicativo por completo — o scanner montava a lista de
+  // descritores uma única vez. Agora:
+  //  1. Realtime: qualquer INSERT/UPDATE/DELETE em authorized_persons da
+  //     escola dispara um novo carregamento na hora (cobre cadastro feito
+  //     em outro dispositivo, ex: Portal da Família).
+  //  2. Foco da janela: ao voltar pra aba do totem, revalida (cobre o
+  //     cadastro feito na mesma máquina, na tela de Cadastro de Foto).
+  useEffect(() => {
+    if (!currentUser?.school_id) return;
+    let cancelled = false;
+
+    const reloadBiometrics = async () => {
+      try {
+        const { data, error: reloadError } = await supabase
+          .from('authorized_persons')
+          .select('id, name, relation, family_id, face_descriptor, face_descriptor_v2, status')
+          .eq('school_id', currentUser.school_id);
+        if (reloadError || cancelled || !data) return;
+
+        const withBio = data.filter(p => p.face_descriptor);
+        const rebuilt = withBio.map(person => {
+          try {
+            let desc = person.face_descriptor;
+            if (typeof desc === 'string') desc = JSON.parse(desc);
+            return new faceapi.LabeledFaceDescriptors(person.id, [new Float32Array(desc)]);
+          } catch {
+            return null;
+          }
+        }).filter(Boolean);
+
+        if (cancelled) return;
+        setAuthorizedList(data);
+        if (rebuilt.length > 0) setLabeledDescriptors(rebuilt);
+      } catch (err) {
+        console.warn('[FaceScanner] Falha ao recarregar biometrias:', err?.message || err);
+      }
+    };
+
+    const channel = supabase
+      .channel(`face-scanner-biometrics-${currentUser.school_id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'authorized_persons', filter: `school_id=eq.${currentUser.school_id}` },
+        reloadBiometrics
+      )
+      .subscribe();
+
+    const onFocus = () => reloadBiometrics();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.school_id]);
 
   // Busca a foto só da pessoa reconhecida (não de todos os cadastrados) —
   // usada apenas para exibir o confronto visual na tela; nunca bloqueia o

@@ -4,10 +4,12 @@ import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 
 const STATUS_CONFIG = {
-  in_school: { label: 'Na escola',  cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
-  left:      { label: 'Já saiu',    cls: 'bg-slate-700 text-slate-100', icon: <LogOut size={12}/> },
-  absent:    { label: 'Ausente',    cls: 'bg-red-100 text-red-600',     icon: null },
-  idle:      { label: 'Pendente de Check-in', cls: 'bg-slate-100 text-slate-500', icon: null },
+  in_school:      { label: 'Na escola',        cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
+  left:           { label: 'Já saiu',          cls: 'bg-slate-700 text-slate-100', icon: <LogOut size={12}/> },
+  absent:         { label: 'Ausente',          cls: 'bg-red-100 text-red-600',     icon: null },
+  pending_entry:  { label: 'Entrada solicitada', cls: 'bg-amber-100 text-amber-700', icon: null },
+  pending_exit:   { label: 'Saída solicitada',   cls: 'bg-amber-100 text-amber-700', icon: null },
+  idle:           { label: 'Pendente de Check-in', cls: 'bg-slate-100 text-slate-500', icon: null },
 };
 
 export default function AdminDailyPresence({ currentUser }) {
@@ -58,6 +60,7 @@ export default function AdminDailyPresence({ currentUser }) {
   const inSchool = allStudents.filter(s => s.status === 'in_school').length;
   const left     = allStudents.filter(s => s.status === 'left').length;
   const absent   = allStudents.filter(s => s.status === 'absent').length;
+  const pending  = allStudents.filter(s => s.status === 'pending_entry' || s.status === 'pending_exit').length;
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -84,11 +87,12 @@ export default function AdminDailyPresence({ currentUser }) {
       {/* Cards de resumo + Sub-menu de Turmas (tudo como cabeçalho estático) */}
       <div className="space-y-4 mb-6 shrink-0">
         {/* Cards de resumo */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: 'Na escola',   count: inSchool, color: 'bg-green-50 border-green-200 text-green-700' },
-            { label: 'Já saíram',   count: left,     color: 'bg-slate-100 border-slate-200 text-slate-600' },
-            { label: 'Ausentes',    count: absent,   color: 'bg-red-50 border-red-200 text-red-600' },
+            { label: 'Na escola',    count: inSchool, color: 'bg-green-50 border-green-200 text-green-700' },
+            { label: 'Solicitações', count: pending,  color: 'bg-amber-50 border-amber-200 text-amber-700' },
+            { label: 'Já saíram',    count: left,     color: 'bg-slate-100 border-slate-200 text-slate-600' },
+            { label: 'Ausentes',     count: absent,   color: 'bg-red-50 border-red-200 text-red-600' },
           ].map(({ label, count, color }) => (
             <div key={label} className={`${color} border rounded-2xl p-3 text-center`}>
               <p className="text-xl font-black">{count}</p>
@@ -160,25 +164,17 @@ export default function AdminDailyPresence({ currentUser }) {
             </p>
           </div>
         ) : (
+          // Todas as colunas ficam visíveis em qualquer tela; no celular a
+          // tabela rola na horizontal dentro deste container em vez de
+          // esconder Turma/Saída.
           <div className="overflow-x-auto">
-            {/* Larguras fixas por coluna (table-fixed) -- sem isso o navegador
-                deixava a última coluna esticar até o fim, com o conteúdo
-                colado à esquerda e uma faixa enorme de espaço vazio à
-                direita, em vez de distribuir o espaço entre as colunas. */}
-            <table className="w-full text-sm table-fixed">
-              <colgroup>
-                <col className="w-[32%]" />
-                <col className="w-[20%] hidden sm:table-column" />
-                <col className="w-[16%]" />
-                <col className="w-[16%] hidden md:table-column" />
-                <col className="w-[16%]" />
-              </colgroup>
+            <table className="w-full text-sm min-w-[620px] whitespace-nowrap">
               <thead>
                 <tr className="text-left border-b border-slate-100">
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Turma</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Turma</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden md:table-cell">Saída</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
                   <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
@@ -194,18 +190,18 @@ export default function AdminDailyPresence({ currentUser }) {
                               {student.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <span className="font-semibold text-slate-800 truncate">{student.name}</span>
+                          <span className="font-semibold text-slate-800">{student.name}</span>
                         </div>
                       </td>
-                      <td className="py-3 pr-4 hidden sm:table-cell">
-                        <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-md truncate inline-block max-w-full">
+                      <td className="py-3 pr-4">
+                        <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-md inline-block">
                           {student.turma || '—'}
                         </span>
                       </td>
                       <td className="py-3 pr-4 font-mono font-bold text-slate-700">
                         {student.today_entry ? student.today_entry.substring(0, 5) : '—'}
                       </td>
-                      <td className="py-3 pr-4 font-mono text-slate-500 hidden md:table-cell">
+                      <td className="py-3 pr-4 font-mono text-slate-500">
                         {student.today_exit ? student.today_exit.substring(0, 5) : '—'}
                       </td>
                       <td className="py-3">

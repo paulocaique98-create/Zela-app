@@ -4,12 +4,17 @@ import { useEffect, useRef } from 'react';
 // usado no Autoatendimento/Totem, cuja tela apagava sozinha (economia de
 // energia do sistema/navegador) no meio do reconhecimento facial.
 //
-// A Wake Lock API é liberada automaticamente pelo navegador sempre que a
-// aba fica oculta (troca de aba, minimizar) — por isso reconquista o lock
-// no "visibilitychange" de volta pra 'visible', enquanto `active` continuar
-// true. Sem suporte no navegador (Safari < 16.4, navegadores antigos), a
-// função falha silenciosamente — não deve travar o reconhecimento facial
-// por causa disso, só deixa de ter o benefício.
+// O navegador libera a Wake Lock sozinho em vários casos além da troca de
+// aba: quando a aba fica oculta, quando o SO força economia de energia, ou
+// simplesmente por decisão interna do próprio navegador. Antes o hook só
+// reconquistava o lock no "visibilitychange" — num totem, cuja aba nunca
+// fica oculta, isso nunca disparava e a tela apagava mesmo assim. Agora:
+//  1. escuta o evento "release" do próprio lock e o reconquista na hora;
+//  2. revalida a cada 20s (rede de segurança pra quando o "release" não
+//     chega, o que acontece em alguns navegadores Android);
+//  3. continua reconquistando no "visibilitychange" de volta pra visível.
+// Sem suporte no navegador a função falha silenciosamente — não trava o
+// reconhecimento facial por causa disso, só deixa de ter o benefício.
 export function useWakeLock(active) {
   const wakeLockRef = useRef(null);
 
@@ -19,15 +24,22 @@ export function useWakeLock(active) {
     let cancelled = false;
 
     const requestWakeLock = async () => {
+      if (cancelled || wakeLockRef.current || document.visibilityState !== 'visible') return;
       try {
         const lock = await navigator.wakeLock.request('screen');
         if (cancelled) {
-          // O componente já desmontou (ou active virou false) enquanto a
-          // promise resolvia — libera imediatamente em vez de manter preso.
           lock.release().catch(() => {});
           return;
         }
         wakeLockRef.current = lock;
+        // Quando o navegador/SO libera o lock por conta própria, limpa a
+        // referência e tenta reconquistar imediatamente (enquanto visível).
+        lock.addEventListener('release', () => {
+          wakeLockRef.current = null;
+          if (!cancelled && document.visibilityState === 'visible') {
+            requestWakeLock();
+          }
+        });
       } catch (err) {
         // Comum e esperado: permissão negada, aba não visível no momento do
         // pedido, ou navegador sem suporte real apesar de expor a API.
@@ -38,14 +50,17 @@ export function useWakeLock(active) {
     requestWakeLock();
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !wakeLockRef.current) {
-        requestWakeLock();
-      }
+      if (document.visibilityState === 'visible') requestWakeLock();
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Rede de segurança: alguns navegadores não emitem "release" de forma
+    // confiável, então revalida periodicamente.
+    const revalidateId = setInterval(requestWakeLock, 20000);
+
     return () => {
       cancelled = true;
+      clearInterval(revalidateId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLockRef.current) {
         wakeLockRef.current.release().catch(() => {});

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2 } from 'lucide-react';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
@@ -73,6 +73,31 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
+  const [bulkApproving, setBulkApproving] = useState(false);
+
+  // Aprova de uma vez todas as solicitações pendentes do Monitor, na ordem em
+  // que aparecem. Vai uma a uma (sequencial) de propósito: updateStudentStatus
+  // grava em attendance_logs e atualiza estado/realtime a cada chamada, então
+  // disparar tudo em paralelo abriria brecha pra corrida de status.
+  const handleApproveAll = async () => {
+    if (bulkApproving || monitorStudents.length === 0) return;
+    setBulkApproving(true);
+    try {
+      // Congela a lista no início: o array muda conforme cada aprovação
+      // remove o aluno de monitorStudents.
+      const pendentes = [...monitorStudents];
+      for (const student of pendentes) {
+        const target = student.status === 'pending_entry' ? 'in_school' : 'left';
+        try {
+          await updateStudentStatus(student.id, target);
+        } catch (err) {
+          console.error(`Falha ao aprovar solicitação de ${student.name}:`, err);
+        }
+      }
+    } finally {
+      setBulkApproving(false);
+    }
+  };
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
   const [isFaceEnrollmentOpen, setIsFaceEnrollmentOpen] = useState(false);
@@ -351,7 +376,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-                {/* Removidos daqui os botões de scanner que agora ficam no Totem */}
+                {monitorStudents.length > 1 && (
+                  <button
+                    onClick={handleApproveAll}
+                    disabled={bulkApproving}
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 font-bold text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 px-4 py-2.5 rounded-zela-md shadow-sm active:scale-95 transition-all"
+                  >
+                    {bulkApproving
+                      ? <><Loader2 size={16} className="animate-spin" /> Aprovando…</>
+                      : <><CheckCheck size={16} /> Aprovar todas ({monitorStudents.length})</>}
+                  </button>
+                )}
               </div>
             </div>
 

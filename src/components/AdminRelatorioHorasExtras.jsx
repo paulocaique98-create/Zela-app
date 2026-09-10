@@ -155,14 +155,14 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-amber-100 p-2.5 rounded-xl text-amber-600">
-            <Clock size={22} />
+          <div className="bg-amber-100 p-2 sm:p-2.5 rounded-xl text-amber-600 shrink-0">
+            <Clock size={20} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Relatório de Horas Extras</h2>
-            <p className="text-sm text-slate-500">Cobrança por hora cheia, entrada antecipada e saída tardia (tolerância configurável em Configurações)</p>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800">Relatório de Horas Extras</h2>
+            <p className="hidden sm:block text-sm text-slate-500">Cobrança por hora cheia, entrada antecipada e saída tardia (tolerância configurável em Configurações)</p>
           </div>
         </div>
         
@@ -175,24 +175,25 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         </button>
       </div>
 
-      {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 shrink-0">
-        <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col justify-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total de Registros</p>
-          <p className="text-2xl font-black text-slate-700">{totalRegistros}</p>
+      {/* Resumo Financeiro -- no celular fica em 3 colunas compactas para não
+          tomar a tela toda antes da tabela de alunos. */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6 shrink-0">
+        <div className="bg-slate-50 border border-slate-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1">Registros</p>
+          <p className="text-lg sm:text-2xl font-black text-slate-700">{totalRegistros}</p>
         </div>
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col justify-center">
-          <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">Minutos Excedentes</p>
-          <p className="text-2xl font-black text-amber-700">{totalMinutosExcedentes} min</p>
+        <div className="bg-amber-50 border border-amber-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
+          <p className="text-[10px] sm:text-xs font-bold text-amber-600 uppercase tracking-wider mb-0.5 sm:mb-1">Excedente</p>
+          <p className="text-lg sm:text-2xl font-black text-amber-700">{totalMinutosExcedentes}<span className="text-xs font-bold"> min</span></p>
         </div>
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex flex-col justify-center">
-          <p className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Valor Total a Cobrar</p>
-          <p className="text-2xl font-black text-rose-700">{totalValorFormatado}</p>
+        <div className="bg-rose-50 border border-rose-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
+          <p className="text-[10px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider mb-0.5 sm:mb-1">A Cobrar</p>
+          <p className="text-lg sm:text-2xl font-black text-rose-700 truncate">{totalValorFormatado}</p>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col xl:flex-row gap-3 mb-6 shrink-0">
+      <div className="flex flex-col xl:flex-row gap-3 mb-4 sm:mb-6 shrink-0">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400" />
