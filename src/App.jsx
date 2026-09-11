@@ -994,16 +994,32 @@ export default function App() {
    */
   const rejectStudentStatus = async (studentId, revertToStatus) => {
     try {
+      // updateStudentStatus já grava today_entry/today_exit (e os _at)
+      // assim que a solicitação é feita — antes de qualquer confirmação —
+      // pra não perder o instante exato do reconhecimento. Cancelar a
+      // solicitação revertia só o status, deixando esse horário "fantasma"
+      // gravado pra sempre: a Presença Diária mostrava uma entrada/saída
+      // que nunca foi confirmada nem existe em attendance_logs, e não tinha
+      // como corrigir (o lápis de correção não encontra log nenhum pra
+      // editar). Ao cancelar, limpa também o campo da direção cancelada.
+      const clearFields = revertToStatus === 'idle'
+        ? { today_entry: null, today_entry_at: null }
+        : { today_exit: null, today_exit_at: null };
+
       const { error } = await supabase
         .from('students')
-        .update({ status: revertToStatus, pending_requester_id: null })
+        .update({ status: revertToStatus, pending_requester_id: null, ...clearFields })
         .eq('id', studentId);
       if (error) throw error;
 
-      // Atualiza apenas o status no estado local — preserva todayRecord intacto
-      setStudents(prev => prev.map(s =>
-        s.id === studentId ? { ...s, status: revertToStatus, pendingRequesterId: null } : s
-      ));
+      // Atualiza o estado local: status + limpa o mesmo lado no todayRecord
+      setStudents(prev => prev.map(s => {
+        if (s.id !== studentId) return s;
+        const clearedRecord = revertToStatus === 'idle'
+          ? { ...s.todayRecord, entry: null, entry_full: null, entry_at: null }
+          : { ...s.todayRecord, exit: null, exit_full: null, exit_at: null };
+        return { ...s, status: revertToStatus, pendingRequesterId: null, todayRecord: clearedRecord };
+      }));
     } catch (err) {
       console.error('[Zela] Erro ao rejeitar solicitação:', err);
       throw err;

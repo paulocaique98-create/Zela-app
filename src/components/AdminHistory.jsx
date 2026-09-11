@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
+import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
+import AttendanceCorrectionModal from './AttendanceCorrectionModal';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -24,12 +25,13 @@ function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('pt-BR');
 }
 
-export default function AdminHistory({ currentSchool }) {
+export default function AdminHistory({ currentSchool, currentUser }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
+  const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
 
   const fetchHistory = async () => {
     if (!currentSchool) return;
@@ -60,8 +62,9 @@ export default function AdminHistory({ currentSchool }) {
           id,
           event_type,
           event_time,
+          corrected,
           student_id,
-          students:student_id (name, turma, contracted_hours, contracted_exit_time, users:family_id(name))
+          students:student_id (name, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, users:family_id(name))
         `)
         .eq('school_id', schoolId)
         .gte('event_time', startDate)
@@ -99,10 +102,15 @@ export default function AdminHistory({ currentSchool }) {
           date: formatDate(group.entryLog?.event_time || group.exitLog?.event_time),
           entry: entryTime ? formatTime(entryTime.toISOString()) : null,
           exit: exitTime ? formatTime(exitTime.toISOString()) : null,
+          entryCorrected: !!group.entryLog?.corrected,
+          exitCorrected: !!group.exitLog?.corrected,
           contracted: `${group.studentData?.contracted_hours || 0}h`,
           duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
           overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
           rawTime: entryTime ? entryTime.getTime() : (exitTime ? exitTime.getTime() : 0),
+          entryLogRaw: group.entryLog,
+          exitLogRaw: group.exitLog,
+          studentRaw: group.studentData,
         };
       });
 
@@ -238,14 +246,38 @@ export default function AdminHistory({ currentSchool }) {
                     <td className="py-3 pr-4 font-semibold text-slate-800">{log.studentName}</td>
                     <td className="py-3 pr-4 text-slate-500 text-xs hidden sm:table-cell">{log.family}</td>
                     <td className="py-3 pr-4">
-                      <span className="flex items-center gap-1 font-medium text-indigo-600">
+                      <span className="flex items-center gap-1.5 font-medium text-indigo-600">
                         <LogIn size={13} /> {log.entry}
+                        {log.entryCorrected && (
+                          <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded" title="Horário ajustado pela escola">Ajustado</span>
+                        )}
+                        {log.entryLogRaw && (
+                          <button
+                            onClick={() => setCorrectionTarget({ log: log.entryLogRaw, student: log.studentRaw })}
+                            className="text-slate-300 hover:text-indigo-600 transition"
+                            title="Corrigir horário de entrada"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                        )}
                       </span>
                     </td>
                     <td className="py-3 pr-4">
                       {log.exit ? (
-                        <span className="flex items-center gap-1 font-medium text-rose-500">
+                        <span className="flex items-center gap-1.5 font-medium text-rose-500">
                           <LogOut size={13} /> {log.exit}
+                          {log.exitCorrected && (
+                            <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded" title="Horário ajustado pela escola">Ajustado</span>
+                          )}
+                          {log.exitLogRaw && (
+                            <button
+                              onClick={() => setCorrectionTarget({ log: log.exitLogRaw, student: log.studentRaw })}
+                              className="text-slate-300 hover:text-indigo-600 transition"
+                              title="Corrigir horário de saída"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                          )}
                         </span>
                       ) : (
                         <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
@@ -270,6 +302,17 @@ export default function AdminHistory({ currentSchool }) {
           </div>
         )}
       </div>
+
+      {correctionTarget && (
+        <AttendanceCorrectionModal
+          log={correctionTarget.log}
+          student={correctionTarget.student}
+          currentUser={currentUser}
+          billingConfig={currentSchool?.billing_config}
+          onClose={() => setCorrectionTarget(null)}
+          onSaved={() => { setCorrectionTarget(null); fetchHistory(); }}
+        />
+      )}
     </div>
   );
 }

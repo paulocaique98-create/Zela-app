@@ -5,6 +5,7 @@ import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
 import ConfirmModal from './ConfirmModal';
+import DuplicateStudentWarningModal from './DuplicateStudentWarningModal';
 
 // Gestão de Usuários = só Responsáveis (família). Contas de Admin/Professor (com
 // login) ficam em Gerenciamento > Funcionários, junto do resto do cadastro de
@@ -20,6 +21,8 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   const [activeTab, setActiveTab] = useState(initialTab); // 'active' | 'pending'
   const [approvingUserId, setApprovingUserId] = useState(null);
   const [confirmRejectUserId, setConfirmRejectUserId] = useState(null);
+  const [allStudents, setAllStudents] = useState([]);
+  const [duplicateWarning, setDuplicateWarning] = useState(null); // { userId, matches }
 
   const fetchUsersAndStudents = async () => {
     setIsLoading(true);
@@ -92,6 +95,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         };
       });
       setUsersList(combinedData);
+      setAllStudents(studentsData || []);
     } catch (err) {
       console.error('Erro ao buscar usuários:', err);
     } finally {
@@ -130,10 +134,42 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     );
   };
 
+  // Antes de aprovar, checa se algum dos alunos recém-criados por este
+  // autocadastro já existe (mesmo nome) sob OUTRO responsável na escola —
+  // sinal de que os dois pais/responsáveis se cadastraram cada um por conta
+  // própria e duplicaram o mesmo filho (foi o que aconteceu com 8 alunos
+  // nesta escola antes dessa checagem existir). Não bloqueia, só avisa: o
+  // admin decide, caso a caso, se é a mesma criança ou não.
+  const findDuplicateMatches = (user) => {
+    if (!user.students?.length) return [];
+    return user.students
+      .map(s => {
+        const norm = s.name.trim().toLowerCase();
+        const existing = allStudents.find(other => other.id !== s.id && other.family_id !== user.id && other.name.trim().toLowerCase() === norm);
+        if (!existing) return null;
+        const existingFamily = usersList.find(u => u.id === existing.family_id);
+        return {
+          newStudent: { id: s.id, name: s.name, guardianId: user.id, isFinancial: user.guardian_type === 'Responsável Financeiro' },
+          existing: { id: existing.id, name: existing.name, school_id: existing.school_id, family_name: existingFamily?.name || 'outro responsável' },
+        };
+      })
+      .filter(Boolean);
+  };
+
   // Aprovar um autocadastro (tela pública "Novo usuário?") — libera o login
   // mudando status 'pending' -> 'active'. Trigger de proteção do banco não
   // bloqueia essa coluna (só protege role/school_id/privilégios de admin).
   const handleApproveUser = async (userId) => {
+    const user = usersList.find(u => u.id === userId);
+    const matches = user ? findDuplicateMatches(user) : [];
+    if (matches.length > 0) {
+      setDuplicateWarning({ userId, matches });
+      return;
+    }
+    await approveUser(userId);
+  };
+
+  const approveUser = async (userId) => {
     setApprovingUserId(userId);
     try {
       const { error } = await supabase.from('users').update({ status: 'active' }).eq('id', userId);
@@ -145,6 +181,13 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     } finally {
       setApprovingUserId(null);
     }
+  };
+
+  const handleDuplicateResolved = async () => {
+    const userId = duplicateWarning?.userId;
+    setDuplicateWarning(null);
+    await fetchUsersAndStudents(); // recarrega antes de aprovar, pra refletir os vínculos/remoções feitos no modal
+    if (userId) await approveUser(userId);
   };
 
   const handleRejectUser = (userId) => setConfirmRejectUserId(userId);
@@ -410,6 +453,14 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           isLoading={deletingUserId === confirmRejectUserId}
           onConfirm={confirmRejectUser}
           onCancel={() => setConfirmRejectUserId(null)}
+        />
+      )}
+
+      {duplicateWarning && (
+        <DuplicateStudentWarningModal
+          matches={duplicateWarning.matches}
+          onClose={() => setDuplicateWarning(null)}
+          onResolved={handleDuplicateResolved}
         />
       )}
 

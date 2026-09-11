@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus } from 'lucide-react';
+import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { formatPersonName } from '../utils/formatName';
@@ -340,6 +340,14 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  // Aviso de possível aluno duplicado (mesmo nome já cadastrado por outro
+  // responsável) — não bloqueia, só exige confirmação explícita antes de
+  // seguir. Ver mesma proteção em AdminUserManagement (aprovação de
+  // autocadastro), que resolve automaticamente vinculando como 2º
+  // responsável; aqui, como é o próprio admin digitando, só avisamos e
+  // deixamos a decisão com ele.
+  const [duplicateAlert, setDuplicateAlert] = useState(null); // [{ name, familyName }]
+  const [forceCreateDespiteDuplicate, setForceCreateDespiteDuplicate] = useState(false);
 
   // Estados para 2º Responsável
   const [secondGuardian, setSecondGuardian] = useState(null);
@@ -607,7 +615,6 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   // ── Submit ──
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
 
@@ -616,6 +623,29 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     // (CAIXA ALTA, minúsculo, misturado etc).
     const normalizedName = formatPersonName(formData.name);
     const normalizedStudents = students.map(s => ({ ...s, name: formatPersonName(s.name) }));
+
+    // Checagem de duplicidade: só no CADASTRO de família nova (não na
+    // edição, que não cria aluno do zero), e só se o admin ainda não
+    // confirmou "cadastrar mesmo assim". Sem essa checagem, dois
+    // responsáveis (pai/mãe) cadastrados em momentos diferentes pelo admin
+    // acabavam cada um com sua própria cópia do mesmo filho — foi o que
+    // gerou 8 alunos duplicados nesta escola antes dessa proteção existir.
+    if (!editingUser && formData.role === 'family' && !forceCreateDespiteDuplicate) {
+      const namesToCheck = normalizedStudents.map(s => s.name.trim()).filter(Boolean);
+      if (namesToCheck.length > 0) {
+        const { data: existingMatches } = await supabase
+          .from('students')
+          .select('name, users:family_id(name)')
+          .eq('school_id', currentUser.school_id)
+          .in('name', namesToCheck);
+        if (existingMatches && existingMatches.length > 0) {
+          setDuplicateAlert(existingMatches.map(m => ({ name: m.name, familyName: m.users?.name || 'outro responsável' })));
+          return;
+        }
+      }
+    }
+    setDuplicateAlert(null);
+    setIsLoading(true);
 
     try {
       if (editingUser) {
@@ -1288,6 +1318,40 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         )}
         {errorMsg && (
           <div className="p-4 bg-red-50 text-red-600 rounded-zela-md border border-red-200 font-medium">{errorMsg}</div>
+        )}
+
+        {duplicateAlert && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-zela-md space-y-2">
+            <p className="font-bold text-amber-800 text-sm flex items-center gap-2">
+              <AlertTriangle size={16} /> Possível aluno duplicado
+            </p>
+            <ul className="text-xs text-amber-700 space-y-0.5">
+              {duplicateAlert.map((m, i) => (
+                <li key={i}>
+                  <span className="font-semibold">{m.name}</span> já está cadastrado por <span className="font-semibold">{m.familyName}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-amber-700">
+              Se for a mesma criança, cancele e vincule esta pessoa como 2º responsável em Gestão de Usuários, em vez de criar um cadastro novo.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setDuplicateAlert(null)}
+                className="text-xs font-bold text-amber-800 bg-white border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { setForceCreateDespiteDuplicate(true); setDuplicateAlert(null); }}
+                className="text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition"
+              >
+                São crianças diferentes, cadastrar mesmo assim
+              </button>
+            </div>
+          </div>
         )}
 
         {formContent}

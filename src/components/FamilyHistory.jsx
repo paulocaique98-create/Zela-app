@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Search, X, History, FileText, LogIn, LogOut } from 'lucide-react';
+import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, PencilLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { calcularHorasExtras } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
+import { ATTENDANCE_CORRECTION_REASONS } from '../lib/constants';
+
+function reasonLabel(code) {
+  return ATTENDANCE_CORRECTION_REASONS.find(r => r.value === code)?.label || code;
+}
+
+// Frase de transparência mostrada pro responsável quando a escola corrige um
+// horário — nunca escondida, sempre no mesmo lugar onde o horário aparece
+// (ver plano de Correção Manual de Presença com Auditoria e Aprovação).
+function describeCorrection(correction, eventLabel) {
+  if (!correction) return null;
+  const corretoAgora = formatTime(correction.event_time);
+  const original = formatTime(correction.original_event_time);
+  const when = correction.corrected_at ? ` em ${formatDate(correction.corrected_at)}` : '';
+  return `Horário de ${eventLabel} ajustado pela escola: ${corretoAgora} em vez de ${original}${when}. Motivo: ${reasonLabel(correction.correction_reason_code)}.`;
+}
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -59,6 +75,10 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
           id,
           event_type,
           event_time,
+          corrected,
+          original_event_time,
+          correction_reason_code,
+          corrected_at,
           student_id,
           students:student_id (name, turma, contracted_hours, contracted_exit_time, users:family_id(name))
         `);
@@ -112,6 +132,8 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
               duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
               overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
               rawTime: entryTime.getTime(),
+              entryCorrection: ev.corrected ? ev : null,
+              exitCorrection: nextExit?.corrected ? nextExit : null,
             });
 
             if (nextExit) {
@@ -251,20 +273,26 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
-                {filtered.map(log => (
-                  <tr key={log.key} className="hover:bg-surface-container-low transition-colors">
+                {filtered.map(log => {
+                  const entryNote = describeCorrection(log.entryCorrection, 'entrada');
+                  const exitNote = describeCorrection(log.exitCorrection, 'saída');
+                  return (
+                  <React.Fragment key={log.key}>
+                  <tr className="hover:bg-surface-container-low transition-colors">
                     <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.date}</td>
                     <td className="py-3 pr-4 font-semibold text-on-surface">{log.studentName}</td>
                     <td className="py-3 pr-4 text-on-surface-variant text-xs hidden sm:table-cell">{log.family}</td>
                     <td className="py-3 pr-4">
                       <span className="flex items-center gap-1 font-medium text-primary">
                         <LogIn size={13} /> {log.entry}
+                        {log.entryCorrection && <PencilLine size={12} className="text-amber-500" title="Horário ajustado pela escola" />}
                       </span>
                     </td>
                     <td className="py-3 pr-4">
                       {log.exit ? (
                         <span className="flex items-center gap-1 font-medium text-rose-500">
                           <LogOut size={13} /> {log.exit}
+                          {log.exitCorrection && <PencilLine size={12} className="text-amber-500" title="Horário ajustado pela escola" />}
                         </span>
                       ) : (
                         <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
@@ -283,7 +311,19 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                       )}
                     </td>
                   </tr>
-                ))}
+                  {(entryNote || exitNote) && (
+                    <tr>
+                      <td colSpan={7} className="pb-3 pr-4">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
+                          {entryNote && <p className="text-[11px] text-amber-800 leading-relaxed">{entryNote}</p>}
+                          {exitNote && <p className="text-[11px] text-amber-800 leading-relaxed">{exitNote}</p>}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

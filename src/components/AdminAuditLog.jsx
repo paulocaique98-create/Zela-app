@@ -8,10 +8,12 @@ const ACTION_LABELS = {
   publish: 'Publicou',
   archive: 'Arquivou',
   delete: 'Excluiu',
+  correct_attendance: 'Corrigiu um registro de',
 };
 
 const ENTITY_LABELS = {
   mitigacao_report: 'Relatório de Mitigação',
+  attendance_log: 'Presença',
 };
 
 function formatWhen(iso) {

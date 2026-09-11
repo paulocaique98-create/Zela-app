@@ -59,3 +59,15 @@ export const NIVEL_AUTONOMIA = [
   { value: 'parcial', label: 'Parcialmente autônomo' },
   { value: 'autonomo', label: 'Autônomo' },
 ];
+
+// Motivos de correção manual de horário de check-in/check-out — obrigatório
+// escolher um ao corrigir (ver AttendanceCorrectionModal.jsx). Aparece
+// também pro responsável, no Histórico, como parte da transparência da
+// correção.
+export const ATTENDANCE_CORRECTION_REASONS = [
+  { value: 'ERRO_TOTEM', label: 'Falha no totem/reconhecimento facial' },
+  { value: 'ESQUECEU_REGISTRAR', label: 'Família ou aluno esqueceu de registrar' },
+  { value: 'ENTRADA_OUTRA_VIA', label: 'Entrou ou saiu por outra via' },
+  { value: 'ERRO_OPERACIONAL', label: 'Erro operacional da equipe' },
+  { value: 'OUTRO', label: 'Outro motivo' },
+];

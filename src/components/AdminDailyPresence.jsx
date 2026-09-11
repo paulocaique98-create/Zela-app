@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, ChevronDown } from 'lucide-react';
+import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, ChevronDown, Pencil, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import AttendanceCorrectionModal from './AttendanceCorrectionModal';
+import AttendanceMarkingDeleteModal from './AttendanceMarkingDeleteModal';
 
 const STATUS_CONFIG = {
   in_school:      { label: 'Na escola',        cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
@@ -12,7 +14,7 @@ const STATUS_CONFIG = {
   idle:           { label: 'Pendente de Check-in', cls: 'bg-slate-100 text-slate-500', icon: null },
 };
 
-export default function AdminDailyPresence({ currentUser }) {
+export default function AdminDailyPresence({ currentUser, currentSchool }) {
   // Turmas cadastradas oficialmente em Gestão de Turmas (schools.turmas) --
   // a MESMA lista usada no cadastro de aluno (Novo Usuário > Alunos
   // vinculados > Turma), pra não duplicar opção quando o texto gravado num
@@ -25,6 +27,9 @@ export default function AdminDailyPresence({ currentUser }) {
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
+  const [deleteTarget, setDeleteTarget] = useState(null); // { student, eventType, staleTime }
+  const [resolvingCorrectionFor, setResolvingCorrectionFor] = useState(null); // `${studentId}_${eventType}`
 
   const fetchPresence = async () => {
     setIsLoading(true);
@@ -32,7 +37,7 @@ export default function AdminDailyPresence({ currentUser }) {
       // Busca todos os alunos da escola que tiveram alguma movimentação hoje
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, status, turma, contracted_hours, today_entry, today_exit, family_id')
+        .select('id, name, status, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, today_entry, today_exit, today_entry_at, today_exit_at, family_id')
         .eq('school_id', currentUser.school_id)
         .neq('status', 'idle')   // exclui quem ainda não interagiu hoje
         .order('name', { ascending: true });
@@ -50,6 +55,42 @@ export default function AdminDailyPresence({ currentUser }) {
   useEffect(() => {
     fetchPresence();
   }, []);
+
+  // Essa tela lê o horário direto de students.today_entry/today_exit (não de
+  // attendance_logs), então não tem o id do log à mão — busca sob demanda,
+  // só quando o admin clica no lápis. entry: primeiro do dia; exit: último
+  // do dia (mesma regra de agruparEventosPorDia em attendanceUtils.js).
+  const openCorrection = async (student, eventType) => {
+    const key = `${student.id}_${eventType}`;
+    setResolvingCorrectionFor(key);
+    try {
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+      const { data, error } = await supabase
+        .from('attendance_logs')
+        .select('id, event_type, event_time, corrected')
+        .eq('student_id', student.id)
+        .eq('event_type', eventType)
+        .gte('event_time', todayStart.toISOString())
+        .lte('event_time', todayEnd.toISOString())
+        .order('event_time', { ascending: eventType === 'entry' })
+        .limit(1);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        // Sem log nenhum por trás desse horário: é uma marcação fantasma
+        // (sobra de solicitação cancelada, ver App.jsx > rejectStudentStatus)
+        // — não dá pra "corrigir" um registro que não existe, só remover.
+        const staleTime = eventType === 'entry' ? student.today_entry_at : student.today_exit_at;
+        setDeleteTarget({ student, eventType, staleTime });
+        return;
+      }
+      setCorrectionTarget({ log: data[0], student });
+    } catch (err) {
+      console.error('Erro ao localizar registro para correção:', err);
+    } finally {
+      setResolvingCorrectionFor(null);
+    }
+  };
 
   // Filtra por turma selecionada
   const displayed = selectedTurma === 'Todas as Turmas'
@@ -199,10 +240,32 @@ export default function AdminDailyPresence({ currentUser }) {
                         </span>
                       </td>
                       <td className="py-3 pr-4 font-mono font-bold text-slate-700">
-                        {student.today_entry ? student.today_entry.substring(0, 5) : '—'}
+                        {student.today_entry ? (
+                          <span className="flex items-center gap-1.5">
+                            {student.today_entry.substring(0, 5)}
+                            {resolvingCorrectionFor === `${student.id}_entry` ? (
+                              <Loader2 size={11} className="animate-spin text-slate-300" />
+                            ) : (
+                              <button onClick={() => openCorrection(student, 'entry')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de entrada">
+                                <Pencil size={11} />
+                              </button>
+                            )}
+                          </span>
+                        ) : '—'}
                       </td>
                       <td className="py-3 pr-4 font-mono text-slate-500">
-                        {student.today_exit ? student.today_exit.substring(0, 5) : '—'}
+                        {student.today_exit ? (
+                          <span className="flex items-center gap-1.5">
+                            {student.today_exit.substring(0, 5)}
+                            {resolvingCorrectionFor === `${student.id}_exit` ? (
+                              <Loader2 size={11} className="animate-spin text-slate-300" />
+                            ) : (
+                              <button onClick={() => openCorrection(student, 'exit')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de saída">
+                                <Pencil size={11} />
+                              </button>
+                            )}
+                          </span>
+                        ) : '—'}
                       </td>
                       <td className="py-3">
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-md ${cfg.cls}`}>
@@ -217,6 +280,28 @@ export default function AdminDailyPresence({ currentUser }) {
           </div>
         )}
       </div>
+
+      {correctionTarget && (
+        <AttendanceCorrectionModal
+          log={correctionTarget.log}
+          student={correctionTarget.student}
+          currentUser={currentUser}
+          billingConfig={currentSchool?.billing_config}
+          onClose={() => setCorrectionTarget(null)}
+          onSaved={() => { setCorrectionTarget(null); fetchPresence(); }}
+        />
+      )}
+
+      {deleteTarget && (
+        <AttendanceMarkingDeleteModal
+          student={deleteTarget.student}
+          eventType={deleteTarget.eventType}
+          staleTime={deleteTarget.staleTime}
+          currentUser={currentUser}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => { setDeleteTarget(null); fetchPresence(); }}
+        />
+      )}
     </div>
   );
 }

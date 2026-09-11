@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
@@ -41,6 +42,7 @@ const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
+const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -74,6 +76,36 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
   const [bulkApproving, setBulkApproving] = useState(false);
+  const [pendingCorrectionsCount, setPendingCorrectionsCount] = useState(0);
+
+  // Badge de correções de presença aguardando aprovação — mesmo padrão do
+  // badge do Monitor, mas via contagem no banco (não deriva de `students`).
+  // Realtime evita precisar trocar de aba pra ver o número atualizar quando
+  // outro admin solicita ou resolve uma correção.
+  useEffect(() => {
+    if (!currentUser?.school_id) return;
+    let cancelled = false;
+
+    const refreshCount = async () => {
+      const { count } = await supabase
+        .from('attendance_corrections')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', currentUser.school_id)
+        .eq('status', 'pending');
+      if (!cancelled) setPendingCorrectionsCount(count || 0);
+    };
+    refreshCount();
+
+    const channel = supabase
+      .channel(`attendance-corrections-badge-${currentUser.school_id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_corrections', filter: `school_id=eq.${currentUser.school_id}` }, refreshCount)
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.school_id]);
 
   // Aprova de uma vez todas as solicitações pendentes do Monitor, na ordem em
   // que aparecem. Vai uma a uma (sequencial) de propósito: updateStudentStatus
@@ -244,6 +276,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
                 <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => go('horas-extras')} />
+                <SidebarItem active={adminTab === 'attendance-corrections'} icon={ClipboardCheck} label="Correções de Presença" badge={pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null} onClick={() => go('attendance-corrections')} />
               </SidebarGroup>
             )}
 
@@ -534,7 +567,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         )}
 
         {/* PRESENÇA */}
-        {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} />}
+        {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* GESTÃO */}
         {adminTab === 'users' && <AdminUserManagement currentUser={currentUser} initialTab={usersInitialTab} />}
@@ -543,10 +576,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'students' && <AdminStudentList currentUser={currentUser} />}
 
         {/* HISTÓRICO */}
-        {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} />}
+        {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
 
         {/* HORAS EXTRAS */}
         {adminTab === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
+
+        {/* CORREÇÕES DE PRESENÇA */}
+        {adminTab === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
 
         {/* CADASTRO */}
         {adminTab === 'register' && <AdminUserRegistration currentUser={currentUser} />}
