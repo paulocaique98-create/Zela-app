@@ -11,6 +11,7 @@ import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
 import CheckinAlertModal from './CheckinAlertModal';
+import ConfirmExitPassword from './ConfirmExitPassword';
 import { SidebarItem, SidebarGroup } from './SidebarNav';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
@@ -146,11 +147,28 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
   // item, mesmo que o mouse ainda esteja em cima do menu.
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const go = (tab) => {
+  // A senha só é exigida pra SAIR do Autoatendimento pra qualquer outro menu
+  // (a tela fica exposta pra qualquer pessoa durante o check-in) — não mais
+  // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
+  // (ver AdminFaceScanner.jsx / AdminPasswordLogin.jsx).
+  const [kioskExitTarget, setKioskExitTarget] = useState(null);
+  const applyTabChange = (tab) => {
     setAdminTab(tab);
     registerClick(tab);
     setIsMobileMenuOpen(false);
     setIsSidebarExpanded(false);
+  };
+  const go = (tab) => {
+    if (adminTab === 'kiosk' && tab !== 'kiosk') {
+      setKioskExitTarget(tab);
+      return;
+    }
+    applyTabChange(tab);
+  };
+  const confirmKioskExit = () => {
+    const tab = kioskExitTarget;
+    setKioskExitTarget(null);
+    if (tab) applyTabChange(tab);
   };
 
   const features = currentSchool?.features_enabled || {};
@@ -507,62 +525,64 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           </div>
         )}
 
-        {/* AUTOATENDIMENTO */}
+        {/* AUTOATENDIMENTO — layout "Totem Institucional": fundo branco, faixa
+            superior fina com o nome da escola, barra de acento na cor da
+            marca acima do título, botões com chip de ícone. Referência
+            visual: quiosques de aeroporto/banco — sóbrio e muito legível,
+            pensado pra ficar bom tanto no tablet do totem quanto no
+            celular. */}
         {adminTab === 'kiosk' && (
-          <div className="relative h-full bg-surface-container-lowest p-5 sm:p-8 rounded-zela-xl shadow-sm border border-outline-variant flex flex-col items-center justify-center overflow-hidden">
-            {/* Configurações: cadastrar foto de responsáveis que esqueceram de fazer pelo Portal da Família */}
-            <button
-              onClick={() => setIsFaceEnrollmentOpen(true)}
-              title="Cadastrar foto de responsáveis"
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition z-10"
-            >
-              <Settings size={20} />
-            </button>
-
-            {/* Header */}
-            <div className="text-center mb-5 sm:mb-8 shrink-0">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <ShieldCheck size={28} className="sm:hidden" />
-                <ShieldCheck size={32} className="hidden sm:block" />
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-on-surface mb-1">Autoatendimento</h2>
-              <p className="text-on-surface-variant font-medium text-sm max-w-md mx-auto">
-                Identifique-se
-              </p>
+          <div className="relative h-full bg-white rounded-zela-xl shadow-sm border border-outline-variant flex flex-col overflow-hidden">
+            {/* Faixa superior: nome da escola + engrenagem de configurações
+                (cadastrar foto de responsáveis que esqueceram de fazer pelo
+                Portal da Família) */}
+            <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-outline-variant shrink-0">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-on-surface truncate pr-3">
+                {currentSchool?.name || 'Autoatendimento'}
+              </span>
+              <button
+                onClick={() => setIsFaceEnrollmentOpen(true)}
+                title="Cadastrar foto de responsáveis"
+                className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition shrink-0"
+              >
+                <Settings size={18} />
+              </button>
             </div>
 
-            {/* Botões — sempre em linha, sem forçar altura extra, para caber sem scroll */}
-            {currentSchool?.plan === 'pro' ? (
-              /* Plano Pro: reconhecimento facial + senha lado a lado */
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl shrink-0">
-                <button
-                  onClick={() => setIsFaceScannerOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-5 rounded-zela-lg transition-all shadow-sm group"
-                >
-                  <Camera size={28} className="group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="font-black text-base sm:text-lg">Reconhecimento Facial</span>
-                </button>
+            {/* Conteúdo central */}
+            <div className="flex-1 flex flex-col items-center justify-center px-5 sm:px-8 py-8 overflow-y-auto">
+              <div className="w-full max-w-md">
+                <div className="w-10 h-1 rounded-full bg-primary mb-4"></div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-on-surface mb-1.5">Identifique-se</h2>
+                <p className="text-on-surface-variant text-sm mb-8">
+                  {currentSchool?.plan === 'pro' ? 'Selecione como deseja continuar' : 'Toque para digitar sua senha'}
+                </p>
 
-                <button
-                  onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-surface-container-low text-on-surface hover:bg-on-surface hover:text-white border-2 border-outline-variant hover:border-on-surface p-5 rounded-zela-lg transition-all shadow-sm group"
-                >
-                  <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="font-black text-base sm:text-lg">Senha / PIN</span>
-                </button>
+                <div className="flex flex-col gap-3">
+                  {currentSchool?.plan === 'pro' && (
+                    <button
+                      onClick={() => setIsFaceScannerOpen(true)}
+                      className="flex items-center gap-3.5 bg-primary hover:bg-primary-container text-white p-4 sm:p-5 rounded-zela-lg transition-all shadow-sm active:scale-[0.98] group"
+                    >
+                      <span className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <Camera size={20} />
+                      </span>
+                      <span className="font-bold text-sm sm:text-base text-left">Reconhecimento Facial</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setIsPasswordLoginOpen(true)}
+                    className="flex items-center gap-3.5 bg-white text-on-surface border-2 border-outline-variant hover:border-primary/50 p-4 sm:p-5 rounded-zela-lg transition-all active:scale-[0.98] group"
+                  >
+                    <span className="w-11 h-11 rounded-xl bg-surface-container-low flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <KeyRound size={20} />
+                    </span>
+                    <span className="font-bold text-sm sm:text-base text-left">Senha / PIN</span>
+                  </button>
+                </div>
               </div>
-            ) : (
-              /* Plano Basic: só senha (reconhecimento facial é recurso Pro) */
-              <div className="grid grid-cols-1 gap-3 w-full max-w-md shrink-0">
-                <button
-                  onClick={() => setIsPasswordLoginOpen(true)}
-                  className="flex flex-row items-center justify-center gap-3 bg-surface-container-low text-on-surface hover:bg-on-surface hover:text-white border-2 border-outline-variant hover:border-on-surface p-5 rounded-zela-lg transition-all shadow-sm group"
-                >
-                  <KeyRound size={28} className="group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="font-black text-base sm:text-lg">Senha / PIN</span>
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -617,6 +637,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             />
           </Suspense>,
           document.body
+        )}
+
+        {kioskExitTarget && (
+          <ConfirmExitPassword
+            email={currentUser?.email}
+            onConfirm={confirmKioskExit}
+            onCancel={() => setKioskExitTarget(null)}
+          />
         )}
 
         {/* Password Login Modal */}

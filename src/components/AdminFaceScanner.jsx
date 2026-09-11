@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
 import { useWakeLock } from '../hooks/useWakeLock';
-import ConfirmExitPassword from './ConfirmExitPassword';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
 let _audioCtx = null;
@@ -163,10 +162,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // energia do SO/navegador) no meio do reconhecimento facial.
   useWakeLock(true);
 
-  // Sair do Autoatendimento exige confirmar a senha da conta — a tela fica exposta
-  // pra qualquer pessoa durante o check-in (ver ConfirmExitPassword).
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const requestExit = () => setShowExitConfirm(true);
+  // Sair desta tela (biometria) volta direto pro menu do Autoatendimento, sem
+  // senha — a senha só é exigida pra sair do Autoatendimento como um todo
+  // pra outro menu (ver AdminPortal.jsx > confirmKioskExit), não pra voltar
+  // do reconhecimento facial pro menu de opções do próprio totem.
+  const requestExit = () => onClose();
 
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [error, setError] = useState(null);
@@ -1117,19 +1117,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     </>
   );
 
-  const exitConfirmModal = showExitConfirm && (
-    <ConfirmExitPassword
-      email={currentUser?.email}
-      onConfirm={() => { setShowExitConfirm(false); onClose(); }}
-      onCancel={() => setShowExitConfirm(false)}
-    />
-  );
-
   if (isKioskMode) {
     return (
       <div className="w-full h-full flex flex-col bg-white overflow-hidden">
         {innerContent}
-        {exitConfirmModal}
       </div>
     );
   }
@@ -1139,7 +1130,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       <div className="w-full h-full max-w-5xl max-h-[850px] bg-white rounded-zela-lg sm:rounded-zela-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         {innerContent}
       </div>
-      {exitConfirmModal}
     </div>
   );
 }
