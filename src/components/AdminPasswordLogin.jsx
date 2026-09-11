@@ -28,6 +28,15 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
   const [matchedUsers, setMatchedUsers] = useState([]); // todos os responsáveis com o mesmo PIN
   const [familyPerson, setFamilyPerson] = useState(null); // responsável selecionado
   const [matchedStudents, setMatchedStudents] = useState(null);
+  // Quais dos alunos vinculados estão de fato sendo entregues/buscados agora
+  // — o reconhecimento (facial ou PIN) só identifica o ADULTO, não diz quais
+  // filhos estão fisicamente com ele. Filho único pré-marca sozinho (sem
+  // ambiguidade); com 2+ filhos vinculados ao mesmo responsável, começa
+  // tudo desmarcado e ele marca quem está entregando/buscando agora.
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const toggleStudentSelection = (id) => {
+    setSelectedStudentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   // Rate-limit contra força bruta: PIN de 4 dígitos tem só 10.000 combinações e o
   // totem é um dispositivo público — sem isso, dava pra tentar todas em minutos.
@@ -174,6 +183,11 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
       setFamilyPerson(user);
       setMatchedStudents(studentsData || []);
+      // Só filho único pré-marca sozinho (não faz sentido perguntar quando
+      // não há ambiguidade). Com 2+, começa tudo desmarcado — o responsável
+      // marca quem de fato está entregando ou buscando agora.
+      const loadedStudents = studentsData || [];
+      setSelectedStudentIds(loadedStudents.length === 1 ? loadedStudents.map(s => s.id) : []);
       setStep('confirm');
     } catch (err) {
       setError(err.message);
@@ -184,14 +198,15 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
   // ── Confirma acesso (check-in/check-out) ───────────────────────────────────
   const handleRequestAccess = async () => {
-    if (!matchedStudents || !matchedStudents.length) return;
+    const selected = matchedStudents?.filter(s => selectedStudentIds.includes(s.id)) || [];
+    if (!selected.length) return;
 
     setIsLoading(true);
     try {
       if (requestKioskAccess) {
-        await requestKioskAccess(matchedStudents.map((s) => s.id));
+        await requestKioskAccess(selected.map((s) => s.id));
       } else {
-        for (const student of matchedStudents) {
+        for (const student of selected) {
           let newStatus = student.status;
           if (['idle', 'left', 'absent'].includes(student.status)) newStatus = 'pending_entry';
           else if (student.status === 'in_school') newStatus = 'pending_exit';
@@ -290,21 +305,41 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <p className="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-0.5">Autorizado(a)</p>
               </div>
 
-              {/* Alunos vinculados */}
+              {/* Alunos vinculados — o PIN identifica o responsável, não diz
+                  quais filhos estão fisicamente com ele. Vem tudo marcado
+                  (mesmo comportamento de sempre pra quem tem 1 filho só),
+                  mas dá pra desmarcar quem não está sendo entregue/buscado
+                  agora. */}
               <div className="bg-surface-container-low p-4 rounded-zela-lg border border-outline-variant">
-                <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-3">Alunos Vinculados</p>
-                <div className="space-y-2">
+                <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Quem está aqui agora?</p>
+                {matchedStudents.length > 1 && (
+                  <p className="text-[11px] text-on-surface-variant mb-2">Marque quem você está entregando ou buscando agora.</p>
+                )}
+                <div className="space-y-2 mt-2">
                   {matchedStudents.length === 0 ? (
                     <p className="text-xs text-on-surface-variant italic text-center py-2">Nenhum aluno cadastrado neste perfil.</p>
                   ) : (
-                    matchedStudents.map((student) => (
-                      <div key={student.id} className="p-3 bg-white border border-outline-variant rounded-zela-md flex justify-between items-center text-sm shadow-sm">
-                        <p className="font-bold text-on-surface">{student.name}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' : 'bg-green-100 text-green-700'}`}>
-                          {student.status === 'in_school' ? 'SAÍDA' : 'ENTRADA'}
-                        </span>
-                      </div>
-                    ))
+                    matchedStudents.map((student) => {
+                      const checked = selectedStudentIds.includes(student.id);
+                      return (
+                        <button
+                          type="button"
+                          key={student.id}
+                          onClick={() => toggleStudentSelection(student.id)}
+                          className={`w-full p-3 border rounded-zela-md flex justify-between items-center text-sm shadow-sm transition-all text-left ${checked ? 'bg-white border-outline-variant' : 'bg-surface-container-lowest border-dashed border-outline-variant opacity-60'}`}
+                        >
+                          <span className="flex items-center gap-2.5 min-w-0">
+                            <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-indigo-600' : 'border-outline-variant'}`}>
+                              {checked && <CheckCircle size={13} className="text-white" strokeWidth={3} />}
+                            </span>
+                            <span className="font-bold text-on-surface truncate">{student.name}</span>
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' : 'bg-green-100 text-green-700'}`}>
+                            {student.status === 'in_school' ? 'SAÍDA' : 'ENTRADA'}
+                          </span>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -325,7 +360,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 </button>
                 <button
                   onClick={handleRequestAccess}
-                  disabled={isLoading || matchedStudents.length === 0}
+                  disabled={isLoading || selectedStudentIds.length === 0}
                   className="flex-[2] bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-black py-3.5 rounded-zela-lg active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider flex justify-center items-center gap-2"
                 >
                   {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar'}

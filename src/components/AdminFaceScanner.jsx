@@ -182,6 +182,17 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const [matchedPerson, setMatchedPerson] = useState(null); // The authorized person detected
   const [matchStatus, setMatchStatus] = useState('idle'); // 'idle' | 'searching' | 'matched' | 'no-match'
   const [matchedStudents, setMatchedStudents] = useState([]);
+  // Quais dos alunos vinculados a essa pessoa estão de fato sendo
+  // entregues/buscados agora — o reconhecimento facial só identifica o
+  // ADULTO, não diz quais filhos estão fisicamente com ele. Filho único
+  // pré-marca sozinho (sem ambiguidade, mantém o fluxo automático de
+  // sempre); com 2+ filhos vinculados ao mesmo responsável (ex: pai e mãe
+  // responsáveis pelos dois), começa tudo desmarcado e o responsável marca
+  // quem está entregando/buscando agora.
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const toggleStudentSelection = (id) => {
+    setSelectedStudentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
   const [actionDone, setActionDone] = useState(false);
 
   // Timeout de segurança: se ninguém for reconhecido depois de um tempo, oferece uma
@@ -609,7 +620,13 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   // fluxo real acima. Ver runHumanShadowComparison().
                   runHumanShadowComparison(video, person.id, currentUser.school_id, authorizedList);
                   const studentsData = await fetchStudentsForPerson(person);
-                  if (!cancelled) setMatchedStudents(studentsData);
+                  if (!cancelled) {
+                    setMatchedStudents(studentsData);
+                    // Só filho único pré-marca sozinho (sem ambiguidade). Com
+                    // 2+, começa desmarcado — o responsável marca quem está
+                    // entregando/buscando agora.
+                    setSelectedStudentIds(studentsData.length === 1 ? studentsData.map(s => s.id) : []);
+                  }
                 }
               }
             }
@@ -697,6 +714,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           fetchMatchedPersonPhoto(person.id);
           const studentsData = await fetchStudentsForPerson(person);
           setMatchedStudents(studentsData);
+          setSelectedStudentIds(studentsData.length === 1 ? studentsData.map(s => s.id) : []);
         } else {
           setMatchStatus('no-match');
         }
@@ -718,6 +736,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setMatchedPerson(null);
     setMatchStatus('idle');
     setMatchedStudents([]);
+    setSelectedStudentIds([]);
     setActionDone(false);
     setFramePosition(null);
     setNoMatchReason('');
@@ -728,11 +747,12 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   };
 
   const handleRequestAccess = async () => {
-    if (!matchedStudents.length || isProcessingCapture || actionDone) return;
+    const selected = matchedStudents.filter(s => selectedStudentIds.includes(s.id));
+    if (!selected.length || isProcessingCapture || actionDone) return;
 
     setIsProcessingCapture(true);
     try {
-      await requestKioskAccess(matchedStudents.map(s => s.id), matchedPerson?.id || null);
+      await requestKioskAccess(selected.map(s => s.id), matchedPerson?.id || null);
       setActionDone(true); // Só aqui, após confirmação real do banco
     } catch (err) {
       console.error('Erro ao solicitar acesso:', err);
@@ -756,15 +776,18 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
   // Só dispara a contagem regressiva depois que o match ficar estável por 1s
   // seguido — mesma lógica do Cadastro de Foto (evita que uma confirmação
-  // instável de um único frame já inicie a contagem).
+  // instável de um único frame já inicie a contagem). Com mais de um aluno
+  // vinculado, NÃO confirma sozinho: o reconhecimento facial só identifica o
+  // adulto, não diz quais filhos estão fisicamente ali — precisa da
+  // conferência manual das marcações antes de confirmar.
   useEffect(() => {
-    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || countdown !== null || autoTriggeredRef.current) return;
+    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || countdown !== null || autoTriggeredRef.current || matchedStudents.length > 1) return;
     const timer = setTimeout(() => {
       autoTriggeredRef.current = true;
       setCountdown(2);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [matchStatus, actionDone, isProcessingCapture, countdown]);
+  }, [matchStatus, actionDone, isProcessingCapture, countdown, matchedStudents.length]);
 
   useEffect(() => {
     if (matchStatus !== 'matched' && countdown === null) {
@@ -951,11 +974,18 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               {matchStatus === 'matched' ? (
                 <button
                   onClick={handleRequestAccess}
-                  disabled={matchedStudents.length === 0 || isProcessingCapture}
+                  disabled={selectedStudentIds.length === 0 || isProcessingCapture}
                   className="w-full md:w-auto flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
                 >
                   {isProcessingCapture ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                  {matchedStudents.some(s => s.status === 'in_school') ? 'Realizar Check-out' : 'Realizar Check-in'}
+                  {(() => {
+                    const selected = matchedStudents.filter(s => selectedStudentIds.includes(s.id));
+                    if (selected.length === 0) return 'Selecione ao menos 1 aluno';
+                    const hasIn = selected.some(s => s.status === 'in_school');
+                    const hasOut = selected.some(s => s.status !== 'in_school');
+                    if (hasIn && hasOut) return 'Confirmar Entrada/Saída';
+                    return hasIn ? 'Realizar Check-out' : 'Realizar Check-in';
+                  })()}
                 </button>
               ) : (
                 <button
@@ -1085,27 +1115,47 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   </div>
                 </div>
 
-                {/* Related students */}
+                {/* Related students — o rosto reconhecido identifica o
+                    responsável, não diz quais filhos estão fisicamente com
+                    ele. Vem tudo marcado (mesmo comportamento de sempre pra
+                    quem tem 1 filho só), mas dá pra desmarcar quem não está
+                    sendo entregue/buscado agora. */}
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2">Alunos Autorizados a Retirar</p>
-                  <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Quem está aqui agora?</p>
+                  {matchedStudents.length > 1 && (
+                    <p className="text-[11px] text-on-surface-variant/70 mb-2">Marque quem você está entregando ou buscando agora.</p>
+                  )}
+                  <div className="space-y-2 mt-2">
                     {matchedStudents.length === 0 ? (
                       <p className="text-xs text-on-surface-variant/70 italic">Nenhum aluno matriculado sob este responsável.</p>
                     ) : (
-                      matchedStudents.map(student => (
-                        <div key={student.id} className="p-3 bg-white border border-outline-variant rounded-zela-md flex justify-between items-center text-sm shadow-sm">
-                          <div>
-                            <p className="font-bold text-on-surface">{student.name}</p>
-                            <span className="text-[10px] text-on-surface-variant/70 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
-                          </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' :
-                            student.status === 'left' ? 'bg-surface-container text-on-surface-variant' :
-                              student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-surface-container text-on-surface-variant'
-                            }`}>
-                            {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente de Check-in'}
-                          </span>
-                        </div>
-                      ))
+                      matchedStudents.map(student => {
+                        const checked = selectedStudentIds.includes(student.id);
+                        return (
+                          <button
+                            type="button"
+                            key={student.id}
+                            onClick={() => toggleStudentSelection(student.id)}
+                            className={`w-full p-3 border rounded-zela-md flex justify-between items-center text-sm shadow-sm transition-all text-left ${checked ? 'bg-white border-outline-variant' : 'bg-surface-container-lowest border-dashed border-outline-variant opacity-60'}`}
+                          >
+                            <span className="flex items-center gap-2.5 min-w-0">
+                              <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-indigo-600' : 'border-outline-variant'}`}>
+                                {checked && <CheckCircle size={13} className="text-white" strokeWidth={3} />}
+                              </span>
+                              <span className="min-w-0">
+                                <p className="font-bold text-on-surface truncate">{student.name}</p>
+                                <span className="text-[10px] text-on-surface-variant/70 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
+                              </span>
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' :
+                              student.status === 'left' ? 'bg-surface-container text-on-surface-variant' :
+                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-surface-container text-on-surface-variant'
+                              }`}>
+                              {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente de Check-in'}
+                            </span>
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 </div>
