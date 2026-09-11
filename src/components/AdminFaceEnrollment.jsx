@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Camera, UserX, Search, Trash2, ShieldCheck, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import ConfirmModal from './ConfirmModal';
 import FaceCameraCapture from './FaceCameraCapture';
 
@@ -9,7 +10,7 @@ import FaceCameraCapture from './FaceCameraCapture';
 // AINDA NÃO tem foto, com busca por nome do responsável ou do filho, e
 // captura a foto AO VIVO pela câmera (nunca por upload de arquivo do
 // dispositivo — evita fotos antigas/de terceiros sendo usadas na biometria).
-export default function AdminFaceEnrollment({ authorized, togglePhoto, students, currentUser, onClose }) {
+export default function AdminFaceEnrollment({ authorized: authorizedProp, togglePhoto, students, currentUser, onClose }) {
   const [tab, setTab] = useState('pending'); // 'pending' | 'enrolled'
   const [search, setSearch] = useState('');
   const [studentsByPersonId, setStudentsByPersonId] = useState({});
@@ -17,6 +18,54 @@ export default function AdminFaceEnrollment({ authorized, togglePhoto, students,
   const [removeTarget, setRemoveTarget] = useState(null); // pessoa com remoção de foto pendente de confirmação
   const [isRemoving, setIsRemoving] = useState(false);
   const [error, setError] = useState('');
+
+  // Busca a lista direto do banco toda vez que a tela abre — não confia só
+  // no estado global `authorized` do App.jsx (alimentado no login e por
+  // Realtime). Isso cobre qualquer situação em que aquele estado ainda não
+  // refletiu uma remoção/cadastro recente (sessão aberta antes de uma
+  // mudança, atraso de propagação, etc) — igual ao AdminFaceScanner, que já
+  // faz sua própria busca a cada abertura em vez de reaproveitar cache.
+  const [authorized, setAuthorized] = useState(authorizedProp || []);
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      if (!currentUser?.school_id) return;
+      const { data, error: fetchError } = await supabase
+        .from('authorized_persons')
+        .select('id, name, relation, has_photo, photo_storage_path, face_descriptor, status, emergency_order, temporary_until, family_id')
+        .eq('school_id', currentUser.school_id);
+      if (fetchError || cancelled) return;
+
+      const pathsToResolve = (data || []).map(a => a.photo_storage_path).filter(Boolean);
+      const signedUrlByPath = pathsToResolve.length > 0
+        ? await getAuthorizedPersonPhotoSignedUrls(pathsToResolve).catch(() => new Map())
+        : new Map();
+      if (cancelled) return;
+
+      setAuthorized((data || []).map(a => ({
+        id: a.id,
+        name: a.name,
+        relation: a.relation,
+        hasPhoto: a.has_photo,
+        photo_url: a.photo_storage_path ? (signedUrlByPath.get(a.photo_storage_path) || null) : null,
+        photo_storage_path: a.photo_storage_path,
+        has_biometrics: a.face_descriptor != null,
+        status: a.status,
+        emergencyOrder: a.emergency_order,
+        temporaryUntil: a.temporary_until,
+        family_id: a.family_id,
+      })));
+    };
+    refresh();
+    return () => { cancelled = true; };
+  }, [currentUser?.school_id]);
+
+  // Depois da busca inicial, continua acompanhando o estado global (que o
+  // Realtime do App.jsx mantém atualizado) — cobre remoções/cadastros feitos
+  // com esta tela já aberta, sem precisar reabrir.
+  useEffect(() => {
+    setAuthorized(authorizedProp || []);
+  }, [authorizedProp]);
 
   const pending = useMemo(
     () => (authorized || []).filter(p => !p.photo_url && !p.hasPhoto && !p.has_biometrics),
