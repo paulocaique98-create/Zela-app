@@ -365,6 +365,51 @@ export default function App() {
           setStudents((prev) => prev.filter((s) => s.id !== oldRow.id));
         }
       })
+      // Mesmo canal, tabela authorized_persons — sem isso, telas que dependem
+      // do estado `authorized` (Biometria de Responsáveis, Autorizados da
+      // família) só refletiam um cadastro/remoção de biometria depois de
+      // recarregar a página inteira. Ex.: alguém remove a própria foto, o
+      // admin que já estava com a tela aberta continuava vendo a pessoa como
+      // "já cadastrada" e ela nunca aparecia de volta em "Pendentes".
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'authorized_persons' }, async (payload) => {
+        const { eventType, new: newRow, old: oldRow } = payload;
+        const role = currentUserRef.current?.role;
+
+        if (eventType === 'DELETE') {
+          setAuthorized((prev) => prev.filter((p) => p.id !== oldRow.id));
+          return;
+        }
+
+        // Admin vê todo mundo da própria escola; família só os seus próprios
+        // autorizados — mesmo escopo já usado no fetch inicial (fetchData).
+        const belongs = role === 'admin'
+          ? newRow.school_id === currentUserRef.current?.school_id
+          : newRow.family_id === currentUserRef.current?.id;
+        if (!belongs) return;
+
+        const photo_url = newRow.photo_storage_path
+          ? await getAuthorizedPersonPhotoSignedUrl(newRow.photo_storage_path).catch(() => null)
+          : null;
+
+        const formatted = {
+          id: newRow.id,
+          name: newRow.name,
+          relation: newRow.relation,
+          hasPhoto: newRow.has_photo,
+          photo_url,
+          photo_storage_path: newRow.photo_storage_path,
+          has_biometrics: newRow.face_descriptor != null,
+          status: newRow.status,
+          emergencyOrder: newRow.emergency_order,
+          temporaryUntil: newRow.temporary_until,
+          family_id: newRow.family_id,
+        };
+
+        setAuthorized((prev) => {
+          const exists = prev.some((p) => p.id === formatted.id);
+          return exists ? prev.map((p) => (p.id === formatted.id ? formatted : p)) : [...prev, formatted];
+        });
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.info('[Zela] Realtime conectado com sucesso.');
@@ -685,12 +730,46 @@ export default function App() {
       }
     }
 
+    // Cadastro novo (foto + descritor juntos): grava o DESCRITOR primeiro,
+    // sem esperar o upload da foto — é só isso que o reconhecimento no totem
+    // precisa. Antes, o descritor só era gravado DEPOIS do upload terminar;
+    // numa rede de escola mais lenta, isso atrasava em vários segundos o
+    // momento em que a pessoa já podia ser reconhecida, e ela geralmente
+    // volta pro totem antes disso (achando que já tinha terminado assim que
+    // fechou a tela). O upload da foto (só usada no confronto visual, não no
+    // reconhecimento em si) segue em segundo plano, sem bloquear nada.
+    if (photoUrl && descriptorArray) {
+      const fastUpdates = { has_photo: true, face_descriptor: JSON.stringify(descriptorArray) };
+      if (consentGiven) fastUpdates.biometric_consent_at = new Date().toISOString();
+
+      const { error: fastError } = await supabase.from('authorized_persons').update(fastUpdates).eq('id', id);
+      if (fastError) {
+        console.error(fastError);
+        throw new Error('Não foi possível salvar a biometria. Tente novamente.');
+      }
+
+      setAuthorized(prev => prev.map(p => p.id === id ? { ...p, hasPhoto: true, has_biometrics: true } : p));
+
+      uploadAuthorizedPersonPhoto(currentUser.school_id, id, photoUrl)
+        .then(async (path) => {
+          const { error: photoError } = await supabase.from('authorized_persons').update({ photo_storage_path: path }).eq('id', id);
+          if (photoError) { console.error('Erro ao salvar caminho da foto:', photoError); return; }
+          const resolvedPhotoUrl = await getAuthorizedPersonPhotoSignedUrl(path).catch(() => null);
+          setAuthorized(prev => prev.map(p => p.id === id ? { ...p, photo_storage_path: path, photo_url: resolvedPhotoUrl } : p));
+        })
+        .catch(err => console.error('Erro ao enviar foto pro Storage (biometria já está ativa, só a miniatura fica sem foto):', err));
+
+      return;
+    }
+
     try {
       const updates = { has_photo: !!photoUrl };
 
       // Foto nova → vai pro Storage. photo_storage_path é o único campo
       // usado pra referenciar a foto — a coluna legada photo_url não é
-      // mais lida nem escrita pelo código.
+      // mais lida nem escrita pelo código. (Cadastro NOVO com foto+descritor
+      // já retornou acima — chegar aqui com photoUrl significa um caso raro
+      // de só trocar a foto sem mexer no descritor, hoje sem uso na UI.)
       if (photoUrl) {
         try {
           const path = await uploadAuthorizedPersonPhoto(currentUser.school_id, id, photoUrl);

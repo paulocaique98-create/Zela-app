@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, Loader2, ArrowLeft, RefreshCw, Check } from 'lucide-react';
+import { X, Camera, Loader2, ArrowLeft, RefreshCw, Check, CheckCircle2 } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import ConfirmModal from './ConfirmModal';
@@ -74,6 +74,10 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Tela de sucesso explícita, só depois que o banco confirma de verdade —
+  // sem isso, a pessoa fechava a tela assim que o "Confirmar" some e corria
+  // pro totem, sem saber se realmente tinha terminado de salvar.
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(null);
   // null (sem rosto) | 'too-far' | 'too-close' | 'off-center' | 'ok'
@@ -225,7 +229,8 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
       }
       const descriptorArray = Array.from(detection.descriptor);
       await onSave(capturedImage, descriptorArray);
-      onDone();
+      setIsSaving(false);
+      setSaveSuccess(true);
     } catch (err) {
       console.error(err);
       setError(err.message?.startsWith('Este rosto já está cadastrado') ? err.message : 'Erro ao processar a biometria.');
@@ -233,24 +238,45 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     }
   };
 
+  // Depois de mostrar a confirmação, fecha sozinho em alguns segundos — dá
+  // tempo de ler "já pode usar o reconhecimento facial" sem travar quem
+  // quer seguir na hora (o botão "Concluir" já fecha antes disso).
+  useEffect(() => {
+    if (!saveSuccess) return;
+    const timer = setTimeout(() => onDone(), 2500);
+    return () => clearTimeout(timer);
+  }, [saveSuccess]);
+
   return (
     <div className="flex flex-col h-[75vh] max-h-[560px]">
       <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Sai bloqueada enquanto salva — sem isso, dava pra fechar antes
+              do banco confirmar de verdade e a pessoa corria pro totem
+              achando que já tinha terminado (ver diagnóstico de "recém
+              cadastrada não reconhece"). Continua liberado na tela de
+              sucesso, pra quem já leu e quer seguir na hora. */}
           {onCancel && (
-            <button onClick={onCancel} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
+            <button onClick={onCancel} disabled={isSaving} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
               <ArrowLeft size={20} />
             </button>
           )}
           <h2 className="text-base font-bold text-on-surface">{personName}</h2>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
+          <button onClick={onClose} disabled={isSaving} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
             <X size={20} />
           </button>
         )}
       </div>
 
+      {saveSuccess ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3 bg-white">
+          <CheckCircle2 size={56} className="text-green-500" />
+          <h3 className="font-bold text-lg text-on-surface">Biometria cadastrada!</h3>
+          <p className="text-sm text-on-surface-variant max-w-xs">Já pode usar o reconhecimento facial no Autoatendimento.</p>
+        </div>
+      ) : (
       <div ref={containerRef} className="relative flex-1 bg-slate-950 overflow-hidden">
         {/* O <video> fica sempre montado (a partir do momento em que a câmera é
             iniciada) — desmontá-lo (ex: ao mostrar a foto capturada) perde o
@@ -316,9 +342,17 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
           );
         })()}
       </div>
+      )}
 
       <div className="p-5 border-t border-outline-variant shrink-0">
-        {capturedImage ? (
+        {saveSuccess ? (
+          <button
+            onClick={onDone}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm"
+          >
+            <Check size={16} /> Concluir
+          </button>
+        ) : capturedImage ? (
           <div className="flex gap-2">
             <button
               onClick={handleRetake}
