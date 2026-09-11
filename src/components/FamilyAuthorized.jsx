@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Users, Plus, Camera, Fingerprint, Loader2, Trash2 } from 'lucide-react';
-import * as faceapi from 'face-api.js';
-import { preloadFaceModels } from '../lib/faceModels';
 import ConfirmModal from './ConfirmModal';
+import FaceCameraCapture from './FaceCameraCapture';
 
 export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, currentSchool }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
   const [confirmRemovePhotoId, setConfirmRemovePhotoId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [pendingConsent, setPendingConsent] = useState(null); // { person, file }
+  // Pessoa sendo fotografada agora — antes era um simples <input type="file">
+  // (galeria/câmera sem nenhum guia de enquadramento), o que gerava fotos de
+  // baixa qualidade e biometrias que não batiam de forma confiável no totem
+  // depois. Agora usa a MESMA captura ao vivo com molde oval do admin (ver
+  // FaceCameraCapture.jsx).
+  const [cameraFor, setCameraFor] = useState(null);
   const isBasic = currentSchool?.plan === 'basic';
   const limitReached = isBasic && authorized.length >= 2;
 
@@ -39,42 +43,6 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
     } finally {
       setIsProcessingId(null);
       setConfirmDeleteId(null);
-    }
-  };
-
-  // Só processa a foto (detecção facial + gravação) depois que o
-  // responsável confirma o consentimento LGPD explícito — ver modal abaixo.
-  const processCapture = async () => {
-    const { person, file } = pendingConsent;
-    setPendingConsent(null);
-    setIsProcessingId(person.id);
-    try {
-      await preloadFaceModels();
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const img = new Image();
-        img.src = reader.result;
-        img.onload = async () => {
-          const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-          if (detection) {
-            const descriptorArray = Array.from(detection.descriptor);
-            try {
-              await togglePhoto(person.id, reader.result, descriptorArray, true);
-            } catch (err) {
-              console.error(err);
-              alert(err.message?.startsWith('Este rosto já está cadastrado') ? err.message : 'Erro ao processar biometria.');
-            }
-          } else {
-            alert("Não foi possível detectar um rosto nítido na foto. Tente outra imagem.");
-          }
-          setIsProcessingId(null);
-        };
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao processar biometria.");
-      setIsProcessingId(null);
     }
   };
 
@@ -118,12 +86,6 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             </div>
           )}
           {authorized.map(person => {
-            const handleFileChange = (e) => {
-              const file = e.target.files[0];
-              if (file) setPendingConsent({ person, file });
-              e.target.value = ''; // permite selecionar o mesmo arquivo de novo se cancelar
-            };
-
             const handleRemovePhoto = () => setConfirmRemovePhotoId(person.id);
             const handleDeleteAuthorized = () => setConfirmDeleteId(person.id);
 
@@ -131,7 +93,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
               <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-4 transition hover:border-slate-300">
                 {/* Avatar & Info */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setCameraFor(person)}
+                    disabled={isProcessingId === person.id}
+                    className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer"
+                  >
                     {isProcessingId === person.id ? (
                       <Loader2 size={20} className="text-primary animate-spin"/>
                     ) : person.photo_url ? (
@@ -143,11 +110,10 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
                     ) : (
                       <Camera size={20} className="text-on-surface-variant/70"/>
                     )}
-                    <label className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white cursor-pointer transition">
+                    <span className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white transition">
                       <Camera size={18}/>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isProcessingId === person.id}/>
-                    </label>
-                  </div>
+                    </span>
+                  </button>
 
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-base text-on-surface truncate">{person.name}</p>
@@ -173,15 +139,19 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
                     {person.status === 'approved' ? 'Ativo' : 'Pendente'}
                   </span>
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <label className="text-xs text-primary font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-outline-variant px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setCameraFor(person)}
+                      disabled={isProcessingId === person.id}
+                      className="text-xs text-primary font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-outline-variant px-3 py-1.5 rounded-lg shadow-sm w-full sm:w-auto disabled:opacity-50"
+                    >
                       {isProcessingId === person.id ? (
                          <><Loader2 size={14} className="animate-spin"/> Processando</>
                       ) : (
                          <><Fingerprint size={14}/> {person.hasPhoto || person.has_biometrics ? 'Atualizar' : 'Cadastrar Biometria'}</>
                       )}
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isProcessingId === person.id}/>
-                    </label>
-                    
+                    </button>
+
                     {(person.hasPhoto || person.has_biometrics || person.photo_url) && (
                       <button
                         onClick={handleRemovePhoto}
@@ -207,7 +177,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
         <div className="mt-4 p-4 bg-primary/10 text-indigo-800 rounded-zela-md border border-primary/10 text-sm flex gap-3">
           <Camera className="shrink-0 text-primary" />
           <p>
-            <strong>Lembrete:</strong> É obrigatório anexar uma foto nítida do rosto do autorizado para o sistema de Reconhecimento Facial na recepção.
+            <strong>Lembrete:</strong> É obrigatório fazer uma foto nítida do rosto do autorizado, pela câmera, para o sistema de Reconhecimento Facial na recepção.
           </p>
         </div>
       </div>
@@ -233,15 +203,29 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
         />
       )}
 
-      {pendingConsent && (
-        <ConfirmModal
-          title="Consentimento para uso de biometria"
-          message={`Ao continuar, você autoriza o uso da foto e dos dados biométricos faciais de ${pendingConsent.person.name} exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD). Você pode remover essa autorização e os dados a qualquer momento.`}
-          confirmLabel="Concluir"
-          danger={false}
-          onConfirm={processCapture}
-          onCancel={() => setPendingConsent(null)}
-        />
+      {cameraFor && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setCameraFor(null)}>
+          <div
+            className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <FaceCameraCapture
+              personName={cameraFor.name}
+              consentMessage={`Ao continuar, você autoriza o uso da foto e dos dados biométricos faciais de ${cameraFor.name} exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD). Você pode remover essa autorização e os dados a qualquer momento.`}
+              onSave={async (imageDataUrl, descriptorArray) => {
+                setIsProcessingId(cameraFor.id);
+                try {
+                  await togglePhoto(cameraFor.id, imageDataUrl, descriptorArray, true);
+                } finally {
+                  setIsProcessingId(null);
+                }
+              }}
+              onDone={() => setCameraFor(null)}
+              onCancel={() => setCameraFor(null)}
+              onClose={() => setCameraFor(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
