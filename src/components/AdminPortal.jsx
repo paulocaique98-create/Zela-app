@@ -568,6 +568,16 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         <Camera size={16} className="text-on-surface-variant/70" /> Biometria de Responsáveis
                       </button>
                       <div className="h-px bg-outline-variant my-1" />
+                      {/* Voltar: sai do Autoatendimento pra tela inicial, sem
+                          deslogar — continua exigindo a senha (mesma trava
+                          de sair do kiosk pra qualquer outro menu). */}
+                      <button
+                        onClick={() => { setIsKioskSettingsOpen(false); go('home'); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low transition text-left"
+                      >
+                        <Home size={16} className="text-on-surface-variant/70" /> Voltar ao Início
+                      </button>
+                      {/* Sair: desloga da conta de verdade. */}
                       <button
                         onClick={() => { setIsKioskSettingsOpen(false); onLogout?.(); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition text-left"
