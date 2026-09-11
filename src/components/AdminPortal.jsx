@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2 } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -53,7 +53,7 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
 ];
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const pushData = usePushNotifications(currentUser, currentSchool);
@@ -152,6 +152,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
   // (ver AdminFaceScanner.jsx / AdminPasswordLogin.jsx).
   const [kioskExitTarget, setKioskExitTarget] = useState(null);
+  // Menu da engrenagem no Autoatendimento (tela cheia, sem Header): reúne
+  // "Cadastrar biometria" (ação de sempre) e "Sair", já que o botão de sair
+  // do Header não existe mais nessa tela.
+  const [isKioskSettingsOpen, setIsKioskSettingsOpen] = useState(false);
   const applyTabChange = (tab) => {
     setAdminTab(tab);
     registerClick(tab);
@@ -532,21 +536,48 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             pensado pra ficar bom tanto no tablet do totem quanto no
             celular. */}
         {adminTab === 'kiosk' && (
-          <div className="relative h-full bg-white rounded-zela-xl shadow-sm border border-outline-variant flex flex-col overflow-hidden">
+          // Sem rounded/border/shadow de propósito: com o Header oculto (ver
+          // App.jsx > isKioskFullscreen) e o <main> sem padding, esse bloco
+          // já ocupa a tela inteira — uma "borda" flutuante ficaria estranha
+          // encostada na tela de verdade.
+          <div className="relative h-full bg-white flex flex-col overflow-hidden">
             {/* Faixa superior: nome da escola + engrenagem de configurações
-                (cadastrar foto de responsáveis que esqueceram de fazer pelo
-                Portal da Família) */}
+                (cadastrar foto de responsáveis, e agora também Sair — o
+                botão de sair do Header não existe mais nesta tela) */}
             <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-outline-variant shrink-0">
               <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-on-surface truncate pr-3">
                 {currentSchool?.name || 'Autoatendimento'}
               </span>
-              <button
-                onClick={() => setIsFaceEnrollmentOpen(true)}
-                title="Cadastrar foto de responsáveis"
-                className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition shrink-0"
-              >
-                <Settings size={18} />
-              </button>
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setIsKioskSettingsOpen(v => !v)}
+                  title="Configurações do Autoatendimento"
+                  className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                >
+                  <Settings size={18} />
+                </button>
+                {isKioskSettingsOpen && (
+                  <>
+                    {/* Fecha ao clicar fora, sem precisar de lib de popover */}
+                    <div className="fixed inset-0 z-10" onClick={() => setIsKioskSettingsOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-outline-variant rounded-zela-lg shadow-lg py-1.5 z-20 animate-in fade-in zoom-in-95 duration-150">
+                      <button
+                        onClick={() => { setIsKioskSettingsOpen(false); setIsFaceEnrollmentOpen(true); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low transition text-left"
+                      >
+                        <Camera size={16} className="text-on-surface-variant/70" /> Biometria de Responsáveis
+                      </button>
+                      <div className="h-px bg-outline-variant my-1" />
+                      <button
+                        onClick={() => { setIsKioskSettingsOpen(false); onLogout?.(); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition text-left"
+                      >
+                        <LogOut size={16} /> Sair
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Conteúdo central */}

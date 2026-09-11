@@ -1170,30 +1170,39 @@ export default function App() {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><Login onLogin={handleLogin} /></Suspense>;
   }
 
+  // Autoatendimento em tela cheia: some com o Header (hambúrguer, nome do
+  // Zela Portal, logo da escola, botão de sair) pra sobrar mais espaço pro
+  // totem e deixar o layout dedicado à tarefa — o botão de sair some daqui e
+  // reaparece dentro da engrenagem de Biometria de Responsáveis (ver
+  // AdminPortal.jsx).
+  const isKioskFullscreen = currentUser.role === 'admin' && adminTab === 'kiosk';
+
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
-      <Header
-        currentUser={currentUser}
-        currentSchool={currentSchool}
-        globalLogo={globalLogo}
-        onLogout={handleLogout}
-        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-        onTriggerEmergency={triggerEmergency}
-        onNavigateTab={
-          // Header/NotificationsDropdown é compartilhado entre papéis, mas
-          // "navegar pra uma aba" significa uma aba DIFERENTE dependendo de
-          // quem está logado. Achado ao liberar o sino de notificações pra
-          // admin: isso estava fixo em setFamilyTab pra qualquer role --
-          // clicar numa notificação de admin não teria efeito nenhum
-          // (chamaria o setter errado, o estado que a tela realmente lê
-          // pra decidir o que mostrar nunca mudava).
-          currentUser?.role === 'admin' ? setAdminTab
-          : currentUser?.role === 'teacher' ? setTeacherTab
-          : setFamilyTab
-        }
-      />
+      {!isKioskFullscreen && (
+        <Header
+          currentUser={currentUser}
+          currentSchool={currentSchool}
+          globalLogo={globalLogo}
+          onLogout={handleLogout}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onTriggerEmergency={triggerEmergency}
+          onNavigateTab={
+            // Header/NotificationsDropdown é compartilhado entre papéis, mas
+            // "navegar pra uma aba" significa uma aba DIFERENTE dependendo de
+            // quem está logado. Achado ao liberar o sino de notificações pra
+            // admin: isso estava fixo em setFamilyTab pra qualquer role --
+            // clicar numa notificação de admin não teria efeito nenhum
+            // (chamaria o setter errado, o estado que a tela realmente lê
+            // pra decidir o que mostrar nunca mudava).
+            currentUser?.role === 'admin' ? setAdminTab
+            : currentUser?.role === 'teacher' ? setTeacherTab
+            : setFamilyTab
+          }
+        />
+      )}
 
-      <main className="flex-1 overflow-hidden flex flex-col p-3 sm:p-4 md:p-6 lg:p-6">
+      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : 'p-3 sm:p-4 md:p-6 lg:p-6'}`}>
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex justify-center items-center">
