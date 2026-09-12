@@ -118,21 +118,27 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
   useEffect(() => { fetchExtras(); }, [currentSchool, period, customDate]);
 
-  const filtered = logs.filter(log => {
-    // Filtro de busca por nome
+  // Mesma regra usada pra pintar a linha de amarelo na tabela: excedeu a
+  // tolerância de entrada antecipada, ou de saída tardia com o check-out já
+  // registrado (enquanto o aluno ainda está na escola sem saída, não dá pra
+  // dizer que "tem" hora extra — ainda pode sair dentro do prazo).
+  const hasExcess = log => log.excessoEntrada || (log.excessoSaida && !log.sem_saida);
+
+  const searchFiltered = logs.filter(log => {
     const term = searchTerm.toLowerCase().trim();
-    const matchName = !term || log.studentName.toLowerCase().includes(term) || log.family.toLowerCase().includes(term);
-    
-    // Filtro de status
-    let matchStatus = true;
-    if (statusFilter === 'excess') {
-      matchStatus = !log.dentro_tolerancia && !log.sem_saida;
-    } else if (statusFilter === 'ok') {
-      matchStatus = log.dentro_tolerancia && !log.sem_saida;
-    }
-    
-    return matchName && matchStatus;
+    return !term || log.studentName.toLowerCase().includes(term) || log.family.toLowerCase().includes(term);
   });
+
+  const filtered = searchFiltered.filter(log => {
+    if (statusFilter === 'excess') return hasExcess(log);
+    if (statusFilter === 'ok') return log.dentro_tolerancia && !log.sem_saida;
+    return true;
+  });
+
+  // Relatório exportado (PDF) sempre leva só quem de fato tem hora extra,
+  // independente do filtro de status selecionado na tela — a tela serve pra
+  // acompanhar todo mundo, o relatório é só o que realmente gerou excedente.
+  const exportRecords = searchFiltered.filter(hasExcess);
 
   const totalRegistros = filtered.length;
   const totalMinutosExcedentes = filtered.reduce((acc, log) => acc + log.minutos_excedentes, 0);
@@ -146,7 +152,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
   const handleExport = () => {
     printHorasExtrasReport({
-      records: filtered,
+      records: exportRecords,
       periodLabel,
       school: currentSchool,
     });
@@ -168,7 +174,8 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         
         <button
           onClick={handleExport}
-          disabled={filtered.length === 0}
+          disabled={exportRecords.length === 0}
+          title={exportRecords.length === 0 ? 'Ninguém com hora extra neste período' : undefined}
           className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0 w-full sm:w-auto"
         >
           <Download size={16} /> Exportar Relatório
@@ -287,10 +294,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                   let excessClass = "text-slate-400";
                   let valorClass = "text-green-600";
                   
-                  // Excesso agora pode vir do check-in antecipado (independente de já ter
-                  // saída registrada) ou do check-out tardio (exige saída registrada).
-                  const temExcesso = log.excessoEntrada || (log.excessoSaida && !log.sem_saida);
-                  if (temExcesso) {
+                  if (hasExcess(log)) {
                     rowClass = "bg-amber-50/50 hover:bg-amber-50 transition-colors";
                     excessText = `${Math.floor(log.minutos_excedentes / 60)}h ${log.minutos_excedentes % 60}min`;
                     excessClass = "text-amber-600 font-bold";

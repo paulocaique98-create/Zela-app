@@ -112,7 +112,9 @@ runIf('Regressão — achado #2: delete_school_and_users sem validação de cham
 });
 
 runIf('Regressão — achado #3: tabelas internas 100% públicas', () => {
-  const tabelasInternas = ['_fase8_backup_photo_url', 'history_records', 'profiles', 'rate_limit_attempts'];
+  // _fase8_backup_photo_url foi removida (backup temporário de uma migração
+  // já concluída, ficou 2 semanas sem uso e foi limpo numa faxina de storage).
+  const tabelasInternas = ['history_records', 'profiles', 'rate_limit_attempts'];
 
   it.each(tabelasInternas)('%s nunca responde com sucesso pra uma leitura anônima', async (tableName) => {
     const { data, error } = await anonClient.from(tableName).select('*').limit(1);

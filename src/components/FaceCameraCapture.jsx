@@ -155,18 +155,34 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     return () => { cancelled = true; clearTimeout(timerId); };
   }, [cameraReady, modelsLoaded, error, capturedImage]);
 
+  // Lado maior da foto salva, em px. O getUserMedia pede 640x480, mas isso é
+  // só uma sugestão — muitos celulares e webcams ignoram e entregam a
+  // resolução nativa da câmera (bem maior), fazendo cada foto de biometria
+  // pesar várias vezes mais do que precisa. O reconhecimento facial não
+  // ganha nada com isso: os modelos redimensionam a imagem internamente pra
+  // extrair o descritor, então uma foto maior não deixa a identificação nem
+  // um pouco mais precisa, só ocupa mais espaço no Storage.
+  const MAX_CAPTURE_DIMENSION = 480;
+
   const doCapture = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
+    const nativeWidth = video.videoWidth || 640;
+    const nativeHeight = video.videoHeight || 480;
+    const scale = Math.min(1, MAX_CAPTURE_DIMENSION / Math.max(nativeWidth, nativeHeight));
+
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    canvas.width = Math.round(nativeWidth * scale);
+    canvas.height = Math.round(nativeHeight * scale);
     const ctx = canvas.getContext('2d');
     // Espelha pra ficar igual ao preview (que está espelhado via CSS)
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    setCapturedImage(canvas.toDataURL('image/jpeg'));
+    // Qualidade 0.82 (padrão do navegador é ~0.92) — redução perceptível de
+    // tamanho sem degradar a nitidez do rosto o suficiente pra atrapalhar o
+    // reconhecimento.
+    setCapturedImage(canvas.toDataURL('image/jpeg', 0.82));
   };
 
   // Só dispara a contagem regressiva depois que o "Perfeito" ficar estável
