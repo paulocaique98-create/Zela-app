@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { setErrorLogContext } from './lib/errorLogger';
+import { logAction } from './lib/auditLog';
 import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
@@ -7,6 +8,7 @@ import { supabase } from './lib/supabase';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
 import { formatPersonName } from './utils/formatName';
+import { FACE_DUPLICATE_THRESHOLD, euclideanDistance } from './lib/faceMatch';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -21,21 +23,6 @@ const SelfRegister = lazy(() => import('./components/SelfRegister'));
 // está "amanhã" entre ~21h e 23h59 no horário de Brasília (UTC-3).
 const getBrasiliaDateStr = (date = new Date()) =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-
-// Mesmo limiar (MATCH_THRESHOLD) usado no reconhecimento ao vivo
-// (AdminFaceScanner) — se duas biometrias ficam mais parecidas que isso,
-// abaixo desse valor o próprio reconhecimento já as trataria como a mesma
-// pessoa, então não faz sentido permitir cadastrar as duas.
-const FACE_DUPLICATE_THRESHOLD = 0.45;
-
-function euclideanDistance(a, b) {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    const diff = a[i] - b[i];
-    sum += diff * diff;
-  }
-  return Math.sqrt(sum);
-}
 
 // Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
 const parseShortTime = (timeStr, todayDate = null) => {
@@ -750,6 +737,21 @@ export default function App() {
 
       setAuthorized(prev => prev.map(p => p.id === id ? { ...p, hasPhoto: true, has_biometrics: true } : p));
 
+      // Auditoria: cadastro/aprovação de biometria (consentimento LGPD
+      // registrado nesse mesmo instante, ver fastUpdates.biometric_consent_at
+      // acima) — quem autorizou o uso do dado biométrico de quem, e quando.
+      if (consentGiven && currentUser?.id && currentUser?.school_id) {
+        const person = authorized.find(p => p.id === id);
+        logAction({
+          actorId: currentUser.id,
+          schoolId: currentUser.school_id,
+          action: 'enroll_biometric_consent',
+          entityType: 'authorized_person',
+          entityId: id,
+          details: { name: person?.name || null },
+        });
+      }
+
       uploadAuthorizedPersonPhoto(currentUser.school_id, id, photoUrl)
         .then(async (path) => {
           const { error: photoError } = await supabase.from('authorized_persons').update({ photo_storage_path: path }).eq('id', id);
@@ -831,6 +833,20 @@ export default function App() {
         photo_storage_path: updates.photo_storage_path,
         photo_url: resolvedPhotoUrl,
       } : p));
+
+      // Auditoria: remoção de foto/biometria (chegar aqui com photoUrl=null é
+      // sempre remoção — cadastro novo já retornou no caminho rápido acima).
+      if (!photoUrl && currentUser?.id && currentUser?.school_id) {
+        const person = authorized.find(p => p.id === id);
+        logAction({
+          actorId: currentUser.id,
+          schoolId: currentUser.school_id,
+          action: 'remove_biometric_photo',
+          entityType: 'authorized_person',
+          entityId: id,
+          details: { name: person?.name || null },
+        });
+      }
     } catch (err) {
       console.error(err);
       throw err;
@@ -841,9 +857,24 @@ export default function App() {
   // família pediu autonomia pra remover entradas erradas/de teste sem
   // depender do Admin.
   const deleteAuthorized = async (id) => {
+    const target = authorized.find(p => p.id === id);
     const { error } = await supabase.from('authorized_persons').delete().eq('id', id);
     if (error) throw error;
     setAuthorized(prev => prev.filter(p => p.id !== id));
+
+    // Auditoria: exclusão de autorizado é uma ação sensível (some com nome,
+    // foto e biometria de vez) — registrada em audit_logs (mesma
+    // infraestrutura já usada pra Mitigação), visível em Sistema > Auditoria.
+    if (currentUser?.id && currentUser?.school_id) {
+      logAction({
+        actorId: currentUser.id,
+        schoolId: currentUser.school_id,
+        action: 'delete_authorized_person',
+        entityType: 'authorized_person',
+        entityId: id,
+        details: { name: target?.name || null, had_biometrics: !!target?.has_biometrics },
+      });
+    }
   };
 
   const handleSaveAuth = async (newPerson) => {
@@ -1124,6 +1155,16 @@ export default function App() {
 
   const requestKioskAccess = async (studentIds, requesterId = null) => {
     if (!studentIds || studentIds.length === 0) return;
+
+    // Protege contra confirmação de check-in/out em série (automação, script,
+    // ou totem comprometido) — checagem no banco, não em estado local (que
+    // some com um F5). Escopado pela própria escola, compartilhado entre
+    // reconhecimento facial e PIN, já que os dois chegam aqui.
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_kiosk_confirm_rate_limit');
+    if (!rateLimitError && allowed === false) {
+      throw new Error('Muitas confirmações em pouco tempo neste totem. Aguarde um instante e tente novamente.');
+    }
+
     for (const studentId of studentIds) {
       const student = students.find(s => s.id === studentId);
       if (!student) continue;

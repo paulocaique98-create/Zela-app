@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut, Fingerprint } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -39,6 +39,7 @@ const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
+const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
@@ -362,6 +363,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 onToggle={() => toggleAccordion('sistema')}
               >
                 <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => go('auditoria')} />
+                <SidebarItem active={adminTab === 'duplicidade-biometrica'} icon={Fingerprint} label="Duplicidade Facial" onClick={() => go('duplicidade-biometrica')} />
                 <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
               </SidebarGroup>
             )}
@@ -406,6 +408,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
           <AdminRelatorioPlaceholder key={r.key} title={r.label} />
         ))}

@@ -3,13 +3,15 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { logClientError, installGlobalErrorHandlers } from './lib/errorLogger'
+import { initSentry } from './lib/sentry'
 
+initSentry()
 installGlobalErrorHandlers()
 
-// Error Boundary próprio (sem Sentry): troca a tela branca por uma mensagem
-// amigável quando algum componente quebra o render, e registra o erro no
-// Supabase (client_error_logs) via logClientError — visível pro developer
-// em Painel do Dev > Logs.
+// Error Boundary próprio: troca a tela branca por uma mensagem amigável
+// quando algum componente quebra o render, e registra o erro nos dois
+// destinos — client_error_logs (via logClientError, que já repassa pro
+// Sentry também, ver errorLogger.js) e visível em Painel do Dev > Logs.
 class ErrorBoundary extends Component {
   state = { hasError: false }
 

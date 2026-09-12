@@ -9,11 +9,15 @@ const ACTION_LABELS = {
   archive: 'Arquivou',
   delete: 'Excluiu',
   correct_attendance: 'Corrigiu um registro de',
+  delete_authorized_person: 'Excluiu o cadastro de',
+  enroll_biometric_consent: 'Cadastrou biometria (com consentimento) de',
+  remove_biometric_photo: 'Removeu foto/biometria de',
 };
 
 const ENTITY_LABELS = {
   mitigacao_report: 'Relatório de Mitigação',
   attendance_log: 'Presença',
+  authorized_person: 'Autorizado',
 };
 
 function formatWhen(iso) {
@@ -99,7 +103,7 @@ export default function AdminAuditLog({ currentSchool }) {
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-on-surface">
                       {ACTION_LABELS[log.action] || log.action} {ENTITY_LABELS[log.entity_type] || log.entity_type}
-                      {log.details?.student_name ? ` · ${log.details.student_name}` : ''}
+                      {(log.details?.student_name || log.details?.name) ? ` · ${log.details.student_name || log.details.name}` : ''}
                     </p>
                     <p className="text-xs text-on-surface-variant/70">
                       por {actorNames[log.actor_id] || 'Usuário'}

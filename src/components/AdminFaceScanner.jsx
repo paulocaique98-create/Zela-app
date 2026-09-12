@@ -652,6 +652,16 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const handleCaptureAndCompare = async () => {
     if (!videoRef.current || !labeledDescriptors) return;
 
+    // Protege contra tentativa de reconhecimento em série (alguém tentando
+    // rosto atrás de rosto — o próprio, foto impressa, foto na tela de um
+    // celular — pra forçar um falso positivo). Checagem no banco, escopada
+    // pela própria escola.
+    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_kiosk_recognition_rate_limit');
+    if (!rateLimitError && allowed === false) {
+      setError('Muitas tentativas de reconhecimento em pouco tempo. Aguarde um instante ou use Senha/PIN.');
+      return;
+    }
+
     setIsProcessingCapture(true);
     setError(null);
     setNoMatchReason('');

@@ -1,21 +1,27 @@
 import { supabase } from './supabase';
+import { setSentryUserContext, captureToSentry } from './sentry';
 
 // Contexto do usuário atual pra anexar aos logs de erro — atualizado pelo
 // App.jsx a cada troca de sessão (login/logout). Módulo-singleton simples,
 // sem precisar passar currentUser por prop até o ErrorBoundary/handlers
-// globais (que ficam fora da árvore do React, em main.jsx).
+// globais (que ficam fora da árvore do React, em main.jsx). Mesmo contexto
+// também alimenta o Sentry (ver sentry.js), pra nunca um sistema saber quem
+// era o usuário e o outro não.
 let currentContext = { user_id: null, role: null, school_id: null };
 
 export function setErrorLogContext(user) {
   currentContext = user
     ? { user_id: user.id || null, role: user.role || null, school_id: user.school_id || null }
     : { user_id: null, role: null, school_id: null };
+  setSentryUserContext(user);
 }
 
-// Registra um erro de cliente no Supabase — nunca lança: se a própria
-// gravação falhar (rede caiu, RLS mudou etc.), só loga no console local em
-// vez de mascarar o erro original com um novo erro do logger.
+// Registra um erro de cliente no Supabase (client_error_logs) E no Sentry —
+// nunca lança: se a própria gravação falhar (rede caiu, RLS mudou etc.), só
+// loga no console local em vez de mascarar o erro original com um novo erro
+// do logger.
 export async function logClientError(error, extra = {}) {
+  captureToSentry(error, extra);
   try {
     const message = (error?.message || String(error) || 'Erro desconhecido').slice(0, 2000);
     const stack = (error?.stack || '').slice(0, 8000);

@@ -2,6 +2,8 @@
 *Documento Estratégico de Futuras Atualizações e Melhorias*
 
 > **Atualizado em 2026-09-02** após auditoria profunda do código-fonte (4 investigações paralelas cobrindo os 40 itens originais). Cada item abaixo tem um veredito real de status — ✅ **FEITO**, 🟡 **PARCIAL**, ⬜ **NÃO EXISTE** — com evidência de arquivo. A numeração original foi preservada para rastreabilidade.
+>
+> **Revisado em 2026-09-12**: dez dias de trabalho intenso entre a última atualização e hoje, quase todo fora do roadmap original (ver nova seção "🆕 Construído entre 02/09 e 12/09" logo após a lista de 40 itens). Um item do roadmap mudou de status nesse intervalo — **#40 (duplicidade facial)** já não é mais "não existe" (ver nota no próprio item). Os outros 39 vereditos abaixo continuam os mesmos de 02/09 — não foram reauditados de novo linha a linha nesta revisão.
 
 ---
 
@@ -37,8 +39,8 @@ Além disso, o projeto avançou **significativamente fora deste roadmap** — ve
 6. **Relatórios em PDF e Exportação CSV (histórico de presença/catraca)** — ⬜ **NÃO EXISTE**
    * Existe exportação PDF, mas só para o Relatório de Mitigação (`src/lib/printMitigacao.js`) e para Horas Extras (`AdminRelatorioHorasExtras.jsx`, construído fora do roadmap). `AdminHistory.jsx`/`FamilyHistory.jsx`/`AdminDailyPresence.jsx` (histórico de entrada/saída propriamente dito) não têm nenhum botão de exportar/CSV/PDF.
 
-7. **Log de Auditoria Completo (Audit Trail)** — 🟡 **PARCIAL**
-   * `audit_logs` + `AdminAuditLog.jsx` existem e funcionam, mas `logAction()` só é chamado em 2 arquivos (`AdminMitigacao.jsx`, `MitigacaoReportEditor.jsx`), cobrindo apenas publish/archive/delete de relatórios de Mitigação. Os dois eventos citados no item original — **exclusão de pessoa autorizada** e **aprovação de biometria/foto** — não geram log hoje.
+7. ~~**Log de Auditoria Completo (Audit Trail)**~~ — ✅ **FEITO (12/09)**
+   * `logAction()` agora também é chamado em `App.jsx` nos dois eventos que faltavam: **exclusão de pessoa autorizada** (`delete_authorized_person`), **cadastro de biometria com consentimento LGPD** (`enroll_biometric_consent`) e **remoção de foto/biometria** (`remove_biometric_photo`) — todos visíveis em Sistema > Auditoria, com o nome da pessoa no detalhe. Já cobria publish/archive/delete de Mitigação e a correção manual de presença (`correct_attendance`).
 
 ---
 
@@ -108,8 +110,8 @@ Além disso, o projeto avançou **significativamente fora deste roadmap** — ve
 26. **Testes Automatizados e Pipeline de CI/CD** — ✅ **FEITO**
     * Suíte madura: ~31 arquivos de teste (Vitest, ~3.478 linhas) em `src/test/`, focados fortemente em RLS/isolamento multi-tenant/autenticação/financeiro. CI configurado em `.github/workflows/ci.yml` (lint + testes + build a cada push/PR). Cobertura de UI/componentes é mais esparsa, mas a base de segurança está bem coberta.
 
-27. **Rate Limiting e Proteção Anti-Brute-Force no Totem** — 🟡 **PARCIAL**
-    * Existe rate limit para login por PIN (`check_pin_login_rate_limit`), mas **não** para o reconhecimento facial em si — nenhuma limitação de tentativas específica no `AdminFaceScanner.jsx` além do retry manual de câmera.
+27. ~~**Rate Limiting e Proteção Anti-Brute-Force no Totem**~~ — ✅ **FEITO (12/09)**
+    * Duas novas funções no banco (`check_kiosk_recognition_rate_limit`, `check_kiosk_confirm_rate_limit`), mesmo padrão do PIN (`check_pin_login_rate_limit`): chave escopada pela própria escola do totem, sem depender de estado local. `AdminFaceScanner.jsx` agora limita tentativas de comparação facial (40/min) antes de rodar a detecção; `requestKioskAccess` (compartilhado por reconhecimento facial e PIN) limita confirmações de check-in/out (60/min) antes de gravar qualquer coisa.
 
 28. **Onboarding Guiado para Novas Escolas (Setup Wizard)** — ⬜ **NÃO EXISTE**
 
@@ -140,8 +142,22 @@ Além disso, o projeto avançou **significativamente fora deste roadmap** — ve
 39. **Backup e Restauração Point-in-Time** — ⬜ **NÃO EXISTE**
     * Nenhuma configuração de PITR nem script de backup no repositório (o backup manual feito nesta sessão para Downloads não conta como rotina automática point-in-time).
 
-40. **Verificação de Duplicidade de Cadastro (Matching Facial)** — ⬜ **NÃO EXISTE**
-    * Tanto `AdminFaceEnrollment.jsx` quanto `FamilyAuthorized.jsx` extraem e salvam o descritor facial direto, sem comparar contra biometrias já cadastradas de outras pessoas.
+40. ~~**Verificação de Duplicidade de Cadastro (Matching Facial)**~~ — ✅ **FEITO (12/09)**
+    * `togglePhoto()` em `App.jsx` já bloqueava salvar uma biometria nova cujo rosto batesse com o de outra pessoa já cadastrada (cobre o caso da Hanaynna Schmitz). O que faltava — pares que já existiam ANTES desse bloqueio, ou a mesma pessoa cadastrada duas vezes com contas diferentes (caso real da Maria Elisa de Freitas Falcão, achado nesta sessão) — ganhou uma tela nova, **Sistema > Duplicidade Facial** (`AdminDuplicateBiometrics.jsx`): varre todas as biometrias já cadastradas da escola e alerta qualquer par de CONTAS diferentes com o mesmo rosto, com foto lado a lado pra comparação visual. Lógica de comparação extraída pra `src/lib/faceMatch.js`, reaproveitada pelos dois pontos (bloqueio no cadastro + varredura). Continua sendo só detecção — decidir mesclar contas ou remover uma biometria continua manual, no mesmo espírito de "diagnóstico antes de aplicar" das outras correções desta sessão. A duplicidade de **cadastro de aluno** (nome, não rosto) continua coberta à parte pelo `DuplicateStudentWarningModal.jsx` (ver item 2 da seção "🆕" abaixo).
+
+---
+
+## 🆕 Construído entre 02/09 e 12/09 (fora do roadmap original)
+
+Dez dias de correções e funcionalidades novas, quase todas nascidas de problemas reais reportados em produção (não do roadmap):
+
+1. **Correção manual de presença com auditoria e aprovação** — módulo novo completo: admin pode corrigir horário e/ou tipo (entrada↔saída) de um check-in/check-out já confirmado, sempre com motivo obrigatório e sem nunca perder o valor original (`attendance_logs.original_event_time`); correção que aumenta a cobrança do dia fica pendente até **outro** admin aprovar (nunca quem pediu); correção que não aumenta aplica na hora. Nova aba "Correções de Presença" com fila de aprovação + histórico e badge em tempo real. Família vê a correção no próprio Histórico ("horário ajustado pela escola..."). Cobre também o caso de marcação "fantasma" (horário gravado numa solicitação depois cancelada, sem nenhum log por trás) — remoção com motivo, sem aprovação. Isso é essencialmente uma versão inicial do que os itens de auditoria (#7) e exportação de histórico (#6) do roadmap original previam, só que nascida de um caso real (o totem gravando entrada como se fosse saída durante a adaptação das biometrias) em vez de planejada do zero.
+2. **Prevenção e correção de aluno duplicado** — 8 alunos que existiam em cópia (cada responsável, ao se cadastrar sozinho, criava sua própria versão dos mesmos filhos) foram unificados sem perder histórico; o cadastro (autocadastro e "Novo Usuário" pelo admin) agora avisa quando o nome de um aluno já existe na escola sob outro responsável, com a opção de vincular como 2º responsável em vez de duplicar.
+3. **Biometria facial — três correções encadeadas de um mesmo problema real** ("cadastrou e não reconhece"): (a) cadastro pela família passou de upload de arquivo solto para a mesma câmera guiada com molde oval que o admin já usava; (b) o descritor facial é gravado primeiro (rápido), o upload da foto (só cosmético) acontece depois em segundo plano, cortando o atraso que fazia a pessoa voltar pro totem antes do cadastro terminar de verdade; (c) a tela de saída da câmera durante o salvamento fica bloqueada e mostra confirmação explícita de sucesso; (d) a tela "Biometria de Responsáveis" (Pendentes/Já Cadastrados) passou a buscar do banco direto toda vez que abre, e o app inteiro ganhou uma assinatura em tempo real pra essa tabela — nenhuma das duas telas dependia mais de recarregar a página. No processo, 6 responsáveis (2º responsáveis reais) foram encontrados sem nenhum registro de biometria criado (bug histórico já corrigido no código) e tiveram o cadastro restaurado manualmente.
+4. **Seleção manual de quem está sendo entregue/buscado no totem** — quando um responsável é vinculado a mais de um filho (ex: pai e mãe responsáveis pelos dois), o reconhecimento (facial ou PIN) agora pergunta quem está ali de fato, em vez de assumir automaticamente todos os filhos elegíveis — evita disparar check-in/check-out pra uma criança que não está fisicamente presente.
+5. **Redesign do Autoatendimento (Totem)** — layout novo ("Totem Institucional", escolhido entre 5 propostas), tela cheia sem o Header do sistema enquanto está no totem, senha exigida só pra sair do Autoatendimento pra outro menu (não mais pra fechar as sub-telas de biometria/PIN), menu da engrenagem com Biometria/Voltar ao Início/Sair separados.
+6. **Relatório de Horas Extras: exportação só de quem tem excesso de verdade** — a tela continua mostrando todo mundo (com filtro), mas o PDF exportado sempre leva só quem de fato gerou hora extra no período, independente do filtro selecionado.
+7. **Faxina de storage** — `VACUUM FULL` em `authorized_persons` (53 MB → 7,5 MB de bloat morto), remoção de uma tabela de backup de migração já concluída (46 MB), banco caiu de 129 MB pra 37 MB; fotos de biometria novas agora são redimensionadas (máx. 480px) e comprimidas (JPEG 0.82) antes do upload — sem perda de precisão no reconhecimento, já que os modelos redimensionam a imagem internamente de qualquer forma.
 
 ---
 
@@ -164,7 +180,32 @@ Levantamento a partir do `git log` — trabalho relevante que **não estava** no
 
 ---
 
+## 🎯 Priorização 12/09 — o que fazer agora vs. guardar como novidade
+
+Triagem por **risco/dado real** (não pode esperar) vs. **feature/diferencial comercial** (ótimo pra anunciar depois, sem urgência):
+
+### 🔴 Fazer agora
+- **#39 Backup/PITR** — maior risco de todos (dado financeiro/biométrico/presença real sem confirmação de recuperação point-in-time). Pode ser só verificar/ativar uma configuração no plano do Supabase.
+- **#35 Alertas de ausência prolongada** — bem-estar/segurança da criança, não só operação. Reaproveita a cron function que já existe.
+- **#7 Completar auditoria** — `audit_logs`/`logAction()` já existem, falta só chamar em mais lugares (exclusão de autorizado, aprovação/consentimento de biometria). Esforço baixo. **Em andamento.**
+- **#6 Exportar Histórico em PDF/CSV** — zero risco, esforço baixo, padrão já pronto (Horas Extras/Mitigação).
+- **#23 2FA pra admin/developer** — conta de admin acessa dado financeiro + biométrico de todo mundo.
+- **#16 Liveness Detection** — hoje uma foto impressa ou na tela de um celular passa pelo reconhecimento; envolve retirada de criança. Maior esforço, mas prioridade de segurança, não de conveniência.
+
+### 🟡 Considerar, sem urgência
+- **#25** Portabilidade de dados LGPD, **#9** bloqueio automático por inadimplência (decisão de negócio sensível), **#24** automatizar expurgo LGPD (política manual já é seguida).
+
+### 🟢 Guardar como novidade pra mostrar depois
+**#22** Dashboards com gráficos, **#19** White-label com cor personalizada, **#11** QR Code expirável, **#20** Gamificação, **#18** Reconhecimento emocional, **#34** Integração com calendário, **#28/#29/#30** Onboarding/Central de Ajuda/Status Page, **#1/#4/#17/#36** Offline/multi-unidades/app nativo/i18n (investimento grande, só quando o volume justificar), **#21/#14/#33/#32/#31/#38** Cantina com saldo/controle de veículos/modo visitante/referral/billing B2B/modo demo.
+
+---
+
 ## Observações finais
 
-- **Prioridade sugerida para retomar do roadmap original**: dado o que já foi feito fora dele, os itens mais valiosos a priorizar agora são **#6 (exportação de presença em PDF/CSV)**, **#7 (completar auditoria — cobrir exclusão de autorizados e aprovação de biometria)**, **#35 (alertas de ausência prolongada)** e **#40 (duplicidade de cadastro facial)** — todos de baixo esforço relativo e alto valor de compliance/operação, aproveitando infraestrutura que já existe (audit_logs, edge functions de cron, matching facial).
-- Este documento deve ser tratado como uma foto do estado em 2026-09-02 — como já vimos, o projeto evolui rápido e às vezes fora deste arquivo. Recomenda-se reauditar periodicamente em vez de confiar cegamente na lista.
+- **Prioridade sugerida pra retomar do roadmap original, revista em 12/09**:
+  - **#6 (exportação de presença em PDF/CSV)** — agora é esforço BEM menor do que em 02/09: já existe o padrão pronto (Horas Extras e Mitigação exportam PDF) e o Histórico (`AdminHistory.jsx`/`FamilyHistory.jsx`) já tem tudo formatado na tela, só falta o botão de exportar reaproveitando `printHistorico.js`.
+  - **#7 (completar auditoria)** — parcialmente puxado pela correção de presença (que já loga em `audit_logs`), mas exclusão de autorizado e aprovação de biometria continuam sem log.
+  - **#35 (alertas de ausência prolongada)** — continua não existindo; ganhou relevância depois do módulo de correção de presença, que já mexe bastante em `attendance_logs`/status do aluno.
+  - **#27 (rate limit no reconhecimento facial)** — vale reconsiderar à luz da seleção manual de aluno (item 4 da seção acima): mais gente testando o totem sem limite de tentativas.
+  - Item **#40 do roadmap original** (duplicidade de cadastro facial) não é mais o problema principal nessa frente — o que dominou os últimos 10 dias foi duplicidade de **aluno/família**, já mitigada (ver seção "🆕" acima).
+- Este documento deve ser tratado como uma foto do estado em **2026-09-12** — o projeto evolui rápido e boa parte do trabalho recente nasceu de bugs reais reportados em produção, não deste roadmap. Recomenda-se reauditar periodicamente em vez de confiar cegamente na lista.
