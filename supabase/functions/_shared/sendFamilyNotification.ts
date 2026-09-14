@@ -48,7 +48,14 @@ export async function sendFamilyNotification(adminClient: any, params: {
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         payload
       );
+      await adminClient.from('push_delivery_attempts').insert({
+        family_id: familyId, endpoint: sub.endpoint, success: true,
+      });
     } catch (err: any) {
+      await adminClient.from('push_delivery_attempts').insert({
+        family_id: familyId, endpoint: sub.endpoint, success: false,
+        status_code: err.statusCode ?? null, error_message: String(err.message ?? err),
+      });
       if (err.statusCode === 410 || err.statusCode === 404) {
         await adminClient.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
       }
