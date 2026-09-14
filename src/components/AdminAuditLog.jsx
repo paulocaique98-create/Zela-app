@@ -106,7 +106,7 @@ export default function AdminAuditLog({ currentSchool }) {
                       {(log.details?.student_name || log.details?.name) ? ` · ${log.details.student_name || log.details.name}` : ''}
                     </p>
                     <p className="text-xs text-on-surface-variant/70">
-                      por {actorNames[log.actor_id] || 'Usuário'}
+                      por {actorNames[log.actor_id] || log.actor_name || 'Usuário'}
                     </p>
                   </div>
                   <span className="text-xs text-on-surface-variant/70 shrink-0">{formatWhen(log.created_at)}</span>
