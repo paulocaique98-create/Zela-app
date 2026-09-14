@@ -228,7 +228,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const [matchDistance, setMatchDistance] = useState(null);
   const [isProcessingCapture, setIsProcessingCapture] = useState(false);
   const [cameraReady, setCameraReady] = useState(false); // true quando stream de vídeo está ativo
-  const [retryCount, setRetryCount] = useState(0); // incrementar refaz o init() (câmera falhou e o usuário pediu nova tentativa)
+  const [retryCount, setRetryCount] = useState(0); // incrementar refaz o init() (câmera falhou ou travou — nova tentativa, manual ou automática)
+  const streamRef = useRef(null); // stream ativo, pra observar se a trilha de vídeo cai/congela
+  const capturedImageRef = useRef(null); // espelha capturedImage sem precisar recriar o watchdog abaixo a cada captura
 
   // Contagem regressiva de 3s antes de confirmar automaticamente a entrada/saída,
   // seguindo exatamente a mesma lógica do Cadastro de Foto (AdminFaceEnrollment):
@@ -242,6 +244,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setCameraReady(false);
     setRetryCount(c => c + 1);
   };
+
+  useEffect(() => { capturedImageRef.current = capturedImage; }, [capturedImage]);
 
   useEffect(() => {
     let active = true;
@@ -311,6 +315,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' }
         });
+        streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => setCameraReady(true);
@@ -333,8 +338,59 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+      if (streamRef.current === stream) streamRef.current = null;
     };
   }, [retryCount]);
+
+  // "Tela preta com o molde ao vivo" — relato real de um pai/dev chegando na
+  // escola e encontrando o totem travado assim: cameraReady já tinha virado
+  // true uma vez, mas a trilha de vídeo morreu ou congelou depois (câmera
+  // solta pelo SO por inatividade, driver, outro app tomando o dispositivo)
+  // sem nenhum evento óbvio pra reagir — o app nunca percebia e ficava preso
+  // até alguém notar e recarregar manualmente. Isso não pode depender de
+  // alguém notando: enquanto o totem está "ativo" (câmera pronta, sem
+  // erro, sem foto capturada), observa a trilha de vídeo de duas formas
+  // complementares e recupera sozinho, sem intervenção humana:
+  //   1. Evento nativo da trilha (ended/mute) — sinal explícito do navegador.
+  //   2. Vigia de progresso: video.currentTime tem que avançar; se ficar
+  //      parado por ~12s com a câmera supostamente "pronta", é uma tela
+  //      preta/congelada mesmo sem o navegador ter avisado nada.
+  useEffect(() => {
+    if (!cameraReady) return;
+
+    const track = streamRef.current?.getVideoTracks?.()[0];
+    let stalled = false;
+    const recoverOnce = (reason) => {
+      if (stalled) return; // evita disparar retry várias vezes pro mesmo travamento
+      stalled = true;
+      console.warn('[FaceScanner] Câmera travada/perdida, recuperando sozinho:', reason);
+      retryInit();
+    };
+    const onEnded = () => recoverOnce('track ended');
+    const onMute = () => recoverOnce('track muted');
+    track?.addEventListener('ended', onEnded);
+    track?.addEventListener('mute', onMute);
+
+    let lastTime = videoRef.current?.currentTime ?? 0;
+    let stuckChecks = 0;
+    const watchdog = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || capturedImageRef.current) return; // captura manual pausa naturalmente o vídeo, não é travamento
+      if (video.currentTime === lastTime) {
+        stuckChecks++;
+        if (stuckChecks >= 3) recoverOnce('sem progresso de frame por ~12s'); // 3 checagens de 4s
+      } else {
+        stuckChecks = 0;
+        lastTime = video.currentTime;
+      }
+    }, 4000);
+
+    return () => {
+      clearInterval(watchdog);
+      track?.removeEventListener('ended', onEnded);
+      track?.removeEventListener('mute', onMute);
+    };
+  }, [cameraReady, retryCount]);
 
   // Recarrega as biometrias sem reabrir o app. Antes, uma foto cadastrada
   // com a tela do totem já aberta só passava a ser reconhecida depois de
@@ -773,13 +829,14 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     }
   };
 
-  // Após concluir o check-in/check-out, a tela "Escanear Próximo" fica parada
-  // esperando alguém tocar o botão manualmente — em kiosk, isso trava a fila.
-  // Depois de 3s parados nela, volta sozinha para o reconhecimento facial.
+  // Após concluir o check-in/check-out, volta pra tela de seleção do
+  // Autoatendimento (Reconhecimento Facial / Senha·PIN) depois de 3s —
+  // mesmo comportamento que o fluxo de PIN já tinha (AdminPasswordLogin.jsx),
+  // só que este ficava preso "escaneando o próximo rosto" sem nunca fechar.
   useEffect(() => {
     if (!actionDone) return;
     const timer = setTimeout(() => {
-      handleResetScanner();
+      onClose();
     }, 3000);
     return () => clearTimeout(timer);
   }, [actionDone]);
@@ -1055,10 +1112,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   <p className="text-on-surface-variant text-xs mt-1">Aguardando confirmação da recepção.</p>
                 </div>
                 <button
-                  onClick={handleResetScanner}
+                  onClick={onClose}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-zela-md transition text-sm shadow-sm"
                 >
-                  Escanear Próximo
+                  Concluir
                 </button>
               </div>
             ) : matchStatus !== 'matched' ? (
