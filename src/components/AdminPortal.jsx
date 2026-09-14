@@ -6,6 +6,7 @@ import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import PushGuidanceModal from './PushGuidanceModal';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
@@ -392,6 +393,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           </div>
         </div>
       )}
+      <PushGuidanceModal guidance={pushData.guidance} onClose={pushData.dismissGuidance} />
       <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
 
         {/* INICIO */}

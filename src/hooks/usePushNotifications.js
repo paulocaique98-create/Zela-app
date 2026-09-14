@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { getPushGuidance } from '../lib/pushDeviceGuidance';
 
 export function usePushNotifications(currentUser, currentSchool) {
   const [permission, setPermission] = useState(
@@ -7,6 +8,8 @@ export function usePushNotifications(currentUser, currentSchool) {
   );
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [guidance, setGuidance] = useState(null);
+  const dismissGuidance = useCallback(() => setGuidance(null), []);
 
   const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -81,6 +84,14 @@ export function usePushNotifications(currentUser, currentSchool) {
 
       if (error) throw error;
       setIsSubscribed(true);
+
+      // Best-effort: manda um push de teste já na ativação, pra pessoa
+      // descobrir na hora se o aparelho bloqueia notificação em segundo
+      // plano, em vez de só descobrir dias depois perdendo um aviso de
+      // check-in de verdade. Nunca bloqueia a ativação em si.
+      supabase.functions.invoke('send-test-push', { body: { endpoint: sub.endpoint } }).catch(() => {});
+      setGuidance(getPushGuidance(navigator.userAgent));
+
       return true;
     } catch (err) {
       console.error('[Push] Erro ao ativar notificações:', err);
@@ -112,5 +123,5 @@ export function usePushNotifications(currentUser, currentSchool) {
     }
   }, [currentUser]);
 
-  return { permission, isSubscribed, isLoading, subscribe, unsubscribe };
+  return { permission, isSubscribed, isLoading, subscribe, unsubscribe, guidance, dismissGuidance };
 }

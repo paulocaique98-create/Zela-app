@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import PushGuidanceModal from './PushGuidanceModal';
 import FamilyInicio from './FamilyInicio';
 import { SidebarItem, SidebarGroup } from './SidebarNav';
 
@@ -309,6 +310,8 @@ export default function FamilyPortal({
             </div>
           </div>
         )}
+
+        <PushGuidanceModal guidance={pushData.guidance} onClose={pushData.dismissGuidance} />
 
         {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} />}
 
