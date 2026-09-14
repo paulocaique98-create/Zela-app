@@ -1055,7 +1055,17 @@ export default function App() {
           event_time: eventTimeIso,
           recorded_by: currentUser.id,
         }]);
-        if (logError) console.error('Erro ao registrar log de presença:', logError);
+        if (logError) {
+          console.error('Erro ao registrar log de presença:', logError);
+        } else {
+          // Notifica (in-app + push) só depois do log confirmado — antes disso
+          // era um trigger de banco que só criava a notificação in-app, sem
+          // enviar push nenhum: só chegava pro responsável se o app estivesse
+          // aberto e conectado ao Realtime naquele instante. Mesma função já
+          // usada pra "solicitação" (linha ~1236), agora também pra
+          // "confirmação" — best-effort, nunca trava o check-in em si.
+          notifyCheckinRequest({ studentId, eventType: newStatus });
+        }
       }
 
       // 3. Atualiza estado local do React

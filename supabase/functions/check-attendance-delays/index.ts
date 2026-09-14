@@ -1,6 +1,17 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getEffectiveExitTime, getEffectiveEntryTime, mergeBillingConfig, BillingConfig } from '../_shared/extraHours.ts'
+import { sendFamilyNotification } from '../_shared/sendFamilyNotification.ts'
+
+// Título/corpo de push por tipo de alerta — o texto completo (message) já
+// existe pra notificação in-app; aqui só o necessário pro banner do push,
+// mais curto. Ver sendFamilyNotification.ts (mesmo helper já usado em
+// send-financial-reminders).
+const PUSH_META: Record<string, { title: string; tag: string }> = {
+  early_checkin_billing: { title: 'Check-in antecipado', tag: 'atraso-checkin-antecipado' },
+  late_exit_15min_billing: { title: 'Cobrança de hora extra ativada', tag: 'atraso-checkout-cobranca' },
+  late_exit_10min_warning: { title: 'Aviso de atraso na saída', tag: 'atraso-checkout-aviso' },
+}
 
 serve(async (req) => {
   // Só o backend (cron/scheduler com a service role key) pode disparar esta função —
@@ -240,9 +251,28 @@ serve(async (req) => {
       }
     }
 
-    // 4. Inserir notificações se houver
-    if (notificationsToInsert.length > 0) {
-      await supabase.from('notifications').insert(notificationsToInsert)
+    // 4. Enviar notificações se houver — antes era um INSERT direto na tabela
+    // notifications (só aparecia pra família se o app estivesse aberto);
+    // agora usa o mesmo helper de send-financial-reminders, que grava o
+    // in-app E manda o push de verdade. Alertas de atraso são sensíveis ao
+    // tempo por natureza (a família precisa saber NA HORA, não só quando
+    // abrir o app depois), então este era o caso mais grave dos dois.
+    for (const n of notificationsToInsert) {
+      try {
+        const meta = PUSH_META[n.type] || { title: 'Aviso da escola', tag: n.type }
+        await sendFamilyNotification(supabase, {
+          schoolId: n.school_id,
+          familyId: n.family_id,
+          studentId: n.student_id,
+          type: n.type,
+          message: n.message,
+          pushTitle: meta.title,
+          pushBody: n.message,
+          pushTag: meta.tag,
+        })
+      } catch (notifyErr) {
+        console.error(`[check-attendance-delays] Falha ao notificar (${n.type}, aluno ${n.student_id}):`, notifyErr)
+      }
     }
 
     // 5. Atualizar os status diários modificados

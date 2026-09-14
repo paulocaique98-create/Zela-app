@@ -3,18 +3,25 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 
-// Notifica (in-app + push) os responsáveis de UM aluno assim que o
-// reconhecimento facial/PIN acontece no Autoatendimento — ou seja, no
-// momento da SOLICITAÇÃO (status pending_entry/pending_exit), não quando a
-// escola confirma. A confirmação pode demorar horas (a recepção não fica o
-// tempo todo olhando o Monitor); a família precisa saber que a criança
-// chegou/está saindo no minuto em que o reconhecimento acontece, não depois.
+// Notifica (in-app + push) os responsáveis de UM aluno em dois momentos:
+//   - SOLICITAÇÃO (pending_entry/pending_exit): assim que o reconhecimento
+//     facial/PIN acontece no Autoatendimento, antes da escola confirmar. A
+//     confirmação pode demorar horas (a recepção não fica o tempo todo
+//     olhando o Monitor); a família precisa saber que a criança
+//     chegou/está saindo no minuto em que o reconhecimento acontece.
+//   - CONFIRMAÇÃO (in_school/left): quando a escola de fato confirma o
+//     check-in/check-out. Antes disso era feito só por um trigger de banco
+//     (notify_on_attendance, removido — ver migration
+//     20260930_drop_attendance_notify_trigger.sql), que só conseguia criar a
+//     notificação in-app, sem enviar push nenhum — a família só ficava
+//     sabendo se o app estivesse aberto naquele instante.
 //
 // Diferente de notify-families: aqui NÃO aplicamos o "release gate"
 // (is_guardian_released) — esse gate existe pra não bombardear a família com
 // avisos gerais (cardápio, mural) antes do 1º check-in de verdade, mas o
-// evento de solicitação de entrada/saída É o próprio check-in acontecendo,
-// então nunca deve ser silenciado.
+// PRÓPRIO check-in/check-out nunca deve ser silenciado, com uma exceção
+// (ver "primeiro check-in do aluno" abaixo, mesma regra que já existia no
+// trigger antigo).
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
@@ -66,24 +73,57 @@ serve(async (req) => {
     }
 
     const { student_id, event_type } = await req.json();
-    if (!student_id || !['pending_entry', 'pending_exit'].includes(event_type)) {
-      throw new Error('Campos obrigatórios: student_id, event_type (pending_entry|pending_exit)');
+    const VALID_EVENT_TYPES = ['pending_entry', 'pending_exit', 'in_school', 'left'];
+    if (!student_id || !VALID_EVENT_TYPES.includes(event_type)) {
+      throw new Error('Campos obrigatórios: student_id, event_type (pending_entry|pending_exit|in_school|left)');
     }
+    const isConfirmation = event_type === 'in_school' || event_type === 'left';
 
     const { data: student, error: studentError } = await adminClient
       .from('students')
-      .select('id, name, family_id, school_id')
+      .select('id, name, family_id, school_id, first_checkin_at')
       .eq('id', student_id)
       .eq('school_id', schoolId) // garante que o admin só notifica alunos da própria escola
       .single();
     if (studentError || !student) throw new Error('Aluno não encontrado nesta escola.');
 
-    const isEntry = event_type === 'pending_entry';
-    const type = isEntry ? 'checkin_requested' : 'checkout_requested';
-    const title = isEntry ? 'Chegada detectada' : 'Saída detectada';
-    const message = isEntry
-      ? `${student.name} chegou e aguarda confirmação da recepção.`
-      : `${student.name} está saindo e aguarda confirmação da recepção.`;
+    let type: string;
+    let title: string;
+    let message: string;
+
+    if (isConfirmation) {
+      const isEntry = event_type === 'in_school';
+      type = isEntry ? 'checkin_confirmed' : 'checkout_confirmed';
+      title = isEntry ? 'Check-in confirmado' : 'Check-out confirmado';
+      message = isEntry
+        ? `O check-in de ${student.name} foi confirmado.`
+        : `O check-out de ${student.name} foi confirmado.`;
+
+      // Mesma regra do trigger antigo: o 1º check-in de cada aluno (nunca
+      // teve first_checkin_at) libera as notificações dele daqui pra frente,
+      // mas o evento em si fica silencioso — evita bombardear a família com
+      // o aviso de sistema justo na primeira vez que a criança frequenta.
+      if (isEntry && !student.first_checkin_at) {
+        await adminClient.from('students').update({ first_checkin_at: new Date().toISOString() }).eq('id', student.id);
+        return new Response(JSON.stringify({ success: true, notified: 0, pushed: 0, silenced: 'primeiro_checkin' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      // Saída sem nenhum check-in já registrado antes (caso de borda) — o
+      // trigger antigo também ficava calado aqui.
+      if (!isEntry && !student.first_checkin_at) {
+        return new Response(JSON.stringify({ success: true, notified: 0, pushed: 0, silenced: 'sem_checkin_anterior' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      const isEntry = event_type === 'pending_entry';
+      type = isEntry ? 'checkin_requested' : 'checkout_requested';
+      title = isEntry ? 'Chegada detectada' : 'Saída detectada';
+      message = isEntry
+        ? `${student.name} chegou e aguarda confirmação da recepção.`
+        : `${student.name} está saindo e aguarda confirmação da recepção.`;
+    }
 
     // Resolve todos os responsáveis vinculados (1º e 2º), com fallback pro
     // family_id direto do aluno — mesmo padrão do trigger notify_on_attendance.
