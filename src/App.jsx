@@ -400,18 +400,28 @@ export default function App() {
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.info('[Zela] Realtime conectado com sucesso.');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          // Achado real em produção: um erro passageiro de renovação de token
+          // (auth/v1/token?grant_type=refresh_token) fecha o canal com status
+          // CLOSED, não CHANNEL_ERROR/TIMED_OUT -- esse caso não reconectava
+          // sozinho, deixando o Monitor (lista, alerta e som de nova
+          // solicitação, todos dependentes deste mesmo canal) parado até um
+          // F5 manual. Reconecta nos três casos agora.
+          //
+          // Guarda contra loop: setupRealtime() também gera CLOSED ao
+          // derrubar o canal antigo de propósito (pra criar um novo, ou no
+          // logout) -- só reconecta se este ainda for o canal "oficial"
+          // (realtimeChannelRef não foi trocado por outra chamada nesse meio
+          // tempo) e se o usuário continua logado.
+          if (realtimeChannelRef.current !== channel) return;
           console.warn(`[Zela] Realtime desconectado: ${status}. Reconectando em 5s...`);
-          // Auto-reconnect: aguarda 5s e tenta reestabelecer o canal
           reconnectTimerRef.current = setTimeout(() => {
             const user = currentUserRef.current;
-            if (user && user.role !== 'developer') {
+            if (user && user.role !== 'developer' && realtimeChannelRef.current === channel) {
               console.info('[Zela] Tentando reconectar ao Realtime...');
               setupRealtime();
             }
           }, 5000);
-        } else if (status === 'CLOSED') {
-          console.warn('[Zela] Realtime canal fechado.');
         }
       });
 
