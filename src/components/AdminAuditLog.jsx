@@ -12,12 +12,14 @@ const ACTION_LABELS = {
   delete_authorized_person: 'Excluiu o cadastro de',
   enroll_biometric_consent: 'Cadastrou biometria (com consentimento) de',
   remove_biometric_photo: 'Removeu foto/biometria de',
+  cancel_checkin_request: 'Cancelou a solicitação de check-in/out de',
 };
 
 const ENTITY_LABELS = {
   mitigacao_report: 'Relatório de Mitigação',
   attendance_log: 'Presença',
   authorized_person: 'Autorizado',
+  student: 'Aluno',
 };
 
 function formatWhen(iso) {

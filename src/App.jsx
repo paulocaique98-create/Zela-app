@@ -9,6 +9,8 @@ import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorized
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
 import { formatPersonName } from './utils/formatName';
 import { FACE_DUPLICATE_THRESHOLD, euclideanDistance } from './lib/faceMatch';
+import { parseShortTime } from './utils/attendanceUtils';
+import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -23,19 +25,6 @@ const SelfRegister = lazy(() => import('./components/SelfRegister'));
 // está "amanhã" entre ~21h e 23h59 no horário de Brasília (UTC-3).
 const getBrasiliaDateStr = (date = new Date()) =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-
-// Helper para extrair o horário curto "HH:mm" de forma segura de qualquer formato
-const parseShortTime = (timeStr, todayDate = null) => {
-  if (!timeStr) return null;
-  if (timeStr.includes('|')) {
-    const parts = timeStr.split('|');
-    const datePart = parts[0];
-    const timePart = parts[1] || '';
-    if (todayDate && datePart !== todayDate) return null;
-    return timePart.substring(0, 5);
-  }
-  return timeStr.substring(0, 5);
-};
 
 export default function App() {
   const [students, setStudents] = useState([]);
@@ -85,10 +74,6 @@ export default function App() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [emergencyData, setEmergencyData] = useState(null);
 
-  // Alerta de check-in/check-out pendente para o Admin
-  // { studentName, type: 'Check-in'|'Check-out', studentId }
-  const [pendingAlert, setPendingAlert] = useState(null);
-
   const [currentSchool, setCurrentSchool] = useState(() => {
     // Só confia na escola em cache se ela pertencer ao mesmo usuário em cache —
     // evita mostrar a logo de outra escola (ex: dispositivo compartilhado, troca
@@ -106,11 +91,12 @@ export default function App() {
   });
   const [globalLogo, setGlobalLogo] = useState(null);
 
-  // Ref para o canal Realtime — permite cancelar quando o usuário deslogar
-  const realtimeChannelRef = useRef(null);
+  // Canal Realtime "secundário" (authorized_persons + emergência) — o canal
+  // de `students` (Monitor/alerta de check-in) foi extraído pro hook
+  // useRealtimeMonitor, que cuida do próprio ciclo de vida e reconexão.
+  const secondaryChannelRef = useRef(null);
   const emergencyChannelRef = useRef(null);
-  // Ref para controle do auto-reconnect (evita múltiplos timeouts simultâneos)
-  const reconnectTimerRef = useRef(null);
+  const secondaryReconnectTimerRef = useRef(null);
 
   // Ref estável para currentUser — evita closures desatualizadas em listeners de longa duração
   const currentUserRef = useRef(currentUser);
@@ -118,10 +104,10 @@ export default function App() {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
-  // Ref estável para adminTab — usada para não disparar o alerta de "Nova
-  // Solicitação" no próprio dispositivo que está com a tela de Autoatendimento
-  // aberta (ele mesmo acabou de gerar o check-in/check-out, não precisa se
-  // avisar); os demais dispositivos logados como admin continuam recebendo.
+  // Ref estável para adminTab — usada por isKioskScreen() (evita
+  // pausar/travar a câmera do totem quando o admin navega pra outra aba) e
+  // repassada pro hook useRealtimeMonitor, que também usa pra não
+  // autoalertar o próprio dispositivo do Autoatendimento.
   const adminTabRef = useRef(adminTab);
   useEffect(() => {
     adminTabRef.current = adminTab;
@@ -240,14 +226,14 @@ export default function App() {
       fetchGlobalLogo();
       if (currentUser.role !== 'developer') {
         fetchData();
-        setupRealtime();
+        setupSecondaryRealtime();
       }
     } else {
       setGlobalLogo(null);
       // Cancela a subscrição ao deslogar
-      if (realtimeChannelRef.current) {
-        supabase.removeChannel(realtimeChannelRef.current);
-        realtimeChannelRef.current = null;
+      if (secondaryChannelRef.current) {
+        supabase.removeChannel(secondaryChannelRef.current);
+        secondaryChannelRef.current = null;
       }
       if (emergencyChannelRef.current) {
         supabase.removeChannel(emergencyChannelRef.current);
@@ -256,108 +242,32 @@ export default function App() {
     }
   }, [currentUser?.id]); // Depende apenas do ID (primitivo estável) — evita recriar o canal ao reatribuir o objeto currentUser
 
+  // Monitor de check-in/check-out em tempo real (Realtime + reconciliação
+  // por polling) — ver comentário completo no próprio hook.
+  const { pendingAlert, dismissAlert, connectionStatus } = useRealtimeMonitor({ currentUser, setStudents, adminTab });
+
   // Sufixo estável por sessão — evita recriar o canal desnecessariamente a cada render
   const channelSuffixRef = useRef(Math.random().toString(36).substring(2, 8));
 
-  const setupRealtime = () => {
-    // Cancela qualquer reconexão pendente antes de configurar novo canal
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
+  // Canal "secundário": authorized_persons (Biometria de Responsáveis,
+  // Autorizados da família — sem isso, um cadastro/remoção de biometria só
+  // refletia depois de recarregar a página inteira) + emergência (broadcast
+  // pra toda a escola). O canal de `students` (Monitor/alerta de
+  // check-in) mora inteiramente em useRealtimeMonitor agora.
+  const setupSecondaryRealtime = () => {
+    if (secondaryReconnectTimerRef.current) {
+      clearTimeout(secondaryReconnectTimerRef.current);
+      secondaryReconnectTimerRef.current = null;
     }
-    if (realtimeChannelRef.current) {
-      supabase.removeChannel(realtimeChannelRef.current);
-      realtimeChannelRef.current = null;
+    if (secondaryChannelRef.current) {
+      supabase.removeChannel(secondaryChannelRef.current);
+      secondaryChannelRef.current = null;
     }
 
-    console.info('[Zela] Conectando ao canal Realtime (students)...');
-    const channelName = `students-realtime-${currentUser.id}-${channelSuffixRef.current}`;
-
-    const formatStudent = (s) => {
-      return {
-        id: s.id,
-        name: s.name,
-        familyId: s.family_id,
-        status: s.status,
-        contractedHours: s.contracted_hours,
-        pendingRequesterId: s.pending_requester_id,
-        todayRecord: {
-          entry: parseShortTime(s.today_entry),
-          exit: parseShortTime(s.today_exit),
-          // Preserva os valores completos para usar como horário original na confirmação
-          entry_full: s.today_entry || null,
-          exit_full: s.today_exit || null,
-          // Instante exato — ver comentário equivalente em fetchData().
-          entry_at: s.today_entry_at || null,
-          exit_at: s.today_exit_at || null,
-        },
-      };
-    };
-
-    // SEM filtro de coluna no canal — filtros de coluna exigem REPLICA IDENTITY FULL;
-    // sem essa configuração no banco, os eventos são descartados silenciosamente no servidor.
-    // A filtragem por escola/família é feita no callback (mais confiável e independe do banco).
-    const pgFilter = { event: '*', schema: 'public', table: 'students' };
+    const channelName = `secondary-realtime-${currentUser.id}-${channelSuffixRef.current}`;
 
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', pgFilter, (payload) => {
-        const { eventType, new: newRow, old: oldRow } = payload;
-
-        if (eventType === 'UPDATE') {
-          // Para UPDATE: verificar se o aluno existe no estado local — mais confiável
-          // que filtrar por school_id no payload (school_id pode não vir no Realtime
-          // dependendo da configuração de colunas da publicação).
-          setStudents((prev) => {
-            if (!prev.some(s => s.id === newRow.id)) return prev; // não é desta escola
-            console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id, newRow?.status);
-            return prev.map((s) => {
-              if (s.id !== newRow.id) return s;
-              const formatted = formatStudent(newRow);
-              return {
-                ...s,
-                ...formatted,
-                todayRecord: { ...s.todayRecord, ...formatted.todayRecord }
-              };
-            });
-          });
-
-          // ── Disparo do alerta de check-in/check-out pendente ──
-          // Só dispara para admins, apenas quando há mudança real de status
-          // para pending_entry ou pending_exit (não em re-broadcasts do mesmo status).
-          if (
-            currentUserRef.current?.role === 'admin' &&
-            adminTabRef.current !== 'kiosk' &&
-            (newRow?.status === 'pending_entry' || newRow?.status === 'pending_exit') &&
-            oldRow?.status !== newRow?.status
-          ) {
-            setPendingAlert({
-              studentId: newRow.id,
-              studentName: newRow.name,
-              type: newRow.status === 'pending_entry' ? 'Check-in' : 'Check-out',
-            });
-          }
-
-        } else if (eventType === 'INSERT') {
-          // Para INSERT: filtrar por school_id/family_id se vierem no payload
-          if (currentUserRef.current?.role === 'family') {
-            if (newRow?.family_id && newRow.family_id !== currentUserRef.current.id) return;
-          } else {
-            if (newRow?.school_id && newRow.school_id !== currentUserRef.current?.school_id) return;
-          }
-          console.debug('[Zela] Realtime evento recebido:', eventType, newRow?.id);
-          setStudents((prev) => [...prev, formatStudent(newRow)]);
-
-        } else if (eventType === 'DELETE') {
-          setStudents((prev) => prev.filter((s) => s.id !== oldRow.id));
-        }
-      })
-      // Mesmo canal, tabela authorized_persons — sem isso, telas que dependem
-      // do estado `authorized` (Biometria de Responsáveis, Autorizados da
-      // família) só refletiam um cadastro/remoção de biometria depois de
-      // recarregar a página inteira. Ex.: alguém remove a própria foto, o
-      // admin que já estava com a tela aberta continuava vendo a pessoa como
-      // "já cadastrada" e ela nunca aparecia de volta em "Pendentes".
       .on('postgres_changes', { event: '*', schema: 'public', table: 'authorized_persons' }, async (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
         const role = currentUserRef.current?.role;
@@ -399,33 +309,19 @@ export default function App() {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.info('[Zela] Realtime conectado com sucesso.');
+          console.info('[Zela] Realtime secundário conectado (authorized_persons).');
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          // Achado real em produção: um erro passageiro de renovação de token
-          // (auth/v1/token?grant_type=refresh_token) fecha o canal com status
-          // CLOSED, não CHANNEL_ERROR/TIMED_OUT -- esse caso não reconectava
-          // sozinho, deixando o Monitor (lista, alerta e som de nova
-          // solicitação, todos dependentes deste mesmo canal) parado até um
-          // F5 manual. Reconecta nos três casos agora.
-          //
-          // Guarda contra loop: setupRealtime() também gera CLOSED ao
-          // derrubar o canal antigo de propósito (pra criar um novo, ou no
-          // logout) -- só reconecta se este ainda for o canal "oficial"
-          // (realtimeChannelRef não foi trocado por outra chamada nesse meio
-          // tempo) e se o usuário continua logado.
-          if (realtimeChannelRef.current !== channel) return;
-          console.warn(`[Zela] Realtime desconectado: ${status}. Reconectando em 5s...`);
-          reconnectTimerRef.current = setTimeout(() => {
+          if (secondaryChannelRef.current !== channel) return;
+          secondaryReconnectTimerRef.current = setTimeout(() => {
             const user = currentUserRef.current;
-            if (user && user.role !== 'developer' && realtimeChannelRef.current === channel) {
-              console.info('[Zela] Tentando reconectar ao Realtime...');
-              setupRealtime();
+            if (user && user.role !== 'developer' && secondaryChannelRef.current === channel) {
+              setupSecondaryRealtime();
             }
           }, 5000);
         }
       });
 
-    realtimeChannelRef.current = channel;
+    secondaryChannelRef.current = channel;
 
     // Canal compartilhado por escola — todos os usuários da mesma escola entram
     // no mesmo tópico, ao contrário do canal acima (privado por usuário/sessão).
@@ -1379,8 +1275,9 @@ export default function App() {
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
                   pendingAlert={pendingAlert}
-                  onDismissAlert={() => setPendingAlert(null)}
-                  onGoToMonitor={() => { setPendingAlert(null); setAdminTab('monitor'); }}
+                  onDismissAlert={dismissAlert}
+                  onGoToMonitor={() => { dismissAlert(); setAdminTab('monitor'); }}
+                  connectionStatus={connectionStatus}
                 />
               ) : currentUser.role === 'teacher' ? (
                 <TeacherPortal

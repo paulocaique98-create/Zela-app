@@ -13,6 +13,8 @@ import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
 import CheckinAlertModal from './CheckinAlertModal';
 import ConfirmExitPassword from './ConfirmExitPassword';
+import ConfirmModal from './ConfirmModal';
+import { logAction } from '../lib/auditLog';
 import { SidebarItem, SidebarGroup } from './SidebarNav';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
@@ -55,7 +57,7 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
 ];
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const pushData = usePushNotifications(currentUser, currentSchool);
@@ -80,6 +82,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const [newArrival, setNewArrival] = useState(false);
   const [bulkApproving, setBulkApproving] = useState(false);
   const [pendingCorrectionsCount, setPendingCorrectionsCount] = useState(0);
+  // Achado real (16/09): "Cancelar Solicitação" no Monitor não tinha
+  // nenhuma confirmação — um clique sem querer apagava a solicitação sem
+  // deixar rastro nenhum (nem log de auditoria), e ninguém percebia até a
+  // família reclamar. Agora exige confirmação explícita e fica registrado.
+  const [cancelTarget, setCancelTarget] = useState(null); // { student, cancelStatus, btnText } | null
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Badge de correções de presença aguardando aprovação — mesmo padrão do
   // badge do Monitor, mas via contagem no banco (não deriva de `students`).
@@ -133,6 +141,30 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       setBulkApproving(false);
     }
   };
+
+  const confirmCancelRequest = async () => {
+    if (!cancelTarget || isCancelling) return;
+    setIsCancelling(true);
+    try {
+      await rejectStudentStatus(cancelTarget.student.id, cancelTarget.cancelStatus);
+      // Best-effort: fica registrado em Sistema > Auditoria quem cancelou,
+      // quando e de qual aluno — antes disso não sobrava rastro nenhum.
+      logAction({
+        actorId: currentUser.id,
+        schoolId: currentUser.school_id,
+        action: 'cancel_checkin_request',
+        entityType: 'student',
+        entityId: cancelTarget.student.id,
+        details: { name: cancelTarget.student.name, tipo: cancelTarget.badgeText },
+      });
+      setCancelTarget(null);
+    } catch (err) {
+      console.error('Erro ao cancelar solicitação:', err);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
   const [isFaceEnrollmentOpen, setIsFaceEnrollmentOpen] = useState(false);
@@ -430,7 +462,25 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <AlertCircle size={22} />
                 </div>
                 <div>
-                  <h2 className="text-h3 text-on-surface">Monitor de Solicitações</h2>
+                  <h2 className="text-h3 text-on-surface flex items-center gap-2">
+                    Monitor de Solicitações
+                    {/* Indicador de status do tempo real — antes disso, uma queda
+                        silenciosa do Realtime só era percebida no Console do
+                        navegador. Amarelo/vermelho não significa que o Monitor
+                        parou: a reconciliação por polling continua atualizando
+                        a lista sozinha em segundo plano. */}
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                        connectionStatus === 'connected' ? 'bg-green-500' :
+                        connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
+                      }`}
+                      title={
+                        connectionStatus === 'connected' ? 'Tempo real conectado' :
+                        connectionStatus === 'connecting' ? 'Conectando ao tempo real…' :
+                        'Tempo real instável — atualizando por verificação periódica'
+                      }
+                    />
+                  </h2>
                   <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
                 </div>
               </div>
@@ -516,10 +566,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                           >
                             {btnText}
                           </button>
-                          {/* Botão CANCELAR: reverte status sem gravar no attendance_logs */}
+                          {/* Botão CANCELAR: reverte status sem gravar no attendance_logs.
+                              Abre confirmação em vez de agir direto no clique —
+                              cancelamento é irreversível e sem isso um toque sem
+                              querer apagava a solicitação sem deixar rastro. */}
                           <button
                             title="Rejeitar solicitação"
-                            onClick={() => rejectStudentStatus(student.id, cancelStatus)}
+                            onClick={() => setCancelTarget({ student, cancelStatus, badgeText })}
                             className="w-full font-semibold py-2 rounded-zela-md text-on-surface-variant bg-surface-container-lowest border border-outline-variant hover:bg-red-50 hover:text-red-500 hover:border-red-200 active:scale-95 transition-all"
                           >
                             Cancelar Solicitação
@@ -712,6 +765,21 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             alert={pendingAlert}
             onDismiss={onDismissAlert}
             onGoToMonitor={onGoToMonitor}
+          />,
+          document.body
+        )}
+
+        {/* Confirmação de cancelamento de solicitação — ver comentário em
+            confirmCancelRequest, gap real encontrado em produção. */}
+        {cancelTarget && createPortal(
+          <ConfirmModal
+            title="Cancelar solicitação?"
+            message={`Isso vai cancelar a solicitação de ${cancelTarget.badgeText?.toLowerCase()} de ${cancelTarget.student.name}. A família vai precisar refazer o reconhecimento no totem.`}
+            confirmLabel="Cancelar solicitação"
+            cancelLabel="Voltar"
+            isLoading={isCancelling}
+            onConfirm={confirmCancelRequest}
+            onCancel={() => setCancelTarget(null)}
           />,
           document.body
         )}

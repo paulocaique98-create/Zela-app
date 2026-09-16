@@ -2,6 +2,22 @@
  * Utilitários para processamento de logs de check-in/out
  */
 
+// Extrai o horário curto "HH:mm" de forma segura de qualquer formato salvo
+// em students.today_entry/today_exit — tanto o legado "YYYY-MM-DD|HH:mm:ss"
+// quanto um horário solto. Movido de App.jsx pra ser reaproveitado também
+// pelo hook useRealtimeMonitor (mesma formatação usada nos dois lugares).
+export const parseShortTime = (timeStr, todayDate = null) => {
+  if (!timeStr) return null;
+  if (timeStr.includes('|')) {
+    const parts = timeStr.split('|');
+    const datePart = parts[0];
+    const timePart = parts[1] || '';
+    if (todayDate && datePart !== todayDate) return null;
+    return timePart.substring(0, 5);
+  }
+  return timeStr.substring(0, 5);
+};
+
 // Horários personalizados por dia da semana (students.weekly_schedule) --
 // substituiu a versão anterior (extra_hours, só somava minutos à saída):
 // agora entrada E saída podem ser sobrescritas por dia específico. Um dia

@@ -133,11 +133,11 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
                   </div>
                 </div>
 
-                {/* Status + Foto Action */}
+                {/* Foto Action — o selo "Ativo/Pendente" foi removido: o campo
+                    status nunca é atualizado em lugar nenhum do sistema (toda
+                    pessoa nasce e fica "pending" pra sempre), só confundia os
+                    responsáveis sem indicar nada de real sobre o cadastro. */}
                 <div className="flex flex-col sm:flex-col items-start sm:items-end justify-between w-full sm:w-auto gap-3 sm:gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-outline-variant">
-                  <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-lg ${person.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
-                    {person.status === 'approved' ? 'Ativo' : 'Pendente'}
-                  </span>
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
                       type="button"

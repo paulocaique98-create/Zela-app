@@ -194,6 +194,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setSelectedStudentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
   const [actionDone, setActionDone] = useState(false);
+  // true quando a confirmação foi um mero RE-reconhecimento de uma
+  // solicitação que já estava pendente (a pessoa esqueceu que já passou pelo
+  // totem e tentou de novo) — antes disso mostrava a mesma tela de "sucesso"
+  // de sempre, dando a entender que uma solicitação NOVA tinha sido criada.
+  const [wasAlreadyPending, setWasAlreadyPending] = useState(false);
 
   // Timeout de segurança: se ninguém for reconhecido depois de um tempo, oferece uma
   // alternativa (QR Code/PIN) em vez de deixar a pessoa presa olhando pra câmera.
@@ -232,11 +237,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const streamRef = useRef(null); // stream ativo, pra observar se a trilha de vídeo cai/congela
   const capturedImageRef = useRef(null); // espelha capturedImage sem precisar recriar o watchdog abaixo a cada captura
 
-  // Contagem regressiva de 3s antes de confirmar automaticamente a entrada/saída,
-  // seguindo exatamente a mesma lógica do Cadastro de Foto (AdminFaceEnrollment):
-  // só dispara depois do match ficar estável por 1s (evita contagem por match
-  // instantâneo/instável) e é cancelada se o match se perder no meio da contagem.
-  const [countdown, setCountdown] = useState(null);
+  // Confirma automaticamente a entrada/saída assim que o match ficar estável
+  // por 1s (evita confirmar em cima de um frame instável/falso positivo) —
+  // sem nenhuma espera visível depois disso (removida a pedido, ver useEffect
+  // mais abaixo).
   const autoTriggeredRef = useRef(false);
 
   const retryInit = () => {
@@ -804,10 +808,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setMatchedStudents([]);
     setSelectedStudentIds([]);
     setActionDone(false);
+    setWasAlreadyPending(false);
     setFramePosition(null);
     setNoMatchReason('');
     recentMatchesRef.current = [];
-    setCountdown(null);
     autoTriggeredRef.current = false;
     resetStuckTimer();
   };
@@ -816,9 +820,16 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     const selected = matchedStudents.filter(s => selectedStudentIds.includes(s.id));
     if (!selected.length || isProcessingCapture || actionDone) return;
 
+    // Calculado ANTES do requestKioskAccess (que reenvia o evento sem mudar
+    // o status quando já está pending) — depois da chamada o status local já
+    // seria o mesmo pending de antes, impossível diferenciar "novo" de
+    // "repetido" só olhando o resultado.
+    const alreadyPending = selected.every(s => s.status === 'pending_entry' || s.status === 'pending_exit');
+
     setIsProcessingCapture(true);
     try {
       await requestKioskAccess(selected.map(s => s.id), matchedPerson?.id || null);
+      setWasAlreadyPending(alreadyPending);
       setActionDone(true); // Só aqui, após confirmação real do banco
     } catch (err) {
       console.error('Erro ao solicitar acesso:', err);
@@ -841,46 +852,29 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     return () => clearTimeout(timer);
   }, [actionDone]);
 
-  // Só dispara a contagem regressiva depois que o match ficar estável por 1s
-  // seguido — mesma lógica do Cadastro de Foto (evita que uma confirmação
-  // instável de um único frame já inicie a contagem). Com mais de um aluno
-  // vinculado, NÃO confirma sozinho: o reconhecimento facial só identifica o
-  // adulto, não diz quais filhos estão fisicamente ali — precisa da
-  // conferência manual das marcações antes de confirmar.
+  // Só confirma depois que o match ficar estável por 1s seguido — mesma
+  // lógica do Cadastro de Foto (evita confirmar em cima de um único frame
+  // trêmulo/falso positivo). Antes disso ainda tinha uma contagem regressiva
+  // visível de 2s depois da estabilidade (~3s de atraso total); removida a
+  // pedido — agora solicita assim que o reconhecimento fica estável, sem
+  // espera visível nenhuma. Com mais de um aluno vinculado, NÃO confirma
+  // sozinho: o reconhecimento facial só identifica o adulto, não diz quais
+  // filhos estão fisicamente ali — precisa da conferência manual das
+  // marcações antes de confirmar.
   useEffect(() => {
-    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || countdown !== null || autoTriggeredRef.current || matchedStudents.length > 1) return;
+    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || autoTriggeredRef.current || matchedStudents.length > 1) return;
     const timer = setTimeout(() => {
       autoTriggeredRef.current = true;
-      setCountdown(2);
+      handleRequestAccess();
     }, 1000);
     return () => clearTimeout(timer);
-  }, [matchStatus, actionDone, isProcessingCapture, countdown, matchedStudents.length]);
+  }, [matchStatus, actionDone, isProcessingCapture, matchedStudents.length]);
 
   useEffect(() => {
-    if (matchStatus !== 'matched' && countdown === null) {
+    if (matchStatus !== 'matched') {
       autoTriggeredRef.current = false;
     }
-  }, [matchStatus, countdown]);
-
-  // Cancela a contagem em andamento se o match se perder no meio dela (rosto
-  // saiu do molde, por exemplo) — mesmo princípio do Cadastro de Foto.
-  useEffect(() => {
-    if (matchStatus !== 'matched' && countdown !== null) {
-      setCountdown(null);
-    }
-  }, [matchStatus, countdown]);
-
-  // Contagem regressiva de 2s antes da confirmação automática.
-  useEffect(() => {
-    if (countdown === null) return;
-    if (countdown === 0) {
-      handleRequestAccess();
-      setCountdown(null);
-      return;
-    }
-    const timer = setTimeout(() => setCountdown(c => (c === null ? null : c - 1)), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
+  }, [matchStatus]);
 
   // Convert distance to similarity percentage
   const getSimilarityPercentage = (distance) => {
@@ -969,13 +963,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   matchStatus === 'no-match' ? 'border-red-500' :
                     framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
                       matchStatus === 'searching' ? 'border-indigo-600' : 'border-white/80'
-              }`}>
-                {countdown !== null && (
-                  <span className="text-white text-7xl font-black drop-shadow-lg animate-in zoom-in duration-300" key={countdown}>
-                    {countdown}
-                  </span>
-                )}
-              </div>
+              }`} />
             </div>
           )}
 
@@ -1033,35 +1021,41 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           </div>
 
 
-          {/* Botão principal da câmera: captura manual antes do match; depois de
-              encontrar o responsável, vira a ação de check-in/check-out direto —
-              evita precisar rolar até o botão do painel lateral. */}
-          {modelsLoaded && !capturedImage && !error && !actionDone && (
+          {/* Botão principal da câmera: captura manual antes do match. Depois de
+              encontrar o responsável com só 1 filho vinculado, a confirmação é
+              100% automática (useEffect de auto-confirmação acima) — nenhum
+              botão aparece, pra não dar a impressão de que precisa clicar em
+              algo. Só reaparece (como confirmação manual de verdade) quando há
+              MAIS de 1 filho vinculado: aí o reconhecimento do responsável não
+              basta pra saber quem está fisicamente ali, precisa da escolha. */}
+          {modelsLoaded && !capturedImage && !error && !actionDone && matchStatus !== 'matched' && (
             <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
-              {matchStatus === 'matched' ? (
-                <button
-                  onClick={handleRequestAccess}
-                  disabled={selectedStudentIds.length === 0 || isProcessingCapture}
-                  className="w-full md:w-auto flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
-                >
-                  {isProcessingCapture ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                  {(() => {
-                    const selected = matchedStudents.filter(s => selectedStudentIds.includes(s.id));
-                    if (selected.length === 0) return 'Selecione ao menos 1 aluno';
-                    const hasIn = selected.some(s => s.status === 'in_school');
-                    const hasOut = selected.some(s => s.status !== 'in_school');
-                    if (hasIn && hasOut) return 'Confirmar Entrada/Saída';
-                    return hasIn ? 'Realizar Check-out' : 'Realizar Check-in';
-                  })()}
-                </button>
-              ) : (
-                <button
-                  onClick={handleCaptureAndCompare}
-                  className="w-full md:w-auto flex justify-center items-center gap-2 bg-primary hover:bg-primary-container text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
-                >
-                  <Camera size={16} /> Capturar e Comparar
-                </button>
-              )}
+              <button
+                onClick={handleCaptureAndCompare}
+                className="w-full md:w-auto flex justify-center items-center gap-2 bg-primary hover:bg-primary-container text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
+              >
+                <Camera size={16} /> Capturar e Comparar
+              </button>
+            </div>
+          )}
+
+          {modelsLoaded && !capturedImage && !error && !actionDone && matchStatus === 'matched' && matchedStudents.length > 1 && (
+            <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
+              <button
+                onClick={handleRequestAccess}
+                disabled={selectedStudentIds.length === 0 || isProcessingCapture}
+                className="w-full md:w-auto flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
+              >
+                {isProcessingCapture ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                {(() => {
+                  const selected = matchedStudents.filter(s => selectedStudentIds.includes(s.id));
+                  if (selected.length === 0) return 'Selecione ao menos 1 aluno';
+                  const hasIn = selected.some(s => s.status === 'in_school');
+                  const hasOut = selected.some(s => s.status !== 'in_school');
+                  if (hasIn && hasOut) return 'Confirmar Entrada/Saída';
+                  return hasIn ? 'Realizar Check-out' : 'Realizar Check-in';
+                })()}
+              </button>
             </div>
           )}
         </div>
@@ -1108,8 +1102,14 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               <div className="text-center py-10 space-y-4">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500 animate-bounce" />
                 <div>
-                  <h4 className="font-bold text-on-surface text-lg">Solicitação Enviada!</h4>
-                  <p className="text-on-surface-variant text-xs mt-1">Aguardando confirmação da recepção.</p>
+                  <h4 className="font-bold text-on-surface text-lg">
+                    {wasAlreadyPending ? 'Solicitação já realizada' : 'Solicitação Enviada!'}
+                  </h4>
+                  <p className="text-on-surface-variant text-xs mt-1">
+                    {wasAlreadyPending
+                      ? 'Aguardando aprovação da recepção. Não precisa escanear de novo.'
+                      : 'Aguardando confirmação da recepção.'}
+                  </p>
                 </div>
                 <button
                   onClick={onClose}
