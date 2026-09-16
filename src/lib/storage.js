@@ -16,6 +16,17 @@ export async function removeFile(bucket, path) {
   if (error) throw error;
 }
 
+// Upload sem sessão autenticada — usado pelo link público de Matrícula
+// (PublicMatricula.jsx), onde a conta do responsável ainda nem existe, então
+// a RLS normal de storage (baseada em auth.uid()) nunca deixaria passar. A
+// Edge Function public-matricula-doc-upload gera esse token com service role
+// ANTES do upload; a URL assinada autoriza o envio independente de papel/RLS.
+export async function uploadFileWithSignedUrl(bucket, path, token, file) {
+  const { error } = await supabase.storage.from(bucket).uploadToSignedUrl(path, token, file);
+  if (error) throw error;
+  return path;
+}
+
 // URL temporária (expira) — o bucket é privado, então todo acesso passa por aqui,
 // respeitando a RLS de storage.objects no momento da geração do link.
 export async function getSignedUrl(bucket, path, expiresInSeconds = 3600) {

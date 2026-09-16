@@ -19,6 +19,7 @@ const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
+const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
 
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
@@ -1200,6 +1201,12 @@ export default function App() {
 
   if (currentPath === '/cadastro') {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><SelfRegister /></Suspense>;
+  }
+
+  // Rota só alcançada por um link que o Admin gera e distribui (ver
+  // AdminMatriculas.jsx) — não fica anunciada em lugar nenhum do login.
+  if (currentPath === '/matricula-publica') {
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><PublicMatricula /></Suspense>;
   }
 
   if (!currentUser) {

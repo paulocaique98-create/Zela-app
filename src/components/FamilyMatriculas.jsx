@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   FileText, Loader2, Plus, Trash2, X, Check, Upload, ChevronDown, ChevronUp,
   Clock, CheckCircle2, XCircle, User, Baby, Car, UserCheck,
+  HeartPulse, Image as ImageIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
@@ -86,7 +87,18 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  // A opção de "Matrícula" (família nova) saiu daqui — agora só existe pelo
+  // link público que o Admin distribui (PublicMatricula.jsx), porque quem já
+  // tem login aqui dentro necessariamente já é família da escola. Only
+  // 'rematricula' é usado neste componente; `tipo` fica gravado na
+  // solicitação mesmo assim, pro Admin distinguir de que veio cada uma.
+  const [step, setStep] = useState('list'); // 'list' | 'form'
+  const [tipo] = useState('rematricula');
+  const [isLoadingPrefill, setIsLoadingPrefill] = useState(false);
+  // Resumo de Ficha Médica / Termo de Uso de Imagem pra Rematrícula — v1 só
+  // mostra o status (essas duas continuam editadas nas telas próprias:
+  // Ficha Médica e Configurações). Integrar a edição aqui é melhoria futura.
+  const [rematriculaResumo, setRematriculaResumo] = useState(null); // { totalFilhos, comFicha } | null
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -138,7 +150,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   }, [maxAutorizados]);
 
   const resetForm = () => {
-    setShowForm(false);
+    setStep('list');
+    setRematriculaResumo(null);
     setResponsavel(emptyResponsavel());
     setTemSegundo(false);
     setSegundoResponsavel(emptyResponsavel());
@@ -147,6 +160,75 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     setTemTransporte(false);
     setTransporteAutorizados([emptyTransporteAutorizado()]);
     setFormError('');
+  };
+
+  // Rematrícula: pré-preenche com o que já existe de verdade no banco pra
+  // essa família, tudo continua editável. Ficha Médica e Termo de Uso de
+  // Imagem não são replicados aqui (são editados nas telas próprias) — só
+  // mostramos um resumo do status atual, ver rematriculaResumo.
+  const fetchRematriculaData = async () => {
+    setIsLoadingPrefill(true);
+    try {
+      const [{ data: ownStudents }, { data: guardianLinks }, { data: existingAuthorized }] = await Promise.all([
+        supabase.from('students').select('id, name, birth_date, turno, periodo, contracted_hours').eq('family_id', currentUser.id),
+        supabase.from('student_guardians').select('student_id, guardian_id').eq('guardian_id', currentUser.id),
+        supabase.from('authorized_persons').select('name, relation').eq('family_id', currentUser.id).eq('school_id', schoolId),
+      ]);
+
+      const guardianStudentIds = (guardianLinks || []).map(g => g.student_id);
+      let linkedStudents = [];
+      if (guardianStudentIds.length > 0) {
+        const { data } = await supabase.from('students').select('id, name, birth_date, turno, periodo, contracted_hours').in('id', guardianStudentIds);
+        linkedStudents = data || [];
+      }
+      // Achado real de teste: o titular às vezes também aparece vinculado ao
+      // próprio filho em student_guardians (efeito colateral do fluxo "Novo
+      // Usuário" — ver commit e27b5d6), o que duplicava a mesma criança nas
+      // duas listas. Deduplica por id.
+      const byId = new Map();
+      [...(ownStudents || []), ...linkedStudents].forEach(s => byId.set(s.id, s));
+      const allStudents = [...byId.values()];
+
+      let comFicha = 0;
+      if (allStudents.length > 0) {
+        const { data: fichas } = await supabase.from('fichas_medicas').select('student_id').in('student_id', allStudents.map(s => s.id));
+        comFicha = (fichas || []).length;
+      }
+
+      setResponsavel(prev => ({ ...prev, nome: currentUser.name || '', email: currentUser.email || '', telefone: currentUser.phone || '' }));
+
+      if (allStudents.length > 0) {
+        setCriancas(allStudents.map(s => ({
+          id: s.id,
+          nome: s.name || '',
+          nascimento: s.birth_date || '',
+          cidade_nascimento: '',
+          certidao_doc: null,
+          endereco: '',
+          ciclo: s.contracted_hours ? String(s.contracted_hours) : '',
+          periodo: s.periodo || '',
+          turno: s.turno || '',
+        })));
+      }
+
+      // A entrada "(Titular)" em authorized_persons representa o próprio
+      // responsável (ver AdminUserRegistration.jsx), não um autorizado real.
+      const autorizadosReais = (existingAuthorized || []).filter(a => !a.relation?.includes('(Titular)'));
+      if (autorizadosReais.length > 0) {
+        setAutorizados(autorizadosReais.map(a => ({ id: Date.now() + Math.random(), nome: a.name || '', telefone: '', parentesco: '' })));
+      }
+
+      setRematriculaResumo({ totalFilhos: allStudents.length, comFicha });
+    } catch (err) {
+      console.error('[FamilyMatriculas] Erro ao pré-carregar dados de rematrícula:', err);
+    } finally {
+      setIsLoadingPrefill(false);
+    }
+  };
+
+  const chooseTipo = async () => {
+    setStep('form');
+    await fetchRematriculaData();
   };
 
   const uploadResponsavelDoc = async (docKey, file) => {
@@ -256,6 +338,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         school_id: schoolId,
         family_id: currentUser.id,
         status: 'pending',
+        tipo,
         responsavel_financeiro: { ...responsavel, nome: formatPersonName(responsavel.nome) },
         segundo_responsavel: temSegundo ? { ...segundoResponsavel, nome: formatPersonName(segundoResponsavel.nome) } : null,
         criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, ...rest }) => ({ ...rest, nome: formatPersonName(rest.nome) })),
@@ -304,9 +387,9 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             <p className="text-on-surface-variant text-small hidden sm:block">Preencha e acompanhe as matrículas dos seus filhos.</p>
           </div>
         </div>
-        {!showForm && (
+        {step === 'list' && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => chooseTipo()}
             className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
           >
             <Plus size={18} /> <span className="hidden sm:inline">Nova Solicitação</span>
@@ -315,14 +398,34 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-        {showForm ? (
+        {step === 'form' ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-on-surface">Nova solicitação de Matrícula</h3>
+              <h3 className="font-bold text-on-surface">Nova solicitação de Rematrícula</h3>
               <button type="button" onClick={resetForm} className="p-1.5 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition">
                 <X size={20} />
               </button>
             </div>
+
+            {isLoadingPrefill && (
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant bg-surface-container-low p-3 rounded-zela-md">
+                <Loader2 size={16} className="animate-spin" /> Carregando seus dados já cadastrados...
+              </div>
+            )}
+
+            {tipo === 'rematricula' && rematriculaResumo && (
+              <section className="bg-indigo-50 border border-indigo-100 rounded-zela-lg p-4 space-y-2">
+                <p className="text-xs font-bold text-primary uppercase tracking-wide">Dados que continuam nas telas próprias</p>
+                <div className="flex items-center gap-2 text-sm text-on-surface">
+                  <HeartPulse size={15} className="text-primary shrink-0" />
+                  Ficha Médica: {rematriculaResumo.comFicha} de {rematriculaResumo.totalFilhos} filho(s) já preenchida. Atualize em Formulários {'>'} Ficha Médica.
+                </div>
+                <div className="flex items-center gap-2 text-sm text-on-surface">
+                  <ImageIcon size={15} className="text-primary shrink-0" />
+                  Termo de Uso de Imagem: {currentUser.image_usage_accepted ? 'já respondido' : 'ainda não respondido'}. Atualize em Configurações.
+                </div>
+              </section>
+            )}
 
             {formError && (
               <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>

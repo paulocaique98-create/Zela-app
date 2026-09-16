@@ -10,13 +10,16 @@ import { formatPersonName } from '../utils/formatName';
 
 const BUCKET = 'matriculas-docs';
 
-function generateTempPassword() {
-  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 4).toUpperCase();
-}
+// Senha inicial padrão pra toda conta criada a partir de uma matrícula —
+// mesma senha usada pro titular no link público (PublicMatricula.jsx). A
+// pessoa troca depois em Configurações, já logada. Antes era uma senha
+// aleatória gerada na hora; padronizar facilita comunicar pra família e
+// elimina a necessidade de guardar/copiar uma senha só usada uma vez.
+const DEFAULT_PASSWORD = '123456';
 
 const TABS = [
-  { key: 'pending', label: 'Pendentes' },
   { key: 'approved', label: 'Aprovadas' },
+  { key: 'pending', label: 'Pendentes' },
   { key: 'rejected', label: 'Rejeitadas' },
 ];
 
@@ -112,6 +115,9 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-200">
+            {solicitacao.tipo === 'rematricula' ? 'Rematrícula' : 'Matrícula'}
+          </span>
           <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
             <StatusIcon size={11} /> {status.label}
           </span>
@@ -229,6 +235,37 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   );
 }
 
+function MatriculaLinkBox({ schoolCode }) {
+  const [copied, setCopied] = useState(false);
+  const link = `${window.location.origin}/matricula-publica?codigo=${schoolCode}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('[AdminMatriculas] Erro ao copiar link:', err);
+    }
+  };
+
+  return (
+    <div className="mx-5 sm:mx-6 mt-4 p-3.5 bg-indigo-50 border border-indigo-100 rounded-zela-md flex items-center gap-3 shrink-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold text-primary uppercase tracking-wide">Link de Matrícula</p>
+        <p className="text-xs text-on-surface-variant truncate" title={link}>{link}</p>
+      </div>
+      <button
+        type="button"
+        onClick={copy}
+        className="flex items-center gap-1.5 shrink-0 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition-all active:scale-95"
+      >
+        <Copy size={13} /> {copied ? 'Copiado!' : 'Copiar link'}
+      </button>
+    </div>
+  );
+}
+
 export default function AdminMatriculas({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const [solicitacoes, setSolicitacoes] = useState([]);
@@ -329,7 +366,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         const { error: linkError } = await supabase.from('student_guardians').insert(links);
         if (linkError) throw new Error(`Vínculo do 2º responsável: ${linkError.message}`);
       } else if (segundo.email?.trim()) {
-        const tempPassword = generateTempPassword();
         const session = await supabase.auth.getSession();
         const token = session.data.session?.access_token;
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -339,7 +375,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           body: JSON.stringify({
             name: segundo.nome,
             email: segundo.email.trim().toLowerCase(),
-            password: tempPassword,
+            password: DEFAULT_PASSWORD,
             phone: segundo.telefone || null,
             doc_number: segundo.cpf || null,
             school_id: solicitacao.school_id,
@@ -363,7 +399,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           documents: { rg_expedicao: segundo.rg_expedicao || null, rg_orgao: segundo.rg_orgao || null },
         }).eq('id', result.user.id);
 
-        segundoCredentials = { name: segundo.nome, email: segundo.email.trim().toLowerCase(), password: tempPassword };
+        segundoCredentials = { name: segundo.nome, email: segundo.email.trim().toLowerCase(), password: DEFAULT_PASSWORD };
       }
     }
 
@@ -430,6 +466,14 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         </div>
       </div>
 
+      {/* Link de Matrícula — só aparece aqui no Admin, pra escola copiar e
+          mandar direto pra uma família nova (WhatsApp, e-mail, etc). Não fica
+          anunciado em lugar nenhum público — quem não tem o link não acha a
+          página. */}
+      {currentSchool?.school_code && (
+        <MatriculaLinkBox schoolCode={currentSchool.school_code} />
+      )}
+
       <div className="flex gap-2 px-5 sm:px-6 pt-4 shrink-0">
         {TABS.map(t => (
           <button
@@ -489,7 +533,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
             </div>
             <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
               <span className="text-lg">⚠️</span>
-              <p><strong>Guarde essas informações agora.</strong> Por segurança, a senha não será exibida novamente.</p>
+              <p>Essa é a senha inicial padrão — oriente a pessoa a trocá-la em Configurações assim que acessar pela primeira vez.</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
