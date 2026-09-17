@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, X, Clock, FileText, LogIn, LogOut, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X, Clock, FileText, Download, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
@@ -21,6 +21,21 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'excess' | 'ok'
+  // Período e status ficam escondidos atrás desse painel — modelo "foco na
+  // lista" validado com o usuário (proposta com 3 layouts, 17/09): sem isso,
+  // os filtros disputavam espaço/atenção com o resultado por aluno, que é a
+  // informação que a recepção realmente precisa ver primeiro.
+  const [showFilters, setShowFilters] = useState(false);
+  const filtersRef = useRef(null);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    const handleClickOutside = (e) => {
+      if (filtersRef.current && !filtersRef.current.contains(e.target)) setShowFilters(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilters]);
 
   const fetchExtras = async () => {
     if (!currentSchool) return;
@@ -140,12 +155,11 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   // acompanhar todo mundo, o relatório é só o que realmente gerou excedente.
   const exportRecords = searchFiltered.filter(hasExcess);
 
-  const totalRegistros = filtered.length;
   const totalMinutosExcedentes = filtered.reduce((acc, log) => acc + log.minutos_excedentes, 0);
   const totalValor = filtered.reduce((acc, log) => acc + log.valor, 0);
   const totalValorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor);
 
-  const PERIOD_LABELS = { today: 'Hoje', '7days': '\u00DAltimos 7 dias', this_month: 'Este m\u00EAs' };
+  const PERIOD_LABELS = { today: 'Hoje', '7days': 'Semana', this_month: 'M\u00EAs' };
   const periodLabel = period === 'custom' && customDate
     ? formatDate(`${customDate}T00:00:00`)
     : (PERIOD_LABELS[period] || 'Per\u00EDodo selecionado');
@@ -160,107 +174,122 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 shrink-0">
-        <div className="flex items-center gap-3">
+      {/* Header -- título e botões sempre na mesma linha (os botões agora são
+          compactos o bastante pra caber mesmo no celular); título encurta
+          pra "Horas Extras" abaixo de sm pra sobrar espaço. */}
+      <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="bg-amber-100 p-2 sm:p-2.5 rounded-xl text-amber-600 shrink-0">
             <Clock size={20} />
           </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800">Relatório de Horas Extras</h2>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">
+              <span className="sm:hidden">Horas Extras</span>
+              <span className="hidden sm:inline">Relatório de Horas Extras</span>
+            </h2>
             <p className="hidden sm:block text-sm text-slate-500">Cobrança por hora cheia, entrada antecipada e saída tardia (tolerância configurável em Configurações)</p>
           </div>
         </div>
-        
-        <button
-          onClick={handleExport}
-          disabled={exportRecords.length === 0}
-          title={exportRecords.length === 0 ? 'Ninguém com hora extra neste período' : undefined}
-          className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-4 py-2.5 rounded-xl transition shadow-sm shrink-0 w-full sm:w-auto"
-        >
-          <Download size={16} /> Exportar Relatório
-        </button>
-      </div>
 
-      {/* Resumo Financeiro -- no celular fica em 3 colunas compactas para não
-          tomar a tela toda antes da tabela de alunos. */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6 shrink-0">
-        <div className="bg-slate-50 border border-slate-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
-          <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1">Registros</p>
-          <p className="text-lg sm:text-2xl font-black text-slate-700">{totalRegistros}</p>
-        </div>
-        <div className="bg-amber-50 border border-amber-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
-          <p className="text-[10px] sm:text-xs font-bold text-amber-600 uppercase tracking-wider mb-0.5 sm:mb-1">Excedente</p>
-          <p className="text-lg sm:text-2xl font-black text-amber-700">{totalMinutosExcedentes}<span className="text-xs font-bold"> min</span></p>
-        </div>
-        <div className="bg-rose-50 border border-rose-200 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col justify-center">
-          <p className="text-[10px] sm:text-xs font-bold text-rose-600 uppercase tracking-wider mb-0.5 sm:mb-1">A Cobrar</p>
-          <p className="text-lg sm:text-2xl font-black text-rose-700 truncate">{totalValorFormatado}</p>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="flex flex-col xl:flex-row gap-3 mb-4 sm:mb-6 shrink-0">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar por aluno ou responsável..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2 shrink-0">
-          <div className="flex bg-slate-100 p-1 rounded-2xl overflow-x-auto">
-            {[
-              { id: 'today', label: 'Hoje' },
-              { id: '7days', label: 'Últimos 7 dias' },
-              { id: 'this_month', label: 'Este mês' },
-              { id: 'custom', label: 'Personalizado' }
-            ].map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  period === p.id ? 'bg-white shadow-sm text-indigo-900' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          
-          {period === 'custom' && (
-            <input
-              type="date"
-              value={customDate}
-              onChange={e => setCustomDate(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-            />
-          )}
-
-          <select 
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer"
+        <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center justify-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm border ${
+              showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+            title="Período e status"
           >
-            <option value="all">Todos os status</option>
-            <option value="excess">Com excesso</option>
-            <option value="ok">Dentro do prazo</option>
-          </select>
+            <SlidersHorizontal size={16} />
+          </button>
+
+          <button
+            onClick={handleExport}
+            disabled={exportRecords.length === 0}
+            title={exportRecords.length === 0 ? 'Ninguém com hora extra neste período' : undefined}
+            className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-3.5 sm:px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          >
+            <Download size={16} /> <span className="hidden sm:inline">Exportar Relatório</span>
+          </button>
+
+          {/* Ancorado no grupo inteiro (não só no botão de filtro) e sempre
+              pela direita -- evita o painel nascer fora da tela quando o
+              botão de filtro não está colado na borda direita real. */}
+          {showFilters && (
+            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-2xl shadow-lg p-3 z-20 space-y-3">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">Período</p>
+                  <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                    {[
+                      { id: 'today', label: 'Hoje' },
+                      { id: '7days', label: 'Semana' },
+                      { id: 'this_month', label: 'Mês' },
+                      { id: 'custom', label: 'Editar' }
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPeriod(p.id)}
+                        className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          period === p.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  {period === 'custom' && (
+                    <input
+                      type="date"
+                      value={customDate}
+                      onChange={e => setCustomDate(e.target.value)}
+                      className="mt-2 w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">Status</p>
+                  <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    <option value="all">Todos os status</option>
+                    <option value="excess">Com excesso</option>
+                    <option value="ok">Dentro do prazo</option>
+                  </select>
+                </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tabela - Scrollable Container */}
+      {/* Resumo -- vira uma frase, não mais cards: modelo "foco na lista"
+          validado com o usuário (proposta com 3 layouts, 17/09). */}
+      <p className="text-sm text-slate-500 mb-4 shrink-0">
+        {periodLabel}: <span className="font-bold text-amber-600">{totalMinutosExcedentes} min</span> excedentes, <span className="font-bold text-rose-600">{totalValorFormatado}</span> a cobrar.
+      </p>
+
+      {/* Busca */}
+      <div className="relative mb-4 sm:mb-6 shrink-0">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Buscar por aluno ou responsável..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+        />
+        {searchTerm && (
+          <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* Resultado por aluno -- cards ao invés de tabela: o valor a cobrar
+          fica em destaque tipográfico bem acima de qualquer outro número da
+          tela, já que é a informação que decide se alguém precisa agir. */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         {isLoading ? (
           <div className="flex justify-center items-center h-full py-12">
@@ -272,81 +301,46 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
             <p className="text-slate-500 font-medium text-sm">Nenhum registro encontrado.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto pb-4">
-            <table className="w-full text-sm whitespace-nowrap min-w-[800px]">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Responsável</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Hor. Contratado</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Excedente</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Valor</th>
-                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Aprovado por</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filtered.map(log => {
-                  let rowClass = "hover:bg-slate-50 transition-colors";
-                  let excessText = "—";
-                  let excessClass = "text-slate-400";
-                  let valorClass = "text-green-600";
-                  
-                  if (hasExcess(log)) {
-                    rowClass = "bg-amber-50/50 hover:bg-amber-50 transition-colors";
-                    excessText = `${Math.floor(log.minutos_excedentes / 60)}h ${log.minutos_excedentes % 60}min`;
-                    excessClass = "text-amber-600 font-bold";
-                    valorClass = "text-rose-600 font-bold";
-                  }
+          <div className="space-y-2 pb-4">
+            {filtered.map(log => {
+              const excess = hasExcess(log);
+              const excessText = `${Math.floor(log.minutos_excedentes / 60)}h ${log.minutos_excedentes % 60}min`;
+              const initials = log.studentName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-                  return (
-                    <tr key={log.key} className={rowClass}>
-                      <td className="py-3 pr-4 font-medium text-slate-600">{log.date}</td>
-                      <td className="py-3 pr-4 font-semibold text-slate-800">{log.studentName}</td>
-                      <td className="py-3 pr-4 text-slate-500 text-xs">{log.family}</td>
-                      <td className="py-3 pr-4">
-                        {log.entry ? (
-                          <span className={`flex items-center gap-1 font-medium ${log.excessoEntrada ? 'text-rose-600' : 'text-indigo-600'}`} title={log.excessoEntrada ? 'Check-in antecipado além da tolerância' : undefined}>
-                            <LogIn size={13} /> {log.entry}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-medium text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        {log.exit ? (
-                          <span className="flex items-center gap-1 font-medium text-slate-600">
-                            <LogOut size={13} /> {log.exit}
-                          </span>
-                        ) : (
-                          <span className="text-amber-500 font-bold text-[10px] uppercase px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200">
-                            Pendente
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 text-center">
-                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                          {log.contractedExit}
-                        </span>
-                      </td>
-                      <td className={`py-3 pr-4 text-right ${excessClass}`}>
-                        {log.sem_saida && !log.excessoEntrada ? '—' : excessText}
-                      </td>
-                      <td className={`py-3 pr-4 text-right ${valorClass}`}>
-                        {log.sem_saida && !log.excessoEntrada ? '—' : log.valorFormatado}
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="text-[10px] text-slate-400 bg-slate-50 border border-slate-100 px-2 py-1 rounded-md">
-                          {log.approvedBy}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div key={log.key} className={`flex items-center gap-3 p-3 sm:p-4 rounded-2xl border shadow-sm ${excess ? 'bg-white border-amber-200' : 'bg-white border-slate-200'}`}>
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 ${excess ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {initials}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-800 text-sm truncate">{log.studentName}</p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {log.date} · {log.family}
+                      {log.exit ? ` · saída ${log.exit}` : (log.entry ? ' · saída pendente' : '')}
+                      {log.contractedExit !== '—' ? ` (contratado ${log.contractedExit})` : ''}
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    {excess ? (
+                      <>
+                        <p className="font-black text-rose-600 text-base sm:text-lg leading-none">{log.valorFormatado}</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-amber-600 mt-1">+{excessText}</p>
+                      </>
+                    ) : log.sem_saida ? (
+                      <span className="text-amber-500 font-bold text-[10px] uppercase px-2 py-1 rounded-full bg-amber-100 border border-amber-200 whitespace-nowrap">
+                        Pendente
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-emerald-600 font-bold text-[10px] sm:text-xs uppercase whitespace-nowrap">
+                        <CheckCircle2 size={13} /> No prazo
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
