@@ -2,6 +2,17 @@
  * Utilitários para processamento de logs de check-in/out
  */
 
+// Data (YYYY-MM-DD) no fuso de Brasília, independente do fuso do
+// dispositivo/servidor. new Date().toISOString().split('T')[0] pega a data em
+// UTC, que já está "amanhã" entre 21h e 23h59 no horário de Brasília
+// (UTC-3) — isso fazia o filtro "Hoje" de Horas Extras/Histórico virar um
+// intervalo vazio (buscando um dia que ainda não tem registro nenhum)
+// exatamente nesse horário. Mesma lógica de getBrasiliaDateStr em App.jsx,
+// centralizada aqui pra ser reaproveitada por todas as telas com filtro de
+// período.
+export const getBrasiliaDateStr = (date = new Date()) =>
+  date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
 // Extrai o horário curto "HH:mm" de forma segura de qualquer formato salvo
 // em students.today_entry/today_exit — tanto o legado "YYYY-MM-DD|HH:mm:ss"
 // quanto um horário solto. Movido de App.jsx pra ser reaproveitado também

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Clock, FileText, Download, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
 
 function formatTime(isoString) {
@@ -42,21 +42,24 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
     setIsLoading(true);
     try {
       const schoolId = currentSchool.school_id || currentSchool.id;
-      const todayISO = new Date().toISOString().split('T')[0];
+      const todayISO = getBrasiliaDateStr();
 
+      // Offset explícito (-03:00): sem ele, o Postgres interpreta a string
+      // como UTC (fuso da sessão), então "00:00" viraria 21h da noite
+      // anterior em Brasília — o intervalo do dia ficaria deslocado.
       let startDate, endDate;
       if (period === 'today') {
-        startDate = `${todayISO}T00:00:00`;
-        endDate   = `${todayISO}T23:59:59`;
+        startDate = `${todayISO}T00:00:00-03:00`;
+        endDate   = `${todayISO}T23:59:59-03:00`;
       } else if (period === 'custom' && customDate) {
-        startDate = `${customDate}T00:00:00`;
-        endDate   = `${customDate}T23:59:59`;
+        startDate = `${customDate}T00:00:00-03:00`;
+        endDate   = `${customDate}T23:59:59-03:00`;
       } else {
         const days = period === '7days' ? 7 : (period === 'this_month' ? new Date().getDate() : 30);
         const start = new Date();
         start.setDate(start.getDate() - (days - 1));
-        startDate = `${start.toISOString().split('T')[0]}T00:00:00`;
-        endDate   = `${todayISO}T23:59:59`;
+        startDate = `${getBrasiliaDateStr(start)}T00:00:00-03:00`;
+        endDate   = `${todayISO}T23:59:59-03:00`;
       }
 
       const { data: rawLogs, error } = await supabase

@@ -1004,16 +1004,6 @@ export default function App() {
         };
       }));
 
-      // 4. Se foi uma saída confirmada, reseta para idle após 2s
-      if (isConfirmExit) {
-        setTimeout(async () => {
-          await supabase.from('students').update({ status: 'idle' }).eq('id', studentId);
-          setStudents(prev => prev.map(s =>
-            s.id === studentId ? { ...s, status: 'idle' } : s
-          ));
-        }, 2000);
-      }
-
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
       throw err;

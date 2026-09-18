@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, ChevronDown, Pencil, Loader2 } from 'lucide-react';
+import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import AttendanceCorrectionModal from './AttendanceCorrectionModal';
@@ -30,6 +30,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
   const [deleteTarget, setDeleteTarget] = useState(null); // { student, eventType, staleTime }
   const [resolvingCorrectionFor, setResolvingCorrectionFor] = useState(null); // `${studentId}_${eventType}`
+  const [turmaMenuOpen, setTurmaMenuOpen] = useState(false);
 
   const fetchPresence = async () => {
     setIsLoading(true);
@@ -116,78 +117,61 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             {lastUpdate && <span className="ml-2 text-slate-400">· Atualizado às {lastUpdate}</span>}
           </p>
         </div>
-        <button
-          onClick={fetchPresence}
-          disabled={isLoading}
-          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
-        >
-          <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> Atualizar
-        </button>
-      </div>
-
-      {/* Cards de resumo + Sub-menu de Turmas (tudo como cabeçalho estático) */}
-      <div className="space-y-4 mb-6 shrink-0">
-        {/* Cards de resumo */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Na escola',    count: inSchool, color: 'bg-green-50 border-green-200 text-green-700' },
-            { label: 'Solicitações', count: pending,  color: 'bg-amber-50 border-amber-200 text-amber-700' },
-            { label: 'Já saíram',    count: left,     color: 'bg-slate-100 border-slate-200 text-slate-600' },
-            { label: 'Ausentes',     count: absent,   color: 'bg-red-50 border-red-200 text-red-600' },
-          ].map(({ label, count, color }) => (
-            <div key={label} className={`${color} border rounded-2xl p-3 text-center`}>
-              <p className="text-xl font-black">{count}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide mt-0.5">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Seletor de turma no mobile -- substitui o scroll horizontal de
-            abas (ruim de usar no celular) por um menu nativo de escolha,
-            mesma largura do botão Atualizar (w-full nesse tamanho de tela). */}
-        <div className="relative sm:hidden">
-          <select
-            value={selectedTurma}
-            onChange={e => setSelectedTurma(e.target.value)}
-            className="w-full appearance-none bg-slate-100 border border-slate-200 rounded-2xl pl-4 pr-10 py-2.5 text-sm font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {turmaOptions.map(turma => (
-              <option key={turma} value={turma}>
-                {turma}
-                {turma !== 'Todas as Turmas'
-                  ? ` (${allStudents.filter(s => s.turma === turma && s.status !== 'idle').length})`
-                  : ''}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-        </div>
-
-        {/* Sub-menu de Turmas (telas maiores) -- mesma largura da linha de
-            cards acima, com as abas se distribuindo por igual nesse espaço
-            (antes era w-fit, só do tamanho do conteúdo, ficando bem mais
-            estreito e desalinhado do resto da tela). */}
-        <div className="hidden sm:flex gap-2 p-1 bg-slate-100 rounded-2xl w-full overflow-x-auto">
-          {turmaOptions.map(turma => (
+        <div className="flex gap-2 w-full sm:w-auto shrink-0">
+          <div className="relative">
             <button
-              key={turma}
-              onClick={() => setSelectedTurma(turma)}
-              className={`flex-1 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                selectedTurma === turma
-                  ? 'bg-white shadow-sm text-indigo-900'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
+              onClick={() => setTurmaMenuOpen(o => !o)}
+              className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3.5 py-2 rounded-xl transition"
             >
-              {turma}
-              {turma !== 'Todas as Turmas' && (
-                <span className="ml-1.5 text-[10px] bg-slate-200 text-slate-600 rounded-full px-1.5 py-0.5">
-                  {allStudents.filter(s => s.turma === turma && s.status !== 'idle').length}
-                </span>
-              )}
+              <SlidersHorizontal size={15} />
+              <span className="hidden sm:inline">{selectedTurma}</span>
             </button>
-          ))}
+            {turmaMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setTurmaMenuOpen(false)} />
+                <div className="absolute right-0 sm:left-0 top-full mt-2 w-56 max-w-[80vw] bg-white border border-slate-200 rounded-2xl shadow-lg z-20 p-1.5 max-h-72 overflow-y-auto">
+                  {turmaOptions.map(turma => (
+                    <button
+                      key={turma}
+                      onClick={() => { setSelectedTurma(turma); setTurmaMenuOpen(false); }}
+                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-bold text-left transition ${
+                        selectedTurma === turma ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="truncate">{turma}</span>
+                      {turma !== 'Todas as Turmas' && (
+                        <span className="shrink-0 text-[10px] bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5">
+                          {allStudents.filter(s => s.turma === turma).length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <button
+            onClick={fetchPresence}
+            disabled={isLoading}
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> <span className="hidden sm:inline">Atualizar</span>
+          </button>
         </div>
       </div>
+
+      {/* Resumo em frase única -- os 4 números continuam 100% derivados de
+          allStudents.filter(status === X) (mesma fonte de verdade da lista
+          abaixo), então a contagem nunca pode divergir do que aparece nos
+          cards. "Já saíram"/"Ausentes" zerados hoje era bug de
+          updateStudentStatus resetando o status pra idle 2s depois de
+          confirmar a saída (ver App.jsx) -- corrigido lá, não aqui. */}
+      <p className="text-sm text-slate-500 mb-5 shrink-0 leading-relaxed">
+        <span className="font-black text-green-700">{inSchool}</span> na escola,{' '}
+        <span className="font-black text-amber-700">{pending}</span> solicitaç{pending === 1 ? 'ão' : 'ões'},{' '}
+        <span className="font-black text-slate-700">{left}</span> já sa{left === 1 ? 'iu' : 'íram'} e{' '}
+        <span className="font-black text-red-600">{absent}</span> ausente{absent === 1 ? '' : 's'}.
+      </p>
 
       {/* Lista de alunos - Scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
@@ -205,78 +189,64 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             </p>
           </div>
         ) : (
-          // Todas as colunas ficam visíveis em qualquer tela; no celular a
-          // tabela rola na horizontal dentro deste container em vez de
-          // esconder Turma/Saída.
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[620px] whitespace-nowrap">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Turma</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {displayed.map(student => {
-                  const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.idle;
-                  return (
-                    <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center shrink-0 border border-indigo-100">
-                            <span className="text-indigo-600 font-bold text-xs">
-                              {student.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="font-semibold text-slate-800">{student.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-md inline-block">
-                          {student.turma || '—'}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-1">
+            {displayed.map(student => {
+              const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.idle;
+              return (
+                <div key={student.id} className="flex flex-col gap-2.5 border border-slate-200 rounded-2xl bg-white shadow-sm p-3.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
+                      <span className="text-indigo-600 font-bold text-xs">
+                        {student.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="font-bold text-slate-800 text-sm min-w-0 break-words">{student.name}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[11px] text-slate-400 font-semibold min-w-0 truncate">
+                      {student.turma || '—'}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-md shrink-0 ${cfg.cls}`}>
+                      {cfg.icon} {cfg.label}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-5 pt-2 border-t border-dashed border-slate-200 flex-wrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Entrada</span>
+                      {student.today_entry ? (
+                        <span className="flex items-center gap-1.5 font-mono font-bold text-indigo-700 text-sm">
+                          {student.today_entry.substring(0, 5)}
+                          {resolvingCorrectionFor === `${student.id}_entry` ? (
+                            <Loader2 size={11} className="animate-spin text-slate-300" />
+                          ) : (
+                            <button onClick={() => openCorrection(student, 'entry')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de entrada">
+                              <Pencil size={11} />
+                            </button>
+                          )}
                         </span>
-                      </td>
-                      <td className="py-3 pr-4 font-mono font-bold text-slate-700">
-                        {student.today_entry ? (
-                          <span className="flex items-center gap-1.5">
-                            {student.today_entry.substring(0, 5)}
-                            {resolvingCorrectionFor === `${student.id}_entry` ? (
-                              <Loader2 size={11} className="animate-spin text-slate-300" />
-                            ) : (
-                              <button onClick={() => openCorrection(student, 'entry')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de entrada">
-                                <Pencil size={11} />
-                              </button>
-                            )}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td className="py-3 pr-4 font-mono text-slate-500">
-                        {student.today_exit ? (
-                          <span className="flex items-center gap-1.5">
-                            {student.today_exit.substring(0, 5)}
-                            {resolvingCorrectionFor === `${student.id}_exit` ? (
-                              <Loader2 size={11} className="animate-spin text-slate-300" />
-                            ) : (
-                              <button onClick={() => openCorrection(student, 'exit')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de saída">
-                                <Pencil size={11} />
-                              </button>
-                            )}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td className="py-3">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-md ${cfg.cls}`}>
-                          {cfg.icon} {cfg.label}
+                      ) : <span className="font-mono font-bold text-slate-300 text-sm">—</span>}
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Saída</span>
+                      {student.today_exit ? (
+                        <span className="flex items-center gap-1.5 font-mono font-bold text-slate-500 text-sm">
+                          {student.today_exit.substring(0, 5)}
+                          {resolvingCorrectionFor === `${student.id}_exit` ? (
+                            <Loader2 size={11} className="animate-spin text-slate-300" />
+                          ) : (
+                            <button onClick={() => openCorrection(student, 'exit')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de saída">
+                              <Pencil size={11} />
+                            </button>
+                          )}
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      ) : <span className="font-mono font-bold text-slate-300 text-sm">—</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
