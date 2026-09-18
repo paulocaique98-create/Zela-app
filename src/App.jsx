@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { setErrorLogContext, logAppError } from './lib/errorLogger';
+import { setErrorLogContext, logAppError, setCurrentScreen } from './lib/errorLogger';
 import { logAction } from './lib/auditLog';
 import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
@@ -64,6 +64,19 @@ export default function App() {
   useEffect(() => { sessionStorage.setItem('zela_admin_tab', adminTab); }, [adminTab]);
   useEffect(() => { sessionStorage.setItem('zela_family_tab', familyTab); }, [familyTab]);
   useEffect(() => { sessionStorage.setItem('zela_teacher_tab', teacherTab); }, [teacherTab]);
+
+  // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
+  // pra anexar aos logs de erro (ver errorLogger.js > setCurrentScreen). Só
+  // um portal renderiza por vez (conforme currentUser.role), então só a
+  // aba do portal realmente ativo é usada.
+  useEffect(() => {
+    const screen =
+      currentUser?.role === 'admin' ? adminTab :
+      currentUser?.role === 'family' ? familyTab :
+      currentUser?.role === 'teacher' ? teacherTab :
+      null;
+    setCurrentScreen(screen);
+  }, [currentUser?.role, adminTab, familyTab, teacherTab]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, History, Bug } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, Bug, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import DeveloperLogs from './DeveloperLogs';
-import { summarizeErrorLog } from '../lib/errorSummaries';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -30,18 +28,49 @@ const PERIOD_OPTIONS = [
   { id: 'all', label: 'Tudo' },
 ];
 
+// Fase E do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — id técnico da aba (ver
+// adminTab/familyTab/teacherTab em App.jsx e activeTab em
+// DeveloperLayout.jsx, prefixado 'dev-') → rótulo amigável pro log. Ids sem
+// entrada aqui mostram o id cru (fallback, nunca quebra por aba nova sem
+// mapear ainda).
+const SCREEN_LABELS = {
+  // Admin
+  home: 'Início', register: 'Cadastro de Usuário', 'cadastro-funcionarios': 'Cadastro de Funcionário',
+  users: 'Gestão de Usuários', students: 'Alunos', 'gerenciar-funcionarios': 'Gestão de Funcionários',
+  matriculas: 'Matrículas', 'ficha-medica': 'Ficha Médica',
+  monitor: 'Monitor', kiosk: 'Autoatendimento', presence: 'Presença Diária', history: 'Histórico Geral',
+  'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença',
+  calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
+  materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
+  financeiro: 'Financeiro', auditoria: 'Auditoria', 'duplicidade-biometrica': 'Duplicidade Facial',
+  settings: 'Configurações',
+  // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
+  acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
+  registration: 'Dados Cadastrais', comunicados: 'Comunicados',
+  // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
+  'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
+  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',
+};
+
+function screenLabel(screen) {
+  if (!screen) return null;
+  return SCREEN_LABELS[screen] || screen;
+}
+
 // Fase D do PLANO_LOGGING_ERROS_PORTAL_DEV.md — tela unificada lendo
 // error_logs (Fase A/B1). Cada linha já é 1 fingerprint (a deduplicação
 // acontece na própria RPC log_error, não aqui), então "agrupar" é só listar
 // -- ordenado por mais frequente por padrão, não por mais recente, pra um
 // erro raro-mas-crítico não ficar escondido atrás de ruído recente.
-// client_error_logs/edge_function_logs/cron_job_logs continuam existindo
-// como estavam (nada foi migrado ainda -- Fase F do plano, opcional); o
-// visualizador antigo (DeveloperLogs.jsx, só client_error_logs) fica
-// acessível numa aba "Legado" dentro desta mesma tela.
+// A aba "Legado" (client_error_logs, DeveloperLogs.jsx) foi removida depois
+// da Fase F (migração adiantada, ver errorLogger.js > logClientError):
+// crash de tela/promise rejeitada agora grava direto em error_logs
+// (source='client'), então essa tela sozinha já cobre tudo. A tabela
+// client_error_logs em si não foi apagada, só parou de receber linha nova
+// -- histórico antigo continua consultável via SQL Editor se precisar.
+// edge_function_logs/cron_job_logs também continuam existindo à parte
+// (cron_job_logs é heartbeat de sucesso E falha, semântica diferente).
 export default function DeveloperErrorLogs({ currentUser }) {
-  const [activeView, setActiveView] = useState('unified'); // 'unified' | 'legacy'
-
   const [logs, setLogs] = useState([]);
   const [schools, setSchools] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,10 +86,41 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const [source, setSource] = useState('all');
   const [severity, setSeverity] = useState('all');
   const [schoolId, setSchoolId] = useState('all');
-  const [period, setPeriod] = useState('7days');
+  const [screenFilter, setScreenFilter] = useState('all');
+  const [period, setPeriod] = useState('today');
   const [showResolved, setShowResolved] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('occurrences'); // 'occurrences' | 'last_seen_at'
+
+  // Modelo 10 (período dentro do título) validado com o usuário (proposta
+  // com 10 layouts, 18/09) -- período vira parte do cabeçalho, clicável
+  // (menu pequeno em vez de barra de chips própria); o resto dos filtros
+  // fica atrás de um único botão "Filtros", igual ao Modelo 01 (já usado em
+  // Horas Extras/Histórico) -- juntos, devolvem 3 linhas inteiras de altura
+  // pra lista de logs, que era a reclamação original.
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const periodMenuRef = useRef(null);
+  const filtersRef = useRef(null);
+
+  useEffect(() => {
+    if (!periodMenuOpen) return;
+    const onClick = (e) => { if (periodMenuRef.current && !periodMenuRef.current.contains(e.target)) setPeriodMenuOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [periodMenuOpen]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onClick = (e) => { if (filtersRef.current && !filtersRef.current.contains(e.target)) setFiltersOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [filtersOpen]);
+
+  const activeFilterCount = [
+    source !== 'all', severity !== 'all', schoolId !== 'all', screenFilter !== 'all',
+    sortBy !== 'occurrences', showResolved, searchTerm.trim().length > 0,
+  ].filter(Boolean).length;
 
   const schoolNameById = useMemo(() => {
     const map = {};
@@ -81,6 +141,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
       if (source !== 'all') query = query.eq('source', source);
       if (severity !== 'all') query = query.eq('severity', severity);
       if (schoolId !== 'all') query = query.eq('school_id', schoolId);
+      if (screenFilter !== 'all') query = query.eq('screen', screenFilter);
       if (!showResolved) query = query.eq('resolved', false);
 
       if (period !== 'all') {
@@ -106,10 +167,9 @@ export default function DeveloperErrorLogs({ currentUser }) {
   };
 
   useEffect(() => {
-    if (activeView !== 'unified') return;
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeView, source, severity, schoolId, period, showResolved, sortBy]);
+  }, [source, severity, schoolId, screenFilter, period, showResolved, sortBy]);
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -131,6 +191,14 @@ export default function DeveloperErrorLogs({ currentUser }) {
     }
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
   }, [filtered]);
+
+  // Fase E do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — só oferece no filtro as
+  // telas que de fato têm log no momento (baseado em `logs`, não em
+  // `filtered`, pra não sumir a opção assim que o usuário aplica ela).
+  const screensInLogs = useMemo(() => {
+    const set = new Set(logs.map(l => l.screen).filter(Boolean));
+    return Array.from(set).sort((a, b) => screenLabel(a).localeCompare(screenLabel(b)));
+  }, [logs]);
 
   const handleResolve = async (log) => {
     setIsSaving(true);
@@ -189,109 +257,107 @@ export default function DeveloperErrorLogs({ currentUser }) {
     }
   };
 
+  const periodLabel = PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período';
+
   return (
     <div className="h-full flex flex-col bg-dev-surface rounded-zela-xl border border-dev-border shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary">
-            <Bug size={22} />
+      <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-dev-border shrink-0 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary shrink-0">
+            <Bug size={20} />
           </div>
-          <div>
-            <h2 className="text-h3 text-dev-text">Logs de erro</h2>
-            <p className="text-dev-text-muted text-small hidden sm:block">Frontend, edge functions, cron e reconhecimento facial, num só lugar.</p>
-          </div>
-        </div>
-        <div className="flex gap-1 bg-dev-bg border border-dev-border rounded-zela-md p-1 shrink-0">
-          <button
-            onClick={() => setActiveView('unified')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeView === 'unified' ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:text-dev-text'}`}
-          >
-            <Bug size={13} /> Unificado
-          </button>
-          <button
-            onClick={() => setActiveView('legacy')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeView === 'legacy' ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:text-dev-text'}`}
-          >
-            <History size={13} /> Legado
-          </button>
-        </div>
-      </div>
-
-      {activeView === 'legacy' ? (
-        <div className="flex-1 min-h-0">
-          <DeveloperLogs />
-        </div>
-      ) : (
-        <>
-          {/* Filtros */}
-          <div className="p-4 sm:p-5 border-b border-dev-border shrink-0 space-y-3">
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              {PERIOD_OPTIONS.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => setPeriod(p.id)}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${period === p.id ? 'bg-dev-primary text-white' : 'bg-dev-bg text-dev-text-muted hover:text-dev-text border border-dev-border'}`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <select value={source} onChange={e => setSource(e.target.value)} className="px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                <option value="all">Todas as fontes</option>
-                {Object.entries(SOURCE_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </select>
-
-              <select value={severity} onChange={e => setSeverity(e.target.value)} className="px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                <option value="all">Toda severidade</option>
-                <option value="warn">Aviso</option>
-                <option value="error">Erro</option>
-                <option value="critical">Crítico</option>
-              </select>
-
-              <select value={schoolId} onChange={e => setSchoolId(e.target.value)} className="px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none max-w-[180px]">
-                <option value="all">Todas as escolas</option>
-                {schools.map(s => <option key={s.id} value={s.id}>{s.name || s.school_code}</option>)}
-              </select>
-
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                <option value="occurrences">Mais frequentes</option>
-                <option value="last_seen_at">Mais recentes</option>
-              </select>
-
-              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text-muted cursor-pointer">
-                <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
-                Ver resolvidos
-              </label>
-
-              <button onClick={fetchLogs} className="ml-auto p-2 text-dev-text-muted hover:text-dev-primary hover:bg-dev-primary-container rounded-xl transition" title="Atualizar">
-                <RefreshCw size={16} />
-              </button>
-            </div>
-
-            <input
-              type="text"
-              placeholder="Buscar por mensagem ou categoria..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 bg-dev-bg border border-dev-border rounded-xl text-xs font-medium text-dev-text outline-none focus:ring-2 focus:ring-dev-primary"
-            />
-
-            {categoryCounts.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {categoryCounts.map(([category, count]) => (
-                  <span key={category} className="text-[10px] font-bold px-2 py-1 rounded-full bg-dev-bg border border-dev-border text-dev-text-muted">
-                    {category} <span className="text-dev-text">{count}</span>
-                  </span>
+          <div className="min-w-0 relative" ref={periodMenuRef}>
+            <button
+              onClick={() => setPeriodMenuOpen(o => !o)}
+              className="text-h3 text-dev-text flex items-center gap-1.5 hover:text-dev-primary transition"
+            >
+              <span className="truncate">Logs de erro</span>
+              <span className="text-dev-primary whitespace-nowrap">— {periodLabel}</span>
+              <ChevronDown size={14} className={`text-dev-primary transition-transform shrink-0 ${periodMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {periodMenuOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-40 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-1">
+                {PERIOD_OPTIONS.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setPeriod(p.id); setPeriodMenuOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition ${period === p.id ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:bg-dev-surface-high'}`}
+                  >
+                    {p.label}
+                  </button>
                 ))}
               </div>
             )}
           </div>
+        </div>
 
-          {/* Lista */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
-            {errorMsg && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-zela-md text-sm font-medium">{errorMsg}</div>}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative" ref={filtersRef}>
+                <button
+                  onClick={() => setFiltersOpen(o => !o)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition ${filtersOpen ? 'bg-dev-primary-container text-dev-primary border-dev-primary/40' : 'bg-dev-bg text-dev-text-muted border-dev-border hover:text-dev-text'}`}
+                >
+                  <SlidersHorizontal size={13} /> Filtros
+                  {activeFilterCount > 0 && (
+                    <span className="bg-dev-primary text-dev-bg text-[9px] font-black rounded-full px-1.5">{activeFilterCount}</span>
+                  )}
+                </button>
+                {filtersOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-72 max-w-[calc(100vw-2.5rem)] bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-3 space-y-2.5">
+                    <input
+                      type="text"
+                      placeholder="Buscar por mensagem ou categoria..."
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 bg-dev-bg border border-dev-border rounded-xl text-xs font-medium text-dev-text outline-none focus:ring-2 focus:ring-dev-primary"
+                    />
+                    <select value={source} onChange={e => setSource(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
+                      <option value="all">Todas as fontes</option>
+                      {Object.entries(SOURCE_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                    </select>
+                    <select value={severity} onChange={e => setSeverity(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
+                      <option value="all">Toda severidade</option>
+                      <option value="warn">Aviso</option>
+                      <option value="error">Erro</option>
+                      <option value="critical">Crítico</option>
+                    </select>
+                    <select value={schoolId} onChange={e => setSchoolId(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
+                      <option value="all">Todas as escolas</option>
+                      {schools.map(s => <option key={s.id} value={s.id}>{s.name || s.school_code}</option>)}
+                    </select>
+                    <select value={screenFilter} onChange={e => setScreenFilter(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
+                      <option value="all">Todas as telas</option>
+                      {screensInLogs.map(s => <option key={s} value={s}>{screenLabel(s)}</option>)}
+                    </select>
+                    <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
+                      <option value="occurrences">Mais frequentes</option>
+                      <option value="last_seen_at">Mais recentes</option>
+                    </select>
+                    <label className="flex items-center gap-1.5 px-1 py-1 text-xs font-bold text-dev-text-muted cursor-pointer">
+                      <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+                      Ver resolvidos
+                    </label>
+                    {categoryCounts.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-dev-border">
+                        {categoryCounts.map(([category, count]) => (
+                          <span key={category} className="text-[9.5px] font-bold px-2 py-1 rounded-full bg-dev-bg border border-dev-border text-dev-text-muted">
+                            {category} <span className="text-dev-text">{count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+          <button onClick={fetchLogs} className="p-2 text-dev-text-muted hover:text-dev-primary hover:bg-dev-primary-container rounded-lg transition" title="Atualizar">
+            <RefreshCw size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Lista */}
+      <div className="flex-1 overflow-y-auto scrollbar-none p-5 sm:p-6 space-y-2">
+        {errorMsg && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-zela-md text-sm font-medium">{errorMsg}</div>}
 
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -305,7 +371,6 @@ export default function DeveloperErrorLogs({ currentUser }) {
             ) : (
               filtered.map(log => {
                 const isExpanded = expandedId === log.id;
-                const summary = summarizeErrorLog(log);
                 return (
                   <div key={log.id} className={`bg-dev-bg border rounded-zela-md overflow-hidden ${log.resolved ? 'border-dev-border opacity-60' : 'border-dev-border'}`}>
                     <button
@@ -317,6 +382,9 @@ export default function DeveloperErrorLogs({ currentUser }) {
                           <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${SEVERITY_CLS[log.severity] || SEVERITY_CLS.error}`}>{log.severity}</span>
                           <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-dev-surface-high text-dev-text-muted">{SOURCE_LABELS[log.source] || log.source}</span>
                           <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-dev-surface-high text-dev-text-muted">{log.category}</span>
+                          {screenLabel(log.screen) && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-dev-primary-container text-dev-primary">📍 {screenLabel(log.screen)}</span>
+                          )}
                           {log.occurrences > 1 && (
                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-dev-primary-container text-dev-primary">{log.occurrences}x</span>
                           )}
@@ -325,9 +393,6 @@ export default function DeveloperErrorLogs({ currentUser }) {
                           )}
                         </div>
                         <p className="text-sm font-bold text-dev-text truncate">{log.message}</p>
-                        {summary && (
-                          <p className="text-xs text-dev-primary mt-1 leading-relaxed">{summary}</p>
-                        )}
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[11px] text-dev-text-muted">
                           <span>1ª vez: {formatDate(log.first_seen_at)}</span>
                           <span>última: {formatDate(log.last_seen_at)}</span>
@@ -342,13 +407,13 @@ export default function DeveloperErrorLogs({ currentUser }) {
                         {log.context && (
                           <div>
                             <p className="text-[10px] font-bold text-dev-text-muted uppercase tracking-wide mb-1">Contexto</p>
-                            <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto">{JSON.stringify(log.context, null, 2)}</pre>
+                            <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto scrollbar-none">{JSON.stringify(log.context, null, 2)}</pre>
                           </div>
                         )}
                         {log.stack && (
                           <div>
                             <p className="text-[10px] font-bold text-dev-text-muted uppercase tracking-wide mb-1">Stack</p>
-                            <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto">{log.stack}</pre>
+                            <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto scrollbar-none">{log.stack}</pre>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-dev-text-muted">
@@ -357,12 +422,10 @@ export default function DeveloperErrorLogs({ currentUser }) {
                           {log.user_agent && <span className="truncate max-w-full">{log.user_agent}</span>}
                         </div>
 
-                        {/* Fase D do PLANO_IA_RESUMO_ERROS.md — só aparece
-                            quando o dicionário determinístico não reconheceu
-                            nada (summary null). Sempre marcado como palpite,
-                            nunca misturado com o resumo determinístico. */}
-                        {!summary && (
-                          <div className="border border-dashed border-dev-border rounded-lg p-3">
+                        {/* Fase D do PLANO_IA_RESUMO_ERROS.md — explicação
+                            sob demanda, sempre marcada como palpite da IA,
+                            nunca como fato confirmado. */}
+                        <div className="border border-dashed border-dev-border rounded-lg p-3">
                             {log.ai_summary ? (
                               <>
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-amber-400 mb-1">🤖 Palpite da IA — pode estar incompleto ou errado</p>
@@ -387,8 +450,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
                             {explainError && explainingId === null && (
                               <p className="text-[11px] text-error mt-1.5">{explainError}</p>
                             )}
-                          </div>
-                        )}
+                        </div>
 
                         {log.resolved ? (
                           <div className="flex items-center justify-between gap-2 pt-1">
@@ -427,9 +489,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
                 );
               })
             )}
-          </div>
-        </>
-      )}
+      </div>
     </div>
   );
 }

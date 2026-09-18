@@ -300,7 +300,7 @@ export default function DeveloperPanel() {
       </div>
 
       {/* Lista de escolas */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 sm:p-5">
         {isLoading ? (
           <div className="h-full flex items-center justify-center text-dev-text-muted">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dev-primary" />
@@ -455,7 +455,7 @@ export default function DeveloperPanel() {
               <button onClick={() => setIsModalOpen(false)} className="text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
             </div>
 
-            <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto text-dev-text">
+            <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto scrollbar-none text-dev-text">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Razão Social / Nome da Escola</label>

@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { getCurrentScreen } from '../lib/errorLogger';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
 let _audioCtx = null;
@@ -231,6 +232,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       p_role: currentUser?.role || null,
       p_url: typeof window !== 'undefined' ? window.location.href : null,
       p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      p_screen: getCurrentScreen(),
     }).catch(() => {});
   };
 

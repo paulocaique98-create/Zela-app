@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Building2, Receipt, FileText, LifeBuoy, Settings } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
+import { setCurrentScreen } from '../lib/errorLogger';
 
 // Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
 const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
@@ -14,6 +15,9 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
   // Configurações (mesmo ajuste feito nos outros 3 portais em App.jsx).
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('zela_developer_tab') || 'schools');
   useEffect(() => { sessionStorage.setItem('zela_developer_tab', activeTab); }, [activeTab]);
+  // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — esse estado é isolado (não
+  // sobe até App.jsx como os outros 3 portais), precisa do próprio efeito.
+  useEffect(() => { setCurrentScreen(`dev-${activeTab}`); }, [activeTab]);
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
 
   const navItems = [
@@ -33,8 +37,8 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      <aside className={`fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-64 md:w-[240px] shrink-0 z-20 md:z-auto bg-dev-bg border-r border-dev-border transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full flex flex-col overflow-y-auto">
+      <aside className={`fixed md:static top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px)] md:h-auto w-64 md:w-[240px] shrink-0 z-20 md:z-auto bg-dev-bg border border-dev-border md:rounded-zela-xl md:shadow-sm transform transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-full flex flex-col overflow-y-auto scrollbar-none">
           <p className="px-4 pt-4 pb-2 text-[11px] font-black text-dev-text-muted uppercase tracking-widest shrink-0">
             Painel do Dev
           </p>

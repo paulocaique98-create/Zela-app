@@ -75,6 +75,16 @@ body {
 }
 
 @layer utilities {
+  /* Esconde a barra de rolagem sem desativar o scroll -- pedido
+     especificamente pro Portal do Desenvolvedor (menu lateral e áreas de
+     conteúdo), que não deve mostrar scrollbar nenhuma em lugar nenhum. */
+  .scrollbar-none {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge legado */
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Edge novo */
+  }
   .animate-gentle-pulse {
     animation: gentlePulse 1.8s ease-in-out infinite;
   }
