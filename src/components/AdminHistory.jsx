@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, Pencil } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
@@ -32,6 +32,19 @@ export default function AdminHistory({ currentSchool, currentUser }) {
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
   const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
+  // Período fica escondido atrás desse painel -- mesmo modelo "foco na
+  // lista" validado no Relatório de Horas Extras (17/09).
+  const [showFilters, setShowFilters] = useState(false);
+  const filtersRef = useRef(null);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    const handleClickOutside = (e) => {
+      if (filtersRef.current && !filtersRef.current.contains(e.target)) setShowFilters(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilters]);
 
   const fetchHistory = async () => {
     if (!currentSchool) return;
@@ -63,6 +76,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           event_type,
           event_time,
           corrected,
+          performed_by_name,
           student_id,
           students:student_id (name, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, users:family_id(name))
         `)
@@ -104,6 +118,12 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           exit: exitTime ? formatTime(exitTime.toISOString()) : null,
           entryCorrected: !!group.entryLog?.corrected,
           exitCorrected: !!group.exitLog?.corrected,
+          // Quem de fato reconheceu (facial ou PIN) -- só existe pra
+          // registros feitos a partir da captura desse dado (ver App.jsx >
+          // updateStudentStatus); registros antigos ficam null, e a tela
+          // simplesmente não mostra essa linha em vez de inventar algo.
+          entryBy: group.entryLog?.performed_by_name || null,
+          exitBy: group.exitLog?.performed_by_name || null,
           contracted: `${group.studentData?.contracted_hours || 0}h`,
           duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
           overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
@@ -130,10 +150,12 @@ export default function AdminHistory({ currentSchool, currentUser }) {
     return !term || log.studentName.toLowerCase().includes(term) || log.family.toLowerCase().includes(term);
   });
 
-  const PERIOD_LABELS = { today: 'Hoje', '7days': 'Últimos 7 dias', '30days': 'Últimos 30 dias' };
+  const PERIOD_LABELS = { today: 'Hoje', '7days': 'Semana', '30days': 'Mês' };
   const periodLabel = period === 'custom' && customDate
     ? formatDate(`${customDate}T00:00:00`)
     : (PERIOD_LABELS[period] || 'Período selecionado');
+
+  const overCount = filtered.filter(log => !!log.overtime).length;
 
   const handleExport = () => {
     printHistoricoReport({
@@ -145,75 +167,105 @@ export default function AdminHistory({ currentSchool, currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600">
-            <History size={22} />
+      {/* Header -- título e botões sempre na mesma linha (mesmo padrão do
+          Relatório de Horas Extras, 17/09). */}
+      <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="bg-indigo-100 p-2 sm:p-2.5 rounded-xl text-indigo-600 shrink-0">
+            <History size={20} />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Histórico de Check-in/out</h2>
-            <p className="text-sm text-slate-500">Todos os registros individuais de entrada e saída</p>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">
+              <span className="sm:hidden">Check-in/out</span>
+              <span className="hidden sm:inline">Histórico de Check-in/out</span>
+            </h2>
+            <p className="hidden sm:block text-sm text-slate-500">Todos os registros individuais de entrada e saída</p>
           </div>
         </div>
-        <button
-          onClick={handleExport}
-          disabled={filtered.length === 0}
-          className="flex w-full sm:w-auto justify-center items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
-        >
-          <FileText size={16} /> Exportar Relatório
-        </button>
-      </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6 shrink-0">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar por aluno ou responsável..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
-              <X size={14} />
-            </button>
+        <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center justify-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm border ${
+              showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+            title="Período"
+          >
+            <SlidersHorizontal size={16} />
+          </button>
+
+          <button
+            onClick={handleExport}
+            disabled={filtered.length === 0}
+            className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed px-3.5 sm:px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+          >
+            <FileText size={16} /> <span className="hidden sm:inline">Exportar Relatório</span>
+          </button>
+
+          {showFilters && (
+            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-2xl shadow-lg p-3 z-20">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">Período</p>
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                {[
+                  { id: 'today', label: 'Hoje' },
+                  { id: '7days', label: 'Semana' },
+                  { id: '30days', label: 'Mês' },
+                  { id: 'custom', label: 'Editar' }
+                ].map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setPeriod(p.id)}
+                    className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      period === p.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              {period === 'custom' && (
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={e => setCustomDate(e.target.value)}
+                  className="mt-2 w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              )}
+            </div>
           )}
         </div>
-
-        <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-2xl shrink-0 max-w-full">
-          {[
-            { id: 'today', label: 'Hoje' },
-            { id: '7days', label: 'Últimos 7 dias' },
-            { id: '30days', label: 'Últimos 30 dias' },
-            { id: 'custom', label: 'Personalizado' }
-          ].map(p => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                period === p.id ? 'bg-white shadow-sm text-indigo-900' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-          {period === 'custom' && (
-            <input
-              type="date"
-              value={customDate}
-              onChange={e => setCustomDate(e.target.value)}
-              className="ml-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          )}
-        </div>
       </div>
 
-      {/* Tabela - Scrollable Container */}
+      {/* Resumo -- vira uma frase, não mais uma linha de filtros grande
+          (mesmo modelo "foco na lista" do Relatório de Horas Extras). */}
+      <p className="text-sm text-slate-500 mb-4 shrink-0">
+        {periodLabel}: <span className="font-bold text-slate-700">{filtered.length}</span> registro{filtered.length === 1 ? '' : 's'}
+        {overCount > 0 && <> · <span className="font-bold text-rose-600">{overCount}</span> com excedente</>}.
+      </p>
+
+      {/* Busca */}
+      <div className="relative mb-4 sm:mb-6 shrink-0">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Buscar por aluno ou responsável..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+        />
+        {searchTerm && (
+          <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* Resultado por aluno -- cards ao invés de tabela, cada evento
+          (entrada/saída) mostrando quem de fato fez o reconhecimento no
+          totem, não um "responsável" fixo (modelo validado com o usuário,
+          proposta com 3 layouts, 17/09). */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         {isLoading ? (
           <div className="flex justify-center items-center h-full py-12">
@@ -226,30 +278,37 @@ export default function AdminHistory({ currentSchool, currentUser }) {
             <p className="text-slate-400 text-xs mt-1">Os registros aparecem após o check-in ser confirmado.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Responsável</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Ciclo</th>
-                  <th className="pb-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Excedente pós tolerância (15 min)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filtered.map(log => (
-                  <tr key={log.key} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 pr-4 font-medium text-slate-600">{log.date}</td>
-                    <td className="py-3 pr-4 font-semibold text-slate-800">{log.studentName}</td>
-                    <td className="py-3 pr-4 text-slate-500 text-xs hidden sm:table-cell">{log.family}</td>
-                    <td className="py-3 pr-4">
-                      <span className="flex items-center gap-1.5 font-medium text-indigo-600">
-                        <LogIn size={13} /> {log.entry}
+          <div className="space-y-2 pb-4">
+            {filtered.map(log => {
+              const initials = log.studentName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+              return (
+                <div key={log.key} className="p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+                      {initials}
+                    </div>
+                    <p className="font-bold text-slate-800 text-sm min-w-0 break-words">{log.studentName}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 flex-wrap mt-2">
+                    <p className="text-xs text-slate-400 min-w-0 break-words">{log.date} · ciclo {log.contracted}</p>
+                    {log.duration === null ? (
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full uppercase bg-amber-50 text-amber-600 border border-amber-200 shrink-0">Na Escola</span>
+                    ) : log.overtime ? (
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap bg-rose-100 text-rose-700 shrink-0">+{log.overtime}</span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap bg-emerald-100 text-emerald-700 shrink-0">
+                        <CheckCircle2 size={11} /> No prazo
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-100 space-y-2">
+                    <div className="min-w-0">
+                      <span className="flex items-center gap-1.5 font-bold text-indigo-600 text-sm flex-wrap">
+                        <LogIn size={13} className="shrink-0" /> {log.entry}
                         {log.entryCorrected && (
-                          <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded" title="Horário ajustado pela escola">Ajustado</span>
+                          <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                         )}
                         {log.entryLogRaw && (
                           <button
@@ -261,13 +320,15 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                           </button>
                         )}
                       </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      {log.exit ? (
-                        <span className="flex items-center gap-1.5 font-medium text-rose-500">
-                          <LogOut size={13} /> {log.exit}
+                      {log.entryBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.entryBy}</p>}
+                    </div>
+
+                    {log.exit && (
+                      <div className="min-w-0">
+                        <span className="flex items-center gap-1.5 font-bold text-rose-500 text-sm flex-wrap">
+                          <LogOut size={13} className="shrink-0" /> {log.exit}
                           {log.exitCorrected && (
-                            <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded" title="Horário ajustado pela escola">Ajustado</span>
+                            <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                           {log.exitLogRaw && (
                             <button
@@ -279,26 +340,13 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                             </button>
                           )}
                         </span>
-                      ) : (
-                        <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 font-medium text-slate-600">{log.contracted}</td>
-                    <td className="py-3 text-right">
-                      {log.duration === null ? (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase bg-amber-50 text-amber-600">—</span>
-                      ) : log.overtime ? (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap bg-red-100 text-red-700">
-                          +{log.overtime}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap bg-green-100 text-green-700">OK</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        {log.exitBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.exitBy}</p>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

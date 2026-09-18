@@ -204,7 +204,25 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
     setIsLoading(true);
     try {
       if (requestKioskAccess) {
-        await requestKioskAccess(selected.map((s) => s.id));
+        // Resolve o registro em authorized_persons da pessoa que digitou o
+        // PIN (pending_requester_id referencia authorized_persons, não
+        // users) -- sem isso, check-ins feitos por PIN nunca gravavam quem
+        // fez a solicitação, diferente do reconhecimento facial. Prioriza o
+        // "(Titular)" quando existe mais de um autorizado na mesma conta.
+        let requesterId = null;
+        try {
+          const { data: authorizedMatches } = await supabase
+            .from('authorized_persons')
+            .select('id, relation')
+            .eq('family_id', familyPerson.id)
+            .eq('school_id', currentUser.school_id);
+          const titular = authorizedMatches?.find(a => a.relation?.includes('(Titular)'));
+          requesterId = titular?.id || authorizedMatches?.[0]?.id || null;
+        } catch {
+          // Best-effort -- se não achar, segue sem requesterId (mesmo
+          // comportamento de antes: check-in funciona, só sem essa info).
+        }
+        await requestKioskAccess(selected.map((s) => s.id), requesterId);
       } else {
         for (const student of selected) {
           let newStatus = student.status;

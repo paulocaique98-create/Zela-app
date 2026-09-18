@@ -954,6 +954,15 @@ export default function App() {
           eventTimeIso = recordAt;
         }
 
+        // Quem de fato fez o reconhecimento (facial ou PIN) que originou essa
+        // confirmação — student.pendingRequesterId ainda reflete o valor de
+        // ANTES do studentUpdates acima (que já mandou limpá-lo no banco).
+        // Nome (não só o id) pra sobreviver a uma eventual exclusão da conta
+        // do autorizado, mesmo padrão de audit_logs.actor_name.
+        const performedBy = student.pendingRequesterId
+          ? authorized.find(a => a.id === student.pendingRequesterId)?.name || null
+          : null;
+
         const { error: logError } = await supabase.from('attendance_logs').insert([{
           student_id: studentId,
           family_id: student.familyId,
@@ -961,6 +970,7 @@ export default function App() {
           event_type: isConfirmEntry ? 'entry' : 'exit',
           event_time: eventTimeIso,
           recorded_by: currentUser.id,
+          performed_by_name: performedBy,
         }]);
         if (logError) {
           console.error('Erro ao registrar log de presença:', logError);
