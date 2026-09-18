@@ -11,7 +11,12 @@ const STATUS_CONFIG = {
   absent:         { label: 'Ausente',          cls: 'bg-red-100 text-red-600',     icon: null },
   pending_entry:  { label: 'Entrada solicitada', cls: 'bg-amber-100 text-amber-700', icon: null },
   pending_exit:   { label: 'Saída solicitada',   cls: 'bg-amber-100 text-amber-700', icon: null },
-  idle:           { label: 'Pendente de Check-in', cls: 'bg-slate-100 text-slate-500', icon: null },
+  // Aluno matriculado que hoje não está na escola, não saiu e não tem
+  // nenhuma solicitação em aberto -- pro contexto de Presença Diária isso É
+  // um ausente (mesmo sem a família ter marcado "Não irá hoje" no app),
+  // então usa o mesmo rótulo/estilo de 'absent' em vez de "Pendente de
+  // Check-in" (rótulo que só faz sentido pro responsável, na Família).
+  idle:           { label: 'Ausente',          cls: 'bg-red-100 text-red-600',     icon: null },
 };
 
 export default function AdminDailyPresence({ currentUser, currentSchool }) {
@@ -35,12 +40,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const fetchPresence = async () => {
     setIsLoading(true);
     try {
-      // Busca todos os alunos da escola que tiveram alguma movimentação hoje
+      // Busca TODOS os alunos matriculados na escola, inclusive quem ainda
+      // não teve nenhuma movimentação hoje ('idle') -- esses contam como
+      // Ausentes nesta tela (ver STATUS_CONFIG.idle), não somem da lista.
       const { data, error } = await supabase
         .from('students')
         .select('id, name, status, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, today_entry, today_exit, today_entry_at, today_exit_at, family_id')
         .eq('school_id', currentUser.school_id)
-        .neq('status', 'idle')   // exclui quem ainda não interagiu hoje
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -98,10 +104,15 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
     ? allStudents
     : allStudents.filter(s => s.turma === selectedTurma);
 
-  // Contagens por status
+  // Contagens por status. Ausente = matriculado e hoje não está em nenhuma
+  // das outras categorias (nem na escola, nem já saiu, nem com solicitação
+  // em aberto) -- inclui tanto quem a família marcou "Não irá hoje"
+  // (status='absent') quanto quem simplesmente ainda não teve nenhuma
+  // movimentação hoje (status='idle', o padrão de todo aluno até a 1ª
+  // interação do dia).
   const inSchool = allStudents.filter(s => s.status === 'in_school').length;
   const left     = allStudents.filter(s => s.status === 'left').length;
-  const absent   = allStudents.filter(s => s.status === 'absent').length;
+  const absent   = allStudents.filter(s => s.status === 'absent' || s.status === 'idle').length;
   const pending  = allStudents.filter(s => s.status === 'pending_entry' || s.status === 'pending_exit').length;
 
   return (
