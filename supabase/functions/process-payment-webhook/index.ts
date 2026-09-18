@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { processPaymentEvent } from '../_shared/processPaymentEvent.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Fase 9 — reprocessamento manual/backfill: varre payment_webhook_events
 // com processed_at IS NULL e tenta sincronizar cada um pra financial_charges
@@ -63,6 +64,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'process-payment-webhook', err.message || String(err));
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

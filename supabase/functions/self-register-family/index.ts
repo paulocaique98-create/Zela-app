@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { notifyAdmins } from '../_shared/notifyAdmins.ts'
+import { logEdgeError } from '../_shared/logEdgeError.ts'
 
 // self-register-family — endpoint PÚBLICO (sem JWT de chamador): usado pela
 // tela "Novo usuário?" da tela de login, onde ninguém está autenticado ainda.
@@ -191,6 +192,11 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'self-register-family', error.message || String(error))
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

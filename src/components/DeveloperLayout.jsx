@@ -6,7 +6,7 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
 const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
 const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
-const DeveloperLogs = lazy(() => import('./DeveloperLogs'));
+const DeveloperErrorLogs = lazy(() => import('./DeveloperErrorLogs'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen }) {
   // Persiste a aba em sessionStorage -- sem isso, um F5 sempre voltava pra
@@ -103,7 +103,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
             <DeveloperChatSupport currentUser={currentUser} />
           )}
           {activeTab === 'logs' && (
-            <DeveloperLogs />
+            <DeveloperErrorLogs currentUser={currentUser} />
           )}
         </Suspense>
       </main>

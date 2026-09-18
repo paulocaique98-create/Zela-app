@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logEdgeError } from '../_shared/logEdgeError.ts'
 
 serve(async (req) => {
   try {
@@ -64,6 +65,12 @@ serve(async (req) => {
         })
       }
     } catch (_) { /* ignora — não deixa o log mascarar o erro original */ }
+
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'daily-reset', err.message || String(err))
+    } catch (_) { /* melhor esforço */ }
 
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }

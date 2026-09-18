@@ -146,12 +146,12 @@ export function findSecureMatch(descriptor, labeledDescriptors) {
   }
 
   if (bestDistance > MATCH_THRESHOLD) {
-    return { label: 'unknown', distance: bestDistance };
+    return { label: 'unknown', distance: bestDistance, secondBestDistance };
   }
   if (secondBestDistance - bestDistance < MATCH_MARGIN) {
-    return { label: 'unknown', distance: bestDistance, ambiguous: true };
+    return { label: 'unknown', distance: bestDistance, secondBestDistance, ambiguous: true };
   }
-  return { label: bestLabel, distance: bestDistance };
+  return { label: bestLabel, distance: bestDistance, secondBestDistance };
 }
 
 export default function AdminFaceScanner({ onClose, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
@@ -200,6 +200,40 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // de sempre, dando a entender que uma solicitação NOVA tinha sido criada.
   const [wasAlreadyPending, setWasAlreadyPending] = useState(false);
 
+  // Fase B1 do PLANO_LOGGING_ERROS_PORTAL_DEV.md — grava cada falha REAL de
+  // reconhecimento (nunca o estado ocioso do totem esperando alguém) em
+  // error_logs, pra sair do "chute" e ter dado de campo sobre a causa das
+  // reclamações de responsáveis não conseguindo ser reconhecidos. Sempre
+  // best-effort (nunca lança, nunca atrasa o reconhecimento em si) e
+  // throttled por categoria — o loop ao vivo roda a cada 180ms, sem
+  // throttle isso viraria centenas de chamadas por minuto.
+  const kioskSessionIdRef = useRef(
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+  const lastFaceLogAtRef = useRef({});
+  const FACE_LOG_THROTTLE_MS = 5000;
+
+  const logFaceEvent = (category, severity, context = {}) => {
+    const now = Date.now();
+    const last = lastFaceLogAtRef.current[category] || 0;
+    if (now - last < FACE_LOG_THROTTLE_MS) return;
+    lastFaceLogAtRef.current[category] = now;
+    supabase.rpc('log_error', {
+      p_source: 'face_recognition',
+      p_category: category,
+      p_message: category,
+      p_severity: severity,
+      p_context: { kiosk_session_id: kioskSessionIdRef.current, ...context },
+      p_school_id: currentUser?.school_id || null,
+      p_user_id: currentUser?.id || null,
+      p_role: currentUser?.role || null,
+      p_url: typeof window !== 'undefined' ? window.location.href : null,
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    }).catch(() => {});
+  };
+
   // Timeout de segurança: se ninguém for reconhecido depois de um tempo, oferece uma
   // alternativa (QR Code/PIN) em vez de deixar a pessoa presa olhando pra câmera.
   const STUCK_TIMEOUT_MS = 20000;
@@ -209,7 +243,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const resetStuckTimer = () => {
     setShowAlternative(false);
     if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
-    stuckTimerRef.current = setTimeout(() => setShowAlternative(true), STUCK_TIMEOUT_MS);
+    stuckTimerRef.current = setTimeout(() => {
+      setShowAlternative(true);
+      logFaceEvent('stuck_timeout', 'warn', { elapsed_ms: STUCK_TIMEOUT_MS });
+    }, STUCK_TIMEOUT_MS);
   };
 
   useEffect(() => {
@@ -368,6 +405,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       if (stalled) return; // evita disparar retry várias vezes pro mesmo travamento
       stalled = true;
       console.warn('[FaceScanner] Câmera travada/perdida, recuperando sozinho:', reason);
+      logFaceEvent('camera_watchdog_recovery', 'error', { reason });
       retryInit();
     };
     const onEnded = () => recoverOnce('track ended');
@@ -650,6 +688,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 resetStuckTimer();
               }
               setMatchStatus('searching');
+              logFaceEvent('frame_position_rejected', 'warn', { reason: position, mode: 'live' });
             } else if (!matchConfirmed) {
               setMatchStatus('searching');
               const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
@@ -688,6 +727,20 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                     setSelectedStudentIds(studentsData.length === 1 ? studentsData.map(s => s.id) : []);
                   }
                 }
+              } else if (isConsistent) {
+                // 3 frames seguidos apontando consistentemente pra "não
+                // reconhecido" (não é ruído de 1 frame isolado) -- é o dado
+                // que faltava pra saber SE a causa mais comum das
+                // reclamações é limiar apertado demais (below_threshold) ou
+                // ambiguidade entre cadastros parecidos (ambiguous_match).
+                logFaceEvent(bestMatch.ambiguous ? 'ambiguous_match' : 'below_threshold', 'warn', {
+                  mode: 'live',
+                  distance: bestMatch.distance,
+                  second_best_distance: bestMatch.secondBestDistance,
+                  threshold: MATCH_THRESHOLD,
+                  margin: MATCH_MARGIN,
+                  candidate_count: labeledDescriptors.length,
+                });
               }
             }
             // Se matchConfirmed && position === 'ok': mantém o estado atual (já confirmado).
@@ -719,6 +772,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     const { data: allowed, error: rateLimitError } = await supabase.rpc('check_kiosk_recognition_rate_limit');
     if (!rateLimitError && allowed === false) {
       setError('Muitas tentativas de reconhecimento em pouco tempo. Aguarde um instante ou use Senha/PIN.');
+      logFaceEvent('rate_limited', 'warn', { mode: 'manual_capture' });
       return;
     }
 
@@ -757,6 +811,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       if (!detection) {
         setMatchStatus('no-match');
         setIsProcessingCapture(false);
+        logFaceEvent('no_face_detected', 'warn', { mode: 'manual_capture' });
         return;
       }
 
@@ -769,6 +824,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         );
         setMatchStatus('no-match');
         setIsProcessingCapture(false);
+        logFaceEvent('frame_position_rejected', 'warn', { reason: position, mode: 'manual_capture' });
         return;
       }
 
@@ -787,9 +843,18 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           setSelectedStudentIds(studentsData.length === 1 ? studentsData.map(s => s.id) : []);
         } else {
           setMatchStatus('no-match');
+          logFaceEvent('matched_person_not_found', 'error', { mode: 'manual_capture', person_id: personId });
         }
       } else {
         setMatchStatus('no-match');
+        logFaceEvent(bestMatch.ambiguous ? 'ambiguous_match' : 'below_threshold', 'warn', {
+          mode: 'manual_capture',
+          distance: bestMatch.distance,
+          second_best_distance: bestMatch.secondBestDistance,
+          threshold: MATCH_THRESHOLD,
+          margin: MATCH_MARGIN,
+          candidate_count: labeledDescriptors.length,
+        });
       }
     } catch (err) {
       console.error('Erro na captura/comparação:', err);

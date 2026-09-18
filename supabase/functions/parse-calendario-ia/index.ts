@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Lê o calendário escolar (PDF com layout livre — lista de datas + mini
 // calendário gráfico, como o modelo real da escola) usando a API do Google
@@ -146,6 +147,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'parse-calendario-ia', err.message || String(err));
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

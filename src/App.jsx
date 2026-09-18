@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { setErrorLogContext } from './lib/errorLogger';
+import { setErrorLogContext, logAppError } from './lib/errorLogger';
 import { logAction } from './lib/auditLog';
 import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
@@ -974,6 +974,14 @@ export default function App() {
         }]);
         if (logError) {
           console.error('Erro ao registrar log de presença:', logError);
+          // Falha silenciosa grave: o status do aluno já mudou (passo 1
+          // acima), mas o registro imutável em attendance_logs não foi
+          // gravado -- sem isso, essa entrada/saída nunca aparece no
+          // Histórico nem entra no cálculo de Horas Extras. Antes disso não
+          // sobrava rastro nenhum de que aconteceu.
+          logAppError('attendance_log_insert_failed', logError, {
+            severity: 'critical', studentId, eventType: newStatus, schoolId: currentUser.school_id,
+          });
         } else {
           // Notifica (in-app + push) só depois do log confirmado — antes disso
           // era um trigger de banco que só criava a notificação in-app, sem
@@ -1006,6 +1014,7 @@ export default function App() {
 
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
+      logAppError('update_student_status_failed', err, { studentId, newStatus, schoolId: currentUser?.school_id });
       throw err;
     }
   };

@@ -38,6 +38,35 @@ export async function logClientError(error, extra = {}) {
   }
 }
 
+// Fase B3 do PLANO_LOGGING_ERROS_PORTAL_DEV.md — destino fácil pros catch
+// que hoje só fazem console.error (a grande maioria do app). Ao lado de
+// logClientError (que continua intacta, cobrindo crash de render e erro
+// global), não força refactor de tudo de uma vez: cada catch que vale a
+// pena logar chama isso, um de cada vez, sem virar um projeto à parte.
+// Grava em error_logs (Fase A) com source='business', nunca em
+// client_error_logs (essa continua só pra erro de render/global).
+export async function logAppError(category, error, context = {}) {
+  try {
+    const message = (error?.message || String(error) || 'Erro desconhecido').slice(0, 2000);
+    const stack = (error?.stack || '').slice(0, 8000);
+    await supabase.rpc('log_error', {
+      p_source: 'business',
+      p_category: category,
+      p_message: message,
+      p_severity: context.severity || 'error',
+      p_stack: stack || null,
+      p_context: context,
+      p_school_id: currentContext.school_id,
+      p_user_id: currentContext.user_id,
+      p_role: currentContext.role,
+      p_url: typeof window !== 'undefined' ? window.location.href : null,
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    });
+  } catch (loggingError) {
+    console.error('[errorLogger] Falha ao registrar erro de negócio (não propagada):', loggingError);
+  }
+}
+
 // Handlers globais — pega erros que acontecem FORA da árvore do React (o
 // ErrorBoundary só cobre erros de render/lifecycle de componentes) e
 // promises rejeitadas sem .catch.

@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getEffectiveExitTime, getEffectiveEntryTime, mergeBillingConfig, BillingConfig } from '../_shared/extraHours.ts'
 import { sendFamilyNotification } from '../_shared/sendFamilyNotification.ts'
+import { logEdgeError } from '../_shared/logEdgeError.ts'
 
 // Título/corpo de push por tipo de alerta — o texto completo (message) já
 // existe pra notificação in-app; aqui só o necessário pro banner do push,
@@ -303,6 +304,11 @@ serve(async (req) => {
     }), { headers: { 'Content-Type': 'application/json' } })
 
   } catch (err: any) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'check-attendance-delays', err.message || String(err))
+    } catch (_) { /* melhor esforço */ }
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 })

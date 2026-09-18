@@ -2,6 +2,7 @@ import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Disparada pelo próprio hook (usePushNotifications.js) logo depois que o
 // usuário ativa as notificações, pra ele descobrir NA HORA se o aparelho
@@ -83,6 +84,11 @@ serve(async (req) => {
       });
     }
   } catch (err: any) {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      await logEdgeError(createClient(supabaseUrl, supabaseServiceKey), 'send-test-push', err.message || String(err));
+    } catch (_) { /* melhor esforço */ }
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
