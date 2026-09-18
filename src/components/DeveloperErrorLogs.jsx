@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, History, Bug } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import DeveloperLogs from './DeveloperLogs';
+import { summarizeErrorLog } from '../lib/errorSummaries';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -48,6 +49,10 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const [expandedId, setExpandedId] = useState(null);
   const [resolutionNoteDraft, setResolutionNoteDraft] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  // Fase D do PLANO_IA_RESUMO_ERROS.md — id do log com pedido de explicação
+  // por IA em andamento (só 1 por vez, é sob demanda/manual).
+  const [explainingId, setExplainingId] = useState(null);
+  const [explainError, setExplainError] = useState('');
 
   const [source, setSource] = useState('all');
   const [severity, setSeverity] = useState('all');
@@ -159,6 +164,28 @@ export default function DeveloperErrorLogs({ currentUser }) {
       console.error('[DeveloperErrorLogs] Erro ao reabrir log:', err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Fase D do PLANO_IA_RESUMO_ERROS.md — chama a edge function sob demanda.
+  // `force`: ignora o cache e gera de novo (botão "Gerar de novo"), conta
+  // pro rate limit; sem force, a function já retorna o valor cacheado se
+  // já existir, sem gastar chamada nova de IA.
+  const handleExplainWithAI = async (log, force = false) => {
+    setExplainingId(log.id);
+    setExplainError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('explain-error-log', {
+        body: { log_id: log.id, force },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLogs(prev => prev.map(l => l.id === log.id ? { ...l, ai_summary: data.ai_summary } : l));
+    } catch (err) {
+      console.error('[DeveloperErrorLogs] Erro ao pedir explicação por IA:', err);
+      setExplainError(err.message || 'Não foi possível gerar a explicação agora.');
+    } finally {
+      setExplainingId(null);
     }
   };
 
@@ -278,6 +305,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
             ) : (
               filtered.map(log => {
                 const isExpanded = expandedId === log.id;
+                const summary = summarizeErrorLog(log);
                 return (
                   <div key={log.id} className={`bg-dev-bg border rounded-zela-md overflow-hidden ${log.resolved ? 'border-dev-border opacity-60' : 'border-dev-border'}`}>
                     <button
@@ -297,6 +325,9 @@ export default function DeveloperErrorLogs({ currentUser }) {
                           )}
                         </div>
                         <p className="text-sm font-bold text-dev-text truncate">{log.message}</p>
+                        {summary && (
+                          <p className="text-xs text-dev-primary mt-1 leading-relaxed">{summary}</p>
+                        )}
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[11px] text-dev-text-muted">
                           <span>1ª vez: {formatDate(log.first_seen_at)}</span>
                           <span>última: {formatDate(log.last_seen_at)}</span>
@@ -325,6 +356,39 @@ export default function DeveloperErrorLogs({ currentUser }) {
                           {log.role && <span>role: {log.role}</span>}
                           {log.user_agent && <span className="truncate max-w-full">{log.user_agent}</span>}
                         </div>
+
+                        {/* Fase D do PLANO_IA_RESUMO_ERROS.md — só aparece
+                            quando o dicionário determinístico não reconheceu
+                            nada (summary null). Sempre marcado como palpite,
+                            nunca misturado com o resumo determinístico. */}
+                        {!summary && (
+                          <div className="border border-dashed border-dev-border rounded-lg p-3">
+                            {log.ai_summary ? (
+                              <>
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-amber-400 mb-1">🤖 Palpite da IA — pode estar incompleto ou errado</p>
+                                <p className="text-xs text-dev-text leading-relaxed">{log.ai_summary}</p>
+                                <button
+                                  onClick={() => handleExplainWithAI(log, true)}
+                                  disabled={explainingId === log.id}
+                                  className="mt-2 text-[11px] font-bold text-dev-text-muted hover:text-dev-text underline disabled:opacity-50"
+                                >
+                                  {explainingId === log.id ? 'Gerando...' : 'Gerar de novo'}
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleExplainWithAI(log, false)}
+                                disabled={explainingId === log.id}
+                                className="flex items-center gap-1.5 text-xs font-bold text-dev-text bg-dev-bg border border-dev-border hover:bg-dev-surface-high px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                              >
+                                {explainingId === log.id ? 'Gerando explicação...' : '✨ Explicar com IA'}
+                              </button>
+                            )}
+                            {explainError && explainingId === null && (
+                              <p className="text-[11px] text-error mt-1.5">{explainError}</p>
+                            )}
+                          </div>
+                        )}
 
                         {log.resolved ? (
                           <div className="flex items-center justify-between gap-2 pt-1">

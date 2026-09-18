@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FileText, Loader2, Trash2, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
+import { summarizeErrorLog } from '../lib/errorSummaries';
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
@@ -101,6 +102,7 @@ export default function DeveloperLogs() {
         ) : (
           logs.map(log => {
             const isExpanded = expandedId === log.id;
+            const summary = summarizeErrorLog({ source: 'client', category: null, message: log.message });
             return (
               <div key={log.id} className="bg-dev-bg border border-dev-border rounded-zela-md overflow-hidden">
                 <button
@@ -109,6 +111,9 @@ export default function DeveloperLogs() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-dev-text truncate">{log.message}</p>
+                    {summary && (
+                      <p className="text-xs text-dev-primary mt-1 leading-relaxed">{summary}</p>
+                    )}
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[11px] text-dev-text-muted">
                       <span>{formatDate(log.created_at)}</span>
                       {log.role && <span>role: {log.role}</span>}
