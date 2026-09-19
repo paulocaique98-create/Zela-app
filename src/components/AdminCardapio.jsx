@@ -400,16 +400,10 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      {/* Título "Cardápio" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-            <UtensilsCrossed size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Cardápio</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block">Crie cardápios mensais, com período de ativação opcional.</p>
-          </div>
-        </div>
+        <p className="text-on-surface-variant text-small hidden sm:block">Crie cardápios mensais, com período de ativação opcional.</p>
         {!showNewForm && !weekGroups && !iaCardapios && (
           <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 sm:justify-end">
             <div className="relative">

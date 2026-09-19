@@ -208,9 +208,9 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
+      {/* Título "Configurações" removido (o Header do app já mostra o nome
+          da tela dinamicamente). */}
       <div className="mb-6 shrink-0">
-        <h2 className="text-h3 text-on-surface">Configurações</h2>
         <p className="text-on-surface-variant text-small">Gestão de autorizações e informações.</p>
       </div>
 

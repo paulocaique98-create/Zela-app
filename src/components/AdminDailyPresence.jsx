@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
+import { LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import AttendanceCorrectionModal from './AttendanceCorrectionModal';
@@ -117,17 +117,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
+      {/* Header -- título "Presença Diária" e ícone removidos (o Header do
+          app já mostra o nome da tela dinamicamente); só a data, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <GraduationCap className="text-indigo-600" size={22}/> Presença Diária
-          </h2>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
-            {lastUpdate && <span className="ml-2 text-slate-400">· Atualizado às {lastUpdate}</span>}
-          </p>
-        </div>
+        <p className="text-sm text-slate-500">
+          {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+          {lastUpdate && <span className="ml-2 text-slate-400">· Atualizado às {lastUpdate}</span>}
+        </p>
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
           <div className="relative">
             <button

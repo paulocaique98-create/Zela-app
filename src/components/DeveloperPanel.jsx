@@ -280,20 +280,13 @@ export default function DeveloperPanel() {
 
   return (
     <div className="h-full flex flex-col bg-dev-surface rounded-zela-xl border border-dev-border shadow-sm overflow-hidden">
-      {/* Header */}
+      {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
+          mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary">
-            <Building2 size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-dev-text">Gestão de Escolas</h2>
-            <p className="text-dev-text-muted text-small hidden sm:block">{schools.length} escola(s) cadastrada(s)</p>
-          </div>
-        </div>
+        <p className="text-dev-text-muted text-small hidden sm:block">{schools.length} escola(s) cadastrada(s)</p>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center justify-center gap-2 bg-dev-primary hover:brightness-110 text-dev-bg font-bold py-2.5 px-4 rounded-zela-md transition shadow-md whitespace-nowrap text-sm shrink-0"
+          className="flex items-center justify-center gap-2 bg-dev-primary hover:brightness-110 text-dev-bg font-bold py-2.5 px-4 rounded-zela-md transition shadow-md whitespace-nowrap text-sm shrink-0 ml-auto"
         >
           <Plus size={16} /> <span className="hidden sm:inline">Cadastrar Escola</span>
         </button>

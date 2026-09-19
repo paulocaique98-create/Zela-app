@@ -98,14 +98,10 @@ export default function AdminFichaMedica({ currentUser, currentSchool, students 
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <Heart size={22} />
-        </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Ficha Médica</h2>
-          <p className="text-on-surface-variant text-small hidden sm:block">Visualize as fichas médicas preenchidas pelos responsáveis dos alunos.</p>
-        </div>
+      {/* Título "Ficha Médica" e ícone removidos (o Header do app já mostra
+          o nome da tela dinamicamente); só a descrição, direto. */}
+      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <p className="text-on-surface-variant text-small hidden sm:block">Visualize as fichas médicas preenchidas pelos responsáveis dos alunos.</p>
       </div>
 
       <div className="px-5 sm:px-6 pt-4 shrink-0">

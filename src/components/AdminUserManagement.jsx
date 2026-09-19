@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check, UserRoundCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
@@ -222,20 +222,95 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     );
   });
 
+  // Modelo 06 (agrupado por núcleo familiar) validado com o usuário
+  // (proposta com 6 layouts, 19/09) -- em vez de 1 card por conta (hoje o
+  // titular e o 2º Responsável aparecem soltos, sem nada ligando os dois
+  // visualmente), agrupa pelo(s) aluno(s) da família. Cobertura garantida:
+  // todo usuário de filteredUsers cai em exatamente 1 grupo, mesmo quem não
+  // tem aluno nenhum vinculado (grupo "solo", sem faixa de aluno no topo) --
+  // ninguém pode sumir da lista por causa do agrupamento.
+  const familyGroups = useMemo(() => {
+    const groups = new Map();
+    const consumed = new Set();
+
+    // 1) Titulares -- cada um já é dono de um grupo (seus alunos = students).
+    filteredUsers.forEach(user => {
+      if (user.students?.length > 0) {
+        groups.set(user.id, { key: user.id, students: user.students, guardians: [user] });
+        consumed.add(user.id);
+      }
+    });
+
+    // 2) 2º Responsável -- entra no grupo do titular que é dono do(s)
+    // mesmo(s) aluno(s) vinculado(s). Se o titular não estiver no recorte
+    // atual (ex.: titular ativo, 2º responsável pendente, abas diferentes),
+    // vira o próprio grupo usando linkedStudents como referência.
+    filteredUsers.forEach(user => {
+      if (consumed.has(user.id)) return;
+      if (user.linkedStudents?.length > 0) {
+        const linkedIds = new Set(user.linkedStudents.map(s => s.id));
+        const targetGroup = Array.from(groups.values()).find(g => g.students.some(s => linkedIds.has(s.id)));
+        if (targetGroup) {
+          targetGroup.guardians.push(user);
+        } else {
+          groups.set(user.id, { key: user.id, students: user.linkedStudents, guardians: [user] });
+        }
+        consumed.add(user.id);
+      }
+    });
+
+    // 3) Ninguém vinculado a aluno nenhum -- grupo solo, sem faixa de aluno.
+    filteredUsers.forEach(user => {
+      if (consumed.has(user.id)) return;
+      groups.set(user.id, { key: user.id, students: [], guardians: [user] });
+      consumed.add(user.id);
+    });
+
+    return Array.from(groups.values());
+  }, [filteredUsers]);
+
+  const guardianBadges = (guardian) => (
+    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
+        Família
+      </span>
+      {guardian.linkedStudents?.length > 0 && (
+        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-primary/10 text-primary">
+          2º Responsável
+        </span>
+      )}
+      {guardian.status === 'pending' && (
+        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-amber-100 text-amber-700">
+          Pendente
+        </span>
+      )}
+    </div>
+  );
+
   return (
-    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
+    // Ganha o máximo de espaço no celular removendo a "moldura de cartão"
+    // (borda/sombra/cantos arredondados/padding grande) que sobra dentro do
+    // <main> do AdminPortal -- mesmo princípio já aplicado ao modal de
+    // Editar Cadastro: o header (hambúrguer, logo) e o menu lateral do
+    // AdminPortal continuam exatamente como estão, só o cartão desta tela
+    // específica encolhe a moldura no celular. Volta ao visual de cartão
+    // normal a partir de sm, igual às outras telas do Admin.
+    // -m-3 sm:m-0 cancela exatamente o padding do <main> do AdminPortal
+    // (p-3 no celular) só nesta tela -- as outras continuam com a margem
+    // normal, e esta some de vez no mobile, encostando nas bordas de
+    // verdade (não só "moldura menor").
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header -- título "Gestão de Usuários" removido (o Header do app já
+          mostra "Zela · Gestão de Usuários"/"Zela Usuários" dinamicamente),
+          ícone + contador ficam numa linha só, mais compacta. */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <Users size={22} />
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+            <Users size={18} />
           </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Gestão de Usuários</h2>
-            <p className="text-small text-on-surface-variant">
-              {usersList.length} {usersList.length !== 1 ? 'responsáveis' : 'responsável'} cadastrado{usersList.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+          <p className="text-small text-on-surface-variant">
+            {usersList.length} {usersList.length !== 1 ? 'responsáveis' : 'responsável'} cadastrado{usersList.length !== 1 ? 's' : ''}
+          </p>
         </div>
 
         {/* Abas: Ativos / Pendentes de aprovação (autocadastro público) */}
@@ -313,110 +388,97 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                 {filteredUsers.length} resultado{filteredUsers.length !== 1 ? 's' : ''} para "<span className="font-semibold text-on-surface-variant">{searchTerm}</span>"
               </p>
             )}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
-              {filteredUsers.map(user => (
-                <div key={user.id} className="border border-outline-variant rounded-zela-lg p-5 hover:border-primary/30 hover:shadow-md transition-all flex flex-col bg-surface-container-lowest relative group">
-
-                  {/* Botões de ação — sempre visíveis no mobile, hover no desktop */}
-                  <div className="absolute top-4 right-4 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => setEditingUser(user)}
-                      className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
-                      title="Editar usuário"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => user.status === 'pending' ? handleRejectUser(user.id) : handleDeleteUser(user.id)}
-                      className="p-1.5 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title={user.status === 'pending' ? 'Rejeitar cadastro' : 'Excluir usuário'}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-
-                  {/* Avatar + Nome */}
-                  <div className="flex items-center gap-3 mb-4 pr-16">
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-primary/10 bg-gradient-to-br from-primary/20 to-primary/10">
-                      {user.photo_url ? (
-                        <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-black text-primary text-lg">{user.name.charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-on-surface text-sm">{user.name}</h3>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
-                          Família
-                        </span>
-                        {user.linkedStudents?.length > 0 && (
-                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-primary/10 text-primary">
-                            2º Responsável
-                          </span>
-                        )}
-                        {user.status === 'pending' && (
-                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-amber-100 text-amber-700">
-                            Pendente
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {user.status === 'pending' && (
-                    <button
-                      onClick={() => handleApproveUser(user.id)}
-                      disabled={approvingUserId === user.id}
-                      className="mb-4 flex items-center justify-center gap-2 w-full py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
-                    >
-                      <Check size={14} /> {approvingUserId === user.id ? 'Aprovando...' : 'Aprovar cadastro'}
-                    </button>
-                  )}
-
-                  {/* Contatos */}
-                  <div className="space-y-1.5 mb-4 flex-1">
-                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                      <Mail size={13} className="text-on-surface-variant/70 shrink-0"/>
-                      <span className="truncate text-xs" title={user.email}>{user.email}</span>
-                    </div>
-                    {user.phone && (
-                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Phone size={13} className="text-on-surface-variant/70 shrink-0"/>
-                        <span className="text-xs">{user.phone}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Alunos vinculados (titular) */}
-                  {user.students?.length > 0 ? (
-                    <div className="mt-auto pt-3 border-t border-outline-variant">
-                      <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2 flex items-center gap-1">
-                        <GraduationCap size={11}/> Alunos ({user.students.length})
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {user.students.map(s => (
-                          <span key={s.id} className="bg-surface-container-low border border-outline-variant text-on-surface-variant text-[10px] font-medium px-2 py-0.5 rounded-md">
-                            {s.name} {s.turma ? <span className="text-on-surface-variant/70">· {s.turma}</span> : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : user.linkedStudents?.length > 0 && (
-                    /* 2º Responsável — mesma posição/altura do bloco de Alunos
-                       acima (mt-auto + border-t), mas só o vínculo com o(s)
-                       aluno(s) já cadastrado(s) pelo titular, sem repetir a
-                       lista inteira de chips. */
-                    <div className="mt-auto pt-3 border-t border-outline-variant">
-                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
-                        <UserRoundCheck size={13} className="text-primary shrink-0"/>
-                        {user.guardianRelationship || 'Responsável'} de{' '}
-                        <span className="font-semibold text-on-surface">
-                          {user.linkedStudents.map(s => s.name).join(', ')}
-                        </span>
-                      </p>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
+              {familyGroups.map(group => (
+                <div key={group.key} className="border border-outline-variant rounded-zela-lg overflow-hidden hover:border-primary/30 hover:shadow-md transition-all bg-surface-container-lowest">
+                  {/* Faixa do(s) aluno(s) -- só existe se o grupo tiver algum
+                      aluno (titular ou vínculo de 2º Responsável); grupo
+                      "solo" (ninguém vinculado a aluno) não mostra essa faixa. */}
+                  {group.students.length > 0 && (
+                    <div className="bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-wider px-4 py-2 flex items-center gap-1.5">
+                      <GraduationCap size={12} className="shrink-0"/>
+                      <span className="truncate">
+                        {group.students.map(s => s.name).join('  •  ')}
+                      </span>
                     </div>
                   )}
+
+                  <div className="p-3.5 space-y-2.5">
+                    {group.guardians.map((guardian, gi) => (
+                      <div
+                        key={guardian.id}
+                        className={`relative group/g flex items-start gap-3 ${gi > 0 ? 'pt-3 border-t border-dashed border-outline-variant' : ''}`}
+                      >
+                        {/* Botões de ação — sempre visíveis no mobile, hover no desktop (mesmo comportamento de antes) */}
+                        <div className="absolute top-0 right-0 flex gap-1 opacity-100 md:opacity-0 md:group-hover/g:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setEditingUser(guardian)}
+                            className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                            title="Editar usuário"
+                          >
+                            <Edit size={15} />
+                          </button>
+                          <button
+                            onClick={() => guardian.status === 'pending' ? handleRejectUser(guardian.id) : handleDeleteUser(guardian.id)}
+                            className="p-1.5 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title={guardian.status === 'pending' ? 'Rejeitar cadastro' : 'Excluir usuário'}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-primary/10 bg-gradient-to-br from-primary/20 to-primary/10">
+                          {guardian.photo_url ? (
+                            <img src={guardian.photo_url} alt={guardian.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-black text-primary text-sm">{guardian.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1 pr-14">
+                          <h3 className="font-bold text-on-surface text-sm truncate">{guardian.name}</h3>
+                          {guardianBadges(guardian)}
+
+                          <div className="space-y-1 mt-2">
+                            <div className="flex items-center gap-2 text-on-surface-variant">
+                              <Mail size={12} className="text-on-surface-variant/70 shrink-0"/>
+                              <span className="truncate text-xs" title={guardian.email}>{guardian.email}</span>
+                            </div>
+                            {guardian.phone && (
+                              <div className="flex items-center gap-2 text-on-surface-variant">
+                                <Phone size={12} className="text-on-surface-variant/70 shrink-0"/>
+                                <span className="text-xs">{guardian.phone}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 2º Responsável sem faixa de aluno própria acima
+                              (grupo criado sozinho porque o titular não está
+                              neste recorte) -- mostra o vínculo por texto,
+                              igual já era feito antes. */}
+                          {group.students.length === 0 && guardian.linkedStudents?.length > 0 && (
+                            <p className="text-xs text-on-surface-variant flex items-center gap-1.5 mt-2">
+                              <UserRoundCheck size={13} className="text-primary shrink-0"/>
+                              {guardian.guardianRelationship || 'Responsável'} de{' '}
+                              <span className="font-semibold text-on-surface">
+                                {guardian.linkedStudents.map(s => s.name).join(', ')}
+                              </span>
+                            </p>
+                          )}
+
+                          {guardian.status === 'pending' && (
+                            <button
+                              onClick={() => handleApproveUser(guardian.id)}
+                              disabled={approvingUserId === guardian.id}
+                              className="mt-2 flex items-center justify-center gap-2 w-full py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                            >
+                              <Check size={13} /> {approvingUserId === guardian.id ? 'Aprovando...' : 'Aprovar cadastro'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

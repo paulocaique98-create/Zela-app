@@ -148,14 +148,14 @@ export default function AdminAttendanceCorrections({ currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-6 shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <ClipboardCheck size={22} />
+      {/* Título "Correções de Presença" removido (o Header do app já mostra
+          o nome da tela dinamicamente); ícone + descrição numa linha
+          compacta (descrição sempre visível, mantém o ícone). */}
+      <div className="flex items-center gap-2.5 mb-6 shrink-0">
+        <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+          <ClipboardCheck size={18} />
         </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Correções de Presença</h2>
-          <p className="text-small text-on-surface-variant">Correções manuais de horário, com aprovação quando aumentam a cobrança.</p>
-        </div>
+        <p className="text-small text-on-surface-variant">Correções manuais de horário, com aprovação quando aumentam a cobrança.</p>
       </div>
 
       {error && (

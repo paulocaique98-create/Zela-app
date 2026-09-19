@@ -75,15 +75,15 @@ export default function AdminDuplicateBiometrics({ currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Título "Verificação de Duplicidade Facial" removido (o Header do
+          app já mostra o nome da tela dinamicamente); ícone + descrição
+          numa linha compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex items-center justify-between gap-3 mb-6 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-            <Fingerprint size={22} />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+            <Fingerprint size={18} />
           </div>
-          <div className="min-w-0">
-            <h2 className="text-h3 text-on-surface">Verificação de Duplicidade Facial</h2>
-            <p className="text-small text-on-surface-variant">Mesmo rosto cadastrado em contas diferentes da escola</p>
-          </div>
+          <p className="text-small text-on-surface-variant truncate">Mesmo rosto cadastrado em contas diferentes da escola</p>
         </div>
         <button
           onClick={scan}

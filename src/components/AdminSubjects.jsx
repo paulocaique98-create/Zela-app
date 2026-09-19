@@ -146,19 +146,13 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      {/* Título "{Matérias}" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-            <BookMarked size={22} />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-h3 text-on-surface">{subjectLabel}s</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block truncate">Cadastre e associe {subjectLabel.toLowerCase()}s às {terminology.class.toLowerCase()}s da escola.</p>
-          </div>
-        </div>
+        <p className="text-on-surface-variant text-small hidden sm:block truncate min-w-0">Cadastre e associe {subjectLabel.toLowerCase()}s às {terminology.class.toLowerCase()}s da escola.</p>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 bg-primary hover:bg-primary-container text-white px-3 py-2 rounded-zela-md font-bold transition-all active:scale-95 text-xs shrink-0"
+          className="flex items-center gap-1.5 bg-primary hover:bg-primary-container text-white px-3 py-2 rounded-zela-md font-bold transition-all active:scale-95 text-xs shrink-0 ml-auto"
         >
           <Plus size={16} /> Nova {subjectLabel}
         </button>

@@ -111,15 +111,15 @@ export default function FamilyRegistrationData({ currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+        {/* Título "Dados Cadastrais" removido (o Header do app já mostra o
+            nome da tela dinamicamente); ícone + descrição numa linha
+            compacta (descrição sempre visível, mantém o ícone). */}
         <div className="flex items-center justify-between mb-6 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-              <User size={22} />
+          <div className="flex items-center gap-2.5">
+            <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+              <User size={18} />
             </div>
-            <div>
-              <h2 className="text-h3 text-on-surface">Dados Cadastrais</h2>
-              <p className="text-small text-on-surface-variant">Mantenha suas informações e documentos atualizados.</p>
-            </div>
+            <p className="text-small text-on-surface-variant">Mantenha suas informações e documentos atualizados.</p>
           </div>
           <button
             onClick={handleSave}

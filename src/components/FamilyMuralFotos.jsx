@@ -86,14 +86,10 @@ export default function FamilyMuralFotos({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <ImageIcon size={22} />
-        </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Mural de Fotos</h2>
-          <p className="text-on-surface-variant text-small hidden sm:block">Fotos compartilhadas pela escola.</p>
-        </div>
+      {/* Título "Mural de Fotos" e ícone removidos (o Header do app já
+          mostra o nome da tela dinamicamente); só a descrição, direto. */}
+      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <p className="text-on-surface-variant text-small hidden sm:block">Fotos compartilhadas pela escola.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6">

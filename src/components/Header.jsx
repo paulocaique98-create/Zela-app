@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
-export default function Header({ currentUser, currentSchool, globalLogo, onLogout, onOpenMobileMenu, onNavigateTab }) {
+export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, onLogout, onOpenMobileMenu, onNavigateTab }) {
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
@@ -30,8 +30,15 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <h1 className="font-bold text-lg tracking-tight leading-none text-on-surface flex items-center gap-1.5 whitespace-nowrap">
-            Zela <span className="font-normal text-on-surface-variant">Portal</span>
+          <h1 className="font-bold text-lg tracking-tight leading-none text-on-surface flex items-center gap-1.5 whitespace-nowrap min-w-0">
+            Zela{' '}
+            {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
+                então usa a versão abreviada do nome da tela (screenLabelMobile)
+                sem separador -- "Zela Usuários" em vez de "Zela · Gestão de
+                Usuários". No desktop, que tem espaço de sobra, mostra o nome
+                completo com o separador. */}
+            <span className="hidden md:inline font-normal text-on-surface-variant">{screenLabel ? `· ${screenLabel}` : 'Portal'}</span>
+            <span className="md:hidden font-normal text-on-surface-variant">{screenLabelMobile || 'Portal'}</span>
           </h1>
         </div>
       </div>
@@ -67,10 +74,17 @@ export default function Header({ currentUser, currentSchool, globalLogo, onLogou
         )}
 
         {currentUser.role !== 'developer' && currentSchool && (
+          // No celular a logo da escola some pra sobrar espaço -- exceto no
+          // Admin, que é o próprio painel de gestão da escola (faz sentido
+          // continuar mostrando ali mesmo com pouco espaço).
           schoolLogo ? (
-            <img src={schoolLogo} alt="Logo da escola" className="w-9 h-9 object-cover rounded-full border border-outline-variant bg-white mr-2" />
+            <img
+              src={schoolLogo}
+              alt="Logo da escola"
+              className={`w-9 h-9 object-cover rounded-full border border-outline-variant bg-white mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:block' : ''}`}
+            />
           ) : (
-            <div className="w-9 h-9 bg-surface-container-low rounded-full flex items-center justify-center border border-outline-variant text-primary font-black text-sm mr-2">
+            <div className={`w-9 h-9 bg-surface-container-low rounded-full items-center justify-center border border-outline-variant text-primary font-black text-sm mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:flex' : 'flex'}`}>
               {currentSchool.name?.charAt(0)}
             </div>
           )

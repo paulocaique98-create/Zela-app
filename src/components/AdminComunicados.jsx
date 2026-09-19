@@ -236,20 +236,14 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      {/* Título "Comunicados" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <Megaphone size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Comunicados</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block">Crie e gerencie avisos para as famílias da escola.</p>
-          </div>
-        </div>
+        <p className="text-on-surface-variant text-small hidden sm:block">Crie e gerencie avisos para as famílias da escola.</p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm ml-auto"
           >
             <Plus size={18} /> <span className="hidden sm:inline">Novo Comunicado</span>
           </button>

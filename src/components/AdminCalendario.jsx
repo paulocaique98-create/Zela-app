@@ -517,17 +517,24 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
       <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <CalendarDays size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Calendário</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block">Adicione, edite e remova eventos do calendário escolar.</p>
-          </div>
+        {/* Título "Calendário" e ícone removidos (o Header do app já mostra
+            o nome da tela dinamicamente); só a descrição, direto. */}
+        <div className="flex items-center">
+          <p className="text-on-surface-variant text-small hidden sm:block">Adicione, edite e remova eventos do calendário escolar.</p>
         </div>
         {activeTab === 'eventos' && !showForm && !importCandidates && !isSelectingEventos && (
           <div className="flex flex-wrap gap-2 justify-end">
+            {/* "Novo Evento" primeiro -- com vários botões antes dele
+                (Modelo, Importar, Importar com IA, Selecionar), o
+                flex-wrap empurrava só ele pra uma segunda linha sozinho
+                no mobile. Vindo primeiro, ele sempre entra na primeira
+                linha junto com os demais. */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+            >
+              <Plus size={18} /> <span className="hidden sm:inline">Novo Evento</span>
+            </button>
             <div className="relative">
               <button
                 type="button"
@@ -575,12 +582,6 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 <ListChecks size={18} /> <span className="hidden sm:inline">Selecionar</span>
               </button>
             )}
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
-            >
-              <Plus size={18} /> <span className="hidden sm:inline">Novo Evento</span>
-            </button>
           </div>
         )}
         {activeTab === 'eventos' && isSelectingEventos && (

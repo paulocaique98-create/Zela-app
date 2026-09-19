@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock } from 'lucide-react';
+import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
 import { mergeBillingConfig } from '../utils/attendanceUtils';
@@ -501,14 +501,10 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
 
   return (
     <div className="h-full flex flex-col bg-white p-3 md:p-4 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-            <Settings size={22} />
-          </div>
-          <h2 className="text-xl font-black text-on-surface">Configurações da Escola</h2>
-        </div>
+      {/* Título "Configurações da Escola" e ícone removidos (o Header do app
+          já mostra o nome da tela dinamicamente); botão de salvar sozinho
+          na linha, alinhado à direita a partir de sm. */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
         <button
           type="submit"
           form="admin-settings-form"

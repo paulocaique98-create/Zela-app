@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ClipboardCheck, Loader2, Check, X as XIcon, Clock, FileWarning } from 'lucide-react';
+import { Loader2, Check, X as XIcon, Clock, FileWarning } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 
@@ -96,13 +96,10 @@ export default function TeacherFrequencia({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-            <ClipboardCheck size={22} />
-          </div>
-          <h2 className="text-h3 text-on-surface">Frequência</h2>
-        </div>
+      {/* Título "Frequência" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente) -- não sobrava nenhuma descrição pra
+          ficar no lugar, então a linha vai direto pros filtros. */}
+      <div className="flex items-center justify-end gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
         <div className="flex items-center gap-2">
           {turmas.length > 1 && (
             <select value={selectedTurma} onChange={e => setSelectedTurma(e.target.value)} className="p-2 border border-outline-variant rounded-zela-md text-sm bg-white">

@@ -77,14 +77,14 @@ export default function AdminAuditLog({ currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-6 shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <ScrollText size={22} />
+      {/* Título "Auditoria" removido (o Header do app já mostra o nome da
+          tela dinamicamente); ícone + descrição numa linha compacta
+          (descrição sempre visível, mantém o ícone). */}
+      <div className="flex items-center gap-2.5 mb-6 shrink-0">
+        <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+          <ScrollText size={18} />
         </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Auditoria</h2>
-          <p className="text-small text-on-surface-variant">Ações sensíveis registradas por administradores da escola.</p>
-        </div>
+        <p className="text-small text-on-surface-variant">Ações sensíveis registradas por administradores da escola.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">

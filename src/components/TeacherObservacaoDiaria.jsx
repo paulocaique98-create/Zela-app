@@ -159,16 +159,10 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      {/* Título "Observação Diária" e ícone removidos (o Header do app já
+          mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <ClipboardList size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Observação Diária</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block">Registre observações pedagógicas sobre seus alunos.</p>
-          </div>
-        </div>
+        <p className="text-on-surface-variant text-small hidden sm:block">Registre observações pedagógicas sobre seus alunos.</p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}

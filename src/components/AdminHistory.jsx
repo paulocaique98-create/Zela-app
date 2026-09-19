@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
@@ -170,23 +170,16 @@ export default function AdminHistory({ currentSchool, currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header -- título e botões sempre na mesma linha (mesmo padrão do
-          Relatório de Horas Extras, 17/09). */}
+      {/* Header -- título e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); botões sempre na mesma linha (mesmo
+          padrão do Relatório de Horas Extras, 17/09). */}
       <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-indigo-100 p-2 sm:p-2.5 rounded-xl text-indigo-600 shrink-0">
-            <History size={20} />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">
-              <span className="sm:hidden">Check-in/out</span>
-              <span className="hidden sm:inline">Histórico de Check-in/out</span>
-            </h2>
-            <p className="hidden sm:block text-sm text-slate-500">Todos os registros individuais de entrada e saída</p>
-          </div>
-        </div>
+        <p className="hidden sm:block text-sm text-slate-500 min-w-0">Todos os registros individuais de entrada e saída</p>
 
-        <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
+        {/* ml-auto -- no mobile o <p> acima some (display:none), e sem isso
+            justify-between com um filho só jogaria estes botões pra
+            esquerda em vez de manter à direita. */}
+        <div className="relative flex items-center gap-2 shrink-0 ml-auto" ref={filtersRef}>
           <button
             onClick={() => setShowFilters(v => !v)}
             className={`flex items-center justify-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm border ${

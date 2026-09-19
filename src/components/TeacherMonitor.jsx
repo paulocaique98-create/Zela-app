@@ -22,15 +22,15 @@ export default function TeacherMonitor({ students, authorized }) {
 
   return (
     <div className={`h-full flex flex-col bg-white p-5 md:p-6 rounded-zela-xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
+      {/* Título "Monitor de Solicitações" removido (o Header do app já mostra
+          o nome da tela dinamicamente); ícone + descrição numa linha
+          compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <AlertCircle size={22} />
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+            <AlertCircle size={18} />
           </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Monitor de Solicitações</h2>
-            <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
-          </div>
+          <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
         </div>
         <span className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70 uppercase tracking-wide bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-zela-md shrink-0">
           <Eye size={13} /> Somente visualização

@@ -1414,13 +1414,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-8 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8 shrink-0">
-        <div className="bg-indigo-100 p-3 rounded-zela-md text-primary"><UserPlus size={24} /></div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Cadastro de Novo Usuário</h2>
-          <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou Administradores.</p>
-        </div>
+      {/* Título "Cadastro de Novo Usuário" removido (o Header do app já
+          mostra o nome da tela dinamicamente); ícone + descrição numa linha
+          compacta (descrição sempre visível, mantém o ícone). */}
+      <div className="flex items-center gap-2.5 mb-8 shrink-0">
+        <div className="bg-indigo-100 p-2 rounded-zela-md text-primary shrink-0"><UserPlus size={20} /></div>
+        <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou Administradores.</p>
       </div>
 
       {/* Scrollable content wrapper */}

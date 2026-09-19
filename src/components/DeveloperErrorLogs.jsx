@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, Bug, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { screenLabel } from '../lib/constants';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -27,35 +28,6 @@ const PERIOD_OPTIONS = [
   { id: '30days', label: 'Mês' },
   { id: 'all', label: 'Tudo' },
 ];
-
-// Fase E do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — id técnico da aba (ver
-// adminTab/familyTab/teacherTab em App.jsx e activeTab em
-// DeveloperLayout.jsx, prefixado 'dev-') → rótulo amigável pro log. Ids sem
-// entrada aqui mostram o id cru (fallback, nunca quebra por aba nova sem
-// mapear ainda).
-const SCREEN_LABELS = {
-  // Admin
-  home: 'Início', register: 'Cadastro de Usuário', 'cadastro-funcionarios': 'Cadastro de Funcionário',
-  users: 'Gestão de Usuários', students: 'Alunos', 'gerenciar-funcionarios': 'Gestão de Funcionários',
-  matriculas: 'Matrículas', 'ficha-medica': 'Ficha Médica',
-  monitor: 'Monitor', kiosk: 'Autoatendimento', presence: 'Presença Diária', history: 'Histórico Geral',
-  'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença',
-  calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
-  materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
-  financeiro: 'Financeiro', auditoria: 'Auditoria', 'duplicidade-biometrica': 'Duplicidade Facial',
-  settings: 'Configurações',
-  // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
-  acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
-  registration: 'Dados Cadastrais', comunicados: 'Comunicados',
-  // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
-  'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
-  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',
-};
-
-function screenLabel(screen) {
-  if (!screen) return null;
-  return SCREEN_LABELS[screen] || screen;
-}
 
 // Fase D do PLANO_LOGGING_ERROS_PORTAL_DEV.md — tela unificada lendo
 // error_logs (Fase A/B1). Cada linha já é 1 fingerprint (a deduplicação

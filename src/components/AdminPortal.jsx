@@ -455,34 +455,31 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'monitor' && (
           <div className={`h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
 
-            {/* Header do Monitor */}
+            {/* Header do Monitor -- título "Monitor de Solicitações" removido
+                (o Header do app já mostra o nome da tela dinamicamente); o
+                indicador de status do tempo real se junta ao ícone. */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
+                <div className="relative bg-primary/10 p-2.5 rounded-zela-md text-primary">
                   <AlertCircle size={22} />
+                  {/* Indicador de status do tempo real — antes disso, uma queda
+                      silenciosa do Realtime só era percebida no Console do
+                      navegador. Amarelo/vermelho não significa que o Monitor
+                      parou: a reconciliação por polling continua atualizando
+                      a lista sozinha em segundo plano. */}
+                  <span
+                    className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white shrink-0 ${
+                      connectionStatus === 'connected' ? 'bg-green-500' :
+                      connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
+                    }`}
+                    title={
+                      connectionStatus === 'connected' ? 'Tempo real conectado' :
+                      connectionStatus === 'connecting' ? 'Conectando ao tempo real…' :
+                      'Tempo real instável — atualizando por verificação periódica'
+                    }
+                  />
                 </div>
-                <div>
-                  <h2 className="text-h3 text-on-surface flex items-center gap-2">
-                    Monitor de Solicitações
-                    {/* Indicador de status do tempo real — antes disso, uma queda
-                        silenciosa do Realtime só era percebida no Console do
-                        navegador. Amarelo/vermelho não significa que o Monitor
-                        parou: a reconciliação por polling continua atualizando
-                        a lista sozinha em segundo plano. */}
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        connectionStatus === 'connected' ? 'bg-green-500' :
-                        connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
-                      }`}
-                      title={
-                        connectionStatus === 'connected' ? 'Tempo real conectado' :
-                        connectionStatus === 'connecting' ? 'Conectando ao tempo real…' :
-                        'Tempo real instável — atualizando por verificação periódica'
-                      }
-                    />
-                  </h2>
-                  <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
-                </div>
+                <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">

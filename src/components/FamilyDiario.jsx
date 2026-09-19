@@ -119,18 +119,12 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+      {/* Título "Diário" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <BookOpen size={22} />
-          </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Diário</h2>
-            <p className="text-on-surface-variant text-small hidden sm:block">Acompanhe o dia a dia do seu filho(a) na escola.</p>
-          </div>
-        </div>
+        <p className="text-on-surface-variant text-small hidden sm:block">Acompanhe o dia a dia do seu filho(a) na escola.</p>
         {students.length > 0 && (
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
             <button onClick={() => changeMonth(-1)} className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition" title="Mês anterior">
               <ChevronLeft size={18} />
             </button>

@@ -182,16 +182,15 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
+      {/* Título "Histórico de Horários" removido (o Header do app já mostra
+          o nome da tela dinamicamente); ícone + descrição numa linha
+          compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <History size={22} />
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+            <History size={18} />
           </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Histórico de Horários</h2>
-            <p className="text-small text-on-surface-variant">Registros de entrada e saída dos seus filhos</p>
-          </div>
+          <p className="text-small text-on-surface-variant">Registros de entrada e saída dos seus filhos</p>
         </div>
         <button
           onClick={handleExport}

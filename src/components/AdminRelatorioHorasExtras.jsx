@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Clock, FileText, Download, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Search, X, FileText, Download, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
@@ -252,22 +252,10 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header -- título e botões sempre na mesma linha (os botões agora são
-          compactos o bastante pra caber mesmo no celular); título encurta
-          pra "Horas Extras" abaixo de sm pra sobrar espaço. */}
-      <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-amber-100 p-2 sm:p-2.5 rounded-xl text-amber-600 shrink-0">
-            <Clock size={20} />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">
-              <span className="sm:hidden">Horas Extras</span>
-              <span className="hidden sm:inline">Relatório de Horas Extras</span>
-            </h2>
-          </div>
-        </div>
-
+      {/* Header -- título e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); não sobrava descrição pra ficar no
+          lugar, então os botões vão sozinhos na linha. */}
+      <div className="flex items-center justify-end gap-2 sm:gap-4 mb-3 shrink-0">
         <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
           <button
             onClick={() => setShowFilters(v => !v)}

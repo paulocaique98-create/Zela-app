@@ -142,18 +142,17 @@ export default function AdminStudentList({ currentUser }) {
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
+      {/* Header -- título "Lista de Alunos" removido (o Header do app já
+          mostra o nome da tela dinamicamente), ícone + contador numa linha
+          só, mais compacta. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-            <GraduationCap size={22} />
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
+            <GraduationCap size={18} />
           </div>
-          <div>
-            <h2 className="text-h3 text-on-surface">Lista de Alunos</h2>
-            <p className="text-small text-on-surface-variant">
-              {totalCount} aluno{totalCount !== 1 ? 's' : ''} matriculado{totalCount !== 1 ? 's' : ''}
-            </p>
-          </div>
+          <p className="text-small text-on-surface-variant">
+            {totalCount} aluno{totalCount !== 1 ? 's' : ''} matriculado{totalCount !== 1 ? 's' : ''}
+          </p>
         </div>
         <button
           onClick={handleRefresh}

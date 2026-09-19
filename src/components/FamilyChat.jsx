@@ -333,14 +333,10 @@ export default function FamilyChat({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-          <MessageCircle size={22} />
-        </div>
-        <div>
-          <h2 className="text-h3 text-on-surface">Chat</h2>
-          <p className="text-on-surface-variant text-small hidden sm:block">Escolha o setor com quem deseja falar.</p>
-        </div>
+      {/* Título "Chat" e ícone removidos (o Header do app já mostra o nome
+          da tela dinamicamente); só a descrição, direto. */}
+      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+        <p className="text-on-surface-variant text-small hidden sm:block">Escolha o setor com quem deseja falar.</p>
       </div>
 
       <div className="flex-1 min-h-0 p-5 sm:p-6 flex flex-col">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, AlertCircle, Loader2, Receipt, ExternalLink, Copy, Check, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Loader2, Receipt, ExternalLink, Copy, Check, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const CYCLE_LABELS = { MONTHLY: 'Mensal', QUARTERLY: 'Trimestral', SEMIANNUALLY: 'Semestral', YEARLY: 'Anual' };
@@ -69,13 +69,8 @@ export default function FamilyFinanceiro() {
 
   return (
     <div className="h-full flex flex-col bg-white p-3 md:p-4 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-          <Wallet size={22} />
-        </div>
-        <h2 className="text-xl font-black text-on-surface">Financeiro</h2>
-      </div>
-
+      {/* Título "Financeiro" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente). */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
         {errorMsg && (
           <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">

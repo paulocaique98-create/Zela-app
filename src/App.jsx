@@ -11,6 +11,7 @@ import { formatPersonName } from './utils/formatName';
 import { FACE_DUPLICATE_THRESHOLD, euclideanDistance } from './lib/faceMatch';
 import { parseShortTime } from './utils/attendanceUtils';
 import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
+import { screenLabel, screenLabelMobile } from './lib/constants';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -60,10 +61,15 @@ export default function App() {
   const [adminTab, setAdminTab] = useState(() => sessionStorage.getItem('zela_admin_tab') || 'home');
   const [familyTab, setFamilyTab] = useState(() => sessionStorage.getItem('zela_family_tab') || 'home'); // home | history | settings
   const [teacherTab, setTeacherTab] = useState(() => sessionStorage.getItem('zela_teacher_tab') || 'home');
+  // Antes vivia isolado dentro do próprio DeveloperLayout.jsx (só ele lia/
+  // escrevia) -- subiu pra cá pra virar disponível pro título dinâmico do
+  // Header, igual aos outros 3 portais acima.
+  const [developerTab, setDeveloperTab] = useState(() => sessionStorage.getItem('zela_developer_tab') || 'schools');
 
   useEffect(() => { sessionStorage.setItem('zela_admin_tab', adminTab); }, [adminTab]);
   useEffect(() => { sessionStorage.setItem('zela_family_tab', familyTab); }, [familyTab]);
   useEffect(() => { sessionStorage.setItem('zela_teacher_tab', teacherTab); }, [teacherTab]);
+  useEffect(() => { sessionStorage.setItem('zela_developer_tab', developerTab); }, [developerTab]);
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
   // pra anexar aos logs de erro (ver errorLogger.js > setCurrentScreen). Só
@@ -74,9 +80,10 @@ export default function App() {
       currentUser?.role === 'admin' ? adminTab :
       currentUser?.role === 'family' ? familyTab :
       currentUser?.role === 'teacher' ? teacherTab :
+      currentUser?.role === 'developer' ? `dev-${developerTab}` :
       null;
     setCurrentScreen(screen);
-  }, [currentUser?.role, adminTab, familyTab, teacherTab]);
+  }, [currentUser?.role, adminTab, familyTab, teacherTab, developerTab]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -1242,6 +1249,18 @@ export default function App() {
   // AdminPortal.jsx).
   const isKioskFullscreen = currentUser.role === 'admin' && adminTab === 'kiosk';
 
+  // Título dinâmico do Header ("Zela - Usuários" etc.) -- na Início de cada
+  // portal continua mostrando só "Zela Portal" (currentHeaderLabel null),
+  // pedido explícito do usuário pra não poluir a tela mais usada.
+  const currentHeaderTab =
+    currentUser.role === 'admin' ? adminTab :
+    currentUser.role === 'family' ? familyTab :
+    currentUser.role === 'teacher' ? teacherTab :
+    currentUser.role === 'developer' ? `dev-${developerTab}` :
+    null;
+  const currentHeaderLabel = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabel(currentHeaderTab) : null;
+  const currentHeaderLabelMobile = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabelMobile(currentHeaderTab) : null;
+
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
       {!isKioskFullscreen && (
@@ -1249,6 +1268,8 @@ export default function App() {
           currentUser={currentUser}
           currentSchool={currentSchool}
           globalLogo={globalLogo}
+          screenLabel={currentHeaderLabel}
+          screenLabelMobile={currentHeaderLabelMobile}
           onLogout={handleLogout}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onTriggerEmergency={triggerEmergency}
@@ -1286,6 +1307,8 @@ export default function App() {
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
+                  activeTab={developerTab}
+                  setActiveTab={setDeveloperTab}
                 />
               ) : currentUser.role === 'admin' ? (
                 <AdminPortal

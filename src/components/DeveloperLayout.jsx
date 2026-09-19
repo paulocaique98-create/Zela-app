@@ -1,7 +1,6 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Building2, Receipt, FileText, LifeBuoy, Settings } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
-import { setCurrentScreen } from '../lib/errorLogger';
 
 // Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
 const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
@@ -9,15 +8,7 @@ const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
 const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
 const DeveloperErrorLogs = lazy(() => import('./DeveloperErrorLogs'));
 
-export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen }) {
-  // Persiste a aba em sessionStorage -- sem isso, um F5 sempre voltava pra
-  // "Gestão de Escolas", mesmo que o developer estivesse em Suporte ou
-  // Configurações (mesmo ajuste feito nos outros 3 portais em App.jsx).
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('zela_developer_tab') || 'schools');
-  useEffect(() => { sessionStorage.setItem('zela_developer_tab', activeTab); }, [activeTab]);
-  // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — esse estado é isolado (não
-  // sobe até App.jsx como os outros 3 portais), precisa do próprio efeito.
-  useEffect(() => { setCurrentScreen(`dev-${activeTab}`); }, [activeTab]);
+export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
 
   const navItems = [

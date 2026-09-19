@@ -71,3 +71,52 @@ export const ATTENDANCE_CORRECTION_REASONS = [
   { value: 'ERRO_OPERACIONAL', label: 'Erro operacional da equipe' },
   { value: 'OUTRO', label: 'Outro motivo' },
 ];
+
+// Id técnico da aba (adminTab/familyTab/teacherTab em App.jsx, activeTab em
+// DeveloperLayout.jsx prefixado 'dev-') -> rótulo amigável. Usado tanto pelo
+// título dinâmico do Header quanto pela tela de origem dos erros
+// (DeveloperErrorLogs.jsx). Ids sem entrada aqui caem no fallback (id cru),
+// nunca quebra por aba nova ainda não mapeada.
+export const SCREEN_LABELS = {
+  // Admin
+  home: 'Início', register: 'Cadastro de Usuário', 'cadastro-funcionarios': 'Cadastro de Funcionário',
+  users: 'Gestão de Usuários', students: 'Alunos', 'gerenciar-funcionarios': 'Gestão de Funcionários',
+  matriculas: 'Matrículas', 'ficha-medica': 'Ficha Médica',
+  monitor: 'Monitor', kiosk: 'Autoatendimento', presence: 'Presença Diária', history: 'Histórico Geral',
+  'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença',
+  calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
+  materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
+  financeiro: 'Financeiro', auditoria: 'Auditoria', 'duplicidade-biometrica': 'Duplicidade Facial',
+  settings: 'Configurações',
+  // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
+  acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
+  registration: 'Dados Cadastrais', comunicados: 'Comunicados',
+  // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
+  'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
+  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',
+};
+
+export function screenLabel(screen) {
+  if (!screen) return null;
+  return SCREEN_LABELS[screen] || screen;
+}
+
+// Versão abreviada de SCREEN_LABELS só pro título do Header no celular, onde
+// sobra pouco espaço (entre o menu hambúrguer e o sino/emergência/sair). Só
+// entram aqui as telas cujo nome completo é longo demais pra caber sem
+// cortar -- as ausentes usam o nome completo normal (screenLabel), que já é
+// curto o bastante ("Usuários", "Alunos", "Início" etc.).
+export const SCREEN_LABELS_MOBILE = {
+  users: 'Usuários',
+  'gerenciar-funcionarios': 'Funcionários',
+  'cadastro-funcionarios': 'Funcionário',
+  'attendance-corrections': 'Correção',
+  'duplicidade-biometrica': 'Duplicidade',
+  materias: 'Matérias',
+  'dev-settings': 'Config.',
+};
+
+export function screenLabelMobile(screen) {
+  if (!screen) return null;
+  return SCREEN_LABELS_MOBILE[screen] || screenLabel(screen);
+}

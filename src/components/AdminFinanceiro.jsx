@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 
@@ -39,16 +39,11 @@ export default function AdminFinanceiro({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white p-3 md:p-4 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
-        <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
-          <Wallet size={22} />
-        </div>
-        <h2 className="text-xl font-black text-on-surface">Financeiro</h2>
-      </div>
+      {/* Título "Financeiro" e ícone removidos (o Header do app já mostra o
+          nome da tela dinamicamente); sub-abas ganham o espaço. */}
 
       {/* Sub-abas */}
-      <div className="flex gap-1 mb-3 border-b border-outline-variant shrink-0 -mt-1">
+      <div className="flex gap-1 mb-3 border-b border-outline-variant shrink-0">
         {TABS.map(t => (
           <button
             key={t.id}
