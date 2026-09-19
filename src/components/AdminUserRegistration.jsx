@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus, AlertTriangle } from 'lucide-react';
+import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus, AlertTriangle, ChevronDown, UserCog } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { formatPersonName } from '../utils/formatName';
@@ -127,6 +127,10 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
   // dia preenchido. Inicializa marcado se o aluno já tiver horários
   // próprios salvos (edição), senão desmarcado.
   const [showWeeklySchedule, setShowWeeklySchedule] = useState(Object.keys(student.weekly_schedule || {}).length > 0);
+  // Expandir/minimizar só visual (não desliga nem apaga os horários já
+  // configurados, diferente do checkbox acima) -- pedido explícito pra
+  // conseguir esconder o bloco de dias sem perder o que já foi preenchido.
+  const [weekBoxExpanded, setWeekBoxExpanded] = useState(false);
 
   const setWeeklyScheduleEnabled = (enabled) => {
     setShowWeeklySchedule(enabled);
@@ -252,51 +256,82 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
       {/* Horários personalizados por dia da semana -- só admin principal/developer */}
       {canManageExtraHours && (
         <div className="pt-3 border-t border-outline-variant">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showWeeklySchedule}
-              onChange={e => setWeeklyScheduleEnabled(e.target.checked)}
-              className="w-4 h-4 rounded accent-primary"
-            />
-            <span className="text-xs font-bold text-on-surface">Horários personalizados por dia</span>
-          </label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showWeeklySchedule}
+                onChange={e => setWeeklyScheduleEnabled(e.target.checked)}
+                className="w-4 h-4 rounded accent-primary"
+              />
+              <span className="text-xs font-bold text-on-surface">Horários personalizados por dia</span>
+            </label>
+            {showWeeklySchedule && (
+              <button
+                type="button"
+                onClick={() => setWeekBoxExpanded(v => !v)}
+                title={weekBoxExpanded ? 'Minimizar' : 'Expandir'}
+                className="p-1 text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 rounded-md transition"
+              >
+                <ChevronDown size={16} className={`transition-transform ${weekBoxExpanded ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+          </div>
 
-          {showWeeklySchedule && (
-            <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-zela-md space-y-1.5 animate-in fade-in duration-200">
-              {DIAS_SEMANA_HORARIO.map(dia => {
-                const override = student.weekly_schedule?.[dia.key];
-                const hasOverride = Boolean(override);
-                return (
-                  <div key={dia.key} className="flex items-center gap-2">
-                    <span className="w-16 text-xs text-on-surface-variant shrink-0">{dia.label}</span>
-                    <input
-                      type="time"
-                      value={override?.entry ?? ''}
-                      onChange={e => setDayOverride(dia.key, 'entry', e.target.value)}
-                      placeholder={baseEntryTime || '--:--'}
-                      className="w-24 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
-                    />
-                    <span className="text-[11px] text-on-surface-variant/70">às</span>
-                    <input
-                      type="time"
-                      value={override?.exit ?? ''}
-                      onChange={e => setDayOverride(dia.key, 'exit', e.target.value)}
-                      placeholder={baseExitTime || '--:--'}
-                      className="w-24 p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
-                    />
-                    {hasOverride ? (
-                      <button type="button" onClick={() => clearDayOverride(dia.key)} title="Voltar ao horário padrão"
-                        className="text-[11px] text-on-surface-variant/60 hover:text-red-600 underline underline-offset-2 shrink-0">
-                        padrão
-                      </button>
-                    ) : (
-                      <span className="text-[11px] text-on-surface-variant/50 shrink-0">(padrão: {baseEntryTime || '--:--'} às {baseExitTime || '--:--'})</span>
-                    )}
-                  </div>
-                );
-              })}
-              <p className="text-[10px] text-on-surface-variant/60 pt-1">Deixe em branco pra usar o horário padrão do ciclo/período acima. Preencha entrada E saída pra sobrescrever o dia -- afeta a tolerância de check-in/check-out e a cobrança automática de hora extra nesse dia.</p>
+          {showWeeklySchedule && weekBoxExpanded && (
+            // Modelo 03 validado com o usuário (proposta com 4 layouts,
+            // 19/09) -- cada dia era uma linha só (nome + 2 campos de
+            // horário + texto de nota), somando mais largura do que cabe
+            // num celular e cortando informação (relato real, com print).
+            // Agora cada dia é um card próprio: nome em cima (linha
+            // inteira), entrada/saída lado a lado numa grade de 2 colunas
+            // logo abaixo, e a nota/link "padrão" por último -- nunca
+            // depende de largura de tela pra caber. Em telas largas
+            // (sm+), 2 dias por linha, ainda sem nenhum elemento precisar
+            // dividir espaço com os outros.
+            <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-zela-md animate-in fade-in duration-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {DIAS_SEMANA_HORARIO.map(dia => {
+                  const override = student.weekly_schedule?.[dia.key];
+                  const hasOverride = Boolean(override);
+                  return (
+                    <div key={dia.key} className="p-2.5 bg-white border border-outline-variant rounded-lg">
+                      <span className="block text-xs font-bold text-on-surface mb-1.5">{dia.label}</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-bold text-on-surface-variant/70 uppercase mb-0.5">Entrada</label>
+                          <input
+                            type="time"
+                            value={override?.entry ?? ''}
+                            onChange={e => setDayOverride(dia.key, 'entry', e.target.value)}
+                            placeholder={baseEntryTime || '--:--'}
+                            className="w-full p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold text-on-surface-variant/70 uppercase mb-0.5">Saída</label>
+                          <input
+                            type="time"
+                            value={override?.exit ?? ''}
+                            onChange={e => setDayOverride(dia.key, 'exit', e.target.value)}
+                            placeholder={baseExitTime || '--:--'}
+                            className="w-full p-1.5 bg-white border border-outline-variant rounded-md text-xs text-center focus:ring-2 focus:ring-primary outline-none"
+                          />
+                        </div>
+                      </div>
+                      {hasOverride ? (
+                        <button type="button" onClick={() => clearDayOverride(dia.key)} title="Voltar ao horário padrão"
+                          className="mt-1.5 text-[11px] font-bold text-amber-600 hover:text-red-600 underline underline-offset-2">
+                          Voltar ao horário padrão
+                        </button>
+                      ) : (
+                        <span className="block mt-1.5 text-[10px] text-on-surface-variant/50">Padrão: {baseEntryTime || '--:--'} às {baseExitTime || '--:--'}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-on-surface-variant/60 pt-2">Deixe em branco pra usar o horário padrão do ciclo/período acima. Preencha entrada E saída pra sobrescrever o dia -- afeta a tolerância de check-in/check-out e a cobrança automática de hora extra nesse dia.</p>
             </div>
           )}
         </div>
@@ -314,6 +349,13 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   const { turmas: schoolTurmas, terminology } = useSchoolConfig(currentUser?.school_id);
   const [guardianType, setGuardianType] = useState('Responsável'); // 'Responsável' | 'Responsável Financeiro'
   const [resetSent, setResetSent] = useState(false);
+
+  // Acordeão das 4 seções do formulário -- todas começam fechadas (a pedido
+  // explícito, mesmo a que mais se mexe), só uma aberta por vez: abrir uma
+  // fecha a anterior sozinha, e clicar de novo na que já está aberta fecha
+  // ela também. `null` = todas fechadas.
+  const [openSection, setOpenSection] = useState(null);
+  const toggleSection = (id) => setOpenSection(prev => (prev === id ? null : id));
 
   // initialData pré-preenche o formulário de CRIAÇÃO (não edição) — usado pelo
   // atalho "Criar acesso de login" a partir de um Funcionário já cadastrado,
@@ -955,13 +997,22 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   const inputCls = 'w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm font-medium';
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form id="admin-user-registration-form" onSubmit={handleSubmit} className="space-y-3">
 
       {/* ── SEÇÃO 1: TIPO DE CONTA ── */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2">
-          1. Tipo de Conta
-        </h3>
+      <div className="border border-outline-variant rounded-zela-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => toggleSection('tipo-conta')}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
+        >
+          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+            <UserCog size={14} /> 1. Tipo de Conta
+          </h3>
+          <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'tipo-conta' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
+        </button>
+        {openSection === 'tipo-conta' && (
+        <div className="p-4 space-y-4 animate-in fade-in duration-150">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Perfil do Usuário', true,
             <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
@@ -1039,13 +1090,24 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             <span className="text-xs font-bold text-primary">Visualiza e responde o chat de todos os departamentos</span>
           </label>
         )}
+        </div>
+        )}
       </div>
 
       {/* ── SEÇÃO 2: DADOS DO RESPONSÁVEL ── */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 flex items-center gap-2">
-          <Users size={14} /> 2. Dados do Responsável
-        </h3>
+      <div className="border border-outline-variant rounded-zela-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => toggleSection('dados-responsavel')}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
+        >
+          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+            <Users size={14} /> 2. Dados do Responsável
+          </h3>
+          <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'dados-responsavel' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
+        </button>
+        {openSection === 'dados-responsavel' && (
+        <div className="p-4 space-y-4 animate-in fade-in duration-150">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Nome Completo', true,
@@ -1119,19 +1181,34 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               className={inputCls} placeholder="Ex: Engenheira" />
           )}
         </div>
+        </div>
+        )}
       </div>
 
       {/* ── SEÇÃO 3: ALUNOS VINCULADOS ── */}
       {formData.role === 'family' && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 flex items-center justify-between">
-            <span className="flex items-center gap-2"><Clock size={14} /> 3. Alunos Vinculados</span>
-            <button type="button" onClick={handleAddStudent}
-              className="text-primary hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition">
+        <div className="border border-outline-variant rounded-zela-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => toggleSection('alunos-vinculados')}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
+          >
+            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+              <Clock size={14} /> 3. Alunos Vinculados
+            </h3>
+            <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'alunos-vinculados' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
+          </button>
+          {openSection === 'alunos-vinculados' && (
+          <div className="p-4 space-y-4 animate-in fade-in duration-150">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleAddStudent}
+              className="text-primary hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition"
+            >
               <Plus size={13} /> Adicionar Aluno
             </button>
-          </h3>
-
+          </div>
           <div className="space-y-4">
             {students.map((student, idx) => (
               <StudentCard
@@ -1146,28 +1223,45 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               />
             ))}
           </div>
+          </div>
+          )}
         </div>
       )}
 
       {/* ── SEÇÃO 4: 2º RESPONSÁVEL (Apenas Edição) ── */}
       {editingUser && formData.role === 'family' && (
-        <div className="space-y-4 pt-4 border-t border-outline-variant">
-          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
-            <Users size={14} /> 4. 2º Responsável (Opcional)
-          </h3>
-          
+        <div className="border border-outline-variant rounded-zela-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => toggleSection('segundo-responsavel')}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
+          >
+            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+              <Users size={14} /> 4. 2º Responsável
+            </h3>
+            <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'segundo-responsavel' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
+          </button>
+          {openSection === 'segundo-responsavel' && (
+          <div className="p-4 space-y-4 animate-in fade-in duration-150">
+
           {secondGuardian ? (
-            <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-bold text-on-surface">{secondGuardian.name}</h4>
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-primary px-2 py-0.5 rounded-md">
+            // Correção pontual (mesmo princípio do Modelo 03 aplicado no
+            // Horário Semanal): no celular, nome+botões lado a lado
+            // forçava o nome a quebrar em várias linhas estreitas e
+            // cortava o botão "Excluir" pra fora da tela (achado real,
+            // com print). Empilha no celular, volta a ficar lado a lado
+            // a partir de sm.
+            <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h4 className="font-bold text-on-surface break-words">{secondGuardian.name}</h4>
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-primary px-2 py-0.5 rounded-md shrink-0">
                     2º Responsável
                   </span>
                 </div>
-                <p className="text-xs text-on-surface-variant">{secondGuardian.email} • {secondGuardian.relationship}</p>
+                <p className="text-xs text-on-surface-variant break-words">{secondGuardian.email} • {secondGuardian.relationship}</p>
               </div>
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setConfirmSecondGuardianAction('remove')}
@@ -1224,21 +1318,24 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               <Plus size={18} /> Cadastrar 2º Responsável
             </button>
           )}
+          </div>
+          )}
         </div>
       )}
 
-      {/* ── SUBMIT ── */}
-      <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
-        {editingUser && (
-          <button type="button" onClick={onClose} className="px-6 py-3 border border-outline-variant text-on-surface-variant font-bold rounded-zela-md hover:bg-surface-container-low transition text-sm">
-            Cancelar
+      {/* ── SUBMIT ──
+          Só aparece na página cheia (Novo Usuário fora de modal) -- dentro
+          do modal (Editar Cadastro / Criar Acesso), o botão de salvar fica
+          fixo no header (não rola com o resto do form) e o "Cancelar" foi
+          removido por ser redundante com o X do header, que já fecha. */}
+      {!(editingUser || forceModal) && (
+        <div className="pt-4 border-t border-outline-variant flex justify-end gap-3">
+          <button type="submit" disabled={isLoading}
+            className="bg-primary text-white font-bold px-8 py-3.5 rounded-zela-md hover:bg-primary-container transition shadow-md disabled:opacity-70 flex items-center gap-2">
+            {isLoading ? 'Salvando...' : 'Finalizar Cadastro'}
           </button>
-        )}
-        <button type="submit" disabled={isLoading}
-          className="bg-primary text-white font-bold px-8 py-3.5 rounded-zela-md hover:bg-primary-container transition shadow-md disabled:opacity-70 flex items-center gap-2">
-          {isLoading ? 'Salvando...' : editingUser ? 'Salvar Alterações' : 'Finalizar Cadastro'}
-        </button>
-      </div>
+        </div>
+      )}
     </form>
   );
 
@@ -1259,26 +1356,44 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
   if (editingUser || forceModal) {
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-        <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-outline-variant bg-surface-container-low shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary">
-                <UserPlus size={22} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-slate-900/60 sm:backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="bg-white sm:rounded-zela-xl shadow-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] flex flex-col overflow-hidden">
+          {/* Header -- reduzido ao máximo no celular (sem subtítulo, ícone e
+              padding menores) pra sobrar o máximo de espaço vertical
+              possível pro conteúdo, que é o que realmente importa editar.
+              No celular o modal também vira tela cheia (sem padding/blur de
+              fundo ao redor) em vez de um cartão flutuante -- não faz
+              sentido gastar espaço de tela desfocando um fundo que já fica
+              89% coberto mesmo assim. */}
+          <div className="flex items-center justify-between gap-2 p-2.5 sm:p-5 border-b border-outline-variant bg-surface-container-low shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="bg-primary/10 p-1.5 sm:p-2.5 rounded-zela-md text-primary shrink-0">
+                <UserPlus size={16} className="sm:hidden" />
+                <UserPlus size={22} className="hidden sm:block" />
               </div>
-              <div>
-                <h2 className="font-bold text-on-surface text-lg">{editingUser ? 'Editar Cadastro do Usuário' : 'Criar Acesso de Login'}</h2>
-                <p className="text-xs text-on-surface-variant/70">{editingUser ? 'Atualize as informações do perfil e alunos vinculados' : 'Complete os dados abaixo para criar o acesso ao sistema'}</p>
+              <div className="min-w-0">
+                <h2 className="font-bold text-on-surface text-sm sm:text-lg truncate">{editingUser ? 'Editar Cadastro' : 'Criar Acesso de Login'}</h2>
+                <p className="hidden sm:block text-xs text-on-surface-variant/70">{editingUser ? 'Atualize as informações do perfil e alunos vinculados' : 'Complete os dados abaixo para criar o acesso ao sistema'}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-lg transition text-on-surface-variant">
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button
+                type="submit"
+                form="admin-user-registration-form"
+                disabled={isLoading}
+                className="bg-primary text-white font-bold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-zela-md hover:bg-primary-container transition shadow-sm disabled:opacity-70 text-xs sm:text-sm whitespace-nowrap"
+              >
+                {isLoading ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button onClick={onClose} className="p-1 sm:p-1.5 hover:bg-slate-200 rounded-lg transition text-on-surface-variant shrink-0">
+                <X size={18} className="sm:hidden" />
+                <X size={20} className="hidden sm:block" />
+              </button>
+            </div>
           </div>
 
           {/* Scrollable Body */}
-          <div className="p-6 overflow-y-auto flex-1">
+          <div className="p-3 sm:p-6 overflow-y-auto flex-1">
             {successMsg && (
               <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-zela-md border border-green-200 flex items-center gap-2 font-medium">
                 <CheckCircle2 size={20} /> {successMsg}
