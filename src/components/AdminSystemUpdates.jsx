@@ -14,9 +14,8 @@ function formatDate(iso) {
 export default function AdminSystemUpdates({ currentUser, onRead }) {
   const [updates, setUpdates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // Minimizado por padrão -- só título + data à vista; expande pra ler o
-  // texto. Mais recente já entra aberto, pra quem acabou de ver o "•" no
-  // menu não precisar de mais um clique pra ler a novidade.
+  // Todos minimizados ao abrir a tela, sem exceção -- só título + data à
+  // vista; nenhum card pode aparecer já expandido sem o próprio clique.
   const [expandedIds, setExpandedIds] = useState(new Set());
   const toggleExpanded = (id) => {
     setExpandedIds(prev => {
@@ -40,7 +39,6 @@ export default function AdminSystemUpdates({ currentUser, onRead }) {
         if (error) throw error;
         if (cancelled) return;
         setUpdates(data || []);
-        if (data && data.length > 0) setExpandedIds(new Set([data[0].id]));
 
         // Marca tudo como lido -- best-effort, nunca trava a leitura da
         // tela se falhar. ON CONFLICT porque abrir a tela de novo (ou em
