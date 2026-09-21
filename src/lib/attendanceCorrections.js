@@ -67,6 +67,37 @@ export async function requestAttendanceCorrection({ logId, newEventTime, newEven
   return data;
 }
 
+// Solicita o LANÇAMENTO de um horário que nunca foi registrado (não existe
+// attendance_logs por trás) -- ex: a saída nunca passou pelo totem e o
+// campo ficou em branco pra sempre. Mesma fricção das correções normais: se
+// não aumenta cobrança, cria o log na hora; se aumenta, fica pendente até
+// outro admin aprovar (o log só nasce na aprovação).
+export async function requestManualAttendanceEntry({ studentId, eventType, newEventTime, reasonCode, reasonDetail, impact, schoolId, actorId }) {
+  const { data, error } = await supabase.rpc('request_attendance_manual_entry', {
+    p_student_id: studentId,
+    p_event_type: eventType,
+    p_new_event_time: newEventTime,
+    p_reason_code: reasonCode,
+    p_reason_detail: reasonDetail || null,
+    p_minutes_delta: impact.minutesDelta,
+    p_increases_billing: impact.increasesBilling,
+  });
+  if (error) throw error;
+
+  if (schoolId && actorId) {
+    logAction({
+      actorId,
+      schoolId,
+      action: 'correct_attendance',
+      entityType: 'attendance_log',
+      entityId: null,
+      details: { student_id: studentId, event_type: eventType, reason_code: reasonCode, status: data?.status, minutes_delta: impact.minutesDelta, manual_entry: true },
+    });
+  }
+
+  return data;
+}
+
 // Remove uma marcação de entrada/saída "fantasma" — gravada em
 // students.today_entry/today_exit no momento de uma solicitação que depois
 // foi cancelada (ou qualquer outra causa de horário órfão), sem log

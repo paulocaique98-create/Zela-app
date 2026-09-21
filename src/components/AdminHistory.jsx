@@ -3,7 +3,7 @@ import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizo
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
-import AttendanceCorrectionModal from './AttendanceCorrectionModal';
+import AttendanceEditTodayModal from './AttendanceEditTodayModal';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -31,7 +31,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
-  const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
+  const [correctionTarget, setCorrectionTarget] = useState(null); // { student, entryLog, exitLog, dateStr }
   // Período fica escondido atrás desse painel -- mesmo modelo "foco na
   // lista" validado no Relatório de Horas Extras (17/09).
   const [showFilters, setShowFilters] = useState(false);
@@ -117,6 +117,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           turma: group.studentData?.turma || '',
           family: group.studentData?.users?.name || '—',
           date: formatDate(group.entryLog?.event_time || group.exitLog?.event_time),
+          dateStr: group.date, // "YYYY-MM-DD" (Brasília) -- ver AttendanceEditTodayModal
           entry: entryTime ? formatTime(entryTime.toISOString()) : null,
           exit: exitTime ? formatTime(exitTime.toISOString()) : null,
           entryCorrected: !!group.entryLog?.corrected,
@@ -299,46 +300,40 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                     )}
                   </div>
 
-                  <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-100 space-y-2">
-                    <div className="min-w-0">
-                      <span className="flex items-center gap-1.5 font-bold text-indigo-600 text-sm flex-wrap">
-                        <LogIn size={13} className="shrink-0" /> {log.entry}
-                        {log.entryCorrected && (
-                          <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
-                        )}
-                        {log.entryLogRaw && (
-                          <button
-                            onClick={() => setCorrectionTarget({ log: log.entryLogRaw, student: log.studentRaw })}
-                            className="text-slate-300 hover:text-indigo-600 transition"
-                            title="Corrigir horário de entrada"
-                          >
-                            <Pencil size={12} />
-                          </button>
-                        )}
-                      </span>
-                      {log.entryBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.entryBy}</p>}
-                    </div>
-
-                    {log.exit && (
+                  <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-100 flex items-end justify-between gap-2">
+                    <div className="space-y-2 min-w-0">
                       <div className="min-w-0">
-                        <span className="flex items-center gap-1.5 font-bold text-rose-500 text-sm flex-wrap">
-                          <LogOut size={13} className="shrink-0" /> {log.exit}
-                          {log.exitCorrected && (
+                        <span className="flex items-center gap-1.5 font-bold text-indigo-600 text-sm flex-wrap">
+                          <LogIn size={13} className="shrink-0" /> {log.entry || <span className="text-slate-300">—</span>}
+                          {log.entryCorrected && (
                             <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
-                          {log.exitLogRaw && (
-                            <button
-                              onClick={() => setCorrectionTarget({ log: log.exitLogRaw, student: log.studentRaw })}
-                              className="text-slate-300 hover:text-indigo-600 transition"
-                              title="Corrigir horário de saída"
-                            >
-                              <Pencil size={12} />
-                            </button>
+                        </span>
+                        {log.entryBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.entryBy}</p>}
+                      </div>
+
+                      <div className="min-w-0">
+                        <span className="flex items-center gap-1.5 font-bold text-rose-500 text-sm flex-wrap">
+                          <LogOut size={13} className="shrink-0" /> {log.exit || <span className="text-slate-300">—</span>}
+                          {log.exitCorrected && (
+                            <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                         </span>
                         {log.exitBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.exitBy}</p>}
                       </div>
-                    )}
+                    </div>
+
+                    {/* Botão único -- substitui os dois lápis separados de
+                        Entrada/Saída (mesmo padrão da Presença Diária). Abre
+                        um modal só, com os dois horários DAQUELE DIA juntos
+                        (ver AttendanceEditTodayModal > targetDateStr). */}
+                    <button
+                      onClick={() => setCorrectionTarget({ student: log.studentRaw, entryLog: log.entryLogRaw, exitLog: log.exitLogRaw, dateStr: log.dateStr })}
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition shrink-0"
+                      title="Editar horário de entrada e/ou saída deste dia"
+                    >
+                      <Pencil size={12} /> Editar horário
+                    </button>
                   </div>
                 </div>
               );
@@ -348,9 +343,11 @@ export default function AdminHistory({ currentSchool, currentUser }) {
       </div>
 
       {correctionTarget && (
-        <AttendanceCorrectionModal
-          log={correctionTarget.log}
+        <AttendanceEditTodayModal
           student={correctionTarget.student}
+          entryLog={correctionTarget.entryLog}
+          exitLog={correctionTarget.exitLog}
+          targetDateStr={correctionTarget.dateStr}
           currentUser={currentUser}
           billingConfig={currentSchool?.billing_config}
           onClose={() => setCorrectionTarget(null)}

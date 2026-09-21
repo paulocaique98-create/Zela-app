@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
-import AttendanceCorrectionModal from './AttendanceCorrectionModal';
-import AttendanceMarkingDeleteModal from './AttendanceMarkingDeleteModal';
+import AttendanceEditTodayModal from './AttendanceEditTodayModal';
 
 const STATUS_CONFIG = {
   in_school:      { label: 'Na escola',        cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
@@ -32,9 +31,8 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [correctionTarget, setCorrectionTarget] = useState(null); // { log, student }
-  const [deleteTarget, setDeleteTarget] = useState(null); // { student, eventType, staleTime }
-  const [resolvingCorrectionFor, setResolvingCorrectionFor] = useState(null); // `${studentId}_${eventType}`
+  const [correctionTarget, setCorrectionTarget] = useState(null); // { student, entryLog, exitLog }
+  const [resolvingCorrectionFor, setResolvingCorrectionFor] = useState(null); // studentId
   const [turmaMenuOpen, setTurmaMenuOpen] = useState(false);
 
   const fetchPresence = async () => {
@@ -64,12 +62,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   }, []);
 
   // Essa tela lê o horário direto de students.today_entry/today_exit (não de
-  // attendance_logs), então não tem o id do log à mão — busca sob demanda,
-  // só quando o admin clica no lápis. entry: primeiro do dia; exit: último
-  // do dia (mesma regra de agruparEventosPorDia em attendanceUtils.js).
-  const openCorrection = async (student, eventType) => {
-    const key = `${student.id}_${eventType}`;
-    setResolvingCorrectionFor(key);
+  // attendance_logs), então não tem o id dos logs à mão — busca os dois
+  // (entrada e saída de hoje) sob demanda, só quando o admin clica em
+  // "Editar horário". Um único botão agora cobre os dois lados (ver
+  // AttendanceEditTodayModal) -- se um lado não tiver log nenhum, o modal já
+  // trata como lançamento novo, não como correção.
+  const openCorrection = async (student) => {
+    setResolvingCorrectionFor(student.id);
     try {
       const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
@@ -77,23 +76,15 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
         .from('attendance_logs')
         .select('id, event_type, event_time, corrected')
         .eq('student_id', student.id)
-        .eq('event_type', eventType)
         .gte('event_time', todayStart.toISOString())
         .lte('event_time', todayEnd.toISOString())
-        .order('event_time', { ascending: eventType === 'entry' })
-        .limit(1);
+        .order('event_time', { ascending: true });
       if (error) throw error;
-      if (!data || data.length === 0) {
-        // Sem log nenhum por trás desse horário: é uma marcação fantasma
-        // (sobra de solicitação cancelada, ver App.jsx > rejectStudentStatus)
-        // — não dá pra "corrigir" um registro que não existe, só remover.
-        const staleTime = eventType === 'entry' ? student.today_entry_at : student.today_exit_at;
-        setDeleteTarget({ student, eventType, staleTime });
-        return;
-      }
-      setCorrectionTarget({ log: data[0], student });
+      const entryLog = (data || []).find(l => l.event_type === 'entry') || null;
+      const exitLog = [...(data || [])].reverse().find(l => l.event_type === 'exit') || null;
+      setCorrectionTarget({ student, entryLog, exitLog });
     } catch (err) {
-      console.error('Erro ao localizar registro para correção:', err);
+      console.error('Erro ao localizar registros de hoje:', err);
     } finally {
       setResolvingCorrectionFor(null);
     }
@@ -219,37 +210,35 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
                     </span>
                   </div>
 
-                  <div className="flex gap-5 pt-2 border-t border-dashed border-slate-200 flex-wrap">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Entrada</span>
-                      {student.today_entry ? (
-                        <span className="flex items-center gap-1.5 font-mono font-bold text-indigo-700 text-sm">
-                          {student.today_entry.substring(0, 5)}
-                          {resolvingCorrectionFor === `${student.id}_entry` ? (
-                            <Loader2 size={11} className="animate-spin text-slate-300" />
-                          ) : (
-                            <button onClick={() => openCorrection(student, 'entry')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de entrada">
-                              <Pencil size={11} />
-                            </button>
-                          )}
+                  <div className="flex items-end justify-between gap-2 pt-2 border-t border-dashed border-slate-200">
+                    <div className="flex gap-5 flex-wrap">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Entrada</span>
+                        <span className="font-mono font-bold text-indigo-700 text-sm">
+                          {student.today_entry ? student.today_entry.substring(0, 5) : <span className="text-slate-300">—</span>}
                         </span>
-                      ) : <span className="font-mono font-bold text-slate-300 text-sm">—</span>}
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Saída</span>
-                      {student.today_exit ? (
-                        <span className="flex items-center gap-1.5 font-mono font-bold text-slate-500 text-sm">
-                          {student.today_exit.substring(0, 5)}
-                          {resolvingCorrectionFor === `${student.id}_exit` ? (
-                            <Loader2 size={11} className="animate-spin text-slate-300" />
-                          ) : (
-                            <button onClick={() => openCorrection(student, 'exit')} className="text-slate-300 hover:text-indigo-600 transition" title="Corrigir horário de saída">
-                              <Pencil size={11} />
-                            </button>
-                          )}
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Saída</span>
+                        <span className="font-mono font-bold text-slate-500 text-sm">
+                          {student.today_exit ? student.today_exit.substring(0, 5) : <span className="text-slate-300">—</span>}
                         </span>
-                      ) : <span className="font-mono font-bold text-slate-300 text-sm">—</span>}
+                      </div>
                     </div>
+                    {/* Botão único -- substitui os dois lápis separados de
+                        Entrada/Saída. Abre um modal só, com os dois horários
+                        juntos (ver AttendanceEditTodayModal). */}
+                    {resolvingCorrectionFor === student.id ? (
+                      <Loader2 size={13} className="animate-spin text-slate-300 shrink-0" />
+                    ) : (
+                      <button
+                        onClick={() => openCorrection(student)}
+                        className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition shrink-0"
+                        title="Editar horário de entrada e/ou saída de hoje"
+                      >
+                        <Pencil size={12} /> Editar horário
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -259,24 +248,14 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
       </div>
 
       {correctionTarget && (
-        <AttendanceCorrectionModal
-          log={correctionTarget.log}
+        <AttendanceEditTodayModal
           student={correctionTarget.student}
+          entryLog={correctionTarget.entryLog}
+          exitLog={correctionTarget.exitLog}
           currentUser={currentUser}
           billingConfig={currentSchool?.billing_config}
           onClose={() => setCorrectionTarget(null)}
           onSaved={() => { setCorrectionTarget(null); fetchPresence(); }}
-        />
-      )}
-
-      {deleteTarget && (
-        <AttendanceMarkingDeleteModal
-          student={deleteTarget.student}
-          eventType={deleteTarget.eventType}
-          staleTime={deleteTarget.staleTime}
-          currentUser={currentUser}
-          onClose={() => setDeleteTarget(null)}
-          onDeleted={() => { setDeleteTarget(null); fetchPresence(); }}
         />
       )}
     </div>

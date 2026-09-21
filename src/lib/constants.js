@@ -72,7 +72,7 @@ export const NIVEL_AUTONOMIA = [
 ];
 
 // Motivos de correção manual de horário de check-in/check-out — obrigatório
-// escolher um ao corrigir (ver AttendanceCorrectionModal.jsx). Aparece
+// escolher um ao corrigir (ver AttendanceEditTodayModal.jsx). Aparece
 // também pro responsável, no Histórico, como parte da transparência da
 // correção.
 export const ATTENDANCE_CORRECTION_REASONS = [
