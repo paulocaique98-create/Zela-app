@@ -45,7 +45,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
       // Ausentes nesta tela (ver STATUS_CONFIG.idle), não somem da lista.
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, status, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, today_entry, today_exit, today_entry_at, today_exit_at, family_id')
+        .select('id, name, status, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra, today_entry, today_exit, today_entry_at, today_exit_at, family_id')
         .eq('school_id', currentUser.school_id)
         .order('name', { ascending: true });
 

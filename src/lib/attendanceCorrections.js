@@ -9,10 +9,11 @@ import { logAction } from './auditLog';
 export function evaluateCorrectionImpact({ eventType, originalIso, newIso, student, billingConfig }) {
   const config = mergeBillingConfig(billingConfig);
   const weeklySchedule = student?.weekly_schedule || null;
+  const isentoHoraExtra = student?.isento_hora_extra || false;
 
   if (eventType === 'exit') {
-    const before = calcularHorasExtras(originalIso, student?.contracted_exit_time, weeklySchedule, config);
-    const after = calcularHorasExtras(newIso, student?.contracted_exit_time, weeklySchedule, config);
+    const before = calcularHorasExtras(originalIso, student?.contracted_exit_time, weeklySchedule, config, isentoHoraExtra);
+    const after = calcularHorasExtras(newIso, student?.contracted_exit_time, weeklySchedule, config, isentoHoraExtra);
     return {
       valorAntes: before.valor,
       valorDepois: after.valor,
@@ -23,8 +24,8 @@ export function evaluateCorrectionImpact({ eventType, originalIso, newIso, stude
     };
   }
 
-  const before = calcularEntradaAntecipada(originalIso, student?.contracted_entry_time, weeklySchedule, config);
-  const after = calcularEntradaAntecipada(newIso, student?.contracted_entry_time, weeklySchedule, config);
+  const before = calcularEntradaAntecipada(originalIso, student?.contracted_entry_time, weeklySchedule, config, isentoHoraExtra);
+  const after = calcularEntradaAntecipada(newIso, student?.contracted_entry_time, weeklySchedule, config, isentoHoraExtra);
   return {
     valorAntes: before.valor,
     valorDepois: after.valor,

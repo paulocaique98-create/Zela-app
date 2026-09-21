@@ -81,7 +81,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           corrected,
           performed_by_name,
           student_id,
-          students:student_id (name, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, users:family_id(name))
+          students:student_id (name, turma, contracted_hours, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra, users:family_id(name))
         `)
         .eq('school_id', schoolId)
         .gte('event_time', startDate)
@@ -108,7 +108,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         // Excedente calculado sobre o HORÁRIO FIXO contratado de saída (não
         // compensa entrada atrasada) — mesma regra e mesma função usadas no
         // Relatório de Horas Extras, pra não ter duas verdades diferentes.
-        const calculo = calcularHorasExtras(group.exitLog?.event_time || null, group.studentData?.contracted_exit_time);
+        const calculo = calcularHorasExtras(group.exitLog?.event_time || null, group.studentData?.contracted_exit_time, null, null, group.studentData?.isento_hora_extra);
 
         return {
           key: `${group.student_id}_${group.date}`,

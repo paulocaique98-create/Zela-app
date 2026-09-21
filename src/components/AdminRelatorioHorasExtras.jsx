@@ -100,7 +100,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           event_time,
           student_id,
           recorded_by,
-          students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, users:family_id(name)),
+          students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra, users:family_id(name)),
           users:recorded_by (name)
         `)
         .eq('school_id', schoolId)
@@ -120,6 +120,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         const contractedEntryTime = group.studentData?.contracted_entry_time;
         const contractedExitTime = group.studentData?.contracted_exit_time;
         const weeklySchedule = group.studentData?.weekly_schedule;
+        const isentoHoraExtra = group.studentData?.isento_hora_extra;
 
         // Incluindo nome do funcionário que aprovou o checkout
         const approvedBy = group.exitLog?.users?.name || group.entryLog?.users?.name || '—';
@@ -127,8 +128,8 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         // Cobrança considera os dois lados: check-in ANTECIPADO (antes da
         // entrada contratada/efetiva do dia, com margem) e check-out
         // TARDIO (já existia) -- somados no total do dia.
-        const calculoSaida = calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule, billingConfig);
-        const calculoEntrada = calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule, billingConfig);
+        const calculoSaida = calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule, billingConfig, isentoHoraExtra);
+        const calculoEntrada = calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule, billingConfig, isentoHoraExtra);
 
         const minutos_excedentes = calculoSaida.minutos_excedentes + calculoEntrada.minutos_antecipados;
         const valor = calculoSaida.valor + calculoEntrada.valor;

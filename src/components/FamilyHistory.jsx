@@ -84,7 +84,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
           correction_reason_code,
           corrected_at,
           student_id,
-          students:student_id (name, turma, contracted_hours, contracted_exit_time, users:family_id(name))
+          students:student_id (name, turma, contracted_hours, contracted_exit_time, isento_hora_extra, users:family_id(name))
         `);
 
       if (familyStudents && familyStudents.length > 0) {
@@ -121,7 +121,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
             // Excedente calculado sobre o HORÁRIO FIXO contratado de saída (não
             // compensa entrada atrasada) — mesma regra e mesma função usadas no
             // Relatório de Horas Extras, pra não ter duas verdades diferentes.
-            const calculo = calcularHorasExtras(nextExit?.event_time || null, ev.students?.contracted_exit_time);
+            const calculo = calcularHorasExtras(nextExit?.event_time || null, ev.students?.contracted_exit_time, null, null, ev.students?.isento_hora_extra);
 
             result.push({
               key: ev.id,

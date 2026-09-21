@@ -103,7 +103,7 @@ export default function AdminStudentList({ currentUser }) {
     try {
       let query = supabase
         .from('students')
-        .select('id, name, turma, contracted_hours, contracted_entry_time, status, family_id, users:family_id(name, email, phone)')
+        .select('id, name, turma, contracted_hours, contracted_entry_time, isento_hora_extra, status, family_id, users:family_id(name, email, phone)')
         .eq('school_id', currentUser.school_id)
         .order('name', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
@@ -240,7 +240,14 @@ export default function AdminStudentList({ currentUser }) {
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-on-surface">{student.name || 'Sem nome'}</span>
+                          <span className="font-semibold text-on-surface flex items-center gap-1.5">
+                            {student.name || 'Sem nome'}
+                            {student.isento_hora_extra && (
+                              <span title="Isento de hora extra" className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                Bolsista
+                              </span>
+                            )}
+                          </span>
                           {student.contracted_entry_time == null && (
                             <span className="text-[10px] font-bold text-warning bg-amber-100 px-2 py-0.5 rounded w-max mt-0.5">
                               Sem período

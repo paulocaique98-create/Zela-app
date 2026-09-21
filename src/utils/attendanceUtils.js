@@ -155,11 +155,18 @@ function formatCurrency(valor) {
  *
  * Exemplos da Regra de Negócio (com a tolerância/valor padrão):
  * Tolerância = 15 minutos. Valor da hora = R$ 30,00.
+ * A tolerância só decide SE cobra (gatilho) -- uma vez ultrapassada em
+ * qualquer minuto, a contagem de horas cheias volta pro horário ORIGINAL
+ * contratado (18:00), não pro fim da tolerância (18:15). Passar 1 minuto
+ * da tolerância já fecha a 1ª hora inteira; passar de 60 minutos totais
+ * já abre a 2ª hora inteira, e assim por diante.
  * - 18:00 contratado + 15min tolerância = 18:15 é o limite.
  * - Check-out às 18:10 -> 10min -> tolerância não ultrapassada -> 0 excedente = R$ 0,00
- * - Check-out às 18:20 -> tolerância (18:15) ultrapassada. Calcula desde 18:15: 18:20 - 18:15 = 5 min excedentes -> 1 hora cheia = R$ 30,00
- * - Check-out às 19:00 -> tolerância ultrapassada. Calcula desde 18:15: 19:00 - 18:15 = 45 min excedentes -> 1 hora cheia = R$ 30,00
- * - Check-out às 19:16 -> tolerância ultrapassada. 19:16 - 18:15 = 61 min excedentes -> 2 horas cheias = R$ 60,00
+ * - Check-out às 18:15 -> 15min -> ainda dentro da tolerância (limite inclusive) -> R$ 0,00
+ * - Check-out às 18:16 -> 16min, passou 1 min da tolerância -> conta 1h cheia (desde 18:00) -> R$ 30,00
+ * - Check-out às 19:00 -> 60min -> ainda dentro da 1ª hora cheia -> R$ 30,00
+ * - Check-out às 19:01 -> 61min, passou de 60min -> abre a 2ª hora cheia -> R$ 60,00
+ * - Check-out às 21:16 -> 196min -> 4ª hora cheia (ceil(196/60)=4) -> R$ 120,00
  *
  * @param {string|null} exitTimeIso - O horário real de saída em formato ISO.
  * @param {string|null} contractedExitTime - O horário-base contratado ("HH:MM" ou "HH:MM:SS").
@@ -168,9 +175,15 @@ function formatCurrency(valor) {
  *   de aplicar a tolerância.
  * @param {Object|null} billingConfig - schools.billing_config (opcional, mesclado com
  *   DEFAULT_BILLING_CONFIG) -- tolerância e valor da hora configuráveis por escola.
+ * @param {boolean} isentoHoraExtra - students.isento_hora_extra (aluno bolsista) --
+ *   se true, nunca gera cobrança nem excedente, independente do horário.
  * @returns {Object} - { minutos_excedentes, valor, valorFormatado, dentro_tolerancia, sem_saida }
  */
-export function calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule = null, billingConfig = null) {
+export function calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule = null, billingConfig = null, isentoHoraExtra = false) {
+  if (isentoHoraExtra) {
+    return { minutos_excedentes: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_saida: !exitTimeIso };
+  }
+
   if (!exitTimeIso) {
     return { minutos_excedentes: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_saida: true };
   }
@@ -201,14 +214,17 @@ export function calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySched
     };
   }
 
-  // Passou da tolerância: calcular os minutos excedentes APÓS a tolerância (ex: se saiu 18:20 e tolerância ia até 18:15, cobrar 5 minutos)
-  const minutosExcedentesCobranca = diffMinutes - config.late_checkout_tolerance_min;
-
-  const horasCobradas = Math.ceil(minutosExcedentesCobranca / 60);
+  // Passou da tolerância: a tolerância só decidiu QUE cobra -- a contagem de
+  // horas cheias usa o tempo total desde o horário ORIGINAL contratado
+  // (diffMinutes), não o tempo subtraído da tolerância. Ex: saiu 18:16
+  // (16min, 1 min além da tolerância) já fecha 1h cheia; saiu 19:01 (61min)
+  // já abre a 2ª hora -- mesma regra validada com o usuário (ver exemplos
+  // no comentário da função).
+  const horasCobradas = Math.ceil(diffMinutes / 60);
   const valor = horasCobradas * (config.hourly_rate_cents / 100);
 
   return {
-    minutos_excedentes: minutosExcedentesCobranca,
+    minutos_excedentes: diffMinutes,
     valor: valor,
     valorFormatado: formatCurrency(valor),
     dentro_tolerancia: false,
@@ -227,9 +243,15 @@ export function calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySched
  * @param {string|null} contractedEntryTime - O horário-base contratado ("HH:MM" ou "HH:MM:SS").
  * @param {Object|null} weeklySchedule - students.weekly_schedule (opcional).
  * @param {Object|null} billingConfig - schools.billing_config (opcional).
+ * @param {boolean} isentoHoraExtra - students.isento_hora_extra (aluno bolsista) --
+ *   se true, nunca gera cobrança nem excedente, independente do horário.
  * @returns {Object} - { minutos_antecipados, valor, valorFormatado, dentro_tolerancia, sem_entrada }
  */
-export function calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule = null, billingConfig = null) {
+export function calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule = null, billingConfig = null, isentoHoraExtra = false) {
+  if (isentoHoraExtra) {
+    return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: !entryTimeIso };
+  }
+
   if (!entryTimeIso) {
     return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: true };
   }
@@ -254,12 +276,14 @@ export function calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, wee
     return { minutos_antecipados: 0, valor: 0, valorFormatado: 'R$ 0,00', dentro_tolerancia: true, sem_entrada: false };
   }
 
-  const minutosAntecipadosCobranca = diffMinutes - config.early_checkin_tolerance_min;
-  const horasCobradas = Math.ceil(minutosAntecipadosCobranca / 60);
+  // Mesma regra de calcularHorasExtras: a tolerância só decide SE cobra --
+  // a contagem de horas cheias usa o tempo total antes do horário
+  // contratado (diffMinutes), não o tempo subtraído da tolerância.
+  const horasCobradas = Math.ceil(diffMinutes / 60);
   const valor = horasCobradas * (config.hourly_rate_cents / 100);
 
   return {
-    minutos_antecipados: minutosAntecipadosCobranca,
+    minutos_antecipados: diffMinutes,
     valor: valor,
     valorFormatado: formatCurrency(valor),
     dentro_tolerancia: false,

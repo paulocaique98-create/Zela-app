@@ -100,6 +100,7 @@ const emptyStudent = () => ({
   custom_exit: '',
   is_custom_period: false,
   weekly_schedule: {},
+  isento_hora_extra: false,
 });
 
 // ──────────────────────────────────────────────────────────
@@ -336,6 +337,28 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           )}
         </div>
       )}
+
+      {/* Isenção de hora extra (bolsista) -- só admin principal/developer,
+          mesmo critério de sensibilidade financeira do bloco acima.
+          Retroativo por natureza: Histórico/Relatório de Horas Extras
+          recalculam tudo na hora a partir do horário contratado, não
+          guardam nenhum valor já cobrado -- então isentar aqui já zera
+          também as marcações passadas desse aluno, sem precisar tocar em
+          nenhum registro antigo. */}
+      {canManageExtraHours && (
+        <div className="pt-3 border-t border-outline-variant">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!student.isento_hora_extra}
+              onChange={e => set('isento_hora_extra', e.target.checked)}
+              className="w-4 h-4 rounded accent-primary"
+            />
+            <span className="text-xs font-bold text-on-surface">Bolsista -- isento de hora extra</span>
+          </label>
+          <p className="text-[10px] text-on-surface-variant/60 pt-1 pl-6">Nunca gera cobrança de hora extra pra este aluno, em nenhum horário de entrada/saída (inclusive marcações já registradas). A família não vê esta marcação.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -490,6 +513,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             custom_exit: custom_exit,
             is_custom_period: is_custom_period,
             weekly_schedule: s.weekly_schedule || {},
+            isento_hora_extra: s.isento_hora_extra || false,
           };
         });
         setStudents(loadedStudents);
@@ -770,6 +794,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               // nunca diverge do que foi carregado, então isso é um no-op seguro
               // mesmo que a trigger de proteção do banco recuse a mudança.
               weekly_schedule: sanitizeWeeklySchedule(s.weekly_schedule),
+              // Mesmo raciocínio: só quem vê o checkbox (canManageExtraHours) pode
+              // de fato mudar esse valor -- pra outros roles é sempre um no-op.
+              isento_hora_extra: !!s.isento_hora_extra,
             };
 
             const isExisting = typeof s.id === 'string';
@@ -920,7 +947,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 // principal/developer), fica de fora do insert e a coluna cai
                 // no default '{}' do banco, sem depender de RLS.
                 ...(Object.keys(sanitizeWeeklySchedule(s.weekly_schedule)).length > 0 ? { weekly_schedule: sanitizeWeeklySchedule(s.weekly_schedule) } : {}),
-
+                isento_hora_extra: !!s.isento_hora_extra,
               };
             });
 
@@ -931,7 +958,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             if (studErr) {
               if (studErr.message?.includes('column') || studErr.message?.includes('schema')) {
                 console.warn('[Cadastro] Campos extras de alunos não salvos (migration pendente):', studErr.message);
-                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, weekly_schedule: _ws, ...rest }) => rest);
+                const baseSt = studentsToInsert.map(({ birth_date: _bd, turno: _t, periodo: _p, weekly_schedule: _ws, isento_hora_extra: _ihe, ...rest }) => rest);
                 const { data: insertedStudents2, error: studErr2 } = await supabase.from('students').insert(baseSt).select('id');
                 if (studErr2) throw studErr2;
                 insertedStudentIds = (insertedStudents2 || []).map(s => s.id);

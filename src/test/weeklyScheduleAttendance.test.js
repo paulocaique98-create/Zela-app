@@ -60,9 +60,10 @@ describe('calcularHorasExtras (check-out tardio) com weekly_schedule + billing_c
     const comOverrideOutroDia = calcularHorasExtras(exitIso, '15:00', { quarta: { entry: '07:00', exit: '17:00' } });
     expect(semOverride).toEqual(comWeeklyVazio);
     expect(semOverride).toEqual(comOverrideOutroDia);
-    // 20min > 15min tolerância padrão -> 5min excedentes -> 1h cheia (R$30 default)
+    // 20min > 15min tolerância padrão -> passou a tolerância, conta 1h cheia
+    // desde o horário contratado (não desde o fim da tolerância) -> R$30 default
     expect(semOverride.dentro_tolerancia).toBe(false);
-    expect(semOverride.minutos_excedentes).toBe(5);
+    expect(semOverride.minutos_excedentes).toBe(20);
     expect(semOverride.valor).toBe(30);
   });
 
@@ -91,12 +92,14 @@ describe('calcularEntradaAntecipada (check-in antecipado)', () => {
     expect(r.valor).toBe(0);
   });
 
-  it('chegada além da tolerância cobra a partir do ponto de corte', () => {
-    // Contratado 07:00, chegou 06:40 (20min antes) -- 15min excedentes após a tolerância de 5min.
+  it('chegada além da tolerância cobra 1h cheia contando desde o horário contratado', () => {
+    // Contratado 07:00, chegou 06:40 (20min antes) -- passou a tolerância de
+    // 5min, conta 1h cheia desde o horário contratado (não desde o fim da
+    // tolerância).
     const entryIso = '2026-09-01T09:40:00.000Z'; // 06:40 em Brasília
     const r = calcularEntradaAntecipada(entryIso, '07:00');
     expect(r.dentro_tolerancia).toBe(false);
-    expect(r.minutos_antecipados).toBe(15);
+    expect(r.minutos_antecipados).toBe(20);
     expect(r.valor).toBe(30); // 1h cheia
   });
 
