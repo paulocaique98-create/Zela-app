@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut, Fingerprint } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
+import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import { useSchoolConfig } from '../lib/schoolConfig';
@@ -42,6 +43,7 @@ const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
+const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
@@ -60,6 +62,7 @@ const RELATORIOS_SUBMENU = [
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
+  const { hasUnread: hasUnreadSystemUpdates, refresh: refreshUnreadSystemUpdates } = useUnreadSystemUpdates(currentUser);
   const pushData = usePushNotifications(currentUser, currentSchool);
   const [dismissedPush, setDismissedPush] = useState(
     localStorage.getItem(`zela_push_dismissed_${currentUser?.id}`) === 'true'
@@ -396,6 +399,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 onToggle={() => toggleAccordion('sistema')}
               >
                 <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => go('auditoria')} />
+                {/* "•" em vez de número -- só indica que existe novidade não
+                    lida, não quantas (pedido explícito). */}
+                <SidebarItem active={adminTab === 'system-updates'} icon={Sparkles} label="Atualizações" badge={hasUnreadSystemUpdates ? '•' : null} onClick={() => go('system-updates')} />
                 <SidebarItem active={adminTab === 'duplicidade-biometrica'} icon={Fingerprint} label="Duplicidade Facial" onClick={() => go('duplicidade-biometrica')} />
                 <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
               </SidebarGroup>
@@ -442,6 +448,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
           <AdminRelatorioPlaceholder key={r.key} title={r.label} />

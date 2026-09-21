@@ -97,7 +97,7 @@ export const SCREEN_LABELS = {
   'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença',
   calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
   materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
-  financeiro: 'Financeiro', auditoria: 'Auditoria', 'duplicidade-biometrica': 'Duplicidade Facial',
+  financeiro: 'Financeiro', auditoria: 'Auditoria', 'system-updates': 'Atualizações', 'duplicidade-biometrica': 'Duplicidade Facial',
   settings: 'Configurações',
   // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
   acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
