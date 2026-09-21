@@ -62,6 +62,30 @@ const LUMINANCE_CHECK_INTERVAL_MS = 1000;
 const DETECTION_INTERVAL_MS = 180;
 const LIVE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
 
+// ── Liveness Detection (Fase 1 — passivo, só em modo observação) ──
+// Roda por cima dos MESMOS frames/landmarks já calculados durante a janela de
+// CONSISTENCY_FRAMES (nenhum frame extra, nenhum segundo a mais de espera).
+// Só GRAVA o que teria decidido (logFaceEvent) -- nunca muda o resultado do
+// reconhecimento nesta fase. Ver plano de implementação (liveness detection).
+const LIVENESS_EAR_VARIANCE_THRESHOLD = 0.003; // abaixo disso, olhos "congelados" demais entre frames
+
+// Eye Aspect Ratio (Soukupová & Čech): razão entre a abertura vertical e a
+// largura horizontal do olho a partir dos 6 pontos do landmark de 68 pontos.
+export function eyeAspectRatio(eyePoints) {
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const vertical1 = dist(eyePoints[1], eyePoints[5]);
+  const vertical2 = dist(eyePoints[2], eyePoints[4]);
+  const horizontal = dist(eyePoints[0], eyePoints[3]);
+  if (horizontal === 0) return 0;
+  return (vertical1 + vertical2) / (2 * horizontal);
+}
+
+export function averageEyeAspectRatio(landmarks) {
+  const left = eyeAspectRatio(landmarks.getLeftEye());
+  const right = eyeAspectRatio(landmarks.getRightEye());
+  return (left + right) / 2;
+}
+
 // ── Enquadramento: exige que o rosto esteja perto (~60cm) e centralizado no molde ──
 // Sem sensor de profundidade, a distância é aproximada pela LARGURA que o rosto ocupa
 // no quadro: quanto mais perto, maior o rosto na imagem. Calibrado para uma webcam
@@ -176,6 +200,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const isDarkRef = useRef(false);
   const lastLuminanceCheckRef = useRef(0);
   const recentMatchesRef = useRef([]);
+  // Liveness Detection (Fase 1, observação) — só liga por escola, via
+  // schools.features_enabled.liveness_detection (Portal do Dev), padrão OFF.
+  const livenessEnabledRef = useRef(false);
+  const livenessEnforceRef = useRef(false);
+  const earHistoryRef = useRef([]);
   // 'ok' | 'too-far' | 'off-center' | null — orienta o overlay de enquadramento
   const [framePosition, setFramePosition] = useState(null);
   const [noMatchReason, setNoMatchReason] = useState('');
@@ -515,6 +544,27 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     };
   }, [currentUser?.school_id]);
 
+  // Liveness Detection (Fase 1, observação) — checa uma vez só se a escola
+  // tem o módulo ligado no Portal do Dev. Padrão OFF, nunca afeta escolas
+  // sem o módulo habilitado.
+  useEffect(() => {
+    if (!currentUser?.school_id) return;
+    let cancelled = false;
+    supabase
+      .from('schools')
+      .select('features_enabled')
+      .eq('id', currentUser.school_id)
+      .single()
+      .then(({ data }) => {
+        if (cancelled) return;
+        livenessEnabledRef.current = Boolean(data?.features_enabled?.liveness_detection);
+        // Só tem efeito se o módulo de observação acima também estiver ligado
+        // — sem ele, não existe earHistory pra avaliar.
+        livenessEnforceRef.current = livenessEnabledRef.current && Boolean(data?.features_enabled?.liveness_detection_enforce);
+      }, () => {});
+    return () => { cancelled = true; };
+  }, [currentUser?.school_id]);
+
   // Busca a foto só da pessoa reconhecida (não de todos os cadastrados) —
   // usada apenas para exibir o confronto visual na tela; nunca bloqueia o
   // check-in em si (best-effort, se falhar simplesmente não mostra a foto).
@@ -685,6 +735,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             setMatchStatus('idle');
             debouncedSetFramePosition(null);
             recentMatchesRef.current = [];
+            earHistoryRef.current = [];
             if (matchConfirmed) {
               matchConfirmed = false;
               setMatchedPerson(null);
@@ -702,6 +753,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               // — e se já estava confirmado, o molde é o "foco": sair dele cancela o
               // match e volta automaticamente para "Verificando Rosto".
               recentMatchesRef.current = [];
+              earHistoryRef.current = [];
               if (matchConfirmed) {
                 matchConfirmed = false;
                 setMatchedPerson(null);
@@ -714,6 +766,15 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             } else if (!matchConfirmed) {
               setMatchStatus('searching');
               const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
+
+              // Liveness Detection (Fase 1, observação) — reaproveita os MESMOS
+              // landmarks já calculados pra achar o rosto (nenhum custo extra),
+              // acumulados na mesma janela de CONSISTENCY_FRAMES.
+              if (livenessEnabledRef.current) {
+                const earHistory = earHistoryRef.current;
+                earHistory.push(averageEyeAspectRatio(detections.landmarks));
+                if (earHistory.length > CONSISTENCY_FRAMES) earHistory.shift();
+              }
 
               // Debounce por consistência: só confirma depois de N frames seguidos
               // apontando para a MESMA pessoa. Um frame isolado ruim (comum em pouca
@@ -729,7 +790,33 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               if (bestMatch.label !== 'unknown' && isConsistent) {
                 const personId = bestMatch.label;
                 const person = authorizedList.find(p => p.id === personId);
-                if (person && !cancelled) {
+
+                // Liveness Detection — avaliado ANTES de confirmar, pra poder
+                // vetar o match quando "Bloqueio Ativo" estiver ligado. Com só
+                // o módulo de observação ligado (sem o de bloqueio), isso
+                // nunca impede a confirmação — só registra o que teria sido.
+                let suspectedSpoof = false;
+                let earVariance = null;
+                if (livenessEnabledRef.current && earHistoryRef.current.length === CONSISTENCY_FRAMES) {
+                  const ears = earHistoryRef.current;
+                  const mean = ears.reduce((a, b) => a + b, 0) / ears.length;
+                  earVariance = ears.reduce((a, b) => a + (b - mean) ** 2, 0) / ears.length;
+                  suspectedSpoof = earVariance < LIVENESS_EAR_VARIANCE_THRESHOLD;
+                }
+
+                if (livenessEnforceRef.current && suspectedSpoof) {
+                  // Recusa como se fosse mais um frame inconclusivo — mesmo
+                  // caminho de "não reconhecido" de sempre (senha/QR via
+                  // timeout já existente), nunca um beco sem saída novo.
+                  recentMatchesRef.current = [];
+                  earHistoryRef.current = [];
+                  logFaceEvent('liveness_blocked', 'warn', {
+                    mode: 'live',
+                    ear_variance: earVariance,
+                    threshold: LIVENESS_EAR_VARIANCE_THRESHOLD,
+                    person_id: personId,
+                  });
+                } else if (person && !cancelled) {
                   matchConfirmed = true;
                   setMatchedPerson(person);
                   setMatchDistance(bestMatch.distance);
@@ -737,6 +824,17 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
                   setShowAlternative(false);
                   fetchMatchedPersonPhoto(person.id);
+                  // Fase 1 (observação) — só grava o que a checagem de
+                  // liveness decidiu; com "Bloqueio Ativo" desligado (padrão),
+                  // nunca muda o resultado do reconhecimento.
+                  if (earVariance !== null) {
+                    logFaceEvent('liveness_check_observed', 'warn', {
+                      mode: 'live',
+                      ear_variance: earVariance,
+                      suspected_spoof: suspectedSpoof,
+                      person_id: person.id,
+                    });
+                  }
                   // Fase F — modo observador: nunca aguardado, nunca afeta o
                   // fluxo real acima. Ver runHumanShadowComparison().
                   runHumanShadowComparison(video, person.id, currentUser.school_id, authorizedList);

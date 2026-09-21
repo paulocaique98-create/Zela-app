@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, eyeAspectRatio, averageEyeAspectRatio } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -129,5 +129,70 @@ describe('evaluateFramePosition — enquadramento do rosto no molde do Totem', (
 
   it('valores de fronteira: um pouco abaixo do limite mínimo já reprova', () => {
     expect(evaluateFramePosition(box(0.199, 0.5, 0.5), VIDEO_W, VIDEO_H)).toBe('too-far');
+  });
+});
+
+describe('eyeAspectRatio/averageEyeAspectRatio — Liveness Detection (Fase 1, observação)', () => {
+  const pt = (x, y) => ({ x, y });
+
+  // 6 pontos no formato do face-api.js (getLeftEye/getRightEye): [0] e [3]
+  // são os cantos (horizontal), [1]/[5] e [2]/[4] são os pares de cima/baixo
+  // (vertical) — olho "aberto" tem abertura vertical real, olho "fechado"
+  // tem os pares de cima/baixo praticamente colados.
+  function eyePoints({ openness }) {
+    const cx = 100, cy = 50, width = 20;
+    return [
+      pt(cx - width / 2, cy),
+      pt(cx - width / 4, cy - openness),
+      pt(cx + width / 4, cy - openness),
+      pt(cx + width / 2, cy),
+      pt(cx + width / 4, cy + openness),
+      pt(cx - width / 4, cy + openness),
+    ];
+  }
+
+  it('olho bem aberto tem EAR bem maior que olho fechado', () => {
+    const aberto = eyeAspectRatio(eyePoints({ openness: 5 }));
+    const fechado = eyeAspectRatio(eyePoints({ openness: 0.1 }));
+    expect(aberto).toBeGreaterThan(fechado);
+  });
+
+  it('olho completamente fechado (pontos colados) tem EAR ~0', () => {
+    const fechado = eyeAspectRatio(eyePoints({ openness: 0 }));
+    expect(fechado).toBeCloseTo(0, 5);
+  });
+
+  it('nunca lança/divide por zero quando a largura do olho é 0 (landmark degenerado)', () => {
+    const degenerado = [pt(50, 50), pt(50, 49), pt(50, 49), pt(50, 50), pt(50, 51), pt(50, 51)];
+    expect(eyeAspectRatio(degenerado)).toBe(0);
+  });
+
+  it('averageEyeAspectRatio tira a média entre os dois olhos (landmarks do face-api.js)', () => {
+    const landmarks = {
+      getLeftEye: () => eyePoints({ openness: 4 }),
+      getRightEye: () => eyePoints({ openness: 2 }),
+    };
+    const earEsquerdo = eyeAspectRatio(eyePoints({ openness: 4 }));
+    const earDireito = eyeAspectRatio(eyePoints({ openness: 2 }));
+    expect(averageEyeAspectRatio(landmarks)).toBeCloseTo((earEsquerdo + earDireito) / 2, 10);
+  });
+
+  it('variância do EAR entre frames de um rosto "vivo" (piscando) é bem maior que a de uma foto estática (mesmo valor repetido)', () => {
+    // Mesma lógica de acúmulo usada no loop ao vivo (ver AdminFaceScanner.jsx
+    // > livenessEnabledRef): 3 frames seguidos, calcula variância populacional.
+    const variance = (values) => {
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      return values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
+    };
+
+    const fotoEstatica = [averageEyeAspectRatio({ getLeftEye: () => eyePoints({ openness: 4 }), getRightEye: () => eyePoints({ openness: 4 }) })];
+    fotoEstatica.push(fotoEstatica[0], fotoEstatica[0]); // foto/tela: exatamente o mesmo frame 3x
+
+    const rostoVivo = [4, 4.2, 1].map(openness =>
+      averageEyeAspectRatio({ getLeftEye: () => eyePoints({ openness }), getRightEye: () => eyePoints({ openness }) })
+    ); // pequena variação natural + 1 piscada no meio da janela de 3 frames
+
+    expect(variance(rostoVivo)).toBeGreaterThan(variance(fotoEstatica));
+    expect(variance(fotoEstatica)).toBeCloseTo(0, 10);
   });
 });

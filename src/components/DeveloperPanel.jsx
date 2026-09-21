@@ -64,7 +64,9 @@ export default function DeveloperPanel() {
     configuracoes: true,
     financeiro: false,
     materias: false,
-    frequencia: false
+    frequencia: false,
+    liveness_detection: false,
+    liveness_detection_enforce: false
   };
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
@@ -605,7 +607,9 @@ export default function DeveloperPanel() {
                     { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' },
                     { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e integração com gateway de pagamento (Asaas)' },
                     { id: 'materias', label: 'Matérias/Disciplinas', desc: 'Cadastro de matérias (ou áreas de conhecimento) e associação com turmas' },
-                    { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' }
+                    { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' },
+                    { id: 'liveness_detection', label: 'Detecção de Vida (Liveness)', desc: 'Antifraude no reconhecimento facial do totem, contra fotos/telas. Sozinho, só OBSERVA (grava em Logs de erro, nunca bloqueia ninguém).' },
+                    { id: 'liveness_detection_enforce', label: 'Liveness · Bloqueio Ativo', desc: 'Só tem efeito com o módulo acima também ligado. Passa a recusar suspeitas de foto/tela de verdade (cai no mesmo Senha/QR de sempre). Só ativar depois de revisar os dados de observação em Logs de erro.' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition">
                       <div className="flex-1">
