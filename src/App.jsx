@@ -11,7 +11,7 @@ import { formatPersonName } from './utils/formatName';
 import { FACE_DUPLICATE_THRESHOLD, euclideanDistance } from './lib/faceMatch';
 import { parseShortTime } from './utils/attendanceUtils';
 import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
-import { screenLabel, screenLabelMobile } from './lib/constants';
+import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
 
 const Login = lazy(() => import('./components/Login'));
 const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
@@ -90,6 +90,28 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authForm, setAuthForm] = useState({ name: '', relation: 'Outro', emergencyOrder: '', isTemporary: false, temporaryUntil: '' });
   const [authError, setAuthError] = useState('');
+  // Se existe um 2º Responsável com login próprio vinculado aos mesmos
+  // alunos -- dobra a cota geral de autorizados (mesmo critério de
+  // FamilyMatriculas.jsx e da trigger enforce_authorized_persons_limit no
+  // banco). Calculado à parte de handleSaveAuth pra já estar pronto quando o
+  // modal "Novo Autorizado" abre, não só no momento de salvar.
+  const [hasSegundoResponsavel, setHasSegundoResponsavel] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    async function checkSegundoResponsavel() {
+      if (currentUser?.role !== 'family') return;
+      const studentIds = (students || []).map(s => s.id).filter(Boolean);
+      if (studentIds.length === 0) { if (!cancelled) setHasSegundoResponsavel(false); return; }
+      const { data } = await supabase
+        .from('student_guardians')
+        .select('guardian_id')
+        .in('student_id', studentIds)
+        .neq('guardian_id', currentUser.id);
+      if (!cancelled) setHasSegundoResponsavel((data || []).length > 0);
+    }
+    checkSegundoResponsavel();
+    return () => { cancelled = true; };
+  }, [currentUser?.id, currentUser?.role, students]);
 
   // Emergency State
   const [isEmergency, setIsEmergency] = useState(false);
@@ -111,6 +133,19 @@ export default function App() {
     }
   });
   const [globalLogo, setGlobalLogo] = useState(null);
+
+  // Números exibidos no modal "Novo Autorizado" (AuthModal) -- mesma
+  // fórmula usada pra bloquear de verdade em handleSaveAuth e na trigger
+  // enforce_authorized_persons_limit do banco.
+  const authLimitsInfo = (() => {
+    const limits = { autorizados_por_responsavel: 2, autorizados_transporte: 1, ...currentSchool?.limits };
+    const realAuthorized = (authorized || []).filter(p => !p.relation?.includes('(Titular)'));
+    const maxGeral = limits.autorizados_por_responsavel * (hasSegundoResponsavel ? 2 : 1);
+    const maxTransporte = limits.autorizados_transporte;
+    const countGeral = realAuthorized.filter(p => p.relation !== AUTHORIZED_TRANSPORTE_RELATION).length;
+    const countTransporte = realAuthorized.filter(p => p.relation === AUTHORIZED_TRANSPORTE_RELATION).length;
+    return { maxGeral, countGeral, maxTransporte, countTransporte };
+  })();
 
   // Canal Realtime "secundário" (authorized_persons + emergência) — o canal
   // de `students` (Monitor/alerta de check-in) foi extraído pro hook
@@ -818,6 +853,7 @@ export default function App() {
       const nameTrim = newPerson.name.trim().toLowerCase();
 
       const studentIds = (students || []).map(s => s.id).filter(Boolean);
+      let otherGuardianIds = [];
       if (studentIds.length > 0) {
         const { data: guardianLinks } = await supabase
           .from('student_guardians')
@@ -825,7 +861,7 @@ export default function App() {
           .in('student_id', studentIds)
           .neq('guardian_id', currentUser.id);
 
-        const otherGuardianIds = [...new Set((guardianLinks || []).map(g => g.guardian_id))];
+        otherGuardianIds = [...new Set((guardianLinks || []).map(g => g.guardian_id))];
         if (otherGuardianIds.length > 0) {
           const { data: otherGuardians } = await supabase
             .from('users')
@@ -837,6 +873,31 @@ export default function App() {
             setAuthError(`"${newPerson.name}" já é o 2º Responsável cadastrado no sistema, com login próprio. Ele(a) mesmo(a) precisa cadastrar a biometria em Autorizados usando a própria conta. Não é necessário adicioná-lo(a) aqui.`);
             return;
           }
+        }
+      }
+
+      // Limite de autorizados -- mesma fórmula já usada em
+      // FamilyMatriculas.jsx (mas que nunca era checada aqui, no cadastro do
+      // dia a dia): "Transporte Escolar" tem cota própria, separada da cota
+      // geral, e a cota geral dobra se houver 2º Responsável.
+      const limits = { autorizados_por_responsavel: 2, autorizados_transporte: 1, ...currentSchool?.limits };
+      // A entrada "(Titular)" é o próprio responsável (só existe pra ele
+      // fazer check-in por reconhecimento facial), nunca conta como
+      // autorizado -- mesma exclusão de FamilyMatriculas.jsx.
+      const realAuthorized = (authorized || []).filter(p => !p.relation?.includes('(Titular)'));
+      const isTransporte = newPerson.relation === AUTHORIZED_TRANSPORTE_RELATION;
+      if (isTransporte) {
+        const countTransporte = realAuthorized.filter(p => p.relation === AUTHORIZED_TRANSPORTE_RELATION).length;
+        if (countTransporte >= limits.autorizados_transporte) {
+          setAuthError(`Limite de ${limits.autorizados_transporte} autorizado(s) de transporte escolar atingido.`);
+          return;
+        }
+      } else {
+        const maxGeral = limits.autorizados_por_responsavel * (otherGuardianIds.length > 0 ? 2 : 1);
+        const countGeral = realAuthorized.filter(p => p.relation !== AUTHORIZED_TRANSPORTE_RELATION).length;
+        if (countGeral >= maxGeral) {
+          setAuthError(`Limite de ${maxGeral} autorizados atingido.`);
+          return;
         }
       }
 
@@ -1355,6 +1416,7 @@ export default function App() {
                   authorized={authorized}
                   togglePhoto={togglePhoto}
                   deleteAuthorized={deleteAuthorized}
+                  authLimitsInfo={authLimitsInfo}
                   onOpenAuthModal={() => { setAuthError(''); setIsAuthModalOpen(true); }}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -1373,6 +1435,7 @@ export default function App() {
           onClose={() => setIsAuthModalOpen(false)}
           onSave={handleSaveAuth}
           error={authError}
+          limitsInfo={authLimitsInfo}
         />
       )}
 

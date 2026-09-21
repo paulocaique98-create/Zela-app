@@ -1,7 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-export default function AuthModal({ authForm, setAuthForm, onClose, onSave, error }) {
+export default function AuthModal({ authForm, setAuthForm, onClose, onSave, error, limitsInfo }) {
+  const { maxGeral, countGeral, maxTransporte, countTransporte } = limitsInfo || {};
   const handleSubmit = (e) => {
     e.preventDefault();
     const newPerson = {
@@ -18,6 +19,11 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
     onSave(newPerson);
   };
 
+  const isTransporte = authForm.relation === 'Transporte';
+  const remainingGeral = maxGeral != null ? Math.max(0, maxGeral - countGeral) : null;
+  const remainingTransporte = maxTransporte != null ? Math.max(0, maxTransporte - countTransporte) : null;
+  const categoryFull = isTransporte ? remainingTransporte === 0 : remainingGeral === 0;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
@@ -31,6 +37,16 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
           )}
+
+          {limitsInfo && (
+            <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-800 space-y-1">
+              <p><strong>{remainingGeral}</strong> de {maxGeral} vaga{maxGeral !== 1 ? 's' : ''} de autorizado geral ainda disponíve{remainingGeral === 1 ? 'l' : 'is'}.</p>
+              {maxTransporte > 0 && (
+                <p><strong>{remainingTransporte}</strong> de {maxTransporte} vaga{maxTransporte !== 1 ? 's' : ''} de transporte escolar ainda disponíve{remainingTransporte === 1 ? 'l' : 'is'}.</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
             <input type="text" required value={authForm.name} onChange={e => setAuthForm({...authForm, name: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" placeholder="Ex: Carlos Silva" />
@@ -43,6 +59,7 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
                 <option>Pai/Mãe</option>
                 <option>Avô/Avó</option>
                 <option>Tio/Tia</option>
+                <option value="Transporte">Transporte Escolar</option>
                 <option>Outro</option>
               </select>
             </div>
@@ -71,8 +88,20 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
             </div>
           )}
 
+          {categoryFull && (
+            <p className="text-xs text-red-600 font-medium">
+              Limite de {isTransporte ? 'transporte escolar' : 'autorizados gerais'} atingido — troque o parentesco ou remova um autorizado existente antes de adicionar outro.
+            </p>
+          )}
+
           <div className="pt-4 border-t border-slate-100">
-            <button type="submit" className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 active:scale-95 transition-all shadow-md">Adicionar Autorizado</button>
+            <button
+              type="submit"
+              disabled={categoryFull}
+              className="w-full bg-indigo-950 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-900 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              Adicionar Autorizado
+            </button>
           </div>
         </form>
       </div>

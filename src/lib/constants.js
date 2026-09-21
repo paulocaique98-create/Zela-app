@@ -1,5 +1,16 @@
 export const TURMAS = ['Todas as Turmas', 'Nido', 'Kids I', 'Kids II - Flores', 'Kids II - Frutos'];
 
+// Valor de authorized_persons.relation que marca um autorizado como
+// "transporte escolar" (van/motorista) -- essa categoria tem cota própria
+// (limits.autorizados_transporte, padrão 1), separada da cota geral de
+// autorizados (limits.autorizados_por_responsavel). O valor 'Transporte' já
+// é usado pela RPC approve_matricula() (supabase/migrations/
+// 20260904_approve_matricula_rpc.sql) ao converter uma solicitação de
+// matrícula aprovada em authorized_persons -- mantido igual aqui pra
+// reconhecer também quem entrou por aquele caminho, não só quem foi
+// cadastrado direto em Autorizados.
+export const AUTHORIZED_TRANSPORTE_RELATION = 'Transporte';
+
 export const CARGOS_FUNCIONARIOS = [
   'Administradora',
   'Auxiliar de Sala',

@@ -217,23 +217,43 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const FACE_LOG_THROTTLE_MS = 5000;
 
   const logFaceEvent = (category, severity, context = {}) => {
-    const now = Date.now();
-    const last = lastFaceLogAtRef.current[category] || 0;
-    if (now - last < FACE_LOG_THROTTLE_MS) return;
-    lastFaceLogAtRef.current[category] = now;
-    supabase.rpc('log_error', {
-      p_source: 'face_recognition',
-      p_category: category,
-      p_message: category,
-      p_severity: severity,
-      p_context: { kiosk_session_id: kioskSessionIdRef.current, ...context },
-      p_school_id: currentUser?.school_id || null,
-      p_user_id: currentUser?.id || null,
-      p_role: currentUser?.role || null,
-      p_url: typeof window !== 'undefined' ? window.location.href : null,
-      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      p_screen: getCurrentScreen(),
-    }).catch(() => {});
+    // Achado real (Escola Montessori de Vitória, 21/09): supabase.rpc(...)
+    // devolve um "query builder" que só garante implementar .then() -- não é
+    // uma Promise nativa de verdade. No Safari/WebKit (totem rodando em
+    // iPhone), chamar .catch() direto nesse objeto lança
+    // "TypeError: ...catch is not a function" -- um erro DENTRO do próprio
+    // log de erros. Isso quebrava o vigia de câmera travada (ver watchdog
+    // logo abaixo, "camera_watchdog_recovery"): o throw síncrono aqui
+    // impedia recoverOnce() de chegar até retryInit(), deixando o totem
+    // preso com a câmera travada até alguém desistir e usar senha.
+    // Correção definitiva, duas camadas:
+    //   1. .then(null, fn) em vez de .catch(fn) -- .then sempre existe no
+    //      builder, em qualquer motor/navegador, ao contrário de .catch.
+    //   2. try/catch envolvendo a função inteira -- essa é a função
+    //      chamada por vários pontos do app SEM proteção própria (ex:
+    //      recoverOnce, resetStuckTimer); nenhum erro aqui dentro (nem
+    //      futuro, nem previsto) pode voltar a interromper quem a chamou.
+    try {
+      const now = Date.now();
+      const last = lastFaceLogAtRef.current[category] || 0;
+      if (now - last < FACE_LOG_THROTTLE_MS) return;
+      lastFaceLogAtRef.current[category] = now;
+      supabase.rpc('log_error', {
+        p_source: 'face_recognition',
+        p_category: category,
+        p_message: category,
+        p_severity: severity,
+        p_context: { kiosk_session_id: kioskSessionIdRef.current, ...context },
+        p_school_id: currentUser?.school_id || null,
+        p_user_id: currentUser?.id || null,
+        p_role: currentUser?.role || null,
+        p_url: typeof window !== 'undefined' ? window.location.href : null,
+        p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        p_screen: getCurrentScreen(),
+      }).then(null, () => {});
+    } catch (err) {
+      console.warn('[FaceScanner] Falha ao registrar evento (não propagada):', err?.message || err);
+    }
   };
 
   // Timeout de segurança: se ninguém for reconhecido depois de um tempo, oferece uma

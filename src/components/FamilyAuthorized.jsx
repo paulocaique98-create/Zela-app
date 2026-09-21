@@ -3,7 +3,7 @@ import { Users, Plus, Camera, Fingerprint, Loader2, Trash2 } from 'lucide-react'
 import ConfirmModal from './ConfirmModal';
 import FaceCameraCapture from './FaceCameraCapture';
 
-export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, currentSchool }) {
+export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, authLimitsInfo }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
   const [confirmRemovePhotoId, setConfirmRemovePhotoId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -13,8 +13,16 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
   // depois. Agora usa a MESMA captura ao vivo com molde oval do admin (ver
   // FaceCameraCapture.jsx).
   const [cameraFor, setCameraFor] = useState(null);
-  const isBasic = currentSchool?.plan === 'basic';
-  const limitReached = isBasic && authorized.length >= 2;
+
+  // Achado: o limite mostrado aqui era "isBasic && length >= 2" -- não tinha
+  // nenhuma relação com o limite de verdade da escola (currentSchool.limits,
+  // já usado em FamilyMatriculas.jsx), não dobrava com 2º Responsável e não
+  // sabia que "Transporte Escolar" é uma categoria à parte (1 vaga própria,
+  // fora da conta geral). authLimitsInfo vem pronto do App.jsx (mesma
+  // fórmula usada pra bloquear de verdade em handleSaveAuth), evitando
+  // recalcular/reconsultar aqui.
+  const { maxGeral, countGeral, maxTransporte, countTransporte } = authLimitsInfo || { maxGeral: 2, countGeral: 0, maxTransporte: 1, countTransporte: 0 };
+  const limitReached = countGeral >= maxGeral && countTransporte >= maxTransporte;
 
   const performRemovePhoto = async () => {
     const personId = confirmRemovePhotoId;
@@ -69,7 +77,9 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             <Plus size={16}/> Novo Autorizado
           </button>
           {limitReached && (
-            <p className="text-[10px] text-red-500 mt-1 max-w-[150px]">Limite do plano Basic atingido (Máx 2).</p>
+            <p className="text-[10px] text-red-500 mt-1 max-w-[180px]">
+              Limite atingido: {maxGeral} autorizado{maxGeral !== 1 ? 's' : ''}{maxTransporte > 0 ? ` + ${maxTransporte} de transporte escolar` : ''}.
+            </p>
           )}
         </div>
       </div>

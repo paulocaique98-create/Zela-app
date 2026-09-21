@@ -121,6 +121,37 @@ serve(async (req) => {
       console.warn(`Usuário já não existia no Auth, prosseguindo para apagar do public: ${deleteAuthError.message}`)
     }
 
+    // 4.5 Excluir os cadastros de "Autorizados" (e a foto/biometria de cada
+    // um) dessa família. Achado ao investigar um falso-positivo na tela de
+    // Duplicidade Facial: authorized_persons.family_id não tem ON DELETE
+    // CASCADE pra users(id) (a tabela foi criada direto no dashboard, sem
+    // migração no repo), então excluir só o usuário deixava a biometria
+    // órfã pra trás -- ela continuava aparecendo pra sempre na varredura de
+    // duplicidade, mesmo com a conta já excluída.
+    const { data: orphanAuths, error: authsFetchError } = await adminClient
+      .from('authorized_persons')
+      .select('id, photo_storage_path')
+      .eq('family_id', userId)
+
+    if (authsFetchError) {
+      console.warn(`Não foi possível buscar authorized_persons de ${userId}: ${authsFetchError.message}`)
+    } else if (orphanAuths && orphanAuths.length > 0) {
+      const photoPaths = orphanAuths.map(a => a.photo_storage_path).filter(Boolean)
+      if (photoPaths.length > 0) {
+        const { error: removePhotosError } = await adminClient.storage.from('person-photos').remove(photoPaths)
+        if (removePhotosError) {
+          console.warn(`Falha ao remover fotos de authorized_persons de ${userId}: ${removePhotosError.message}`)
+        }
+      }
+      const { error: deleteAuthsError } = await adminClient
+        .from('authorized_persons')
+        .delete()
+        .eq('family_id', userId)
+      if (deleteAuthsError) {
+        console.warn(`Falha ao excluir authorized_persons de ${userId}: ${deleteAuthsError.message}`)
+      }
+    }
+
     // 5. Excluir do public.users
     const { error: deletePublicError } = await adminClient
       .from('users')
