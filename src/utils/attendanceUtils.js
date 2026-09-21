@@ -52,6 +52,19 @@ export function mergeBillingConfig(schoolBillingConfig) {
   return { ...DEFAULT_BILLING_CONFIG, ...schoolBillingConfig };
 }
 
+// Item #35 do roadmap: alerta de ausência prolongada (schools.absence_alert_config).
+// Mesmo par default/merge acima, espelhado também em
+// supabase/functions/_shared/extraHours.ts (Deno não compartilha módulo com
+// o bundle do Vite, mesmo padrão já aceito no projeto).
+export const DEFAULT_ABSENCE_ALERT_CONFIG = {
+  enabled: false,
+  consecutive_days_threshold: 3,
+};
+
+export function mergeAbsenceAlertConfig(schoolConfig) {
+  return { ...DEFAULT_ABSENCE_ALERT_CONFIG, ...schoolConfig };
+}
+
 // Deriva o dia da semana de uma string "YYYY-MM-DD" de forma imune a fuso
 // horário -- new Date(dateStr).getDay() usaria meia-noite UTC e converteria
 // pro fuso LOCAL do dispositivo, podendo "virar o dia" errado; construir via

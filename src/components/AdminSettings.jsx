@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock } from 'lucide-react';
+import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
-import { mergeBillingConfig } from '../utils/attendanceUtils';
+import { mergeBillingConfig, mergeAbsenceAlertConfig } from '../utils/attendanceUtils';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 
@@ -368,6 +368,48 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
   );
 }
 
+// Item #35 do roadmap: alerta de ausência prolongada -- quando um aluno
+// acumula N dias letivos consecutivos sem nenhum check-in, os admins da
+// escola recebem um aviso (in-app + push), pra poderem checar o bem-estar
+// da criança/entrar em contato com a família. N é configurável aqui; o
+// cálculo de verdade roda na edge function check-attendance-delays (mesma
+// que já cuida do atraso no mesmo dia).
+function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = false }) {
+  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  if (!canManage) return null;
+
+  const set = (field, value) => onConfigChange({ ...config, [field]: value });
+
+  return (
+    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
+      <div className="mb-2">
+        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><CalendarX size={15} className="text-primary" /> Ausência Prolongada</h3>
+        <p className="text-xs text-on-surface-variant">
+          Avisa os administradores da escola quando um aluno passa muitos dias letivos seguidos sem nenhum check-in registrado.
+        </p>
+      </div>
+
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" checked={config.enabled}
+          onChange={e => set('enabled', e.target.checked)}
+          className="w-4 h-4 rounded accent-primary" />
+        <span className="text-xs font-medium text-on-surface">Alertar administradores por ausência prolongada</span>
+      </label>
+
+      <div className="mt-3 max-w-xs">
+        <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Dias letivos consecutivos sem comparecer</label>
+        <input
+          type="number" min="1" max="30"
+          disabled={!config.enabled}
+          value={config.consecutive_days_threshold}
+          onChange={e => set('consecutive_days_threshold', Math.max(1, Number(e.target.value) || 1))}
+          className="w-24 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSettings({ currentUser, currentSchool, onUpdate }) {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -383,6 +425,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   );
   const [loginImageUrl, setLoginImageUrl] = useState(currentSchool?.login_image_url || '');
   const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
+  const [absenceAlertConfig, setAbsenceAlertConfig] = useState(mergeAbsenceAlertConfig(currentSchool?.absence_alert_config));
   const canManageSchool = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
   const [activeConfigTab, setActiveConfigTab] = useState(canManageSchool ? 'turmas' : 'menu');
 
@@ -419,6 +462,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
       setLogoUrl(currentSchool.logo_url || '');
       setLoginImageUrl(currentSchool.login_image_url || '');
       setBillingConfig(mergeBillingConfig(currentSchool.billing_config));
+      setAbsenceAlertConfig(mergeAbsenceAlertConfig(currentSchool.absence_alert_config));
       setFormData({
         name: currentSchool.name || '',
         phone: currentSchool.phone || '',
@@ -474,6 +518,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
         logo_url: logoUrl || null,
         login_image_url: loginImageUrl || null,
         billing_config: billingConfig,
+        absence_alert_config: absenceAlertConfig,
       };
 
       const { error } = await supabase
@@ -605,6 +650,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
                   { id: 'turmas', label: 'Turmas' },
                   { id: 'login_image', label: 'Imagem de Login' },
                   { id: 'billing', label: 'Cobrança de Hora Extra' },
+                  { id: 'absence_alert', label: 'Faltas' },
                 ] : []),
                 { id: 'menu', label: 'Personalizar Menu' },
               ].map(tab => (
@@ -632,6 +678,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
               )}
               {activeConfigTab === 'billing' && (
                 <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} noBorder />
+              )}
+              {activeConfigTab === 'absence_alert' && (
+                <AbsenceAlertSection currentUser={currentUser} config={absenceAlertConfig} onConfigChange={setAbsenceAlertConfig} noBorder />
               )}
               {activeConfigTab === 'menu' && (
                 <div>

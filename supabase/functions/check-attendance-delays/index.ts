@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { getEffectiveExitTime, getEffectiveEntryTime, mergeBillingConfig, BillingConfig } from '../_shared/extraHours.ts'
+import { getEffectiveExitTime, getEffectiveEntryTime, mergeBillingConfig, BillingConfig, mergeAbsenceAlertConfig, AbsenceAlertConfig } from '../_shared/extraHours.ts'
 import { sendFamilyNotification } from '../_shared/sendFamilyNotification.ts'
+import { notifyAdmins } from '../_shared/notifyAdmins.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 
 // Título/corpo de push por tipo de alerta — o texto completo (message) já
@@ -65,7 +66,7 @@ serve(async (req) => {
     // Obter todos os alunos com horários contratados ativos
     const { data: students, error: stdError } = await supabase
       .from('students')
-      .select('id, school_id, family_id, name, status, contracted_entry_time, contracted_exit_time, weekly_schedule')
+      .select('id, school_id, family_id, name, status, contracted_entry_time, contracted_exit_time, weekly_schedule, consecutive_absent_days, absence_alert_sent_at')
       // Vamos checar apenas alunos que tenham ao menos 1 dos horários cadastrados
       .or('contracted_entry_time.not.is.null,contracted_exit_time.not.is.null')
 
@@ -81,11 +82,16 @@ serve(async (req) => {
     const schoolIds = [...new Set(students.map(s => s.school_id))]
     const { data: schoolsData, error: schoolsError } = await supabase
       .from('schools')
-      .select('id, billing_config')
+      .select('id, billing_config, absence_alert_config')
       .in('id', schoolIds)
     if (schoolsError) throw schoolsError
     const billingConfigBySchool = new Map<string, BillingConfig>(
       (schoolsData || []).map(s => [s.id, mergeBillingConfig(s.billing_config)])
+    )
+    // Item #35: alerta de ausência prolongada -- config por escola (Sistema >
+    // Configurações > aba "Faltas"), desligada por padrão.
+    const absenceConfigBySchool = new Map<string, AbsenceAlertConfig>(
+      (schoolsData || []).map(s => [s.id, mergeAbsenceAlertConfig(s.absence_alert_config)])
     )
 
     // 1. Garantir que todo aluno tenha uma linha na daily_attendance_status de hoje em BATCH
@@ -143,6 +149,11 @@ serve(async (req) => {
     const notificationsToInsert: any[] = []
     const statusUpdates: any[] = []
     const studentsToMarkAbsent: string[] = []
+    // Item #35: ausência prolongada -- atualizações em students.consecutive_absent_days/
+    // absence_alert_sent_at (reset ao voltar, incremento ao ser marcado ausente pela
+    // 1ª vez no dia) e os alertas de fato disparados pra admin.
+    const studentAbsenceUpdates: { id: string; consecutive_absent_days: number; absence_alert_sent_at: string | null }[] = []
+    const adminAbsenceAlerts: { schoolId: string; studentName: string; days: number }[] = []
 
     const currentMinutesOfDay = brasiliaTime.getUTCHours() * 60 + brasiliaTime.getUTCMinutes()
 
@@ -164,6 +175,14 @@ serve(async (req) => {
       let statusChanged = false
       const newStatus = { ...statusRow }
 
+      // Item #35: aluno compareceu hoje -- zera a sequência de faltas (se
+      // havia alguma) e libera o alerta pra disparar de novo numa futura
+      // ausência. Roda pra QUALQUER aluno com check-in, não só os com
+      // contracted_entry_time (mesmo raciocínio de reset defensivo).
+      if (hasEntryLog && ((student.consecutive_absent_days || 0) > 0 || student.absence_alert_sent_at)) {
+        studentAbsenceUpdates.push({ id: student.id, consecutive_absent_days: 0, absence_alert_sent_at: null })
+      }
+
       // --- CHECAGEM DE ENTRADA (Atraso > 5 min e Falta > 30 min) ---
       if (student.contracted_entry_time && !hasEntryLog) {
         const entryMinutes = timeToMinutes(student.contracted_entry_time)
@@ -171,9 +190,22 @@ serve(async (req) => {
         // Transição automática para Ausente se passou de 30 min e ainda está idle
         if (currentMinutesOfDay >= entryMinutes + 30 && student.status === 'idle') {
           studentsToMarkAbsent.push(student.id)
+
+          // Item #35: esse é exatamente o momento (1x por dia, por
+          // construção -- só dispara na transição idle -> absent) de
+          // incrementar a sequência de dias consecutivos sem comparecer.
+          const absenceConfig = absenceConfigBySchool.get(student.school_id) || mergeAbsenceAlertConfig(null)
+          const newStreak = (student.consecutive_absent_days || 0) + 1
+          const alreadyAlerted = !!student.absence_alert_sent_at
+          let nextAlertSentAt = student.absence_alert_sent_at || null
+
+          if (absenceConfig.enabled && newStreak >= absenceConfig.consecutive_days_threshold && !alreadyAlerted) {
+            adminAbsenceAlerts.push({ schoolId: student.school_id, studentName: student.name, days: newStreak })
+            nextAlertSentAt = todayStr
+          }
+
+          studentAbsenceUpdates.push({ id: student.id, consecutive_absent_days: newStreak, absence_alert_sent_at: nextAlertSentAt })
         }
-
-
       }
 
       // --- CHECAGEM DE CHECK-IN ANTECIPADO (cobrança de hora extra na entrada) ---
@@ -296,11 +328,40 @@ serve(async (req) => {
         .in('id', studentsToMarkAbsent)
     }
 
+    // 7. Item #35 -- grava a sequência de faltas atualizada (reset ou
+    // incremento) de cada aluno tocado nesta execução.
+    for (const upd of studentAbsenceUpdates) {
+      await supabase.from('students')
+        .update({ consecutive_absent_days: upd.consecutive_absent_days, absence_alert_sent_at: upd.absence_alert_sent_at })
+        .eq('id', upd.id)
+    }
+
+    // 8. Item #35 -- alerta pros ADMINS da escola (não pra família, que já
+    // sabe que o próprio filho faltou) quando a sequência bate o limite
+    // configurado. Um alerta por episódio de ausência (ver alreadyAlerted
+    // acima), nunca repetido todo dia enquanto ela continua.
+    for (const alert of adminAbsenceAlerts) {
+      try {
+        const message = `${alert.studentName} está há ${alert.days} dias letivos consecutivos sem comparecer à escola.`
+        await notifyAdmins(supabase, {
+          schoolId: alert.schoolId,
+          type: 'prolonged_absence',
+          message,
+          pushTitle: 'Ausência prolongada',
+          pushBody: message,
+          pushTag: 'ausencia-prolongada',
+        })
+      } catch (notifyErr) {
+        console.error(`[check-attendance-delays] Falha ao alertar ausência prolongada (${alert.studentName}):`, notifyErr)
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       notificationsCreated: notificationsToInsert.length,
       statusesUpdated: statusUpdates.length,
-      absencesMarked: studentsToMarkAbsent.length
+      absencesMarked: studentsToMarkAbsent.length,
+      prolongedAbsenceAlertsCreated: adminAbsenceAlerts.length
     }), { headers: { 'Content-Type': 'application/json' } })
 
   } catch (err: any) {

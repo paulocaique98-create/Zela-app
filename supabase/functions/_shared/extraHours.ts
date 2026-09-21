@@ -30,6 +30,21 @@ export function mergeBillingConfig(schoolBillingConfig: Partial<BillingConfig> |
   return { ...DEFAULT_BILLING_CONFIG, ...(schoolBillingConfig || {}) }
 }
 
+// Item #35 do roadmap: alerta de ausência prolongada (schools.absence_alert_config).
+export interface AbsenceAlertConfig {
+  enabled: boolean;
+  consecutive_days_threshold: number;
+}
+
+export const DEFAULT_ABSENCE_ALERT_CONFIG: AbsenceAlertConfig = {
+  enabled: false,
+  consecutive_days_threshold: 3,
+}
+
+export function mergeAbsenceAlertConfig(schoolConfig: Partial<AbsenceAlertConfig> | null | undefined): AbsenceAlertConfig {
+  return { ...DEFAULT_ABSENCE_ALERT_CONFIG, ...(schoolConfig || {}) }
+}
+
 // Deriva o dia da semana de uma string "YYYY-MM-DD" de forma imune a fuso
 // horário (Date.UTC + getUTCDay, nunca setHours/getDay locais).
 export function getDayKeyFromDateStr(dateStr: string): string {

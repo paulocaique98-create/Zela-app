@@ -175,6 +175,8 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
         return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
       case 'late_exit_15min_billing':
         return { icon: <AlertCircle size={18} className="text-red-600" />, bg: 'bg-red-100', dot: 'bg-red-500' };
+      case 'prolonged_absence':
+        return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
       case 'diario':
         return { icon: <BookOpen size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
       case 'pending_registration':
