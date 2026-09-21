@@ -28,6 +28,11 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
 
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
+  // Presentes = teve QUALQUER movimentação hoje (na escola, com solicitação
+  // em aberto ou já saiu) -- Ausentes = nem uma nem outra (nunca fez
+  // check-in nem foi marcado "Não irá hoje"). Mesma regra já usada no
+  // resumo em frase única logo abaixo, só que agora também filtra a lista.
+  const [statusFilter, setStatusFilter] = useState('presentes');
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -90,10 +95,12 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
     }
   };
 
-  // Filtra por turma selecionada
-  const displayed = selectedTurma === 'Todas as Turmas'
-    ? allStudents
-    : allStudents.filter(s => s.turma === selectedTurma);
+  const isAusente = (s) => s.status === 'absent' || s.status === 'idle';
+
+  // Filtra por turma selecionada + status (Presentes/Ausentes)
+  const displayed = allStudents
+    .filter(s => selectedTurma === 'Todas as Turmas' || s.turma === selectedTurma)
+    .filter(s => statusFilter === 'ausentes' ? isAusente(s) : !isAusente(s));
 
   // Contagens por status. Ausente = matriculado e hoje não está em nenhuma
   // das outras categorias (nem na escola, nem já saiu, nem com solicitação
@@ -103,19 +110,30 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   // interação do dia).
   const inSchool = allStudents.filter(s => s.status === 'in_school').length;
   const left     = allStudents.filter(s => s.status === 'left').length;
-  const absent   = allStudents.filter(s => s.status === 'absent' || s.status === 'idle').length;
+  const absent   = allStudents.filter(isAusente).length;
   const pending  = allStudents.filter(s => s.status === 'pending_entry' || s.status === 'pending_exit').length;
+  const presentes = inSchool + left + pending;
 
   return (
     <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título "Presença Diária" e ícone removidos (o Header do
           app já mostra o nome da tela dinamicamente); só a data, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <p className="text-sm text-slate-500">
-          {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
-          {lastUpdate && <span className="ml-2 text-slate-400">· Atualizado às {lastUpdate}</span>}
+        <p className="text-[13px] sm:text-sm text-slate-500 whitespace-nowrap overflow-x-auto w-full text-center sm:w-auto">
+          {(() => {
+            const weekday = new Date().toLocaleDateString('pt-BR', { weekday: 'long' }).split('-')[0];
+            return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+          })()} - {new Date().toLocaleDateString('pt-BR')}
+          {lastUpdate && <span className="text-slate-400"> - Atualizado em {lastUpdate}</span>}
         </p>
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
+          <button
+            onClick={fetchPresence}
+            disabled={isLoading}
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> <span className="hidden sm:inline">Atualizar</span>
+          </button>
           <div className="relative">
             <button
               onClick={() => setTurmaMenuOpen(o => !o)}
@@ -127,7 +145,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             {turmaMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setTurmaMenuOpen(false)} />
-                <div className="absolute right-0 sm:left-0 top-full mt-2 w-56 max-w-[80vw] bg-white border border-slate-200 rounded-2xl shadow-lg z-20 p-1.5 max-h-72 overflow-y-auto">
+                <div className="absolute right-0 top-full mt-2 w-72 max-w-[85vw] bg-white border border-slate-200 rounded-2xl shadow-lg z-20 p-1.5">
                   {turmaOptions.map(turma => (
                     <button
                       key={turma}
@@ -148,13 +166,6 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
               </>
             )}
           </div>
-          <button
-            onClick={fetchPresence}
-            disabled={isLoading}
-            className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
-          >
-            <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> <span className="hidden sm:inline">Atualizar</span>
-          </button>
         </div>
       </div>
 
@@ -164,12 +175,34 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
           cards. "Já saíram"/"Ausentes" zerados hoje era bug de
           updateStudentStatus resetando o status pra idle 2s depois de
           confirmar a saída (ver App.jsx) -- corrigido lá, não aqui. */}
-      <p className="text-sm text-slate-500 mb-5 shrink-0 leading-relaxed">
+      <p className="text-sm text-slate-500 mb-3 shrink-0 leading-relaxed">
         <span className="font-black text-green-700">{inSchool}</span> na escola,{' '}
         <span className="font-black text-amber-700">{pending}</span> solicitaç{pending === 1 ? 'ão' : 'ões'},{' '}
         <span className="font-black text-slate-700">{left}</span> já sa{left === 1 ? 'iu' : 'íram'} e{' '}
         <span className="font-black text-red-600">{absent}</span> ausente{absent === 1 ? '' : 's'}.
       </p>
+
+      {/* Presentes (na escola + solicitação + já saíram) vs. Ausentes (sem
+          nenhuma movimentação hoje) -- mesma regra do resumo acima, só que
+          agora também filtra a lista, não só informa. */}
+      <div className="flex bg-slate-100 rounded-xl p-1 gap-1 mb-5 shrink-0">
+        <button
+          onClick={() => setStatusFilter('presentes')}
+          className={`flex-1 px-3.5 py-1.5 rounded-lg text-sm font-bold transition ${
+            statusFilter === 'presentes' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Presentes <span className="text-xs opacity-70">({presentes})</span>
+        </button>
+        <button
+          onClick={() => setStatusFilter('ausentes')}
+          className={`flex-1 px-3.5 py-1.5 rounded-lg text-sm font-bold transition ${
+            statusFilter === 'ausentes' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Ausentes <span className="text-xs opacity-70">({absent})</span>
+        </button>
+      </div>
 
       {/* Lista de alunos - Scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
@@ -181,9 +214,9 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
           <div className="flex flex-col items-center justify-center h-full py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
             <Users className="h-10 w-10 text-slate-300 mb-3"/>
             <p className="text-slate-500 font-medium text-sm">
-            {selectedTurma === 'Todas as Turmas'
-                ? 'Nenhuma movimentação registrada hoje.'
-                : `Nenhuma movimentação em ${selectedTurma} hoje.`}
+            {statusFilter === 'ausentes'
+                ? (selectedTurma === 'Todas as Turmas' ? 'Nenhum ausente hoje.' : `Nenhum ausente em ${selectedTurma} hoje.`)
+                : (selectedTurma === 'Todas as Turmas' ? 'Nenhum presente hoje.' : `Nenhum presente em ${selectedTurma} hoje.`)}
             </p>
           </div>
         ) : (
