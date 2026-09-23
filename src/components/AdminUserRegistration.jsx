@@ -715,20 +715,36 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
     try {
       if (editingUser) {
-        // 1. Atualizar usuário na tabela users
+        // 1. Atualizar nome/telefone/role na tabela users (e-mail NUNCA entra
+        // aqui -- ver passo 1b. Mudar só public.users deixava o login de
+        // verdade, auth.users, com o e-mail antigo pra sempre: o e-mail de
+        // redefinição de senha ia pro endereço errado sem nenhum erro visível
+        // em lugar nenhum, achado real em produção 23/09, caso Maria Elisa de
+        // Freitas Falcão).
         const { error: userError } = await supabase
           .from('users')
           .update({
             name: normalizedName,
-            email: formData.email.trim().toLowerCase(),
             phone: formData.phone1,
             role: formData.role,
           })
           .eq('id', editingUser.id);
 
-        if (userError) {
-          if (userError.code === '23505') throw new Error('Este e-mail já está em uso por outro usuário.');
-          throw userError;
+        if (userError) throw userError;
+
+        // 1b. E-mail sempre passa pela Admin API (única forma de também
+        // atualizar auth.users, que o client normal não alcança) -- chamada
+        // em TODO salvamento, mesmo se o valor mostrado em tela parecer
+        // igual ao de antes. Motivo: public.users pode já estar "certo" de
+        // uma correção anterior enquanto auth.users continua desatualizado
+        // (foi exatamente esse o bug real -- comparar só com o valor local
+        // não pega esse caso, só uma nova sincronização de verdade pega).
+        const normalizedEmail = formData.email.trim().toLowerCase();
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('update-user-email', {
+          body: { user_id: editingUser.id, new_email: normalizedEmail },
+        });
+        if (emailError || emailResult?.error) {
+          throw new Error(emailResult?.error || emailError.message || 'Erro ao atualizar e-mail.');
         }
 
         // 2. Atualizar campos extras
