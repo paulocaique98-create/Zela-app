@@ -23,6 +23,7 @@ import { SidebarItem, SidebarGroup } from './SidebarNav';
 // maioria acessada só ocasionalmente).
 const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
 const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
+const AdminQrCheckin = lazy(() => import('./AdminQrCheckin'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const AdminCardapio = lazy(() => import('./AdminCardapio'));
@@ -36,6 +37,7 @@ const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminStudentList = lazy(() => import('./AdminStudentList'));
 const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
+const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
@@ -169,6 +171,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   };
 
   const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
   const [isFaceEnrollmentOpen, setIsFaceEnrollmentOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -232,6 +235,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showFinanceiro = features.financeiro === true && localPrefs.financeiro !== false;
   const showMaterias = features.materias === true && localPrefs.materias !== false;
   const showFrequencia = features.frequencia === true && localPrefs.frequencia !== false;
+  const showQrCheckin = features.qr_checkin === true && localPrefs.qr_checkin !== false;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA (~12,6MB) em background só quando o admin
@@ -332,6 +336,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               >
                 <SidebarItem active={adminTab === 'monitor'} icon={ShieldCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => go('monitor')} />
                 <SidebarItem active={adminTab === 'kiosk'} icon={Smartphone} label="Autoatendimento" onClick={() => go('kiosk')} />
+                {showQrCheckin && (
+                  <SidebarItem active={adminTab === 'qr-checkin'} icon={Fingerprint} label="Carteirinhas QR" onClick={() => go('qr-checkin')} />
+                )}
                 <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
                 <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => go('horas-extras')} />
@@ -674,6 +681,18 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     </button>
                   )}
 
+                  {showQrCheckin && (
+                    <button
+                      onClick={() => setIsQrScannerOpen(true)}
+                      className="flex items-center gap-3.5 bg-white text-on-surface border-2 border-outline-variant hover:border-primary/50 p-4 sm:p-5 rounded-zela-lg transition-all active:scale-[0.98] group"
+                    >
+                      <span className="w-11 h-11 rounded-xl bg-surface-container-low flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <Fingerprint size={20} />
+                      </span>
+                      <span className="font-bold text-sm sm:text-base text-left">QR Code do Aluno</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setIsPasswordLoginOpen(true)}
                     className="flex items-center gap-3.5 bg-white text-on-surface border-2 border-outline-variant hover:border-primary/50 p-4 sm:p-5 rounded-zela-lg transition-all active:scale-[0.98] group"
@@ -691,6 +710,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* PRESENÇA */}
         {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}
+
+        {/* CARTEIRINHAS QR */}
+        {adminTab === 'qr-checkin' && <AdminQrCheckin students={students} currentSchool={currentSchool} />}
 
         {/* GESTÃO */}
         {adminTab === 'users' && <AdminUserManagement currentUser={currentUser} initialTab={usersInitialTab} />}
@@ -722,6 +744,17 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               updateStudentStatus={updateStudentStatus}
               requestKioskAccess={requestKioskAccess}
               students={students}
+              currentUser={currentUser}
+            />
+          </Suspense>,
+          document.body
+        )}
+
+        {isQrScannerOpen && createPortal(
+          <Suspense fallback={null}>
+            <AdminQrScanner
+              onClose={() => setIsQrScannerOpen(false)}
+              requestKioskAccess={requestKioskAccess}
               currentUser={currentUser}
             />
           </Suspense>,

@@ -94,7 +94,7 @@ export const SCREEN_LABELS = {
   users: 'Gestão de Usuários', students: 'Alunos', 'gerenciar-funcionarios': 'Gestão de Funcionários',
   matriculas: 'Matrículas', 'ficha-medica': 'Ficha Médica',
   monitor: 'Monitor', kiosk: 'Autoatendimento', presence: 'Presença Diária', history: 'Histórico Geral',
-  'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença',
+  'horas-extras': 'Horas Extras', 'attendance-corrections': 'Correções de Presença', 'qr-checkin': 'Carteirinhas QR',
   calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
   materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
   financeiro: 'Financeiro', auditoria: 'Auditoria', 'system-updates': 'Atualizações', 'duplicidade-biometrica': 'Duplicidade Facial',

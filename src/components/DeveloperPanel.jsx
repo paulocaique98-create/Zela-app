@@ -66,7 +66,8 @@ export default function DeveloperPanel() {
     materias: false,
     frequencia: false,
     liveness_detection: false,
-    liveness_detection_enforce: false
+    liveness_detection_enforce: false,
+    qr_checkin: false
   };
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
@@ -609,7 +610,8 @@ export default function DeveloperPanel() {
                     { id: 'materias', label: 'Matérias/Disciplinas', desc: 'Cadastro de matérias (ou áreas de conhecimento) e associação com turmas' },
                     { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' },
                     { id: 'liveness_detection', label: 'Detecção de Vida (Liveness)', desc: 'Antifraude no reconhecimento facial do totem, contra fotos/telas. Sozinho, só OBSERVA (grava em Logs de erro, nunca bloqueia ninguém).' },
-                    { id: 'liveness_detection_enforce', label: 'Liveness · Bloqueio Ativo', desc: 'Só tem efeito com o módulo acima também ligado. Passa a recusar suspeitas de foto/tela de verdade (cai no mesmo Senha/QR de sempre). Só ativar depois de revisar os dados de observação em Logs de erro.' }
+                    { id: 'liveness_detection_enforce', label: 'Liveness · Bloqueio Ativo', desc: 'Só tem efeito com o módulo acima também ligado. Passa a recusar suspeitas de foto/tela de verdade (cai no mesmo Senha/QR de sempre). Só ativar depois de revisar os dados de observação em Logs de erro.' },
+                    { id: 'qr_checkin', label: 'Check-in por QR Code', desc: 'Adiciona a opção de check-in/check-out escaneando o QR de cada aluno no totem, com 1 toque de confirmação de quem está presente.' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition">
                       <div className="flex-1">
