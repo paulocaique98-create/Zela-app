@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import {
   ShieldCheck, Mail, Lock, Plus, Trash2, CheckCircle2, ArrowLeft,
-  User, Baby, Car, UserCheck, MapPin, Upload, Check, X, Loader2, Camera, FileText,
+  User, Baby, Car, UserCheck, MapPin, Upload, Check, X, Loader2, Camera, FileText, ChevronDown,
+  ImageIcon, HeartPulse,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFileWithSignedUrl, buildSafeFileName } from '../lib/storage';
 import { compressImage } from '../lib/imageCompression';
 import { navigateTo } from '../utils/navigate';
 import { formatPersonName } from '../utils/formatName';
+import {
+  ESTADO_CIVIL, PARENTESCOS, CICLOS, PERIODOS_POR_CICLO,
+  RESPONSAVEL_DOC_FIELDS, CRIANCA_DOC_FIELDS,
+  emptyResponsavel, emptyCrianca, emptyAutorizado, emptyTransporteAutorizado,
+  montarEndereco, inputCls, labelCls,
+} from '../lib/matriculaFields';
 
 // Tela pública de Matrícula — só é alcançada por um link que o Admin gera e
 // distribui (ver AdminMatriculas.jsx), não é anunciada em lugar nenhum do
@@ -19,24 +26,19 @@ import { formatPersonName } from '../utils/formatName';
 // public-matricula-doc-upload pra conseguir subir arquivo pro Storage antes
 // de a conta do responsável existir (URL de upload assinada com service
 // role, já que a RLS normal do bucket exige auth.uid()).
+//
+// Layout e ordem das seções seguem o protótipo aprovado (canvas "Protótipo —
+// Formulário de Matrícula Zela"): Dados da Criança > Endereço > Responsável
+// Financeiro > 2º Responsável > Autorizados e Contato de Emergência >
+// Autorização de Imagem > Saúde e Alimentação > Documentos. Autorização de
+// imagem e as perguntas de saúde são novas AQUI dentro da matrícula (antes só
+// existiam em telas separadas, pós-login) -- guardadas como campos extras
+// dentro dos mesmos jsonb (responsavel_financeiro/criancas) que a solicitação
+// já usa, sem precisar de nenhuma coluna nova no banco.
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'];
 const DOC_BUCKET = 'matriculas-docs';
-// Documentos do responsável financeiro — o rótulo já deixa claro de quem é
-// cada um, pra não confundir num formulário com vários filhos.
-const DOC_FIELDS = [
-  { key: 'cpf_doc', label: 'CPF — Responsável Financeiro' },
-  { key: 'rg_doc', label: 'RG — Responsável Financeiro' },
-  { key: 'comprovante_residencia_doc', label: 'Comprovante de Residência' },
-  { key: 'plano_saude_doc', label: 'Plano de Saúde / SUS — Responsável Financeiro' },
-];
-// Documentos por CRIANÇA (não do responsável) — cartão de vacina é do filho,
-// não de quem preenche o formulário.
-const CRIANCA_DOC_FIELDS = [
-  { key: 'cartao_vacina_doc', label: 'Cartão de Vacina' },
-  { key: 'certidao_doc', label: 'Certidão de Nascimento' },
-];
 
 // Cada documento vira uma linha com DUAS ações explícitas — "Escolher
 // arquivo" (galeria/arquivos do aparelho) e "Tirar foto" (abre a câmera
@@ -79,51 +81,64 @@ function DocUploadRow({ label, doc, onFile, onRemove, isUploading }) {
   );
 }
 
-const ESTADO_CIVIL = ['Solteiro(a)', 'Casado(a)', 'Separado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
-const PARENTESCOS = ['Avô(ó)', 'Tio(a)', 'Irmão(ã)', 'Cuidador(a)', 'Babá', 'Outro'];
-
-const CICLOS = [6, 8, 10];
-const PERIODOS_POR_CICLO = {
-  6: [
-    { label: '07:00 às 13:00', turno: 'Matutino' },
-    { label: '13:00 às 19:00', turno: 'Vespertino' },
-  ],
-  8: [
-    { label: '07:00 às 15:00', turno: 'Matutino' },
-    { label: '11:00 às 19:00', turno: 'Vespertino' },
-    { label: '13:00 às 19:00', turno: 'Vespertino' },
-  ],
-  10: [
-    { label: '07:00 às 17:00', turno: 'Matutino' },
-    { label: '09:00 às 19:00', turno: 'Matutino' },
-  ],
-};
-
-const emptyResponsavel = () => ({
-  nome: '', email: '', cpf: '', rg: '', rg_expedicao: '', rg_orgao: '',
-  telefone: '', telefone2: '', profissao: '', estado_civil: '',
-});
-const emptyCrianca = () => ({
-  id: Date.now() + Math.random(),
-  nome: '', nascimento: '', cidade_nascimento: '', ciclo: '', periodo: '', turno: '',
-  cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
-  certidao_doc: null, cartao_vacina_doc: null,
-});
-
-// Monta o campo único "endereço" que o resto do sistema já espera (tela do
-// Admin em Formulários > Matrículas mostra c.endereco como uma linha só) —
-// só a coleta aqui no link público que fica em campos separados, por pedido
-// explícito (CEP/Rua/Número/Complemento/Bairro/Cidade/UF).
-function montarEndereco(c) {
-  const linha1 = [c.rua, c.numero].filter(Boolean).join(', ') + (c.complemento ? ` - ${c.complemento}` : '');
-  const linha2 = [c.bairro, [c.cidade, c.uf].filter(Boolean).join('/')].filter(Boolean).join(', ');
-  return [linha1.trim(), linha2, c.cep ? `CEP ${c.cep}` : ''].filter(Boolean).join(' - ');
+// Seção retrátil (acordeão) — mesmo padrão já usado em Editar Cadastro
+// (AdminUserRegistration.jsx > toggleSection).
+function AccordionSection({ id, title, icon, openId, onToggle, children }) {
+  const isOpen = openId === id;
+  return (
+    <div className="border border-outline-variant rounded-zela-lg overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3.5 bg-surface-container-low hover:bg-surface-container transition text-left"
+      >
+        <h4 className="font-bold text-on-surface text-sm flex items-center gap-2">{icon} {title}</h4>
+        <ChevronDown size={16} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
+      </button>
+      {isOpen && (
+        <div className="p-4 sm:p-5 space-y-3 animate-in fade-in duration-150">
+          {children}
+        </div>
+      )}
+    </div>
+  );
 }
-const emptyAutorizado = () => ({ id: Date.now() + Math.random(), nome: '', telefone: '', parentesco: '' });
-const emptyTransporteAutorizado = () => ({ id: Date.now() + Math.random(), nome: '' });
 
-const inputCls = 'w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm';
-const labelCls = 'block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5';
+// Pílulas de ciclo (6h/8h/10h) — igual ao protótipo, no lugar do select.
+function CicloPills({ value, onChange }) {
+  return (
+    <div className="flex gap-2">
+      {CICLOS.map(h => (
+        <button
+          key={h}
+          type="button"
+          onClick={() => onChange(String(h))}
+          className={`flex-1 text-center py-2.5 px-2 rounded-zela-md text-xs font-bold border-2 transition-all ${
+            String(value) === String(h) ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'
+          }`}
+        >
+          {h} horas
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Radio simples de duas opções, usado na Autorização de Imagem/Emergência.
+function RadioRow({ selected, onSelect, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full flex items-start gap-2.5 p-3 rounded-zela-md border-2 text-left transition-all ${
+        selected ? 'border-primary bg-primary/5' : 'border-outline-variant bg-white hover:border-indigo-200'
+      }`}
+    >
+      <span className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 ${selected ? 'border-primary bg-primary shadow-[inset_0_0_0_2.5px_#fff]' : 'border-outline-variant'}`} />
+      <span className="text-sm text-on-surface">{label}</span>
+    </button>
+  );
+}
 
 function getSchoolCodeFromUrl() {
   try {
@@ -152,6 +167,16 @@ export default function PublicMatricula() {
   const [autorizados, setAutorizados] = useState([emptyAutorizado()]);
   const [temTransporte, setTemTransporte] = useState(false);
   const [transporteAutorizados, setTransporteAutorizados] = useState([emptyTransporteAutorizado()]);
+  // Autorização de imagem e de emergência médica — do responsável, valem
+  // pra todos os filhos dessa matrícula. '' = ainda não respondido.
+  const [autorizacaoImagem, setAutorizacaoImagem] = useState('');
+  const [autorizacaoEmergencia, setAutorizacaoEmergencia] = useState('');
+
+  // Só uma seção aberta por vez, igual ao mesmo padrão de Editar Cadastro —
+  // todas fechadas ao entrar (e continuam fechadas mesmo depois de
+  // atualizar a página).
+  const [openSection, setOpenSection] = useState(null);
+  const toggleSection = (id) => setOpenSection(prev => (prev === id ? null : id));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -255,7 +280,12 @@ export default function PublicMatricula() {
           school_code: schoolCode.trim(),
           email: email.trim().toLowerCase(),
           password: DEFAULT_PASSWORD,
-          responsavel: { ...responsavel, nome: formatPersonName(responsavel.nome) },
+          responsavel: {
+            ...responsavel,
+            nome: formatPersonName(responsavel.nome),
+            autorizacao_imagem: autorizacaoImagem,
+            autorizacao_emergencia: autorizacaoEmergencia,
+          },
           segundo_responsavel: temSegundo ? { ...segundoResponsavel, nome: formatPersonName(segundoResponsavel.nome) } : null,
           criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, cep, rua, numero, complemento, bairro, cidade, uf, ...rest }) => ({
             ...rest,
@@ -289,21 +319,29 @@ export default function PublicMatricula() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex w-full relative overflow-hidden bg-surface-container-lowest">
-      <div className="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-3xl pointer-events-none mix-blend-multiply" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-secondary/5 blur-3xl pointer-events-none mix-blend-multiply" />
-
-      <div className="w-full flex items-center justify-center p-4 sm:p-8 relative z-10">
-        <div className="w-full max-w-2xl flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-primary-container rounded-zela-lg flex items-center justify-center shadow-sm">
-              <ShieldCheck className="text-white" size={20} />
+    <div className="min-h-screen min-h-[100dvh] w-full bg-surface-container-lowest">
+      {/* Cabeçalho — mesmo estilo do protótipo aprovado (faixa em gradiente
+          na cor da marca, símbolo + nome do Zela, boas-vindas da escola). */}
+      <div className="bg-gradient-to-br from-primary to-primary-container px-5 sm:px-8 py-8 sm:py-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-9 h-9 bg-white/15 rounded-zela-lg flex items-center justify-center shrink-0">
+              <ShieldCheck className="text-white" size={18} />
             </div>
-            <span className="text-h2 text-on-surface tracking-tight leading-none">Zela</span>
+            <span className="text-lg font-extrabold text-white tracking-tight">Zela</span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 tracking-tight">Requerimento de Matrícula</h1>
+          <p className="text-sm text-white/85 leading-relaxed max-w-xl">
+            Obrigada por escolher educar para a paz. Preencha os dados abaixo com atenção — todos os campos marcados são obrigatórios.
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full flex justify-center p-4 sm:p-8">
+        <div className="w-full max-w-2xl flex flex-col -mt-4 sm:-mt-6">
 
           {done ? (
-            <div className="bg-white border border-outline-variant rounded-zela-lg p-8 text-center flex flex-col items-center gap-4">
+            <div className="bg-white border border-outline-variant rounded-zela-lg p-8 text-center flex flex-col items-center gap-4 shadow-sm">
               <CheckCircle2 className="text-emerald-500" size={48} />
               <div>
                 <h1 className="text-h2 text-on-surface mb-2">Matrícula enviada!</h1>
@@ -318,22 +356,18 @@ export default function PublicMatricula() {
             </div>
           ) : (
             <>
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h1 className="text-h1-mobile lg:text-display text-on-surface mb-1 tracking-tight">Matrícula</h1>
-                  <p className="text-body text-on-surface-variant">Preencha os dados pra solicitar a matrícula do seu filho.</p>
-                </div>
+              <div className="mb-4 flex justify-end">
                 <button type="button" onClick={() => navigateTo('/')} className="flex items-center gap-1 text-small text-on-surface-variant hover:text-primary shrink-0">
                   <ArrowLeft size={16} /> Voltar
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {formError && (
                   <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
                 )}
 
-                <section className="bg-white border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                <section className="bg-white border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3 shadow-sm">
                   <h4 className="font-bold text-on-surface text-sm">Código da Escola</h4>
                   <div>
                     <label className={labelCls}>Código da Escola *</label>
@@ -351,9 +385,98 @@ export default function PublicMatricula() {
                   </p>
                 </section>
 
-                {/* Responsável Financeiro */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                  <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><User size={16} className="text-primary" /> 1. Informações Pessoais</h4>
+                {/* 1. DADOS DA CRIANÇA */}
+                <AccordionSection id="criancas" title="1. Dados da Criança" icon={<Baby size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  {criancas.map((c, idx) => {
+                    const periodoOptions = PERIODOS_POR_CICLO[Number(c.ciclo)] || [];
+                    return (
+                      <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-black text-primary uppercase tracking-wider">Criança {idx + 1}</span>
+                          {criancas.length > 1 && (
+                            <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                        <div>
+                          <label className={labelCls}>Nome completo *</label>
+                          <input className={inputCls} value={c.nome} onChange={e => updateCrianca(c.id, { nome: e.target.value })} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls}>Cidade de Nascimento *</label>
+                            <input className={inputCls} value={c.cidade_nascimento} onChange={e => updateCrianca(c.id, { cidade_nascimento: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Data de Nascimento *</label>
+                            <input type="date" className={inputCls} value={c.nascimento} onChange={e => updateCrianca(c.id, { nascimento: e.target.value })} />
+                          </div>
+                        </div>
+                        <div>
+                          <label className={labelCls}>Ciclo *</label>
+                          <CicloPills value={c.ciclo} onChange={(v) => updateCrianca(c.id, { ciclo: v })} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Período *</label>
+                          <select className={inputCls} value={c.periodo} onChange={e => updateCrianca(c.id, { periodo: e.target.value })} disabled={!c.ciclo}>
+                            <option value="">{c.ciclo ? 'Selecionar...' : '← Primeiro o Ciclo'}</option>
+                            {periodoOptions.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button type="button" onClick={addCrianca} className="flex items-center gap-2 text-primary hover:text-primary font-bold text-sm px-3 py-2">
+                    <Plus size={16} /> Adicionar Criança
+                  </button>
+                </AccordionSection>
+
+                {/* 2. ENDEREÇO */}
+                <AccordionSection id="endereco" title="2. Endereço" icon={<MapPin size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  <p className="text-[11px] text-on-surface-variant/70 -mt-1">Endereço onde a criança reside.</p>
+                  {criancas.map((c, idx) => (
+                    <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                      {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelCls}>CEP *</label>
+                          <input className={inputCls} placeholder="Somente números" value={c.cep} onChange={e => updateCrianca(c.id, { cep: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Rua / Logradouro *</label>
+                          <input className={inputCls} value={c.rua} onChange={e => updateCrianca(c.id, { rua: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Número *</label>
+                          <input className={inputCls} value={c.numero} onChange={e => updateCrianca(c.id, { numero: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Complemento</label>
+                          <input className={inputCls} placeholder="Apto, Bloco, etc." value={c.complemento} onChange={e => updateCrianca(c.id, { complemento: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Bairro *</label>
+                          <input className={inputCls} value={c.bairro} onChange={e => updateCrianca(c.id, { bairro: e.target.value })} />
+                        </div>
+                        <div className="grid grid-cols-[1fr_auto] gap-3">
+                          <div>
+                            <label className={labelCls}>Cidade *</label>
+                            <input className={inputCls} value={c.cidade} onChange={e => updateCrianca(c.id, { cidade: e.target.value })} />
+                          </div>
+                          <div className="w-20">
+                            <label className={labelCls}>UF *</label>
+                            <input className={inputCls} maxLength={2} placeholder="ES" value={c.uf} onChange={e => updateCrianca(c.id, { uf: e.target.value.toUpperCase() })} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </AccordionSection>
+
+                {/* 3. RESPONSÁVEL FINANCEIRO */}
+                <AccordionSection id="responsavel" title="3. Responsável Financeiro" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  <p className="text-[11px] text-on-surface-variant/70 -mt-1">É em nome desta pessoa que sai a nota fiscal, para posterior declaração do Imposto de Renda.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className={labelCls}>Nome Completo *</label>
@@ -375,32 +498,54 @@ export default function PublicMatricula() {
                       <input className={inputCls} value={responsavel.telefone2} onChange={e => setResponsavel(p => ({ ...p, telefone2: e.target.value }))} />
                     </div>
                     <div>
-                      <label className={labelCls}>Profissão</label>
+                      <label className={labelCls}>Profissão *</label>
                       <input className={inputCls} value={responsavel.profissao} onChange={e => setResponsavel(p => ({ ...p, profissao: e.target.value }))} />
                     </div>
                     <div>
-                      <label className={labelCls}>CPF</label>
-                      <input className={inputCls} value={responsavel.cpf} onChange={e => setResponsavel(p => ({ ...p, cpf: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>RG</label>
-                      <input className={inputCls} value={responsavel.rg} onChange={e => setResponsavel(p => ({ ...p, rg: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Estado Civil</label>
+                      <label className={labelCls}>Estado Civil *</label>
                       <select className={inputCls} value={responsavel.estado_civil} onChange={e => setResponsavel(p => ({ ...p, estado_civil: e.target.value }))}>
                         <option value="">Selecionar...</option>
                         {ESTADO_CIVIL.map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
+                    <div>
+                      <label className={labelCls}>CPF *</label>
+                      <input className={inputCls} placeholder="Somente números" value={responsavel.cpf} onChange={e => setResponsavel(p => ({ ...p, cpf: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>RG *</label>
+                      <input className={inputCls} value={responsavel.rg} onChange={e => setResponsavel(p => ({ ...p, rg: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Data de Expedição *</label>
+                      <input type="date" className={inputCls} value={responsavel.rg_expedicao} onChange={e => setResponsavel(p => ({ ...p, rg_expedicao: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Órgão Expedidor *</label>
+                      <input className={inputCls} placeholder="Ex: SSP ES" value={responsavel.rg_orgao} onChange={e => setResponsavel(p => ({ ...p, rg_orgao: e.target.value }))} />
+                    </div>
                   </div>
-                </section>
 
-                {/* Segundo Responsável */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                  <div className="pt-2 space-y-2">
+                    <label className={labelCls}>Documentos do Responsável Financeiro</label>
+                    {RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => (
+                      <DocUploadRow
+                        key={key}
+                        label={label}
+                        doc={responsavel[key]}
+                        isUploading={uploadingKey === key}
+                        onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
+                        onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
+                      />
+                    ))}
+                  </div>
+                </AccordionSection>
+
+                {/* 4. SEGUNDO RESPONSÁVEL */}
+                <AccordionSection id="segundo" title="4. Segundo Responsável" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
-                    <span className="font-bold text-on-surface text-sm flex items-center gap-2"><User size={16} className="text-primary" /> Adicionar Segundo Responsável</span>
+                    <span className="font-bold text-on-surface text-sm">Esta matrícula tem um segundo responsável</span>
                   </label>
                   {temSegundo && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -409,7 +554,7 @@ export default function PublicMatricula() {
                         <input className={inputCls} value={segundoResponsavel.nome} onChange={e => setSegundoResponsavel(p => ({ ...p, nome: e.target.value }))} />
                       </div>
                       <div>
-                        <label className={labelCls}>E-mail</label>
+                        <label className={labelCls}>E-mail *</label>
                         <input type="email" className={inputCls} value={segundoResponsavel.email} onChange={e => setSegundoResponsavel(p => ({ ...p, email: e.target.value }))} />
                       </div>
                       <div>
@@ -433,6 +578,14 @@ export default function PublicMatricula() {
                         <input className={inputCls} value={segundoResponsavel.rg} onChange={e => setSegundoResponsavel(p => ({ ...p, rg: e.target.value }))} />
                       </div>
                       <div>
+                        <label className={labelCls}>Data de Expedição</label>
+                        <input type="date" className={inputCls} value={segundoResponsavel.rg_expedicao} onChange={e => setSegundoResponsavel(p => ({ ...p, rg_expedicao: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Órgão Expedidor</label>
+                        <input className={inputCls} placeholder="Ex: SSP ES" value={segundoResponsavel.rg_orgao} onChange={e => setSegundoResponsavel(p => ({ ...p, rg_orgao: e.target.value }))} />
+                      </div>
+                      <div>
                         <label className={labelCls}>Estado Civil</label>
                         <select className={inputCls} value={segundoResponsavel.estado_civil} onChange={e => setSegundoResponsavel(p => ({ ...p, estado_civil: e.target.value }))}>
                           <option value="">Selecionar...</option>
@@ -441,114 +594,25 @@ export default function PublicMatricula() {
                       </div>
                     </div>
                   )}
-                </section>
+                </AccordionSection>
 
-                {/* Crianças */}
-                <section className="space-y-3">
-                  <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><Baby size={16} className="text-primary" /> Informações da Criança</h4>
-                  {criancas.map((c, idx) => {
-                    const periodoOptions = PERIODOS_POR_CICLO[Number(c.ciclo)] || [];
-                    return (
-                      <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-black text-primary uppercase tracking-wider">Criança {idx + 1}</span>
-                          {criancas.length > 1 && (
-                            <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className={labelCls}>Nome completo *</label>
-                            <input className={inputCls} value={c.nome} onChange={e => updateCrianca(c.id, { nome: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Data de Nascimento *</label>
-                            <input type="date" className={inputCls} value={c.nascimento} onChange={e => updateCrianca(c.id, { nascimento: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Cidade de Nascimento</label>
-                            <input className={inputCls} value={c.cidade_nascimento} onChange={e => updateCrianca(c.id, { cidade_nascimento: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Ciclo (Horas/Dia) *</label>
-                            <select className={inputCls} value={c.ciclo} onChange={e => updateCrianca(c.id, { ciclo: e.target.value })}>
-                              <option value="">Selecionar...</option>
-                              {CICLOS.map(h => <option key={h} value={h}>{h}h/dia</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label className={labelCls}>Período *</label>
-                            <select className={inputCls} value={c.periodo} onChange={e => updateCrianca(c.id, { periodo: e.target.value })} disabled={!c.ciclo}>
-                              <option value="">{c.ciclo ? 'Selecionar...' : '← Primeiro o Ciclo'}</option>
-                              {periodoOptions.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="pt-1 border-t border-outline-variant">
-                          <h5 className="flex items-center gap-1.5 text-xs font-bold text-on-surface uppercase tracking-wide py-2">
-                            <MapPin size={13} className="text-primary" /> Endereço Completo
-                          </h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                              <label className={labelCls}>CEP</label>
-                              <input className={inputCls} placeholder="00000-000" value={c.cep} onChange={e => updateCrianca(c.id, { cep: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>Rua / Logradouro</label>
-                              <input className={inputCls} value={c.rua} onChange={e => updateCrianca(c.id, { rua: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>Número</label>
-                              <input className={inputCls} value={c.numero} onChange={e => updateCrianca(c.id, { numero: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>Complemento</label>
-                              <input className={inputCls} placeholder="Apto, Bloco, etc." value={c.complemento} onChange={e => updateCrianca(c.id, { complemento: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className={labelCls}>Bairro</label>
-                              <input className={inputCls} value={c.bairro} onChange={e => updateCrianca(c.id, { bairro: e.target.value })} />
-                            </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-3">
-                              <div>
-                                <label className={labelCls}>Cidade</label>
-                                <input className={inputCls} value={c.cidade} onChange={e => updateCrianca(c.id, { cidade: e.target.value })} />
-                              </div>
-                              <div className="w-20">
-                                <label className={labelCls}>UF</label>
-                                <input className={inputCls} maxLength={2} placeholder="SP" value={c.uf} onChange={e => updateCrianca(c.id, { uf: e.target.value.toUpperCase() })} />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <button type="button" onClick={addCrianca} className="flex items-center gap-2 text-primary hover:text-primary font-bold text-sm px-3 py-2">
-                    <Plus size={16} /> Adicionar Criança
-                  </button>
-                </section>
-
-                {/* Autorizados */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                  <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><UserCheck size={16} className="text-primary" /> Informações do Autorizado</h4>
+                {/* 5. AUTORIZADOS E CONTATO DE EMERGÊNCIA */}
+                <AccordionSection id="autorizados" title="5. Autorizados e Contato de Emergência" icon={<UserCheck size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  <p className="text-[11px] text-on-surface-variant/70 -mt-1">Quem mais pode buscar a criança. Também é quem entramos em contato em caso de emergência, quando não conseguirmos falar com os responsáveis.</p>
                   <div className="space-y-3">
                     {autorizados.map((a) => (
                       <div key={a.id} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-white border border-outline-variant rounded-zela-md p-3">
                         <div>
-                          <label className={labelCls}>Nome completo</label>
+                          <label className={labelCls}>Nome completo *</label>
                           <input className={inputCls} value={a.nome} onChange={e => updateAutorizado(a.id, { nome: e.target.value })} />
                         </div>
                         <div>
-                          <label className={labelCls}>Telefone</label>
+                          <label className={labelCls}>Telefone *</label>
                           <input className={inputCls} value={a.telefone} onChange={e => updateAutorizado(a.id, { telefone: e.target.value })} />
                         </div>
                         <div className="flex items-end gap-2">
                           <div className="flex-1">
-                            <label className={labelCls}>Parentesco</label>
+                            <label className={labelCls}>Parentesco *</label>
                             <select className={inputCls} value={a.parentesco} onChange={e => updateAutorizado(a.id, { parentesco: e.target.value })}>
                               <option value="">Selecionar...</option>
                               {PARENTESCOS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -588,31 +652,88 @@ export default function PublicMatricula() {
                       </button>
                     </div>
                   )}
-                </section>
+                </AccordionSection>
 
-                {/* Documentos — sessão única com tudo que precisa ser
-                    anexado, pra fazer de uma vez só em vez de espalhado pelo
-                    formulário. Cada item permite escolher um arquivo do
-                    aparelho OU tirar foto na hora, pela câmera. */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                  <h4 className="font-bold text-on-surface text-sm flex items-center gap-2"><FileText size={16} className="text-primary" /> Documentos</h4>
+                {/* 6. AUTORIZAÇÃO DE IMAGEM */}
+                <AccordionSection id="imagem" title="6. Autorização de Imagem" icon={<ImageIcon size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
                   <div className="space-y-2">
-                    {DOC_FIELDS.map(({ key, label }) => (
-                      <DocUploadRow
-                        key={key}
-                        label={label}
-                        doc={responsavel[key]}
-                        isUploading={uploadingKey === key}
-                        onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
-                        onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
-                      />
-                    ))}
+                    <RadioRow
+                      selected={autorizacaoImagem === 'nao'}
+                      onSelect={() => setAutorizacaoImagem('nao')}
+                      label="Não autorizo o uso da imagem do meu filho(a)"
+                    />
+                    <RadioRow
+                      selected={autorizacaoImagem === 'sim'}
+                      onSelect={() => setAutorizacaoImagem('sim')}
+                      label="Autorizo o(a) aluno(a) a ser fotografado e suas imagens publicadas no site e nas redes sociais da escola"
+                    />
+                  </div>
+
+                  <h5 className="flex items-center gap-1.5 text-xs font-bold text-on-surface uppercase tracking-wide pt-3">
+                    <HeartPulse size={13} className="text-primary" /> Emergência Médica
+                  </h5>
+                  <p className="text-[11px] text-on-surface-variant/70">Em caso de acidente considerado grave.</p>
+                  <div className="space-y-2">
+                    <RadioRow
+                      selected={autorizacaoEmergencia === 'sim'}
+                      onSelect={() => setAutorizacaoEmergencia('sim')}
+                      label="Autorizo encaminhar o(a) aluno(a) ao hospital ou pronto-socorro mais próximo"
+                    />
+                    <RadioRow
+                      selected={autorizacaoEmergencia === 'nao'}
+                      onSelect={() => setAutorizacaoEmergencia('nao')}
+                      label="Não autorizo"
+                    />
+                  </div>
+                </AccordionSection>
+
+                {/* 7. SAÚDE E ALIMENTAÇÃO */}
+                <AccordionSection id="saude" title="7. Saúde e Alimentação" icon={<HeartPulse size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  {criancas.map((c, idx) => (
+                    <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                      {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                      <div>
+                        <label className={labelCls}>Possui restrição ou alergia alimentar? Quais? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva ou 'Não possui'" value={c.restricao_alimentar} onChange={e => updateCrianca(c.id, { restricao_alimentar: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Alimentação Atual — como se alimenta, o que costuma comer *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva a rotina alimentar da criança" value={c.alimentacao_atual} onChange={e => updateCrianca(c.id, { alimentacao_atual: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Possui restrição de saúde? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva ou 'Não possui'" value={c.restricao_saude} onChange={e => updateCrianca(c.id, { restricao_saude: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Já consultou algum especialista? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Qual especialista e motivo" value={c.especialista} onChange={e => updateCrianca(c.id, { especialista: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Faz algum tratamento? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva ou 'Não faz'" value={c.tratamento} onChange={e => updateCrianca(c.id, { tratamento: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Possui alguma alergia? Qual? Precisa de medicamento? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva a alergia e o medicamento, se houver" value={c.alergia} onChange={e => updateCrianca(c.id, { alergia: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>A criança possui algum hábito importante? *</label>
+                        <textarea className={`${inputCls} h-16 resize-none`} placeholder="Ex: usa chupeta, tem objeto de apego..." value={c.habito_importante} onChange={e => updateCrianca(c.id, { habito_importante: e.target.value })} />
+                      </div>
+                    </div>
+                  ))}
+                </AccordionSection>
+
+                {/* 8. DOCUMENTOS — só os da criança aqui (certidão e cartão de
+                    vacina); os do responsável já ficam dentro da seção dele. */}
+                <AccordionSection id="documentos" title="8. Documentos da Criança" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                  <div className="space-y-2">
                     {criancas.map((c, idx) => (
                       <React.Fragment key={c.id}>
                         {CRIANCA_DOC_FIELDS.map(({ key, label }) => (
                           <DocUploadRow
                             key={key}
-                            label={`${label} — ${c.nome.trim() || `Filho(a) ${idx + 1}`}`}
+                            label={criancas.length > 1 ? `${label} · ${c.nome.trim() || `Filho(a) ${idx + 1}`}` : label}
                             doc={c[key]}
                             isUploading={uploadingKey === `crianca-${c.id}-${key}`}
                             onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCriancaDoc(c.id, key, f); }}
@@ -622,13 +743,14 @@ export default function PublicMatricula() {
                       </React.Fragment>
                     ))}
                   </div>
-                </section>
+                </AccordionSection>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm mt-2"
                 >
+                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
                   {isSubmitting ? 'Enviando...' : 'Enviar Matrícula'}
                 </button>
               </form>

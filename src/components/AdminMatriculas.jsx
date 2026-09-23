@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import {
   FileText, Loader2, Clock, CheckCircle2, XCircle,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
+  FileSpreadsheet, UploadCloud, Sparkles,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getSignedUrl } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { formatPersonName } from '../utils/formatName';
+import { downloadMatriculaImportTemplate } from '../lib/matriculaImportTemplate';
+import AdminMatriculaImportModal from './AdminMatriculaImportModal';
+import AdminMatriculaImportIAModal from './AdminMatriculaImportIAModal';
+import AdminMatriculaDrafts from './AdminMatriculaDrafts';
 
 const BUCKET = 'matriculas-docs';
 
@@ -116,7 +121,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-200">
-            {solicitacao.tipo === 'rematricula' ? 'Rematrícula' : 'Matrícula'}
+            {solicitacao.tipo === 'atualizacao_cadastral' ? 'Atualização Cadastral' : solicitacao.tipo === 'rematricula' ? 'Rematrícula' : 'Matrícula'}
           </span>
           <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
             <StatusIcon size={11} /> {status.label}
@@ -163,6 +168,19 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     <Field label="Endereço" value={c.endereco} />
                   </div>
                 </div>
+                {(c.alimentacao_atual || c.restricao_alimentar || c.restricao_saude || c.especialista || c.tratamento || c.alergia || c.habito_importante) && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm pt-2 border-t border-outline-variant/60">
+                    <div className="col-span-2 sm:col-span-3">
+                      <Field label="Alimentação Atual" value={c.alimentacao_atual} />
+                    </div>
+                    <Field label="Restrição Alimentar" value={c.restricao_alimentar} />
+                    <Field label="Restrição de Saúde" value={c.restricao_saude} />
+                    <Field label="Alergia" value={c.alergia} />
+                    <Field label="Especialista Consultado" value={c.especialista} />
+                    <Field label="Tratamento" value={c.tratamento} />
+                    <Field label="Hábito Importante" value={c.habito_importante} />
+                  </div>
+                )}
                 <DocLink doc={c.certidao_doc} label="Certidão de Nascimento" />
               </div>
             ))}
@@ -235,7 +253,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   );
 }
 
-function MatriculaLinkBox({ schoolCode }) {
+function CopyMatriculaLinkButton({ schoolCode }) {
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/matricula-publica?codigo=${schoolCode}`;
 
@@ -250,19 +268,14 @@ function MatriculaLinkBox({ schoolCode }) {
   };
 
   return (
-    <div className="mx-5 sm:mx-6 mt-4 p-3.5 bg-indigo-50 border border-indigo-100 rounded-zela-md flex items-center gap-3 shrink-0">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold text-primary uppercase tracking-wide">Link de Matrícula</p>
-        <p className="text-xs text-on-surface-variant truncate" title={link}>{link}</p>
-      </div>
-      <button
-        type="button"
-        onClick={copy}
-        className="flex items-center gap-1.5 shrink-0 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition-all active:scale-95"
-      >
-        <Copy size={13} /> {copied ? 'Copiado!' : 'Copiar link'}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={copy}
+      title={link}
+      className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition-all active:scale-95"
+    >
+      <Copy size={14} /> {copied ? 'Copiado!' : 'Copiar Link'}
+    </button>
   );
 }
 
@@ -271,9 +284,27 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState('pending');
+  const [tab, setTab] = useState('approved');
   const [decidingId, setDecidingId] = useState(null);
   const [newGuardianCredentials, setNewGuardianCredentials] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImportIAModalOpen, setIsImportIAModalOpen] = useState(false);
+  const [drafts, setDrafts] = useState([]);
+
+  const fetchDrafts = async () => {
+    if (!schoolId) return;
+    const { data, error: draftsError } = await supabase
+      .from('matricula_import_drafts')
+      .select('*')
+      .eq('school_id', schoolId)
+      .eq('status', 'draft')
+      .order('created_at', { ascending: false });
+    if (draftsError) {
+      console.error('[AdminMatriculas] Erro ao buscar rascunhos:', draftsError);
+      return;
+    }
+    setDrafts(data || []);
+  };
 
   const fetchSolicitacoes = async () => {
     if (!schoolId) return;
@@ -298,6 +329,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
 
   useEffect(() => {
     fetchSolicitacoes();
+    fetchDrafts();
   }, [schoolId]);
 
   // Converte os dados da solicitação aprovada em cadastros reais. O "núcleo"
@@ -418,7 +450,13 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         updated_at: new Date().toISOString(),
       };
 
-      if (status === 'approved') {
+      if (status === 'approved' && solicitacao.tipo === 'atualizacao_cadastral') {
+        // Aluno já matriculado -- só incorpora endereço/ficha médica/contatos
+        // ao cadastro que já existe, nunca cria aluno novo (approve_matricula
+        // sempre INSERT; aqui é update-only, casado por student_id).
+        const { error: rpcError } = await supabase.rpc('approve_atualizacao_cadastral', { p_solicitacao_id: solicitacao.id });
+        if (rpcError) throw new Error(`Não foi possível aplicar a atualização: ${rpcError.message}`);
+      } else if (status === 'approved') {
         // approve_matricula já marca status='approved' dentro da própria transação —
         // não precisa (e não deve) fazer um update solto aqui por cima.
         const result = await convertSolicitacaoToRecords(solicitacao);
@@ -431,16 +469,20 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       setSolicitacoes(prev => prev.map(s => (s.id === solicitacao.id ? { ...s, ...patch } : s)));
       if (segundoCredentials) setNewGuardianCredentials(segundoCredentials);
 
-      const criancasNomes = (solicitacao.criancas || []).map(c => c.nome).join(', ');
-      notifyFamilies({
-        type: 'matricula',
-        title: status === 'approved' ? 'Matrícula aprovada!' : 'Matrícula não aprovada',
-        message: status === 'approved'
-          ? `A matrícula de ${criancasNomes} foi aprovada.`
-          : `A solicitação de matrícula de ${criancasNomes} não foi aprovada.${reason ? ` Motivo: ${reason}` : ''}`,
-        url: '/?tab=matriculas',
-        familyIds: [solicitacao.family_id],
-      });
+      // Atualização cadastral não é uma decisão sobre matrícula nova -- não
+      // faz sentido notificar a família com "matrícula aprovada/reprovada".
+      if (solicitacao.tipo !== 'atualizacao_cadastral') {
+        const criancasNomes = (solicitacao.criancas || []).map(c => c.nome).join(', ');
+        notifyFamilies({
+          type: 'matricula',
+          title: status === 'approved' ? 'Matrícula aprovada!' : 'Matrícula não aprovada',
+          message: status === 'approved'
+            ? `A matrícula de ${criancasNomes} foi aprovada.`
+            : `A solicitação de matrícula de ${criancasNomes} não foi aprovada.${reason ? ` Motivo: ${reason}` : ''}`,
+          url: '/?tab=matriculas',
+          familyIds: [solicitacao.family_id],
+        });
+      }
     } catch (err) {
       console.error('[AdminMatriculas] Erro ao decidir solicitação:', err);
       setError(status === 'approved'
@@ -458,17 +500,40 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
       {/* Título "Matrículas" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
         <p className="text-on-surface-variant text-small hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
+        {/* Importação em massa — pra migrar formulários de anos anteriores
+            (ex: um Google Forms usado antes do Zela existir) sem cada
+            família precisar preencher tudo de novo do zero. */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto flex-wrap justify-end">
+          {/* Link de Matrícula — copia direto pra escola mandar pra uma
+              família nova (WhatsApp, e-mail, etc); resumido a um botão pra
+              liberar espaço vertical pras abas Aprovadas/Pendentes/Rejeitadas
+              subirem. Não fica anunciado em lugar nenhum público — quem não
+              tem o link não acha a página. */}
+          {currentSchool?.school_code && (
+            <CopyMatriculaLinkButton schoolCode={currentSchool.school_code} />
+          )}
+          <button
+            onClick={downloadMatriculaImportTemplate}
+            className="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container border border-outline-variant px-3 py-2 rounded-zela-md transition"
+          >
+            <FileSpreadsheet size={14} /> Baixar Modelo
+          </button>
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition"
+          >
+            <UploadCloud size={14} /> Importar Planilha
+          </button>
+          <button
+            onClick={() => setIsImportIAModalOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 px-3 py-2 rounded-zela-md transition"
+          >
+            <Sparkles size={14} /> Importar com IA
+          </button>
+        </div>
       </div>
-
-      {/* Link de Matrícula — só aparece aqui no Admin, pra escola copiar e
-          mandar direto pra uma família nova (WhatsApp, e-mail, etc). Não fica
-          anunciado em lugar nenhum público — quem não tem o link não acha a
-          página. */}
-      {currentSchool?.school_code && (
-        <MatriculaLinkBox schoolCode={currentSchool.school_code} />
-      )}
 
       <div className="flex gap-2 px-5 sm:px-6 pt-4 shrink-0">
         {TABS.map(t => (
@@ -488,6 +553,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
+        <AdminMatriculaDrafts drafts={drafts} onRefresh={() => { fetchDrafts(); fetchSolicitacoes(); }} />
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
@@ -546,6 +612,20 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
             </div>
           </div>
         </div>
+      )}
+
+      {isImportModalOpen && (
+        <AdminMatriculaImportModal
+          onClose={() => setIsImportModalOpen(false)}
+          onImportComplete={() => { setTab('pending'); fetchSolicitacoes(); }}
+        />
+      )}
+
+      {isImportIAModalOpen && (
+        <AdminMatriculaImportIAModal
+          onClose={() => setIsImportIAModalOpen(false)}
+          onDraftsCreated={fetchDrafts}
+        />
       )}
     </div>
   );
