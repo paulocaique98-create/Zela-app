@@ -266,7 +266,17 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       consumed.add(user.id);
     });
 
-    return Array.from(groups.values());
+    // Ordena pelo nome do aluno que aparece na faixa do card (o primeiro,
+    // quando há mais de um) -- grupos "solo" sem aluno nenhum (ver passo 3
+    // acima) vão pro final, já que não têm essa faixa pra ordenar por ela.
+    return Array.from(groups.values()).sort((a, b) => {
+      const nameA = a.students[0]?.name || '';
+      const nameB = b.students[0]?.name || '';
+      if (!nameA && !nameB) return 0;
+      if (!nameA) return 1;
+      if (!nameB) return -1;
+      return nameA.localeCompare(nameB, 'pt-BR');
+    });
   }, [filteredUsers]);
 
   const guardianBadges = (guardian) => (
