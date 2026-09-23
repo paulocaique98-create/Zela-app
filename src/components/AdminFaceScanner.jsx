@@ -98,6 +98,18 @@ const CENTER_TOLERANCE_X = 0.26;
 const CENTER_TOLERANCE_Y = 0.32;
 
 // Avalia se o rosto detectado está bem posicionado (perto e dentro do molde central)
+// Cada motivo de rejeição de enquadramento vira sua própria categoria de log
+// (fingerprint separado em error_logs) -- sem isso, "muito perto" e "muito
+// longe" caíam todos em "frame_position_rejected", e como o RPC log_error só
+// guarda o CONTEXTO da ocorrência mais recente (não um histórico completo),
+// virava impossível saber a proporção real entre os motivos, só o último que
+// aconteceu.
+export function frameRejectionCategory(position) {
+  if (position === 'too-far') return 'frame_position_too_far';
+  if (position === 'too-close') return 'frame_position_too_close';
+  return 'frame_position_off_center';
+}
+
 export function evaluateFramePosition(box, videoWidth, videoHeight) {
   const faceWidthRatio = box.width / videoWidth;
   const cx = (box.x + box.width / 2) / videoWidth;
@@ -762,7 +774,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 resetStuckTimer();
               }
               setMatchStatus('searching');
-              logFaceEvent('frame_position_rejected', 'warn', { reason: position, mode: 'live' });
+              logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live' });
             } else if (!matchConfirmed) {
               setMatchStatus('searching');
               const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
@@ -881,110 +893,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     };
   }, [labeledDescriptors, modelsLoaded, cameraReady, error, authorizedList, students, capturedImage]);
 
-  // Capture current frame and run face comparison
-  const handleCaptureAndCompare = async () => {
-    if (!videoRef.current || !labeledDescriptors) return;
-
-    // Protege contra tentativa de reconhecimento em série (alguém tentando
-    // rosto atrás de rosto — o próprio, foto impressa, foto na tela de um
-    // celular — pra forçar um falso positivo). Checagem no banco, escopada
-    // pela própria escola.
-    const { data: allowed, error: rateLimitError } = await supabase.rpc('check_kiosk_recognition_rate_limit');
-    if (!rateLimitError && allowed === false) {
-      setError('Muitas tentativas de reconhecimento em pouco tempo. Aguarde um instante ou use Senha/PIN.');
-      logFaceEvent('rate_limited', 'warn', { mode: 'manual_capture' });
-      return;
-    }
-
-    setIsProcessingCapture(true);
-    setError(null);
-    setNoMatchReason('');
-    try {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-
-      // Mirror the context so captured photo matches mirrored camera display
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
-
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      setCapturedImage(dataUrl);
-      setMatchStatus('searching');
-
-      // Pré-processamento adaptativo: só realça brilho/contraste na intensidade que a
-      // cena realmente precisa, em vez do filtro fixo 1.8/1.3 anterior, que distorcia
-      // o rosto mesmo com boa iluminação e piorava a taxa de falso-positivo.
-      const luminance = getAverageLuminance(video);
-      const processCanvas = enhanceForLowLight(video, video.videoWidth || 640, video.videoHeight || 480, luminance, false);
-
-      // Detector mais preciso (SsdMobilenetv1) para a confirmação manual — não é
-      // tempo-crítico como o loop ao vivo, então vale usar o modelo mais robusto.
-      const detection = await faceapi.detectSingleFace(processCanvas, new faceapi.SsdMobilenetv1Options())
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (!detection) {
-        setMatchStatus('no-match');
-        setIsProcessingCapture(false);
-        logFaceEvent('no_face_detected', 'warn', { mode: 'manual_capture' });
-        return;
-      }
-
-      const position = evaluateFramePosition(detection.detection.box, video.videoWidth || 640, video.videoHeight || 480);
-      if (position !== 'ok') {
-        setNoMatchReason(
-          position === 'too-far' ? 'Aproxime-se do Dispositivo e tente novamente.' :
-            position === 'too-close' ? 'Afaste-se do Dispositivo e tente novamente.' :
-              'Centralize o rosto no molde e tente novamente.'
-        );
-        setMatchStatus('no-match');
-        setIsProcessingCapture(false);
-        logFaceEvent('frame_position_rejected', 'warn', { reason: position, mode: 'manual_capture' });
-        return;
-      }
-
-      const bestMatch = findSecureMatch(detection.descriptor, labeledDescriptors);
-
-      if (bestMatch.label !== 'unknown') {
-        const personId = bestMatch.label;
-        const person = authorizedList.find(p => p.id === personId);
-        if (person) {
-          setMatchedPerson(person);
-          setMatchDistance(bestMatch.distance);
-          setMatchStatus('matched');
-          fetchMatchedPersonPhoto(person.id);
-          const studentsData = await fetchStudentsForPerson(person);
-          setMatchedStudents(studentsData);
-          setSelectedStudentIds(studentsData.length === 1 ? studentsData.map(s => s.id) : []);
-        } else {
-          setMatchStatus('no-match');
-          logFaceEvent('matched_person_not_found', 'error', { mode: 'manual_capture', person_id: personId });
-        }
-      } else {
-        setMatchStatus('no-match');
-        logFaceEvent(bestMatch.ambiguous ? 'ambiguous_match' : 'below_threshold', 'warn', {
-          mode: 'manual_capture',
-          distance: bestMatch.distance,
-          second_best_distance: bestMatch.secondBestDistance,
-          threshold: MATCH_THRESHOLD,
-          margin: MATCH_MARGIN,
-          candidate_count: labeledDescriptors.length,
-        });
-      }
-    } catch (err) {
-      console.error('Erro na captura/comparação:', err);
-      setError('Erro ao processar imagem capturada.');
-      setMatchStatus('no-match');
-    } finally {
-      setIsProcessingCapture(false);
-    }
-  };
-
   const handleResetScanner = () => {
     setCapturedImage(null);
     setMatchDistance(null);
@@ -1060,15 +968,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       autoTriggeredRef.current = false;
     }
   }, [matchStatus]);
-
-  // Convert distance to similarity percentage
-  const getSimilarityPercentage = (distance) => {
-    if (distance === null || distance === undefined) return 0;
-    // Euclidean distance of 0.6 is the default threshold.
-    // Scale so distance=0 is 100%, distance=0.55 is 50%, and distance >= 0.7 is 0%
-    const score = Math.max(0, 1 - (distance / 0.75));
-    return Math.round(score * 100);
-  };
 
   const innerContent = (
     <>
@@ -1206,24 +1105,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           </div>
 
 
-          {/* Botão principal da câmera: captura manual antes do match. Depois de
-              encontrar o responsável com só 1 filho vinculado, a confirmação é
-              100% automática (useEffect de auto-confirmação acima) — nenhum
-              botão aparece, pra não dar a impressão de que precisa clicar em
-              algo. Só reaparece (como confirmação manual de verdade) quando há
-              MAIS de 1 filho vinculado: aí o reconhecimento do responsável não
-              basta pra saber quem está fisicamente ali, precisa da escolha. */}
-          {modelsLoaded && !capturedImage && !error && !actionDone && matchStatus !== 'matched' && (
-            <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
-              <button
-                onClick={handleCaptureAndCompare}
-                className="w-full md:w-auto flex justify-center items-center gap-2 bg-primary hover:bg-primary-container text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
-              >
-                <Camera size={16} /> Capturar e Comparar
-              </button>
-            </div>
-          )}
-
           {modelsLoaded && !capturedImage && !error && !actionDone && matchStatus === 'matched' && matchedStudents.length > 1 && (
             <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-auto">
               <button
@@ -1309,7 +1190,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 <div>
                   <p className="text-sm font-semibold text-on-surface">Aguardando detecção</p>
                   <p className="text-xs mt-1 px-4 leading-relaxed">
-                    Posicione o responsável ou clique no botão Capturar e Comparar na câmera para capturar uma foto manual de confronto.
+                    Posicione o responsável em frente à câmera, dentro do molde.
                   </p>
                 </div>
               </div>
@@ -1317,47 +1198,15 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               // Match Found
               <div className="space-y-5 animate-in fade-in duration-300">
 
-                {/* Visual side-by-side confrontation */}
-                {capturedImage && (
-                  <div>
-                    <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2">Confronto Biométrico</p>
-                    <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-zela-lg border border-outline-variant shadow-sm relative">
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] font-extrabold text-on-surface-variant/70 uppercase mb-1">Capturado</span>
-                        <div className="w-full h-24 rounded-lg overflow-hidden border border-outline-variant">
-                          <img src={capturedImage} alt="Capturado" className="w-full h-full object-cover" />
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] font-extrabold text-primary uppercase mb-1">Cadastrado</span>
-                        <div className="w-full h-24 rounded-lg overflow-hidden border border-indigo-100 flex items-center justify-center bg-surface-container">
-                          {matchedPerson.photo_url ? (
-                            <img src={matchedPerson.photo_url} alt="Registrado" className="w-full h-full object-cover" />
-                          ) : (
-                            <Loader2 size={20} className="text-primary animate-spin" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Similarity Badge */}
-                      <div className="absolute top-[48%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white font-black text-[10px] px-2 py-1 rounded-full shadow border-2 border-white">
-                        {getSimilarityPercentage(matchDistance)}%
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Person details */}
                 <div className="bg-white p-4 rounded-zela-lg border border-outline-variant shadow-sm flex items-center gap-3">
-                  {!capturedImage && (
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-indigo-600 bg-surface-container shrink-0 flex items-center justify-center">
-                      {matchedPerson.photo_url ? (
-                        <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
-                      ) : (
-                        <Loader2 size={18} className="text-primary animate-spin" />
-                      )}
-                    </div>
-                  )}
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-indigo-600 bg-surface-container shrink-0 flex items-center justify-center">
+                    {matchedPerson.photo_url ? (
+                      <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
+                    ) : (
+                      <Loader2 size={18} className="text-primary animate-spin" />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-on-surface truncate text-sm">{matchedPerson.name}</p>
                     <p className="text-primary font-bold text-xs">{matchedPerson.relation}</p>
