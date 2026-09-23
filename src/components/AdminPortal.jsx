@@ -82,7 +82,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     go('users');
   };
 
-  const monitorStudents = students.filter(s => ['pending_entry', 'pending_exit'].includes(s.status));
+  const monitorStudents = students
+    .filter(s => ['pending_entry', 'pending_exit'].includes(s.status))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
   const [bulkApproving, setBulkApproving] = useState(false);
