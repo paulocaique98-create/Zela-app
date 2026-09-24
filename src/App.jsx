@@ -1360,15 +1360,19 @@ export default function App() {
         />
       )}
 
-      {/* Só o respiro de mobile/tablet pequeno (p-3 sm:p-4) continua igual --
-          é o que sustenta o truque de "-m-3 sm:m-0" que cada tela já usa pra
-          ficar edge-to-edge no celular e voltar a ter moldura a partir do sm
-          (ver histórico de telas Admin/Família/Professor/Dev). A partir do
-          md (onde o menu lateral vira uma coluna fixa, não mais um overlay),
-          o padding do <main> foi zerado de propósito: é o que deixa o menu
-          lateral e o header colados nas bordas da tela, formando um bloco só
-          (ver isFlushChrome acima e Header.jsx `flush`). */}
-      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : 'p-3 sm:p-4'}`}>
+      {/* Só o respiro de mobile pequeno (p-3) continua igual -- é o que
+          sustenta o truque de "-m-3 sm:m-0" que cada tela já usa pra ficar
+          edge-to-edge no celular e voltar a ter moldura a partir do sm (ver
+          histórico de telas Admin/Família/Professor/Dev). Do sm em diante o
+          padding do <main> foi zerado de propósito, pra deixar o menu
+          lateral e o header colados nas bordas da tela (ver isFlushChrome
+          acima e Header.jsx `flush`).
+          Portal do Dev: zerado já a partir do sm (não só do md como os
+          outros 3 portais) -- ele é o único de tema escuro, então a faixa de
+          padding (que nos outros 3 é quase invisível, mesma cor clara do
+          fundo) aparecia bem visível como uma margem branca em volta do
+          conteúdo escuro numa janela de navegador não maximizada. */}
+      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : (currentUser?.role === 'developer' ? 'p-3 sm:p-0' : 'p-3 sm:p-4 md:p-0')}`}>
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex justify-center items-center">

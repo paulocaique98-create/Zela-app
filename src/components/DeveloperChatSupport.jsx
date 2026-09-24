@@ -166,26 +166,26 @@ export default function DeveloperChatSupport({ currentUser }) {
 
   if (activeThread) {
     return (
-      <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
-          <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
+      <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
+        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-dev-border shrink-0">
+          <button onClick={closeThread} className="p-2 -ml-1 text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-h3 text-on-surface">{activeThread.family?.name || 'Admin'}</h2>
-            <p className="text-xs text-on-surface-variant/70">{activeThread.school?.school_code} · {activeThread.school?.name}</p>
+            <h2 className="text-h3 text-dev-text">{activeThread.family?.name || 'Admin'}</h2>
+            <p className="text-xs text-dev-text-muted">{activeThread.school?.school_code} · {activeThread.school?.name}</p>
           </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-5 space-y-3">
           {isLoadingThread ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <Loader2 className="w-8 h-8 text-dev-primary animate-spin" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-16 text-on-surface-variant/70">
-              <LifeBuoy className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-              <p className="text-sm font-semibold text-on-surface-variant">Nenhuma mensagem ainda.</p>
+            <div className="text-center py-16 text-dev-text-muted">
+              <LifeBuoy className="mx-auto h-12 w-12 text-dev-surface-high mb-3" />
+              <p className="text-sm font-semibold text-dev-text-muted">Nenhuma mensagem ainda.</p>
             </div>
           ) : (
             <>
@@ -194,7 +194,7 @@ export default function DeveloperChatSupport({ currentUser }) {
                   <button
                     onClick={loadOlderMessages}
                     disabled={isLoadingOlder}
-                    className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-zela-md transition disabled:opacity-60"
+                    className="flex items-center gap-1.5 text-xs font-bold text-dev-primary bg-dev-primary-container hover:brightness-110 px-3 py-1.5 rounded-zela-md transition disabled:opacity-60"
                   >
                     {isLoadingOlder ? <Loader2 size={14} className="animate-spin" /> : <ChevronUp size={14} />}
                     Carregar mensagens anteriores
@@ -205,9 +205,9 @@ export default function DeveloperChatSupport({ currentUser }) {
                 const mine = m.sender_role === 'developer';
                 return (
                   <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
+                    <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-dev-primary text-dev-bg' : 'bg-dev-surface-high text-dev-text'}`}>
                       <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
+                      <p className={`text-[10px] mt-1 ${mine ? 'text-dev-bg/70' : 'text-dev-text-muted'}`}>{formatTime(m.created_at)}</p>
                     </div>
                   </div>
                 );
@@ -218,22 +218,22 @@ export default function DeveloperChatSupport({ currentUser }) {
 
         {error && (
           <div className="px-4 sm:px-5 pb-2">
-            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
           </div>
         )}
 
-        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-outline-variant shrink-0">
+        <form onSubmit={handleSend} className="flex items-center gap-2 p-4 sm:p-5 border-t border-dev-border shrink-0">
           <input
             type="text"
             value={body}
             onChange={e => setBody(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 min-w-0 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            className="flex-1 min-w-0 px-4 py-2.5 bg-dev-bg border border-dev-border text-dev-text placeholder:text-dev-text-muted rounded-zela-md focus:outline-none focus:ring-2 focus:ring-dev-primary text-sm"
           />
           <button
             type="submit"
             disabled={isSending || !body.trim()}
-            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
+            className="flex items-center justify-center gap-1.5 bg-dev-primary hover:brightness-110 disabled:bg-dev-surface-high disabled:text-dev-text-muted text-dev-bg p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             <span className="hidden sm:inline">Enviar</span>
@@ -244,22 +244,22 @@ export default function DeveloperChatSupport({ currentUser }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
       {/* Título "Suporte Zela" e ícone removidos (o Header do app já mostra
           o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <p className="text-on-surface-variant text-small hidden sm:block">Conversas de administradores de todas as escolas.</p>
+      <div className="flex items-center p-5 sm:p-6 border-b border-dev-border shrink-0">
+        <p className="text-dev-text-muted text-small hidden sm:block">Conversas de administradores de todas as escolas.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-none p-5 sm:p-6 space-y-2">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <Loader2 className="w-8 h-8 text-dev-primary animate-spin" />
           </div>
         ) : threads.length === 0 ? (
-          <div className="text-center py-16 text-on-surface-variant/70">
-            <LifeBuoy className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma conversa de suporte ainda.</p>
+          <div className="text-center py-16 text-dev-text-muted">
+            <LifeBuoy className="mx-auto h-12 w-12 text-dev-surface-high mb-3" />
+            <p className="text-sm font-semibold text-dev-text-muted">Nenhuma conversa de suporte ainda.</p>
           </div>
         ) : (
           threads.map(t => {
@@ -268,13 +268,13 @@ export default function DeveloperChatSupport({ currentUser }) {
               <button
                 key={t.id}
                 onClick={() => openThread(t)}
-                className="w-full flex items-center gap-3 p-4 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
+                className="w-full flex items-center gap-3 p-4 bg-dev-surface border border-dev-border hover:border-dev-primary/40 hover:bg-dev-surface-high rounded-zela-lg transition text-left"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-on-surface text-sm truncate">{t.family?.name || 'Admin'}</p>
-                  <p className="text-on-surface-variant/70 text-xs truncate">{t.school?.school_code} · {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
+                  <p className="font-bold text-dev-text text-sm truncate">{t.family?.name || 'Admin'}</p>
+                  <p className="text-dev-text-muted text-xs truncate">{t.school?.school_code} · {t.school?.name} • Atualizado em {formatTime(t.updated_at)}</p>
                 </div>
-                {unread && <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />}
+                {unread && <span className="w-2.5 h-2.5 rounded-full bg-dev-primary shrink-0" />}
               </button>
             );
           })

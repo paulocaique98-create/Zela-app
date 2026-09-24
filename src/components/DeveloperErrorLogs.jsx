@@ -232,7 +232,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const periodLabel = PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período';
 
   return (
-    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-dev-border md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
       <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-dev-border shrink-0 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary shrink-0">

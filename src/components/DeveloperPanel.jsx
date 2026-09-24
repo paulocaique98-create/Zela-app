@@ -283,7 +283,7 @@ export default function DeveloperPanel() {
   }, [openMenuId]);
 
   return (
-    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-dev-border md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
       {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
