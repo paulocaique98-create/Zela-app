@@ -283,7 +283,7 @@ export default function DeveloperPanel() {
   }, [openMenuId]);
 
   return (
-    <div className="h-full flex flex-col bg-dev-surface rounded-zela-xl border border-dev-border shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-dev-border shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
@@ -615,8 +615,8 @@ export default function DeveloperPanel() {
                     { id: 'qr_checkin', label: 'Check-in por QR Code', desc: 'Adiciona a opção de check-in/check-out escaneando o QR de cada aluno no totem, com 1 toque de confirmação de quem está presente.' },
                     { id: 'face_engine_human', label: 'Motor Facial · Human (beta)', desc: 'Troca o motor que DECIDE o reconhecimento facial de face-api.js para @vladmandic/human. Só ativar depois de validar os dados do modo observador (Logs de erro / shadow_face_recognition_log) — ver PLANO_MIGRACAO_BIBLIOTECA_RECONHECIMENTO_FACIAL.md, Fases C/D. Pessoas sem face_descriptor_v2 gerado continuam sendo reconhecidas pelo motor antigo automaticamente.' }
                   ].map(mod => (
-                    <div key={mod.id} className="flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition">
-                      <div className="flex-1">
+                    <div key={mod.id} className={`flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition ${mod.id === 'face_engine_human' ? 'sm:col-span-2' : ''}`}>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-dev-text">{mod.label}</p>
                         <p className="text-xs text-dev-text-muted mt-0.5">{mod.desc}</p>
                       </div>

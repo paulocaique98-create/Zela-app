@@ -141,7 +141,7 @@ export default function AdminStudentList({ currentUser }) {
   const handleLoadMore = () => fetchPage(students.length, { append: true });
 
   return (
-    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título "Lista de Alunos" removido (o Header do app já
           mostra o nome da tela dinamicamente), ícone + contador numa linha
           só, mais compacta. */}

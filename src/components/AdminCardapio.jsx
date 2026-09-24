@@ -399,7 +399,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Cardápio" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
@@ -967,7 +967,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
       <div className="p-5 sm:p-6 border-b border-outline-variant shrink-0 space-y-3">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant hover:text-primary transition">
           <ArrowLeft size={14} /> Voltar aos cardápios

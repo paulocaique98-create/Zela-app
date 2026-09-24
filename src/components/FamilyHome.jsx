@@ -3,7 +3,7 @@ import { CheckCircle2, LogOut } from 'lucide-react';
 
 export default function FamilyHome({ familyStudents, updateStudentStatus }) {
   return (
-    <div className="h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Título "Início" removido (o Header do app já mostra "Zela Portal"
           nessa tela). */}
       <div className="mb-6 flex justify-between items-start shrink-0">

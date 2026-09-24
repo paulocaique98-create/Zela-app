@@ -118,7 +118,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
   );
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Diário" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">

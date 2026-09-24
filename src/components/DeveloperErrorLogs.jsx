@@ -62,7 +62,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const [period, setPeriod] = useState('today');
   const [showResolved, setShowResolved] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('occurrences'); // 'occurrences' | 'last_seen_at'
+  const [sortBy, setSortBy] = useState('last_seen_at'); // 'occurrences' | 'last_seen_at'
 
   // Modelo 10 (período dentro do título) validado com o usuário (proposta
   // com 10 layouts, 18/09) -- período vira parte do cabeçalho, clicável
@@ -91,7 +91,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
 
   const activeFilterCount = [
     source !== 'all', severity !== 'all', schoolId !== 'all', screenFilter !== 'all',
-    sortBy !== 'occurrences', showResolved, searchTerm.trim().length > 0,
+    sortBy !== 'last_seen_at', showResolved, searchTerm.trim().length > 0,
   ].filter(Boolean).length;
 
   const schoolNameById = useMemo(() => {
@@ -232,7 +232,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const periodLabel = PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período';
 
   return (
-    <div className="h-full flex flex-col bg-dev-surface rounded-zela-xl border border-dev-border shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-dev-border shadow-none sm:shadow-sm overflow-hidden">
       <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-dev-border shrink-0 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary shrink-0">

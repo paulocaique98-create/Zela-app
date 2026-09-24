@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   FileText, Loader2, Clock, CheckCircle2, XCircle,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
-  FileSpreadsheet, UploadCloud, Sparkles,
+  FileSpreadsheet, UploadCloud,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getSignedUrl } from '../lib/storage';
@@ -10,8 +10,6 @@ import { notifyFamilies } from '../lib/notifyFamilies';
 import { formatPersonName } from '../utils/formatName';
 import { downloadMatriculaImportTemplate } from '../lib/matriculaImportTemplate';
 import AdminMatriculaImportModal from './AdminMatriculaImportModal';
-import AdminMatriculaImportIAModal from './AdminMatriculaImportIAModal';
-import AdminMatriculaDrafts from './AdminMatriculaDrafts';
 
 const BUCKET = 'matriculas-docs';
 
@@ -288,23 +286,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const [decidingId, setDecidingId] = useState(null);
   const [newGuardianCredentials, setNewGuardianCredentials] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isImportIAModalOpen, setIsImportIAModalOpen] = useState(false);
-  const [drafts, setDrafts] = useState([]);
-
-  const fetchDrafts = async () => {
-    if (!schoolId) return;
-    const { data, error: draftsError } = await supabase
-      .from('matricula_import_drafts')
-      .select('*')
-      .eq('school_id', schoolId)
-      .eq('status', 'draft')
-      .order('created_at', { ascending: false });
-    if (draftsError) {
-      console.error('[AdminMatriculas] Erro ao buscar rascunhos:', draftsError);
-      return;
-    }
-    setDrafts(data || []);
-  };
 
   const fetchSolicitacoes = async () => {
     if (!schoolId) return;
@@ -329,7 +310,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
 
   useEffect(() => {
     fetchSolicitacoes();
-    fetchDrafts();
   }, [schoolId]);
 
   // Converte os dados da solicitação aprovada em cadastros reais. O "núcleo"
@@ -497,7 +477,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const pendingCount = solicitacoes.filter(s => s.status === 'pending').length;
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-zela-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Matrículas" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
@@ -526,12 +506,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           >
             <UploadCloud size={14} /> Importar Planilha
           </button>
-          <button
-            onClick={() => setIsImportIAModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 px-3 py-2 rounded-zela-md transition"
-          >
-            <Sparkles size={14} /> Importar com IA
-          </button>
         </div>
       </div>
 
@@ -553,7 +527,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
-        <AdminMatriculaDrafts drafts={drafts} onRefresh={() => { fetchDrafts(); fetchSolicitacoes(); }} />
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
@@ -618,13 +591,6 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         <AdminMatriculaImportModal
           onClose={() => setIsImportModalOpen(false)}
           onImportComplete={() => { setTab('pending'); fetchSolicitacoes(); }}
-        />
-      )}
-
-      {isImportIAModalOpen && (
-        <AdminMatriculaImportIAModal
-          onClose={() => setIsImportIAModalOpen(false)}
-          onDraftsCreated={fetchDrafts}
         />
       )}
     </div>

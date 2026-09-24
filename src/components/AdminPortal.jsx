@@ -469,7 +469,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
-          <div className={`h-full flex flex-col bg-surface-container-lowest p-5 md:p-6 rounded-zela-xl shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
+          <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
 
             {/* Header do Monitor -- título "Monitor de Solicitações" removido
                 (o Header do app já mostra o nome da tela dinamicamente); o
