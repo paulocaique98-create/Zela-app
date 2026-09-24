@@ -18,6 +18,7 @@ import ConfirmModal from './ConfirmModal';
 import { logAction } from '../lib/auditLog';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import KioskClock from './KioskClock';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
@@ -679,7 +680,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             </div>
 
             {/* Conteúdo central */}
-            <div className="flex-1 flex flex-col items-center justify-center px-5 sm:px-8 py-8 overflow-y-auto">
+            <div className="flex-1 flex flex-col items-center justify-start px-5 sm:px-8 pt-[72px] sm:pt-20 pb-8 overflow-y-auto">
               <div className="w-full max-w-md">
                 <div className="w-10 h-1 rounded-full bg-primary mb-4"></div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-on-surface mb-1.5">Identifique-se</h2>
@@ -722,6 +723,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     <span className="font-bold text-sm sm:text-base text-left">Senha / PIN</span>
                   </button>
                 </div>
+              </div>
+
+              <div className="w-full max-w-md mt-[50px]">
+                <KioskClock />
               </div>
             </div>
           </div>
