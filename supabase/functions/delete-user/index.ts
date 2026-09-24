@@ -102,26 +102,18 @@ serve(async (req) => {
       }
     }
 
-    // 3.5 Revogar todos os tokens ativos (Passo 3)
-    // O Supabase JS client aceita admin.signOut para revogar todas as sessões do usuário.
-    // Fazemos isso ANTES de apagar o usuário para evitar erros.
-    await adminClient.auth.admin.signOut(userId, 'global')
+    // Achado real (login de um responsável quebrou do nada): a ordem antiga
+    // apagava o Auth PRIMEIRO e só depois o public.users -- se o DELETE do
+    // public.users falhasse no meio (ex: uma FK travando, como aconteceu
+    // com fichas_medicas.updated_by), o Auth já tinha ido embora e a conta
+    // ficava "pela metade": ninguém mais conseguia logar, mas o cadastro
+    // (aluno, vínculos, fichas) continuava intacto, sem erro nenhum visível
+    // pra quem excluiu. Agora a ordem é invertida: apaga tudo do banco
+    // PRIMEIRO, e só apaga o login (Auth) por último, quando o resto já deu
+    // certo -- se algo travar no banco, a pessoa nem percebe, o login dela
+    // continua funcionando normalmente.
 
-    // 4. Excluir do auth.users usando a admin API
-    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId)
-
-    if (deleteAuthError) {
-      // Só seguimos para apagar o public.users se o motivo for "já não existe no Auth"
-      // (ex: conta fantasma). Qualquer outro erro (permissão, rede, etc.) precisa parar
-      // aqui — senão apagamos o perfil público e deixamos um usuário órfão no Auth.
-      const notFound = /not.?found/i.test(deleteAuthError.message || '')
-      if (!notFound) {
-        throw new Error(`Erro ao excluir do Auth: ${deleteAuthError.message}`)
-      }
-      console.warn(`Usuário já não existia no Auth, prosseguindo para apagar do public: ${deleteAuthError.message}`)
-    }
-
-    // 4.5 Excluir os cadastros de "Autorizados" (e a foto/biometria de cada
+    // 4. Excluir os cadastros de "Autorizados" (e a foto/biometria de cada
     // um) dessa família. Achado ao investigar um falso-positivo na tela de
     // Duplicidade Facial: authorized_persons.family_id não tem ON DELETE
     // CASCADE pra users(id) (a tabela foi criada direto no dashboard, sem
@@ -161,12 +153,18 @@ serve(async (req) => {
     if (deletePublicError) {
       throw new Error(`Erro ao excluir usuário público: ${deletePublicError.message}`)
     }
-    
-    // Passo 3 do User: se não deletar (ou mesmo deletando), invalidar sessão
-    // Porem o `deleteUser` já apaga o usuário e revoga tokens do Supabase automaticamente.
-    // Mas conforme o requisito, chamamos signOut('others') se necessário. 
-    // Contudo signOut() não aceita 'others' no user_id, ele apenas apaga a sessão se o usuário estiver lá.
-    // O deleteUser já é suficiente para revogar o token no backend.
+
+    // 6. Só agora, com o banco já limpo, revoga as sessões e apaga o login
+    // (Auth) -- por último de propósito (ver comentário acima).
+    await adminClient.auth.admin.signOut(userId, 'global')
+    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId)
+    if (deleteAuthError) {
+      const notFound = /not.?found/i.test(deleteAuthError.message || '')
+      if (!notFound) {
+        throw new Error(`Erro ao excluir do Auth: ${deleteAuthError.message}`)
+      }
+      console.warn(`Usuário já não existia no Auth: ${deleteAuthError.message}`)
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: 'Usuário excluído com sucesso dos dois ambientes.' }),
