@@ -198,13 +198,13 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   const totalValor = filtered.reduce((acc, log) => acc + log.valor, 0);
   const totalValorFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor);
 
-  // "Hoje"/"Editar" são um único dia -- cada registro de `filtered` já É o
-  // resultado daquele dia por aluno, então mostra um card por dia. "Semana"/
-  // "Mês" cobrem vários dias: sem agrupar por aluno, cada card continuava
-  // mostrando só 1 dia (geralmente o mais recente, por causa da ordenação),
-  // dando a impressão de que o excedente do mês era só o de hoje. Aqui soma
-  // minutos/valor de TODOS os dias do período, por aluno.
-  const isSingleDay = period === 'today' || period === 'custom';
+  // Todos os períodos (Hoje/Semana/Mês/Editar) agrupam por aluno e mostram
+  // um card expansível -- antes só Semana/Mês tinham esse comportamento;
+  // Hoje/Editar mostravam o dia direto, sem poder expandir/recolher. Pra um
+  // único dia isso só cria um grupo com 1 "dia" dentro, mas mantém a
+  // interação igual em todas as abas. Some minutos/valor de TODOS os dias
+  // do período, por aluno.
+  const isSingleDay = false;
   const displayLogs = isSingleDay ? filtered : (() => {
     const byStudent = new Map();
     for (const log of filtered) {
