@@ -421,8 +421,16 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
           autorizacao_emergencia: autorizacaoEmergencia,
         },
         segundo_responsavel: temSegundo ? { ...segundoResponsavel, nome: formatPersonName(segundoResponsavel.nome) } : null,
-        criancas: criancas.filter(c => c.nome.trim()).map(({ id: _id, cep, rua, numero, complemento, bairro, cidade, uf, ...rest }) => ({
+        // Mantém o student_id quando o aluno já existe (rematrícula) --
+        // sem isso, a aprovação não tem como saber que é pra ATUALIZAR o
+        // cadastro existente e acaba criando um aluno novo do zero. Foi
+        // exatamente isso que causou uma família duplicada: um responsável
+        // secundário fez a rematrícula da própria filha e o sistema, sem
+        // essa referência, criou uma segunda matrícula da mesma criança
+        // vinculada a ele, em vez de atualizar a matrícula já existente.
+        criancas: criancas.filter(c => c.nome.trim()).map(({ id, cep, rua, numero, complemento, bairro, cidade, uf, ...rest }) => ({
           ...rest,
+          student_id: id || null,
           nome: formatPersonName(rest.nome),
           endereco: montarEndereco({ cep, rua, numero, complemento, bairro, cidade, uf }),
         })),
