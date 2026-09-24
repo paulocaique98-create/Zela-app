@@ -67,7 +67,8 @@ export default function DeveloperPanel() {
     frequencia: false,
     liveness_detection: false,
     liveness_detection_enforce: false,
-    qr_checkin: false
+    qr_checkin: false,
+    face_engine_human: false
   };
 
   const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
@@ -611,7 +612,8 @@ export default function DeveloperPanel() {
                     { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' },
                     { id: 'liveness_detection', label: 'Detecção de Vida (Liveness)', desc: 'Antifraude no reconhecimento facial do totem, contra fotos/telas. Sozinho, só OBSERVA (grava em Logs de erro, nunca bloqueia ninguém).' },
                     { id: 'liveness_detection_enforce', label: 'Liveness · Bloqueio Ativo', desc: 'Só tem efeito com o módulo acima também ligado. Passa a recusar suspeitas de foto/tela de verdade (cai no mesmo Senha/QR de sempre). Só ativar depois de revisar os dados de observação em Logs de erro.' },
-                    { id: 'qr_checkin', label: 'Check-in por QR Code', desc: 'Adiciona a opção de check-in/check-out escaneando o QR de cada aluno no totem, com 1 toque de confirmação de quem está presente.' }
+                    { id: 'qr_checkin', label: 'Check-in por QR Code', desc: 'Adiciona a opção de check-in/check-out escaneando o QR de cada aluno no totem, com 1 toque de confirmação de quem está presente.' },
+                    { id: 'face_engine_human', label: 'Motor Facial · Human (beta)', desc: 'Troca o motor que DECIDE o reconhecimento facial de face-api.js para @vladmandic/human. Só ativar depois de validar os dados do modo observador (Logs de erro / shadow_face_recognition_log) — ver PLANO_MIGRACAO_BIBLIOTECA_RECONHECIMENTO_FACIAL.md, Fases C/D. Pessoas sem face_descriptor_v2 gerado continuam sendo reconhecidas pelo motor antigo automaticamente.' }
                   ].map(mod => (
                     <div key={mod.id} className="flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition">
                       <div className="flex-1">

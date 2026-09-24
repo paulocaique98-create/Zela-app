@@ -5,6 +5,14 @@ import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
+
+// Mesmo valor de humanFaceEngine.js (HUMAN_MATCH_THRESHOLD_COSINE) — copiado
+// aqui em vez de importado porque humanFaceEngine.js importa `Human` no topo
+// do arquivo, e isso arrasta a build Node do @vladmandic/human (que exige
+// @tensorflow/tfjs-node, não instalado no projeto principal) pro bundle de
+// teste deste componente. Calibrado na Fase D com dado real — ver
+// FASE_D_CALIBRACAO_THRESHOLD_HUMAN.md.
+const HUMAN_MATCH_THRESHOLD_COSINE = 0.48;
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getCurrentScreen } from '../lib/errorLogger';
 
@@ -216,6 +224,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // schools.features_enabled.liveness_detection (Portal do Dev), padrão OFF.
   const livenessEnabledRef = useRef(false);
   const livenessEnforceRef = useRef(false);
+  const humanDecideEnabledRef = useRef(false);
   const earHistoryRef = useRef([]);
   // 'ok' | 'too-far' | 'off-center' | null — orienta o overlay de enquadramento
   const [framePosition, setFramePosition] = useState(null);
@@ -573,6 +582,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         // Só tem efeito se o módulo de observação acima também estiver ligado
         // — sem ele, não existe earHistory pra avaliar.
         livenessEnforceRef.current = livenessEnabledRef.current && Boolean(data?.features_enabled?.liveness_detection_enforce);
+        // Motor Facial · Human (beta) — Fase G do plano de migração (parcial:
+        // só decide de fato pra escolas com o módulo ligado no Portal do Dev,
+        // default OFF). Ver findSecureMatchWithEngine().
+        humanDecideEnabledRef.current = Boolean(data?.features_enabled?.face_engine_human);
       }, () => {});
     return () => { cancelled = true; };
   }, [currentUser?.school_id]);
@@ -800,7 +813,38 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 history.every(label => label === bestMatch.label);
 
               if (bestMatch.label !== 'unknown' && isConsistent) {
-                const personId = bestMatch.label;
+                let personId = bestMatch.label;
+
+                // Motor Facial · Human (beta, Portal do Dev) — só entra em
+                // ação depois que o face-api.js já confirmou um match
+                // consistente (nunca no meio da busca, nunca substitui a
+                // lógica de CONSISTENCY_FRAMES acima). Se o Human encontrar
+                // alguém com confiança suficiente entre quem já tem
+                // face_descriptor_v2, o resultado dele PREVALECE; se não
+                // encontrar (pessoa sem v2 ainda, ou abaixo do threshold),
+                // mantém o resultado do face-api.js sem nenhuma mudança —
+                // por isso quem ainda não tem v2 continua funcionando normal.
+                if (humanDecideEnabledRef.current) {
+                  const humanResult = await detectViaHumanWorker(video);
+                  if (humanResult.ok && humanResult.descriptor) {
+                    let bestHuman = null;
+                    for (const candidate of authorizedList) {
+                      if (!candidate.face_descriptor_v2) continue;
+                      let candidateDescriptor;
+                      try {
+                        candidateDescriptor = JSON.parse(candidate.face_descriptor_v2);
+                      } catch {
+                        continue;
+                      }
+                      const similarity = cosineSimilarity(humanResult.descriptor, candidateDescriptor);
+                      if (similarity >= HUMAN_MATCH_THRESHOLD_COSINE && (!bestHuman || similarity > bestHuman.similarity)) {
+                        bestHuman = { id: candidate.id, similarity };
+                      }
+                    }
+                    if (bestHuman) personId = bestHuman.id;
+                  }
+                }
+
                 const person = authorizedList.find(p => p.id === personId);
 
                 // Liveness Detection — avaliado ANTES de confirmar, pra poder
@@ -848,8 +892,13 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                     });
                   }
                   // Fase F — modo observador: nunca aguardado, nunca afeta o
-                  // fluxo real acima. Ver runHumanShadowComparison().
-                  runHumanShadowComparison(video, person.id, currentUser.school_id, authorizedList);
+                  // fluxo real acima. Ver runHumanShadowComparison(). Só roda
+                  // fora do modo "Human decide" -- com o motor novo já
+                  // decidindo de verdade, comparar ele contra si mesmo não
+                  // gera dado nenhum (sempre concordaria trivialmente).
+                  if (!humanDecideEnabledRef.current) {
+                    runHumanShadowComparison(video, bestMatch.label, currentUser.school_id, authorizedList);
+                  }
                   const studentsData = await fetchStudentsForPerson(person);
                   if (!cancelled) {
                     setMatchedStudents(studentsData);
