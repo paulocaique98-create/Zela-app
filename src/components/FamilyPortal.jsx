@@ -177,7 +177,7 @@ export default function FamilyPortal({
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in md:relative">
+    <div className="flex flex-col md:flex-row gap-0 w-full h-full animate-in fade-in md:relative">
       {/* MENU LATERAL (SIDEBAR) */}
       <div
         className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -186,7 +186,7 @@ export default function FamilyPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -299,7 +299,7 @@ export default function FamilyPortal({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col">
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
         
         {/* BANNER NOTIFICAÇÕES PUSH */}
         {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (

@@ -275,7 +275,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   }, [monitorStudents.length]);
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in md:relative">
+    <div className="flex flex-col md:flex-row gap-0 w-full h-full animate-in fade-in md:relative">
 
       {/* MENU LATERAL (SIDEBAR) */}
       <div
@@ -285,7 +285,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -432,7 +432,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col">
+      {/* A linha que separava header de sidebar foi removida (ver Header.jsx
+          `flush`) -- em vez disso, essa borda no topo do CONTEÚDO (não da
+          sidebar) recria a mesma linha só a partir de onde a sidebar termina,
+          como uma continuação do border-r dela, sem risco em cima do próprio
+          menu lateral. */}
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
       {/* BANNER NOTIFICAÇÕES PUSH — mesmo padrão de FamilyPortal.jsx.
           Sem isso, notifyAdmins() nunca tem pra quem mandar push (a
           escola nunca teria se inscrito). */}
@@ -481,7 +486,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
-          <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
+          <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl md:rounded-none shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant md:shadow-none'}`}>
 
             {/* Header do Monitor -- título "Monitor de Solicitações" removido
                 (o Header do app já mostra o nome da tela dinamicamente); o

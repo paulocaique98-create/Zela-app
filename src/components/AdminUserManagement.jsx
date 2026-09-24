@@ -309,7 +309,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     // (p-3 no celular) só nesta tela -- as outras continuam com a margem
     // normal, e esta some de vez no mobile, encostando nas bordas de
     // verdade (não só "moldura menor").
-    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header -- título "Gestão de Usuários" removido (o Header do app já
           mostra "Zela · Gestão de Usuários"/"Zela Usuários" dinamicamente),
           ícone + contador ficam numa linha só, mais compacta. */}

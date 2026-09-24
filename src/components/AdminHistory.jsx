@@ -170,7 +170,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-3xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-slate-200 md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); botões sempre na mesma linha (mesmo
           padrão do Relatório de Horas Extras, 17/09). */}

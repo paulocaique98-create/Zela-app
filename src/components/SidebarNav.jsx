@@ -162,6 +162,13 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
 // `borderColorClass`/`bgColorClass` permitem o Portal do Dev usar as cores
 // próprias dele (dev-*) em vez das cores padrão dos outros 3 portais.
 export function SidebarToggleButton({ isExpanded, onToggle, borderColorClass = 'border-outline-variant', bgColorClass = 'bg-surface-container-low hover:bg-surface-container-high' }) {
+  // Voltou pra cor clarinha de antes (quase a cor de fundo do menu) -- tinha
+  // virado azul pra tentar resolver um problema de contraste, mas o
+  // problema real era a sidebar ficar ATRÁS do conteúdo em algumas telas no
+  // desktop (aside sem z-index de verdade, ou até sem "position" nenhuma no
+  // caso do Dev -- ver `md:z-30` e `md:relative` no <aside> de cada portal).
+  // Resolvido isso, o botão nunca mais fica escondido atrás de nada, então
+  // não precisa mais de uma cor forte pra se destacar.
   return (
     <button
       type="button"

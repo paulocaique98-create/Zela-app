@@ -115,7 +115,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const presentes = inSchool + left + pending;
 
   return (
-    <div className="h-full flex flex-col bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-3xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-slate-200 md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título "Presença Diária" e ícone removidos (o Header do
           app já mostra o nome da tela dinamicamente); só a data, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">

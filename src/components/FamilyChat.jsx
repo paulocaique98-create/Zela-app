@@ -248,7 +248,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
     const setorInfo = SETORES_CHAT.find(s => s.value === activeSetor);
     const Icon = SETOR_ICONS[activeSetor] || MessageCircle;
     return (
-      <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
+      <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
           <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
@@ -332,7 +332,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Chat" e ícone removidos (o Header do app já mostra o nome
           da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">

@@ -147,7 +147,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
 
   if (turmas.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center">
+      <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center">
         <ClipboardList className="text-outline-variant w-12 h-12 mb-3" />
         <h2 className="text-h3 text-on-surface mb-1">Nenhuma turma vinculada</h2>
         <p className="text-on-surface-variant text-small max-w-sm">
@@ -158,7 +158,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
   }
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Observação Diária" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">

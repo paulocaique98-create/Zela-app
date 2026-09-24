@@ -23,7 +23,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 w-full h-full animate-in fade-in">
+    <div className="flex flex-col md:flex-row gap-0 w-full h-full animate-in fade-in">
       {/* MENU LATERAL (SIDEBAR) */}
       {/* OVERLAY PARA MOBILE */}
       <div 
@@ -33,7 +33,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:static top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px)] md:h-auto w-64 shrink-0 z-20 md:z-auto bg-dev-bg border border-dev-border md:rounded-zela-xl md:shadow-sm transform transition-all duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[240px]' : 'md:w-16'}`}
+        className={`group/side fixed md:relative top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px)] md:h-auto w-64 shrink-0 z-20 md:z-30 bg-dev-bg border-r border-dev-border transform transition-all duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[240px]' : 'md:w-16'}`}
       >
         <SidebarToggleButton
           isExpanded={isSidebarExpanded}
@@ -101,7 +101,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col">
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-dev-border">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {activeTab === 'schools' && (
             <DeveloperPanel

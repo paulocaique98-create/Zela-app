@@ -21,7 +21,7 @@ export default function TeacherMonitor({ students, authorized }) {
   }, [monitorStudents.length]);
 
   return (
-    <div className={`h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant'}`}>
+    <div className={`h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl md:rounded-none shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant md:shadow-none'}`}>
       {/* Título "Monitor de Solicitações" removido (o Header do app já mostra
           o nome da tela dinamicamente); ícone + descrição numa linha
           compacta (descrição sempre visível, mantém o ícone). */}

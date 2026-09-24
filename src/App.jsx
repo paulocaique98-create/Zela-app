@@ -1322,6 +1322,16 @@ export default function App() {
   const currentHeaderLabel = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabel(currentHeaderTab) : null;
   const currentHeaderLabelMobile = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabelMobile(currentHeaderTab) : null;
 
+  // Layout "colado nas bordas" -- header e menu lateral encostados nas
+  // bordas da tela (sem o respiro do <main>), formando um bloco só (mesma
+  // cor, sem vão, sem linha de separação entre eles); a separação real
+  // aparece como borda no topo do CONTEÚDO de cada portal, não da sidebar
+  // (ver AdminPortal/FamilyPortal/TeacherPortal/DeveloperLayout). Aprovado
+  // primeiro só na Início do Admin, depois estendido pra todas as telas dos
+  // 4 portais -- só o Autoatendimento em tela cheia (isKioskFullscreen) fica
+  // de fora, por já não ter Header nem menu lateral.
+  const isFlushChrome = !isKioskFullscreen;
+
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
       {!isKioskFullscreen && (
@@ -1331,6 +1341,7 @@ export default function App() {
           globalLogo={globalLogo}
           screenLabel={currentHeaderLabel}
           screenLabelMobile={currentHeaderLabelMobile}
+          flush={isFlushChrome}
           onLogout={handleLogout}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onTriggerEmergency={triggerEmergency}
@@ -1349,7 +1360,15 @@ export default function App() {
         />
       )}
 
-      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : 'p-3 sm:p-4 md:p-6 lg:p-6'}`}>
+      {/* Só o respiro de mobile/tablet pequeno (p-3 sm:p-4) continua igual --
+          é o que sustenta o truque de "-m-3 sm:m-0" que cada tela já usa pra
+          ficar edge-to-edge no celular e voltar a ter moldura a partir do sm
+          (ver histórico de telas Admin/Família/Professor/Dev). A partir do
+          md (onde o menu lateral vira uma coluna fixa, não mais um overlay),
+          o padding do <main> foi zerado de propósito: é o que deixa o menu
+          lateral e o header colados nas bordas da tela, formando um bloco só
+          (ver isFlushChrome acima e Header.jsx `flush`). */}
+      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : 'p-3 sm:p-4'}`}>
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex justify-center items-center">

@@ -2,20 +2,34 @@ import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
-export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, onLogout, onOpenMobileMenu, onNavigateTab }) {
+export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onOpenMobileMenu, onNavigateTab }) {
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
+  // O Portal do Dev usa um tema escuro próprio (dev-*) em todas as telas
+  // dele -- o header sempre segue esse tema quando é esse o papel logado,
+  // pra não ficar um header claro "descolado" colado num menu lateral
+  // escuro (ver DeveloperLayout.jsx).
+  const isDev = currentUser.role === 'developer';
 
   return (
     <>
-    <nav className="bg-surface/80 backdrop-blur-xl border-b border-outline-variant/60 sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center shadow-[0_1px_8px_rgba(0,0,0,0.03)] h-[60px] md:h-16">
+    {/* `flush`: mesmo fundo sólido do menu lateral (bg-surface-container-low
+        pros portais claros, bg-dev-bg pro Portal do Dev) pra header e
+        sidebar parecerem um bloco só, sem contraste entre os dois -- vale
+        pra qualquer tela agora (ver isFlushChrome em App.jsx). A borda
+        inferior também some nesse modo: como o fundo é idêntico ao do menu
+        logo abaixo, a linha ficava parecendo uma emenda entre os dois blocos
+        em vez de uma separação de verdade (essa separação existe, só que
+        recriada como borda no topo do CONTEÚDO de cada portal, não da
+        sidebar -- ver AdminPortal/FamilyPortal/TeacherPortal/DeveloperLayout). */}
+    <nav className={`${isDev ? 'bg-dev-bg' : (flush ? 'bg-surface-container-low' : 'bg-surface/80 backdrop-blur-xl')} border-b sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center h-[60px] md:h-16 ${isDev || flush ? 'border-transparent shadow-none' : 'border-outline-variant/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)]'}`}>
 
       {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <button
           onClick={onOpenMobileMenu}
-          className="md:hidden p-1.5 -ml-1 text-primary hover:bg-surface-container-low rounded-zela-sm transition active:scale-95 shrink-0"
+          className={`md:hidden p-1.5 -ml-1 rounded-zela-sm transition active:scale-95 shrink-0 ${isDev ? 'text-dev-primary hover:bg-dev-surface-high' : 'text-primary hover:bg-surface-container-low'}`}
           title="Abrir menu"
         >
           <Menu size={24} />
@@ -30,15 +44,15 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <h1 className="font-bold text-lg tracking-tight leading-none text-on-surface flex items-center gap-1.5 whitespace-nowrap min-w-0">
+          <h1 className={`font-bold text-lg tracking-tight leading-none flex items-center gap-1.5 whitespace-nowrap min-w-0 ${isDev ? 'text-dev-text' : 'text-on-surface'}`}>
             Zela{' '}
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)
                 sem separador -- "Zela Usuários" em vez de "Zela · Gestão de
                 Usuários". No desktop, que tem espaço de sobra, mostra o nome
                 completo com o separador. */}
-            <span className="hidden md:inline font-normal text-on-surface-variant">{screenLabel ? `· ${screenLabel}` : 'Portal'}</span>
-            <span className="md:hidden font-normal text-on-surface-variant">{screenLabelMobile || 'Portal'}</span>
+            <span className={`hidden md:inline font-normal ${isDev ? 'text-dev-text-muted' : 'text-on-surface-variant'}`}>{screenLabel ? `· ${screenLabel}` : 'Portal'}</span>
+            <span className={`md:hidden font-normal ${isDev ? 'text-dev-text-muted' : 'text-on-surface-variant'}`}>{screenLabelMobile || 'Portal'}</span>
           </h1>
         </div>
       </div>
@@ -47,7 +61,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
       <div className="hidden md:flex flex-col justify-center flex-1 min-w-0">
         {(currentSchool || currentUser.role === 'developer') && (
           currentUser.role === 'developer' ? (
-            <span className="text-label text-on-surface">Painel do Desenvolvedor</span>
+            <span className="text-label text-dev-text">Painel do Desenvolvedor</span>
           ) : (
             <>
               <span className="text-caption text-on-surface-variant uppercase font-bold tracking-tighter leading-none">{currentSchool?.school_code}</span>
@@ -92,7 +106,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
 
         <button
           onClick={onLogout}
-          className="p-2 text-on-surface-variant hover:text-error hover:bg-red-50 rounded-zela-sm transition items-center justify-center active:scale-95 flex"
+          className={`p-2 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-red-400 hover:bg-dev-surface-high' : 'text-on-surface-variant hover:text-error hover:bg-red-50'}`}
           title="Sair do sistema"
         >
           <LogOut size={20} />

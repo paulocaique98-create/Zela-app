@@ -244,7 +244,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   if (!currentUser?.departamento && !currentUser?.chat_visibilidade_total) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center gap-4">
+      <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center gap-4">
         <div>
           <MessageCircle className="text-outline-variant w-12 h-12 mb-3 mx-auto" />
           <h2 className="text-h3 text-on-surface mb-1">Nenhum departamento configurado</h2>
@@ -266,7 +266,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   if (activeThread) {
     return (
-      <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
+      <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
           <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
@@ -353,7 +353,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
   const filteredThreads = threads.filter(t => t.setor === tab);
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">

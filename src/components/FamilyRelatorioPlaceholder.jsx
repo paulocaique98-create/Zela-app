@@ -3,7 +3,7 @@ import { FileText } from 'lucide-react';
 
 export default function FamilyRelatorioPlaceholder({ title }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center">
+    <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center">
       <div className="bg-primary/10 p-3 rounded-zela-lg text-primary mb-3">
         <FileText size={26} />
       </div>
