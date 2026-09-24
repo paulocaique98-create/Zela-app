@@ -4,6 +4,8 @@
 > **Atualizado em 2026-09-02** após auditoria profunda do código-fonte (4 investigações paralelas cobrindo os 40 itens originais). Cada item abaixo tem um veredito real de status — ✅ **FEITO**, 🟡 **PARCIAL**, ⬜ **NÃO EXISTE** — com evidência de arquivo. A numeração original foi preservada para rastreabilidade.
 >
 > **Revisado em 2026-09-12**: dez dias de trabalho intenso entre a última atualização e hoje, quase todo fora do roadmap original (ver nova seção "🆕 Construído entre 02/09 e 12/09" logo após a lista de 40 itens). Um item do roadmap mudou de status nesse intervalo — **#40 (duplicidade facial)** já não é mais "não existe" (ver nota no próprio item). Os outros 39 vereditos abaixo continuam os mesmos de 02/09 — não foram reauditados de novo linha a linha nesta revisão.
+>
+> **Revisado em 2026-09-24**: mais doze dias de trabalho, de novo majoritariamente fora do roadmap original — ver nova seção "🆕 Construído entre 12/09 e 24/09" logo após a seção de 02/09→12/09. Nenhum item do roadmap original mudou de status nesse intervalo (o trabalho foi em UI/UX dos 4 portais, confiabilidade/segurança e um caso real de duplicidade de família), então os 40 vereditos continuam os mesmos de 12/09 — de novo, não reauditados linha a linha.
 
 ---
 
@@ -161,6 +163,21 @@ Dez dias de correções e funcionalidades novas, quase todas nascidas de problem
 
 ---
 
+## 🆕 Construído entre 12/09 e 24/09 (fora do roadmap original)
+
+Doze dias, de novo em cima de casos reais reportados em produção, não deste roadmap:
+
+1. **Migração da biblioteca de reconhecimento facial (Fase B + toggle)** — batch de geração de `face_descriptor_v2` via `@vladmandic/human` para a maioria das pessoas já cadastradas (cobertura foi de 24 para 130 de 138), e toggle "Motor Facial · Human (beta)" por escola em Portal do Dev (`features_enabled.face_engine_human`, desligado por padrão): quando ligado, `AdminFaceScanner.jsx` deixa o Human decidir quando há descritor v2 disponível, com fallback automático pro face-api.js — nunca bloqueia ninguém. Continua em modo observador (shadow mode) em produção desde 26/08, sem ter sido ligado de verdade em nenhuma escola ainda.
+2. **Redesign edge-to-edge do layout em todos os 4 portais** — telas ocupam a largura toda do celular sem moldura (ganho de espaço real de tela), e a partir do tablet/desktop o menu lateral e o cabeçalho ficam colados nas bordas, formando um bloco visual único (mesma cor, sem linha de separação) em vez do card "flutuando" com respiro em volta.
+3. **Menu lateral retrátil** — botão para encolher/expandir o menu (ícone-só vs. com rótulo) nos 4 portais, com a preferência salva por navegador (localStorage); itens com submenu, quando o menu está encolhido, abrem um flyout flutuante ao lado em vez de exigir expandir o menu inteiro.
+4. **Relógio ao vivo no Autoatendimento** — hora (com segundos) e data visíveis na tela de identificação do totem, pra quem faz check-in/check-out conferir na hora o horário que está sendo registrado.
+5. **Tema visual único no Portal do Dev** — as telas "Zela Suporte" e "Configurações" usavam paleta clara, destoando do resto do painel (que é escuro); agora as quatro telas do portal seguem a mesma paleta.
+6. **Novo caso real de duplicidade de família, indo além do item 2 da seção anterior** — um responsável secundário (não o titular financeiro da conta) fazendo uma **rematrícula** da própria filha criava uma família inteira duplicada (usuário novo + aluno novo), porque o formulário descartava a referência ao aluno já existente antes de enviar o pedido, e a aprovação sempre inseria um cadastro novo sem checar se já havia um. Corrigido na origem (o pedido agora carrega o `student_id` existente e a aprovação atualiza em vez de duplicar) — bug diferente do já mitigado pelo item 2 (aquele cobria autocadastro solto; este é especificamente sobre rematrícula por responsável não-titular).
+7. **Correção crítica: exclusão de usuário podia deixar uma conta "pela metade"** — excluir um usuário que já tivesse criado/editado qualquer registro em ~27 tabelas (ficha médica, mensagem de chat, matrícula revisada, foto de mural etc.) travava no meio: o login (Auth) já tinha sido apagado, mas o perfil (`public.users`) ficava preso por uma trava de banco sem tratamento — a pessoa perdia o acesso sem nenhum dado ter sido de fato removido, e sem erro visível pra quem excluiu. Corrigido: todas as colunas de auditoria ("quem fez isso") agora liberam a exclusão em vez de travar, e a função de exclusão passou a apagar o banco primeiro e o login por último (se algo travar agora, o login da pessoa simplesmente continua funcionando).
+8. **Ajustes pontuais de UI** — cards de "Hoje"/"Editar" em Horas Extras ganharam a mesma função de expandir/recolher que "Semana"/"Mês" já tinham.
+
+---
+
 ## 🆕 Construído fora do roadmap original
 
 Levantamento a partir do `git log` — trabalho relevante que **não estava** nos 40 itens acima, priorizado no lugar deles:
@@ -208,4 +225,7 @@ Triagem por **risco/dado real** (não pode esperar) vs. **feature/diferencial co
   - **#35 (alertas de ausência prolongada)** — continua não existindo; ganhou relevância depois do módulo de correção de presença, que já mexe bastante em `attendance_logs`/status do aluno.
   - **#27 (rate limit no reconhecimento facial)** — vale reconsiderar à luz da seleção manual de aluno (item 4 da seção acima): mais gente testando o totem sem limite de tentativas.
   - Item **#40 do roadmap original** (duplicidade de cadastro facial) não é mais o problema principal nessa frente — o que dominou os últimos 10 dias foi duplicidade de **aluno/família**, já mitigada (ver seção "🆕" acima).
-- Este documento deve ser tratado como uma foto do estado em **2026-09-12** — o projeto evolui rápido e boa parte do trabalho recente nasceu de bugs reais reportados em produção, não deste roadmap. Recomenda-se reauditar periodicamente em vez de confiar cegamente na lista.
+- **Atualização 24/09**: nenhum item novo do roadmap original foi concluído neste intervalo, mas dois achados reais merecem entrar na lista de prioridades:
+  - **Duplicidade de família via rematrícula por responsável não-titular** (ver item 6 da nova seção "🆕 12/09→24/09") era um caso que o item 2 (autocadastro solto) não cobria — já corrigido, mas reforça que vale um teste dedicado de "segundo responsável mexendo na própria matrícula" antes de qualquer mudança futura nesse fluxo.
+  - **Exclusão de usuário podia deixar conta "pela metade"** (item 7 da mesma seção) foi um incidente real em produção, não um achado teórico — o tipo de bug que justificaria adiantar o **#23 (2FA)** e reforça a prioridade já dada ao **#39 (Backup/PITR)**: contas de admin conseguem apagar dado real sem confirmação de dois passos nem trilha de auditoria própria pra essa ação específica (a exclusão de usuário não é logada em `audit_logs` hoje).
+- Este documento deve ser tratado como uma foto do estado em **2026-09-24** — o projeto evolui rápido e boa parte do trabalho recente nasceu de bugs reais reportados em produção, não deste roadmap. Recomenda-se reauditar periodicamente em vez de confiar cegamente na lista.
