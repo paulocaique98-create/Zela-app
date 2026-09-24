@@ -7,7 +7,9 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import FamilyInicio from './FamilyInicio';
-import { SidebarItem, SidebarGroup } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
 // — mesmo padrão de code-splitting já usado no AdminPortal.
@@ -144,12 +146,13 @@ export default function FamilyPortal({
   // Controla o expandir/recolher da sidebar no desktop via estado (não só
   // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
   // item, mesmo que o mouse ainda esteja em cima do menu.
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
   const go = (tab) => {
     setFamilyTab(tab);
     registerClick(tab);
     setIsMobileMenuOpen(false);
-    setIsSidebarExpanded(false);
   };
 
   const features = currentSchool?.features_enabled || {};
@@ -182,18 +185,18 @@ export default function FamilyPortal({
       ></div>
 
       <aside
-        onMouseEnter={() => setIsSidebarExpanded(true)}
-        onMouseLeave={() => setIsSidebarExpanded(false)}
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
-        <div className="h-full flex flex-col min-h-0">
+        <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
+        <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={familyTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* FORMULÁRIOS */}
             {showFormularios && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Formulários"
                 icon={FileText}
                 isOpen={openAccordion === 'formularios'}
@@ -207,6 +210,7 @@ export default function FamilyPortal({
             {/* GERENCIAMENTO */}
             {showGerenciamento && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Gerenciamento"
                 icon={Folders}
                 isOpen={openAccordion === 'gerenciamento'}
@@ -220,6 +224,7 @@ export default function FamilyPortal({
             {/* CHECK-IN/OUT */}
             {showCheckin && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Check-in/out"
                 icon={ShieldCheck}
                 isOpen={openAccordion === 'checkin'}
@@ -234,6 +239,7 @@ export default function FamilyPortal({
             {/* RELATÓRIOS */}
             {showRelatorios && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Relatórios"
                 icon={FileText}
                 badge={mitigacaoUnread > 0 ? mitigacaoUnread : null}
@@ -256,6 +262,7 @@ export default function FamilyPortal({
             {/* ACADÊMICO */}
             {(showCalendario || showComunicados || showMural || showCardapio || showDiario) && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Acadêmico"
                 icon={CalendarDays}
                 isOpen={openAccordion === 'academico'}

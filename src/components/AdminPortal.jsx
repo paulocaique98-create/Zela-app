@@ -16,7 +16,9 @@ import CheckinAlertModal from './CheckinAlertModal';
 import ConfirmExitPassword from './ConfirmExitPassword';
 import ConfirmModal from './ConfirmModal';
 import { logAction } from '../lib/auditLog';
-import { SidebarItem, SidebarGroup } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
 // — reduz bastante o carregamento inicial do painel (dezenas de telas, a
@@ -185,10 +187,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     setOpenAccordion(openAccordion === name ? null : name);
   };
 
-  // Controla o expandir/recolher da sidebar no desktop via estado (não só
-  // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
-  // item, mesmo que o mouse ainda esteja em cima do menu.
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  // Expandir/recolher por clique (persistido em localStorage) -- antes era
+  // por hover, o que fazia o menu abrir/fechar sozinho só de passar o mouse.
+  const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  // No mobile o menu sempre aparece em tela cheia (com rótulos), mesmo que a
+  // preferência salva seja "recolhido" -- o colapso só existe visualmente no
+  // desktop, então os grupos com submenu só abrem em flyout quando é
+  // desktop E está recolhido.
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
   // A senha só é exigida pra SAIR do Autoatendimento pra qualquer outro menu
   // (a tela fica exposta pra qualquer pessoa durante o check-in) — não mais
   // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
@@ -202,7 +209,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     setAdminTab(tab);
     registerClick(tab);
     setIsMobileMenuOpen(false);
-    setIsSidebarExpanded(false);
   };
   const go = (tab) => {
     if (adminTab === 'kiosk' && tab !== 'kiosk') {
@@ -278,18 +284,18 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       ></div>
 
       <aside
-        onMouseEnter={() => setIsSidebarExpanded(true)}
-        onMouseLeave={() => setIsSidebarExpanded(false)}
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
-        <div className="h-full flex flex-col min-h-0">
+        <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
+        <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* CADASTROS */}
             {showCadastros && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Cadastros"
                 icon={FolderPlus}
                 isOpen={openAccordion === 'cadastros'}
@@ -303,6 +309,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* GERENCIAMENTO */}
             {showGerenciamento && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Gerenciamento"
                 icon={Folders}
                 isOpen={openAccordion === 'gerenciamento'}
@@ -317,6 +324,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* FORMULÁRIOS */}
             {showFormularios && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Formulários"
                 icon={FileText}
                 isOpen={openAccordion === 'formularios'}
@@ -330,6 +338,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* CHECK-IN/OUT */}
             {showCheckin && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Check-in/out"
                 icon={ShieldCheck}
                 badge={monitorStudents.length > 0 ? monitorStudents.length : null}
@@ -351,6 +360,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* RELATÓRIOS PEDAGÓGICOS */}
             {showRelatorios && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Relatórios"
                 icon={FileText}
                 isOpen={openAccordion === 'relatorios'}
@@ -365,6 +375,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO / MATÉRIAS / FREQUÊNCIA / COMUNICADOS */}
             {(showCalendario || showMural || showCardapio || showDiario || showMaterias || showFrequencia || showComunicados) && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Acadêmico"
                 icon={CalendarDays}
                 isOpen={openAccordion === 'academico'}
@@ -402,6 +413,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* SISTEMA */}
             {showConfiguracoes && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Sistema"
                 icon={Settings}
                 isOpen={openAccordion === 'sistema'}

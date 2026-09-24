@@ -2,7 +2,9 @@ import React, { useState, lazy, Suspense } from 'react';
 import { Home, AlertCircle, FileText, ClipboardCheck } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
-import { SidebarItem, SidebarGroup } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
@@ -32,12 +34,13 @@ export default function TeacherPortal({
   // Controla o expandir/recolher da sidebar no desktop via estado (não só
   // :hover do CSS) — assim dá pra forçar o recolhimento ao clicar em um
   // item, mesmo que o mouse ainda esteja em cima do menu.
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
   const go = (tab) => {
     setTeacherTab(tab);
     registerClick(tab);
     setIsMobileMenuOpen(false);
-    setIsSidebarExpanded(false);
   };
   const isBlocked = currentUser?.teacher_status && currentUser.teacher_status !== 'ativo';
   const showRelatorios = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
@@ -88,12 +91,11 @@ export default function TeacherPortal({
       ></div>
 
       <aside
-        onMouseEnter={() => setIsSidebarExpanded(true)}
-        onMouseLeave={() => setIsSidebarExpanded(false)}
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 overflow-hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-auto bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
-        <div className="h-full flex flex-col min-h-0">
+        <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
+        <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={teacherTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
             <SidebarItem active={teacherTab === 'monitor'} icon={AlertCircle} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
@@ -103,6 +105,7 @@ export default function TeacherPortal({
 
             {showRelatorios && (
               <SidebarGroup
+                collapsed={collapsed}
                 label="Relatórios"
                 icon={FileText}
                 isOpen={openAccordion === 'relatorios'}
