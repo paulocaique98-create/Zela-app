@@ -54,9 +54,9 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 pl-4 pr-4 md:pl-[7px] md:pr-[7px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium text-dev-text-muted opacity-60 cursor-not-allowed"
+                    className="flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium text-dev-text-muted opacity-60 cursor-not-allowed"
                   >
-                    <Icon size={18} className="shrink-0" />
+                    <Icon size={22} className="shrink-0" />
                     <span className="truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{item.label}</span>
                     <span className="ml-auto bg-dev-surface-high text-[9px] px-1.5 py-0.5 rounded text-dev-text-muted font-bold uppercase tracking-wide md:hidden md:group-data-[expanded=true]/side:inline-block">
                       Em breve
@@ -73,14 +73,14 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                     setIsMobileMenuOpen(false);
                     if (item.id === 'support') refreshChatUnread();
                   }}
-                  className={`flex items-center gap-3 pl-4 pr-4 md:pl-[7px] md:pr-[7px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-dev-primary-container text-dev-primary'
                       : 'text-dev-text-muted hover:bg-dev-surface hover:text-dev-text'
                   }`}
                 >
                   <span className="relative shrink-0">
-                    <Icon size={18} />
+                    <Icon size={22} />
                     {item.id === 'support' && chatUnreadCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-error text-white text-[9px] font-black flex items-center justify-center md:group-data-[expanded=true]/side:hidden">
                         {chatUnreadCount > 9 ? '9+' : chatUnreadCount}

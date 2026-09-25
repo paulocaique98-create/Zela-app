@@ -24,10 +24,10 @@ export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[7px] md:pr-[7px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+      className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
     >
       <span className="relative shrink-0">
-        <Icon size={18} />
+        <Icon size={22} />
         {badge ? (
           <span className={`absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ${active ? 'bg-white/25 text-white' : 'bg-warning text-white animate-pulse'}`}>
             {badge}
@@ -108,10 +108,10 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[7px] md:pr-[7px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${isOpen || flyoutPos ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+        className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${isOpen || flyoutPos ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
       >
         <span className="relative shrink-0">
-          <Icon size={18} />
+          <Icon size={22} />
           {badge ? (
             <span className="absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center bg-warning text-white animate-pulse">
               {badge}
