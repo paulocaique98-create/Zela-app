@@ -18,6 +18,7 @@ const FamilyPortal = lazy(() => import('./components/FamilyPortal'));
 const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
+const FinanceiroPortal = lazy(() => import('./components/FinanceiroPortal'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
 const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
@@ -61,6 +62,9 @@ export default function App() {
   const [adminTab, setAdminTab] = useState(() => sessionStorage.getItem('zela_admin_tab') || 'home');
   const [familyTab, setFamilyTab] = useState(() => sessionStorage.getItem('zela_family_tab') || 'home'); // home | history | settings
   const [teacherTab, setTeacherTab] = useState(() => sessionStorage.getItem('zela_teacher_tab') || 'home');
+  // Portal Financeiro/Administrativo -- scaffold novo, mesmo padrão dos
+  // outros 3 portais (Admin/Família/Professor).
+  const [financeiroTab, setFinanceiroTab] = useState(() => sessionStorage.getItem('zela_financeiro_tab') || 'home');
   // Antes vivia isolado dentro do próprio DeveloperLayout.jsx (só ele lia/
   // escrevia) -- subiu pra cá pra virar disponível pro título dinâmico do
   // Header, igual aos outros 3 portais acima.
@@ -69,6 +73,7 @@ export default function App() {
   useEffect(() => { sessionStorage.setItem('zela_admin_tab', adminTab); }, [adminTab]);
   useEffect(() => { sessionStorage.setItem('zela_family_tab', familyTab); }, [familyTab]);
   useEffect(() => { sessionStorage.setItem('zela_teacher_tab', teacherTab); }, [teacherTab]);
+  useEffect(() => { sessionStorage.setItem('zela_financeiro_tab', financeiroTab); }, [financeiroTab]);
   useEffect(() => { sessionStorage.setItem('zela_developer_tab', developerTab); }, [developerTab]);
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
@@ -81,9 +86,10 @@ export default function App() {
       currentUser?.role === 'family' ? familyTab :
       currentUser?.role === 'teacher' ? teacherTab :
       currentUser?.role === 'developer' ? `dev-${developerTab}` :
+      currentUser?.role === 'financeiro' ? financeiroTab :
       null;
     setCurrentScreen(screen);
-  }, [currentUser?.role, adminTab, familyTab, teacherTab, developerTab]);
+  }, [currentUser?.role, adminTab, familyTab, teacherTab, developerTab, financeiroTab]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -578,6 +584,7 @@ export default function App() {
     sessionStorage.removeItem('zela_family_tab');
     sessionStorage.removeItem('zela_teacher_tab');
     sessionStorage.removeItem('zela_developer_tab');
+    sessionStorage.removeItem('zela_financeiro_tab');
     // Faz o logoff do Auth Supabase por garantia
     supabase.auth.signOut().catch(() => { });
   };
@@ -1318,6 +1325,7 @@ export default function App() {
     currentUser.role === 'family' ? familyTab :
     currentUser.role === 'teacher' ? teacherTab :
     currentUser.role === 'developer' ? `dev-${developerTab}` :
+    currentUser.role === 'financeiro' ? financeiroTab :
     null;
   const currentHeaderLabel = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabel(currentHeaderTab) : null;
   const currentHeaderLabelMobile = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabelMobile(currentHeaderTab) : null;
@@ -1355,6 +1363,7 @@ export default function App() {
             // pra decidir o que mostrar nunca mudava).
             currentUser?.role === 'admin' ? setAdminTab
             : currentUser?.role === 'teacher' ? setTeacherTab
+            : currentUser?.role === 'financeiro' ? setFinanceiroTab
             : setFamilyTab
           }
         />
@@ -1427,7 +1436,17 @@ export default function App() {
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
                 />
-              ) : (
+              ) : currentUser.role === 'financeiro' ? (
+                <FinanceiroPortal
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  financeiroTab={financeiroTab}
+                  setFinanceiroTab={setFinanceiroTab}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
+                />
+              ) : currentUser.role === 'family' ? (
                 <FamilyPortal
                   currentUser={currentUser}
                   currentSchool={currentSchool}
@@ -1445,7 +1464,7 @@ export default function App() {
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
                 />
-              )}
+              ) : null}
             </Suspense>
           )}
         </div>
