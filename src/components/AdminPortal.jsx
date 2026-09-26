@@ -24,7 +24,6 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
 // — reduz bastante o carregamento inicial do painel (dezenas de telas, a
 // maioria acessada só ocasionalmente).
-const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
 const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
 const AdminQrCheckin = lazy(() => import('./AdminQrCheckin'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
@@ -297,7 +296,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 isOpen={openAccordion === 'formularios'}
                 onToggle={() => toggleAccordion('formularios')}
               >
-                <SidebarItem active={adminTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => go('matriculas')} />
                 <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => go('ficha-medica')} />
               </SidebarGroup>
             )}
@@ -424,7 +422,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'home' && <AdminInicio currentUser={currentUser} currentSchool={currentSchool} setAdminTab={setAdminTab} registerClick={registerClick} clickCounts={clickCounts} monitorCount={monitorStudents.length} pendingUsersCount={pendingUsersCount} onGoToPendingUsers={goToPendingUsers} />}
 
         {/* NOVOS PLACEHOLDERS */}
-        {adminTab === 'matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'ficha-medica' && <AdminFichaMedica currentUser={currentUser} currentSchool={currentSchool} students={students} />}
         {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}

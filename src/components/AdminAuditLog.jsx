@@ -13,6 +13,13 @@ const ACTION_LABELS = {
   enroll_biometric_consent: 'Cadastrou biometria (com consentimento) de',
   remove_biometric_photo: 'Removeu foto/biometria de',
   cancel_checkin_request: 'Cancelou a solicitação de check-in/out de',
+  update_student_profile: 'Editou o cadastro de',
+  transfer_student_external: 'Transferiu para outra escola',
+  upload_student_document: 'Enviou um documento de',
+  delete_student_document: 'Excluiu um documento de',
+  approve_matricula_solicitacao: 'Aprovou a matrícula de',
+  reject_matricula_solicitacao: 'Rejeitou a matrícula de',
+  request_matricula_changes: 'Pediu ajustes na matrícula de',
 };
 
 const ENTITY_LABELS = {
@@ -20,6 +27,7 @@ const ENTITY_LABELS = {
   attendance_log: 'Presença',
   authorized_person: 'Autorizado',
   student: 'Aluno',
+  matricula_solicitacao: 'Solicitação',
 };
 
 function formatWhen(iso) {

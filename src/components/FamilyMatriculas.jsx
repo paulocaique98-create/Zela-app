@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   FileText, Loader2, Plus, Trash2, X, Check, Upload, ChevronDown, ChevronUp,
   Clock, CheckCircle2, XCircle, User, Baby, Car, UserCheck, MapPin,
-  HeartPulse, Image as ImageIcon,
+  HeartPulse, Image as ImageIcon, MessageSquareWarning, Pencil,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
@@ -117,7 +117,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const [requestId] = useState(() => crypto.randomUUID());
+  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [isEditingExisting, setIsEditingExisting] = useState(false);
   const [responsavel, setResponsavel] = useState(emptyResponsavel());
   const [temSegundo, setTemSegundo] = useState(false);
   const [segundoResponsavel, setSegundoResponsavel] = useState(emptyResponsavel());
@@ -185,6 +186,41 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     setAutorizacaoEmergencia('');
     setFormError('');
     setOpenSection(null);
+    setIsEditingExisting(false);
+    setRequestId(crypto.randomUUID());
+  };
+
+  // Fase 4 (Secretaria/Matrículas): quando a Gestão pede correção
+  // (status='changes_requested'), a família edita a MESMA solicitação em vez
+  // de criar uma nova -- reaproveita os dados já enviados (não os dados
+  // atuais do cadastro, que é o que fetchRematriculaData busca). O endereço
+  // não volta pros campos separados (cep/rua/número/...) porque foi salvo
+  // como uma única linha de texto (montarEndereco) -- a família só precisa
+  // reconferir/reescrever esse campo antes de reenviar.
+  const editSolicitacao = (s) => {
+    const resp = s.responsavel_financeiro || {};
+    setResponsavel({ ...emptyResponsavel(), ...resp });
+    setAutorizacaoImagem(resp.autorizacao_imagem || '');
+    setAutorizacaoEmergencia(resp.autorizacao_emergencia || '');
+    const seg = s.segundo_responsavel;
+    setTemSegundo(!!seg);
+    setSegundoResponsavel(seg ? { ...emptyResponsavel(), ...seg } : emptyResponsavel());
+    const criancasCarregadas = (s.criancas || []).map(c => ({
+      ...emptyCrianca(),
+      ...c,
+      id: c.student_id || (Date.now() + Math.random()),
+    }));
+    setCriancas(criancasCarregadas.length ? criancasCarregadas : [emptyCrianca()]);
+    const autorizadosCarregados = (s.autorizados || []).map(a => ({ ...emptyAutorizado(), ...a }));
+    setAutorizados(autorizadosCarregados.length ? autorizadosCarregados : [emptyAutorizado()]);
+    const transporteCarregado = (s.transporte_autorizados || []).map(t => ({ ...emptyTransporteAutorizado(), ...t }));
+    setTemTransporte(transporteCarregado.length > 0);
+    setTransporteAutorizados(transporteCarregado.length ? transporteCarregado : [emptyTransporteAutorizado()]);
+    setFormError('');
+    setOpenSection(null);
+    setRequestId(s.id);
+    setIsEditingExisting(true);
+    setStep('form');
   };
 
   // Rematrícula: pré-preenche com o que já existe de verdade no banco pra
@@ -436,9 +472,18 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         })),
         autorizados: autorizados.filter(a => a.nome.trim()).map(({ id: _id, ...rest }) => ({ ...rest, nome: formatPersonName(rest.nome) })),
         transporte_autorizados: temTransporte ? transporteAutorizados.filter(t => t.nome.trim()).map(t => ({ nome: formatPersonName(t.nome) })) : [],
+        rejection_reason: null,
       };
-      const { error: insertError } = await supabase.from('matricula_solicitacoes').insert(payload);
-      if (insertError) throw insertError;
+      if (isEditingExisting) {
+        // Reenvio de uma solicitação que a Gestão pediu pra corrigir --
+        // atualiza a mesma linha (mantém o histórico/id) em vez de criar uma
+        // nova, e a RLS só deixa isso acontecer voltando pra status='pending'.
+        const { error: updateError } = await supabase.from('matricula_solicitacoes').update(payload).eq('id', requestId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from('matricula_solicitacoes').insert(payload);
+        if (insertError) throw insertError;
+      }
       resetForm();
       await fetchSolicitacoes();
     } catch (err2) {
@@ -487,7 +532,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         {step === 'form' ? (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-on-surface">Nova solicitação de Rematrícula</h3>
+              <h3 className="font-bold text-on-surface">{isEditingExisting ? 'Corrigir solicitação' : 'Nova solicitação de Rematrícula'}</h3>
               <button type="button" onClick={resetForm} className="p-1.5 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition">
                 <X size={20} />
               </button>
@@ -895,7 +940,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             ) : (
               <div className="space-y-3">
                 {solicitacoes.map(s => (
-                  <SolicitacaoCard key={s.id} solicitacao={s} onDelete={handleDelete} />
+                  <SolicitacaoCard key={s.id} solicitacao={s} onDelete={handleDelete} onEdit={editSolicitacao} />
                 ))}
               </div>
             )}
@@ -920,9 +965,10 @@ const STATUS_INFO = {
   pending: { label: 'Em análise', icon: Clock, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
   approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-green-50 text-green-700 border-green-200' },
   rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-red-50 text-red-700 border-red-200' },
+  changes_requested: { label: 'Precisa de ajustes', icon: MessageSquareWarning, cls: 'bg-orange-50 text-orange-700 border-orange-200' },
 };
 
-function SolicitacaoCard({ solicitacao, onDelete }) {
+function SolicitacaoCard({ solicitacao, onDelete, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const status = STATUS_INFO[solicitacao.status] || STATUS_INFO.pending;
   const StatusIcon = status.icon;
@@ -953,6 +999,11 @@ function SolicitacaoCard({ solicitacao, onDelete }) {
               Motivo: {solicitacao.rejection_reason}
             </div>
           )}
+          {solicitacao.status === 'changes_requested' && solicitacao.rejection_reason && (
+            <div className="bg-orange-50 border border-orange-100 text-orange-700 p-3 rounded-zela-md text-xs font-medium">
+              O que precisa corrigir: {solicitacao.rejection_reason}
+            </div>
+          )}
           <div>
             <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Responsável Financeiro</p>
             <p className="text-sm text-on-surface">{solicitacao.responsavel_financeiro?.nome}</p>
@@ -963,6 +1014,14 @@ function SolicitacaoCard({ solicitacao, onDelete }) {
               <p className="text-sm text-on-surface">{c.nome} · {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
             </div>
           ))}
+          {solicitacao.status === 'changes_requested' && (
+            <button
+              onClick={() => onEdit(solicitacao)}
+              className="flex items-center gap-1.5 text-orange-700 bg-orange-50 hover:bg-orange-100 font-bold text-xs px-3 py-2 rounded-zela-md transition"
+            >
+              <Pencil size={13} /> Corrigir e reenviar
+            </button>
+          )}
           {solicitacao.status === 'pending' && (
             <button
               onClick={() => onDelete(solicitacao.id)}

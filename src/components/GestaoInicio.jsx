@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Wallet, Clock, ClipboardCheck } from 'lucide-react';
+import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText } from 'lucide-react';
 
 // Tela inicial do Portal da Gestão -- espelha o padrão de "Ações Rápidas"
 // de AdminInicio.jsx. Ainda sem clickCounts/ordenação por uso (poucos
@@ -11,6 +11,8 @@ export default function GestaoInicio({ currentSchool, setGestaoTab, pendingCorre
   const showCheckin = features.checkin !== false;
 
   const menus = [
+    { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap, tab: 'secretaria-alunos' },
+    { key: 'secretaria-matriculas', label: 'Matrículas', icon: FileText, tab: 'secretaria-matriculas' },
     showFinanceiro && { key: 'financeiro', label: 'Financeiro', icon: Wallet, tab: 'financeiro' },
     showCheckin && { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras' },
     showCheckin && { key: 'attendance-corrections', label: 'Correções de Presença', icon: ClipboardCheck, tab: 'attendance-corrections', badge: pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null },

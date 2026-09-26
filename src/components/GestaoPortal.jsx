@@ -1,13 +1,17 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { Home, Wallet, Clock, ClipboardCheck } from 'lucide-react';
-import { SidebarItem, SidebarToggleButton } from './SidebarNav';
+import { Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText } from 'lucide-react';
+import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import { supabase } from '../lib/supabase';
 import GestaoInicio from './GestaoInicio';
 
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
+const GestaoAlunos = lazy(() => import('./GestaoAlunos'));
+const GestaoAlunoPerfil = lazy(() => import('./GestaoAlunoPerfil'));
+const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
 
 // Portal da Gestão (financeiro/administrativo). Espelha à risca a casca do
 // AdminPortal.jsx (aside/nav/main, mesmas classes, mesmo comportamento de
@@ -28,12 +32,18 @@ export default function GestaoPortal({
   onLogout,
 }) {
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
+  const [openAccordion, setOpenAccordion] = useState(null);
+  const toggleAccordion = (name) => setOpenAccordion(openAccordion === name ? null : name);
   const features = currentSchool?.features_enabled || {};
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
+  const [selectedAlunoId, setSelectedAlunoId] = useState(null);
   const go = (tab) => {
     setGestaoTab(tab);
     setIsMobileMenuOpen(false);
+    if (tab !== 'secretaria-alunos') setSelectedAlunoId(null);
   };
 
   // Badge de correções de presença aguardando aprovação -- mesmo padrão e
@@ -79,6 +89,16 @@ export default function GestaoPortal({
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={gestaoTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
+            <SidebarGroup
+              collapsed={collapsed}
+              label="Secretaria"
+              icon={GraduationCap}
+              isOpen={openAccordion === 'secretaria'}
+              onToggle={() => toggleAccordion('secretaria')}
+            >
+              <SidebarItem active={gestaoTab === 'secretaria-alunos'} icon={GraduationCap} label="Alunos" onClick={() => go('secretaria-alunos')} />
+              <SidebarItem active={gestaoTab === 'secretaria-matriculas'} icon={FileText} label="Matrículas" onClick={() => go('secretaria-matriculas')} />
+            </SidebarGroup>
             {showFinanceiro && (
               <SidebarItem active={gestaoTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
             )}
@@ -96,6 +116,16 @@ export default function GestaoPortal({
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {gestaoTab === 'home' && (
             <GestaoInicio currentSchool={currentSchool} setGestaoTab={setGestaoTab} pendingCorrectionsCount={pendingCorrectionsCount} />
+          )}
+          {gestaoTab === 'secretaria-alunos' && (
+            selectedAlunoId ? (
+              <GestaoAlunoPerfil currentUser={currentUser} studentId={selectedAlunoId} onBack={() => setSelectedAlunoId(null)} />
+            ) : (
+              <GestaoAlunos currentUser={currentUser} onOpenAluno={setSelectedAlunoId} />
+            )
+          )}
+          {gestaoTab === 'secretaria-matriculas' && (
+            <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />
           )}
           {gestaoTab === 'financeiro' && (
             <AdminFinanceiro currentUser={currentUser} currentSchool={currentSchool} />

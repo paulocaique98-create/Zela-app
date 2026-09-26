@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  FileText, Loader2, Clock, CheckCircle2, XCircle,
+  FileText, Loader2, Clock, CheckCircle2, XCircle, MessageSquareWarning,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
   FileSpreadsheet, UploadCloud,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getSignedUrl } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
+import { logAction } from '../lib/auditLog';
 import { formatPersonName } from '../utils/formatName';
 import { downloadMatriculaImportTemplate } from '../lib/matriculaImportTemplate';
 import AdminMatriculaImportModal from './AdminMatriculaImportModal';
@@ -23,6 +24,7 @@ const DEFAULT_PASSWORD = '123456';
 const TABS = [
   { key: 'approved', label: 'Aprovadas' },
   { key: 'pending', label: 'Pendentes' },
+  { key: 'changes_requested', label: 'Alteração Solicitada' },
   { key: 'rejected', label: 'Rejeitadas' },
 ];
 
@@ -30,6 +32,7 @@ const STATUS_INFO = {
   pending: { label: 'Em análise', icon: Clock, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
   approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-green-50 text-green-700 border-green-200' },
   rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-red-50 text-red-700 border-red-200' },
+  changes_requested: { label: 'Alteração solicitada', icon: MessageSquareWarning, cls: 'bg-orange-50 text-orange-700 border-orange-200' },
 };
 
 function DocLink({ doc, label }) {
@@ -98,6 +101,8 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   const [expanded, setExpanded] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showReject, setShowReject] = useState(false);
+  const [changesNote, setChangesNote] = useState('');
+  const [showChangesRequest, setShowChangesRequest] = useState(false);
   const status = STATUS_INFO[solicitacao.status] || STATUS_INFO.pending;
   const StatusIcon = status.icon;
   const criancas = solicitacao.criancas || [];
@@ -133,6 +138,11 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
           {solicitacao.status === 'rejected' && solicitacao.rejection_reason && (
             <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-xs font-medium">
               Motivo da rejeição: {solicitacao.rejection_reason}
+            </div>
+          )}
+          {solicitacao.status === 'changes_requested' && solicitacao.rejection_reason && (
+            <div className="bg-orange-50 border border-orange-100 text-orange-700 p-3 rounded-zela-md text-xs font-medium">
+              O que a família precisa corrigir: {solicitacao.rejection_reason}
             </div>
           )}
 
@@ -225,14 +235,41 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     </button>
                   </div>
                 </div>
+              ) : showChangesRequest ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={changesNote}
+                    onChange={e => setChangesNote(e.target.value)}
+                    placeholder="O que a família precisa corrigir antes de reenviar (visível para a família)"
+                    rows={2}
+                    className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowChangesRequest(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
+                    <button
+                      onClick={() => onDecide(solicitacao, 'changes_requested', changesNote)}
+                      disabled={isDeciding || !changesNote.trim()}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 text-white font-bold py-2 rounded-zela-md text-sm transition"
+                    >
+                      {isDeciding ? <Loader2 size={14} className="animate-spin" /> : <MessageSquareWarning size={14} />} Confirmar Solicitação de Alteração
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => setShowReject(true)}
                     disabled={isDeciding}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     <XCircle size={15} /> Rejeitar
+                  </button>
+                  <button
+                    onClick={() => setShowChangesRequest(true)}
+                    disabled={isDeciding}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-orange-200 hover:bg-orange-50 text-orange-700 font-bold py-2.5 rounded-zela-md text-sm transition"
+                  >
+                    <MessageSquareWarning size={15} /> Solicitar alteração
                   </button>
                   <button
                     onClick={() => onDecide(solicitacao, 'approved')}
@@ -426,7 +463,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         status,
         reviewed_by: currentUser.id,
         reviewed_at: new Date().toISOString(),
-        rejection_reason: status === 'rejected' ? (reason || null) : null,
+        rejection_reason: (status === 'rejected' || status === 'changes_requested') ? (reason || null) : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -449,16 +486,28 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       setSolicitacoes(prev => prev.map(s => (s.id === solicitacao.id ? { ...s, ...patch } : s)));
       if (segundoCredentials) setNewGuardianCredentials(segundoCredentials);
 
+      const criancasNomesLog = (solicitacao.criancas || []).map(c => c.nome).join(', ');
+      logAction({
+        actorId: currentUser.id,
+        schoolId: currentUser.school_id,
+        action: status === 'approved' ? 'approve_matricula_solicitacao' : status === 'changes_requested' ? 'request_matricula_changes' : 'reject_matricula_solicitacao',
+        entityType: 'matricula_solicitacao',
+        entityId: solicitacao.id,
+        details: { name: criancasNomesLog, tipo: solicitacao.tipo, reason: reason || null },
+      });
+
       // Atualização cadastral não é uma decisão sobre matrícula nova -- não
       // faz sentido notificar a família com "matrícula aprovada/reprovada".
       if (solicitacao.tipo !== 'atualizacao_cadastral') {
         const criancasNomes = (solicitacao.criancas || []).map(c => c.nome).join(', ');
         notifyFamilies({
           type: 'matricula',
-          title: status === 'approved' ? 'Matrícula aprovada!' : 'Matrícula não aprovada',
+          title: status === 'approved' ? 'Matrícula aprovada!' : status === 'changes_requested' ? 'Sua solicitação precisa de ajustes' : 'Matrícula não aprovada',
           message: status === 'approved'
             ? `A matrícula de ${criancasNomes} foi aprovada.`
-            : `A solicitação de matrícula de ${criancasNomes} não foi aprovada.${reason ? ` Motivo: ${reason}` : ''}`,
+            : status === 'changes_requested'
+              ? `A solicitação de ${criancasNomes} precisa de alguns ajustes antes de continuar.${reason ? ` ${reason}` : ''} Corrija e reenvie pelo app.`
+              : `A solicitação de matrícula de ${criancasNomes} não foi aprovada.${reason ? ` Motivo: ${reason}` : ''}`,
           url: '/?tab=matriculas',
           familyIds: [solicitacao.family_id],
         });
