@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, Clock, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText, UserRoundPlus } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, ArrowRight, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText, UserRoundPlus } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0, pendingUsersCount = 0, onGoToPendingUsers = () => {} }) {
@@ -12,7 +12,6 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
     { key: 'history', label: 'Histórico Geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'users', label: 'Gestão de Usuários', icon: UserCog, tab: 'users', feature: 'cadastros', defaultOn: true },
     { key: 'kiosk', label: 'Autoatendimento', icon: ShieldCheck, tab: 'kiosk', feature: 'checkin', defaultOn: true },
-    { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras', feature: 'gerenciamento', defaultOn: true },
     { key: 'register', label: 'Cadastro de Usuários', icon: UserPlus, tab: 'register', feature: 'cadastros', defaultOn: true },
     { key: 'settings', label: 'Configurações', icon: Settings, tab: 'settings', feature: 'configuracoes', defaultOn: true },
     { key: 'mural-fotos', label: 'Mural de Fotos', icon: Image, tab: 'mural-fotos', feature: 'mural', defaultOn: false },

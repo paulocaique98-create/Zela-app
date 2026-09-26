@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, Wallet, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -44,17 +44,14 @@ const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
-const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
-const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
-const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -91,42 +88,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const prevMonitorCount = useRef(monitorStudents.length);
   const [newArrival, setNewArrival] = useState(false);
   const [bulkApproving, setBulkApproving] = useState(false);
-  const [pendingCorrectionsCount, setPendingCorrectionsCount] = useState(0);
   // Achado real (16/09): "Cancelar Solicitação" no Monitor não tinha
   // nenhuma confirmação — um clique sem querer apagava a solicitação sem
   // deixar rastro nenhum (nem log de auditoria), e ninguém percebia até a
   // família reclamar. Agora exige confirmação explícita e fica registrado.
   const [cancelTarget, setCancelTarget] = useState(null); // { student, cancelStatus, btnText } | null
   const [isCancelling, setIsCancelling] = useState(false);
-
-  // Badge de correções de presença aguardando aprovação — mesmo padrão do
-  // badge do Monitor, mas via contagem no banco (não deriva de `students`).
-  // Realtime evita precisar trocar de aba pra ver o número atualizar quando
-  // outro admin solicita ou resolve uma correção.
-  useEffect(() => {
-    if (!currentUser?.school_id) return;
-    let cancelled = false;
-
-    const refreshCount = async () => {
-      const { count } = await supabase
-        .from('attendance_corrections')
-        .select('id', { count: 'exact', head: true })
-        .eq('school_id', currentUser.school_id)
-        .eq('status', 'pending');
-      if (!cancelled) setPendingCorrectionsCount(count || 0);
-    };
-    refreshCount();
-
-    const channel = supabase
-      .channel(`attendance-corrections-badge-${currentUser.school_id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_corrections', filter: `school_id=eq.${currentUser.school_id}` }, refreshCount)
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser?.school_id]);
 
   // Aprova de uma vez todas as solicitações pendentes do Monitor, na ordem em
   // que aparecem. Vai uma a uma (sequencial) de propósito: updateStudentStatus
@@ -241,7 +208,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const showDiario = features.diario === true && localPrefs.diario !== false;
   const showChat = features.chat === true && localPrefs.chat !== false;
   const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
-  const showFinanceiro = features.financeiro === true && localPrefs.financeiro !== false;
   const showMaterias = features.materias === true && localPrefs.materias !== false;
   const showFrequencia = features.frequencia === true && localPrefs.frequencia !== false;
   const showQrCheckin = features.qr_checkin === true && localPrefs.qr_checkin !== false;
@@ -353,8 +319,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 )}
                 <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
-                <SidebarItem active={adminTab === 'horas-extras'} icon={Clock} label="Horas Extras" onClick={() => go('horas-extras')} />
-                <SidebarItem active={adminTab === 'attendance-corrections'} icon={ClipboardCheck} label="Correções de Presença" badge={pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null} onClick={() => go('attendance-corrections')} />
               </SidebarGroup>
             )}
 
@@ -404,11 +368,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
                 )}
               </SidebarGroup>
-            )}
-
-            {/* FINANCEIRO */}
-            {showFinanceiro && (
-              <SidebarItem active={adminTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
             )}
 
             {/* SISTEMA */}
@@ -483,7 +442,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'financeiro' && <AdminFinanceiro currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
@@ -746,12 +704,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* HISTÓRICO */}
         {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
-
-        {/* HORAS EXTRAS */}
-        {adminTab === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
-
-        {/* CORREÇÕES DE PRESENÇA */}
-        {adminTab === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
 
         {/* CADASTRO */}
         {adminTab === 'register' && <AdminUserRegistration currentUser={currentUser} />}

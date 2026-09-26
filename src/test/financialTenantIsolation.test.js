@@ -15,13 +15,16 @@ import {
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Isolamento multi-tenant — módulo financeiro', () => {
-  let schoolA, schoolB, adminA, adminB, familyA, familyB, studentA, contractA, chargeA;
+  let schoolA, schoolB, adminA, adminB, gestaoA, familyA, familyB, studentA, contractA, chargeA;
 
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest Fin A');
     schoolB = await createTestSchool('Vitest Fin B');
     adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
     adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    // Fase 5 do plano de migração Admin -> Portal da Gestão: escrita
+    // financeira agora é exclusiva de 'gestao' -- admin mantém só leitura.
+    gestaoA = await createTestUser({ role: 'gestao', schoolId: schoolA });
     familyA = await createTestUser({ role: 'family', schoolId: schoolA, extra: { doc_type: 'cpf', doc_number: '11144477735' } });
     familyB = await createTestUser({ role: 'family', schoolId: schoolB, extra: { doc_type: 'cpf', doc_number: '52998224725' } });
 
@@ -96,6 +99,7 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
     await adminClient.from('students').delete().eq('id', studentA);
     await deleteTestUser(adminA.id);
     await deleteTestUser(adminB.id);
+    await deleteTestUser(gestaoA.id);
     await deleteTestUser(familyA.id);
     await deleteTestUser(familyB.id);
     await deleteTestSchool(schoolA);
@@ -230,7 +234,7 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
       expect(contracts).toHaveLength(1);
     });
 
-    it('admin AINDA consegue cancelar o próprio contrato (único write legítimo, usado por AdminFinanceiro.jsx)', async () => {
+    it('Fase 5 (migração Admin -> Gestão): admin NÃO consegue mais cancelar contrato, só gestao', async () => {
       // Aluno + contrato descartáveis só pra este teste (studentA já tem
       // um contrato 'active' -- contractA -- e a tabela tem unique
       // constraint de 1 contrato ativo por aluno).
@@ -244,9 +248,16 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
       }).select('id').single();
       if (insertErr) throw insertErr;
       try {
-        const { data, error } = await adminA.client.from('financial_contracts').update({ status: 'cancelled' }).eq('id', disposable.id).select();
+        // Negativo: admin (Recepção) só lê, não escreve mais.
+        const { data: adminAttempt } = await adminA.client.from('financial_contracts').update({ status: 'cancelled' }).eq('id', disposable.id).select();
+        expect(adminAttempt ?? []).toEqual([]);
+        const { data: stillActive } = await adminClient.from('financial_contracts').select('status').eq('id', disposable.id).single();
+        expect(stillActive.status).toBe('active');
+
+        // Positivo: gestao consegue cancelar de verdade.
+        const { data: gestaoAttempt, error } = await gestaoA.client.from('financial_contracts').update({ status: 'cancelled' }).eq('id', disposable.id).select();
         expect(error).toBeNull();
-        expect(data?.[0]?.status).toBe('cancelled');
+        expect(gestaoAttempt?.[0]?.status).toBe('cancelled');
       } finally {
         await adminClient.from('financial_contracts').delete().eq('id', disposable.id);
         await adminClient.from('students').delete().eq('id', disposableStudent.id);
