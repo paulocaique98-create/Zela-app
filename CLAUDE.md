@@ -33,6 +33,14 @@ migração invisível), nem trabalho ainda não aprovado/commitado pelo usuário
   tarefa anterior tenha sido autorizada — cada commit precisa do próprio aval.
 - Sempre rodar `npm run build` e `npx vitest run` (suíte completa) depois de
   qualquer mudança, e só reportar sucesso depois de ver os dois passarem.
+- Os testes de integração rodam SÓ no Supabase local (desde 27/09/2026),
+  nunca na produção: antes da suíte, garantir o Docker no PATH (ver abaixo) e
+  `npx supabase start`. Credenciais locais em `.env.test.local` (fora do
+  git; recriar com `npx supabase status -o env`, ver src/test/envForTests.js).
+  Sem o Supabase local de pé, os testes de integração PULAM -- conferir que
+  não houve "skipped" antes de reportar sucesso. Mudança de estrutura nova:
+  aplicar primeiro no local (`npx supabase migration up` ou `db reset`),
+  testar, e só então `db push --linked` na produção.
 - Migrações (mudança de estrutura: tabela, coluna, policy, função, trigger)
   seguem o fluxo do Supabase CLI desde 27/09/2026 — o histórico começa na
   linha de base `supabase/migrations/20260927170000_baseline_producao.sql`
