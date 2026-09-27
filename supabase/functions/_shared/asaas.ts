@@ -93,6 +93,13 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch('/v3/payments', { method: 'POST', body: JSON.stringify(input) });
     },
 
+    // Fonte da verdade de um pagamento -- usada pelo webhook pra nunca
+    // confiar no conteúdo do evento recebido (ver _shared/trustedPayment.ts).
+    // deno-lint-ignore no-explicit-any
+    getPayment(paymentId: string): Promise<any> {
+      return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}`, { method: 'GET' });
+    },
+
     getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
       return asaasFetch(`/v3/payments/${paymentId}/pixQrCode`, { method: 'GET' });
     },

@@ -45,8 +45,10 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
-    if (dbCallerError || !callerData || callerData.role !== 'admin') {
-      throw new Error('Acesso negado: apenas administradores podem criar contratos financeiros.');
+    // Financeiro é exclusivo da Gestão desde a Fase 5 da migração Admin ->
+    // Gestão (a RLS já era só gestao; esta checagem tinha ficado pra trás).
+    if (dbCallerError || !callerData || callerData.role !== 'gestao') {
+      throw new Error('Acesso negado: apenas a Gestão pode criar contratos financeiros.');
     }
     const schoolId = callerData.school_id;
 

@@ -14,6 +14,17 @@ vi.mock('../../supabase/functions/_shared/sendFamilyNotification.ts', () => ({
   centsToBRL: (cents) => `R$ ${(cents / 100).toFixed(2)}`,
 }));
 
+// Item 14 da auditoria (27/09/2026): processPaymentEvent consulta o
+// pagamento no Asaas antes de gravar. Aqui o "Asaas" é simulado: por padrão
+// responde exatamente o que está no evento (evento verdadeiro); um teste
+// abaixo simula o caso do evento forjado, em que o Asaas discorda.
+const asaasSource = new Map();
+vi.mock('../../supabase/functions/_shared/asaas.ts', () => ({
+  createAsaasClient: () => ({
+    getPayment: async (id) => asaasSource.get(id) ?? null,
+  }),
+}));
+
 const { processPaymentEvent } = await import('../../supabase/functions/_shared/processPaymentEvent.ts');
 const { sendFamilyNotification } = await import('../../supabase/functions/_shared/sendFamilyNotification.ts');
 
@@ -46,30 +57,72 @@ function makeAdminClient(responsesByTable) {
     return builder;
   }
 
-  return { from: vi.fn((table) => chain(table)) };
+  return {
+    from: vi.fn((table) => chain(table)),
+    // get_school_gateway_secret -- chave (fictícia) da conta Asaas da escola
+    rpc: vi.fn(async () => ({ data: 'chave-asaas-teste', error: null })),
+  };
 }
 
 function basePayload(overrides = {}) {
+  const payment = {
+    id: 'pay_123',
+    status: 'RECEIVED',
+    value: 500,
+    dueDate: '2026-09-05',
+    billingType: 'PIX',
+    ...overrides,
+  };
+  asaasSource.set(payment.id, { ...payment });
   return {
     id: 'evt_123',
     event_type: 'PAYMENT_RECEIVED',
     school_id: 'school-a',
-    payload: {
-      payment: {
-        id: 'pay_123',
-        status: 'RECEIVED',
-        value: 500,
-        dueDate: '2026-09-05',
-        billingType: 'PIX',
-        ...overrides,
-      },
-    },
+    payload: { payment },
   };
 }
 
 describe('processPaymentEvent — lógica real dos handlers de webhook Asaas', () => {
   beforeEach(() => {
     sendFamilyNotification.mockClear();
+    asaasSource.clear();
+  });
+
+  it('evento forjado dizendo "pago" quando o Asaas diz PENDING: não marca como paga nem avisa a família', async () => {
+    const client = makeAdminClient({
+      financial_charges: [
+        { data: { id: 'charge-1', status: 'PENDING', contract_id: null, student_id: 'student-1', family_id: 'family-1' } },
+        { data: { id: 'charge-1' } },
+      ],
+      financial_charge_events: [{ data: null }],
+      payment_webhook_events: [{ data: null }],
+    });
+    const forjado = basePayload();
+    asaasSource.set('pay_123', { id: 'pay_123', status: 'PENDING', value: 500, dueDate: '2026-09-05', billingType: 'PIX' });
+
+    let upserted;
+    const originalFrom = client.from;
+    client.from = vi.fn((table) => {
+      const builder = originalFrom(table);
+      if (table === 'financial_charges') {
+        const originalUpsert = builder.upsert;
+        builder.upsert = (row) => { upserted = row; return originalUpsert(row); };
+      }
+      return builder;
+    });
+
+    await processPaymentEvent(client, forjado);
+    expect(upserted.status).toBe('PENDING');
+    expect(upserted.paid_at).toBeNull();
+    expect(sendFamilyNotification).not.toHaveBeenCalled();
+  });
+
+  it('Asaas não confirma o pagamento (não existe lá): não grava nada', async () => {
+    const client = makeAdminClient({ financial_charges: [], financial_charge_events: [], payment_webhook_events: [] });
+    const evento = basePayload();
+    asaasSource.delete('pay_123');
+    await expect(processPaymentEvent(client, evento)).rejects.toThrow();
+    expect(client.from).not.toHaveBeenCalledWith('financial_charges');
   });
 
   it('cobrança avulsa nova (existia via create-avulsa-charge, ainda PENDING) confirmada como paga: mapeia status, marca paid_at, notifica "pagamento confirmado"', async () => {

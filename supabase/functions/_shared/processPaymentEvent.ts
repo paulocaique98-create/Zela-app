@@ -16,6 +16,23 @@
 // (pagamento confirmado) — nunca em nenhuma outra transição, pra não virar
 // ruído.
 import { sendFamilyNotification, centsToBRL } from './sendFamilyNotification.ts';
+import { createAsaasClient } from './asaas.ts';
+import { buildTrustedPayment } from './trustedPayment.ts';
+
+// Consulta o pagamento direto no Asaas com a chave da PRÓPRIA escola (a
+// escola já foi resolvida pelo token do webhook). Sem chave ou sem resposta
+// = não grava nada; o evento cru continua salvo em payment_webhook_events
+// (processed_at nulo) e pode ser reprocessado depois.
+// deno-lint-ignore no-explicit-any
+async function fetchPaymentFromAsaas(adminClient: any, schoolId: string, paymentId: string) {
+  const { data: apiKey, error: keyError } = await adminClient.rpc('get_school_gateway_secret', {
+    p_school_id: schoolId,
+    p_gateway: 'asaas',
+  });
+  if (keyError) throw keyError;
+  if (!apiKey) throw new Error('Escola sem conta Asaas configurada: pagamento não pode ser confirmado.');
+  return createAsaasClient(apiKey).getPayment(paymentId);
+}
 
 // Normaliza os status do Asaas pro vocabulário interno (Fase 2, seção 16 do
 // escopo mestre — nunca strings soltas do gateway espalhadas pelo código).
@@ -49,11 +66,15 @@ export interface ProcessResult {
 // deno-lint-ignore no-explicit-any
 export async function processPaymentEvent(adminClient: any, webhookEventRow: any): Promise<ProcessResult> {
   const { school_id: schoolId, event_type: eventType, payload } = webhookEventRow;
-  const payment = payload?.payment;
+  const eventPayment = payload?.payment;
 
-  if (!payment || !payment.id) {
+  if (!eventPayment || !eventPayment.id) {
     return { processed: false, reason: 'evento sem objeto payment' };
   }
+
+  // Auditoria 27/09/2026 (item 14): do evento só se aproveita o id; todo o
+  // resto (status, valor, vencimento, assinatura...) vem do Asaas.
+  const payment = buildTrustedPayment(eventPayment, await fetchPaymentFromAsaas(adminClient, schoolId, eventPayment.id));
 
   const subscriptionId = payment.subscription;
   const mappedStatus = ASAAS_STATUS_MAP[payment.status] || 'PENDING';

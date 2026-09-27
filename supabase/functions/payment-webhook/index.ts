@@ -36,6 +36,22 @@ serve(async (req) => {
     // Header real do Asaas (confirmado na Fase 3) — o valor é o `authToken`
     // que CADA escola define ao criar o webhook dela no painel Asaas, nunca
     // a chave de API.
+    // Auditoria 27/09/2026 (item 14): limite por IP ANTES de procurar o
+    // token -- o limite por escola abaixo só vale depois que o token já
+    // bateu, então tentativa de adivinhar token não era limitada. Teto
+    // folgado: o Asaas manda de poucos IPs pra todas as escolas.
+    const clientIp = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'desconhecido';
+    const { data: ipOk, error: ipLimitError } = await adminClient.rpc('check_rate_limit', {
+      p_key: `edge:payment-webhook:ip:${clientIp}`,
+      p_limit: 600,
+      p_window_seconds: 300,
+    });
+    if (ipLimitError) {
+      console.error('[payment-webhook] Erro ao checar rate limit por IP:', ipLimitError);
+    } else if (ipOk === false) {
+      return new Response(JSON.stringify({ error: 'Rate limit excedido' }), { status: 429, headers: JSON_HEADERS });
+    }
+
     const providedToken = req.headers.get('asaas-access-token') || '';
     if (!providedToken) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: JSON_HEADERS });
