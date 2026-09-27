@@ -593,7 +593,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       setSuccessMsg(
         result.authorized_person_created === false
           ? '2º Responsável criado, mas não foi possível gerar o registro em Autorizados automaticamente — adicione manualmente em "Autorizados" se quiser que apareça em Pendentes.'
-          : '2º Responsável criado com sucesso!'
+          : (currentUser?.role === 'admin'
+            ? '2º Responsável criado! A conta fica aguardando a aprovação da Gestão para ter acesso.'
+            : '2º Responsável criado com sucesso!')
       );
 
       // Limpa a msg após 5s
@@ -757,7 +759,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           guardian_type: guardianType,
           ...(formData.role === 'admin' ? {
             departamento: formData.departamento || null,
-            ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
+            ...(['gestao', 'developer'].includes(currentUser.role) ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
           ...(formData.role === 'teacher' ? { turmas: formData.turmas } : {}),
         };
@@ -895,7 +897,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           guardian_type: guardianType,
           ...(formData.role === 'admin' ? {
             departamento: formData.departamento || null,
-            ...(currentUser.is_primary_admin ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
+            ...(['gestao', 'developer'].includes(currentUser.role) ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
           ...(formData.role === 'teacher' ? { turmas: formData.turmas } : {}),
         };
@@ -1017,7 +1019,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           }]);
         }
 
-        setSuccessMsg('Cadastro realizado com sucesso!');
+        setSuccessMsg(currentUser?.role === 'admin' ? 'Cadastro realizado! A conta fica aguardando a aprovação da Gestão para ter acesso.' : 'Cadastro realizado com sucesso!');
         setFormData({ name: '', email: '', password: '', phone1: '', phone2: '', doc_type: 'CPF', doc_number: '', profession: '', civil_status: '', role: 'family' });
         setStudents([emptyStudent()]);
         setGuardianType('Responsável');
@@ -1060,7 +1062,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           {field('Perfil do Usuário', true,
             <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
               <option value="family">Responsáveis</option>
-              <option value="admin">Administrador (Equipe)</option>
+              {/* Admin só é criado pela Gestão (hierarquia de 27/09/2026). */}
+              {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'admin') && (
+                <option value="admin">Administrador (Equipe)</option>
+              )}
               <option value="teacher">Professor</option>
             </select>
           )}
@@ -1122,7 +1127,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           </div>
         )}
 
-        {formData.role === 'admin' && currentUser.is_primary_admin && (
+        {formData.role === 'admin' && ['gestao', 'developer'].includes(currentUser.role) && (
           <label className="flex items-center gap-2 cursor-pointer bg-primary/10 border border-primary/10 rounded-zela-md p-3">
             <input
               type="checkbox"
@@ -1262,7 +1267,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 onRemove={handleRemoveStudent}
                 canRemove={students.length > 1}
                 turmas={schoolTurmas}
-                canManageExtraHours={currentUser?.role === 'developer' || currentUser?.is_primary_admin === true}
+                canManageExtraHours={['gestao', 'developer'].includes(currentUser?.role)}
               />
             ))}
           </div>
@@ -1313,14 +1318,17 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 >
                   <UserMinus size={14} /> Remover Vínculo
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmSecondGuardianAction('delete')}
-                  disabled={secondGuardianLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
-                >
-                  <Trash2 size={14} /> Excluir 2º Responsável
-                </button>
+                {/* Excluir conta é só da Gestão (hierarquia de 27/09/2026). */}
+                {['gestao', 'developer'].includes(currentUser?.role) && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmSecondGuardianAction('delete')}
+                    disabled={secondGuardianLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
+                  >
+                    <Trash2 size={14} /> Excluir 2º Responsável
+                  </button>
+                )}
               </div>
             </div>
           ) : isAddingSecondGuardian ? (

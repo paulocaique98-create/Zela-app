@@ -182,13 +182,13 @@ export default function DeveloperPanel() {
 
         if (error) throw error;
       } else {
-        // 1. Validar dados do administrador
+        // 1. Validar dados da conta da Gestão
         if (!adminData.name.trim() || !adminData.email.trim() || !adminData.password.trim()) {
           setSaveError('Preencha o nome, e-mail e senha do responsável da escola.');
           return;
         }
-        if (adminData.password.length < 6) {
-          setSaveError('A senha do responsável deve ter no mínimo 6 caracteres.');
+        if (adminData.password.length < 8) {
+          setSaveError('A senha do responsável deve ter no mínimo 8 caracteres.');
           return;
         }
 
@@ -202,21 +202,24 @@ export default function DeveloperPanel() {
 
         if (schoolError) throw schoolError;
 
-        // 3. Criar o usuário admin de forma segura via Edge Function
+        // 3. Criar a conta da GESTÃO da escola (topo da hierarquia, decisão
+        // de 27/09/2026): é ela quem cria os admins depois. Antes era um
+        // admin marcado como "principal" -- marcação que a function nunca
+        // gravava (is_primary_admin fica fora da allowlist de extra_fields).
+        // Nasce com troca obrigatória de senha (create-admin-user).
         const { data: newUser, error: funcError } = await supabase.functions.invoke('create-admin-user', {
           body: {
             email: adminData.email.trim().toLowerCase(),
             password: adminData.password,
             name: adminData.name.trim(),
-            role: 'admin',
+            role: 'gestao',
             school_id: newSchool.id,
-            extra_fields: { is_primary_admin: true, chat_visibilidade_total: true }
           }
         });
 
         if (funcError || !newUser || newUser.error) {
-          const errMsg = (funcError?.message || newUser?.error || 'Erro ao criar admin');
-          if (errMsg.includes('already registered')) throw new Error('Este e-mail de administrador já está em uso.');
+          const errMsg = (funcError?.message || newUser?.error || 'Erro ao criar a conta da Gestão');
+          if (errMsg.includes('already registered')) throw new Error('Este e-mail já está em uso por outra conta.');
           throw new Error(errMsg);
         }
       }
@@ -550,9 +553,9 @@ export default function DeveloperPanel() {
                     <div className="border-t border-dev-border pt-4 mt-2">
                       <p className="text-xs font-black text-dev-primary uppercase tracking-wider mb-1 flex items-center gap-2">
                         <span className="w-5 h-5 bg-dev-primary-container rounded-full flex items-center justify-center text-[10px]">1</span>
-                        Responsável da Escola (Primeiro Acesso)
+                        Gestão da Escola (Primeiro Acesso)
                       </p>
-                      <p className="text-xs text-dev-text-muted mb-3">Este usuário terá o papel de <strong>Administrador</strong> e será o primeiro acesso da escola no sistema.</p>
+                      <p className="text-xs text-dev-text-muted mb-3">Esta será a conta da <strong>Gestão</strong>, o primeiro acesso da escola no sistema. É ela quem cria os administradores (Recepção, Coordenação, Direção). No primeiro login, a pessoa cria a própria senha.</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="md:col-span-2">
                           <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome do Responsável</label>
@@ -580,7 +583,7 @@ export default function DeveloperPanel() {
                             type="password"
                             value={adminData.password}
                             onChange={e => setAdminData({ ...adminData, password: e.target.value })}
-                            placeholder="Mínimo 6 caracteres"
+                            placeholder="Mínimo 8 caracteres"
                             className="w-full p-2.5 bg-dev-primary-container border border-dev-primary/30 rounded-zela-md focus:ring-2 focus:ring-dev-primary focus:bg-dev-bg outline-none transition"
                           />
                         </div>

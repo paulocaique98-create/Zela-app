@@ -8,9 +8,9 @@ import { adminClient, createTestUser, deleteTestUser, createTestSchool, deleteTe
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
-  it('admin principal configura; admin comum e família são bloqueados (nada muda)', async () => {
+  it('Gestão (hierarquia 27/09/2026) configura; admin comum e família são bloqueados (nada muda)', async () => {
     const school = await createTestSchool();
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
     const family = await createTestUser({ role: 'family', schoolId: school });
     const { data: student } = await adminClient.from('students').insert({ name: 'Aluno Vitest', school_id: school, family_id: family.id }).select('id').single();
@@ -18,7 +18,7 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
     try {
       let r = await regularAdmin.client.from('students').update({ weekly_schedule: { segunda: { entry: '06:00', exit: '17:00' } } }).eq('id', student.id).select();
       expect(r.error).toBeTruthy();
-      expect(r.error.message).toContain('admin principal');
+      expect(r.error.message).toContain('Gestão');
 
       // Família não tem mais UPDATE em students (check-in/out só no
       // autoatendimento, 27/09/2026): o RLS nem enxerga a linha pra
@@ -46,7 +46,7 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
 
   it('rejeita formato/faixa inválidos: entrada depois da saída, horário malformado, chave de dia inválida, override incompleto', async () => {
     const school = await createTestSchool();
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const family = await createTestUser({ role: 'family', schoolId: school });
     const { data: student } = await adminClient.from('students').insert({ name: 'Aluno Vitest', school_id: school, family_id: family.id }).select('id').single();
 
@@ -87,9 +87,9 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
 });
 
 runIf('Config de cobrança por escola (schools.billing_config)', () => {
-  it('admin principal configura; admin comum é bloqueado', async () => {
+  it('Gestão (hierarquia 27/09/2026) configura; admin comum é bloqueado', async () => {
     const school = await createTestSchool();
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
 
     try {
@@ -101,7 +101,7 @@ runIf('Config de cobrança por escola (schools.billing_config)', () => {
 
       r = await regularAdmin.client.from('schools').update({ billing_config: { hourly_rate_cents: 1 } }).eq('id', school).select();
       expect(r.error).toBeTruthy();
-      expect(r.error.message).toContain('admin principal');
+      expect(r.error.message).toContain('Gestão');
     } finally {
       await deleteTestUser(primaryAdmin.id);
       await deleteTestUser(regularAdmin.id);
@@ -111,7 +111,7 @@ runIf('Config de cobrança por escola (schools.billing_config)', () => {
 
   it('rejeita valor fora da faixa e chave desconhecida', async () => {
     const school = await createTestSchool();
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
 
     try {
       let r = await primaryAdmin.client.from('schools').update({ billing_config: { hourly_rate_cents: -1 } }).eq('id', school);

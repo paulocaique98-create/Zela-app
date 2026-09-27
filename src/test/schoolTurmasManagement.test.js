@@ -8,11 +8,11 @@ import { adminClient, createTestUser, deleteTestUser, createTestSchool, deleteTe
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Gestão de turmas pela escola (update_school_turmas)', () => {
-  it('admin principal pode adicionar e remover turma não usada; admin comum, professor e família são bloqueados', async () => {
+  it('Gestão (hierarquia 27/09/2026) pode adicionar e remover turma não usada; admin comum, professor e família são bloqueados', async () => {
     const school = await createTestSchool();
     await adminClient.from('schools').update({ turmas: ['Nido', 'Kids I'] }).eq('id', school);
 
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
     const teacher = await createTestUser({ role: 'teacher', schoolId: school });
     const family = await createTestUser({ role: 'family', schoolId: school });
@@ -20,7 +20,7 @@ runIf('Gestão de turmas pela escola (update_school_turmas)', () => {
     try {
       let r = await regularAdmin.client.rpc('update_school_turmas', { p_turmas: ['Nido', 'Kids I', 'Kids II'] });
       expect(r.error).toBeTruthy();
-      expect(r.error.message).toContain('admin principal');
+      expect(r.error.message).toContain('Gestão');
 
       r = await teacher.client.rpc('update_school_turmas', { p_turmas: ['Nido', 'Kids I', 'Kids II'] });
       expect(r.error).toBeTruthy();
@@ -54,7 +54,7 @@ runIf('Gestão de turmas pela escola (update_school_turmas)', () => {
     const school = await createTestSchool();
     await adminClient.from('schools').update({ turmas: ['Turma A', 'Turma B', 'Turma C', 'Turma D', 'Turma E', 'Turma F'] }).eq('id', school);
 
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const family = await createTestUser({ role: 'family', schoolId: school });
     const teacherInTurma = await createTestUser({ role: 'teacher', schoolId: school, extra: { turmas: ['Turma B'] } });
     const { data: student } = await adminClient.from('students').insert({ name: 'Aluno Vitest', school_id: school, family_id: family.id, turma: 'Turma A' }).select('id').single();
@@ -115,7 +115,7 @@ runIf('Gestão de turmas pela escola (update_school_turmas)', () => {
     await adminClient.from('schools').update({ turmas: ['Berçário'] }).eq('id', schoolB);
 
     const developer = await createTestUser({ role: 'developer', schoolId: null });
-    const primaryAdminB = await createTestUser({ role: 'admin', schoolId: schoolB, extra: { is_primary_admin: true } });
+    const primaryAdminB = await createTestUser({ role: 'gestao', schoolId: schoolB });
 
     try {
       // Admin principal da escola B não afeta a escola A.

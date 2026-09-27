@@ -102,6 +102,10 @@ export const SCREEN_LABELS = {
   // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
   acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
   registration: 'Dados Cadastrais', comunicados: 'Comunicados',
+  // Gestão (ids próprios do GestaoPortal.jsx)
+  'secretaria-alunos': 'Alunos', 'secretaria-matriculas': 'Matrículas',
+  'cadastros-usuarios': 'Usuários', 'cadastros-novo': 'Novo Cadastro',
+  'cadastros-funcionarios': 'Funcionários', 'cadastros-turmas': 'Turmas', configuracoes: 'Configurações',
   // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
   'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
   'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',

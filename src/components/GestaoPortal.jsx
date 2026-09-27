@@ -1,10 +1,11 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText } from 'lucide-react';
+import { Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings } from 'lucide-react';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { supabase } from '../lib/supabase';
 import GestaoInicio from './GestaoInicio';
+import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 
 const AdminFinanceiro = lazy(() => import('./AdminFinanceiro'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
@@ -12,6 +13,14 @@ const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrectio
 const GestaoAlunos = lazy(() => import('./GestaoAlunos'));
 const GestaoAlunoPerfil = lazy(() => import('./GestaoAlunoPerfil'));
 const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
+// Cadastros e Configurações: mesmas telas do Admin, reaproveitadas. As
+// permissões (aprovar, excluir, criar admin, turmas, cobrança) mudam pelo
+// papel do usuário -- hierarquia de contas de 27/09/2026.
+const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
+const AdminUserRegistration = lazy(() => import('./AdminUserRegistration'));
+const AdminFuncionarios = lazy(() => import('./AdminFuncionarios'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const TurmasSection = lazy(() => import('./AdminSettings').then(m => ({ default: m.TurmasSection })));
 
 // Portal da Gestão (financeiro/administrativo). Espelha à risca a casca do
 // AdminPortal.jsx (aside/nav/main, mesmas classes, mesmo comportamento de
@@ -28,6 +37,7 @@ const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
 export default function GestaoPortal({
   currentUser, currentSchool,
   gestaoTab, setGestaoTab,
+  onUpdateSchool,
   isMobileMenuOpen, setIsMobileMenuOpen,
   onLogout,
 }) {
@@ -40,6 +50,7 @@ export default function GestaoPortal({
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
+  const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const go = (tab) => {
     setGestaoTab(tab);
     setIsMobileMenuOpen(false);
@@ -99,6 +110,19 @@ export default function GestaoPortal({
               <SidebarItem active={gestaoTab === 'secretaria-alunos'} icon={GraduationCap} label="Alunos" onClick={() => go('secretaria-alunos')} />
               <SidebarItem active={gestaoTab === 'secretaria-matriculas'} icon={FileText} label="Matrículas" onClick={() => go('secretaria-matriculas')} />
             </SidebarGroup>
+            <SidebarGroup
+              collapsed={collapsed}
+              label="Cadastros"
+              icon={Folders}
+              badge={pendingUsersCount > 0 ? pendingUsersCount : null}
+              isOpen={openAccordion === 'cadastros'}
+              onToggle={() => toggleAccordion('cadastros')}
+            >
+              <SidebarItem active={gestaoTab === 'cadastros-usuarios'} icon={Users} label="Usuários" badge={pendingUsersCount > 0 ? pendingUsersCount : null} onClick={() => go('cadastros-usuarios')} />
+              <SidebarItem active={gestaoTab === 'cadastros-novo'} icon={UserPlus} label="Novo Cadastro" onClick={() => go('cadastros-novo')} />
+              <SidebarItem active={gestaoTab === 'cadastros-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('cadastros-funcionarios')} />
+              <SidebarItem active={gestaoTab === 'cadastros-turmas'} icon={School} label="Turmas" onClick={() => go('cadastros-turmas')} />
+            </SidebarGroup>
             {showFinanceiro && (
               <SidebarItem active={gestaoTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
             )}
@@ -108,6 +132,7 @@ export default function GestaoPortal({
                 <SidebarItem active={gestaoTab === 'attendance-corrections'} icon={ClipboardCheck} label="Correções de Presença" badge={pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null} onClick={() => go('attendance-corrections')} />
               </>
             )}
+            <SidebarItem active={gestaoTab === 'configuracoes'} icon={Settings} label="Configurações" onClick={() => go('configuracoes')} />
           </nav>
         </div>
       </aside>
@@ -115,7 +140,7 @@ export default function GestaoPortal({
       <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {gestaoTab === 'home' && (
-            <GestaoInicio currentSchool={currentSchool} setGestaoTab={setGestaoTab} pendingCorrectionsCount={pendingCorrectionsCount} />
+            <GestaoInicio currentSchool={currentSchool} setGestaoTab={setGestaoTab} pendingCorrectionsCount={pendingCorrectionsCount} pendingUsersCount={pendingUsersCount} />
           )}
           {gestaoTab === 'secretaria-alunos' && (
             selectedAlunoId ? (
@@ -126,6 +151,25 @@ export default function GestaoPortal({
           )}
           {gestaoTab === 'secretaria-matriculas' && (
             <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />
+          )}
+          {gestaoTab === 'cadastros-usuarios' && (
+            <AdminUserManagement currentUser={currentUser} initialTab={pendingUsersCount > 0 ? 'pending' : 'active'} />
+          )}
+          {gestaoTab === 'cadastros-novo' && (
+            <AdminUserRegistration currentUser={currentUser} />
+          )}
+          {gestaoTab === 'cadastros-funcionarios' && (
+            <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} />
+          )}
+          {gestaoTab === 'cadastros-turmas' && (
+            <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 lg:p-8">
+              <div className="max-w-3xl">
+                <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />
+              </div>
+            </div>
+          )}
+          {gestaoTab === 'configuracoes' && (
+            <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />
           )}
           {gestaoTab === 'financeiro' && (
             <AdminFinanceiro currentUser={currentUser} currentSchool={currentSchool} />

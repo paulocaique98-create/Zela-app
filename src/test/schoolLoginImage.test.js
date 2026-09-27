@@ -9,9 +9,9 @@ import { adminClient, createTestUser, deleteTestUser, createTestSchool, deleteTe
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Imagem de login por escola (login_image_url + get_school_login_image)', () => {
-  it('admin principal grava a imagem; admin comum e professor não conseguem (0 linhas afetadas, sem erro -- RLS de schools nem tem policy de UPDATE pra essas roles)', async () => {
+  it('Gestão (hierarquia 27/09/2026) grava a imagem; admin comum e professor não conseguem (0 linhas afetadas, sem erro -- RLS de schools nem tem policy de UPDATE pra essas roles)', async () => {
     const school = await createTestSchool();
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
     const teacher = await createTestUser({ role: 'teacher', schoolId: school });
 

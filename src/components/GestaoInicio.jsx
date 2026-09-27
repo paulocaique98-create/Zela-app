@@ -1,11 +1,11 @@
 import React from 'react';
-import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText } from 'lucide-react';
+import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, School, Settings } from 'lucide-react';
 
 // Tela inicial do Portal da Gestão -- espelha o padrão de "Ações Rápidas"
 // de AdminInicio.jsx. Ainda sem clickCounts/ordenação por uso (poucos
 // menus por enquanto) -- isso entra quando houver menu suficiente pra
 // justificar, igual foi feito no Admin.
-export default function GestaoInicio({ currentSchool, setGestaoTab, pendingCorrectionsCount = 0 }) {
+export default function GestaoInicio({ currentSchool, setGestaoTab, pendingCorrectionsCount = 0, pendingUsersCount = 0 }) {
   const features = currentSchool?.features_enabled || {};
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
@@ -13,9 +13,14 @@ export default function GestaoInicio({ currentSchool, setGestaoTab, pendingCorre
   const menus = [
     { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap, tab: 'secretaria-alunos' },
     { key: 'secretaria-matriculas', label: 'Matrículas', icon: FileText, tab: 'secretaria-matriculas' },
+    { key: 'cadastros-usuarios', label: 'Usuários', icon: Users, tab: 'cadastros-usuarios', badge: pendingUsersCount > 0 ? pendingUsersCount : null },
+    { key: 'cadastros-novo', label: 'Novo Cadastro', icon: UserPlus, tab: 'cadastros-novo' },
+    { key: 'cadastros-funcionarios', label: 'Funcionários', icon: Users, tab: 'cadastros-funcionarios' },
+    { key: 'cadastros-turmas', label: 'Turmas', icon: School, tab: 'cadastros-turmas' },
     showFinanceiro && { key: 'financeiro', label: 'Financeiro', icon: Wallet, tab: 'financeiro' },
     showCheckin && { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras' },
     showCheckin && { key: 'attendance-corrections', label: 'Correções de Presença', icon: ClipboardCheck, tab: 'attendance-corrections', badge: pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null },
+    { key: 'configuracoes', label: 'Configurações', icon: Settings, tab: 'configuracoes' },
   ].filter(Boolean);
 
   return (

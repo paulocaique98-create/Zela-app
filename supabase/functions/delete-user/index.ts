@@ -42,8 +42,10 @@ serve(async (req) => {
       .eq('id', caller.id)
       .single()
 
-    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
-      throw new Error('Acesso negado: apenas a escola pode excluir usuários')
+    // Hierarquia (Fase 3): excluir conta é só da Gestão (ou do suporte). O
+    // admin edita cadastros, mas não exclui.
+    if (dbCallerError || !callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao')) {
+      throw new Error('Acesso negado: apenas a Gestão pode excluir usuários')
     }
 
     // Rate limit: exclusão de conta é uma ação sensível/irreversível — limite

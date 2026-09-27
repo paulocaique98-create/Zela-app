@@ -87,6 +87,13 @@ serve(async (req) => {
     if (role === 'gestao' && userData.role !== 'developer') {
       throw new Error('Só o suporte do Zela pode criar a conta da Gestão.');
     }
+    // Fase 3: admin só é criado pela Gestão (ou pelo suporte).
+    if (role === 'admin' && userData.role !== 'gestao' && userData.role !== 'developer') {
+      throw new Error('Só a Gestão da escola pode criar contas de administrador.');
+    }
+    // Fase 2: professor/responsável criado pelo admin nasce pendente e só a
+    // Gestão aprova (users.status; ver protect_admin_privilege_columns).
+    const createdAsPending = userData.role === 'admin';
 
     // Se for admin, só pode criar para a própria escola
     let finalSchoolId = school_id;
@@ -113,7 +120,7 @@ serve(async (req) => {
     };
     if (role === 'admin') {
       safeExtraFields.departamento = ef.departamento ?? null;
-      if (userData.role === 'developer' || userData.role === 'gestao' || userData.is_primary_admin) {
+      if (userData.role === 'developer' || userData.role === 'gestao') {
         safeExtraFields.chat_visibilidade_total = !!ef.chat_visibilidade_total;
       }
     }
@@ -153,7 +160,8 @@ serve(async (req) => {
         email,
         role,
         school_id: finalSchoolId,
-        ...safeExtraFields
+        ...safeExtraFields,
+        ...(createdAsPending ? { status: 'pending' } : {}),
       })
       .select()
       .single();

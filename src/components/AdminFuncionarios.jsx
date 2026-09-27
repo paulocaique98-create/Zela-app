@@ -31,6 +31,29 @@ const ACCESS_ROLE_STYLE = {
 };
 
 export default function AdminFuncionarios({ currentUser, currentSchool }) {
+  // Hierarquia (27/09/2026): admin (Coordenação, Direção, Recepção...) só é
+  // criado pela Gestão; professor pode ser criado pelo admin (nasce
+  // pendente) ou pela Gestão. Excluir e aprovar acesso é só da Gestão.
+  const isGestao = ['gestao', 'developer'].includes(currentUser?.role);
+  const canCreateAccessFor = (cargo) => {
+    const acesso = CARGO_PARA_ACESSO[cargo];
+    if (!acesso) return false;
+    return acesso.role === 'teacher' || isGestao;
+  };
+  const [approvingAccessId, setApprovingAccessId] = useState(null);
+  const approveAccessUser = async (u) => {
+    setApprovingAccessId(u.id);
+    try {
+      const { error: approveError } = await supabase.from('users').update({ status: 'active' }).eq('id', u.id);
+      if (approveError) throw approveError;
+      setAccessUsers(prev => prev.map(x => (x.id === u.id ? { ...x, status: 'active' } : x)));
+    } catch (err) {
+      console.error('[AdminFuncionarios] Erro ao aprovar acesso:', err);
+      alert('Não foi possível aprovar este acesso: ' + (err.message || 'erro desconhecido'));
+    } finally {
+      setApprovingAccessId(null);
+    }
+  };
   const [funcionarios, setFuncionarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -411,7 +434,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   {f.notes && <p className="text-on-surface-variant text-sm mt-2 whitespace-pre-wrap">{f.notes}</p>}
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  {CARGO_PARA_ACESSO[f.cargo] && (
+                  {canCreateAccessFor(f.cargo) && (
                     <button
                       onClick={() => setCreatingAccessFor(f)}
                       className="p-2 text-on-surface-variant/70 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
@@ -503,16 +526,34 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                       >
                         <Edit size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDeleteAccessUser(u.id)}
-                        disabled={deletingAccessId === u.id}
-                        className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                        title="Excluir"
-                      >
-                        {deletingAccessId === u.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                      </button>
+                      {isGestao && (
+                        <button
+                          onClick={() => handleDeleteAccessUser(u.id)}
+                          disabled={deletingAccessId === u.id}
+                          className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                          title="Excluir"
+                        >
+                          {deletingAccessId === u.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        </button>
+                      )}
                     </div>
                   </div>
+
+                  {u.status === 'pending' && (
+                    isGestao ? (
+                      <button
+                        onClick={() => approveAccessUser(u)}
+                        disabled={approvingAccessId === u.id}
+                        className="mt-3 w-full py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                      >
+                        {approvingAccessId === u.id ? 'Aprovando...' : 'Aprovar acesso'}
+                      </button>
+                    ) : (
+                      <p className="mt-3 w-full py-1.5 text-center bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs">
+                        Aguardando aprovação da Gestão
+                      </p>
+                    )
+                  )}
 
                   {u.role === 'teacher' && (
                     <div className="mt-3 pt-3 border-t border-outline-variant">

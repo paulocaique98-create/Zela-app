@@ -12,7 +12,7 @@ const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 // uma turma nova. A RPC update_school_turmas valida uso antes de permitir
 // remover: bloqueia se a turma ainda estiver associada a algum aluno,
 // professor, mural, comunicado, matéria ou frequência.
-function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false }) {
+export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false }) {
   const [turmas, setTurmas] = useState(currentSchool?.turmas || []);
   const [newTurma, setNewTurma] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -27,7 +27,7 @@ function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false 
     setTurmas(currentSchool?.turmas || []);
   }, [currentSchool?.turmas]);
 
-  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
 
   const saveTurmas = async (nextTurmas) => {
     setError('');
@@ -232,7 +232,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
   const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState('');
 
-  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
 
   // Comprime antes de converter pra base64 -- guardado numa coluna text, uma
   // foto de celular sem compressão (3-5MB comum) infla a linha da escola e
@@ -324,7 +324,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
 // "não consigo trocar a imagem" foi exatamente um botão de salvar separado
 // que não persistia -- não repetir aqui).
 function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = false }) {
-  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
   if (!canManage) return null;
 
   const set = (field, value) => onConfigChange({ ...config, [field]: value });
@@ -375,7 +375,7 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
 // cálculo de verdade roda na edge function check-attendance-delays (mesma
 // que já cuida do atraso no mesmo dia).
 function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = false }) {
-  const canManage = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
   if (!canManage) return null;
 
   const set = (field, value) => onConfigChange({ ...config, [field]: value });
@@ -426,7 +426,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   const [loginImageUrl, setLoginImageUrl] = useState(currentSchool?.login_image_url || '');
   const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
   const [absenceAlertConfig, setAbsenceAlertConfig] = useState(mergeAbsenceAlertConfig(currentSchool?.absence_alert_config));
-  const canManageSchool = currentUser?.role === 'developer' || currentUser?.is_primary_admin === true;
+  const canManageSchool = ['developer', 'gestao'].includes(currentUser?.role);
   const [activeConfigTab, setActiveConfigTab] = useState(canManageSchool ? 'turmas' : 'menu');
 
   const features = currentSchool?.features_enabled || {};
@@ -652,7 +652,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
                   { id: 'billing', label: 'Cobrança de Hora Extra' },
                   { id: 'absence_alert', label: 'Faltas' },
                 ] : []),
-                { id: 'menu', label: 'Personalizar Menu' },
+                // Personalizar Menu ajusta o menu do Portal do Admin -- não se
+                // aplica à Gestão.
+                ...(currentUser?.role !== 'gestao' ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
               ].map(tab => (
                 <button
                   key={tab.id}

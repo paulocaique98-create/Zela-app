@@ -144,7 +144,10 @@ serve(async (req) => {
         school_id,
         // Senha provisória escolhida por outra pessoa (ex: 2º responsável
         // aprovado na matrícula): o app obriga a trocar no primeiro acesso.
-        must_change_password: must_change_password === true
+        must_change_password: must_change_password === true,
+        // Hierarquia (Fase 2): responsável criado pelo admin nasce pendente
+        // e só a Gestão aprova.
+        ...(callerData.role === 'admin' ? { status: 'pending' } : {}),
       })
 
     if (publicUserError) {

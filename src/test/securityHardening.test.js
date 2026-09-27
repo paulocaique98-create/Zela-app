@@ -434,7 +434,12 @@ runIf('Segurança · item 11: cadastro pendente não tem acesso até a escola ap
       const { data: pendingRole } = await family.client.rpc('get_my_role');
       expect(pendingRole).toBeNull();
 
-      const { error: approveErr } = await admin.client.from('users').update({ status: 'active' }).eq('id', family.id);
+      // Hierarquia (Fase 3): o admin não aprova; só a Gestão.
+      const { error: adminApproveErr } = await admin.client.from('users').update({ status: 'active' }).eq('id', family.id);
+      expect(adminApproveErr).not.toBeNull();
+      const gestao = await createTestUser({ role: 'gestao', schoolId });
+      const { error: approveErr } = await gestao.client.from('users').update({ status: 'active' }).eq('id', family.id);
+      await deleteTestUser(gestao.id);
       expect(approveErr).toBeNull();
       const { data: activeRole } = await family.client.rpc('get_my_role');
       expect(activeRole).toBe('family');

@@ -1484,6 +1484,7 @@ export default function App() {
                   currentSchool={currentSchool}
                   gestaoTab={gestaoTab}
                   setGestaoTab={setGestaoTab}
+                  onUpdateSchool={fetchData}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}

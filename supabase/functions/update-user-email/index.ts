@@ -117,12 +117,10 @@ serve(async (req) => {
         if (targetUser.role === 'gestao' || targetUser.role === 'developer') {
           throw new Error('Só o suporte pode alterar o e-mail desta conta.');
         }
-        if (targetUser.is_primary_admin === true && callerData.role !== 'gestao') {
-          throw new Error('Só a Gestão pode alterar o e-mail do admin principal.');
-        }
-        if (targetUser.role === 'admin' && targetUser.id !== user.id
-            && callerData.role !== 'gestao' && callerData.is_primary_admin !== true) {
-          throw new Error('Só a Gestão ou o admin principal da escola podem alterar o e-mail de outro administrador.');
+        // Fase 3: e-mail de admin (inclusive o próprio) só a Gestão altera;
+        // o admin corrige professor e responsável.
+        if (targetUser.role === 'admin' && callerData.role !== 'gestao') {
+          throw new Error('Só a Gestão pode alterar o e-mail de um administrador.');
         }
       }
     }

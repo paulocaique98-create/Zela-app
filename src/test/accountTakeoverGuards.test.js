@@ -62,10 +62,10 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
     }
   }, 30000);
 
-  it('fluxo normal continua: admin corrige e-mail de família; admin principal corrige e-mail de outro admin', async () => {
+  it('fluxo normal continua: admin corrige e-mail de família; a Gestão corrige e-mail de admin', async () => {
     const schoolId = await createTestSchool();
     const admin = await createTestUser({ role: 'admin', schoolId });
-    const primary = await createTestUser({ role: 'admin', schoolId, extra: { is_primary_admin: true } });
+    const primary = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
       const familyEmail = newEmail();
@@ -134,17 +134,21 @@ runIf('delete-user · Recepção não apaga a conta da Gestão', () => {
     }
   }, 25000);
 
-  it('fluxo normal continua: admin exclui conta de família', async () => {
+  it('hierarquia (Fase 3): admin NÃO exclui conta de família; a Gestão exclui', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const gestao = await createTestUser({ role: 'gestao', schoolId });
+    const recepcao = await createTestUser({ role: 'admin', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
-      const { status } = await callFn('delete-user', admin.token, { userId: family.id });
+      const asAdmin = await callFn('delete-user', recepcao.token, { userId: family.id });
+      expect(asAdmin.status).not.toBe(200);
+      const { status } = await callFn('delete-user', gestao.token, { userId: family.id });
       expect(status).toBe(200);
       const { data: gone } = await adminClient.from('users').select('id').eq('id', family.id).maybeSingle();
       expect(gone).toBeNull();
     } finally {
-      await deleteTestUser(admin.id);
+      await deleteTestUser(gestao.id);
+      await deleteTestUser(recepcao.id);
       await deleteTestUser(family.id);
       await deleteTestSchool(schoolId);
     }

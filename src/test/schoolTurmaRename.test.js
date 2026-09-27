@@ -8,11 +8,11 @@ import { adminClient, createTestUser, deleteTestUser, createTestSchool, deleteTe
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Renomear turma com propagação (rename_school_turma)', () => {
-  it('admin principal renomeia e a mudança se propaga por todas as tabelas; admin comum, professor e família são bloqueados', async () => {
+  it('Gestão (hierarquia 27/09/2026) renomeia e a mudança se propaga por todas as tabelas; admin comum, professor e família são bloqueados', async () => {
     const school = await createTestSchool();
     await adminClient.from('schools').update({ turmas: ['Kids I', 'Kids II'] }).eq('id', school);
 
-    const primaryAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
     const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
     const teacher = await createTestUser({ role: 'teacher', schoolId: school, extra: { turmas: ['Kids I'] } });
     const family = await createTestUser({ role: 'family', schoolId: school });
@@ -97,7 +97,7 @@ runIf('Renomear turma com propagação (rename_school_turma)', () => {
     await adminClient.from('schools').update({ turmas: ['Nido'] }).eq('id', schoolA);
     await adminClient.from('schools').update({ turmas: ['Nido'] }).eq('id', schoolB);
 
-    const primaryAdminA = await createTestUser({ role: 'admin', schoolId: schoolA, extra: { is_primary_admin: true } });
+    const primaryAdminA = await createTestUser({ role: 'gestao', schoolId: schoolA });
 
     try {
       const r = await primaryAdminA.client.rpc('rename_school_turma', { p_old_name: 'Nido', p_new_name: 'Berçário' });
