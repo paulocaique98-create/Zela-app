@@ -397,6 +397,44 @@ runIf('Segurança · item 5: família não mexe em cobrança nem apaga aluno', (
   }, 20000);
 });
 
+runIf('Segurança · item 11: cadastro pendente não tem acesso até a escola aprovar', () => {
+  it('família pendente fica sem papel no banco; ao ser aprovada, ganha o papel family', async () => {
+    const schoolId = await createTestSchool();
+    const family = await createTestUser({ role: 'family', schoolId, extra: { status: 'pending' } });
+    const admin = await createTestUser({ role: 'admin', schoolId });
+    try {
+      const { data: pendingRole } = await family.client.rpc('get_my_role');
+      expect(pendingRole).toBeNull();
+
+      const { error: approveErr } = await admin.client.from('users').update({ status: 'active' }).eq('id', family.id);
+      expect(approveErr).toBeNull();
+      const { data: activeRole } = await family.client.rpc('get_my_role');
+      expect(activeRole).toBe('family');
+    } finally {
+      await deleteTestUser(family.id);
+      await deleteTestUser(admin.id);
+      await deleteTestSchool(schoolId);
+    }
+  }, 20000);
+
+  it('família pendente também não mexe em cobrança do próprio filho (trava do item 5 não depende do papel ativo)', async () => {
+    const schoolId = await createTestSchool();
+    const family = await createTestUser({ role: 'family', schoolId, extra: { status: 'pending' } });
+    const { data: student } = await adminClient.from('students')
+      .insert({ school_id: schoolId, family_id: family.id, name: 'Vitest Pendente Aluno', turma: 'Nido', isento_hora_extra: false })
+      .select('id').single();
+    try {
+      await family.client.from('students').update({ isento_hora_extra: true }).eq('id', student.id);
+      const { data } = await adminClient.from('students').select('isento_hora_extra').eq('id', student.id).single();
+      expect(data.isento_hora_extra).toBe(false);
+    } finally {
+      await adminClient.from('students').delete().eq('id', student.id);
+      await deleteTestUser(family.id);
+      await deleteTestSchool(schoolId);
+    }
+  }, 20000);
+});
+
 runIf('Segurança · acesso legado do totem (x-kiosk-token) removido', () => {
   it('nenhum token de totem legado continua ativo', async () => {
     const { data: active } = await adminClient.from('kiosk_devices').select('id').eq('is_active', true);
