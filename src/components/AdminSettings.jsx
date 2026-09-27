@@ -410,7 +410,10 @@ function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = f
   );
 }
 
-export default function AdminSettings({ currentUser, currentSchool, onUpdate }) {
+// `only` (opcional): lista de abas a exibir; `showSchoolData` (padrão true):
+// logo e dados da escola. Usados pelo Portal da Gestão pra dividir
+// Configurações em Escola / Acadêmico / Financeiro reaproveitando esta tela.
+export default function AdminSettings({ currentUser, currentSchool, onUpdate, only = null, showSchoolData = true }) {
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: currentSchool?.name || '',
@@ -427,7 +430,18 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
   const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
   const [absenceAlertConfig, setAbsenceAlertConfig] = useState(mergeAbsenceAlertConfig(currentSchool?.absence_alert_config));
   const canManageSchool = ['developer', 'gestao'].includes(currentUser?.role);
-  const [activeConfigTab, setActiveConfigTab] = useState(canManageSchool ? 'turmas' : 'menu');
+  const configTabs = [
+    ...(canManageSchool ? [
+      { id: 'turmas', label: 'Turmas' },
+      { id: 'login_image', label: 'Imagem de Login' },
+      { id: 'billing', label: 'Cobrança de Hora Extra' },
+      { id: 'absence_alert', label: 'Faltas' },
+    ] : []),
+    // Personalizar Menu ajusta o menu do Portal do Admin -- não se
+    // aplica à Gestão.
+    ...(currentUser?.role !== 'gestao' ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
+  ].filter(t => !only || only.includes(t.id));
+  const [activeConfigTab, setActiveConfigTab] = useState(configTabs[0]?.id || 'menu');
 
   const features = currentSchool?.features_enabled || {};
   const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
@@ -563,6 +577,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
 
       <form id="admin-settings-form" onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3">
+          {showSchoolData && (
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-3 items-stretch">
 
             {/* LOGO UPLOAD */}
@@ -638,24 +653,16 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
               </div>
             </div>
           </div>
+          )}
 
           {/* Abas horizontais: Turmas / Imagem de Login / Cobrança de Hora Extra /
               Personalizar Menu -- continuam dentro do mesmo <form>, só trocando o
               que fica visível; nenhuma delas tem save próprio (mesmo "Salvar
               Alterações" único do topo salva a aba ativa e as outras já editadas). */}
-          <div className="pt-3 border-t border-outline-variant">
+          {configTabs.length > 0 && (
+          <div className={showSchoolData ? 'pt-3 border-t border-outline-variant' : ''}>
             <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              {[
-                ...(canManageSchool ? [
-                  { id: 'turmas', label: 'Turmas' },
-                  { id: 'login_image', label: 'Imagem de Login' },
-                  { id: 'billing', label: 'Cobrança de Hora Extra' },
-                  { id: 'absence_alert', label: 'Faltas' },
-                ] : []),
-                // Personalizar Menu ajusta o menu do Portal do Admin -- não se
-                // aplica à Gestão.
-                ...(currentUser?.role !== 'gestao' ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
-              ].map(tab => (
+              {configTabs.length > 1 && configTabs.map(tab => (
                 <button
                   key={tab.id}
                   type="button"
@@ -718,6 +725,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate }) 
               )}
             </div>
           </div>
+          )}
 
           {errorMsg && (
             <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">

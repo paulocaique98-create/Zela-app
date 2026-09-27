@@ -35,8 +35,11 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
-    if (dbCallerError || !callerData || callerData.role !== 'admin') {
-      throw new Error('Acesso negado: apenas administradores podem notificar as famílias.');
+    // Gestão incluída (27/09/2026): decisão de matrícula, comunicados e
+    // contratos saem do Portal da Gestão -- antes o aviso às famílias falhava
+    // em silêncio quando a Gestão aprovava/rejeitava uma matrícula.
+    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'gestao')) {
+      throw new Error('Acesso negado: apenas a escola pode notificar as famílias.');
     }
 
     // Rate limit: cada chamada pode disparar push pra toda a escola de uma

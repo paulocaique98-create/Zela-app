@@ -100,6 +100,14 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}`, { method: 'GET' });
     },
 
+    // Baixa de pagamento recebido por fora do Asaas (dinheiro, PIX direto na
+    // conta da escola, transferência): o Asaas para de cobrar a família e
+    // manda o webhook PAYMENT_RECEIVED_IN_CASH.
+    // deno-lint-ignore no-explicit-any
+    receiveInCash(paymentId: string, input: { paymentDate: string; value: number; notifyCustomer?: boolean }): Promise<any> {
+      return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}/receiveInCash`, { method: 'POST', body: JSON.stringify(input) });
+    },
+
     getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
       return asaasFetch(`/v3/payments/${paymentId}/pixQrCode`, { method: 'GET' });
     },

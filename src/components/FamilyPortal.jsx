@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet, FileSignature } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -30,6 +30,7 @@ const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsa
 const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
 const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
 const FamilyFinanceiro = lazy(() => import('./FamilyFinanceiro'));
+const FamilyContratos = lazy(() => import('./FamilyContratos'));
 
 // Submenus do menu Relatórios visíveis para a família — só os relatórios que
 // a escola de fato compartilha com os responsáveis (o Mapa de Habilidades é
@@ -291,6 +292,8 @@ export default function FamilyPortal({
               <SidebarItem active={familyTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
             )}
 
+            <SidebarItem active={familyTab === 'contratos'} icon={FileSignature} label="Contratos" onClick={() => go('contratos')} />
+
             {showConfiguracoes && (
               <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
             )}
@@ -341,6 +344,7 @@ export default function FamilyPortal({
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
+          {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} />}
           {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
           ))}

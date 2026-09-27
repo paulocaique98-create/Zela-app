@@ -37,6 +37,10 @@ const INTERNAL_ONLY_FUNCTIONS = [
   // Cálculo de cobrança usado pelas RPCs de correção (servidor decide se a
   // correção aumenta a cobrança, não a tela).
   'attendance_charge_cents',
+  // Portal da Gestão: triggers que rodam como dona (matrícula por ano e
+  // ano letivo inicial de escola nova).
+  'sync_student_enrollment',
+  'create_initial_school_year',
 ];
 
 runIf('Regressão de segurança — grants de EXECUTE em funções internas SECURITY DEFINER', () => {

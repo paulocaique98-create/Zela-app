@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
+import { uploadFile, buildSafeFileName } from '../lib/storage';
 
 const CYCLE_LABELS = { MONTHLY: 'Mensal', QUARTERLY: 'Trimestral', SEMIANNUALLY: 'Semestral', YEARLY: 'Anual' };
 const CYCLES = ['MONTHLY', 'QUARTERLY', 'SEMIANNUALLY', 'YEARLY'];
@@ -13,7 +14,7 @@ const CONTRACT_STATUS_CLASSES = {
   cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
 };
 
-const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', AWAITING_PAYMENT: 'Aguardando', PAID: 'Pago', OVERDUE: 'Atrasado', CANCELLED: 'Cancelado', REFUNDED: 'Estornado', FAILED: 'Falhou' };
+export const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', AWAITING_PAYMENT: 'Aguardando', PAID: 'Pago', OVERDUE: 'Atrasado', CANCELLED: 'Cancelado', REFUNDED: 'Estornado', FAILED: 'Falhou' };
 const CHARGE_STATUS_CLASSES = {
   PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
   AWAITING_PAYMENT: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -67,7 +68,7 @@ export default function AdminFinanceiro({ currentUser, currentSchool }) {
 
 // ─────────────────────────────── CONTRATOS ───────────────────────────────
 
-function ContratosTab({ currentUser }) {
+export function ContratosTab({ currentUser }) {
   const [contracts, setContracts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -399,13 +400,17 @@ async function parseFnErrorBody(error) {
 
 // ─────────────────────────────── COBRANÇAS ───────────────────────────────
 
-function CobrancasTab({ currentUser }) {
+// initialStatus: abre já filtrada (Inadimplência = OVERDUE).
+// canRegisterPayment: mostra "Registrar pagamento" (baixa manual; permissão
+// financeiro.baixa_manual, conferida de novo no servidor).
+export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPayment = false }) {
   const [charges, setCharges] = useState([]);
+  const [payingCharge, setPayingCharge] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isReprocessing, setIsReprocessing] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [isAvulsaModalOpen, setIsAvulsaModalOpen] = useState(false);
 
   const fetchCharges = useCallback(async () => {
@@ -518,6 +523,7 @@ function CobrancasTab({ currentUser }) {
                 <th className="py-2 pr-3">Método</th>
                 <th className="py-2 pr-3">Status</th>
                 <th className="py-2 pr-3">Link</th>
+                {canRegisterPayment && <th className="py-2 pr-3" />}
               </tr>
             </thead>
             <tbody>
@@ -541,12 +547,30 @@ function CobrancasTab({ currentUser }) {
                         </a>
                       ) : '—'}
                     </td>
+                    {canRegisterPayment && (
+                      <td className="py-2 pr-3 text-right">
+                        {['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(c.status) && (
+                          <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
+                            <HandCoins size={13} /> Registrar pagamento
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {payingCharge && (
+        <RegistrarPagamentoModal
+          currentUser={currentUser}
+          charge={payingCharge}
+          onClose={() => setPayingCharge(null)}
+          onDone={() => { setPayingCharge(null); setSuccessMsg('Pagamento registrado.'); fetchCharges(); }}
+        />
       )}
 
       {isAvulsaModalOpen && (
@@ -717,7 +741,7 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
 
 // ─────────────────────────────── CONFIGURAÇÃO ───────────────────────────────
 
-function ConfigTab({ currentUser }) {
+export function ConfigTab({ currentUser }) {
   const [gatewayStatus, setGatewayStatus] = useState({ asaas: null, asaas_webhook: null });
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -1116,6 +1140,97 @@ function DescontoResponsavelModal({ currentUser, existingRow, excludeGuardianIds
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+
+const MANUAL_METHODS = [
+  { value: 'cash', label: 'Dinheiro' },
+  { value: 'pix', label: 'PIX direto na conta da escola' },
+  { value: 'transfer', label: 'Transferência bancária' },
+  { value: 'other', label: 'Outro' },
+];
+
+// Baixa manual: avisa o Asaas ("recebido em dinheiro") e só então dá baixa
+// no Zela (Edge Function register-manual-payment).
+export function RegistrarPagamentoModal({ currentUser, charge, onClose, onDone, presetDate, presetAmountCents }) {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const [date, setDate] = useState(presetDate || today);
+  const [amount, setAmount] = useState(((presetAmountCents ?? charge.amount_cents) / 100).toFixed(2).replace('.', ','));
+  const [method, setMethod] = useState('pix');
+  const [note, setNote] = useState('');
+  const [file, setFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    setError('');
+    const amountCents = Math.round(Number(amount.replace(/\./g, '').replace(',', '.')) * 100);
+    if (!amountCents || amountCents <= 0) { setError('Informe o valor recebido.'); return; }
+    setIsSaving(true);
+    try {
+      let receiptPath = null;
+      if (file) {
+        receiptPath = `${currentUser.school_id}/recebimentos/${charge.id}-${buildSafeFileName(file)}`;
+        await uploadFile('expense-attachments', receiptPath, file);
+      }
+      const { data, error: fnError } = await supabase.functions.invoke('register-manual-payment', {
+        body: { charge_id: charge.id, payment_date: date, amount_cents: amountCents, method, note: note.trim() || null, receipt_path: receiptPath },
+      });
+      if (fnError || data?.error) {
+        let msg = data?.error;
+        if (!msg && fnError?.context && typeof fnError.context.json === 'function') {
+          try { msg = (await fnError.context.json())?.error; } catch { /* corpo não era JSON */ }
+        }
+        throw new Error(msg || fnError?.message || 'Erro ao registrar pagamento.');
+      }
+      onDone();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-5 space-y-3" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-on-surface">Registrar pagamento</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-zela-md" aria-label="Fechar"><X size={18} /></button>
+        </div>
+        <p className="text-xs text-on-surface-variant">
+          {charge.students?.name || 'Aluno'} · vencimento {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'} · {centsToBRL(charge.amount_cents)}.
+          O Asaas é avisado de que a cobrança foi paga por fora e deixa de cobrar a família.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-[11px] font-bold uppercase text-on-surface-variant">Data do pagamento
+            <input id="manual-payment-date" type="date" value={date} max={today} onChange={e => setDate(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
+          </label>
+          <label className="text-[11px] font-bold uppercase text-on-surface-variant">Valor recebido (R$)
+            <input id="manual-payment-amount" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
+          </label>
+        </div>
+        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Forma de pagamento
+          <select id="manual-payment-method" value={method} onChange={e => setMethod(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm">
+            {MANUAL_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        </label>
+        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Observação
+          <input id="manual-payment-note" value={note} onChange={e => setNote(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
+        </label>
+        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Comprovante (opcional)
+          <input id="manual-payment-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-xs" />
+        </label>
+        {error && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{error}</div>}
+        <div className="flex justify-end gap-2 pt-1">
+          <button onClick={onClose} className="px-3 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-zela-md">Cancelar</button>
+          <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <HandCoins size={14} />} Confirmar recebimento
+          </button>
+        </div>
       </div>
     </div>
   );

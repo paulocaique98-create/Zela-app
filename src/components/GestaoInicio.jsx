@@ -1,67 +1,92 @@
-import React from 'react';
-import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, School, Settings } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
+import { centsToBRL, monthRange } from '../lib/gestaoUtils';
+import { StatCard } from './GestaoShared';
 
-// Tela inicial do Portal da Gestão -- espelha o padrão de "Ações Rápidas"
-// de AdminInicio.jsx. Ainda sem clickCounts/ordenação por uso (poucos
-// menus por enquanto) -- isso entra quando houver menu suficiente pra
-// justificar, igual foi feito no Admin.
-export default function GestaoInicio({ currentSchool, setGestaoTab, pendingCorrectionsCount = 0, pendingUsersCount = 0 }) {
+// Início da Gestão: números do dia no topo (cada um leva à tela onde se
+// resolve) e atalhos abaixo.
+export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab }) {
   const features = currentSchool?.features_enabled || {};
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
+  const { data: pend } = useGestaoPendencias(currentUser);
+  const [fin, setFin] = useState(null);
+
+  useEffect(() => {
+    if (!showFinanceiro || !currentUser?.school_id) return;
+    const { start, end } = monthRange(0);
+    (async () => {
+      const [{ data: due }, { data: paid }] = await Promise.all([
+        supabase.from('financial_charges').select('amount_cents, status').eq('school_id', currentUser.school_id).gte('due_date', start).lte('due_date', end).neq('status', 'CANCELLED'),
+        supabase.from('financial_charges').select('amount_cents').eq('school_id', currentUser.school_id).eq('status', 'PAID').gte('paid_at', `${start}T00:00:00`).lte('paid_at', `${end}T23:59:59`),
+      ]);
+      setFin({
+        previsto: (due || []).reduce((s, c) => s + c.amount_cents, 0),
+        recebido: (paid || []).reduce((s, c) => s + c.amount_cents, 0),
+      });
+    })();
+  }, [showFinanceiro, currentUser?.school_id]);
+
+  const pendTotal = pend ? pend.cadastros.length + pend.matriculas.length + pend.correcoes.length + pend.contratos.length : null;
 
   const menus = [
+    { key: 'pendencias', label: 'Pendências', icon: Bell, tab: 'pendencias', badge: pendTotal || null },
     { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap, tab: 'secretaria-alunos' },
-    { key: 'secretaria-matriculas', label: 'Matrículas', icon: FileText, tab: 'secretaria-matriculas' },
-    { key: 'cadastros-usuarios', label: 'Usuários', icon: Users, tab: 'cadastros-usuarios', badge: pendingUsersCount > 0 ? pendingUsersCount : null },
-    { key: 'cadastros-novo', label: 'Novo Cadastro', icon: UserPlus, tab: 'cadastros-novo' },
-    { key: 'cadastros-funcionarios', label: 'Funcionários', icon: Users, tab: 'cadastros-funcionarios' },
-    { key: 'cadastros-turmas', label: 'Turmas', icon: School, tab: 'cadastros-turmas' },
-    showFinanceiro && { key: 'financeiro', label: 'Financeiro', icon: Wallet, tab: 'financeiro' },
+    { key: 'secretaria-matriculas', label: 'Matrículas', icon: FileText, tab: 'secretaria-matriculas', badge: pend?.matriculas.length || null },
+    { key: 'contratos-lista', label: 'Contratos', icon: FileSignature, tab: 'contratos-lista' },
+    showFinanceiro && { key: 'financeiro-visao', label: 'Visão Financeira', icon: Wallet, tab: 'financeiro-visao' },
+    showFinanceiro && { key: 'financeiro-cobrancas', label: 'Cobranças', icon: Receipt, tab: 'financeiro-cobrancas' },
+    showCheckin && { key: 'attendance-corrections', label: 'Correções de Presença', icon: ClipboardCheck, tab: 'attendance-corrections', badge: pend?.correcoes.length || null },
     showCheckin && { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras' },
-    showCheckin && { key: 'attendance-corrections', label: 'Correções de Presença', icon: ClipboardCheck, tab: 'attendance-corrections', badge: pendingCorrectionsCount > 0 ? pendingCorrectionsCount : null },
-    { key: 'configuracoes', label: 'Configurações', icon: Settings, tab: 'configuracoes' },
+    { key: 'cadastros-usuarios', label: 'Responsáveis', icon: Users, tab: 'cadastros-usuarios', badge: pend?.cadastros.length || null },
+    { key: 'cadastros-turmas', label: 'Turmas', icon: School, tab: 'cadastros-turmas' },
+    { key: 'relatorios-gestao', label: 'Relatórios', icon: BarChart3, tab: 'relatorios-gestao' },
   ].filter(Boolean);
 
   return (
     <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
-        <div className="mb-6 lg:mb-8 shrink-0">
+        <div className="mb-6 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da Gestão</h1>
-          <p className="text-small text-on-surface-variant mt-1">O que você deseja acessar hoje?</p>
+          <p className="text-small text-on-surface-variant mt-1">{currentSchool?.name || 'Sua escola'} · resumo de hoje</p>
         </div>
 
-        {menus.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {menus.map(menu => (
-              <button
-                key={menu.key}
-                onClick={() => setGestaoTab(menu.tab)}
-                className="bg-surface-container-lowest p-4 rounded-zela-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-start gap-3 text-left relative"
-              >
-                {menu.badge && (
-                  <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
-                    {menu.badge}
-                  </span>
-                )}
-                <div className="w-10 h-10 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
-                  <menu.icon size={20} />
-                </div>
-                <div>
-                  <span className="text-label text-on-surface block">{menu.label}</span>
-                  <span className="text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">
-                    Acessar <ArrowRight size={11} />
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center py-16 bg-surface-container-lowest rounded-zela-xl border border-dashed border-outline-variant">
-            <Wallet size={32} className="text-outline-variant mb-3" />
-            <p className="text-sm font-semibold text-on-surface-variant">Nenhum menu disponível ainda</p>
-          </div>
-        )}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint="cadastros, matrículas, correções e contratos" onClick={() => setGestaoTab('pendencias')} />
+          <StatCard label="Documentos faltando" value={pend ? pend.documentos.length : '·'} tone={pend?.documentos.length ? 'warn' : 'good'} hint="alunos ativos" onClick={() => setGestaoTab('secretaria-documentos')} />
+          {showFinanceiro && (
+            <>
+              <StatCard label="Recebido no mês" value={fin ? centsToBRL(fin.recebido) : '·'} tone="good" hint={fin ? `de ${centsToBRL(fin.previsto)} previstos` : ''} onClick={() => setGestaoTab('financeiro-visao')} />
+              <StatCard label="Em atraso" value={pend ? centsToBRL(pend.vencidasTotal) : '·'} tone={pend?.vencidasTotal ? 'bad' : 'good'} hint={pend ? `${pend.vencidas.length} cobrança(s)` : ''} onClick={() => setGestaoTab('financeiro-inadimplencia')} />
+            </>
+          )}
+        </div>
+
+        <h2 className="text-sm font-bold uppercase tracking-wide text-on-surface-variant mb-3">Acesso rápido</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {menus.map(menu => (
+            <button
+              key={menu.key}
+              onClick={() => setGestaoTab(menu.tab)}
+              className="bg-surface-container-lowest p-4 rounded-zela-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-start gap-3 text-left relative"
+            >
+              {menu.badge && (
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-md">
+                  {menu.badge}
+                </span>
+              )}
+              <div className="w-10 h-10 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
+                <menu.icon size={20} />
+              </div>
+              <div>
+                <span className="text-label text-on-surface block">{menu.label}</span>
+                <span className="text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">Acessar <ArrowRight size={11} /></span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

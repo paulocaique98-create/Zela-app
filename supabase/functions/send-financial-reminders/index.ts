@@ -37,32 +37,53 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Vencimento daqui a exatamente 2 dias, ainda não lembrado, e ainda em
-    // aberto (não faz sentido lembrar de algo já pago/cancelado).
-    const target = new Date();
-    target.setDate(target.getDate() + 2);
-    const targetDate = target.toISOString().split('T')[0];
+    // Antecedência do lembrete por escola (schools.communication_config,
+    // Portal da Gestão · Configurações · Comunicação). Sem configuração:
+    // ligado, 2 dias -- o comportamento fixo de antes.
+    const { data: schoolsCfg, error: schoolsError } = await adminClient
+      .from('schools')
+      .select('id, communication_config');
+    if (schoolsError) throw schoolsError;
+    const schoolsByDays = new Map<number, string[]>();
+    for (const s of schoolsCfg || []) {
+      const cfg = (s.communication_config || {}) as { financial_reminders_enabled?: boolean; reminder_days_before?: number };
+      if (cfg.financial_reminders_enabled === false) continue;
+      const days = Math.min(10, Math.max(1, Number(cfg.reminder_days_before) || 2));
+      schoolsByDays.set(days, [...(schoolsByDays.get(days) || []), s.id]);
+    }
 
-    const { data: charges, error } = await adminClient
-      .from('financial_charges')
-      .select('id, school_id, family_id, student_id, due_date, amount_cents, payment_link, boleto_url, pix_copy_paste, students:student_id(name)')
-      .eq('due_date', targetDate)
-      .in('status', ['PENDING', 'AWAITING_PAYMENT'])
-      .is('reminder_sent_at', null);
-    if (error) throw error;
+    // Vencimento daqui a N dias (N por escola), ainda não lembrado e ainda em
+    // aberto (não faz sentido lembrar de algo já pago/cancelado).
+    const charges: Array<Record<string, unknown> & { daysBefore: number }> = [];
+    for (const [days, schoolIds] of schoolsByDays) {
+      const target = new Date();
+      target.setDate(target.getDate() + days);
+      const targetDate = target.toISOString().split('T')[0];
+      const { data, error } = await adminClient
+        .from('financial_charges')
+        .select('id, school_id, family_id, student_id, due_date, amount_cents, payment_link, boleto_url, pix_copy_paste, students:student_id(name)')
+        .eq('due_date', targetDate)
+        .in('school_id', schoolIds)
+        .in('status', ['PENDING', 'AWAITING_PAYMENT'])
+        .is('reminder_sent_at', null);
+      if (error) throw error;
+      for (const c of data || []) charges.push({ ...c, daysBefore: days });
+    }
 
     let reminded = 0;
-    for (const charge of charges || []) {
+    // deno-lint-ignore no-explicit-any
+    for (const charge of charges as any[]) {
       try {
         const amountLabel = centsToBRL(charge.amount_cents);
         const studentName = (charge as { students?: { name?: string } }).students?.name || 'seu filho(a)';
+        const daysLabel = charge.daysBefore === 1 ? '1 dia' : `${charge.daysBefore} dias`;
         await sendFamilyNotification(adminClient, {
           schoolId: charge.school_id,
           familyId: charge.family_id,
           studentId: charge.student_id,
           type: 'financeiro',
-          message: `Lembrete: cobrança de ${studentName} no valor de ${amountLabel} vence em 2 dias (${charge.due_date}).`,
-          pushTitle: 'Cobrança vence em 2 dias',
+          message: `Lembrete: cobrança de ${studentName} no valor de ${amountLabel} vence em ${daysLabel} (${charge.due_date}).`,
+          pushTitle: `Cobrança vence em ${daysLabel}`,
           pushBody: `${amountLabel} — vencimento ${charge.due_date}`,
           pushTag: 'financeiro-lembrete-vencimento',
         });
