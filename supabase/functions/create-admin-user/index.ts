@@ -76,8 +76,14 @@ serve(async (req) => {
     // responsável (família) também, mandando role:'family' (linha ~620 do
     // componente). A trava original quebrou o cadastro de qualquer
     // responsável novo. 'family' é role legítimo aqui.
-    if (role !== 'admin' && role !== 'teacher' && role !== 'family') {
-      throw new Error('role deve ser "admin", "teacher" ou "family".');
+    // Hierarquia de contas (decisão de 27/09/2026): a conta da Gestão é o
+    // topo da escola e é criada SÓ pelo suporte (developer), na adesão da
+    // escola -- nunca por admin, nem pelo admin principal.
+    if (role !== 'admin' && role !== 'teacher' && role !== 'family' && role !== 'gestao') {
+      throw new Error('role deve ser "admin", "teacher", "family" ou "gestao".');
+    }
+    if (role === 'gestao' && userData.role !== 'developer') {
+      throw new Error('Só o suporte do Zela pode criar a conta da Gestão.');
     }
 
     // Se for admin, só pode criar para a própria escola
@@ -111,6 +117,11 @@ serve(async (req) => {
     }
     if (role === 'teacher') {
       safeExtraFields.turmas = Array.isArray(ef.turmas) ? ef.turmas : [];
+    }
+    if (role === 'gestao') {
+      // Conta do financeiro com senha escolhida por outra pessoa: troca
+      // obrigatória no primeiro acesso.
+      safeExtraFields.must_change_password = true;
     }
 
     const supabaseAdmin = createClient(

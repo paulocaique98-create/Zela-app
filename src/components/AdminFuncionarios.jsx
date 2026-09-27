@@ -23,6 +23,13 @@ const CARGO_PARA_ACESSO = {
   'Recepcionista': { role: 'admin', departamento: 'recepcao' },
 };
 
+const ACCESS_ROLE_LABEL = { admin: 'Admin', teacher: 'Professor', gestao: 'Gestão' };
+const ACCESS_ROLE_STYLE = {
+  admin: 'bg-amber-50 text-amber-700 border-amber-200',
+  teacher: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  gestao: 'bg-primary/10 text-primary border-primary/20',
+};
+
 export default function AdminFuncionarios({ currentUser, currentSchool }) {
   const [funcionarios, setFuncionarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +91,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         .from('users')
         .select('*')
         .eq('school_id', schoolId)
-        .in('role', ['admin', 'teacher'])
+        .in('role', ['admin', 'teacher', 'gestao'])
         .order('name', { ascending: true });
       if (fetchError) throw fetchError;
       setAccessUsers(data || []);
@@ -478,9 +485,9 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h4 className="font-bold text-on-surface text-sm truncate">{u.name}</h4>
                         <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${
-                          u.role === 'admin' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          ACCESS_ROLE_STYLE[u.role] || ACCESS_ROLE_STYLE.teacher
                         }`}>
-                          {u.role === 'admin' ? 'Admin' : 'Professor'}
+                          {ACCESS_ROLE_LABEL[u.role] || u.role}
                         </span>
                       </div>
                       <p className="text-on-surface-variant/70 text-xs truncate mt-0.5">{u.email}</p>

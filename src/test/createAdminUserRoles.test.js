@@ -82,4 +82,45 @@ runIf('create-admin-user — role deve aceitar admin/teacher/family, nunca devel
       await deleteTestSchool(school);
     }
   }, 15000);
+  it('hierarquia: o suporte (developer) cria a conta da Gestão, que nasce com troca obrigatória de senha', async () => {
+    const school = await createTestSchool();
+    const primary = await createTestUser({ role: 'developer', schoolId: null });
+    let createdId = null;
+    try {
+      const { status, body } = await callCreateAdminUser(primary.token, {
+        email: `vitest.gestao.${Date.now()}@zela-teste.com`,
+        password: 'SenhaTeste123!',
+        name: 'Gestão Teste',
+        role: 'gestao',
+        school_id: school,
+      });
+      expect(status).toBe(200);
+      expect(body.role).toBe('gestao');
+      expect(body.must_change_password).toBe(true);
+      createdId = body.id;
+    } finally {
+      if (createdId) await deleteTestUser(createdId);
+      await deleteTestUser(primary.id);
+      await deleteTestSchool(school);
+    }
+  }, 15000);
+
+  it('hierarquia: nem o admin principal cria conta da Gestão (só o suporte)', async () => {
+    const school = await createTestSchool();
+    const admin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    try {
+      const { status, body } = await callCreateAdminUser(admin.token, {
+        email: `vitest.gestao.neg.${Date.now()}@zela-teste.com`,
+        password: 'SenhaTeste123!',
+        name: 'Gestão Negada',
+        role: 'gestao',
+        school_id: school,
+      });
+      expect(status).not.toBe(200);
+      expect(body.error).toMatch(/suporte/);
+    } finally {
+      await deleteTestUser(admin.id);
+      await deleteTestSchool(school);
+    }
+  }, 15000);
 });
