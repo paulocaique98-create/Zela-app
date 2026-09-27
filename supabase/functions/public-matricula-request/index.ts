@@ -61,8 +61,11 @@ serve(async (req) => {
     if (!school_code || !email || !password || !responsavel?.nome?.trim() || !responsavel?.telefone?.trim()) {
       throw new Error('Preencha ao menos o e-mail, a senha e os dados do responsável.')
     }
-    if (password.length < 6) {
-      throw new Error('A senha deve ter ao menos 6 caracteres.')
+    if (typeof password !== 'string' || password.length < 8) {
+      throw new Error('A senha deve ter ao menos 8 caracteres.')
+    }
+    if (password === '123456' || password === '12345678') {
+      throw new Error('Escolha uma senha menos óbvia.')
     }
     const validCriancas = Array.isArray(criancas) ? criancas.filter((c: { nome?: string }) => c?.nome?.trim()) : []
     if (validCriancas.length === 0) {

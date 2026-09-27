@@ -97,8 +97,11 @@ serve(async (req) => {
 
       // Um admin não pode excluir outro admin — evita bloqueio acidental/mal-intencionado
       // da escola inteira. Só o developer (suporte) pode remover contas de admin.
-      if (targetData.role === 'admin') {
-        throw new Error('Acesso negado: apenas o suporte pode excluir contas de administrador.')
+      // Auditoria de segurança 27/09/2026 (item 3): a mesma regra vale pra
+      // conta da Gestão (antes só 'admin' era bloqueado, então a Recepção
+      // conseguia apagar a conta da Gestão) e pra conta do suporte.
+      if (targetData.role === 'admin' || targetData.role === 'gestao' || targetData.role === 'developer') {
+        throw new Error('Acesso negado: apenas o suporte pode excluir contas de administrador ou da gestão.')
       }
     }
 

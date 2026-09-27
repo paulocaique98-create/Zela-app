@@ -38,7 +38,7 @@ serve(async (req) => {
 
     const { data: callerData } = await supabaseClient
       .from('users')
-      .select('role, school_id')
+      .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
 
@@ -78,7 +78,7 @@ serve(async (req) => {
     // body além do id.
     const { data: targetUser, error: targetError } = await supabaseAdmin
       .from('users')
-      .select('id, email, school_id')
+      .select('id, email, school_id, role, is_primary_admin')
       .eq('id', user_id)
       .single();
 
@@ -87,6 +87,40 @@ serve(async (req) => {
     }
     if (callerData.role === 'admin' && targetUser.school_id !== callerData.school_id) {
       throw new Error('Permissão negada.');
+    }
+
+    // Auditoria de segurança 27/09/2026 (item 3): trocar o e-mail já
+    // confirmado de outra pessoa + "Esqueci minha senha" = tomar a conta.
+    // Antes, qualquer admin da escola fazia isso com QUALQUER usuário da
+    // escola, inclusive a conta da Gestão e o admin principal -- anulando a
+    // separação Recepção/Gestão. Regra agora (developer continua podendo
+    // tudo):
+    //   - família/professor: qualquer admin da escola (como sempre foi);
+    //   - outro admin: só o admin principal (é quem gerencia a equipe);
+    //   - gestão, admin principal e suporte: só o suporte.
+    // Salvar sem mudar o e-mail continua permitido pra todo mundo:
+    // AdminUserRegistration.jsx chama esta function em TODO salvamento. A
+    // comparação é contra o e-mail de LOGIN (auth.users) -- nunca contra
+    // public.users, que admin consegue alterar direto e daria pra usar pra
+    // disfarçar uma troca como "sem mudança".
+    if (callerData.role !== 'developer') {
+      const { data: authTarget, error: authTargetError } = await supabaseAdmin.auth.admin.getUserById(user_id);
+      if (authTargetError || !authTarget?.user) {
+        throw new Error('Usuário não encontrado.');
+      }
+      const isNoOp = (authTarget.user.email || '').trim().toLowerCase() === normalizedEmail;
+
+      if (!isNoOp) {
+        const isProtectedAccount = targetUser.role === 'gestao'
+          || targetUser.role === 'developer'
+          || targetUser.is_primary_admin === true;
+        if (isProtectedAccount) {
+          throw new Error('Só o suporte pode alterar o e-mail desta conta.');
+        }
+        if (targetUser.role === 'admin' && targetUser.id !== user.id && callerData.is_primary_admin !== true) {
+          throw new Error('Só o admin principal da escola pode alterar o e-mail de outro administrador.');
+        }
+      }
     }
 
     // Propositalmente SEM atalho de "já está igual, não faz nada" aqui --

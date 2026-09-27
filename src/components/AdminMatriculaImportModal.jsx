@@ -238,7 +238,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
 
       setResults(prev => prev.map((r, idx) => {
         const res = data.results?.find(x => x.index === idx);
-        return res ? { ...r, status: res.status, msg: res.message } : { ...r, status: 'error', msg: 'Sem retorno do servidor.' };
+        return res ? { ...r, status: res.status, msg: res.message, credentials: res.credentials || null } : { ...r, status: 'error', msg: 'Sem retorno do servidor.' };
       }));
     } catch (err) {
       setResults(prev => prev.map(r => (r.status === 'pending' ? { ...r, status: 'error', msg: err.message } : r)));
@@ -254,6 +254,13 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
   const errorCount = results.filter((r) => r.status === 'error').length;
   const progress = results.length > 0 ? Math.round((doneCount / results.length) * 100) : 0;
   const totalCriancas = families.reduce((sum, f) => sum + f.criancas.length, 0);
+  const newAccesses = results.filter((r) => r.status === 'success' && r.credentials);
+  const [copiedAccesses, setCopiedAccesses] = useState(false);
+  const copyAccesses = () => {
+    const text = newAccesses.map((r) => `${r.nome}\nE-mail: ${r.credentials.email}\nSenha provisória: ${r.credentials.password}`).join('\n\n');
+    navigator.clipboard.writeText(text);
+    setCopiedAccesses(true);
+  };
 
   const modal = (
     <div
@@ -400,6 +407,25 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
               {successCount > 0 && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700">
                   As solicitações importadas já aparecem em "Pendentes" — revise e aprove cada uma normalmente.
+                </div>
+              )}
+              {newAccesses.length > 0 && (
+                <div className="border border-amber-200 rounded-2xl overflow-hidden">
+                  <div className="bg-amber-50 px-4 py-2.5 border-b border-amber-200 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Acessos provisórios criados · mostrados só agora</p>
+                    <button type="button" onClick={copyAccesses} className="text-[11px] font-bold text-amber-800 bg-white border border-amber-200 hover:bg-amber-100 px-2.5 py-1 rounded-lg transition shrink-0">
+                      {copiedAccesses ? 'Copiado' : 'Copiar todos'}
+                    </button>
+                  </div>
+                  <div className="divide-y divide-amber-100 max-h-48 overflow-y-auto">
+                    {newAccesses.map((r, idx) => (
+                      <div key={idx} className="px-4 py-2.5 text-xs">
+                        <div className="font-semibold text-slate-700">{r.nome}</div>
+                        <div className="text-slate-500 break-all">{r.credentials.email} · <span className="font-mono font-bold text-slate-700">{r.credentials.password}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="px-4 py-2.5 text-[11px] text-amber-700 bg-amber-50/50 border-t border-amber-100">Cada senha é única. No primeiro acesso o Zela pede para a família criar a própria senha. Copie antes de fechar esta janela.</p>
                 </div>
               )}
               {errorCount > 0 && (

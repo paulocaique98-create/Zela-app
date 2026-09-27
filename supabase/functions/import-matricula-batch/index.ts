@@ -17,7 +17,18 @@ import { logEdgeError } from '../_shared/logEdgeError.ts'
 // e-mail já pertence a uma família existente da escola (comum: já é
 // família ativa, só está fazendo a rematrícula pela planilha), reaproveita
 // a conta que já existe em vez de criar outra.
-const DEFAULT_PASSWORD = '123456'
+// Senha provisória ÚNICA por conta nova (antes era 123456 pra todo mundo).
+// Volta pro admin no resultado da importação pra ele repassar, e a conta
+// nasce com must_change_password = true: o app obriga a trocar no 1º acesso.
+// Sem 0/O, 1/l/I (a senha às vezes é ditada pra família).
+const TEMP_PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+function generateTempPassword(length = 10): string {
+  const bytes = new Uint32Array(length)
+  crypto.getRandomValues(bytes)
+  let out = ''
+  for (let i = 0; i < length; i++) out += TEMP_PASSWORD_ALPHABET[bytes[i] % TEMP_PASSWORD_ALPHABET.length]
+  return out
+}
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -72,7 +83,7 @@ serve(async (req) => {
     }
 
     const schoolId = callerData.school_id
-    const results: Array<{ index: number; status: 'success' | 'error'; message: string }> = []
+    const results: Array<{ index: number; status: 'success' | 'error'; message: string; credentials?: { email: string; password: string } | null }> = []
 
     for (let i = 0; i < families.length; i++) {
       const fam = families[i]
@@ -96,12 +107,14 @@ serve(async (req) => {
           .maybeSingle()
 
         let familyId: string
+        let credentials: { email: string; password: string } | null = null
         if (existingUser) {
           familyId = existingUser.id
         } else {
+          const tempPassword = generateTempPassword()
           const { data: newAuthUser, error: createAuthError } = await supabaseAdmin.auth.admin.createUser({
             email,
-            password: DEFAULT_PASSWORD,
+            password: tempPassword,
             email_confirm: true,
             user_metadata: { name: responsavel.nome, role: 'family', school_id: schoolId },
           })
@@ -120,6 +133,7 @@ serve(async (req) => {
             role: 'family',
             school_id: schoolId,
             status: 'pending',
+            must_change_password: true,
           })
           if (publicUserError) {
             await supabaseAdmin.auth.admin.deleteUser(familyId)
@@ -139,6 +153,7 @@ serve(async (req) => {
             await supabaseAdmin.auth.admin.deleteUser(familyId)
             throw new Error('Erro ao salvar autorizado titular: ' + authorizedError.message)
           }
+          credentials = { email, password: tempPassword }
         }
 
         // 2. A solicitação em si -- fica pendente até o admin revisar em
@@ -156,7 +171,7 @@ serve(async (req) => {
         })
         if (insertError) throw new Error('Erro ao criar solicitação: ' + insertError.message)
 
-        results.push({ index: i, status: 'success', message: `${responsavel.nome} — ${validCriancas.length} criança(s) importada(s).` })
+        results.push({ index: i, status: 'success', message: `${responsavel.nome} — ${validCriancas.length} criança(s) importada(s).`, credentials })
       } catch (rowError) {
         results.push({ index: i, status: 'error', message: rowError.message || String(rowError) })
       }

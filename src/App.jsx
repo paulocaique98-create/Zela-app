@@ -20,6 +20,7 @@ const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const GestaoPortal = lazy(() => import('./components/GestaoPortal'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
+const ForcePasswordChange = lazy(() => import('./components/ForcePasswordChange'));
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
 const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
 
@@ -205,6 +206,16 @@ export default function App() {
       if (!session && localStorage.getItem('zela_user')) {
         localStorage.removeItem('zela_user');
         setCurrentUser(null);
+        return;
+      }
+      // O usuário vem do cache do navegador (zela_user) -- confere no banco
+      // se há troca obrigatória de senha pendente, senão quem já estava com
+      // sessão aberta escaparia da tela de "Crie sua senha".
+      if (session) {
+        const { data } = await supabase.from('users').select('must_change_password').eq('id', session.user.id).maybeSingle();
+        if (data?.must_change_password) {
+          setCurrentUser(prev => (prev ? { ...prev, must_change_password: true } : prev));
+        }
       }
     };
     validateSession();
@@ -1308,6 +1319,16 @@ export default function App() {
 
   if (!currentUser) {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><Login onLogin={handleLogin} /></Suspense>;
+  }
+
+  // Conta criada pela escola com senha provisória: nada do portal abre até
+  // a pessoa criar a própria senha.
+  if (currentUser.must_change_password) {
+    return (
+      <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}>
+        <ForcePasswordChange currentUser={currentUser} onPasswordChanged={handleLogin} onLogout={handleLogout} />
+      </Suspense>
+    );
   }
 
   // Autoatendimento em tela cheia: some com o Header (hambúrguer, nome do

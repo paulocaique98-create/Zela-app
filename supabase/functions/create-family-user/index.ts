@@ -71,8 +71,9 @@ serve(async (req) => {
       doc_number, 
       school_id, 
       student_ids, 
-      relationship, 
-      is_financial 
+      relationship,
+      is_financial,
+      must_change_password
     } = await req.json()
     
     if (!name || !email || !password || !school_id || !student_ids || student_ids.length === 0) {
@@ -137,9 +138,12 @@ serve(async (req) => {
         phone: phone || null,
         doc_number: doc_number || null,
         role: 'family',
-        school_id
+        school_id,
+        // Senha provisória escolhida por outra pessoa (ex: 2º responsável
+        // aprovado na matrícula): o app obriga a trocar no primeiro acesso.
+        must_change_password: must_change_password === true
       })
-      
+
     if (publicUserError) {
       // Rollback se falhar
       await adminClient.auth.admin.deleteUser(newUserId)

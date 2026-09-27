@@ -30,6 +30,10 @@ const INTERNAL_ONLY_FUNCTIONS = [
   'check_rate_limit',
   'find_school_by_webhook_token',
   'list_security_definer_grantees',
+  // Auditoria 27/09/2026 item 1: helpers internos de presença, chamados só
+  // pelas RPCs request_/approve_attendance_* (SECURITY DEFINER).
+  '_apply_attendance_correction',
+  '_apply_attendance_manual_entry',
 ];
 
 runIf('Regressão de segurança — grants de EXECUTE em funções internas SECURITY DEFINER', () => {

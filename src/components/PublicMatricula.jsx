@@ -157,9 +157,11 @@ export default function PublicMatricula() {
   // editável se alguém abrir a página sem nenhum código na URL.
   const schoolCodeLocked = !!codeFromUrl;
   const [email, setEmail] = useState('');
-  // Senha inicial padrão — a pessoa troca depois em Configurações, já
-  // logada. Evita mais um campo pra preencher/errar num formulário já longo.
-  const DEFAULT_PASSWORD = '123456';
+  // A própria família define a senha. Antes era uma senha padrão igual pra
+  // todo mundo (e anunciada nesta página), o que deixava qualquer conta
+  // aberta pra quem soubesse o e-mail do responsável.
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [responsavel, setResponsavel] = useState(emptyResponsavel());
   const [temSegundo, setTemSegundo] = useState(false);
   const [segundoResponsavel, setSegundoResponsavel] = useState(emptyResponsavel());
@@ -258,6 +260,8 @@ export default function PublicMatricula() {
   const validate = () => {
     if (!schoolCode.trim()) return 'Informe o código da escola.';
     if (!email.trim()) return 'Informe um e-mail.';
+    if (password.length < 8) return 'Crie uma senha com pelo menos 8 caracteres.';
+    if (password !== passwordConfirm) return 'As senhas digitadas não são iguais.';
     if (!responsavel.nome.trim() || !responsavel.telefone.trim()) return 'Preencha ao menos nome e telefone do responsável financeiro.';
     const validCriancas = criancas.filter(c => c.nome.trim());
     if (validCriancas.length === 0) return 'Adicione ao menos uma criança.';
@@ -279,7 +283,7 @@ export default function PublicMatricula() {
         body: {
           school_code: schoolCode.trim(),
           email: email.trim().toLowerCase(),
-          password: DEFAULT_PASSWORD,
+          password,
           responsavel: {
             ...responsavel,
             nome: formatPersonName(responsavel.nome),
@@ -347,7 +351,7 @@ export default function PublicMatricula() {
                 <h1 className="text-h2 text-on-surface mb-2">Matrícula enviada!</h1>
                 <p className="text-body text-on-surface-variant">
                   Sua solicitação foi recebida e está aguardando aprovação da escola.
-                  Você poderá acessar o Zela assim que a matrícula for aprovada, usando o e-mail informado e a senha <strong>123456</strong> (você pode trocá-la depois em Configurações).
+                  Você poderá acessar o Zela assim que a matrícula for aprovada, usando o e-mail e a senha que você criou.
                 </p>
               </div>
               <button type="button" onClick={() => navigateTo('/')} className="mt-2 text-small text-primary font-medium hover:underline underline-offset-4">
@@ -380,9 +384,6 @@ export default function PublicMatricula() {
                       required
                     />
                   </div>
-                  <p className="text-[11px] text-on-surface-variant/70 flex items-center gap-1.5">
-                    <Lock size={12} className="shrink-0" /> Sua senha inicial de acesso será <strong>123456</strong>. Você pode alterá-la depois em Configurações, assim que sua matrícula for aprovada.
-                  </p>
                 </section>
 
                 {/* 1. DADOS DA CRIANÇA */}
@@ -487,6 +488,21 @@ export default function PublicMatricula() {
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
                         <input type="email" className={`${inputCls} pl-9`} value={email} onChange={e => setEmail(e.target.value)} required />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Crie uma senha de acesso *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
+                        <input id="public-matricula-password" type="password" autoComplete="new-password" minLength={8} className={`${inputCls} pl-9`} value={password} onChange={e => setPassword(e.target.value)} required />
+                      </div>
+                      <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres. Você vai usar essa senha para entrar no Zela depois que a matrícula for aprovada.</p>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Confirme a senha *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
+                        <input id="public-matricula-password-confirm" type="password" autoComplete="new-password" minLength={8} className={`${inputCls} pl-9`} value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)} required />
                       </div>
                     </div>
                     <div>

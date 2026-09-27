@@ -8,18 +8,13 @@ import { supabase } from '../lib/supabase';
 import { getSignedUrl } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { logAction } from '../lib/auditLog';
+import { generateTempPassword } from '../utils/tempPassword';
 import { formatPersonName } from '../utils/formatName';
 import { downloadMatriculaImportTemplate } from '../lib/matriculaImportTemplate';
 import AdminMatriculaImportModal from './AdminMatriculaImportModal';
 
 const BUCKET = 'matriculas-docs';
 
-// Senha inicial padrão pra toda conta criada a partir de uma matrícula —
-// mesma senha usada pro titular no link público (PublicMatricula.jsx). A
-// pessoa troca depois em Configurações, já logada. Antes era uma senha
-// aleatória gerada na hora; padronizar facilita comunicar pra família e
-// elimina a necessidade de guardar/copiar uma senha só usada uma vez.
-const DEFAULT_PASSWORD = '123456';
 
 const TABS = [
   { key: 'approved', label: 'Aprovadas' },
@@ -415,6 +410,9 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         const { error: linkError } = await supabase.from('student_guardians').insert(links);
         if (linkError) throw new Error(`Vínculo do 2º responsável: ${linkError.message}`);
       } else if (segundo.email?.trim()) {
+        // Senha provisória única (nunca mais uma senha fixa igual pra todo
+        // mundo); o app obriga a trocar no primeiro acesso.
+        const tempPassword = generateTempPassword();
         const session = await supabase.auth.getSession();
         const token = session.data.session?.access_token;
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -424,7 +422,8 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           body: JSON.stringify({
             name: segundo.nome,
             email: segundo.email.trim().toLowerCase(),
-            password: DEFAULT_PASSWORD,
+            password: tempPassword,
+            must_change_password: true,
             phone: segundo.telefone || null,
             doc_number: segundo.cpf || null,
             school_id: solicitacao.school_id,
@@ -448,7 +447,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           documents: { rg_expedicao: segundo.rg_expedicao || null, rg_orgao: segundo.rg_orgao || null },
         }).eq('id', result.user.id);
 
-        segundoCredentials = { name: segundo.nome, email: segundo.email.trim().toLowerCase(), password: DEFAULT_PASSWORD };
+        segundoCredentials = { name: segundo.nome, email: segundo.email.trim().toLowerCase(), password: tempPassword };
       }
     }
 
@@ -617,7 +616,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
             </div>
             <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
               <span className="text-lg">⚠️</span>
-              <p>Essa é a senha inicial padrão — oriente a pessoa a trocá-la em Configurações assim que acessar pela primeira vez.</p>
+              <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela pede para a pessoa criar a própria senha.</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
