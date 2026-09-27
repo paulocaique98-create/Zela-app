@@ -362,25 +362,53 @@ runIf('Segurança · item 5: família não mexe em cobrança nem apaga aluno', (
     }
   }, 20000);
 
-  it('fluxo normal continua: família solicita entrada e registra saída pelo app', async () => {
+  it('check-in/out só no autoatendimento: família NÃO registra entrada nem saída pelo celular', async () => {
     const s = await setupFamilyStudent();
     try {
       const nowIso = new Date().toISOString();
-      const { error: reqErr } = await s.family.client.from('students')
-        .update({ status: 'pending_entry', pending_requester_id: null, today_entry: '08:00', today_exit: null, today_entry_at: nowIso, today_exit_at: null })
+      await s.family.client.from('students')
+        .update({ status: 'in_school', today_entry: '08:00', today_entry_at: nowIso })
         .eq('id', s.studentId);
-      expect(reqErr).toBeNull();
-      const { error: exitErr } = await s.family.client.from('students')
+      await s.family.client.from('students')
         .update({ status: 'left', today_exit: '12:00', today_exit_at: nowIso })
         .eq('id', s.studentId);
-      expect(exitErr).toBeNull();
       const { data } = await adminClient.from('students').select('status, today_exit_at').eq('id', s.studentId).single();
-      expect(data.status).toBe('left');
-      expect(data.today_exit_at).not.toBeNull();
+      expect(data.status).toBe('idle');
+      expect(data.today_exit_at).toBeNull();
+
+      const { error: logErr } = await s.family.client.from('attendance_logs').insert({
+        school_id: s.schoolId, student_id: s.studentId, family_id: s.family.id, event_type: 'exit', event_time: nowIso,
+      });
+      expect(logErr).not.toBeNull();
+      const { data: logs } = await adminClient.from('attendance_logs').select('id').eq('student_id', s.studentId);
+      expect(logs).toEqual([]);
     } finally {
       await cleanup(s);
     }
   }, 20000);
+
+  it('"Não irá hoje": família avisa ausência antes da chegada; depois da chegada, não', async () => {
+    const s = await setupFamilyStudent();
+    const other = await createTestUser({ role: 'family', schoolId: s.schoolId });
+    try {
+      const { error: foreignErr } = await other.client.rpc('family_mark_student_absent', { p_student_id: s.studentId });
+      expect(foreignErr).not.toBeNull();
+
+      const { error } = await s.family.client.rpc('family_mark_student_absent', { p_student_id: s.studentId });
+      expect(error).toBeNull();
+      const { data } = await adminClient.from('students').select('status').eq('id', s.studentId).single();
+      expect(data.status).toBe('absent');
+
+      await adminClient.from('students').update({ status: 'in_school' }).eq('id', s.studentId);
+      const { error: lateErr } = await s.family.client.rpc('family_mark_student_absent', { p_student_id: s.studentId });
+      expect(lateErr).not.toBeNull();
+      const { data: after } = await adminClient.from('students').select('status').eq('id', s.studentId).single();
+      expect(after.status).toBe('in_school');
+    } finally {
+      await deleteTestUser(other.id);
+      await cleanup(s);
+    }
+  }, 25000);
 
   it('admin e gestão continuam editando horário contratado e isenção', async () => {
     const s = await setupFamilyStudent();

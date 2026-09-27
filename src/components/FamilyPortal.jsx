@@ -43,8 +43,8 @@ export default function FamilyPortal({
   currentUser, 
   setCurrentUser,
   students, 
-  familyTab, setFamilyTab, 
-  updateStudentStatus,
+  familyTab, setFamilyTab,
+  markStudentAbsent,
   authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, currentSchool,
   authLimitsInfo,
   isMobileMenuOpen, setIsMobileMenuOpen
@@ -325,7 +325,7 @@ export default function FamilyPortal({
 
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {/* REUTILIZANDO COMPONENTES EXISTENTES */}
-          {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} updateStudentStatus={updateStudentStatus} />}
+          {familyTab === 'acompanhamento' && <FamilyHome currentUser={currentUser} familyStudents={familyStudents} markStudentAbsent={markStudentAbsent} />}
           {familyTab === 'authorized' && <FamilyAuthorized authorized={authorized} togglePhoto={togglePhoto} deleteAuthorized={deleteAuthorized} onOpenAuthModal={onOpenAuthModal} currentSchool={currentSchool} authLimitsInfo={authLimitsInfo} />}
           {familyTab === 'gerenciar-responsaveis' && <FamilyGerenciarResponsaveis currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}
           {familyTab === 'history' && <FamilyHistory currentUser={currentUser} familyStudents={familyStudents} currentSchool={currentSchool} />}

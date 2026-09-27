@@ -1,7 +1,10 @@
 import React from 'react';
-import { CheckCircle2, LogOut } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
-export default function FamilyHome({ familyStudents, updateStudentStatus }) {
+// Entrada e saída são registradas SÓ no autoatendimento da escola (decisão
+// de 27/09/2026) -- aqui a família acompanha e, antes da chegada, pode
+// avisar que o aluno não irá.
+export default function FamilyHome({ familyStudents, markStudentAbsent }) {
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Título "Início" removido (o Header do app já mostra "Zela Portal"
@@ -44,7 +47,8 @@ export default function FamilyHome({ familyStudents, updateStudentStatus }) {
               <div className="p-4 md:p-5 bg-surface-container-low border-t border-outline-variant">
                 {student.status === 'idle' ? (
                   <div className="space-y-3">
-                    <button onClick={() => updateStudentStatus(student.id, 'absent')} className="w-full bg-white text-on-surface-variant border border-outline-variant font-bold py-3 rounded-zela-lg hover:bg-surface-container-low active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm shadow-sm">
+                    <p className="text-xs text-on-surface-variant text-center">A entrada é registrada no autoatendimento da escola.</p>
+                    <button onClick={() => markStudentAbsent(student.id)} className="w-full bg-white text-on-surface-variant border border-outline-variant font-bold py-3 rounded-zela-lg hover:bg-surface-container-low active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm shadow-sm">
                       Não irá hoje
                     </button>
                   </div>
@@ -53,9 +57,7 @@ export default function FamilyHome({ familyStudents, updateStudentStatus }) {
                     <div className="w-full bg-green-50 text-green-800 border border-green-200 font-bold py-3 rounded-zela-lg flex items-center justify-center gap-2 text-sm">
                       <CheckCircle2 size={18} /> Aluno em segurança
                     </div>
-                    <button onClick={() => updateStudentStatus(student.id, 'left')} className="w-full bg-slate-800 text-white font-bold py-4 rounded-zela-lg hover:bg-slate-900 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-md">
-                      <LogOut size={20} /> Registrar Saída
-                    </button>
+                    <p className="text-xs text-on-surface-variant text-center">A saída é registrada no autoatendimento da escola, na hora da retirada.</p>
                   </div>
                 ) : student.status === 'absent' ? (
                   <div className="w-full bg-red-50 text-red-800 border border-red-200 font-bold py-4 rounded-zela-lg flex items-center justify-center gap-2 text-sm text-center">

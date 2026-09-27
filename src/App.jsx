@@ -509,8 +509,10 @@ export default function App() {
         // Se a entrada foi resetada (virou o dia) e o status ainda era 'in_school', 'left', etc, volta para 'idle'
         if (!parsedEntry && s.today_entry) {
           sStatus = 'idle';
-          // Opcional: Atualizar no banco em background
-          supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
+          // Atualiza no banco em background -- só na sessão da escola: a
+          // família não grava mais em students (check-in/out centralizado
+          // no autoatendimento).
+          if (['admin', 'gestao', 'developer'].includes(currentUser.role)) supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
             .then(({ error }) => {
               if (error) console.error('[Zela] Falha ao resetar status do aluno para idle:', s.id, error);
             });
@@ -1134,6 +1136,18 @@ export default function App() {
    * pending_entry  → idle      (aluno nunca chegou — cancela entrada)
    * pending_exit   → in_school (aluno continua na escola — cancela saída)
    */
+  // Único registro que a família faz sobre o dia do aluno: o aviso "Não irá
+  // hoje". Entrada e saída são registradas só no autoatendimento da escola.
+  const markStudentAbsent = async (studentId) => {
+    const { error } = await supabase.rpc('family_mark_student_absent', { p_student_id: studentId });
+    if (error) {
+      console.error('[Zela] Falha ao avisar ausência:', error);
+      alert(error.message || 'Não foi possível avisar a ausência. Tente novamente.');
+      return;
+    }
+    setStudents(prev => prev.map(s => (s.id === studentId ? { ...s, status: 'absent' } : s)));
+  };
+
   const rejectStudentStatus = async (studentId, revertToStatus) => {
     try {
       // updateStudentStatus já grava today_entry/today_exit (e os _at)
@@ -1482,7 +1496,7 @@ export default function App() {
                   students={students}
                   familyTab={familyTab}
                   setFamilyTab={setFamilyTab}
-                  updateStudentStatus={updateStudentStatus}
+                  markStudentAbsent={markStudentAbsent}
                   authorized={authorized}
                   togglePhoto={togglePhoto}
                   deleteAuthorized={deleteAuthorized}

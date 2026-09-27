@@ -20,8 +20,12 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
       expect(r.error).toBeTruthy();
       expect(r.error.message).toContain('admin principal');
 
+      // Família não tem mais UPDATE em students (check-in/out só no
+      // autoatendimento, 27/09/2026): o RLS nem enxerga a linha pra
+      // alterar -- nenhuma linha atualizada (a checagem "nada muda" abaixo
+      // continua valendo).
       r = await family.client.from('students').update({ weekly_schedule: { segunda: { entry: '06:00', exit: '17:00' } } }).eq('id', student.id).select();
-      expect(r.error).toBeTruthy();
+      expect(r.error || (r.data || []).length === 0).toBeTruthy();
 
       const { data: unchanged } = await adminClient.from('students').select('weekly_schedule').eq('id', student.id).single();
       expect(unchanged.weekly_schedule).toEqual({});
