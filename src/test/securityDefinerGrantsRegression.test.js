@@ -34,6 +34,9 @@ const INTERNAL_ONLY_FUNCTIONS = [
   // pelas RPCs request_/approve_attendance_* (SECURITY DEFINER).
   '_apply_attendance_correction',
   '_apply_attendance_manual_entry',
+  // Cálculo de cobrança usado pelas RPCs de correção (servidor decide se a
+  // correção aumenta a cobrança, não a tela).
+  'attendance_charge_cents',
 ];
 
 runIf('Regressão de segurança — grants de EXECUTE em funções internas SECURITY DEFINER', () => {
