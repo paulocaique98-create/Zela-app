@@ -273,6 +273,130 @@ runIf('Segurança · item 2: fim da senha padrão 123456 e troca obrigatória', 
   }, 30000);
 });
 
+runIf('Segurança · item 4: professor não amplia o próprio acesso', () => {
+  it('professor NÃO altera as próprias turmas nem o próprio status; admin altera normalmente', async () => {
+    const schoolId = await createTestSchool();
+    const teacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'inativo', turmas: ['Nido'] } });
+    const admin = await createTestUser({ role: 'admin', schoolId });
+    try {
+      await teacher.client.from('users').update({ turmas: ['Nido', 'Kids I', 'Kids II'] }).eq('id', teacher.id);
+      await teacher.client.from('users').update({ teacher_status: 'ativo' }).eq('id', teacher.id);
+      const { data: afterSelf } = await adminClient.from('users').select('turmas, teacher_status').eq('id', teacher.id).single();
+      expect(afterSelf.turmas).toEqual(['Nido']);
+      expect(afterSelf.teacher_status).toBe('inativo');
+
+      const { error: adminErr } = await admin.client.from('users').update({ turmas: ['Nido', 'Kids I'], teacher_status: 'ativo' }).eq('id', teacher.id);
+      expect(adminErr).toBeNull();
+      const { data: afterAdmin } = await adminClient.from('users').select('turmas, teacher_status').eq('id', teacher.id).single();
+      expect(afterAdmin.turmas).toEqual(['Nido', 'Kids I']);
+      expect(afterAdmin.teacher_status).toBe('ativo');
+    } finally {
+      await deleteTestUser(teacher.id);
+      await deleteTestUser(admin.id);
+      await deleteTestSchool(schoolId);
+    }
+  }, 25000);
+
+  it('família continua editando telefone e aceites do próprio cadastro, mas não o próprio status', async () => {
+    const schoolId = await createTestSchool();
+    const family = await createTestUser({ role: 'family', schoolId, extra: { status: 'pending' } });
+    try {
+      const { error: phoneErr } = await family.client.from('users').update({ phone: '27988887777', lgpd_accepted: true }).eq('id', family.id);
+      expect(phoneErr).toBeNull();
+      await family.client.from('users').update({ status: 'active' }).eq('id', family.id);
+      const { data } = await adminClient.from('users').select('phone, status').eq('id', family.id).single();
+      expect(data.phone).toBe('27988887777');
+      expect(data.status).toBe('pending');
+    } finally {
+      await deleteTestUser(family.id);
+      await deleteTestSchool(schoolId);
+    }
+  }, 20000);
+});
+
+runIf('Segurança · item 5: família não mexe em cobrança nem apaga aluno', () => {
+  async function setupFamilyStudent() {
+    const schoolId = await createTestSchool();
+    const family = await createTestUser({ role: 'family', schoolId });
+    const { data: student, error } = await adminClient.from('students')
+      .insert({ school_id: schoolId, family_id: family.id, name: 'Vitest Cobrança Aluno', turma: 'Nido', contracted_exit_time: '13:00', isento_hora_extra: false, status: 'idle' })
+      .select('id').single();
+    if (error) throw error;
+    return { schoolId, family, studentId: student.id };
+  }
+  async function cleanup({ schoolId, family, studentId }, extraUsers = []) {
+    await adminClient.from('students').delete().eq('id', studentId);
+    await adminClient.from('students').delete().eq('school_id', schoolId);
+    await deleteTestUser(family.id);
+    for (const u of extraUsers) await deleteTestUser(u.id);
+    await deleteTestSchool(schoolId);
+  }
+
+  it('família NÃO se isenta de hora extra nem estica o horário contratado', async () => {
+    const s = await setupFamilyStudent();
+    try {
+      await s.family.client.from('students').update({ isento_hora_extra: true }).eq('id', s.studentId);
+      await s.family.client.from('students').update({ contracted_exit_time: '19:00' }).eq('id', s.studentId);
+      await s.family.client.from('students').update({ turma: 'Kids I', enrollment_status: 'inativo' }).eq('id', s.studentId);
+      const { data } = await adminClient.from('students').select('isento_hora_extra, contracted_exit_time, turma, enrollment_status').eq('id', s.studentId).single();
+      expect(data.isento_hora_extra).toBe(false);
+      expect(data.contracted_exit_time).toBe('13:00:00');
+      expect(data.turma).toBe('Nido');
+      expect(data.enrollment_status).toBe('ativo');
+    } finally {
+      await cleanup(s);
+    }
+  }, 20000);
+
+  it('família NÃO apaga o próprio filho nem cria aluno na escola', async () => {
+    const s = await setupFamilyStudent();
+    try {
+      await s.family.client.from('students').delete().eq('id', s.studentId);
+      const { data: still } = await adminClient.from('students').select('id').eq('id', s.studentId).maybeSingle();
+      expect(still).not.toBeNull();
+
+      const { error: insertErr } = await s.family.client.from('students').insert({ school_id: s.schoolId, family_id: s.family.id, name: 'Aluno Inventado', turma: 'Nido' });
+      expect(insertErr).not.toBeNull();
+    } finally {
+      await cleanup(s);
+    }
+  }, 20000);
+
+  it('fluxo normal continua: família solicita entrada e registra saída pelo app', async () => {
+    const s = await setupFamilyStudent();
+    try {
+      const nowIso = new Date().toISOString();
+      const { error: reqErr } = await s.family.client.from('students')
+        .update({ status: 'pending_entry', pending_requester_id: null, today_entry: '08:00', today_exit: null, today_entry_at: nowIso, today_exit_at: null })
+        .eq('id', s.studentId);
+      expect(reqErr).toBeNull();
+      const { error: exitErr } = await s.family.client.from('students')
+        .update({ status: 'left', today_exit: '12:00', today_exit_at: nowIso })
+        .eq('id', s.studentId);
+      expect(exitErr).toBeNull();
+      const { data } = await adminClient.from('students').select('status, today_exit_at').eq('id', s.studentId).single();
+      expect(data.status).toBe('left');
+      expect(data.today_exit_at).not.toBeNull();
+    } finally {
+      await cleanup(s);
+    }
+  }, 20000);
+
+  it('admin e gestão continuam editando horário contratado e isenção', async () => {
+    const s = await setupFamilyStudent();
+    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    try {
+      const { error } = await admin.client.from('students').update({ contracted_exit_time: '15:00', isento_hora_extra: true }).eq('id', s.studentId);
+      expect(error).toBeNull();
+      const { data } = await adminClient.from('students').select('isento_hora_extra, contracted_exit_time').eq('id', s.studentId).single();
+      expect(data.isento_hora_extra).toBe(true);
+      expect(data.contracted_exit_time).toBe('15:00:00');
+    } finally {
+      await cleanup(s, [admin]);
+    }
+  }, 20000);
+});
+
 runIf('Segurança · acesso legado do totem (x-kiosk-token) removido', () => {
   it('nenhum token de totem legado continua ativo', async () => {
     const { data: active } = await adminClient.from('kiosk_devices').select('id').eq('is_active', true);
