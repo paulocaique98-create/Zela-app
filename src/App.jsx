@@ -446,6 +446,13 @@ export default function App() {
         .select('id, name, relation, has_photo, photo_storage_path, face_descriptor, status, emergency_order, temporary_until, family_id')
         .eq('school_id', currentUser.school_id);
 
+      // Professor não lê a tabela direto (ela tem a biometria facial, dado
+      // sensível): recebe só nome, parentesco, foto e "tem biometria" das
+      // famílias das turmas dele.
+      if (currentUser.role === 'teacher') {
+        authQuery = supabase.rpc('get_teacher_authorized_persons');
+      }
+
       if (currentUser.role === 'family') {
         const { data: guardianLinks } = await supabase
           .from('student_guardians')
@@ -548,7 +555,7 @@ export default function App() {
         hasPhoto: a.has_photo,
         photo_url: a.photo_storage_path ? (signedUrlByPath.get(a.photo_storage_path) || null) : null,
         photo_storage_path: a.photo_storage_path,
-        has_biometrics: a.face_descriptor != null,
+        has_biometrics: a.has_biometrics ?? (a.face_descriptor != null),
         status: a.status,
         emergencyOrder: a.emergency_order,
         temporaryUntil: a.temporary_until,

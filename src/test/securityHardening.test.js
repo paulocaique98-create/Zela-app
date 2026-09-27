@@ -500,6 +500,81 @@ runIf('Segurança · vínculo de responsável (student_guardians)', () => {
   }, 25000);
 });
 
+runIf('Segurança · item 7: biometria facial fora do alcance do professor', () => {
+  const FAKE_DESCRIPTOR = JSON.stringify(Array.from({ length: 128 }, (_, i) => i / 1000));
+
+  async function setupBiometry() {
+    const schoolId = await createTestSchool();
+    const family = await createTestUser({ role: 'family', schoolId });
+    const teacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'ativo', turmas: ['Nido'] } });
+    const otherTeacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'ativo', turmas: ['Kids II'] } });
+    const admin = await createTestUser({ role: 'admin', schoolId });
+    const { data: student } = await adminClient.from('students')
+      .insert({ school_id: schoolId, family_id: family.id, name: 'Vitest Biometria Aluno', turma: 'Nido' }).select('id').single();
+    const { data: person, error } = await adminClient.from('authorized_persons')
+      .insert({ school_id: schoolId, family_id: family.id, name: 'Vitest Avó', relation: 'Avó', has_photo: true, face_descriptor: FAKE_DESCRIPTOR, emergency_order: 2 })
+      .select('id').single();
+    if (error) throw error;
+    const photoPath = `${schoolId}/${person.id}.jpg`;
+    await adminClient.storage.from('person-photos').upload(photoPath, new Blob([new Uint8Array([255, 216, 255, 217])], { type: 'image/jpeg' }), { upsert: true });
+    await adminClient.from('authorized_persons').update({ photo_storage_path: photoPath }).eq('id', person.id);
+    return { schoolId, family, teacher, otherTeacher, admin, studentId: student.id, personId: person.id, photoPath };
+  }
+  async function cleanup(s) {
+    await adminClient.storage.from('person-photos').remove([s.photoPath]);
+    await adminClient.from('authorized_persons').delete().eq('id', s.personId);
+    await adminClient.from('students').delete().eq('id', s.studentId);
+    for (const u of [s.family, s.teacher, s.otherTeacher, s.admin]) await deleteTestUser(u.id);
+    await deleteTestSchool(s.schoolId);
+  }
+
+  it('professor NÃO lê o descritor facial dos responsáveis da própria turma', async () => {
+    const s = await setupBiometry();
+    try {
+      const { data } = await s.teacher.client.from('authorized_persons').select('id, face_descriptor').eq('id', s.personId);
+      expect((data || []).filter(r => r.face_descriptor)).toEqual([]);
+    } finally {
+      await cleanup(s);
+    }
+  }, 30000);
+
+  it('professor continua vendo nome, foto e "tem biometria" das famílias da turma dele (e só delas)', async () => {
+    const s = await setupBiometry();
+    try {
+      const { data, error } = await s.teacher.client.rpc('get_teacher_authorized_persons');
+      expect(error).toBeNull();
+      const row = data.find(r => r.id === s.personId);
+      expect(row).toBeTruthy();
+      expect(row.name).toBe('Vitest Avó');
+      expect(row.has_biometrics).toBe(true);
+      expect(row).not.toHaveProperty('face_descriptor');
+
+      const { data: signed, error: signErr } = await s.teacher.client.storage.from('person-photos').createSignedUrl(s.photoPath, 60);
+      expect(signErr).toBeNull();
+      expect(signed?.signedUrl).toBeTruthy();
+
+      const { data: otherData } = await s.otherTeacher.client.rpc('get_teacher_authorized_persons');
+      expect((otherData || []).find(r => r.id === s.personId)).toBeUndefined();
+      const { error: otherSignErr } = await s.otherTeacher.client.storage.from('person-photos').createSignedUrl(s.photoPath, 60);
+      expect(otherSignErr).not.toBeNull();
+    } finally {
+      await cleanup(s);
+    }
+  }, 30000);
+
+  it('caminho do totem intacto: admin continua lendo os descritores da escola', async () => {
+    const s = await setupBiometry();
+    try {
+      const { data, error } = await s.admin.client.from('authorized_persons').select('id, face_descriptor').not('face_descriptor', 'is', null).eq('id', s.personId);
+      expect(error).toBeNull();
+      expect(data).toHaveLength(1);
+      expect(data[0].face_descriptor).toBe(FAKE_DESCRIPTOR);
+    } finally {
+      await cleanup(s);
+    }
+  }, 30000);
+});
+
 runIf('Segurança · acesso legado do totem (x-kiosk-token) removido', () => {
   it('nenhum token de totem legado continua ativo', async () => {
     const { data: active } = await adminClient.from('kiosk_devices').select('id').eq('is_active', true);
