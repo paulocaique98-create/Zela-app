@@ -29,7 +29,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (!userData || (userData.role !== 'admin' && userData.role !== 'developer')) {
+    // Hierarquia de contas (27/09/2026): a Gestão é o topo da escola e cria
+    // admins, professores e responsáveis (Fase 1, em paralelo com o admin).
+    if (!userData || (userData.role !== 'admin' && userData.role !== 'developer' && userData.role !== 'gestao')) {
       throw new Error('Permissão negada');
     }
 
@@ -88,7 +90,7 @@ serve(async (req) => {
 
     // Se for admin, só pode criar para a própria escola
     let finalSchoolId = school_id;
-    if (userData.role === 'admin') {
+    if (userData.role === 'admin' || userData.role === 'gestao') {
       finalSchoolId = userData.school_id;
     }
 
@@ -111,7 +113,7 @@ serve(async (req) => {
     };
     if (role === 'admin') {
       safeExtraFields.departamento = ef.departamento ?? null;
-      if (userData.role === 'developer' || userData.is_primary_admin) {
+      if (userData.role === 'developer' || userData.role === 'gestao' || userData.is_primary_admin) {
         safeExtraFields.chat_visibilidade_total = !!ef.chat_visibilidade_total;
       }
     }

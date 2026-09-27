@@ -42,8 +42,8 @@ serve(async (req) => {
       .eq('id', caller.id)
       .single()
 
-    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'developer')) {
-      throw new Error('Acesso negado: apenas administradores podem excluir usuários')
+    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
+      throw new Error('Acesso negado: apenas a escola pode excluir usuários')
     }
 
     // Rate limit: exclusão de conta é uma ação sensível/irreversível — limite
@@ -100,8 +100,13 @@ serve(async (req) => {
       // Auditoria de segurança 27/09/2026 (item 3): a mesma regra vale pra
       // conta da Gestão (antes só 'admin' era bloqueado, então a Recepção
       // conseguia apagar a conta da Gestão) e pra conta do suporte.
-      if (targetData.role === 'admin' || targetData.role === 'gestao' || targetData.role === 'developer') {
-        throw new Error('Acesso negado: apenas o suporte pode excluir contas de administrador ou da gestão.')
+      // Hierarquia (27/09/2026): conta da Gestão e do suporte, só o suporte
+      // exclui. Conta de admin: a Gestão exclui (topo da escola); admin não.
+      if (targetData.role === 'gestao' || targetData.role === 'developer') {
+        throw new Error('Acesso negado: apenas o suporte pode excluir a conta da Gestão.')
+      }
+      if (targetData.role === 'admin' && callerData.role !== 'gestao') {
+        throw new Error('Acesso negado: apenas a Gestão pode excluir contas de administrador.')
       }
     }
 

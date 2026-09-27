@@ -42,7 +42,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer')) {
+    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
       throw new Error('Permissão negada');
     }
 
@@ -85,7 +85,7 @@ serve(async (req) => {
     if (targetError || !targetUser) {
       throw new Error('Usuário não encontrado.');
     }
-    if (callerData.role === 'admin' && targetUser.school_id !== callerData.school_id) {
+    if ((callerData.role === 'admin' || callerData.role === 'gestao') && targetUser.school_id !== callerData.school_id) {
       throw new Error('Permissão negada.');
     }
 
@@ -111,14 +111,18 @@ serve(async (req) => {
       const isNoOp = (authTarget.user.email || '').trim().toLowerCase() === normalizedEmail;
 
       if (!isNoOp) {
-        const isProtectedAccount = targetUser.role === 'gestao'
-          || targetUser.role === 'developer'
-          || targetUser.is_primary_admin === true;
-        if (isProtectedAccount) {
+        // Hierarquia (27/09/2026): Gestão é o topo da escola. Conta da
+        // Gestão e do suporte: só o suporte. Admin principal: só a Gestão.
+        // Outro admin: Gestão ou admin principal (fase paralela).
+        if (targetUser.role === 'gestao' || targetUser.role === 'developer') {
           throw new Error('Só o suporte pode alterar o e-mail desta conta.');
         }
-        if (targetUser.role === 'admin' && targetUser.id !== user.id && callerData.is_primary_admin !== true) {
-          throw new Error('Só o admin principal da escola pode alterar o e-mail de outro administrador.');
+        if (targetUser.is_primary_admin === true && callerData.role !== 'gestao') {
+          throw new Error('Só a Gestão pode alterar o e-mail do admin principal.');
+        }
+        if (targetUser.role === 'admin' && targetUser.id !== user.id
+            && callerData.role !== 'gestao' && callerData.is_primary_admin !== true) {
+          throw new Error('Só a Gestão ou o admin principal da escola podem alterar o e-mail de outro administrador.');
         }
       }
     }
