@@ -435,6 +435,71 @@ runIf('Segurança · item 11: cadastro pendente não tem acesso até a escola ap
   }, 20000);
 });
 
+runIf('Segurança · vínculo de responsável (student_guardians)', () => {
+  async function setupTwoFamilies() {
+    const schoolId = await createTestSchool();
+    const owner = await createTestUser({ role: 'family', schoolId });
+    const second = await createTestUser({ role: 'family', schoolId });
+    const stranger = await createTestUser({ role: 'family', schoolId });
+    const { data: student, error } = await adminClient.from('students')
+      .insert({ school_id: schoolId, family_id: owner.id, name: 'Vitest Vínculo Aluno', turma: 'Nido' })
+      .select('id').single();
+    if (error) throw error;
+    await adminClient.from('student_guardians').insert([
+      { student_id: student.id, guardian_id: owner.id, school_id: schoolId, is_primary: true, is_financial: true, relationship: 'Responsável Financeiro' },
+      { student_id: student.id, guardian_id: second.id, school_id: schoolId, is_primary: false, is_financial: false, relationship: 'Segundo Responsável' },
+    ]);
+    return { schoolId, owner, second, stranger, studentId: student.id };
+  }
+  async function cleanup(s) {
+    await adminClient.from('student_guardians').delete().eq('student_id', s.studentId);
+    await adminClient.from('students').delete().eq('id', s.studentId);
+    for (const u of [s.owner, s.second, s.stranger]) await deleteTestUser(u.id);
+    await deleteTestSchool(s.schoolId);
+  }
+
+  it('família NÃO se vincula como responsável de um aluno que não é dela', async () => {
+    const s = await setupTwoFamilies();
+    try {
+      await s.stranger.client.from('student_guardians').insert({
+        student_id: s.studentId, guardian_id: s.stranger.id, school_id: s.schoolId, is_primary: false, is_financial: false, relationship: 'Invasor',
+      });
+      const { data: links } = await adminClient.from('student_guardians').select('guardian_id').eq('student_id', s.studentId).eq('guardian_id', s.stranger.id);
+      expect(links).toEqual([]);
+      const { data: canRead } = await s.stranger.client.from('students').select('id').eq('id', s.studentId);
+      expect(canRead).toEqual([]);
+    } finally {
+      await cleanup(s);
+    }
+  }, 25000);
+
+  it('2º responsável NÃO se promove a responsável financeiro', async () => {
+    const s = await setupTwoFamilies();
+    try {
+      await s.second.client.from('student_guardians').update({ is_financial: true, is_primary: true }).eq('guardian_id', s.second.id);
+      const { data } = await adminClient.from('student_guardians').select('is_financial, is_primary').eq('student_id', s.studentId).eq('guardian_id', s.second.id).single();
+      expect(data.is_financial).toBe(false);
+      expect(data.is_primary).toBe(false);
+    } finally {
+      await cleanup(s);
+    }
+  }, 25000);
+
+  it('fluxo normal continua: titular vê os vínculos e remove o 2º responsável dos próprios filhos', async () => {
+    const s = await setupTwoFamilies();
+    try {
+      const { data: visible } = await s.owner.client.from('student_guardians').select('guardian_id').eq('student_id', s.studentId);
+      expect(visible).toHaveLength(2);
+      const { error } = await s.owner.client.from('student_guardians').delete().eq('guardian_id', s.second.id).in('student_id', [s.studentId]);
+      expect(error).toBeNull();
+      const { data: remaining } = await adminClient.from('student_guardians').select('guardian_id').eq('student_id', s.studentId);
+      expect(remaining.map(r => r.guardian_id)).toEqual([s.owner.id]);
+    } finally {
+      await cleanup(s);
+    }
+  }, 25000);
+});
+
 runIf('Segurança · acesso legado do totem (x-kiosk-token) removido', () => {
   it('nenhum token de totem legado continua ativo', async () => {
     const { data: active } = await adminClient.from('kiosk_devices').select('id').eq('is_active', true);
