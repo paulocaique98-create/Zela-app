@@ -33,10 +33,24 @@ migração invisível), nem trabalho ainda não aprovado/commitado pelo usuário
   tarefa anterior tenha sido autorizada — cada commit precisa do próprio aval.
 - Sempre rodar `npm run build` e `npx vitest run` (suíte completa) depois de
   qualquer mudança, e só reportar sucesso depois de ver os dois passarem.
-- Migrações e queries ad-hoc são aplicadas direto no projeto Supabase linkado
-  (não há Supabase local/Docker neste projeto): `npx supabase db query
-  --linked -f <arquivo.sql>`. Funções de borda: `npx supabase functions
-  deploy <nome>`.
+- Migrações (mudança de estrutura: tabela, coluna, policy, função, trigger)
+  seguem o fluxo do Supabase CLI desde 27/09/2026 — o histórico começa na
+  linha de base `supabase/migrations/20260927170000_baseline_producao.sql`
+  (as antigas ficam em `supabase/migrations_legado/`, só pra consulta):
+  1. `npx supabase migration new <nome_curto>` (gera o arquivo com timestamp
+     no formato certo; NUNCA criar à mão com nome tipo `20260927k_...`);
+  2. escrever o SQL no arquivo gerado;
+  3. `npx supabase db push --linked` (aplica e registra no histórico).
+  NUNCA aplicar mudança de estrutura com `db query -f` — ela não registra
+  no histórico e o repositório volta a divergir da produção.
+- Queries ad-hoc (consultas, correção pontual de dados, insert em
+  `system_updates`) continuam com `npx supabase db query --linked -f
+  <arquivo.sql>`. Funções de borda: `npx supabase functions deploy <nome>`.
+- Docker Desktop está instalado (usuário atual, fora do PATH do bash): antes
+  de comandos que precisam dele (`db dump`, `db start`, `start`), rodar
+  `export PATH="/c/Users/User/AppData/Local/Programs/DockerDesktop/resources/bin:$PATH"`.
+  Jobs do pg_cron de produção ficam fora das migrações (apontam pra URL de
+  produção) — referência em `supabase/cron_jobs_producao.sql`.
 - Nunca usar hífen ("-") em texto voltado ao usuário (UI, relatórios,
   notificações, textos de `system_updates`) — usar "·" no lugar. Exceção:
   quando o próprio usuário pede um formato específico com "-" explicitamente
