@@ -1,89 +1,174 @@
-import React from 'react';
-import { RefreshCw, ArrowRight, CheckCircle2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  RefreshCw, CheckCircle2, Inbox, ShieldCheck, Wallet, Clock, UserPlus, GraduationCap, FileSignature,
+  UserX, AlertTriangle, Receipt, FileWarning, ScanFace,
+} from 'lucide-react';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
-import { centsToBRL, formatDateBR } from '../lib/gestaoUtils';
+import { buildPendencias, PRIORIDADES } from '../lib/pendenciasModel';
+import { centsToBRL, todayISO } from '../lib/gestaoUtils';
 import { PageShell, Loading, Notice, SecondaryButton } from './GestaoShared';
 
-// Caixa única do que depende da Gestão. Cada grupo leva à tela onde a
-// pendência é resolvida.
+// Pendências da Gestão · Modelo 4 (aprovado em 28/09/2026): os quatro
+// números e as áreas do "Painel por área" + a fila do "Fila por prioridade".
+// As regras (o que é urgente, os números, as áreas) ficam em
+// src/lib/pendenciasModel.js; aqui é só a apresentação.
+
+const AREA_ICON = { lgpd: ShieldCheck, financeiro: Wallet, presenca: Clock, cadastros: UserPlus, secretaria: GraduationCap, contratos: FileSignature };
+const ROW_ICON = {
+  exclusao: UserX, biometria: ScanFace, vencidas: AlertTriangle, despesas: Receipt, correcoes: Clock,
+  cadastros: UserPlus, matriculas: GraduationCap, documentos: FileWarning, contratos: FileSignature,
+};
+
+// Cores por prioridade (texto escuro o bastante sobre o fundo claro).
+const TONE = {
+  urgente: { title: 'text-error', dot: 'bg-error', tint: 'bg-red-50 text-error', num: 'bg-error text-white', badge: 'bg-red-50 text-error' },
+  semana: { title: 'text-amber-800', dot: 'bg-warning', tint: 'bg-amber-50 text-amber-800', num: 'bg-amber-100 text-amber-800', badge: 'bg-amber-50 text-amber-800' },
+  acompanhar: { title: 'text-on-surface-variant', dot: 'bg-outline', tint: 'bg-surface-container-low text-primary', num: 'bg-surface-container-low text-primary', badge: 'bg-surface-container-low text-on-surface-variant' },
+};
+
+function Kpi({ label, value, hint, valueClass = 'text-on-surface' }) {
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-2.5 md:px-4 md:py-3.5 flex flex-col gap-0.5 min-w-0">
+      <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{label}</span>
+      <span className={`text-lg md:text-2xl font-black tabular-nums truncate ${valueClass}`}>{value}</span>
+      {hint && <span className="hidden md:block text-xs text-on-surface-variant truncate">{hint}</span>}
+    </div>
+  );
+}
+
 export default function GestaoPendencias({ currentUser, setGestaoTab }) {
   const { isLoading, data, error, refresh } = useGestaoPendencias(currentUser);
+  const [area, setArea] = useState('todas');
+  const model = useMemo(() => buildPendencias(data, todayISO()), [data]);
+  const rows = area === 'todas' ? model.rows : model.rows.filter(r => r.area === area);
 
-  const groups = data ? [
-    {
-      key: 'cadastros', title: 'Cadastros aguardando aprovação', tab: 'cadastros-usuarios', items: data.cadastros,
-      render: u => `${u.name} · ${u.role === 'teacher' ? 'Professor' : 'Responsável'}`,
-    },
-    {
-      key: 'matriculas', title: 'Matrículas e rematrículas para decidir', tab: 'secretaria-matriculas', items: data.matriculas,
-      render: m => `${(m.criancas || []).map(c => c.nome).join(', ') || 'Solicitação'} · enviada em ${formatDateBR(m.submitted_at)}`,
-    },
-    {
-      key: 'exclusoes', title: 'Pedidos de exclusão de conta (prazo de 30 dias)', tab: 'cadastros-exclusoes', items: data.exclusoes,
-      render: r => `${r.user_name} · pedido em ${formatDateBR(r.requested_at)}`,
-    },
-    {
-      key: 'biometria', title: 'Biometria de famílias sem aluno ativo', tab: 'cadastros-biometria', items: data.biometria,
-      render: b => `${b.person_name} · família ${b.family_name || 'excluída'}`,
-    },
-    {
-      key: 'correcoes', title: 'Correções de presença para aprovar', tab: 'attendance-corrections', items: data.correcoes,
-      render: c => `${c.students?.name || 'Aluno'} · pedida em ${formatDateBR(c.requested_at)}`,
-    },
-    {
-      key: 'documentos', title: 'Alunos com documentos faltando', tab: 'secretaria-documentos', items: data.documentos,
-      render: s => `${s.name} · falta ${s.missing.map(m => m.label).join(', ')}`,
-    },
-    {
-      key: 'vencidas', title: `Cobranças vencidas (${centsToBRL(data.vencidasTotal)})`, tab: 'financeiro-inadimplencia', items: data.vencidas,
-      render: c => `${c.students?.name || 'Aluno'} · ${centsToBRL(c.amount_cents)} · venceu em ${formatDateBR(c.due_date)}`,
-    },
-    {
-      key: 'contratos', title: 'Contratos aguardando assinatura', tab: 'contratos-assinaturas', items: data.contratos,
-      render: c => `${c.students?.name || 'Aluno'} · ${c.title} · enviado em ${formatDateBR(c.sent_at)}`,
-    },
-    {
-      key: 'despesas', title: 'Despesas vencendo em até 7 dias', tab: 'financeiro-despesas', items: data.despesas,
-      render: d => `${d.description} · ${centsToBRL(d.amount_cents)} · vence em ${formatDateBR(d.due_date)}`,
-    },
-  ] : [];
-
-  const total = groups.reduce((sum, g) => sum + g.items.length, 0);
+  const areaButtons = [{ key: 'todas', label: 'Todas as áreas', count: model.rows.length, resumo: `${model.rows.length} pendência${model.rows.length === 1 ? '' : 's'}` }, ...model.areas];
 
   return (
     <PageShell
-      description="Tudo o que depende da Gestão, num lugar só."
+      description="Tudo o que depende da Gestão: o resumo, as áreas e a fila por prioridade."
       actions={<SecondaryButton onClick={refresh}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /> Atualizar</SecondaryButton>}
     >
       <Notice>{error}</Notice>
       {isLoading && !data ? <Loading /> : data && (
-        total === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-16">
-            <CheckCircle2 size={36} className="text-emerald-500 mb-2" />
-            <p className="font-bold text-on-surface">Nenhuma pendência no momento.</p>
+        <div className="flex flex-col gap-4 md:gap-5">
+          {/* Números do topo */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+            <Kpi label="Precisam de ação hoje" value={model.kpis.hoje} hint={model.kpis.hojeHint} valueClass={model.kpis.hoje ? 'text-error' : 'text-emerald-700'} />
+            <Kpi label="Para esta semana" value={model.kpis.semana} hint={model.kpis.semanaHint} valueClass={model.kpis.semana ? 'text-amber-800' : 'text-emerald-700'} />
+            <Kpi label="Valor em atraso" value={centsToBRL(model.kpis.atrasoCents)} hint={model.kpis.atrasoHint} />
+            <Kpi label="Prazo mais próximo" value={model.kpis.prazo} hint={model.kpis.prazoHint} />
           </div>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {groups.filter(g => g.items.length > 0).map(g => (
-              <section key={g.key} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-on-surface text-sm">{g.title}</h3>
-                  <span className="text-xs font-black text-white bg-red-500 rounded-full min-w-[22px] h-[22px] px-1.5 flex items-center justify-center">{g.items.length}</span>
-                </div>
-                <ul className="space-y-1 mb-3">
-                  {g.items.slice(0, 6).map((item, idx) => (
-                    <li key={item.id || idx} className="text-sm text-on-surface-variant truncate">{g.render(item)}</li>
+
+          {model.rows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center py-16">
+              <CheckCircle2 size={36} className="text-emerald-600 mb-2" />
+              <p className="font-bold text-on-surface">Nenhuma pendência no momento.</p>
+            </div>
+          ) : (
+            <>
+              {/* Áreas · celular: botões que deslizam */}
+              <div className="md:hidden flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filtrar por área">
+                {areaButtons.map(a => (
+                  <button
+                    key={a.key}
+                    onClick={() => setArea(a.key)}
+                    aria-pressed={area === a.key}
+                    className={`shrink-0 flex items-center gap-2 min-h-[44px] rounded-full border px-3.5 text-sm font-bold whitespace-nowrap ${area === a.key ? 'bg-on-surface border-on-surface text-white' : 'bg-surface-container-lowest border-outline-variant text-on-surface'}`}
+                  >
+                    {a.key === 'todas' ? `Todas · ${a.count}` : a.label}
+                    {a.key !== 'todas' && <span className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-[11px] font-black flex items-center justify-center ${TONE[a.worst].num}`}>{a.count}</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Áreas · tablet: grade de cartões */}
+              <div className="hidden md:grid lg:hidden grid-cols-3 gap-2" role="group" aria-label="Filtrar por área">
+                {areaButtons.map(a => (
+                  <AreaButton key={a.key} a={a} active={area === a.key} onClick={() => setArea(a.key)} compact />
+                ))}
+              </div>
+
+              <div className="flex gap-6 items-start">
+                {/* Áreas · computador: coluna à esquerda */}
+                <aside className="hidden lg:flex w-72 shrink-0 flex-col gap-0.5" aria-label="Filtrar por área">
+                  <p className="ml-3 mb-1.5 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Por área</p>
+                  {areaButtons.map(a => (
+                    <AreaButton key={a.key} a={a} active={area === a.key} onClick={() => setArea(a.key)} />
                   ))}
-                  {g.items.length > 6 && <li className="text-xs text-on-surface-variant/70">e mais {g.items.length - 6}</li>}
-                </ul>
-                <button onClick={() => setGestaoTab(g.tab)} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-                  Resolver <ArrowRight size={12} />
-                </button>
-              </section>
-            ))}
-          </div>
-        )
+                </aside>
+
+                {/* Fila por prioridade */}
+                <div className="flex-1 min-w-0 flex flex-col gap-4">
+                  {PRIORIDADES.map(p => {
+                    const items = rows.filter(r => r.priority === p.key);
+                    if (items.length === 0) return null;
+                    const tone = TONE[p.key];
+                    return (
+                      <section key={p.key} className="flex flex-col gap-2">
+                        <h2 className={`m-0 flex items-center gap-2 text-xs md:text-[13px] font-black uppercase tracking-wide ${tone.title}`}>
+                          <span className={`w-2 h-2 rounded-full ${tone.dot}`} />{p.label}
+                        </h2>
+                        <div className="flex flex-col gap-2 md:gap-0 md:bg-surface-container-lowest md:border md:border-outline-variant md:rounded-zela-lg md:divide-y md:divide-outline-variant/50">
+                          {items.map(r => {
+                            const Icon = ROW_ICON[r.icon] || Inbox;
+                            return (
+                              <div key={r.key} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-3.5 flex flex-col gap-3 md:border-0 md:rounded-none md:bg-transparent md:flex-row md:items-center md:gap-3.5 md:px-4 md:py-3">
+                                <div className="flex items-start md:items-center gap-3 flex-1 min-w-0">
+                                  <div className={`w-9 h-9 rounded-zela-md flex items-center justify-center shrink-0 ${tone.tint}`}><Icon size={18} /></div>
+                                  <div className="min-w-0">
+                                    <p className="text-[15px] md:text-sm font-bold text-on-surface">{r.title}</p>
+                                    {r.meta && <p className="text-[13px] md:text-xs text-on-surface-variant">{r.meta}</p>}
+                                  </div>
+                                </div>
+                                {r.badge && <span className={`hidden lg:inline-block text-xs font-bold rounded-full px-2.5 py-1 whitespace-nowrap ${tone.badge}`}>{r.badge}</span>}
+                                <button
+                                  onClick={() => setGestaoTab(r.tab)}
+                                  className={`w-full md:w-auto min-h-[44px] md:min-h-0 rounded-zela-md px-3.5 py-2.5 md:py-2 text-sm md:text-[13px] font-bold whitespace-nowrap ${p.key === 'urgente' ? 'bg-primary text-white hover:bg-primary-container' : 'bg-surface-container-low text-primary hover:bg-primary/10'}`}
+                                >
+                                  {r.action}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    );
+                  })}
+                  {rows.length === 0 && <p className="text-sm text-on-surface-variant">Nenhuma pendência nesta área.</p>}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </PageShell>
+  );
+}
+
+function AreaButton({ a, active, onClick, compact = false }) {
+  const Icon = a.key === 'todas' ? Inbox : AREA_ICON[a.key];
+  const tone = a.worst ? TONE[a.worst] : null;
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`w-full flex items-center gap-3 text-left rounded-zela-lg border transition min-h-[52px] ${compact ? 'px-3 py-2' : 'px-3 py-2.5'} ${
+        active
+          ? (compact ? 'bg-on-surface border-on-surface' : 'bg-surface-container-lowest border-outline-variant')
+          : (compact ? 'bg-surface-container-lowest border-outline-variant hover:border-primary/40' : 'border-transparent hover:bg-surface-container-low')
+      }`}
+    >
+      {!compact && (
+        <span className={`w-8 h-8 rounded-zela-md flex items-center justify-center shrink-0 ${tone ? tone.tint : 'bg-surface-container-high text-primary'}`}><Icon size={17} /></span>
+      )}
+      <span className="flex-1 min-w-0">
+        <span className={`block text-sm font-bold truncate ${compact && active ? 'text-white' : 'text-on-surface'}`}>{a.label}</span>
+        {a.resumo && <span className={`block text-[11px] md:text-xs truncate ${compact && active ? 'text-white/80' : 'text-on-surface-variant'}`}>{a.resumo}</span>}
+      </span>
+      {a.key !== 'todas' && tone && (
+        <span className={`min-w-[24px] h-6 px-2 rounded-full text-xs font-black flex items-center justify-center shrink-0 ${tone.num}`}>{a.count}</span>
+      )}
+    </button>
   );
 }

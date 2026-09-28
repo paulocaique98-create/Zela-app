@@ -43,7 +43,7 @@ export function useGestaoPendencias(currentUser) {
       const [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, biometria, documentos] = await Promise.all([
         supabase.from('users').select('id, name, role').eq('school_id', schoolId).eq('status', 'pending').in('role', ['family', 'teacher']),
         supabase.from('matricula_solicitacoes').select('id, tipo, criancas, submitted_at').eq('school_id', schoolId).eq('status', 'pending'),
-        supabase.from('attendance_corrections').select('id, requested_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'pending'),
+        supabase.from('attendance_corrections').select('id, requested_at, increases_billing, students:student_id(name)').eq('school_id', schoolId).eq('status', 'pending'),
         supabase.from('financial_charges').select('id, amount_cents, due_date, students:student_id(name)').eq('school_id', schoolId).eq('status', 'OVERDUE'),
         supabase.from('contract_documents').select('id, title, sent_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'enviado'),
         supabase.from('expenses').select('id, description, amount_cents, due_date').eq('school_id', schoolId).eq('status', 'pendente').lte('due_date', inDays(7)),
