@@ -5,6 +5,7 @@ import { notifyFamilies } from '../lib/notifyFamilies';
 import { printContract } from '../lib/printContract';
 import { centsToBRL, formatDateBR, fillTemplate } from '../lib/gestaoUtils';
 import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton } from './GestaoShared';
+import ConfirmModal from './ConfirmModal';
 
 export const CONTRACT_STATUS = { rascunho: 'Rascunho', enviado: 'Aguardando assinatura', assinado: 'Assinado', cancelado: 'Cancelado' };
 const STATUS_CLS = {
@@ -154,6 +155,7 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [confirmCancel, setConfirmCancel] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -192,7 +194,7 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
   };
 
   const cancel = async (doc) => {
-    if (!window.confirm(`Cancelar "${doc.title}"? O documento fica no histórico como cancelado.`)) return;
+    setConfirmCancel(null);
     const { error: e } = await supabase.from('contract_documents').update({ status: 'cancelado' }).eq('id', doc.id);
     if (e) { setError(e.message); return; }
     setViewing(null);
@@ -260,8 +262,18 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
           onClose={() => setCreating(null)} onSaved={() => { setCreating(null); setSuccess('Documento salvo como rascunho. Revise e envie para a família.'); load(); }} />
       )}
       {viewing && (
-        <DocumentoModal canManage={canManage} doc={viewing} onClose={() => setViewing(null)} onSend={() => send(viewing)} onCancel={() => cancel(viewing)}
+        <DocumentoModal canManage={canManage} doc={viewing} onClose={() => setViewing(null)} onSend={() => send(viewing)} onCancel={() => setConfirmCancel(viewing)}
           onPrint={() => printContract(viewing, currentSchool?.name)} onSaved={() => { setViewing(null); load(); }} />
+      )}
+      {confirmCancel && (
+        <ConfirmModal
+          title="Cancelar documento?"
+          message={`"${confirmCancel.title}" fica no histórico como cancelado.`}
+          confirmLabel="Cancelar documento"
+          cancelLabel="Voltar"
+          onConfirm={() => cancel(confirmCancel)}
+          onCancel={() => setConfirmCancel(null)}
+        />
       )}
     </PageShell>
   );

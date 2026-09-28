@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus, AlertTriangle, ChevronDown, UserCog } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
+import { publicAppUrl } from '../lib/publicUrl';
 import { formatPersonName } from '../utils/formatName';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import ConfirmModal from './ConfirmModal';
@@ -528,7 +529,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     setErrorMsg('');
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: publicAppUrl('/'),
       });
       if (resetError) throw resetError;
       setResetSent(true);

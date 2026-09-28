@@ -6,6 +6,7 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import { formatPersonName } from '../utils/formatName';
 import ConfirmModal from './ConfirmModal';
 import AdminUserRegistration from './AdminUserRegistration';
+import { toast } from '../lib/toast';
 
 const DEPARTAMENTOS_LABEL = Object.fromEntries(SETORES_CHAT.map(s => [s.value, s.label]));
 
@@ -49,7 +50,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
       setAccessUsers(prev => prev.map(x => (x.id === u.id ? { ...x, status: 'active' } : x)));
     } catch (err) {
       console.error('[AdminFuncionarios] Erro ao aprovar acesso:', err);
-      alert('Não foi possível aprovar este acesso: ' + (err.message || 'erro desconhecido'));
+      toast.error('Não foi possível aprovar este acesso: ' + (err.message || 'erro desconhecido'));
     } finally {
       setApprovingAccessId(null);
     }
@@ -141,7 +142,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
       setAccessUsers(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
       console.error('[AdminFuncionarios] Erro ao excluir conta de acesso:', err);
-      alert('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
+      toast.error('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
     } finally {
       setDeletingAccessId(null);
       setConfirmDeleteAccessId(null);
@@ -171,7 +172,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
       setEditingTurmasFor(null);
     } catch (err) {
       console.error('[AdminFuncionarios] Erro ao salvar turmas:', err);
-      alert('Erro ao salvar turmas: ' + (err.message || 'Desconhecido'));
+      toast.error('Erro ao salvar turmas: ' + (err.message || 'Desconhecido'));
     } finally {
       setIsSavingTurmas(false);
     }

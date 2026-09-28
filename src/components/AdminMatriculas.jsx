@@ -5,6 +5,7 @@ import {
   FileSpreadsheet, UploadCloud,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { publicAppUrl } from '../lib/publicUrl';
 import { getSignedUrl } from '../lib/storage';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { logAction } from '../lib/auditLog';
@@ -285,7 +286,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
 
 function CopyMatriculaLinkButton({ schoolCode }) {
   const [copied, setCopied] = useState(false);
-  const link = `${window.location.origin}/matricula-publica?codigo=${schoolCode}`;
+  const link = publicAppUrl(`/matricula-publica?codigo=${schoolCode}`);
 
   const copy = async () => {
     try {

@@ -1,3 +1,5 @@
+import { toast } from './toast';
+
 // Impressão da carteirinha de check-in por QR Code (Fase 1 do plano de QR
 // Code) -- mesmo mecanismo comprovado dos outros print*.js (window.open +
 // print nativo do navegador, sem lib de PDF). Layout pequeno de propósito
@@ -33,7 +35,7 @@ const STYLES = `
 function openPrintWindow(title, bodyHtml) {
   const win = window.open('', '_blank');
   if (!win) {
-    alert('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
+    toast.error('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
     return null;
   }
   win.document.write(`

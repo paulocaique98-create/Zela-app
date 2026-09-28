@@ -65,14 +65,22 @@ export async function deleteTestUser(id) {
 }
 
 export async function createTestSchool(namePrefix = 'Vitest Escola') {
-  const suffix = uniqueSuffix().slice(-4).toUpperCase();
-  const { data, error } = await adminClient
-    .from('schools')
-    .insert({ name: `${namePrefix} ${suffix}`, school_code: `VT${suffix}`.slice(0, 5) })
-    .select('id')
-    .single();
-  if (error) throw error;
-  return data.id;
+  // school_code tem 5 caracteres ("VT" + 3 aleatórios): colisão com uma
+  // escola de teste que sobrou de outra rodada é rara, mas acontecia
+  // (duplicate key em schools_school_code_key). Sorteia de novo nesse caso.
+  let lastError = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const suffix = uniqueSuffix().slice(-4).toUpperCase();
+    const { data, error } = await adminClient
+      .from('schools')
+      .insert({ name: `${namePrefix} ${suffix}`, school_code: `VT${suffix}`.slice(0, 5) })
+      .select('id')
+      .single();
+    if (!error) return data.id;
+    lastError = error;
+    if (error.code !== '23505') break;
+  }
+  throw lastError;
 }
 
 export async function deleteTestSchool(id) {

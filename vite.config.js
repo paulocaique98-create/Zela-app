@@ -43,5 +43,10 @@ export default defineConfig({
     // arquivos em sequência: mais lento, mas sem corrida real contra o
     // rate limit do Supabase.
     fileParallelism: false,
+    // "Worker exited unexpectedly" (Windows, 28/09/2026): o processo filho
+    // de um arquivo às vezes morre sem aviso, em arquivos diferentes a cada
+    // rodada. Testado pool 'threads': pior, a queda derruba a suíte inteira
+    // (saída 127 sem resultado). Mantido 'forks' (padrão), que isola a queda
+    // num arquivo só: se aparecer, rodar a suíte de novo antes de concluir.
   },
 })

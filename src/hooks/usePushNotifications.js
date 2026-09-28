@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { getPushGuidance } from '../lib/pushDeviceGuidance';
+import { toast } from '../lib/toast';
 
 export function usePushNotifications(currentUser, currentSchool) {
   const [permission, setPermission] = useState(
@@ -39,12 +40,12 @@ export function usePushNotifications(currentUser, currentSchool) {
 
   const subscribe = useCallback(async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Seu navegador não suporta notificações push.');
+      toast.error('Seu navegador não suporta notificações push.');
       return false;
     }
     if (!VAPID_PUBLIC_KEY) {
       console.error('[Push] VITE_VAPID_PUBLIC_KEY não configurada.');
-      alert('Notificações push não estão configuradas neste ambiente.');
+      toast.error('Notificações push não estão configuradas neste ambiente.');
       return false;
     }
     setIsLoading(true);

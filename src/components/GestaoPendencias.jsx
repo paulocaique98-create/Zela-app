@@ -23,6 +23,10 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
       render: r => `${r.user_name} · pedido em ${formatDateBR(r.requested_at)}`,
     },
     {
+      key: 'biometria', title: 'Biometria de famílias sem aluno ativo', tab: 'cadastros-biometria', items: data.biometria,
+      render: b => `${b.person_name} · família ${b.family_name || 'excluída'}`,
+    },
+    {
       key: 'correcoes', title: 'Correções de presença para aprovar', tab: 'attendance-corrections', items: data.correcoes,
       render: c => `${c.students?.name || 'Aluno'} · pedida em ${formatDateBR(c.requested_at)}`,
     },

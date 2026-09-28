@@ -13,6 +13,8 @@ import { parseShortTime } from './utils/attendanceUtils';
 import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
 import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
+import { toast } from './lib/toast';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
 
 const Login = lazy(() => import('./components/Login'));
@@ -97,6 +99,7 @@ export default function App() {
 
   // Publicação nova do Zela enquanto a aba estava aberta: oferece recarregar.
   const updateAvailable = useAppUpdate();
+  const isOnline = useOnlineStatus();
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
   // pra anexar aos logs de erro (ver errorLogger.js > setCurrentScreen). Só
@@ -1163,7 +1166,7 @@ export default function App() {
     const { error } = await supabase.rpc('family_mark_student_absent', { p_student_id: studentId });
     if (error) {
       console.error('[Zela] Falha ao avisar ausência:', error);
-      alert(error.message || 'Não foi possível avisar a ausência. Tente novamente.');
+      toast.error(error.message || 'Não foi possível avisar a ausência. Tente novamente.');
       return;
     }
     setStudents(prev => prev.map(s => (s.id === studentId ? { ...s, status: 'absent' } : s)));
@@ -1430,6 +1433,15 @@ export default function App() {
             : setFamilyTab
           }
         />
+      )}
+
+      {/* Sem internet: avisa antes que a pessoa tente salvar algo. No
+          Autoatendimento também aparece (a equipe precisa saber que o totem
+          está sem conexão). */}
+      {!isOnline && (
+        <div role="alert" className="shrink-0 bg-amber-500 text-white px-4 py-2 text-center text-sm font-bold">
+          Sem conexão com a internet · as informações podem estar desatualizadas e nada será salvo até a conexão voltar.
+        </div>
       )}
 
       {/* Nova versão publicada: não aparece no Autoatendimento (tela pública

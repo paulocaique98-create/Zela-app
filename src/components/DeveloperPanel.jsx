@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { toast } from '../lib/toast';
 
 // Modelo 04 (tabela densa estilo painel enterprise) validado com o usuário
 // (proposta com 5 layouts, 18/09) -- tabela clássica de admin no desktop
@@ -260,10 +261,10 @@ export default function DeveloperPanel() {
       if (error) throw error;
 
       fetchSchools();
-      alert(`Escola ${name} excluída com sucesso.`);
+      toast.success(`Escola ${name} excluída com sucesso.`);
     } catch (err) {
       console.error(err);
-      alert(`Erro ao excluir escola: ${err.message}`);
+      toast.error(`Erro ao excluir escola: ${err.message}`);
     } finally {
       setIsDeletingSchool(false);
       setConfirmDeleteSchool(null);

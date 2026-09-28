@@ -1,4 +1,5 @@
 import { MITIGACAO_SECTIONS, calcIdade, buildIntroducaoText } from './mitigacaoSections';
+import { toast } from './toast';
 
 function formatDate(dateStr) {
   return dateStr ? new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
@@ -116,7 +117,7 @@ function buildReportBodyHtml(report, student, school, sectionValues) {
 function openPrintWindow(title, bodyHtml, logoHtml) {
   const win = window.open('', '_blank');
   if (!win) {
-    alert('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
+    toast.error('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
     return null;
   }
 
@@ -166,7 +167,7 @@ export function printMitigacaoReport({ report, student, school, sectionValues })
 // filtrado (ex: só PUBLICADO) pelo chamador.
 export function printMitigacaoReportsBulk({ reports, studentsById, school }) {
   if (!reports || reports.length === 0) {
-    alert('Nenhum relatório para exportar.');
+    toast.info('Nenhum relatório para exportar.');
     return;
   }
   const logoHtml = buildHeaderLogoHtml(school);

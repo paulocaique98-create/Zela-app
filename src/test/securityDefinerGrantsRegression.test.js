@@ -41,6 +41,8 @@ const INTERNAL_ONLY_FUNCTIONS = [
   // ano letivo inicial de escola nova).
   'sync_student_enrollment',
   'create_initial_school_year',
+  // Limpeza supervisionada de biometria: regra de elegibilidade interna.
+  'biometria_sem_aluno_ativo',
 ];
 
 runIf('Regressão de segurança — grants de EXECUTE em funções internas SECURITY DEFINER', () => {

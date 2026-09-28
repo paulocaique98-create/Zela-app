@@ -1,3 +1,5 @@
+import { toast } from './toast';
+
 // Exportação em PDF do Histórico Geral (Admin) e Histórico de Horários
 // (Família) — mesmo mecanismo comprovado do relatório de Mitigação
 // (window.open + print nativo do navegador, sem depender de lib de PDF).
@@ -186,7 +188,7 @@ function buildBodyHtml({ records, periodLabel, school }) {
 function openPrintWindow(title, bodyHtml) {
   const win = window.open('', '_blank');
   if (!win) {
-    alert('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
+    toast.error('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
     return null;
   }
   win.document.write(`

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Users, Plus, Camera, Fingerprint, Loader2, Trash2 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import FaceCameraCapture from './FaceCameraCapture';
+import { toast } from '../lib/toast';
 
 export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthorized, onOpenAuthModal, authLimitsInfo }) {
   const [isProcessingId, setIsProcessingId] = useState(null);
@@ -31,7 +32,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
       await togglePhoto(personId, null, null);
     } catch (err) {
       console.error(err);
-      alert("Erro ao remover biometria.");
+      toast.error('Não foi possível remover a biometria. Tente novamente.');
     } finally {
       setIsProcessingId(null);
       setConfirmRemovePhotoId(null);
@@ -47,7 +48,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
       await deleteAuthorized(personId);
     } catch (err) {
       console.error(err);
-      alert("Erro ao excluir autorizado.");
+      toast.error('Não foi possível excluir a pessoa autorizada. Tente novamente.');
     } finally {
       setIsProcessingId(null);
       setConfirmDeleteId(null);

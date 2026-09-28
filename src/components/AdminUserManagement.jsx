@@ -6,6 +6,7 @@ import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
 import ConfirmModal from './ConfirmModal';
 import DuplicateStudentWarningModal from './DuplicateStudentWarningModal';
+import { toast } from '../lib/toast';
 
 // Gestão de Usuários = só Responsáveis (família). Contas de Admin/Professor (com
 // login) ficam em Gerenciamento > Funcionários, junto do resto do cadastro de
@@ -124,7 +125,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       setUsersList(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
       console.error(err);
-      alert('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
+      toast.error('Erro ao excluir usuário: ' + (err.message || 'Desconhecido'));
     } finally {
       setDeletingUserId(null);
       setConfirmDeleteUserId(null);
@@ -180,7 +181,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       setUsersList(prev => prev.map(u => u.id === userId ? { ...u, status: 'active' } : u));
     } catch (err) {
       console.error(err);
-      alert('Erro ao aprovar cadastro: ' + (err.message || 'Desconhecido'));
+      toast.error('Erro ao aprovar cadastro: ' + (err.message || 'Desconhecido'));
     } finally {
       setApprovingUserId(null);
     }
@@ -204,7 +205,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       setUsersList(prev => prev.filter(u => u.id !== userId));
     } catch (err) {
       console.error(err);
-      alert('Erro ao rejeitar cadastro: ' + (err.message || 'Desconhecido'));
+      toast.error('Erro ao rejeitar cadastro: ' + (err.message || 'Desconhecido'));
     } finally {
       setDeletingUserId(null);
       setConfirmRejectUserId(null);

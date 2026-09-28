@@ -1,3 +1,5 @@
+import { toast } from './toast';
+
 // Exportação em PDF do Relatório de Horas Extras — mesmo mecanismo do
 // Histórico Geral (window.open + print nativo do navegador).
 //
@@ -201,7 +203,7 @@ function buildBodyHtml({ records, periodLabel, school }) {
 function openPrintWindow(title, bodyHtml) {
   const win = window.open('', '_blank');
   if (!win) {
-    alert('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
+    toast.error('O navegador bloqueou a abertura da janela de impressão. Permita pop-ups para este site e tente novamente.');
     return null;
   }
   win.document.write(`

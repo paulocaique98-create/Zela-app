@@ -115,7 +115,7 @@ Parte dos fornecedores armazena ou processa dados fora do Brasil (item 5). Essas
 
 Os dados são mantidos enquanto houver vínculo do usuário ou do aluno com a Escola e, depois disso, pelo tempo necessário para cumprir obrigações legais ou exercer direitos. [Tabela de prazos por categoria a definir · Q6]
 
-Registros técnicos de erro são apagados em até **[90 dias]**. A biometria facial de uma pessoa autorizada é apagada quando a família remove a foto ou a pessoa autorizada. **[Nota técnica: a limpeza automática da biometria quando o aluno sai da Escola (transferência ou desligamento) e dos registros de erro após 90 dias ainda não existe no sistema. Precisa ser implementada antes de publicar este parágrafo.]**
+Registros técnicos de erro são apagados em até **[90 dias]**. A biometria facial de uma pessoa autorizada é apagada quando a família remove a foto ou a pessoa autorizada. Quando a família deixa de ter aluno ativo na Escola (transferência ou desligamento), a biometria aparece para a Gestão da Escola em uma lista de limpeza e é apagada após a confirmação dela, com registro na auditoria. **[Nota técnica: a limpeza de biometria existe desde 28/09/2026, de forma supervisionada (não automática), conforme LGPD_RETENCAO.md. A limpeza dos registros de erro após 90 dias ainda não existe. Definir com o advogado se a limpeza da biometria deve ter um prazo máximo (ex.: 90 dias após a saída).]**
 
 ### 8. Segurança
 

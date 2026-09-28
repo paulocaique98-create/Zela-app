@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ShieldAlert, KeyRound } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading, Notice, Field, inputCls, PrimaryButton, StatCard } from './GestaoShared';
+import ConfirmModal from './ConfirmModal';
 
 // Configurações · Comunicação: lembrete automático de cobrança antes do
 // vencimento (lido pela rotina send-financial-reminders).
@@ -74,10 +75,12 @@ export function ConfigSeguranca({ currentUser }) {
   };
   useEffect(() => { load(); }, [currentUser.school_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [confirming, setConfirming] = useState(false);
+  const roleNames = ROLE_OPTIONS.filter(r => roles.includes(r.id)).map(r => r.label).join(', ');
+
   const require = async () => {
+    setConfirming(false);
     if (roles.length === 0) return;
-    const names = ROLE_OPTIONS.filter(r => roles.includes(r.id)).map(r => r.label).join(', ');
-    if (!window.confirm(`Exigir nova senha no próximo acesso de: ${names}?`)) return;
     setIsSaving(true);
     setMsg({ type: '', text: '' });
     const { data, error } = await supabase.rpc('require_password_change_school', { p_roles: roles });
@@ -111,9 +114,20 @@ export function ConfigSeguranca({ currentUser }) {
               </label>
             ))}
           </div>
-          <PrimaryButton onClick={require} disabled={isSaving || roles.length === 0}><ShieldAlert size={15} /> Exigir nova senha</PrimaryButton>
+          <PrimaryButton onClick={() => setConfirming(true)} disabled={isSaving || roles.length === 0}><ShieldAlert size={15} /> Exigir nova senha</PrimaryButton>
         </section>
       </div>
+      {confirming && (
+        <ConfirmModal
+          title="Exigir nova senha?"
+          message={`No próximo acesso, estas contas vão precisar criar uma nova senha: ${roleNames}.`}
+          confirmLabel="Exigir nova senha"
+          cancelLabel="Voltar"
+          danger={false}
+          onConfirm={require}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </PageShell>
   );
 }

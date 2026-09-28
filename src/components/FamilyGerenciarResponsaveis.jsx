@@ -3,6 +3,7 @@ import { Users, Plus, UserMinus, Trash2, ShieldCheck, CheckCircle2, Copy } from 
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 import { formatPersonName } from '../utils/formatName';
+import { toast } from '../lib/toast';
 
 export default function FamilyGerenciarResponsaveis({ currentUser, familyStudents, currentSchool }) {
   const [secondGuardian, setSecondGuardian] = useState(null);
@@ -142,7 +143,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
 
       setSecondGuardian(null);
     } catch (err) {
-      alert('Erro ao remover vínculo: ' + err.message);
+      toast.error('Erro ao remover vínculo: ' + err.message);
     } finally {
       setActionLoading(false);
       setConfirmSecondGuardianAction(null);
@@ -165,7 +166,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
 
       setSecondGuardian(null);
     } catch (err) {
-      alert('Erro ao excluir 2º Responsável: ' + err.message);
+      toast.error('Erro ao excluir 2º Responsável: ' + err.message);
     } finally {
       setActionLoading(false);
       setConfirmSecondGuardianAction(null);
@@ -176,7 +177,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
     if (!successModalData) return;
     const text = `Acesso Portal Zela\nE-mail: ${successModalData.email}\nSenha: ${successModalData.password}`;
     navigator.clipboard.writeText(text);
-    alert('Credenciais copiadas!');
+    toast.success('Credenciais copiadas.');
   };
 
   const field = (label, required, node) => (

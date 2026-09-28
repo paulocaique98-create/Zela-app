@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { publicAppUrl } from '../lib/publicUrl';
 import { navigateTo } from '../utils/navigate';
 
 export default function Login({ onLogin }) {
@@ -185,7 +186,7 @@ export default function Login({ onLogin }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: publicAppUrl('/reset-password'),
       });
       if (error) throw error;
       setRecoveryMsg('E-mail de recuperação enviado! Verifique sua caixa de entrada (e o spam).');
