@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical } from 'lucide-react';
+import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical, LayoutGrid } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { toast } from '../lib/toast';
+import DeveloperModulos from './DeveloperModulos';
+import { featuresIniciais, pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
 
 // Modelo 04 (tabela densa estilo painel enterprise) validado com o usuário
 // (proposta com 5 layouts, 18/09) -- tabela clássica de admin no desktop
@@ -14,6 +16,10 @@ import { toast } from '../lib/toast';
 // tela ainda estava na paleta clara do app das famílias/escolas, destoando
 // do resto do portal.
 const AVATAR_PALETTE = ['#818cf8', '#f59e0b', '#34d399', '#fb7185', '#60a5fa', '#c084fc'];
+const nomeDoPacote = (school) => {
+  const id = pacoteAtual(school.features_enabled || {});
+  return id === 'livre' ? 'Livre' : PACOTES.find(p => p.id === id).nome;
+};
 const initials = (name) => (name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
 export default function DeveloperPanel() {
@@ -50,29 +56,10 @@ export default function DeveloperPanel() {
   const [turmasInput, setTurmasInput] = useState('');
   const [customClassLabel, setCustomClassLabel] = useState('');
 
-  const defaultFeatures = {
-    cadastros: true,
-    gerenciamento: true,
-    formularios: false,
-    checkin: true,
-    calendario: false,
-    comunicados: false,
-    mural: false,
-    cardapio: false,
-    diario: false,
-    chat: false,
-    relatorios_pedagogicos: false,
-    configuracoes: true,
-    financeiro: false,
-    materias: false,
-    frequencia: false,
-    liveness_detection: false,
-    liveness_detection_enforce: false,
-    qr_checkin: false,
-    face_engine_human: false
-  };
-
-  const [featuresEnabled, setFeaturesEnabled] = useState(defaultFeatures);
+  // Módulos contratados: tela própria (DeveloperModulos, Modelo 3 de
+  // 28/09/2026), aberta pelo menu "⋯" da escola. Escola nova nasce no
+  // pacote Essencial (featuresIniciais).
+  const [modulosSchool, setModulosSchool] = useState(null);
 
   const defaultLimits = { autorizados_por_responsavel: 2, autorizados_transporte: 1 };
   const [limits, setLimits] = useState(defaultLimits);
@@ -113,7 +100,6 @@ export default function DeveloperPanel() {
         is_active: school.is_active,
         notes: school.notes || ''
       });
-      setFeaturesEnabled({ ...defaultFeatures, ...school.features_enabled });
       setLimits({ ...defaultLimits, ...school.limits });
       setPedagogicalMethod(school.pedagogical_method || 'tradicional');
       setTurmasInput((school.turmas || []).join(', '));
@@ -123,7 +109,6 @@ export default function DeveloperPanel() {
       setFormData({
         name: '', cnpj: '', email: '', phone: '', address: '', plan: 'basic', is_active: true, notes: ''
       });
-      setFeaturesEnabled(defaultFeatures);
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
       setPedagogicalMethod('tradicional');
@@ -178,7 +163,7 @@ export default function DeveloperPanel() {
         // Update apenas dados da escola
         const { error } = await supabase
           .from('schools')
-          .update({ ...formData, features_enabled: featuresEnabled, limits, ...pedagogicalFields })
+          .update({ ...formData, limits, ...pedagogicalFields })
           .eq('id', editingSchool.id);
 
         if (error) throw error;
@@ -197,7 +182,7 @@ export default function DeveloperPanel() {
         const schoolCode = await generateSchoolCode();
         const { data: newSchool, error: schoolError } = await supabase
           .from('schools')
-          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresEnabled, limits, ...pedagogicalFields }])
+          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresIniciais(), limits, ...pedagogicalFields }])
           .select()
           .single();
 
@@ -286,6 +271,20 @@ export default function DeveloperPanel() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuId]);
 
+  if (modulosSchool) {
+    return (
+      <DeveloperModulos
+        key={modulosSchool.id}
+        school={modulosSchool}
+        onBack={() => setModulosSchool(null)}
+        onSaved={(updated) => {
+          setModulosSchool(updated);
+          setSchools(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+        }}
+      />
+    );
+  }
+
   return (
     <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
       {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
@@ -316,6 +315,7 @@ export default function DeveloperPanel() {
                 <tr className="bg-dev-surface-high text-left text-[9.5px] font-bold uppercase tracking-wide text-dev-text-muted">
                   <th className="px-4 py-3">Escola</th>
                   <th className="px-4 py-3">Plano</th>
+                  <th className="px-4 py-3">Pacote</th>
                   <th className="px-4 py-3">Ativa</th>
                   <th className="px-4 py-3 w-10"></th>
                 </tr>
@@ -346,6 +346,11 @@ export default function DeveloperPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
+                      <button onClick={() => setModulosSchool(school)} className="text-xs font-bold text-dev-primary hover:underline">
+                        {nomeDoPacote(school)}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => toggleStatus(school.id, school.is_active)}
                         title={school.is_active ? 'Suspender acesso' : 'Reativar acesso'}
@@ -369,6 +374,12 @@ export default function DeveloperPanel() {
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
                           >
                             <Edit2 size={13} /> Editar
+                          </button>
+                          <button
+                            onClick={() => { setModulosSchool(school); setOpenMenuId(null); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
+                          >
+                            <LayoutGrid size={13} /> Módulos
                           </button>
                           <button
                             onClick={() => { handleDeleteSchool(school.id, school.name, school.school_code); setOpenMenuId(null); }}
@@ -417,6 +428,12 @@ export default function DeveloperPanel() {
                           <Edit2 size={13} /> Editar
                         </button>
                         <button
+                          onClick={() => { setModulosSchool(school); setOpenMenuId(null); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
+                        >
+                          <LayoutGrid size={13} /> Módulos
+                        </button>
+                        <button
                           onClick={() => { handleDeleteSchool(school.id, school.name, school.school_code); setOpenMenuId(null); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-error hover:bg-error/10 transition text-left"
                         >
@@ -429,6 +446,9 @@ export default function DeveloperPanel() {
                     <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' : 'bg-dev-surface-high text-dev-text-muted border-dev-border'}`}>
                       {school.plan}
                     </span>
+                    <button onClick={() => setModulosSchool(school)} className="text-xs font-bold text-dev-primary hover:underline mr-auto ml-2">
+                      {nomeDoPacote(school)}
+                    </button>
                     <button
                       onClick={() => toggleStatus(school.id, school.is_active)}
                       title={school.is_active ? 'Suspender acesso' : 'Reativar acesso'}
@@ -594,46 +614,14 @@ export default function DeveloperPanel() {
                 )}
               </div>
 
-              {/* MÓDULOS CONTRATADOS */}
+              {/* MÓDULOS CONTRATADOS: agora na tela própria (menu "⋯" › Módulos). */}
               <div className="mt-6 border-t border-dev-border pt-6">
-                <h4 className="text-sm font-bold text-dev-text mb-4">Módulos Contratados</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { id: 'cadastros', label: 'Cadastros', desc: 'Cadastro de usuários, comunicados e funcionários' },
-                    { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Gestão de usuários, alunos e funcionários' },
-                    { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas' },
-                    { id: 'checkin', label: 'Check-in/out', desc: 'Monitor, autoatendimento, presença e histórico' },
-                    { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos e datas do ano letivo' },
-                    { id: 'comunicados', label: 'Comunicados', desc: 'Envio e visualização de comunicados' },
-                    { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos por turma' },
-                    { id: 'cardapio', label: 'Cardápio', desc: 'Cardápio semanal da escola' },
-                    { id: 'diario', label: 'Diário', desc: 'Registro diário de refeições, sono e evacuação por aluno' },
-                    { id: 'chat', label: 'Chat', desc: 'Chat interno por setor (Administrativo, Diretoria, Coordenação, Recepção e Suporte Zela)' },
-                    { id: 'relatorios_pedagogicos', label: 'Módulo Pedagógico', desc: 'Portal do Professor: registros pedagógicos e relatórios de desenvolvimento' },
-                    { id: 'configuracoes', label: 'Configurações', desc: 'Acesso às configurações do portal' },
-                    { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e integração com gateway de pagamento (Asaas)' },
-                    { id: 'materias', label: 'Matérias/Disciplinas', desc: 'Cadastro de matérias (ou áreas de conhecimento) e associação com turmas' },
-                    { id: 'frequencia', label: 'Frequência', desc: 'Chamada letiva por turma/dia, independente do Módulo Pedagógico (Relatórios)' },
-                    { id: 'liveness_detection', label: 'Detecção de Vida (Liveness)', desc: 'Antifraude no reconhecimento facial do totem, contra fotos/telas. Sozinho, só OBSERVA (grava em Logs de erro, nunca bloqueia ninguém).' },
-                    { id: 'liveness_detection_enforce', label: 'Liveness · Bloqueio Ativo', desc: 'Só tem efeito com o módulo acima também ligado. Passa a recusar suspeitas de foto/tela de verdade (cai no mesmo Senha/QR de sempre). Só ativar depois de revisar os dados de observação em Logs de erro.' },
-                    { id: 'qr_checkin', label: 'Check-in por QR Code', desc: 'Adiciona a opção de check-in/check-out escaneando o QR de cada aluno no totem, com 1 toque de confirmação de quem está presente.' },
-                    { id: 'face_engine_human', label: 'Motor Facial · Human (beta)', desc: 'Troca o motor que DECIDE o reconhecimento facial de face-api.js para @vladmandic/human. Só ativar depois de validar os dados do modo observador (Logs de erro / shadow_face_recognition_log) — ver PLANO_MIGRACAO_BIBLIOTECA_RECONHECIMENTO_FACIAL.md, Fases C/D. Pessoas sem face_descriptor_v2 gerado continuam sendo reconhecidas pelo motor antigo automaticamente.' }
-                  ].map(mod => (
-                    <div key={mod.id} className={`flex items-start gap-3 p-3 border border-dev-border rounded-zela-md bg-dev-bg hover:bg-dev-surface-high transition ${mod.id === 'face_engine_human' ? 'sm:col-span-2' : ''}`}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-dev-text">{mod.label}</p>
-                        <p className="text-xs text-dev-text-muted mt-0.5">{mod.desc}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setFeaturesEnabled(prev => ({ ...prev, [mod.id]: !prev[mod.id] }))}
-                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${featuresEnabled[mod.id] ? 'bg-dev-primary' : 'bg-dev-surface-high'}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${featuresEnabled[mod.id] ? 'translate-x-2' : '-translate-x-2'}`} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <h4 className="text-sm font-bold text-dev-text mb-1">Módulos Contratados</h4>
+                <p className="text-xs text-dev-text-muted">
+                  {editingSchool
+                    ? 'Ficam na tela Módulos, no menu "⋯" da escola, com pacote, o que cada módulo inclui e o histórico.'
+                    : 'A escola nasce no pacote Essencial (plano base). Depois de criar, ajuste na tela Módulos, no menu "⋯" da escola.'}
+                </p>
               </div>
 
               {/* LIMITES DE AUTORIZADOS (matrícula) */}

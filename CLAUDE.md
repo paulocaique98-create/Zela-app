@@ -27,6 +27,16 @@ Aplicar direto no banco linkado:
 Não registrar: mudanças internas que o usuário não percebe (refactor, testes,
 migração invisível), nem trabalho ainda não aprovado/commitado pelo usuário.
 
+## Módulos contratados: tudo começa desativado
+
+Regra definida pelo usuário em 28/09/2026: todo e qualquer módulo, adicional
+ou recurso que precise ser ativado começa DESATIVADO. Escola nova nasce só
+com o plano base (sempre incluso, não se ativa). Ao criar um módulo ou
+adicional novo: registrar no catálogo `src/lib/modulosCatalogo.js` (nasce
+desligado) e, nos portais, ler a chave como `features.x === true` (ausente =
+desligado), nunca `!== false`. O teste "REGRA: todo módulo, adicional ou
+chave técnica começa desativado" em `modulosCatalogo.test.js` garante isso.
+
 ## Fluxo padrão de trabalho neste repositório
 
 - Nunca commitar/dar push sem autorização explícita do usuário, mesmo que uma
