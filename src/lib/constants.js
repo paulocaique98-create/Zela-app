@@ -120,6 +120,9 @@ export const SCREEN_LABELS = {
   'config-escola': 'Configurações da Escola', 'config-academico': 'Configurações Acadêmicas',
   'config-financeiro': 'Configurações Financeiras', 'config-comunicacao': 'Configurações de Comunicação',
   'config-seguranca': 'Segurança', integracoes: 'Integrações',
+  // Admin · módulos liberados pela Gestão (Permissões)
+  'gestao-contratos': 'Contratos', 'gestao-modelos': 'Modelos de Contrato', 'gestao-inadimplencia': 'Inadimplência',
+  'gestao-despesas': 'Despesas', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
   // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
   'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
   'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',

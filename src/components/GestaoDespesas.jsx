@@ -12,7 +12,7 @@ const BUCKET = 'expense-attachments';
 
 // Financeiro · Despesas (contas a pagar). Permissões: despesas.ver /
 // despesas.gerenciar (Gestão sempre; admin se liberado em Permissões).
-export default function GestaoDespesas({ currentUser }) {
+export default function GestaoDespesas({ currentUser, canManage = true }) {
   const [offset, setOffset] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [rows, setRows] = useState(null);
@@ -59,7 +59,7 @@ export default function GestaoDespesas({ currentUser }) {
           { label: 'Situação', value: r => STATUS[r.status] }, { label: 'Pago em', value: r => r.paid_on ? formatDateBR(r.paid_on) : '' },
           { label: 'Valor', value: r => (r.amount_cents / 100).toFixed(2).replace('.', ',') },
         ])}><Download size={15} /> Planilha</SecondaryButton>}
-        <PrimaryButton onClick={() => setEditing({ description: '', category: '', amount: '', due_date: todayISO(), supplier_id: '', notes: '' })}><Plus size={16} /> Nova despesa</PrimaryButton>
+        {canManage && <PrimaryButton onClick={() => setEditing({ description: '', category: '', amount: '', due_date: todayISO(), supplier_id: '', notes: '' })}><Plus size={16} /> Nova despesa</PrimaryButton>}
       </>}
     >
       <Notice>{error}</Notice>
@@ -98,9 +98,9 @@ export default function GestaoDespesas({ currentUser }) {
                       <td className="py-2 pr-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[r.status]}`}>{STATUS[r.status]}{r.paid_on ? ` em ${formatDateBR(r.paid_on)}` : ''}</span></td>
                       <td className="py-2 text-right whitespace-nowrap">
                         {r.attachment_path && <button onClick={() => openAttachment(r.attachment_path)} className="p-1.5 text-on-surface-variant hover:text-primary" aria-label="Abrir anexo"><Paperclip size={14} /></button>}
-                        {r.status === 'pendente' && <button onClick={() => setPaying(r)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-zela-md" aria-label="Marcar como paga"><CheckCircle2 size={15} /></button>}
-                        {r.status === 'pendente' && <button onClick={() => setEditing({ ...r, amount: (r.amount_cents / 100).toFixed(2).replace('.', ','), supplier_id: r.supplier_id || '' })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Editar"><Edit size={14} /></button>}
-                        {r.status === 'pendente' && <button onClick={() => cancel(r)} className="px-1.5 text-xs font-bold text-on-surface-variant hover:text-red-600">Cancelar</button>}
+                        {canManage && r.status === 'pendente' && <button onClick={() => setPaying(r)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-zela-md" aria-label="Marcar como paga"><CheckCircle2 size={15} /></button>}
+                        {canManage && r.status === 'pendente' && <button onClick={() => setEditing({ ...r, amount: (r.amount_cents / 100).toFixed(2).replace('.', ','), supplier_id: r.supplier_id || '' })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Editar"><Edit size={14} /></button>}
+                        {canManage && r.status === 'pendente' && <button onClick={() => cancel(r)} className="px-1.5 text-xs font-bold text-on-surface-variant hover:text-red-600">Cancelar</button>}
                       </td>
                     </tr>
                   ))}

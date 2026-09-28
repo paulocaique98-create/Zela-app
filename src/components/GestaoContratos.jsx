@@ -55,9 +55,9 @@ As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicat
 // Contratos (documento jurídico). A cobrança recorrente continua em
 // Financeiro · Mensalidades; aqui fica o texto que o responsável assina.
 // view: 'lista' | 'modelos' | 'assinaturas' | 'aditivos'
-export default function GestaoContratos({ currentUser, currentSchool, view = 'lista' }) {
+export default function GestaoContratos({ currentUser, currentSchool, view = 'lista', canManage = true }) {
   if (view === 'modelos') return <Modelos currentUser={currentUser} />;
-  return <Documentos currentUser={currentUser} currentSchool={currentSchool} view={view} />;
+  return <Documentos currentUser={currentUser} currentSchool={currentSchool} view={view} canManage={canManage} />;
 }
 
 // ─── Modelos ──────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ function ModeloModal({ currentUser, initial, onClose, onSaved }) {
 }
 
 // ─── Contratos, assinaturas e aditivos ────────────────────────────────────
-function Documentos({ currentUser, currentSchool, view }) {
+function Documentos({ currentUser, currentSchool, view, canManage }) {
   const [rows, setRows] = useState(null);
   const [statusFilter, setStatusFilter] = useState(view === 'assinaturas' ? 'enviado' : '');
   const [search, setSearch] = useState('');
@@ -208,7 +208,7 @@ function Documentos({ currentUser, currentSchool, view }) {
   return (
     <PageShell
       description={descriptions[view]}
-      actions={view !== 'assinaturas' && (
+      actions={canManage && view !== 'assinaturas' && (
         <PrimaryButton onClick={() => setCreating({ kind: view === 'aditivos' ? 'aditivo' : 'contrato' })}>
           <Plus size={16} /> {view === 'aditivos' ? 'Novo aditivo' : 'Gerar contrato'}
         </PrimaryButton>
@@ -244,7 +244,7 @@ function Documentos({ currentUser, currentSchool, view }) {
                     <td className="py-2 text-right whitespace-nowrap">
                       <button onClick={() => setViewing(d)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Abrir"><Eye size={15} /></button>
                       <button onClick={() => printContract(d, currentSchool?.name)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Imprimir"><Printer size={15} /></button>
-                      {d.status === 'assinado' && d.kind === 'contrato' && (
+                      {canManage && d.status === 'assinado' && d.kind === 'contrato' && (
                         <button onClick={() => setCreating({ kind: 'aditivo', parent: d })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Criar aditivo"><FilePlus2 size={15} /></button>
                       )}
                     </td>
@@ -260,7 +260,7 @@ function Documentos({ currentUser, currentSchool, view }) {
           onClose={() => setCreating(null)} onSaved={() => { setCreating(null); setSuccess('Documento salvo como rascunho. Revise e envie para a família.'); load(); }} />
       )}
       {viewing && (
-        <DocumentoModal doc={viewing} onClose={() => setViewing(null)} onSend={() => send(viewing)} onCancel={() => cancel(viewing)}
+        <DocumentoModal canManage={canManage} doc={viewing} onClose={() => setViewing(null)} onSend={() => send(viewing)} onCancel={() => cancel(viewing)}
           onPrint={() => printContract(viewing, currentSchool?.name)} onSaved={() => { setViewing(null); load(); }} />
       )}
     </PageShell>
@@ -395,11 +395,11 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
   );
 }
 
-function DocumentoModal({ doc, onClose, onSend, onCancel, onPrint, onSaved }) {
+function DocumentoModal({ doc, canManage, onClose, onSend, onCancel, onPrint, onSaved }) {
   const [body, setBody] = useState(doc.body);
   const [title, setTitle] = useState(doc.title);
   const [error, setError] = useState('');
-  const isDraft = doc.status === 'rascunho';
+  const isDraft = canManage && doc.status === 'rascunho';
   const pendingFields = (body.match(/\{\{\s*[a-z_]+\s*\}\}/g) || []);
 
   const saveDraft = async () => {
@@ -412,7 +412,7 @@ function DocumentoModal({ doc, onClose, onSend, onCancel, onPrint, onSaved }) {
     <Modal wide title={doc.title} onClose={onClose}
       footer={<>
         <SecondaryButton onClick={onPrint}><Printer size={15} /> Imprimir</SecondaryButton>
-        {['rascunho', 'enviado'].includes(doc.status) && <SecondaryButton onClick={onCancel}><XCircle size={15} /> Cancelar documento</SecondaryButton>}
+        {canManage && ['rascunho', 'enviado'].includes(doc.status) && <SecondaryButton onClick={onCancel}><XCircle size={15} /> Cancelar documento</SecondaryButton>}
         {isDraft && <SecondaryButton onClick={saveDraft}>Salvar alterações</SecondaryButton>}
         {isDraft && <PrimaryButton onClick={onSend} disabled={pendingFields.length > 0 || body !== doc.body || title !== doc.title}><Send size={15} /> Enviar para assinatura</PrimaryButton>}
       </>}>

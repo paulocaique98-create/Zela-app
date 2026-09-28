@@ -3,14 +3,16 @@ import { Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading, Notice } from './GestaoShared';
 
+// Só o Administrativo por enquanto: o portal das professoras não tem estes
+// módulos (a tabela no banco já aceita 'teacher' pra quando tiver).
 const ROLES = [
   { id: 'admin', label: 'Administrativo' },
-  { id: 'teacher', label: 'Professoras' },
 ];
 
 // Permissões · Perfis e Permissões. A Gestão tem tudo sempre (não dá pra se
 // trancar pra fora); aqui ela libera ou retira dos perfis Administrativo e
 // Professoras o acesso aos módulos novos (despesas, contratos, baixa manual…).
+// O que for liberado aparece no Portal do Admin, no grupo "Gestão".
 export default function GestaoPermissoes({ currentUser }) {
   const [catalog, setCatalog] = useState(null);
   const [overrides, setOverrides] = useState({});
@@ -106,7 +108,7 @@ export default function GestaoPermissoes({ currentUser }) {
           </div>
         )}
         <p className="text-xs text-on-surface-variant">
-          As telas que já existiam antes (alunos, matrículas, presença, cobranças) seguem as regras fixas de cada perfil. Esta tabela controla os módulos novos da Gestão.
+          O que você liberar aqui aparece no Portal do Administrativo, no menu "Gestão" (no próximo acesso ou ao recarregar a página). As telas que já existiam antes (alunos, matrículas, presença) seguem as regras fixas de cada perfil.
         </p>
       </div>
     </PageShell>

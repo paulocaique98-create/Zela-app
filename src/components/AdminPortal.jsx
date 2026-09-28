@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles } from 'lucide-react';
+import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -20,6 +20,8 @@ import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import KioskClock from './KioskClock';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { usePermissions } from '../hooks/usePermissions';
+import { PageShell } from './GestaoShared';
 
 // Lazy: cada tela só entra no bundle quando o admin realmente abre aquela aba
 // — reduz bastante o carregamento inicial do painel (dezenas de telas, a
@@ -51,6 +53,13 @@ const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics')
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
+// Módulos da Gestão que a Gestão pode liberar pro Administrativo
+// (Gestão · Permissões).
+const GestaoContratos = lazy(() => import('./GestaoContratos'));
+const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
+const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
+const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
+const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.CobrancasTab })));
 
 // Submenus do menu Relatórios — cada um vira sua própria tela conforme for
 // implementado; por enquanto todos apontam para o placeholder "em construção".
@@ -163,6 +172,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // desktop E está recolhido.
   const isDesktop = useIsDesktop();
   const collapsed = isDesktop && !isSidebarExpanded;
+  const perms = usePermissions(currentUser);
+  const canSeeContratos = perms['contratos.ver'] || perms['contratos.gerenciar'];
+  const canSeeDespesas = perms['despesas.ver'] || perms['despesas.gerenciar'];
+  const hasGestaoModules = canSeeContratos || canSeeDespesas || perms['fornecedores.gerenciar'] || perms['financeiro.baixa_manual'] || perms['relatorios.financeiro.ver'];
   // A senha só é exigida pra SAIR do Autoatendimento pra qualquer outro menu
   // (a tela fica exposta pra qualquer pessoa durante o check-in) — não mais
   // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
@@ -368,6 +381,24 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
+            {/* GESTÃO: só o que a Gestão liberou em Permissões */}
+            {hasGestaoModules && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Gestão"
+                icon={Briefcase}
+                isOpen={openAccordion === 'gestao'}
+                onToggle={() => toggleAccordion('gestao')}
+              >
+                {canSeeContratos && <SidebarItem active={adminTab === 'gestao-contratos'} icon={FileSignature} label="Contratos" onClick={() => go('gestao-contratos')} />}
+                {perms['contratos.gerenciar'] && <SidebarItem active={adminTab === 'gestao-modelos'} icon={LayoutTemplate} label="Modelos de Contrato" onClick={() => go('gestao-modelos')} />}
+                {perms['financeiro.baixa_manual'] && <SidebarItem active={adminTab === 'gestao-inadimplencia'} icon={AlertOctagon} label="Inadimplência" onClick={() => go('gestao-inadimplencia')} />}
+                {canSeeDespesas && <SidebarItem active={adminTab === 'gestao-despesas'} icon={Receipt} label="Despesas" onClick={() => go('gestao-despesas')} />}
+                {perms['fornecedores.gerenciar'] && <SidebarItem active={adminTab === 'gestao-fornecedores'} icon={Truck} label="Fornecedores" onClick={() => go('gestao-fornecedores')} />}
+                {perms['relatorios.financeiro.ver'] && <SidebarItem active={adminTab === 'gestao-relatorio-financeiro'} icon={BarChart3} label="Relatório Financeiro" onClick={() => go('gestao-relatorio-financeiro')} />}
+              </SidebarGroup>
+            )}
+
             {/* SISTEMA */}
             {showConfiguracoes && (
               <SidebarGroup
@@ -431,6 +462,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
+        {adminTab === 'gestao-contratos' && canSeeContratos && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="lista" canManage={Boolean(perms['contratos.gerenciar'])} />}
+        {adminTab === 'gestao-modelos' && perms['contratos.gerenciar'] && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="modelos" />}
+        {adminTab === 'gestao-inadimplencia' && perms['financeiro.baixa_manual'] && (
+          <PageShell description="Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora."><CobrancasTab currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment /></PageShell>
+        )}
+        {adminTab === 'gestao-despesas' && canSeeDespesas && <GestaoDespesas currentUser={currentUser} canManage={Boolean(perms['despesas.gerenciar'])} />}
+        {adminTab === 'gestao-fornecedores' && perms['fornecedores.gerenciar'] && <GestaoFornecedores currentUser={currentUser} />}
+        {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
         {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
