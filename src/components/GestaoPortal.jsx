@@ -102,6 +102,12 @@ export default function GestaoPortal({
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
+  // Aba e turma com que o perfil abre (ex.: "Mudar de turma" do painel).
+  const [alunoIntent, setAlunoIntent] = useState(null);
+  const openAlunoFromPainel = (id, intent = null) => {
+    setAlunoIntent(intent);
+    setSelectedAlunoId(id);
+  };
   const [financeConfigTab, setFinanceConfigTab] = useState('gateway');
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentUser?.school_id);
@@ -118,6 +124,7 @@ export default function GestaoPortal({
     go(tab);
   };
   const openAluno = (id) => {
+    setAlunoIntent(null);
     setSelectedAlunoId(id);
     setGestaoTab('secretaria-alunos');
     setOpenAccordion('secretaria');
@@ -264,12 +271,19 @@ export default function GestaoPortal({
           {gestaoTab === 'secretaria-alunos' && (
             <>
               {selectedAlunoId && (
-                <GestaoAlunoPerfil currentUser={currentUser} studentId={selectedAlunoId} onBack={() => setSelectedAlunoId(null)} />
+                <GestaoAlunoPerfil
+                  key={selectedAlunoId}
+                  currentUser={currentUser}
+                  studentId={selectedAlunoId}
+                  initialTab={alunoIntent?.tab}
+                  initialMoveTo={alunoIntent?.moveTo}
+                  onBack={() => { setSelectedAlunoId(null); setAlunoIntent(null); }}
+                />
               )}
               <div className={selectedAlunoId ? 'hidden' : 'h-full'}>
                 <GestaoAlunos
                   currentUser={currentUser}
-                  onOpenAluno={setSelectedAlunoId}
+                  onOpenAluno={openAlunoFromPainel}
                   onNovaMatricula={() => go('secretaria-matriculas')}
                   isVisible={!selectedAlunoId}
                 />

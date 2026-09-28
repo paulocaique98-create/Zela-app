@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, GraduationCap, ChevronRight, ChevronDown, ArrowLeft, ArrowRight, Plus, RefreshCw, CheckCircle2, Info } from 'lucide-react';
+import { Search, GraduationCap, ChevronRight, ChevronDown, ArrowLeft, ArrowRight, Plus, RefreshCw, CheckCircle2, Info, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { buildPainelAlunos, DOCUMENTOS_OBRIGATORIOS, SEM_TURMA } from '../lib/alunosPainel';
 import { Loading, Notice, SecondaryButton, PrimaryButton, Modal } from './GestaoShared';
+import { sugestoesDaEscola, formatIdade } from '../lib/sugestaoTurma';
 
 const PAGE_SIZE = 30;
 
@@ -106,7 +107,7 @@ async function selectAll(build) {
 
 async function loadPainelData(schoolId) {
   const [students, documentos, fichas, overdueCharges, { data: anoLetivo, error: anoError }] = await Promise.all([
-    selectAll(() => supabase.from('students').select('id, name, turma, turno, enrollment_status').eq('school_id', schoolId).order('id')),
+    selectAll(() => supabase.from('students').select('id, name, turma, turno, birth_date, enrollment_status').eq('school_id', schoolId).order('id')),
     selectAll(() => supabase.from('student_documents').select('student_id, category').eq('school_id', schoolId).in('category', DOCUMENTOS_OBRIGATORIOS.map(d => d.key)).order('id')),
     selectAll(() => supabase.from('fichas_medicas').select('student_id').eq('school_id', schoolId).order('student_id')),
     selectAll(() => supabase.from('financial_charges').select('student_id, amount_cents').eq('school_id', schoolId).eq('status', 'OVERDUE').order('id')),
@@ -198,6 +199,58 @@ function CartaoTurma({ turma, onOpen, onVerTurma }) {
   );
 }
 
+// Protótipo (28/09/2026): quem pode estar na hora de mudar de turma, só pela
+// idade (regras em src/lib/sugestaoTurma.js). "Mudar" abre o perfil na
+// Matrícula com a nova turma já escolhida; a escola confirma.
+function CartaoSugestoes({ sugestoes, onMudar, onOpen }) {
+  const [verTodas, setVerTodas] = useState(false);
+  const visiveis = verTodas ? sugestoes : sugestoes.slice(0, 4);
+  return (
+    <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-col gap-3 md:col-span-2 xl:col-span-3">
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <Sparkles size={17} className="text-primary shrink-0" />
+        <h3 className="text-base font-black text-on-surface">Hora de mudar de turma?</h3>
+        <span className="text-[10px] font-bold uppercase tracking-wide rounded-full px-2 py-0.5 bg-surface-container-low text-on-surface-variant">Prévia</span>
+      </div>
+      <p className="text-xs text-on-surface-variant">
+        Sugestão feita só pela idade: compara cada criança com a idade das crianças de cada turma. Em breve vai considerar também os relatórios e o desenvolvimento. A decisão é sempre da escola.
+      </p>
+      {sugestoes.length === 0 ? (
+        <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-emerald-700" /> Nenhuma criança com idade fora da turma agora.</p>
+      ) : (
+        <div className="flex flex-col">
+          {visiveis.map(sg => (
+            <div key={sg.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 py-2.5 border-t border-outline-variant/50">
+              <button onClick={() => onOpen(sg.id)} className="flex-1 min-w-0 text-left hover:text-primary">
+                <span className="block text-sm font-bold text-on-surface truncate">{sg.name}</span>
+                <span className="block text-xs text-on-surface-variant">
+                  {formatIdade(sg.idadeMeses)} · {sg.tipo === 'evoluir'
+                    ? `${sg.turmaAtual} → ${sg.turma}`
+                    : `bem mais nova que ${sg.turmaAtual}; confira a data de nascimento`}
+                </span>
+              </button>
+              {sg.tipo === 'evoluir' ? (
+                <button onClick={() => onMudar(sg)} className="self-start sm:self-auto min-h-[40px] text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-zela-md transition whitespace-nowrap">
+                  Mudar de turma
+                </button>
+              ) : (
+                <button onClick={() => onOpen(sg.id)} className="self-start sm:self-auto min-h-[40px] text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-zela-md transition whitespace-nowrap">
+                  Conferir cadastro
+                </button>
+              )}
+            </div>
+          ))}
+          {sugestoes.length > 4 && (
+            <button onClick={() => setVerTodas(v => !v)} className="self-start mt-1 min-h-[40px] text-sm font-bold text-primary hover:underline">
+              {verTodas ? 'Mostrar menos' : `Ver todas (${sugestoes.length})`}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // Celular: cada turma é uma sanfona com quem precisa de atenção por cima.
 function SanfonaTurma({ turma, open, onToggle, onOpen, onVerTurma }) {
   return (
@@ -269,6 +322,9 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
     () => (painelData ? buildPainelAlunos({ ...painelData, turmasConfig: schoolTurmas }) : null),
     [painelData, schoolTurmas],
   );
+
+  const sugestoes = useMemo(() => (painelData ? sugestoesDaEscola(painelData.students) : []), [painelData]);
+  const mudarDeTurma = (sg) => onOpenAluno(sg.id, { tab: 'matricula', moveTo: sg.turma });
 
   // Linha de atenção por aluno, para o ponto colorido da lista.
   const atencaoPorAluno = useMemo(() => {
@@ -507,6 +563,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                       onVerTurma={nome => abrirLista({ turma: nome })}
                     />
                   ))}
+                  <CartaoSugestoes sugestoes={sugestoes} onMudar={mudarDeTurma} onOpen={onOpenAluno} />
                 </div>
 
                 {/* Tablet e computador: cartões */}
@@ -555,6 +612,8 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                     )}
                     <VerMais onClick={() => abrirLista({ status: 'saidas' })}>Ver quem saiu</VerMais>
                   </section>
+
+                  <CartaoSugestoes sugestoes={sugestoes} onMudar={mudarDeTurma} onOpen={onOpenAluno} />
                 </div>
               </>
             )}

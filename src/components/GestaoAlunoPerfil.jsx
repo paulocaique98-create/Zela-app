@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, Pencil, Check, X, LogOut, Upload, Download, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, Pencil, Check, X, LogOut, Upload, Download, Trash2, ArrowRightLeft, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
 import { logAction } from '../lib/auditLog';
+import { perfilDasTurmas, sugerirTurma, formatIdade, idadeEmMeses, MOTIVOS_MUDANCA_TURMA } from '../lib/sugestaoTurma';
 
 const TABS = [
   { key: 'pessoais', label: 'Dados Pessoais', icon: User },
@@ -58,9 +59,11 @@ const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', PAID: 'Pago', OVERDUE: 'Em a
 // ainda consegue editar em paralelo (AdminUserRegistration.jsx), até
 // validar e cortar numa fase futura -- ver comentário na migration
 // 20260927b_secretaria_gestao_escreve_alunos.sql.
-export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
+// initialTab/initialMoveTo: vindo do cartão "Hora de mudar de turma?" do
+// painel de Alunos, abre direto na Matrícula com a mudança já preenchida.
+export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, initialTab = 'pessoais', initialMoveTo = null }) {
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
-  const [activeTab, setActiveTab] = useState('pessoais');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [student, setStudent] = useState(null);
   const [guardians, setGuardians] = useState([]);
@@ -87,19 +90,28 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
   const [isSavingTransfer, setIsSavingTransfer] = useState(false);
   const [transferError, setTransferError] = useState('');
 
+  // Mudar de turma (dentro da escola).
+  const [colegas, setColegas] = useState([]);
+  const [isMoving, setIsMoving] = useState(!!initialMoveTo);
+  const [moveTurma, setMoveTurma] = useState(initialMoveTo || '');
+  const [moveMotivo, setMoveMotivo] = useState(initialMoveTo ? MOTIVOS_MUDANCA_TURMA[0] : '');
+  const [moveNota, setMoveNota] = useState('');
+  const [isSavingMove, setIsSavingMove] = useState(false);
+  const [moveError, setMoveError] = useState('');
+
   const fetchAll = async () => {
     setIsLoading(true);
     setError('');
     try {
       const { data: studentData, error: studentError } = await supabase
         .from('students')
-        .select('id, name, birth_date, cidade_nascimento, turma, turno, periodo, contracted_hours, contracted_entry_time, contracted_exit_time, enrollment_status, family_id, autorizacao_imagem, autorizacao_emergencia_medica, users:family_id(name, email, phone, doc_type, doc_number, street, number, complement, neighborhood, city, state, zip_code)')
+        .select('id, school_id, name, birth_date, cidade_nascimento, turma, turno, periodo, contracted_hours, contracted_entry_time, contracted_exit_time, enrollment_status, family_id, autorizacao_imagem, autorizacao_emergencia_medica, users:family_id(name, email, phone, doc_type, doc_number, street, number, complement, neighborhood, city, state, zip_code)')
         .eq('id', studentId)
         .single();
       if (studentError) throw studentError;
       setStudent(studentData);
 
-      const [{ data: guardiansData }, { data: authorizedData }, { data: fichaData }, { data: contractData }, { data: documentsData }, { data: auditData }, { data: transfersData }] = await Promise.all([
+      const [{ data: guardiansData }, { data: authorizedData }, { data: fichaData }, { data: contractData }, { data: documentsData }, { data: auditData }, { data: transfersData }, { data: colegasData }] = await Promise.all([
         supabase.from('student_guardians').select('id, is_primary, is_financial, relationship, guardian_id, users:guardian_id(name, phone, email)').eq('student_id', studentId),
         supabase.from('authorized_persons').select('id, name, relation, status, has_photo').eq('family_id', studentData.family_id),
         supabase.from('fichas_medicas').select('*').eq('student_id', studentId).maybeSingle(),
@@ -107,12 +119,15 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
         supabase.from('student_documents').select('id, category, file_name, storage_path, notes, uploaded_at').eq('student_id', studentId).order('uploaded_at', { ascending: false }),
         supabase.from('audit_logs').select('id, action, details, actor_id, created_at, users:actor_id(name)').eq('entity_type', 'student').eq('entity_id', studentId).order('created_at', { ascending: false }),
         supabase.from('student_transfers').select('id, transfer_type, from_class_name, to_class_name, destination_school_name, reason, transferred_at, users:transferred_by(name)').eq('student_id', studentId).order('transferred_at', { ascending: false }),
+        // Idade das crianças de cada turma, para a sugestão de turma (prévia).
+        supabase.from('students').select('id, turma, turno, birth_date, enrollment_status').eq('school_id', studentData.school_id || currentUser.school_id).eq('enrollment_status', 'ativo'),
       ]);
       setGuardians(guardiansData || []);
       setAuthorized(authorizedData || []);
       setFichaMedica(fichaData || null);
       setContract(contractData || null);
       setDocuments(documentsData || []);
+      setColegas(colegasData || []);
 
       // Histórico consolidado (Fase 8): audit_logs cobre edições/documentos/
       // decisões de matrícula; student_transfers cobre turma/saída externa
@@ -159,7 +174,6 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
       name: student.name || '',
       birth_date: student.birth_date || '',
       cidade_nascimento: student.cidade_nascimento || '',
-      turma: student.turma || '',
       turno: student.turno || '',
       periodo: student.periodo || '',
       contracted_hours: student.contracted_hours || '',
@@ -177,8 +191,6 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
     setIsSaving(true);
     setSaveError('');
     try {
-      const turmaChanged = form.turma !== student.turma && form.turma.trim();
-
       const { error: updateError } = await supabase
         .from('students')
         .update({
@@ -196,17 +208,6 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
         })
         .eq('id', studentId);
       if (updateError) throw updateError;
-
-      // Turma muda por uma RPC dedicada (mantém histórico em
-      // student_transfers) -- nunca por UPDATE direto.
-      if (turmaChanged) {
-        const { error: transferError } = await supabase.rpc('transfer_student_class', {
-          p_student_id: studentId,
-          p_new_turma: form.turma.trim(),
-          p_reason: 'Editado pelo perfil do aluno (Secretaria)',
-        });
-        if (transferError) throw transferError;
-      }
 
       logAction({
         actorId: currentUser.id,
@@ -259,6 +260,38 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
       setTransferError(err.message || 'Não foi possível registrar a transferência.');
     } finally {
       setIsSavingTransfer(false);
+    }
+  };
+
+  const startMove = (turmaSugerida = '') => {
+    setMoveTurma(turmaSugerida);
+    setMoveMotivo(turmaSugerida ? MOTIVOS_MUDANCA_TURMA[0] : '');
+    setMoveNota('');
+    setMoveError('');
+    setIsTransferring(false);
+    setIsMoving(true);
+  };
+
+  // Mesma função do banco usada pela Recepção: troca a turma e grava em
+  // student_transfers (que já aparece no Histórico do aluno).
+  const handleConfirmMove = async () => {
+    setIsSavingMove(true);
+    setMoveError('');
+    try {
+      const reason = [moveMotivo, moveNota.trim()].filter(Boolean).join(' · ') || null;
+      const { error: moveRpcError } = await supabase.rpc('transfer_student_class', {
+        p_student_id: studentId,
+        p_new_turma: moveTurma,
+        p_reason: reason,
+      });
+      if (moveRpcError) throw moveRpcError;
+      setIsMoving(false);
+      await fetchAll();
+    } catch (err) {
+      console.error('[GestaoAlunoPerfil] Erro ao mudar de turma:', err);
+      setMoveError(err.message || 'Não foi possível mudar a turma.');
+    } finally {
+      setIsSavingMove(false);
     }
   };
 
@@ -356,6 +389,10 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
 
   const financialGuardian = guardians.find(g => g.is_financial) || guardians.find(g => g.is_primary);
   const canEditHere = activeTab === 'pessoais' || activeTab === 'matricula';
+  const isAtivo = (student.enrollment_status || 'ativo') === 'ativo';
+  const sugestao = isAtivo ? sugerirTurma(student, perfilDasTurmas(colegas)) : null;
+  const idadeMeses = idadeEmMeses(student.birth_date);
+  const turmasDestino = [...new Set([...schoolTurmas, ...colegas.map(c => c.turma).filter(Boolean)])].filter(t => t !== student.turma);
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
@@ -487,12 +524,9 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Turma</label>
-                <select value={form.turma} onChange={e => setForm(f => ({ ...f, turma: e.target.value }))} className="mt-1 w-full p-2.5 border border-outline-variant rounded-zela-md text-sm">
-                  <option value={student.turma}>{student.turma} (atual)</option>
-                  {schoolTurmas.filter(t => t !== student.turma).map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <p className="text-[11px] text-on-surface-variant/60 mt-1">Trocar a turma aqui já registra no histórico de transferências do aluno.</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Turma</p>
+                <p className="mt-1 text-sm text-on-surface">{student.turma || '·'}</p>
+                <p className="text-[11px] text-on-surface-variant/60 mt-1">Para trocar a turma, salve ou cancele esta edição e use o botão "Mudar de turma".</p>
               </div>
               <EditField label="Turno" value={form.turno} onChange={v => setForm(f => ({ ...f, turno: v }))} />
               <EditField label="Período" value={form.periodo} onChange={v => setForm(f => ({ ...f, periodo: v }))} />
@@ -507,12 +541,81 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack }) {
               <Field label="Turno" value={student.turno || '—'} />
               <Field label="Período" value={student.periodo || '—'} />
               <Field label="Ciclo contratado" value={student.contracted_hours ? `${student.contracted_hours}h` : '—'} />
-              <p className="text-xs text-on-surface-variant/60 pt-2">Transferências de turma feitas por aqui também aparecem no histórico do aluno em Admin/Recepção.</p>
+              <Field label="Idade" value={formatIdade(idadeMeses)} />
+
+              {sugestao && !isMoving && (
+                <div className={`p-3.5 rounded-zela-lg border flex flex-col sm:flex-row sm:items-center gap-3 ${sugestao.tipo === 'evoluir' ? 'bg-primary/5 border-primary/20' : 'bg-amber-50 border-amber-200'}`}>
+                  <Sparkles size={18} className={`shrink-0 ${sugestao.tipo === 'evoluir' ? 'text-primary' : 'text-amber-800'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-on-surface">
+                      {sugestao.tipo === 'evoluir' ? `Pode estar na hora de ir para ${sugestao.turma}` : 'Idade bem abaixo da turma'}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      {sugestao.tipo === 'evoluir'
+                        ? `Tem ${formatIdade(sugestao.idadeMeses)}; em ${sugestao.turma} a idade típica é ${formatIdade(Math.round(sugestao.medianaDestino))}. Sugestão só pela idade (prévia): avalie com a professora.`
+                        : `Tem ${formatIdade(sugestao.idadeMeses)}, e a idade típica da turma é ${formatIdade(Math.round(sugestao.medianaAtual))}. Confira a data de nascimento.`}
+                    </p>
+                  </div>
+                  {sugestao.tipo === 'evoluir' && (
+                    <button onClick={() => startMove(sugestao.turma)} className="self-start sm:self-auto text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition whitespace-nowrap">
+                      Mudar para {sugestao.turma}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {isAtivo && (
+                <div className="pt-4 border-t border-outline-variant">
+                  {!isMoving ? (
+                    <button onClick={() => startMove('')} className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-zela-md transition">
+                      <ArrowRightLeft size={14} /> Mudar de turma
+                    </button>
+                  ) : (
+                    <div className="space-y-3 max-w-md">
+                      <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant">Mudar de turma</p>
+                      <p className="text-[11px] text-on-surface-variant/60">O aluno continua matriculado na escola; muda só a turma. A mudança fica registrada no Histórico.</p>
+                      <div>
+                        <label htmlFor="mover-turma" className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Nova turma</label>
+                        <select id="mover-turma" value={moveTurma} onChange={e => setMoveTurma(e.target.value)} className="mt-1 w-full p-2.5 border border-outline-variant rounded-zela-md text-sm bg-white">
+                          <option value="">Escolha a turma</option>
+                          {turmasDestino.map(t => (
+                            <option key={t} value={t}>{t}{sugestao?.tipo === 'evoluir' && sugestao.turma === t ? ' (sugerida pela idade)' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Motivo</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {MOTIVOS_MUDANCA_TURMA.map(m => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setMoveMotivo(moveMotivo === m ? '' : m)}
+                              aria-pressed={moveMotivo === m}
+                              className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${moveMotivo === m ? 'bg-primary border-primary text-white' : 'bg-white border-outline-variant text-on-surface hover:border-primary/40'}`}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <EditField label="Observação (opcional)" value={moveNota} onChange={setMoveNota} />
+                      {moveError && <p className="text-xs text-red-600 font-medium">{moveError}</p>}
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setIsMoving(false)} disabled={isSavingMove} className="text-xs font-bold text-on-surface-variant hover:bg-surface-container px-3 py-2 rounded-zela-md transition">Cancelar</button>
+                        <button onClick={handleConfirmMove} disabled={isSavingMove || !moveTurma} className="flex items-center gap-1 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition disabled:opacity-60">
+                          {isSavingMove ? <Loader2 size={14} className="animate-spin" /> : <ArrowRightLeft size={14} />} Confirmar mudança
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {student.enrollment_status !== 'transferido' && (
                 <div className="pt-4 border-t border-outline-variant">
                   {!isTransferring ? (
-                    <button onClick={startTransfer} className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-zela-md transition">
+                    <button onClick={() => { setIsMoving(false); startTransfer(); }} className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-zela-md transition">
                       <LogOut size={14} /> Transferir para outra escola
                     </button>
                   ) : (
