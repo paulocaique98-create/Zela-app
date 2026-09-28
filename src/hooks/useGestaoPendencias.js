@@ -40,16 +40,17 @@ export function useGestaoPendencias(currentUser) {
     if (!schoolId) return;
     setState(s => ({ ...s, isLoading: true, error: '' }));
     try {
-      const [cadastros, matriculas, correcoes, vencidas, contratos, despesas, documentos] = await Promise.all([
+      const [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, documentos] = await Promise.all([
         supabase.from('users').select('id, name, role').eq('school_id', schoolId).eq('status', 'pending').in('role', ['family', 'teacher']),
         supabase.from('matricula_solicitacoes').select('id, tipo, criancas, submitted_at').eq('school_id', schoolId).eq('status', 'pending'),
         supabase.from('attendance_corrections').select('id, requested_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'pending'),
         supabase.from('financial_charges').select('id, amount_cents, due_date, students:student_id(name)').eq('school_id', schoolId).eq('status', 'OVERDUE'),
         supabase.from('contract_documents').select('id, title, sent_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'enviado'),
         supabase.from('expenses').select('id, description, amount_cents, due_date').eq('school_id', schoolId).eq('status', 'pendente').lte('due_date', inDays(7)),
+        supabase.from('account_deletion_requests').select('id, user_name, user_role, requested_at').eq('school_id', schoolId).eq('status', 'pendente'),
         fetchDocumentosPendentes(schoolId),
       ]);
-      const firstError = [cadastros, matriculas, correcoes, vencidas, contratos, despesas].find(r => r.error)?.error;
+      const firstError = [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes].find(r => r.error)?.error;
       if (firstError) throw firstError;
       setState({
         isLoading: false,
@@ -63,6 +64,7 @@ export function useGestaoPendencias(currentUser) {
           contratos: contratos.data || [],
           despesas: despesas.data || [],
           despesasAtrasadas: (despesas.data || []).filter(d => d.due_date < todayISO()),
+          exclusoes: exclusoes.data || [],
           documentos,
         },
       });

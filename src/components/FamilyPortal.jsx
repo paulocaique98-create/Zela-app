@@ -7,6 +7,7 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import FamilyInicio from './FamilyInicio';
+import FamilyBottomNav from './FamilyBottomNav';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
@@ -187,7 +188,7 @@ export default function FamilyPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -302,8 +303,8 @@ export default function FamilyPortal({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
-        
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+
         {/* BANNER NOTIFICAÇÕES PUSH */}
         {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3 justify-between shrink-0">
@@ -362,7 +363,19 @@ export default function FamilyPortal({
         </Suspense>
       </main>
 
-      {/* Chat flutuante — acessível de qualquer aba, canto inferior direito */}
+      <FamilyBottomNav
+        familyTab={familyTab}
+        go={go}
+        showCheckin={showCheckin}
+        showComunicados={showComunicados}
+        showFinanceiro={showFinanceiro}
+        comunicadosUnread={comunicadosUnread}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+
+      {/* Chat flutuante — acessível de qualquer aba, canto inferior direito
+          (no celular, acima da barra de navegação inferior) */}
       {showChat && createPortal(
         <>
           <button
@@ -371,7 +384,7 @@ export default function FamilyPortal({
               setIsChatExpanded(false);
               if (isChatOpen) refreshChatUnread();
             }}
-            className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
             title="Chat"
           >
             {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}

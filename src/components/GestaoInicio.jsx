@@ -29,7 +29,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab 
     })();
   }, [showFinanceiro, currentUser?.school_id]);
 
-  const pendTotal = pend ? pend.cadastros.length + pend.matriculas.length + pend.correcoes.length + pend.contratos.length : null;
+  const pendTotal = pend ? pend.cadastros.length + pend.matriculas.length + pend.correcoes.length + pend.contratos.length + pend.exclusoes.length : null;
 
   const menus = [
     { key: 'pendencias', label: 'Pendências', icon: Bell, tab: 'pendencias', badge: pendTotal || null },
@@ -54,7 +54,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab 
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint="cadastros, matrículas, correções e contratos" onClick={() => setGestaoTab('pendencias')} />
+          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint="cadastros, matrículas, correções, contratos e exclusões" onClick={() => setGestaoTab('pendencias')} />
           <StatCard label="Documentos faltando" value={pend ? pend.documentos.length : '·'} tone={pend?.documentos.length ? 'warn' : 'good'} hint="alunos ativos" onClick={() => setGestaoTab('secretaria-documentos')} />
           {showFinanceiro && (
             <>

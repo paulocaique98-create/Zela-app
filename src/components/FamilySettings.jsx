@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AccountDeletionSection from './AccountDeletionSection';
 import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -192,7 +193,8 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
 
   const handleLgpdAccept = async () => {
     try {
-      await supabase.from('users').update({ lgpd_accepted: true }).eq('id', currentUser.id);
+      const { error } = await supabase.from('users').update({ lgpd_accepted: true }).eq('id', currentUser.id);
+      if (error) throw error;
       setLgpdAccepted(true);
       setCurrentUser(prev => ({ ...prev, lgpd_accepted: true }));
     } catch (e) { console.error(e); }
@@ -200,7 +202,10 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
 
   const handleImageUsageRespond = async (agreed) => {
     try {
-      await supabase.from('users').update({ image_usage_accepted: agreed }).eq('id', currentUser.id);
+      // A coluna não existia na produção até 28/09/2026 e o erro era
+      // ignorado: a resposta aparecia na tela, mas não era salva.
+      const { error } = await supabase.from('users').update({ image_usage_accepted: agreed }).eq('id', currentUser.id);
+      if (error) throw error;
       setImageUsageStatus(agreed);
       setCurrentUser(prev => ({ ...prev, image_usage_accepted: agreed }));
     } catch (e) { console.error(e); }
@@ -338,6 +343,8 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
               </div>
             </div>
           )}
+
+          <AccountDeletionSection />
         </div>
       </div>
       </div>

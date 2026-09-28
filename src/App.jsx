@@ -11,6 +11,8 @@ import { formatPersonName } from './utils/formatName';
 import { FACE_DUPLICATE_THRESHOLD, euclideanDistance } from './lib/faceMatch';
 import { parseShortTime } from './utils/attendanceUtils';
 import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
+import { useTabHistory } from './hooks/useTabHistory';
+import { useAppUpdate } from './hooks/useAppUpdate';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
 
 const Login = lazy(() => import('./components/Login'));
@@ -27,6 +29,10 @@ const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
 // está "amanhã" entre ~21h e 23h59 no horário de Brasília (UTC-3).
+// Constantes estáveis (fora do componente) pro useTabHistory.
+const KIOSK_LOCKED_TABS = ['kiosk'];
+const NO_LOCKED_TABS = [];
+
 const getBrasiliaDateStr = (date = new Date()) =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
@@ -76,6 +82,21 @@ export default function App() {
   useEffect(() => { sessionStorage.setItem('zela_teacher_tab', teacherTab); }, [teacherTab]);
   useEffect(() => { sessionStorage.setItem('zela_gestao_tab', gestaoTab); }, [gestaoTab]);
   useEffect(() => { sessionStorage.setItem('zela_developer_tab', developerTab); }, [developerTab]);
+
+  // Botão Voltar do celular/navegador volta à tela anterior do portal ativo
+  // (antes saía do Zela). O Autoatendimento fica travado: sair dele exige senha.
+  const activeRole = currentUser?.role || null;
+  const [activeTab, setActiveTab] =
+    activeRole === 'admin' ? [adminTab, setAdminTab] :
+    activeRole === 'family' ? [familyTab, setFamilyTab] :
+    activeRole === 'teacher' ? [teacherTab, setTeacherTab] :
+    activeRole === 'gestao' ? [gestaoTab, setGestaoTab] :
+    activeRole === 'developer' ? [developerTab, setDeveloperTab] :
+    [null, null];
+  useTabHistory(activeTab ? activeRole : null, activeTab, setActiveTab, activeRole === 'admin' ? KIOSK_LOCKED_TABS : NO_LOCKED_TABS);
+
+  // Publicação nova do Zela enquanto a aba estava aberta: oferece recarregar.
+  const updateAvailable = useAppUpdate();
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
   // pra anexar aos logs de erro (ver errorLogger.js > setCurrentScreen). Só
@@ -1409,6 +1430,17 @@ export default function App() {
             : setFamilyTab
           }
         />
+      )}
+
+      {/* Nova versão publicada: não aparece no Autoatendimento (tela pública
+          do totem, que já recarrega ao sair). */}
+      {updateAvailable && !isKioskFullscreen && (
+        <div role="status" className="shrink-0 bg-primary text-white px-4 py-2 flex items-center justify-center gap-3 text-sm">
+          <span className="font-medium">Nova versão do Zela disponível.</span>
+          <button onClick={() => window.location.reload()} className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-zela-md font-bold text-xs">
+            Atualizar
+          </button>
+        </div>
       )}
 
       {/* Só o respiro de mobile pequeno (p-3) continua igual -- é o que

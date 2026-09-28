@@ -19,6 +19,10 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
       render: m => `${(m.criancas || []).map(c => c.nome).join(', ') || 'Solicitação'} · enviada em ${formatDateBR(m.submitted_at)}`,
     },
     {
+      key: 'exclusoes', title: 'Pedidos de exclusão de conta (prazo de 30 dias)', tab: 'cadastros-exclusoes', items: data.exclusoes,
+      render: r => `${r.user_name} · pedido em ${formatDateBR(r.requested_at)}`,
+    },
+    {
       key: 'correcoes', title: 'Correções de presença para aprovar', tab: 'attendance-corrections', items: data.correcoes,
       render: c => `${c.students?.name || 'Aluno'} · pedida em ${formatDateBR(c.requested_at)}`,
     },

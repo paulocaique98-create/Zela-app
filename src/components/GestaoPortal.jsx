@@ -3,7 +3,7 @@ import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
-  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck,
+  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX,
 } from 'lucide-react';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -43,6 +43,7 @@ const GestaoOcorrencias = lazy(() => import('./GestaoOcorrencias'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
+const GestaoExclusoesConta = lazy(() => import('./GestaoExclusoesConta'));
 const ConfigComunicacao = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigComunicacao })));
 const ConfigSeguranca = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigSeguranca })));
 // Telas do Admin reaproveitadas (a RLS de cada tabela já aceita gestao).
@@ -199,6 +200,7 @@ export default function GestaoPortal({
               {item('cadastros-funcionarios', Users, 'Funcionários e Acessos')}
               {item('cadastros-turmas', School, 'Turmas')}
               {item('cadastros-fornecedores', Truck, 'Fornecedores')}
+              {item('cadastros-exclusoes', UserX, 'Pedidos de exclusão')}
             </>, pendingUsersCount > 0 ? pendingUsersCount : null)}
             {group('academico', 'Acadêmico', BookOpen, <>
               {item('academico-ano-letivo', CalendarRange, 'Ano Letivo')}
@@ -282,6 +284,7 @@ export default function GestaoPortal({
             </div>
           )}
           {gestaoTab === 'cadastros-fornecedores' && <GestaoFornecedores currentUser={currentUser} />}
+          {gestaoTab === 'cadastros-exclusoes' && <GestaoExclusoesConta currentUser={currentUser} />}
 
           {/* Acadêmico (consulta) */}
           {gestaoTab === 'academico-ano-letivo' && <GestaoAnoLetivo currentUser={currentUser} />}

@@ -3,11 +3,29 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import compression from 'vite-plugin-compression'
 
+// Identificador desta publicação: o app aberto compara com /version.json
+// e avisa quando existe versão nova (src/hooks/useAppUpdate.js).
+const BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 12) || Date.now().toString(36)
+
+function versionFilePlugin() {
+  return {
+    name: 'zela-version-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: BUILD_ID }) })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_BUILD__: JSON.stringify(BUILD_ID),
+  },
   plugins: [
     react(),
     tailwindcss(),
+    versionFilePlugin(),
     compression({
       algorithm: 'gzip',
       ext: '.gz',
