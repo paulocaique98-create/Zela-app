@@ -259,12 +259,22 @@ export default function GestaoPortal({
           {gestaoTab === 'pendencias' && <GestaoPendencias currentUser={currentUser} setGestaoTab={goFromShortcut} />}
 
           {/* Secretaria */}
+          {/* O painel de alunos fica montado (escondido) enquanto o perfil está
+              aberto, para voltar no mesmo ponto (turma, filtros, busca). */}
           {gestaoTab === 'secretaria-alunos' && (
-            selectedAlunoId ? (
-              <GestaoAlunoPerfil currentUser={currentUser} studentId={selectedAlunoId} onBack={() => setSelectedAlunoId(null)} />
-            ) : (
-              <GestaoAlunos currentUser={currentUser} onOpenAluno={setSelectedAlunoId} />
-            )
+            <>
+              {selectedAlunoId && (
+                <GestaoAlunoPerfil currentUser={currentUser} studentId={selectedAlunoId} onBack={() => setSelectedAlunoId(null)} />
+              )}
+              <div className={selectedAlunoId ? 'hidden' : 'h-full'}>
+                <GestaoAlunos
+                  currentUser={currentUser}
+                  onOpenAluno={setSelectedAlunoId}
+                  onNovaMatricula={() => go('secretaria-matriculas')}
+                  isVisible={!selectedAlunoId}
+                />
+              </div>
+            </>
           )}
           {gestaoTab === 'secretaria-matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
           {gestaoTab === 'secretaria-documentos' && <GestaoDocumentosPendentes currentUser={currentUser} onOpenAluno={openAluno} />}
