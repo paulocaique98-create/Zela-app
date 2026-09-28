@@ -1,7 +1,32 @@
 # Plano · Zela nos aplicativos Android e iOS
 
-**Data:** 28/09/2026
+**Data:** 28/09/2026 · **Atualizado em:** 28/09/2026 (2ª versão: o que já foi adiantado na web e cronograma com datas)
 **Base da análise:** código atual do Zela (React 19 + Vite 8 + Tailwind 4, cerca de 38.600 linhas em `src/`, 115 componentes, 5 portais: Família, Professora, Admin, Gestão e Suporte), Supabase (banco, Auth, Storage, Realtime em 11 telas, 27 Edge Functions), PWA atual (`public/manifest.json` + `public/sw.js`), notificações Web Push (VAPID), reconhecimento facial no aparelho (face-api.js + Human, modelos de 22 MB em `public/`), pagamentos Asaas (PIX, boleto, link) e hospedagem na Vercel (`sensekids.vercel.app`).
+
+---
+
+## 0. Status em 28/09/2026 · o que já foi adiantado na web
+
+Entre a 1ª versão deste plano e o início oficial (01/10/2026), os itens do plano que também tinham uso real na web foram feitos e publicados. Eles já funcionam hoje para a escola e diminuem o trabalho das fases:
+
+| Item do plano | Fase | Situação | Publicado em |
+|---|---|---|---|
+| Botão voltar volta à tela anterior (lógica em `useTabHistory.js`, pronta para ligar ao botão físico do Android) | 7 (B3) | Web pronta; no app falta ligar ao `@capacitor/app` | `1b1007e` |
+| Barra de navegação inferior da Família no celular | 7 | Pronto | `1b1007e` |
+| Aviso "Nova versão do Zela disponível" (`version.json`) | 8 | Pronto na web; no app, falta a tabela `app_versions` | `1b1007e` |
+| "Excluir minha conta" (Família) e tela da Gestão para responder | 9 | Pronto; falta a opção para a Professora (no app) | `1b1007e` |
+| Consentimentos de imagem e LGPD com data carimbada pelo servidor | 6 e 9 | Pronto | `1b1007e` |
+| Avisos do Zela no lugar dos 21 `alert` e 2 `confirm` (`toast.js`) | 7 (B8) | **Resolvido** | `5f90f04` |
+| Endereço público fixo nos links (`publicAppUrl`) | 4 (B2) | Código pronto; falta a variável `VITE_PUBLIC_APP_URL` na Vercel e o domínio próprio | `5f90f04` |
+| Faixa "Sem conexão com a internet" | 7 | Pronto (falta guardar a última versão das telas no app) | `5f90f04` |
+| Cache de 7 dias dos modelos de reconhecimento facial | 6 (B7) | Pronto na web; no app falta o download sob demanda | `5f90f04` |
+| Limpeza supervisionada da biometria (LGPD) | 9 | Pronto | `5f90f04` |
+| Envio único de notificações (`_shared/push.ts`) já com FCM para Android e iOS; tabela `push_subscriptions` com `platform` e `token` | 3 (B1) | **Servidor pronto**; falta o Firebase e o registro do token no app | `17ceb6a` |
+| Fonte Inter servida pelo próprio Zela | 1 | Pronto | `b9aab8d` |
+| Tabelas largas em cartões no celular (`ResponsiveTable`) | 7 | Pronto nas telas de Gestão e Financeiro | `b9aab8d` |
+| Base da política de privacidade | 0 e 9 | Com o advogado (`POLITICA_PRIVACIDADE_BASE.md`) | `1b1007e` |
+
+**Efeito no prazo:** cerca de 1 semana de desenvolvimento a menos, principalmente nas Fases 3, 7 e 9.
 
 ---
 
@@ -21,7 +46,13 @@
   * `PrivacyInfo.xcprivacy` no iOS;
   * contas de demonstração para o revisor.
 * **Ponto de atenção prático:** o app iOS só é compilado em macOS. Como o desenvolvimento é em Windows, é preciso um Mac ou um serviço de build em nuvem (Codemagic, GitHub Actions com máquina macOS, Ionic Appflow).
-* **Prazo estimado:** 7 a 9 semanas até a publicação nas duas lojas, com uma escola piloto em teste fechado a partir da semana 5 (seção 8).
+* **Prazo (2ª versão, seção 8):** seguindo o plano à risca a partir de **01/10/2026**, os apps chegam a **100% das famílias nas duas lojas em 15/01/2027**, com duas semanas de folga até a volta às aulas (início de fevereiro). São cerca de **15 semanas de calendário**:
+  * 7 semanas de desenvolvimento e testes (01/10 a 19/11), já descontado o que foi adiantado na web (seção 0);
+  * 3 semanas de piloto com a escola;
+  * cerca de 2 semanas de revisão das lojas e lançamento gradual;
+  * o restante são feriados, a pausa de fim de ano da Apple e folga.
+* **Por que mais que os 7 a 9 semanas da 1ª versão:** aquela conta era só de trabalho, sem calendário. Esta inclui 5 feriados, a espera das contas das lojas, a pausa de fim de ano da Apple (23/12 a 03/01) e o recesso escolar, que empurra o lançamento para janeiro de qualquer forma.
+* **Caminho crítico:** as contas das lojas em nome da empresa. O número D-U-N-S pode levar até 30 dias e precisa ser pedido em **01/10**. Se a conta Apple não estiver pronta até **13/11**, o piloto começa só no Android e o iPhone entra depois (seção 8.3).
 
 ---
 
@@ -65,6 +96,15 @@
 | B6 | `supabase.js` (sessão no `localStorage`), `zela_user` e `zela_school` no `localStorage` | Os dados do app podem ser apagados pelo iOS em falta de espaço, e a sessão fica em armazenamento comum | Sessão no Keychain / Keystore (Fase 2) |
 | B7 | `FaceCameraCapture.jsx` (Família · Autorizados) usa os modelos faciais de 13 MB | Embutir os modelos deixa o instalador pesado; baixar a cada uso gasta o plano de dados da família | Baixar sob demanda e guardar em cache no aparelho (Fase 6) |
 | B8 | 11 `alert(...)` e 3 `confirm(...)` | Aparecem como caixa do sistema com o título "localhost" | Trocar pelo `ConfirmModal` e pelos avisos que o app já tem (Fase 7) |
+
+**Situação em 28/09/2026:**
+* **Resolvido:** B8.
+* **Parcialmente resolvido:**
+  * B1: o servidor já envia para web e apps; falta o app registrar o token.
+  * B2: o código já usa o endereço público; falta o domínio e os links universais.
+  * B3: a lógica de voltar está pronta; falta ligar ao botão físico.
+  * B7: o cache está pronto; falta o download sob demanda no app.
+* **Pendentes (só existem no app):** B4, B5 e B6.
 
 ### 3.3 Pontos de atenção (não bloqueiam, mas melhoram muito)
 
@@ -148,7 +188,9 @@ src/platform/
 
 ## 5. Fases de implementação
 
-### Fase 0 · Preparação e contas (semana 1, em paralelo)
+### Fase 0 · Preparação e contas (a partir de 01/10, em paralelo às demais)
+
+* **Pedir no dia 01/10:** D-U-N-S, Apple Developer (empresa), Google Play Console (empresa) e o domínio. São os itens com espera externa e definem o caminho crítico (seção 8.2).
 
 * **Apple Developer Program** (US$ 99/ano) e **Google Play Console** (US$ 25, taxa única), em nome da **empresa** (CNPJ), não de pessoa física. Motivos:
   1. O nome da empresa aparece como desenvolvedora nas lojas (mais confiança para as escolas).
@@ -159,7 +201,9 @@ src/platform/
 * **Política de privacidade e termos de uso** publicados numa página pública. Devem citar: dados de crianças, fotos, dados de rosto (biometria), dados financeiros, Asaas, Firebase, Sentry e retenção conforme `LGPD_RETENCAO.md`.
 * **Acesso a um Mac** ou conta num serviço de build em nuvem com macOS.
 
-### Fase 1 · Base do app (semana 1)
+### Fase 1 · Base do app (01/10 a 09/10)
+
+* **Já adiantado:** fonte Inter embutida (`b9aab8d`).
 
 * Instalar o Capacitor e gerar os projetos `android/` e `ios/` (entram no git; os builds não).
 * Configurar `capacitor.config` com `webDir: 'dist'`, sem `server.url` em produção.
@@ -171,7 +215,7 @@ src/platform/
 * Esconder a tela de abertura só quando a sessão já foi verificada, para não "piscar" o login.
 * **Entrega:** o Zela abrindo no emulador Android e no simulador iOS, com login funcionando.
 
-### Fase 2 · Sessão e segurança (semana 2)
+### Fase 2 · Sessão e segurança (13/10 a 16/10)
 
 * **Adaptador de armazenamento da sessão do Supabase** (`auth.storage`) usando Keychain (iOS) e Keystore (Android). Na web, continua o `localStorage`.
 * **Renovação do token ao voltar do segundo plano:** `startAutoRefresh` / `stopAutoRefresh` no evento de estado do app, como recomenda o Supabase para apps móveis.
@@ -181,7 +225,9 @@ src/platform/
 * **Sair da conta** apaga sessão, token de push do aparelho (remove a linha em `push_subscriptions`) e cache local.
 * **Não fazer agora:** fixação de certificado (certificate pinning) e detecção de root/jailbreak. O custo de manutenção é alto e o ganho é pequeno para o risco atual, já que a segurança real está na RLS.
 
-### Fase 3 · Notificações nativas (semanas 2 e 3)
+### Fase 3 · Notificações nativas (19/10 a 23/10)
+
+* **Já adiantado:** a migração de `push_subscriptions` e o `_shared/push.ts` com as 8 funções migradas e testadas estão em produção (`17ceb6a`). Falta só a parte do app e do Firebase, por isso a fase caiu para 1 semana.
 
 * Criar o projeto Firebase, registrar os apps Android e iOS, gerar a chave APNs na Apple e enviar ao Firebase.
 * Aplicar a migração de `push_subscriptions` (seção 4.3): primeiro no Supabase local, depois `db push --linked`.
@@ -190,7 +236,9 @@ src/platform/
 * Adaptar o `PushGuidanceModal` para o app (só instruções de Ajustes).
 * **Entrega:** comunicado, cobrança, chat, contrato para assinar e aviso de entrada chegando com o app fechado, nos dois sistemas.
 
-### Fase 4 · Links, e-mails e rotas públicas (semana 3)
+### Fase 4 · Links, e-mails e rotas públicas (26/10 a 28/10)
+
+* **Já adiantado:** `publicAppUrl` nos 3 pontos que montam link (`5f90f04`).
 
 * `PUBLIC_APP_URL` em `Login.jsx`, `AdminUserRegistration.jsx`, `AdminMatriculas.jsx` e onde mais se monta link.
 * Arquivos `.well-known` na Vercel, com a exceção no `vercel.json`.
@@ -198,7 +246,7 @@ src/platform/
 * Revisar os modelos de e-mail do Supabase Auth, que precisam apontar para o domínio público.
 * **Entrega:** clicar no e-mail de "esqueci a senha" no celular abre o app direto na tela de nova senha.
 
-### Fase 5 · Arquivos, impressão, pagamento e compartilhamento (semana 4)
+### Fase 5 · Arquivos, impressão, pagamento e compartilhamento (28/10 a 30/10 e 03/11)
 
 * **`print.js`:** na web mantém o comportamento atual. No app, entrega o mesmo HTML ao diálogo de impressão do sistema (que também permite "Salvar como PDF" no iOS e no Android). Os 6 módulos `print*.js` e as telas de relatório passam a chamar só `printHtml`.
 * **`files.js`:** o `downloadCSV` de `gestaoUtils.js` e o download de fotos do mural salvam o arquivo no aparelho e abrem a tela de compartilhar (WhatsApp, e-mail, Arquivos, Drive).
@@ -209,7 +257,9 @@ src/platform/
 * **Contratos:** na Família, o botão "Imprimir ou salvar em PDF" usa `printHtml`. Oferecer também "Compartilhar PDF".
 * **Pagamentos e regras das lojas:** mensalidade escolar é um serviço prestado fora do app, então **não precisa** usar a compra dentro do app da Apple nem do Google. PIX, boleto e link Asaas são permitidos. Deixar isso explicado nas notas para o revisor.
 
-### Fase 6 · Câmera e reconhecimento facial (semana 4)
+### Fase 6 · Câmera e reconhecimento facial (04/11 a 06/11)
+
+* **Já adiantado:** data do consentimento registrada e cache mais longo dos modelos na web (`1b1007e`, `5f90f04`).
 
 * **Permissões com textos claros:**
   * iOS: `NSCameraUsageDescription` ("O Zela usa a câmera para cadastrar o rosto das pessoas autorizadas a buscar seu filho e para enviar fotos e documentos"), `NSPhotoLibraryUsageDescription` e `NSFaceIDUsageDescription`;
@@ -219,7 +269,9 @@ src/platform/
 * **Documentos e fotos (matrícula, comunicados, despesas):** o seletor de arquivos continua funcionando. Oferecer também "Tirar foto", com compressão antes do envio (já existe `imageCompression.js`).
 * **LGPD e lojas:** o cadastro de rosto já pede consentimento (`consentMessage`). Registrar a data do consentimento e declarar o uso de dados de rosto nos formulários de privacidade das lojas. A Apple exige explicar por que o dado de rosto é coletado e como é protegido.
 
-### Fase 7 · Experiência nativa (semanas 4 e 5)
+### Fase 7 · Experiência nativa (04/11 a 11/11, junto com as Fases 6 e 8)
+
+* **Já adiantado:** lógica do voltar, barra inferior da Família, troca dos `alert`/`confirm`, faixa sem conexão e tabelas em cartões (`1b1007e`, `5f90f04`, `b9aab8d`). Restam: ligar o botão físico, puxar para atualizar, haptics, teclado e guardar a última versão das telas.
 
 * **Botão voltar do Android (B3):** `backButton.js` guarda a pilha de abas visitadas em cada portal. Voltar fecha modal, depois volta de aba, e só na tela Início pede "Toque de novo para sair".
 * **Barra de navegação inferior na Família** (no celular), com 4 ou 5 itens principais: Início, Acompanhamento, Financeiro, Comunicados e Mais. O menu completo continua em "Mais". Ordenar pelos cliques, como já é feito nos atalhos da Início.
@@ -232,7 +284,9 @@ src/platform/
 * **Tamanhos de toque** de no mínimo 44×44 pontos e contraste revisado. Suporte ao aumento de fonte do sistema (acessibilidade), testando em fonte grande.
 * **Modo escuro:** fica para uma versão futura. Os tokens de cor atuais facilitam, mas exigem revisão de todas as telas.
 
-### Fase 8 · Desempenho, atualizações e versões (semana 5)
+### Fase 8 · Desempenho, atualizações e versões (09/11 a 11/11)
+
+* **Já adiantado:** aviso de nova versão na web (`1b1007e`).
 
 * **Metas:** abrir o app em menos de 2 segundos num Android intermediário comum no Brasil (linha Galaxy A, Moto G) e instalador abaixo de 30 MB.
 * Conferir que `pdf`, `xlsx`, `tesseract`, `face-api` e `human` continuam fora do carregamento inicial.
@@ -240,7 +294,9 @@ src/platform/
 * **Versão mínima obrigatória:** tabela `app_versions` (plataforma, versão mínima, mensagem). Na abertura, se o app estiver abaixo do mínimo, mostra "Atualize o Zela para continuar", com botão para a loja. Isso é essencial quando uma mudança no banco não for compatível com versões antigas.
 * **Numeração:** o app segue a versão do `package.json` (hoje 1.4.2), e o número de build aumenta a cada envio para a loja.
 
-### Fase 9 · Conformidade com as lojas (semanas 5 e 6)
+### Fase 9 · Conformidade com as lojas (11/11 a 13/11)
+
+* **Já adiantado:** exclusão de conta da Família, limpeza de biometria e base da política de privacidade (`1b1007e`, `5f90f04`). **Prazo externo:** a política revisada pelo advogado precisa estar publicada até 13/11, porque o formulário das lojas pede o endereço dela.
 
 * **Exclusão de conta pelo próprio usuário (obrigatória na Apple):**
   * hoje só a Gestão exclui contas;
@@ -264,7 +320,7 @@ src/platform/
 * **Android:** nível de API alvo exigido pelo Google no momento do envio, assinatura pelo Play App Signing, e permissão de notificações no Android 13+ pedida na hora certa.
 * **Textos das lojas em português**, sem hífen (padrão "·" do projeto), com capturas de tela reais de cada perfil em iPhone de tela grande e pequena, iPad (se liberar para iPad) e Android.
 
-### Fase 10 · Qualidade e testes (contínua, foco nas semanas 5 e 6)
+### Fase 10 · Qualidade e testes (contínua; foco em 16/11 a 19/11)
 
 * **Manter a suíte atual** (`npm run build` + `npx vitest run` com Supabase local) como porta de entrada. Somar testes unitários da camada `src/platform/`, com os plugins simulados.
 * **Testes de ponta a ponta no aparelho com Maestro:** fluxos em arquivos simples, roda em emulador e em serviço de nuvem. Fluxos mínimos:
@@ -279,14 +335,15 @@ src/platform/
 * **Sentry nativo** (`@sentry/capacitor`) com versão e build identificados, para separar erro do app, erro da web e travamento nativo. Manter o `client_error_logs` e marcar a plataforma em cada registro (coluna ou contexto `platform`).
 * **Monitorar:** taxa de travamento (meta abaixo de 0,5% das sessões), entrega de push (`push_delivery_attempts` por plataforma) e tempo de abertura.
 
-### Fase 11 · Piloto e lançamento (semanas 6 a 9)
+### Fase 11 · Piloto e lançamento (23/11/2026 a 15/01/2027)
 
-* **Semana 6:** TestFlight (iOS) e teste interno do Play (Android) com a equipe.
-* **Semanas 6 a 8:** teste fechado com **uma escola piloto** (Gestão, 2 professoras, 10 a 20 famílias). Coletar retorno por um formulário simples dentro do app.
-* **Semana 8:** envio para revisão (a Apple costuma levar de 1 a 3 dias; a primeira revisão pode ter idas e vindas).
-* **Semana 9:** lançamento gradual:
-  * Google Play em 10%, 50% e 100% ao longo de uma semana, acompanhando o Sentry;
-  * iOS com lançamento em fases (7 dias).
+* **16/11 a 19/11:** TestFlight (iOS) e teste interno do Play (Android) com a equipe.
+* **23/11 a 11/12:** teste fechado com **uma escola piloto** (Gestão, 2 professoras, 10 a 20 famílias). Coletar retorno por um formulário simples dentro do app. Termina antes do recesso escolar de dezembro, enquanto as famílias ainda usam o Zela todos os dias.
+* **14/12 a 16/12:** últimas correções e envio para revisão nas duas lojas (até 16/12, antes da pausa de fim de ano da Apple).
+* **16/12 a 22/12:** revisão (a Apple costuma levar de 1 a 3 dias; a primeira revisão pode ter idas e vindas). Se houver recusa, corrigir e reenviar até 22/12.
+* **04/01 a 15/01/2027:** lançamento gradual:
+  * Google Play em 10%, 50% e 100%, acompanhando o Sentry;
+  * iOS com lançamento em fases de 7 dias.
 * **Comunicação às escolas:**
   * registrar em Atualizações (`system_updates`);
   * mostrar um aviso na versão web ("O Zela agora tem app · baixe na App Store e no Google Play") com links para as lojas;
@@ -323,36 +380,63 @@ src/platform/
 
 ---
 
-## 8. Cronograma estimado
+## 8. Cronograma (2ª versão, com datas)
 
-| Semana | Fases | Entrega |
+### 8.1 Calendário seguindo o plano à risca
+
+Considera um desenvolvedor dedicado, os feriados nacionais (12/10, 02/11, 20/11, 25/12 e 01/01) e o que já foi adiantado (seção 0).
+
+| Período | Fases | Entrega | Marco |
+|---|---|---|---|
+| 01/10 a 09/10 | 0 e 1 | Contas e D-U-N-S pedidos no dia 01/10; domínio; Capacitor instalado; app abrindo no Android e no iOS com login | Início |
+| 13/10 a 16/10 | 2 | Sessão no Keychain/Keystore, Face ID/digital, renovação do token, tela protegida nos apps recentes | |
+| 19/10 a 23/10 | 3 | Firebase criado; app registrando o token; push chegando com o app fechado nos dois sistemas | **Push nativo** |
+| 26/10 a 03/11 | 4 e 5 | Links universais (`.well-known`), senha e matrícula abrindo o app; impressão, PDF, compartilhar, boleto no navegador interno e PIX | |
+| 04/11 a 11/11 | 6, 7 e 8 | Câmera validada em aparelho real; modelos faciais sob demanda; botão voltar físico; teclado; puxar para atualizar; versão mínima; atualização ao vivo | **App completo** |
+| 11/11 a 13/11 | 9 | `PrivacyInfo.xcprivacy`, formulários de privacidade, Escola Demonstração, exclusão de conta da Professora, textos e capturas das lojas | Política publicada |
+| 16/11 a 19/11 | 10 | Testes em 4 aparelhos reais e roteiros automáticos (Maestro); TestFlight e teste interno do Play | **Versão de teste** |
+| 23/11 a 11/12 | 11 | Piloto de 3 semanas com uma escola; correções semanais pela atualização ao vivo | **Piloto** |
+| 14/12 a 16/12 | 11 | Correções finais e envio para revisão nas duas lojas | **Envio** |
+| 16/12 a 22/12 | 11 | Revisão das lojas; reenvio se houver recusa | Aprovação |
+| 23/12 a 03/01 | · | Pausa de fim de ano (Apple com revisão reduzida; recesso escolar) | Folga |
+| 04/01 a 15/01/2027 | 11 | Lançamento gradual até 100% nas duas lojas; aviso na versão web | **Lançamento** |
+| 18/01 a 29/01/2027 | · | Folga para correções antes da volta às aulas | Margem |
+
+**Total:** cerca de 15 semanas de calendário (01/10/2026 a 15/01/2027). São 7 de desenvolvimento, 3 de piloto, cerca de 2 de revisão e lançamento, e o restante de feriados, pausa e folga.
+
+### 8.2 Caminho crítico (o que atrasa tudo se atrasar)
+
+| Item | Prazo limite | Por quê |
 |---|---|---|
-| 1 | 0 e 1 | Contas em andamento; app abrindo no Android e iOS com login |
-| 2 | 2 e início da 3 | Sessão segura, biometria, migração de push no banco |
-| 3 | 3 e 4 | Push nativo nos dois sistemas; links de senha, convite e matrícula abrindo o app |
-| 4 | 5, 6 e início da 7 | Impressão, PDF, compartilhar, boleto, PIX, câmera e modelos faciais sob demanda |
-| 5 | 7 e 8 | Botão voltar, barra inferior, sem internet, desempenho, versão mínima |
-| 6 | 9 e 10 | Exclusão de conta, formulários de privacidade, Escola Demonstração, testes em aparelhos; TestFlight e teste interno |
-| 7 e 8 | 10 e 11 | Piloto com uma escola; correções; envio para revisão |
-| 9 | 11 | Lançamento gradual nas duas lojas |
+| Pedir D-U-N-S, Apple Developer e Google Play em nome da empresa | **01/10** | O D-U-N-S pode levar até 30 dias, e a conta Apple de empresa só é aprovada depois dele |
+| Mac ou serviço de build em nuvem para o iOS | 09/10 | Sem isso o app de iPhone não é gerado |
+| Firebase e chave APNs | 19/10 | Começo da Fase 3 |
+| Domínio próprio (D3) | 23/10 | Os links universais (Fase 4) ficam amarrados ao domínio |
+| Política de privacidade aprovada pelo advogado e publicada | **13/11** | As duas lojas exigem o endereço dela no cadastro do app |
+| Conta Apple aprovada | **13/11** | TestFlight do piloto (16/11) |
+| Escola piloto confirmada e famílias avisadas | 20/11 | Início do piloto (23/11) |
+| Envio para revisão | **16/12** | Depois disso, a pausa de fim de ano da Apple pode empurrar a aprovação para janeiro |
 
-A estimativa considera um desenvolvedor dedicado. As contas das lojas e o D-U-N-S podem atrasar o início se não forem pedidos logo na semana 1.
+### 8.3 Riscos e plano B
 
----
+* **Conta Apple atrasada (D-U-N-S):** o piloto começa só no Android em 23/11 e o iPhone entra no piloto quando a conta sair. Se sair depois de 11/12, o iOS é lançado 2 a 3 semanas depois do Android, ainda em janeiro.
+* **Recusa na primeira revisão da Apple** (comum em apps com login e dados de crianças): a margem de 16/12 a 22/12 permite um reenvio. Com duas recusas, a aprovação vai para a primeira semana de janeiro e o lançamento termina em 22/01, ainda antes da volta às aulas.
+* **Problema grave no piloto:** a atualização ao vivo corrige telas no mesmo dia; mudança nativa exige nova versão de teste (1 a 2 dias).
+* **Sem um desenvolvedor dedicado:** com metade do tempo, o desenvolvimento dobra (7 para 14 semanas) e o lançamento vai para março de 2027, depois da volta às aulas. Nesse caso, a recomendação é lançar primeiro só o Android.
 
 ## 9. Decisões que dependem de você
 
-| # | Decisão | Recomendação |
-|---|---|---|
-| D1 | Contas das lojas em nome de qual empresa (CNPJ)? | Empresa, não pessoa física |
-| D2 | Nome nas lojas e identificador do app | "Zela" (ou "Zela Escola" se ocupado); `br.com.zela.app` |
-| D3 | Domínio próprio antes do lançamento? | Sim (ex.: `app.zela.com.br`) |
-| D4 | Como compilar o iOS: Mac próprio ou serviço em nuvem? | Codemagic ou Appflow no começo, com um Mac para depuração |
-| D5 | Admin e Gestão entram no app já na v1? | Sim, sem o Autoatendimento |
-| D6 | Totem ganha app próprio? | Sim, numa fase posterior, só Android |
-| D7 | Projeto Supabase de homologação? | Sim; se não, "Escola Demonstração" isolada na produção |
-| D8 | Liberar o app para iPad? | Sim para Gestão e Admin (tela maior ajuda); exige capturas de iPad |
-| D9 | Exclusão de conta: prazo e o que é mantido | Até 30 dias, preservando só o exigido por lei, conforme `LGPD_RETENCAO.md` |
+| # | Decisão | Recomendação | Decidir até |
+|---|---|---|---|
+| D1 | Contas das lojas em nome de qual empresa (CNPJ)? | Empresa, não pessoa física | 01/10 |
+| D2 | Nome nas lojas e identificador do app | "Zela" (ou "Zela Escola" se ocupado); `br.com.zela.app` | 01/10 |
+| D3 | Domínio próprio antes do lançamento? | Sim (ex.: `app.zela.com.br`) | 23/10 |
+| D4 | Como compilar o iOS: Mac próprio ou serviço em nuvem? | Codemagic ou Appflow no começo, com um Mac para depuração | 09/10 |
+| D5 | Admin e Gestão entram no app já na v1? | Sim, sem o Autoatendimento | 09/10 |
+| D6 | Totem ganha app próprio? | Sim, numa fase posterior, só Android | após o lançamento |
+| D7 | Projeto Supabase de homologação? | Sim; se não, "Escola Demonstração" isolada na produção | 13/11 |
+| D8 | Liberar o app para iPad? | Sim para Gestão e Admin (tela maior ajuda); exige capturas de iPad | 13/11 |
+| D9 | Exclusão de conta: prazo e o que é mantido | Até 30 dias, preservando só o exigido por lei, conforme `LGPD_RETENCAO.md` | 13/11 |
 
 ---
 
