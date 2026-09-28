@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ResponsiveTable } from './GestaoShared';
 import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
@@ -148,47 +149,32 @@ export function ContratosTab({ currentUser }) {
           <p className="text-on-surface-variant font-medium text-sm">Nenhum contrato criado ainda.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                <th className="py-2 pr-3">Aluno</th>
-                <th className="py-2 pr-3">Responsável</th>
-                <th className="py-2 pr-3">Ciclo</th>
-                <th className="py-2 pr-3">Valor</th>
-                <th className="py-2 pr-3">1º Vencimento</th>
-                <th className="py-2 pr-3">Status</th>
-                <th className="py-2 pr-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {contracts.map(c => (
-                <tr key={c.id} className="border-b border-outline-variant/50">
-                  <td className="py-2 pr-3 font-medium text-on-surface">{c.students?.name || '—'}</td>
-                  <td className="py-2 pr-3 text-on-surface-variant">{c.guardian?.name || '—'}</td>
-                  <td className="py-2 pr-3">{CYCLE_LABELS[c.billing_cycle] || c.billing_cycle}</td>
-                  <td className="py-2 pr-3 font-bold">{centsToBRL(c.amount_cents)}</td>
-                  <td className="py-2 pr-3">{c.first_due_date ? new Date(c.first_due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
-                  <td className="py-2 pr-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CONTRACT_STATUS_CLASSES[c.status] || ''}`}>
-                      {CONTRACT_STATUS_LABELS[c.status] || c.status}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-3 text-right">
-                    {c.status === 'active' && (
-                      <button
-                        onClick={() => setCancelTarget(c)}
-                        className="text-xs font-bold text-red-600 hover:bg-red-50 px-2 py-1 rounded-zela-md transition"
-                      >
-                        Cancelar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          rows={contracts}
+          columns={[
+            { label: 'Aluno', primary: true, render: c => c.students?.name || '·' },
+            { label: 'Responsável', className: 'text-on-surface-variant', render: c => c.guardian?.name || '·' },
+            { label: 'Ciclo', render: c => CYCLE_LABELS[c.billing_cycle] || c.billing_cycle },
+            { label: 'Valor', className: 'font-bold', render: c => centsToBRL(c.amount_cents) },
+            { label: '1º Vencimento', render: c => (c.first_due_date ? new Date(c.first_due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·') },
+            {
+              label: 'Status',
+              render: c => (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CONTRACT_STATUS_CLASSES[c.status] || ''}`}>
+                  {CONTRACT_STATUS_LABELS[c.status] || c.status}
+                </span>
+              ),
+            },
+            {
+              label: '', actions: true, align: 'right',
+              render: c => c.status === 'active' && (
+                <button onClick={() => setCancelTarget(c)} className="text-xs font-bold text-red-600 hover:bg-red-50 px-2 py-1 rounded-zela-md transition">
+                  Cancelar
+                </button>
+              ),
+            },
+          ]}
+        />
       )}
 
       {isModalOpen && (
@@ -513,55 +499,42 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
           <p className="text-on-surface-variant/70 text-xs mt-1">Cobranças aparecem aqui quando o Asaas emite e envia o webhook.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                <th className="py-2 pr-3">Aluno</th>
-                <th className="py-2 pr-3">Vencimento</th>
-                <th className="py-2 pr-3">Valor</th>
-                <th className="py-2 pr-3">Método</th>
-                <th className="py-2 pr-3">Status</th>
-                <th className="py-2 pr-3">Link</th>
-                {canRegisterPayment && <th className="py-2 pr-3" />}
-              </tr>
-            </thead>
-            <tbody>
-              {charges.map(c => {
+        <ResponsiveTable
+          rows={charges}
+          columns={[
+            { label: 'Aluno', primary: true, render: c => c.students?.name || '·' },
+            { label: 'Vencimento', render: c => (c.due_date ? new Date(c.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·') },
+            { label: 'Valor', className: 'font-bold', render: c => centsToBRL(c.amount_cents) },
+            { label: 'Método', className: 'uppercase text-xs text-on-surface-variant', render: c => c.payment_method || '·' },
+            {
+              label: 'Status',
+              render: c => (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CHARGE_STATUS_CLASSES[c.status] || ''}`}>
+                  {CHARGE_STATUS_LABELS[c.status] || c.status}
+                </span>
+              ),
+            },
+            {
+              label: 'Link',
+              render: c => {
                 const link = c.payment_link || c.boleto_url;
-                return (
-                  <tr key={c.id} className="border-b border-outline-variant/50">
-                    <td className="py-2 pr-3 font-medium text-on-surface">{c.students?.name || '—'}</td>
-                    <td className="py-2 pr-3">{c.due_date ? new Date(c.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
-                    <td className="py-2 pr-3 font-bold">{centsToBRL(c.amount_cents)}</td>
-                    <td className="py-2 pr-3 uppercase text-xs text-on-surface-variant">{c.payment_method || '—'}</td>
-                    <td className="py-2 pr-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CHARGE_STATUS_CLASSES[c.status] || ''}`}>
-                        {CHARGE_STATUS_LABELS[c.status] || c.status}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-3">
-                      {link ? (
-                        <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
-                          Abrir <ExternalLink size={12} />
-                        </a>
-                      ) : '—'}
-                    </td>
-                    {canRegisterPayment && (
-                      <td className="py-2 pr-3 text-right">
-                        {['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(c.status) && (
-                          <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
-                            <HandCoins size={13} /> Registrar pagamento
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                return link ? (
+                  <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+                    Abrir <ExternalLink size={12} />
+                  </a>
+                ) : '·';
+              },
+            },
+            ...(canRegisterPayment ? [{
+              label: '', actions: true, align: 'right',
+              render: c => ['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(c.status) && (
+                <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
+                  <HandCoins size={13} /> Registrar pagamento
+                </button>
+              ),
+            }] : []),
+          ]}
+        />
       )}
 
       {payingCharge && (

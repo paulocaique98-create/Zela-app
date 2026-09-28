@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { printContract } from '../lib/printContract';
 import { centsToBRL, formatDateBR, fillTemplate } from '../lib/gestaoUtils';
-import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton } from './GestaoShared';
+import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
 export const CONTRACT_STATUS = { rascunho: 'Rascunho', enviado: 'Aguardando assinatura', assinado: 'Assinado', cancelado: 'Cancelado' };
@@ -227,34 +227,25 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
           </select>
         </div>
         {rows === null ? <Loading /> : filtered.length === 0 ? <EmptyState icon={FileSignature} text="Nenhum documento encontrado." /> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                <th className="py-2 pr-3">Aluno</th><th className="py-2 pr-3">Documento</th><th className="py-2 pr-3">Situação</th>
-                <th className="py-2 pr-3">{view === 'assinaturas' ? 'Enviado em' : 'Criado em'}</th>
-                {view === 'assinaturas' && <th className="py-2 pr-3">Assinatura</th>}
-                <th className="py-2" />
-              </tr></thead>
-              <tbody>
-                {filtered.map(d => (
-                  <tr key={d.id} className="border-b border-outline-variant/50">
-                    <td className="py-2 pr-3 font-medium text-on-surface">{d.students?.name || '·'}</td>
-                    <td className="py-2 pr-3">{d.title}</td>
-                    <td className="py-2 pr-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[d.status]}`}>{CONTRACT_STATUS[d.status]}</span></td>
-                    <td className="py-2 pr-3 whitespace-nowrap">{formatDateBR(view === 'assinaturas' ? d.sent_at : d.created_at)}</td>
-                    {view === 'assinaturas' && <td className="py-2 pr-3 text-xs">{d.signed_at ? `${d.signer_name} · ${new Date(d.signed_at).toLocaleString('pt-BR')}` : '·'}</td>}
-                    <td className="py-2 text-right whitespace-nowrap">
-                      <button onClick={() => setViewing(d)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Abrir"><Eye size={15} /></button>
-                      <button onClick={() => printContract(d, currentSchool?.name)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Imprimir"><Printer size={15} /></button>
-                      {canManage && d.status === 'assinado' && d.kind === 'contrato' && (
-                        <button onClick={() => setCreating({ kind: 'aditivo', parent: d })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Criar aditivo"><FilePlus2 size={15} /></button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            rows={filtered}
+            columns={[
+              { label: 'Aluno', primary: true, render: d => d.students?.name || '·' },
+              { label: 'Documento', render: d => d.title },
+              { label: 'Situação', render: d => <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[d.status]}`}>{CONTRACT_STATUS[d.status]}</span> },
+              { label: view === 'assinaturas' ? 'Enviado em' : 'Criado em', className: 'whitespace-nowrap', render: d => formatDateBR(view === 'assinaturas' ? d.sent_at : d.created_at) },
+              ...(view === 'assinaturas' ? [{ label: 'Assinatura', className: 'text-xs', render: d => (d.signed_at ? `${d.signer_name} · ${new Date(d.signed_at).toLocaleString('pt-BR')}` : '·') }] : []),
+              { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: d => (
+                <span className="inline-flex items-center gap-1">
+                  <button onClick={() => setViewing(d)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Abrir"><Eye size={15} /></button>
+                  <button onClick={() => printContract(d, currentSchool?.name)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Imprimir"><Printer size={15} /></button>
+                  {canManage && d.status === 'assinado' && d.kind === 'contrato' && (
+                    <button onClick={() => setCreating({ kind: 'aditivo', parent: d })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Criar aditivo"><FilePlus2 size={15} /></button>
+                  )}
+                </span>
+              ) },
+            ]}
+          />
         )}
       </div>
       {creating && (

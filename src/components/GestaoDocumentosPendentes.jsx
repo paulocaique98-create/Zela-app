@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { FolderCheck, Download, ArrowRight } from 'lucide-react';
 import { fetchDocumentosPendentes, REQUIRED_DOCUMENTS } from '../hooks/useGestaoPendencias';
 import { downloadCSV } from '../lib/gestaoUtils';
-import { PageShell, Loading, EmptyState, Notice, SecondaryButton } from './GestaoShared';
+import { PageShell, Loading, EmptyState, Notice, SecondaryButton, ResponsiveTable } from './GestaoShared';
 
 // Secretaria · Documentos pendentes: checklist dos documentos obrigatórios
 // por aluno ativo. O envio continua no perfil do aluno (aba Documentos) --
@@ -50,29 +50,21 @@ export default function GestaoDocumentosPendentes({ currentUser, onOpenAluno }) 
             <EmptyState icon={FolderCheck} text="Todos os alunos ativos estão com os documentos em dia." />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                    <th className="py-2 pr-3">Aluno</th><th className="py-2 pr-3">Turma</th><th className="py-2 pr-3">Falta</th><th className="py-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(r => (
-                    <tr key={r.id} className="border-b border-outline-variant/50">
-                      <td className="py-2 pr-3 font-medium text-on-surface">{r.name}</td>
-                      <td className="py-2 pr-3 text-on-surface-variant">{r.turma || '·'}</td>
-                      <td className="py-2 pr-3">
-                        <div className="flex flex-wrap gap-1">
-                          {r.missing.map(m => <span key={m.key} className="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{m.label}</span>)}
-                        </div>
-                      </td>
-                      <td className="py-2 text-right">
-                        <button onClick={() => onOpenAluno(r.id)} className="text-xs font-bold text-primary inline-flex items-center gap-1 hover:underline">Enviar <ArrowRight size={12} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable
+                rows={filtered}
+                columns={[
+                  { label: 'Aluno', primary: true, render: r => r.name },
+                  { label: 'Turma', className: 'text-on-surface-variant', render: r => r.turma || '·' },
+                  { label: 'Falta', render: r => (
+                    <div className="flex flex-wrap gap-1 justify-end md:justify-start">
+                      {r.missing.map(m => <span key={m.key} className="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{m.label}</span>)}
+                    </div>
+                  ) },
+                  { label: '', actions: true, align: 'right', render: r => (
+                    <button onClick={() => onOpenAluno(r.id)} className="text-xs font-bold text-primary inline-flex items-center gap-1 hover:underline">Enviar <ArrowRight size={12} /></button>
+                  ) },
+                ]}
+              />
             </div>
           )}
         </>

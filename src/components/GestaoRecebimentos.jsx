@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Upload, Download, HandCoins, Landmark } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { centsToBRL, formatDateBR, monthRange, parseOFXCredits, downloadCSV } from '../lib/gestaoUtils';
-import { PageShell, Tabs, Loading, EmptyState, Notice, SecondaryButton } from './GestaoShared';
+import { PageShell, Tabs, Loading, EmptyState, Notice, SecondaryButton, ResponsiveTable } from './GestaoShared';
 import { RegistrarPagamentoModal } from './AdminFinanceiro';
 
 const METHOD_LABELS = { pix: 'PIX', boleto: 'Boleto', credit_card: 'Cartão', link: 'Link', cash: 'Dinheiro', transfer: 'Transferência', other: 'Outro' };
@@ -61,27 +61,21 @@ function Recebidos({ currentUser }) {
       </div>
       <Notice>{error}</Notice>
       {rows === null ? <Loading /> : rows.length === 0 ? <EmptyState icon={HandCoins} text="Nenhum recebimento neste mês." /> : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-              <th className="py-2 pr-3">Aluno</th><th className="py-2 pr-3">Vencimento</th><th className="py-2 pr-3">Pago em</th><th className="py-2 pr-3">Forma</th><th className="py-2 pr-3 text-right">Valor</th>
-            </tr></thead>
-            <tbody>
-              {rows.map(r => (
-                <tr key={r.id} className="border-b border-outline-variant/50">
-                  <td className="py-2 pr-3 font-medium text-on-surface">{r.students?.name || '·'}</td>
-                  <td className="py-2 pr-3">{formatDateBR(r.due_date)}</td>
-                  <td className="py-2 pr-3">{formatDateBR(r.paid_at)}</td>
-                  <td className="py-2 pr-3">
-                    {METHOD_LABELS[r.payment_method] || '·'}
-                    {MANUAL.includes(r.payment_method) && <span className="ml-1.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full">baixa manual</span>}
-                  </td>
-                  <td className="py-2 pr-3 text-right font-bold">{centsToBRL(r.amount_cents)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          rows={rows}
+          columns={[
+            { label: 'Aluno', primary: true, render: r => r.students?.name || '·' },
+            { label: 'Vencimento', render: r => formatDateBR(r.due_date) },
+            { label: 'Pago em', render: r => formatDateBR(r.paid_at) },
+            { label: 'Forma', render: r => (
+              <>
+                {METHOD_LABELS[r.payment_method] || '·'}
+                {MANUAL.includes(r.payment_method) && <span className="ml-1.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full">baixa manual</span>}
+              </>
+            ) },
+            { label: 'Valor', align: 'right', className: 'font-bold', render: r => centsToBRL(r.amount_cents) },
+          ]}
+        />
       )}
     </div>
   );
@@ -128,38 +122,27 @@ function Conciliar({ currentUser }) {
       <Notice type="success">{msg && msg.startsWith('Baixa') ? msg : ''}</Notice>
       {msg && !msg.startsWith('Baixa') && <p className="text-sm text-on-surface-variant">{msg}</p>}
       {credits && credits.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-              <th className="py-2 pr-3">Data</th><th className="py-2 pr-3">Descrição no extrato</th><th className="py-2 pr-3 text-right">Valor</th><th className="py-2 pr-3">Cobrança sugerida</th>
-            </tr></thead>
-            <tbody>
-              {credits.map(cr => {
-                const cands = candidatesFor(cr);
-                return (
-                  <tr key={cr.id} className="border-b border-outline-variant/50 align-top">
-                    <td className="py-2 pr-3 whitespace-nowrap">{formatDateBR(cr.date)}</td>
-                    <td className="py-2 pr-3 text-on-surface-variant">{cr.memo || '·'}</td>
-                    <td className="py-2 pr-3 text-right font-bold">{centsToBRL(cr.amount_cents)}</td>
-                    <td className="py-2 pr-3">
-                      {done.has(cr.id) ? <span className="text-xs font-bold text-emerald-700">Baixa feita</span>
-                        : cands.length === 0 ? <span className="text-xs text-on-surface-variant flex items-center gap-1"><Landmark size={12} /> Sem cobrança correspondente</span>
-                        : (
-                          <div className="space-y-1">
-                            {cands.slice(0, 3).map(c => (
-                              <button key={c.id} onClick={() => setPaying({ charge: c, credit: cr })} className="block text-left text-xs font-bold text-primary hover:underline">
-                                {c.students?.name || 'Aluno'} · vence {formatDateBR(c.due_date)}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          rows={credits}
+          columns={[
+            { label: 'Valor', primary: true, render: cr => `${centsToBRL(cr.amount_cents)} · ${formatDateBR(cr.date)}` },
+            { label: 'Descrição no extrato', className: 'text-on-surface-variant', render: cr => cr.memo || '·' },
+            { label: 'Cobrança sugerida', render: cr => {
+              const cands = candidatesFor(cr);
+              if (done.has(cr.id)) return <span className="text-xs font-bold text-emerald-700">Baixa feita</span>;
+              if (cands.length === 0) return <span className="text-xs text-on-surface-variant inline-flex items-center gap-1"><Landmark size={12} /> Sem cobrança correspondente</span>;
+              return (
+                <div className="space-y-1">
+                  {cands.slice(0, 3).map(c => (
+                    <button key={c.id} onClick={() => setPaying({ charge: c, credit: cr })} className="block text-left text-xs font-bold text-primary hover:underline">
+                      {c.students?.name || 'Aluno'} · vence {formatDateBR(c.due_date)}
+                    </button>
+                  ))}
+                </div>
+              );
+            } },
+          ]}
+        />
       )}
       {paying && (
         <RegistrarPagamentoModal

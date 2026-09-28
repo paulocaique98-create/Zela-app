@@ -3,7 +3,7 @@ import { Plus, Receipt, Edit, Download, CheckCircle2, Paperclip } from 'lucide-r
 import { supabase } from '../lib/supabase';
 import { uploadFile, buildSafeFileName, getSignedUrl } from '../lib/storage';
 import { centsToBRL, brlToCents, formatDateBR, monthRange, todayISO, downloadCSV } from '../lib/gestaoUtils';
-import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton, StatCard } from './GestaoShared';
+import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton, StatCard, ResponsiveTable } from './GestaoShared';
 import { EXPENSE_CATEGORIES } from './GestaoFornecedores';
 
 const STATUS = { pendente: 'Pendente', pago: 'Paga', cancelado: 'Cancelada' };
@@ -80,33 +80,29 @@ export default function GestaoDespesas({ currentUser, canManage = true }) {
             <StatCard label="Em atraso" value={overdue.length} tone={overdue.length ? 'bad' : 'good'} hint={centsToBRL(overdue.reduce((s, r) => s + r.amount_cents, 0))} />
           </div>
           {rows.length === 0 ? <EmptyState icon={Receipt} text="Nenhuma despesa neste mês." /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                  <th className="py-2 pr-3">Vencimento</th><th className="py-2 pr-3">Descrição</th><th className="py-2 pr-3">Categoria</th><th className="py-2 pr-3 text-right">Valor</th><th className="py-2 pr-3">Situação</th><th className="py-2" />
-                </tr></thead>
-                <tbody>
-                  {rows.map(r => (
-                    <tr key={r.id} className="border-b border-outline-variant/50">
-                      <td className={`py-2 pr-3 whitespace-nowrap ${r.status === 'pendente' && r.due_date < todayISO() ? 'text-red-600 font-bold' : ''}`}>{formatDateBR(r.due_date)}</td>
-                      <td className="py-2 pr-3">
-                        <p className="font-medium text-on-surface">{r.description}</p>
-                        {r.suppliers?.name && <p className="text-xs text-on-surface-variant">{r.suppliers.name}</p>}
-                      </td>
-                      <td className="py-2 pr-3 text-on-surface-variant">{r.category}</td>
-                      <td className="py-2 pr-3 text-right font-bold">{centsToBRL(r.amount_cents)}</td>
-                      <td className="py-2 pr-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[r.status]}`}>{STATUS[r.status]}{r.paid_on ? ` em ${formatDateBR(r.paid_on)}` : ''}</span></td>
-                      <td className="py-2 text-right whitespace-nowrap">
-                        {r.attachment_path && <button onClick={() => openAttachment(r.attachment_path)} className="p-1.5 text-on-surface-variant hover:text-primary" aria-label="Abrir anexo"><Paperclip size={14} /></button>}
-                        {canManage && r.status === 'pendente' && <button onClick={() => setPaying(r)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-zela-md" aria-label="Marcar como paga"><CheckCircle2 size={15} /></button>}
-                        {canManage && r.status === 'pendente' && <button onClick={() => setEditing({ ...r, amount: (r.amount_cents / 100).toFixed(2).replace('.', ','), supplier_id: r.supplier_id || '' })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Editar"><Edit size={14} /></button>}
-                        {canManage && r.status === 'pendente' && <button onClick={() => cancel(r)} className="px-1.5 text-xs font-bold text-on-surface-variant hover:text-red-600">Cancelar</button>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveTable
+              rows={rows}
+              columns={[
+                { label: 'Descrição', primary: true, render: r => (
+                  <>
+                    <p className="font-medium text-on-surface">{r.description}</p>
+                    {r.suppliers?.name && <p className="text-xs font-normal text-on-surface-variant">{r.suppliers.name}</p>}
+                  </>
+                ) },
+                { label: 'Vencimento', render: r => <span className={`whitespace-nowrap ${r.status === 'pendente' && r.due_date < todayISO() ? 'text-red-600 font-bold' : ''}`}>{formatDateBR(r.due_date)}</span> },
+                { label: 'Categoria', className: 'text-on-surface-variant', render: r => r.category },
+                { label: 'Valor', align: 'right', className: 'font-bold', render: r => centsToBRL(r.amount_cents) },
+                { label: 'Situação', render: r => <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[r.status]}`}>{STATUS[r.status]}{r.paid_on ? ` em ${formatDateBR(r.paid_on)}` : ''}</span> },
+                { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: r => (r.attachment_path || (canManage && r.status === 'pendente')) && (
+                  <span className="inline-flex items-center gap-1">
+                    {r.attachment_path && <button onClick={() => openAttachment(r.attachment_path)} className="p-1.5 text-on-surface-variant hover:text-primary" aria-label="Abrir anexo"><Paperclip size={14} /></button>}
+                    {canManage && r.status === 'pendente' && <button onClick={() => setPaying(r)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-zela-md" aria-label="Marcar como paga"><CheckCircle2 size={15} /></button>}
+                    {canManage && r.status === 'pendente' && <button onClick={() => setEditing({ ...r, amount: (r.amount_cents / 100).toFixed(2).replace('.', ','), supplier_id: r.supplier_id || '' })} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Editar"><Edit size={14} /></button>}
+                    {canManage && r.status === 'pendente' && <button onClick={() => cancel(r)} className="px-1.5 text-xs font-bold text-on-surface-variant hover:text-red-600">Cancelar</button>}
+                  </span>
+                ) },
+              ]}
+            />
           )}
         </>
       )}

@@ -110,6 +110,67 @@ export function SecondaryButton({ children, ...props }) {
   );
 }
 
+// Tabela que vira lista de cartões no celular (PLANO_APPS_MOBILE, Fase 7):
+// no computador (md+) é a tabela de sempre; no celular cada linha vira um
+// cartão, com o(s) campo(s) `primary` como título, os demais como
+// "rótulo: valor" e o campo `actions` no rodapé. Nada de rolar para os lados.
+// columns: [{ label, render: (row) => node, className?, align?: 'right',
+//            primary?: true, actions?: true, hideOnMobile?: true }]
+export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassName }) {
+  const primary = columns.filter(c => c.primary);
+  const details = columns.filter(c => !c.primary && !c.actions && !c.hideOnMobile);
+  const actions = columns.filter(c => c.actions);
+  return (
+    <>
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
+              {columns.map((c, i) => (
+                <th key={i} className={`py-2 pr-3 ${c.align === 'right' ? 'text-right' : ''}`}>{c.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, idx) => (
+              <tr key={rowKey(r, idx)} className={`border-b border-outline-variant/50 ${rowClassName ? rowClassName(r) : ''}`}>
+                {columns.map((c, i) => (
+                  <td key={i} className={`py-2 pr-3 ${c.align === 'right' ? 'text-right' : ''} ${c.className || ''}`}>{c.render(r)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ul className="md:hidden space-y-2">
+        {rows.map((r, idx) => {
+          const renderedActions = actions.map(c => c.render(r)).filter(Boolean);
+          return (
+          <li key={rowKey(r, idx)} className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-3 space-y-1.5 ${rowClassName ? rowClassName(r) : ''}`}>
+            {primary.length > 0 && (
+              <div className="text-sm font-bold text-on-surface">
+                {primary.map((c, i) => <div key={i}>{c.render(r)}</div>)}
+              </div>
+            )}
+            {details.map((c, i) => (
+              <div key={i} className="flex items-start justify-between gap-3 text-sm">
+                <span className="text-xs text-on-surface-variant shrink-0 pt-0.5">{c.label}</span>
+                <span className="text-right text-on-surface min-w-0 break-words">{c.render(r)}</span>
+              </div>
+            ))}
+            {renderedActions.length > 0 && (
+              <div className="flex flex-wrap justify-end gap-2 pt-1 border-t border-outline-variant/50">
+                {renderedActions.map((node, i) => <div key={i}>{node}</div>)}
+              </div>
+            )}
+          </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
 export function Tabs({ tabs, active, onChange }) {
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4">

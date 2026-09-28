@@ -1,5 +1,8 @@
 import { StrictMode, Component } from 'react'
 import { createRoot } from 'react-dom/client'
+// Fonte Inter servida pelo próprio Zela (antes vinha do Google Fonts): abre
+// mais rápido e funciona sem internet no app (PLANO_APPS_MOBILE, Fase 1).
+import '@fontsource-variable/inter'
 import './index.css'
 import App from './App.jsx'
 import Toaster from './components/Toaster.jsx'

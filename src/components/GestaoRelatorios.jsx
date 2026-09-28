@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Download, Printer, BarChart3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { centsToBRL, monthRange, downloadCSV } from '../lib/gestaoUtils';
-import { PageShell, Loading, Notice, SecondaryButton, StatCard, EmptyState } from './GestaoShared';
+import { PageShell, Loading, Notice, SecondaryButton, StatCard, EmptyState, ResponsiveTable } from './GestaoShared';
 
 // Relatórios consolidados da Gestão. Cada visão devolve { cards, table }:
 // os cards resumem, a tabela é o que vai pra planilha e pra impressão.
@@ -80,20 +80,18 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
               </div>
             )}
             {data.table && (data.table.rows.length === 0 ? <EmptyState icon={BarChart3} text="Sem dados no período." /> : (
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 overflow-x-auto">
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">
                 {data.table.title && <h3 className="font-bold text-sm text-on-surface mb-2">{data.table.title}</h3>}
-                <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                    {data.table.columns.map(c => <th key={c} className="py-2 pr-3">{c}</th>)}
-                  </tr></thead>
-                  <tbody>
-                    {data.table.rows.map((r, i) => (
-                      <tr key={i} className="border-b border-outline-variant/50">
-                        {r.map((v, j) => <td key={j} className={`py-2 pr-3 ${j > 0 ? 'tabular-nums' : 'font-medium text-on-surface'}`}>{v}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ResponsiveTable
+                  rows={data.table.rows}
+                  rowKey={(r, i) => i}
+                  columns={data.table.columns.map((label, j) => ({
+                    label,
+                    primary: j === 0,
+                    className: j > 0 ? 'tabular-nums' : 'font-medium text-on-surface',
+                    render: r => r[j],
+                  }))}
+                />
               </section>
             ))}
           </>
