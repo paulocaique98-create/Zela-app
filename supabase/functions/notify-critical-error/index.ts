@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import webpush from 'npm:web-push@3.6.7'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { sendPush } from '../_shared/push.ts'
 
 // Fase E do PLANO_LOGGING_ERROS_PORTAL_DEV.md — fecha o gap documentado em
 // OBSERVABILIDADE.md ("não há alerta automático"). Chamada pelo trigger
@@ -41,45 +41,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, notified: 0, reason: 'nenhum developer cadastrado' }), { headers: { 'Content-Type': 'application/json' } })
     }
 
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT')
-    if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      return new Response(JSON.stringify({ success: true, notified: 0, reason: 'VAPID não configurado' }), { headers: { 'Content-Type': 'application/json' } })
-    }
-
     const developerIds = developers.map((d: { id: string }) => d.id)
-    const { data: subscriptions } = await adminClient
-      .from('push_subscriptions')
-      .select('endpoint, p256dh, auth')
-      .in('user_id', developerIds)
-
-    if (!subscriptions || subscriptions.length === 0) {
-      return new Response(JSON.stringify({ success: true, notified: 0, reason: 'nenhuma subscription de push' }), { headers: { 'Content-Type': 'application/json' } })
-    }
-
-    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
-    const payload = JSON.stringify({
+    const { sent: notified } = await sendPush(adminClient, developerIds, {
       title: 'Erro crítico no Zela',
       body: `${source} · ${category}: ${message}`,
       url: '/',
       tag: 'critical-error-log',
     })
-
-    let notified = 0
-    for (const sub of subscriptions) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload
-        )
-        notified++
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await adminClient.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
-        }
-      }
-    }
 
     return new Response(JSON.stringify({ success: true, notified }), { headers: { 'Content-Type': 'application/json' } })
   } catch (err: any) {

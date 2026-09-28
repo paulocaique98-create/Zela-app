@@ -11,6 +11,7 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 import { supabase } from '../lib/supabase';
 import GestaoInicio from './GestaoInicio';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
+import { useMenuClicks } from '../hooks/useMenuClicks';
 import { PageShell, Tabs } from './GestaoShared';
 
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
@@ -57,7 +58,16 @@ const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
-const LEGACY_TABS = { financeiro: 'financeiro-visao', configuracoes: 'config-escola' };
+// Também traduz os nomes de tela do Admin usados nos avisos enviados à
+// equipe (ex.: /?tab=users no cadastro pendente), que desde 28/09/2026
+// também chegam para a Gestão.
+const LEGACY_TABS = {
+  financeiro: 'financeiro-visao',
+  configuracoes: 'config-escola',
+  users: 'cadastros-usuarios',
+  matriculas: 'secretaria-matriculas',
+  presence: 'presenca-dia',
+};
 
 // Grupo do menu de cada aba: abre o grupo certo ao navegar por atalho.
 function groupOf(tab) {
@@ -66,11 +76,10 @@ function groupOf(tab) {
   if (tab.startsWith('financeiro-')) return 'financeiro';
   if (['presenca-dia', 'attendance-corrections', 'horas-extras'].includes(tab)) return 'presenca';
   if (tab.startsWith('cadastros-')) return 'cadastros';
-  if (tab.startsWith('academico-')) return 'academico';
+  if (tab.startsWith('academico-') || tab === 'calendario') return 'academico';
   if (tab.startsWith('comunicacao-')) return 'comunicacao';
   if (tab.startsWith('relatorios-')) return 'relatorios';
-  if (tab.startsWith('permissoes-')) return 'permissoes';
-  if (tab.startsWith('config-')) return 'configuracoes';
+  if (tab.startsWith('permissoes-') || tab.startsWith('config-') || tab === 'integracoes') return 'configuracoes';
   return null;
 }
 
@@ -95,8 +104,10 @@ export default function GestaoPortal({
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
   const [financeConfigTab, setFinanceConfigTab] = useState('gateway');
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
+  const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentUser?.school_id);
   const go = (tab) => {
     setGestaoTab(tab);
+    registerClick(tab);
     setIsMobileMenuOpen(false);
     if (tab !== 'secretaria-alunos') setSelectedAlunoId(null);
   };
@@ -168,7 +179,12 @@ export default function GestaoPortal({
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
-          <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
+          {/* A Gestão tem mais itens do que cabe na altura da tela: a barra
+              de rolagem vertical ocupava largura dentro da coluna de 64px do
+              menu recolhido e criava também rolagem horizontal. A rolagem
+              continua (roda do mouse, toque), mas sem barra visível e nunca
+              na horizontal. */}
+          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[14px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             {item('home', Home, 'Início')}
             {item('pendencias', Inbox, 'Pendências', { badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
             {group('secretaria', 'Secretaria', GraduationCap, <>
@@ -209,8 +225,8 @@ export default function GestaoPortal({
               {item('academico-frequencia', ClipboardList, 'Frequência')}
               {item('academico-relatorios', FileText, 'Relatórios Pedagógicos')}
               {item('academico-ocorrencias', NotebookPen, 'Ocorrências')}
+              {item('calendario', CalendarDays, 'Calendário')}
             </>)}
-            {item('calendario', CalendarDays, 'Calendário')}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
               {item('comunicacao-mural', ImageIcon, 'Mural')}
@@ -221,25 +237,25 @@ export default function GestaoPortal({
               {item('relatorios-academico', BookOpen, 'Acadêmico')}
               {item('relatorios-operacional', Clock, 'Operacional')}
             </>)}
-            {group('permissoes', 'Permissões', ShieldCheck, <>
-              {item('permissoes-perfis', ShieldCheck, 'Perfis e Permissões')}
-              {item('permissoes-auditoria', ScrollText, 'Auditoria')}
-            </>)}
+            {/* Permissões e Integrações ficam dentro de Configurações
+                (pedido de 28/09/2026: menu principal mais curto). */}
             {group('configuracoes', 'Configurações', Settings, <>
               {item('config-escola', School, 'Escola')}
               {item('config-academico', BookOpen, 'Acadêmico')}
               {item('config-financeiro', Wallet, 'Financeiro')}
               {item('config-comunicacao', MessageSquare, 'Comunicação')}
               {item('config-seguranca', KeyRound, 'Segurança')}
+              {item('permissoes-perfis', ShieldCheck, 'Perfis e Permissões')}
+              {item('permissoes-auditoria', ScrollText, 'Auditoria')}
+              {item('integracoes', Plug, 'Integrações')}
             </>)}
-            {item('integracoes', Plug, 'Integrações')}
           </nav>
         </div>
       </aside>
 
       <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
-          {gestaoTab === 'home' && <GestaoInicio currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} />}
+          {gestaoTab === 'home' && <GestaoInicio currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} clickCounts={clickCounts} />}
           {gestaoTab === 'pendencias' && <GestaoPendencias currentUser={currentUser} setGestaoTab={goFromShortcut} />}
 
           {/* Secretaria */}

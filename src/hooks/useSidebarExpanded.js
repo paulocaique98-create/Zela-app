@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 // forma imprevisível só por passar o mouse -- ver correção em
 // SidebarNav.jsx, que elimina esse pulo de vez.
 const STORAGE_KEY = 'zela:sidebarExpanded';
+const SYNC_EVENT = 'zela:sidebar-expanded';
 
 export function useSidebarExpanded() {
   const [isExpanded, setIsExpanded] = useState(() => {
@@ -24,7 +25,16 @@ export function useSidebarExpanded() {
     } catch {
       // localStorage indisponível (aba anônima, etc.) -- só não persiste, não quebra nada.
     }
+    // Avisa as outras instâncias do hook (ex.: o Header, que alinha a logo
+    // do Zela com a coluna de ícones do menu recolhido).
+    window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: isExpanded }));
   }, [isExpanded]);
+
+  useEffect(() => {
+    const onSync = (e) => setIsExpanded(prev => (prev === e.detail ? prev : e.detail));
+    window.addEventListener(SYNC_EVENT, onSync);
+    return () => window.removeEventListener(SYNC_EVENT, onSync);
+  }, []);
 
   const toggle = () => setIsExpanded(prev => !prev);
 

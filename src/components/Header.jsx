@@ -1,8 +1,10 @@
 import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
+import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 
 export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onOpenMobileMenu, onNavigateTab }) {
+  const [isSidebarExpanded] = useSidebarExpanded();
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
@@ -34,7 +36,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         >
           <Menu size={24} />
         </button>
-        <div className="hidden md:flex items-center shrink-0">
+        {/* Logo (36px) centralizada na coluna de ícones do menu lateral
+            (24px): centro a 32px da borda com o menu recolhido e a 44px com
+            ele aberto. O cabeçalho começa em 24px (md:px-6). */}
+        <div className={`hidden md:flex items-center shrink-0 transition-[margin] duration-300 ${isSidebarExpanded ? 'md:ml-0.5' : 'md:-ml-2.5'}`}>
           {zelaLogo ? (
             <img src={zelaLogo} alt="Zela" className="w-9 h-9 object-contain" />
           ) : (

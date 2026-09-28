@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3 } from 'lucide-react';
+import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3, CalendarDays, Megaphone, UserCheck, AlertOctagon, Banknote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
@@ -7,7 +7,12 @@ import { StatCard } from './GestaoShared';
 
 // Início da Gestão: números do dia no topo (cada um leva à tela onde se
 // resolve) e atalhos abaixo.
-export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab }) {
+// Acesso rápido: só 8 atalhos, os mais usados por esta conta primeiro
+// (mesma regra dos outros portais: ordem por clickCounts; empate mantém a
+// ordem abaixo, que é o padrão de quem ainda não usou nada).
+const MAX_ATALHOS = 8;
+
+export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab, clickCounts = {} }) {
   const features = currentSchool?.features_enabled || {};
   const showFinanceiro = features.financeiro === true;
   const showCheckin = features.checkin !== false;
@@ -43,14 +48,22 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab 
     { key: 'cadastros-usuarios', label: 'Responsáveis', icon: Users, tab: 'cadastros-usuarios', badge: pend?.cadastros.length || null },
     { key: 'cadastros-turmas', label: 'Turmas', icon: School, tab: 'cadastros-turmas' },
     { key: 'relatorios-gestao', label: 'Relatórios', icon: BarChart3, tab: 'relatorios-gestao' },
-  ].filter(Boolean);
+    showFinanceiro && { key: 'financeiro-inadimplencia', label: 'Inadimplência', icon: AlertOctagon, tab: 'financeiro-inadimplencia' },
+    { key: 'financeiro-despesas', label: 'Despesas', icon: Banknote, tab: 'financeiro-despesas' },
+    showCheckin && { key: 'presenca-dia', label: 'Presença do Dia', icon: UserCheck, tab: 'presenca-dia' },
+    { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario' },
+    { key: 'comunicacao-comunicados', label: 'Comunicados', icon: Megaphone, tab: 'comunicacao-comunicados' },
+  ]
+    .filter(Boolean)
+    .map((m, index) => ({ ...m, index }))
+    .sort((a, b) => ((clickCounts[b.tab] || 0) - (clickCounts[a.tab] || 0)) || (a.index - b.index))
+    .slice(0, MAX_ATALHOS);
 
   return (
     <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
         <div className="mb-6 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da Gestão</h1>
-          <p className="text-small text-on-surface-variant mt-1">{currentSchool?.name || 'Sua escola'} · resumo de hoje</p>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">

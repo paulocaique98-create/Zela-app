@@ -13,6 +13,9 @@ runIf('Notificação de admin — cadastro pendente (self-register-family -> not
     const school = await createTestSchool();
     const { data: schoolRow } = await adminClient.from('schools').select('school_code').eq('id', school).single();
     const admin = await createTestUser({ role: 'admin', schoolId: school });
+    // Hierarquia (27/09/2026): quem aprova cadastros é a Gestão, que também
+    // precisa ser avisada (bug de 28/09/2026: só contas 'admin' recebiam).
+    const gestao = await createTestUser({ role: 'gestao', schoolId: school });
 
     const familyEmail = `vitest.pendingnotify.${Date.now()}@zela-teste.com`;
     let familyId = null;
@@ -39,6 +42,9 @@ runIf('Notificação de admin — cadastro pendente (self-register-family -> not
       expect(notifs[0].url).toBe('/?tab=users');
       expect(notifs[0].read_at).toBeNull();
 
+      const { data: gestaoNotifs } = await gestao.client.from('notifications').select('type').eq('family_id', gestao.id);
+      expect(gestaoNotifs.map(n => n.type)).toEqual(['pending_registration']);
+
       // Admin marca como lida (mesma ação de abrir o sino).
       const { error: updateErr } = await admin.client.from('notifications').update({ read_at: new Date().toISOString() }).eq('family_id', admin.id);
       expect(updateErr).toBeNull();
@@ -54,9 +60,10 @@ runIf('Notificação de admin — cadastro pendente (self-register-family -> not
       }
       await adminClient.from('notifications').delete().eq('school_id', school);
       await deleteTestUser(admin.id);
+      await deleteTestUser(gestao.id);
       await deleteTestSchool(school);
     }
-  }, 15000);
+  }, 20000);
 
   it('CRÍTICO — admin de outra escola não vê a notificação nem conta o pendente de escola alheia', async () => {
     const schoolA = await createTestSchool();

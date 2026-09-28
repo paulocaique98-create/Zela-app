@@ -268,7 +268,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
-          <nav className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
+          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[14px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* CADASTROS */}

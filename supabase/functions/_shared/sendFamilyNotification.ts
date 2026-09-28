@@ -1,4 +1,4 @@
-import webpush from 'npm:web-push@3.6.7';
+import { sendPush } from './push.ts';
 
 // Fase 13 — notificação in-app + push pra família, sempre no mesmo formato.
 // Compartilhado entre processPaymentEvent (cobrança criada/paga) e
@@ -28,39 +28,7 @@ export async function sendFamilyNotification(adminClient: any, params: {
     url: url ?? null,
   });
 
-  const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-  const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-  const vapidSubject = Deno.env.get('VAPID_SUBJECT');
-  if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) return;
-
-  const { data: subscriptions } = await adminClient
-    .from('push_subscriptions')
-    .select('endpoint, p256dh, auth')
-    .eq('user_id', familyId);
-  if (!subscriptions?.length) return;
-
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  const payload = JSON.stringify({ title: pushTitle, body: pushBody, url: url || '/', tag: pushTag });
-
-  for (const sub of subscriptions) {
-    try {
-      await webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        payload
-      );
-      await adminClient.from('push_delivery_attempts').insert({
-        family_id: familyId, endpoint: sub.endpoint, success: true,
-      });
-    } catch (err: any) {
-      await adminClient.from('push_delivery_attempts').insert({
-        family_id: familyId, endpoint: sub.endpoint, success: false,
-        status_code: err.statusCode ?? null, error_message: String(err.message ?? err),
-      });
-      if (err.statusCode === 410 || err.statusCode === 404) {
-        await adminClient.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-      }
-    }
-  }
+  await sendPush(adminClient, [familyId], { title: pushTitle, body: pushBody, url: url || '/', tag: pushTag });
 }
 
 export function centsToBRL(cents: number): string {

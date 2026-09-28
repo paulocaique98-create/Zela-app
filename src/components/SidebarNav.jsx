@@ -20,14 +20,21 @@ import { ChevronDown, ChevronLeft } from 'lucide-react';
 // portal (Admin/Família/Professor/Developer) a partir do estado persistido
 // em localStorage (ver useSidebarExpanded.js), alternado por clique no botão
 // de SidebarToggleButton, não mais por hover.
+// Ícones do menu com 24px (pedido de 28/09/2026: 36px e 28px ficaram
+// grandes demais). No menu recolhido (64px) o destaque azul do item ativo é
+// um quadrado de 36px, do tamanho do emblema do Zela, justo ao ícone: nav
+// com 14px + quadrado de 36px + 14px (14+36+14 = 64), centro a 32px. O
+// Header desloca a logo para o mesmo centro (ver Header.jsx).
+export const SIDEBAR_ICON_SIZE = 24;
+
 export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+      className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-md text-sm font-medium transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
     >
       <span className="relative shrink-0">
-        <Icon size={22} />
+        <Icon size={SIDEBAR_ICON_SIZE} />
         {badge ? (
           <span className={`absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ${active ? 'bg-white/25 text-white' : 'bg-warning text-white animate-pulse'}`}>
             {badge}
@@ -108,10 +115,10 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`w-full flex items-center gap-3 pl-4 pr-4 md:pl-[5px] md:pr-[5px] md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 py-2.5 rounded-zela-md text-sm font-medium transition-all ${isOpen || flyoutPos ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+        className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-md text-sm font-medium transition-all ${isOpen || flyoutPos ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
       >
         <span className="relative shrink-0">
-          <Icon size={22} />
+          <Icon size={SIDEBAR_ICON_SIZE} />
           {badge ? (
             <span className="absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center bg-warning text-white animate-pulse">
               {badge}

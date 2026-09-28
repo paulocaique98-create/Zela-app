@@ -1,8 +1,8 @@
-import webpush from 'npm:web-push@3.6.7';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { sendPush } from '../_shared/push.ts';
 
 // Notifica (in-app, quando o destinatário é família + push, sempre que houver
 // subscription) quando uma nova mensagem chega numa conversa do chat interno.
@@ -19,9 +19,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT')!;
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -123,36 +120,12 @@ serve(async (req) => {
       })));
     }
 
-    let pushed = 0;
-    if (vapidPublicKey && vapidPrivateKey && vapidSubject) {
-      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-      const { data: subscriptions } = await adminClient
-        .from('push_subscriptions')
-        .select('endpoint, p256dh, auth, user_id')
-        .in('user_id', recipientIds);
-
-      if (subscriptions?.length) {
-        const payload = JSON.stringify({
-          title,
-          body: lastMessage.body.length > 120 ? `${lastMessage.body.slice(0, 117)}...` : lastMessage.body,
-          url: '/',
-          tag: 'chat',
-        });
-        for (const sub of subscriptions) {
-          try {
-            await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              payload
-            );
-            pushed++;
-          } catch (err: any) {
-            if (err.statusCode === 410 || err.statusCode === 404) {
-              await adminClient.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-            }
-          }
-        }
-      }
-    }
+    const { sent: pushed } = await sendPush(adminClient, recipientIds, {
+      title,
+      body: lastMessage.body.length > 120 ? `${lastMessage.body.slice(0, 117)}...` : lastMessage.body,
+      url: '/',
+      tag: 'chat',
+    });
 
     return new Response(JSON.stringify({ success: true, notified: recipientIds.length, pushed }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
