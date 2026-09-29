@@ -235,6 +235,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // carregamento "sob demanda" — o preload em si continua valendo: quando a
   // pessoa abre Autoatendimento, o modelo já está esquentando antes de ela
   // clicar em "Escanear".
+  // Entrar no Autoatendimento fecha o chat da Recepção, se estiver aberto
+  // (o botão também some lá; ver o chat flutuante no fim do componente).
+  useEffect(() => {
+    if (adminTab === 'kiosk') setIsChatOpen(false);
+  }, [adminTab]);
+
   useEffect(() => {
     if (!showCheckin || adminTab !== 'kiosk') return;
     preloadFaceModels().catch(err => console.warn('[FaceModels] Erro no pré-carregamento:', err));
@@ -833,8 +839,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           document.body
         )}
 
-        {/* Chat flutuante — acessível de qualquer aba, canto inferior direito */}
-        {showChat && createPortal(
+        {/* Chat flutuante — canto inferior direito, em todas as abas MENOS o
+            Autoatendimento (kiosk): o totem fica de frente para as famílias e
+            o chat ali é o da Recepção (28/09/2026). */}
+        {showChat && adminTab !== 'kiosk' && createPortal(
           <>
             <button
               onClick={() => {
