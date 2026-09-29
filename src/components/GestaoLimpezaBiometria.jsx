@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScanFace, Trash2 } from 'lucide-react';
+import { ScanFace, Trash2, ImageOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatDateBR } from '../lib/gestaoUtils';
 import { PageShell, Loading, EmptyState, Notice } from './GestaoShared';
@@ -16,6 +16,41 @@ export default function GestaoLimpezaBiometria() {
   const [isPurging, setIsPurging] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Fotos soltas: arquivos de rosto sem nenhum cadastro usando (29/09/2026).
+  const [soltas, setSoltas] = useState(null);
+  const [confirmandoSoltas, setConfirmandoSoltas] = useState(false);
+  const [apagandoSoltas, setApagandoSoltas] = useState(false);
+
+  const loadSoltas = useCallback(async () => {
+    const { data, error: e } = await supabase.rpc('list_fotos_soltas');
+    if (e) { setError(e.message); setSoltas([]); return; }
+    setSoltas(data || []);
+  }, []);
+  useEffect(() => { loadSoltas(); }, [loadSoltas]);
+
+  const apagarSoltas = async () => {
+    setConfirmandoSoltas(false);
+    setApagandoSoltas(true);
+    setError('');
+    setSuccess('');
+    try {
+      // O servidor confere de novo quais continuam sem cadastro.
+      const { data, error: e } = await supabase.rpc('confirmar_fotos_soltas', { p_paths: soltas.map(f => f.path) });
+      if (e) throw e;
+      const paths = (data || []).map(r => r.path);
+      if (paths.length) {
+        const { error: storageErr } = await supabase.storage.from('person-photos').remove(paths);
+        if (storageErr) throw storageErr;
+      }
+      setSuccess(`${paths.length} ${paths.length === 1 ? 'foto sem cadastro apagada' : 'fotos sem cadastro apagadas'}.`);
+      loadSoltas();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setApagandoSoltas(false);
+    }
+  };
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.rpc('list_biometria_para_limpar');
@@ -60,7 +95,7 @@ export default function GestaoLimpezaBiometria() {
         <Notice>{error}</Notice>
         <Notice type="success">{success}</Notice>
         {rows === null ? <Loading /> : rows.length === 0 ? (
-          <EmptyState icon={ScanFace} text="Nenhuma biometria para limpar." hint="Todas as fotos e biometrias guardadas pertencem a famílias com aluno ativo." />
+          <EmptyState icon={ScanFace} text="Nenhuma biometria para limpar." hint="Todas as biometrias de cadastros pertencem a famílias com aluno ativo." />
         ) : (
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -94,7 +129,49 @@ export default function GestaoLimpezaBiometria() {
             </ul>
           </>
         )}
+
+        <section className="pt-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-bold text-on-surface">Fotos sem cadastro</h3>
+            <p className="text-xs text-on-surface-variant">Fotos de rosto guardadas que nenhum cadastro usa mais (de autorizados que já foram apagados). Só aparecem depois de 1 dia, para nunca pegar uma foto que acabou de ser enviada.</p>
+          </div>
+          {soltas === null ? <Loading /> : soltas.length === 0 ? (
+            <p className="text-sm text-on-surface-variant">Nenhuma foto sem cadastro.</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-on-surface">{soltas.length} {soltas.length === 1 ? 'foto' : 'fotos'} sem cadastro</p>
+                <button
+                  onClick={() => setConfirmandoSoltas(true)}
+                  disabled={apagandoSoltas}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
+                >
+                  <Trash2 size={15} /> {apagandoSoltas ? 'Apagando...' : `Apagar ${soltas.length === 1 ? 'a foto' : `as ${soltas.length} fotos`}`}
+                </button>
+              </div>
+              <ul className="divide-y divide-outline-variant/60 bg-surface-container-lowest border border-outline-variant rounded-zela-lg">
+                {soltas.map(f => (
+                  <li key={f.path} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <ImageOff size={15} className="text-on-surface-variant shrink-0" />
+                    <span className="text-on-surface">Enviada em {formatDateBR(f.criada_em)}</span>
+                    <span className="text-xs text-on-surface-variant truncate">{f.path.split('/').pop()}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
       </div>
+      {confirmandoSoltas && (
+        <ConfirmModal
+          title="Apagar fotos sem cadastro?"
+          message={`${soltas.length} ${soltas.length === 1 ? 'foto de rosto sem cadastro será apagada' : 'fotos de rosto sem cadastro serão apagadas'} do armazenamento. Nenhum cadastro usa essas fotos, então nada muda no reconhecimento do totem.`}
+          confirmLabel="Apagar fotos"
+          cancelLabel="Voltar"
+          onConfirm={apagarSoltas}
+          onCancel={() => setConfirmandoSoltas(false)}
+        />
+      )}
       {confirming && (
         <ConfirmModal
           title="Apagar biometria?"
