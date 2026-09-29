@@ -4,7 +4,8 @@ import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical, LayoutG
 import ConfirmModal from './ConfirmModal';
 import { toast } from '../lib/toast';
 import DeveloperModulos from './DeveloperModulos';
-import { featuresIniciais, pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
+import { pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
+import { montarDadosEscola } from '../lib/escolaForm';
 
 // Modelo 04 (tabela densa estilo painel enterprise) validado com o usuário
 // (proposta com 5 layouts, 18/09) -- tabela clássica de admin no desktop
@@ -48,12 +49,11 @@ export default function DeveloperPanel() {
   const [successMsg, setSuccessMsg] = useState('');
 
   // Flexibilidade de Método Pedagógico — Fase 2 (UI). Ficam FORA de
-  // formData de propósito: são só estado de edição da UI (turmas como
-  // texto separado por vírgula, label de turma personalizado), nunca
-  // devem ser espalhados direto num insert/update do Supabase (colunas
-  // reais são pedagogical_method/custom_config/turmas).
+  // formData de propósito: são só estado de edição da UI (label de turma
+  // personalizado), nunca devem ser espalhados direto num insert/update do
+  // Supabase (colunas reais são pedagogical_method/custom_config). As
+  // turmas saíram daqui em 28/09/2026: ficam em Gestão › Cadastros › Turmas.
   const [pedagogicalMethod, setPedagogicalMethod] = useState('tradicional');
-  const [turmasInput, setTurmasInput] = useState('');
   const [customClassLabel, setCustomClassLabel] = useState('');
 
   // Módulos contratados: tela própria (DeveloperModulos, Modelo 3 de
@@ -102,7 +102,6 @@ export default function DeveloperPanel() {
       });
       setLimits({ ...defaultLimits, ...school.limits });
       setPedagogicalMethod(school.pedagogical_method || 'tradicional');
-      setTurmasInput((school.turmas || []).join(', '));
       setCustomClassLabel(school.custom_config?.terminology?.class || '');
     } else {
       setEditingSchool(null);
@@ -112,7 +111,6 @@ export default function DeveloperPanel() {
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
       setPedagogicalMethod('tradicional');
-      setTurmasInput('');
       setCustomClassLabel('');
       setSaveError('');
       setSuccessMsg('');
@@ -151,19 +149,14 @@ export default function DeveloperPanel() {
     setSaveError('');
     setSuccessMsg('');
     try {
-      // Turmas: texto "Nido, Kids I, Kids II" -> array, aparadas e sem
-      // itens vazios (vírgula sobrando não vira turma "").
-      const turmas = turmasInput.split(',').map(t => t.trim()).filter(Boolean);
-      const custom_config = customClassLabel.trim()
-        ? { terminology: { class: customClassLabel.trim() } }
-        : {};
-      const pedagogicalFields = { pedagogical_method: pedagogicalMethod, turmas, custom_config };
+      // Sem turmas e sem módulos ao editar (ver src/lib/escolaForm.js).
+      const dadosEscola = montarDadosEscola({ formData, limits, pedagogicalMethod, customClassLabel, isNew: !editingSchool });
 
       if (editingSchool) {
         // Update apenas dados da escola
         const { error } = await supabase
           .from('schools')
-          .update({ ...formData, limits, ...pedagogicalFields })
+          .update(dadosEscola)
           .eq('id', editingSchool.id);
 
         if (error) throw error;
@@ -182,7 +175,7 @@ export default function DeveloperPanel() {
         const schoolCode = await generateSchoolCode();
         const { data: newSchool, error: schoolError } = await supabase
           .from('schools')
-          .insert([{ ...formData, school_code: schoolCode, features_enabled: featuresIniciais(), limits, ...pedagogicalFields }])
+          .insert([{ ...dadosEscola, school_code: schoolCode }])
           .select()
           .single();
 
@@ -552,19 +545,6 @@ export default function DeveloperPanel() {
                         />
                       </div>
                     )}
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Turmas / Agrupamentos (separados por vírgula)</label>
-                      <input
-                        type="text"
-                        value={turmasInput}
-                        onChange={e => setTurmasInput(e.target.value)}
-                        placeholder="Ex: Nido, Kids I, Kids II"
-                        className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
-                      />
-                      <p className="text-[11px] text-dev-text-muted mt-1">
-                        Vazio = a escola usa a lista padrão do sistema até alguém configurar isso aqui.
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -612,16 +592,6 @@ export default function DeveloperPanel() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* MÓDULOS CONTRATADOS: agora na tela própria (menu "⋯" › Módulos). */}
-              <div className="mt-6 border-t border-dev-border pt-6">
-                <h4 className="text-sm font-bold text-dev-text mb-1">Módulos Contratados</h4>
-                <p className="text-xs text-dev-text-muted">
-                  {editingSchool
-                    ? 'Ficam na tela Módulos, no menu "⋯" da escola, com pacote, o que cada módulo inclui e o histórico.'
-                    : 'A escola nasce no pacote Essencial (plano base). Depois de criar, ajuste na tela Módulos, no menu "⋯" da escola.'}
-                </p>
               </div>
 
               {/* LIMITES DE AUTORIZADOS (matrícula) */}
