@@ -111,7 +111,7 @@ export const SCREEN_LABELS = {
   'contratos-aditivos': 'Aditivos', contratos: 'Contratos',
   'financeiro-visao': 'Visão Financeira', 'financeiro-mensalidades': 'Mensalidades', 'financeiro-cobrancas': 'Cobranças',
   'financeiro-inadimplencia': 'Inadimplência', 'financeiro-recebimentos': 'Recebimentos e Conciliação', 'financeiro-despesas': 'Despesas',
-  'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Pedidos de Exclusão de Conta', 'cadastros-biometria': 'Limpeza de Biometria',
+  'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Pedidos de Exclusão de Conta', 'cadastros-biometria': 'Limpeza de Biometria', 'cadastros-unificar': 'Unificar Responsáveis',
   'academico-ano-letivo': 'Ano Letivo', 'academico-frequencia': 'Frequência', 'academico-relatorios': 'Relatórios Pedagógicos',
   'academico-ocorrencias': 'Ocorrências', 'comunicacao-comunicados': 'Comunicados', 'comunicacao-mural': 'Mural de Fotos',
   'relatorios-gestao': 'Relatório de Gestão', 'relatorios-financeiro': 'Relatório Financeiro',

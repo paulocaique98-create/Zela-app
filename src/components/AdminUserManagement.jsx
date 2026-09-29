@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check, UserRoundCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
+import { escolherCadastroDaFoto } from '../lib/fotoResponsavel';
+import { agruparFamilias, papeisNaFamilia } from '../lib/familiasAgrupadas';
 import AdminUserRegistration from './AdminUserRegistration';
 import AdminImportModal from './AdminImportModal';
 import ConfirmModal from './ConfirmModal';
@@ -51,7 +53,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       // aluno diretamente (ver render abaixo).
       const { data: guardianLinksData, error: guardianLinksError } = await supabase
         .from('student_guardians')
-        .select('guardian_id, student_id, relationship')
+        .select('guardian_id, student_id, relationship, is_financial')
         .eq('school_id', currentUser.school_id);
       if (guardianLinksError) throw guardianLinksError;
 
@@ -74,9 +76,16 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         const familyAuths = (authData || []).filter(
           ap => ap.family_id === user.id
         );
-        const matchingAuth = familyAuths.find(
-          ap => ap.name.toLowerCase().trim() === user.name.toLowerCase().trim()
-        ) || familyAuths.find(ap => ap.relation?.includes('(Titular)'));
+        // Foto: procura em todos os cadastros da pessoa (a própria conta e as
+        // famílias em que ela é 2º responsável), aceita nome escrito um pouco
+        // diferente e prefere o cadastro com foto (src/lib/fotoResponsavel.js).
+        const familiasTitulares = new Set(
+          (guardianLinksData || [])
+            .filter(g => g.guardian_id === user.id)
+            .map(g => studentsData.find(s => s.id === g.student_id)?.family_id)
+            .filter(id => id && id !== user.id)
+        );
+        const matchingAuth = escolherCadastroDaFoto(user, authData, familiasTitulares);
         const ownStudents = studentsData.filter(s => s.family_id === user.id);
 
         // Só monta o vínculo de 2º responsável pra quem não é titular de
@@ -94,6 +103,9 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           photo_url: matchingAuth ? resolvePhotoUrl(matchingAuth) : null,
           authorized: familyAuths,
           students: ownStudents,
+          // Todos os vínculos da pessoa (titular ou 2º responsável, com quem
+          // é financeiro): base do cartão por família e dos papéis.
+          vinculos: (guardianLinksData || []).filter(g => g.guardian_id === user.id),
           linkedStudents,
           guardianRelationship,
         };
@@ -233,46 +245,14 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   // todo usuário de filteredUsers cai em exatamente 1 grupo, mesmo quem não
   // tem aluno nenhum vinculado (grupo "solo", sem faixa de aluno no topo) --
   // ninguém pode sumir da lista por causa do agrupamento.
+  const alunosPorId = useMemo(() => new Map((allStudents || []).map(st => [st.id, st])), [allStudents]);
+
+  // Um cartão por FAMÍLIA REAL: todos os responsáveis ligados às mesmas
+  // crianças, mesmo quando são dois titulares (29/09/2026). Cada usuário do
+  // recorte cai em exatamente um grupo; quem não tem aluno fica sozinho.
   const familyGroups = useMemo(() => {
-    const groups = new Map();
-    const consumed = new Set();
+    const groups = new Map(agruparFamilias(filteredUsers, alunosPorId).map(g => [g.key, g]));
 
-    // 1) Titulares -- cada um já é dono de um grupo (seus alunos = students).
-    filteredUsers.forEach(user => {
-      if (user.students?.length > 0) {
-        groups.set(user.id, { key: user.id, students: user.students, guardians: [user] });
-        consumed.add(user.id);
-      }
-    });
-
-    // 2) 2º Responsável -- entra no grupo do titular que é dono do(s)
-    // mesmo(s) aluno(s) vinculado(s). Se o titular não estiver no recorte
-    // atual (ex.: titular ativo, 2º responsável pendente, abas diferentes),
-    // vira o próprio grupo usando linkedStudents como referência.
-    filteredUsers.forEach(user => {
-      if (consumed.has(user.id)) return;
-      if (user.linkedStudents?.length > 0) {
-        const linkedIds = new Set(user.linkedStudents.map(s => s.id));
-        const targetGroup = Array.from(groups.values()).find(g => g.students.some(s => linkedIds.has(s.id)));
-        if (targetGroup) {
-          targetGroup.guardians.push(user);
-        } else {
-          groups.set(user.id, { key: user.id, students: user.linkedStudents, guardians: [user] });
-        }
-        consumed.add(user.id);
-      }
-    });
-
-    // 3) Ninguém vinculado a aluno nenhum -- grupo solo, sem faixa de aluno.
-    filteredUsers.forEach(user => {
-      if (consumed.has(user.id)) return;
-      groups.set(user.id, { key: user.id, students: [], guardians: [user] });
-      consumed.add(user.id);
-    });
-
-    // Ordena pelo nome do aluno que aparece na faixa do card (o primeiro,
-    // quando há mais de um) -- grupos "solo" sem aluno nenhum (ver passo 3
-    // acima) vão pro final, já que não têm essa faixa pra ordenar por ela.
     return Array.from(groups.values()).sort((a, b) => {
       const nameA = a.students[0]?.name || '';
       const nameB = b.students[0]?.name || '';
@@ -281,7 +261,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       if (!nameB) return -1;
       return nameA.localeCompare(nameB, 'pt-BR');
     });
-  }, [filteredUsers]);
+  }, [filteredUsers, alunosPorId]);
 
   const guardianBadges = (guardian) => (
     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -452,6 +432,9 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                         <div className="min-w-0 flex-1 pr-14">
                           <h3 className="font-bold text-on-surface text-sm truncate">{guardian.name}</h3>
                           {guardianBadges(guardian)}
+                          {papeisNaFamilia(guardian, alunosPorId) && (
+                            <p className="text-[11px] text-on-surface-variant mt-1">{papeisNaFamilia(guardian, alunosPorId)}</p>
+                          )}
 
                           <div className="space-y-1 mt-2">
                             <div className="flex items-center gap-2 text-on-surface-variant">

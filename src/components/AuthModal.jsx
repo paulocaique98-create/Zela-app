@@ -55,8 +55,11 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-1">Parentesco</label>
+              {/* "Pai/Mãe" saiu em 29/09/2026: o outro pai/mãe tem conta
+                  própria (Gerenciamento › Responsáveis), não é autorizado.
+                  Só aparece para não quebrar a edição de cadastro antigo. */}
               <select value={authForm.relation} onChange={e => setAuthForm({...authForm, relation: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-slate-700">
-                <option>Pai/Mãe</option>
+                {authForm.relation === 'Pai/Mãe' && <option>Pai/Mãe</option>}
                 <option>Avô/Avó</option>
                 <option>Tio/Tia</option>
                 <option value="Transporte">Transporte Escolar</option>
@@ -74,6 +77,10 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
             </div>
           </div>
           
+          <p className="text-xs text-slate-500">
+            O outro pai ou a outra mãe da criança não entra como autorizado: cadastre em <strong>Gerenciamento › Responsáveis</strong>, com acesso próprio ao Zela.
+          </p>
+
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer p-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
               <input type="checkbox" checked={authForm.isTemporary} onChange={e => setAuthForm({...authForm, isTemporary: e.target.checked})} className="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" />
