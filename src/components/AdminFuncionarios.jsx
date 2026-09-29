@@ -18,15 +18,18 @@ const emptyForm = { name: '', cargo: '', phone: '', email: '', doc_number: '', a
 // ficam de fora, sem o botão.
 const CARGO_PARA_ACESSO = {
   'Professora': { role: 'teacher' },
-  'Coordenadora': { role: 'admin', departamento: 'coordenacao' },
-  'Diretora': { role: 'admin', departamento: 'diretoria_pedagogica' },
+  // Coordenação e Direção entram no Portal da Gestão sem financeiro
+  // (Gestão Pedagógica, 29/09/2026).
+  'Coordenadora': { role: 'gestao_pedagogica', departamento: 'coordenacao' },
+  'Diretora': { role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica' },
   'Administradora': { role: 'admin', departamento: 'administrativo' },
   'Recepcionista': { role: 'admin', departamento: 'recepcao' },
 };
 
-const ACCESS_ROLE_LABEL = { admin: 'Admin', teacher: 'Professor', gestao: 'Gestão' };
+const ACCESS_ROLE_LABEL = { admin: 'Admin', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção' };
 const ACCESS_ROLE_STYLE = {
   admin: 'bg-amber-50 text-amber-700 border-amber-200',
+  gestao_pedagogica: 'bg-sky-50 text-sky-800 border-sky-200',
   teacher: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   gestao: 'bg-primary/10 text-primary border-primary/20',
 };
@@ -40,6 +43,25 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
     const acesso = CARGO_PARA_ACESSO[cargo];
     if (!acesso) return false;
     return acesso.role === 'teacher' || isGestao;
+  };
+  // Troca o tipo de acesso de Coordenação/Direção entre Equipe (portal da
+  // Recepção) e Gestão Pedagógica (Portal da Gestão). Só a Gestão.
+  const [mudandoTipoId, setMudandoTipoId] = useState(null);
+  const mudarTipoDeAcesso = async (u, novoTipo) => {
+    setMudandoTipoId(u.id);
+    try {
+      const { error: rpcError } = await supabase.rpc('set_staff_access_type', { p_user_id: u.id, p_role: novoTipo });
+      if (rpcError) throw rpcError;
+      setAccessUsers(prev => prev.map(x => (x.id === u.id ? { ...x, role: novoTipo } : x)));
+      toast.success(novoTipo === 'gestao_pedagogica'
+        ? `${u.name} agora entra no Portal da Gestão, sem financeiro. Vale sair e entrar de novo.`
+        : `${u.name} voltou para o portal da Recepção.`);
+    } catch (err) {
+      console.error('[AdminFuncionarios] Erro ao mudar tipo de acesso:', err);
+      toast.error('Não foi possível mudar o tipo de acesso: ' + (err.message || 'erro desconhecido'));
+    } finally {
+      setMudandoTipoId(null);
+    }
   };
   const [approvingAccessId, setApprovingAccessId] = useState(null);
   const approveAccessUser = async (u) => {
@@ -115,7 +137,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         .from('users')
         .select('*')
         .eq('school_id', schoolId)
-        .in('role', ['admin', 'teacher', 'gestao'])
+        .in('role', ['admin', 'teacher', 'gestao', 'gestao_pedagogica'])
         .order('name', { ascending: true });
       if (fetchError) throw fetchError;
       setAccessUsers(data || []);
@@ -515,7 +537,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                         </span>
                       </div>
                       <p className="text-on-surface-variant/70 text-xs truncate mt-0.5">{u.email}</p>
-                      {u.role === 'admin' && u.departamento && (
+                      {['admin', 'gestao_pedagogica'].includes(u.role) && u.departamento && (
                         <p className="text-on-surface-variant text-xs mt-1">{DEPARTAMENTOS_LABEL[u.departamento] || u.departamento}</p>
                       )}
                     </div>
@@ -539,6 +561,25 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                       )}
                     </div>
                   </div>
+
+                  {isGestao && u.role === 'admin' && ['coordenacao', 'diretoria_pedagogica'].includes(u.departamento) && (
+                    <button
+                      onClick={() => mudarTipoDeAcesso(u, 'gestao_pedagogica')}
+                      disabled={mudandoTipoId === u.id}
+                      className="mt-3 w-full py-1.5 bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                    >
+                      {mudandoTipoId === u.id ? 'Mudando...' : 'Mudar para o Portal da Gestão (sem financeiro)'}
+                    </button>
+                  )}
+                  {isGestao && u.role === 'gestao_pedagogica' && (
+                    <button
+                      onClick={() => mudarTipoDeAcesso(u, 'admin')}
+                      disabled={mudandoTipoId === u.id}
+                      className="mt-3 w-full py-1.5 bg-white text-on-surface-variant hover:bg-surface-container-low border border-outline-variant rounded-lg transition font-bold text-xs disabled:opacity-50"
+                    >
+                      {mudandoTipoId === u.id ? 'Mudando...' : 'Voltar para o portal da Recepção'}
+                    </button>
+                  )}
 
                   {u.status === 'pending' && (
                     isGestao ? (

@@ -25,7 +25,10 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   const [approvingUserId, setApprovingUserId] = useState(null);
   // Hierarquia (27/09/2026): aprovar, recusar e excluir conta é só da
   // Gestão (ou do suporte). O admin consulta e edita.
-  const canApproveAndDelete = ['gestao', 'developer'].includes(currentUser?.role);
+  // Aprovar: Gestão, Coordenação e Direção. Recusar (apaga a conta) e
+  // excluir: só a Gestão (29/09/2026).
+  const canApprove = ['gestao', 'gestao_pedagogica', 'developer'].includes(currentUser?.role);
+  const canDelete = ['gestao', 'developer'].includes(currentUser?.role);
   const [confirmRejectUserId, setConfirmRejectUserId] = useState(null);
   const [allStudents, setAllStudents] = useState([]);
   const [duplicateWarning, setDuplicateWarning] = useState(null); // { userId, matches }
@@ -412,7 +415,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                           >
                             <Edit size={15} />
                           </button>
-                          {canApproveAndDelete && <button
+                          {canDelete && <button
                             onClick={() => guardian.status === 'pending' ? handleRejectUser(guardian.id) : handleDeleteUser(guardian.id)}
                             className="p-1.5 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                             title={guardian.status === 'pending' ? 'Rejeitar cadastro' : 'Excluir usuário'}
@@ -463,12 +466,12 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                             </p>
                           )}
 
-                          {guardian.status === 'pending' && !canApproveAndDelete && (
+                          {guardian.status === 'pending' && !canApprove && (
                             <p className="mt-2 w-full py-1.5 text-center bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs">
                               Aguardando aprovação da Gestão
                             </p>
                           )}
-                          {guardian.status === 'pending' && canApproveAndDelete && (
+                          {guardian.status === 'pending' && canApprove && (
                             <button
                               onClick={() => handleApproveUser(guardian.id)}
                               disabled={approvingUserId === guardian.id}

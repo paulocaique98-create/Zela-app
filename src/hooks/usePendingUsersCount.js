@@ -11,7 +11,7 @@ export function usePendingUsersCount(currentUser) {
   const [count, setCount] = useState(0);
 
   const refresh = useCallback(async () => {
-    if (!['admin', 'gestao'].includes(currentUser?.role) || !currentUser?.school_id) {
+    if (!['admin', 'gestao', 'gestao_pedagogica'].includes(currentUser?.role) || !currentUser?.school_id) {
       setCount(0);
       return;
     }
@@ -34,7 +34,7 @@ export function usePendingUsersCount(currentUser) {
   }, [refresh]);
 
   useEffect(() => {
-    if (!['admin', 'gestao'].includes(currentUser?.role) || !currentUser?.school_id) return;
+    if (!['admin', 'gestao', 'gestao_pedagogica'].includes(currentUser?.role) || !currentUser?.school_id) return;
 
     const channel = supabase
       .channel(`pending-users-${currentUser.id}`)

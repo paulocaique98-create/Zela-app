@@ -1,4 +1,22 @@
 import { describe, it, expect } from 'vitest';
+import { buildPendencias as buildPendenciasGp } from './pendenciasModel';
+
+describe('Pendências · Gestão Pedagógica e contrato de aluno que saiu (29/09/2026)', () => {
+  const base = { cadastros: [], matriculas: [], exclusoes: [], biometria: [], vencidas: [], despesas: [], contratos: [], documentos: [] };
+
+  it('mensalidade ativa de aluno que saiu vira pendência financeira da Gestão', () => {
+    const { rows } = buildPendenciasGp({ ...base, correcoes: [], contratosAlunoSaiu: [{ id: 'c1', students: { name: 'Laura Nunes', enrollment_status: 'transferido' } }] }, '2026-09-29');
+    expect(rows.find(r => r.key === 'contratos-aluno-saiu')).toMatchObject({ area: 'financeiro', tab: 'financeiro-mensalidades', meta: 'Laura Nunes' });
+  });
+
+  it('para quem não aprova, correção pendente é só acompanhamento', () => {
+    const correcoes = [{ id: 'x', increases_billing: true, students: { name: 'Ana' } }];
+    expect(buildPendenciasGp({ ...base, correcoes }, '2026-09-29').rows[0]).toMatchObject({ priority: 'urgente', action: 'Revisar' });
+    const r = buildPendenciasGp({ ...base, correcoes }, '2026-09-29', { podeAprovarCorrecoes: false }).rows[0];
+    expect(r).toMatchObject({ priority: 'acompanhar', action: 'Acompanhar' });
+    expect(r.title).toMatch(/aguardando a Gestão/);
+  });
+});
 import { buildPendencias } from './pendenciasModel';
 
 const TODAY = '2026-09-28';

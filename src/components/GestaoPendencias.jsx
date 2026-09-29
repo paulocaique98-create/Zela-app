@@ -7,6 +7,7 @@ import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { buildPendencias, PRIORIDADES } from '../lib/pendenciasModel';
 import { centsToBRL, todayISO } from '../lib/gestaoUtils';
 import { PageShell, Loading, Notice, SecondaryButton } from './GestaoShared';
+import { recursosDoPerfil, AREAS_PENDENCIAS_GESTAO_PEDAGOGICA } from '../lib/perfisGestao';
 
 // Pendências da Gestão · Modelo 4 (aprovado em 28/09/2026): os quatro
 // números e as áreas do "Painel por área" + a fila do "Fila por prioridade".
@@ -39,14 +40,26 @@ function Kpi({ label, value, hint, valueClass = 'text-on-surface' }) {
 export default function GestaoPendencias({ currentUser, setGestaoTab }) {
   const { isLoading, data, error, refresh } = useGestaoPendencias(currentUser);
   const [area, setArea] = useState('todas');
-  const model = useMemo(() => buildPendencias(data, todayISO()), [data]);
+  const recursos = recursosDoPerfil(currentUser?.role);
+  const model = useMemo(() => {
+    const m = buildPendencias(data, todayISO(), { podeAprovarCorrecoes: recursos.aprovarCorrecaoQueGeraCobranca });
+    if (recursos.financeiro) return m;
+    // Coordenação e Direção: só cadastros, secretaria e presença.
+    return {
+      ...m,
+      rows: m.rows.filter(r => AREAS_PENDENCIAS_GESTAO_PEDAGOGICA.has(r.area)),
+      areas: m.areas.filter(a => AREAS_PENDENCIAS_GESTAO_PEDAGOGICA.has(a.key)),
+    };
+  }, [data, recursos.aprovarCorrecaoQueGeraCobranca, recursos.financeiro]);
   const rows = area === 'todas' ? model.rows : model.rows.filter(r => r.area === area);
 
   const areaButtons = [{ key: 'todas', label: 'Todas as áreas', count: model.rows.length, resumo: `${model.rows.length} pendência${model.rows.length === 1 ? '' : 's'}` }, ...model.areas];
 
   return (
     <PageShell
-      description="Tudo o que depende da Gestão: o resumo, as áreas e a fila por prioridade."
+      description={recursos.financeiro
+        ? 'Tudo o que depende da Gestão: o resumo, as áreas e a fila por prioridade.'
+        : 'O que depende da Coordenação e da Direção: cadastros, secretaria e presença.'}
       actions={<SecondaryButton onClick={refresh}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /> Atualizar</SecondaryButton>}
     >
       <Notice>{error}</Notice>
@@ -56,7 +69,11 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
             <Kpi label="Precisam de ação hoje" value={model.kpis.hoje} hint={model.kpis.hojeHint} valueClass={model.kpis.hoje ? 'text-error' : 'text-emerald-700'} />
             <Kpi label="Para esta semana" value={model.kpis.semana} hint={model.kpis.semanaHint} valueClass={model.kpis.semana ? 'text-amber-800' : 'text-emerald-700'} />
-            <Kpi label="Valor em atraso" value={centsToBRL(model.kpis.atrasoCents)} hint={model.kpis.atrasoHint} />
+            {recursos.financeiro ? (
+              <Kpi label="Valor em atraso" value={centsToBRL(model.kpis.atrasoCents)} hint={model.kpis.atrasoHint} />
+            ) : (
+              <Kpi label="Para aprovar" value={(data.cadastros?.length || 0) + (data.matriculas?.length || 0)} hint="cadastros e matrículas" />
+            )}
             <Kpi label="Prazo mais próximo" value={model.kpis.prazo} hint={model.kpis.prazoHint} />
           </div>
 

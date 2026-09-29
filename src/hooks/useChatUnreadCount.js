@@ -55,7 +55,7 @@ export function useChatUnreadCount(currentUser, enabled) {
     // tempo, então não tem um único school_id que sirva de filtro.
     const filter =
       currentUser.role === 'family' ? `family_id=eq.${currentUser.id}` :
-      currentUser.role === 'admin' && currentUser.school_id ? `school_id=eq.${currentUser.school_id}` :
+      (currentUser.role === 'admin' || currentUser.role === 'gestao_pedagogica') && currentUser.school_id ? `school_id=eq.${currentUser.school_id}` :
       undefined;
 
     const channel = supabase

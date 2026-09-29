@@ -42,7 +42,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
+    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
       throw new Error('Permissão negada');
     }
 
@@ -85,7 +85,7 @@ serve(async (req) => {
     if (targetError || !targetUser) {
       throw new Error('Usuário não encontrado.');
     }
-    if ((callerData.role === 'admin' || callerData.role === 'gestao') && targetUser.school_id !== callerData.school_id) {
+    if ((callerData.role === 'admin' || callerData.role === 'gestao' || callerData.role === 'gestao_pedagogica') && targetUser.school_id !== callerData.school_id) {
       throw new Error('Permissão negada.');
     }
 
@@ -121,6 +121,10 @@ serve(async (req) => {
         // o admin corrige professor e responsável.
         if (targetUser.role === 'admin' && callerData.role !== 'gestao') {
           throw new Error('Só a Gestão pode alterar o e-mail de um administrador.');
+        }
+        // Coordenação/Direção (Gestão Pedagógica, 29/09/2026): só a Gestão.
+        if (targetUser.role === 'gestao_pedagogica' && callerData.role !== 'gestao') {
+          throw new Error('Só a Gestão pode alterar o e-mail da Coordenação ou da Direção.');
         }
       }
     }

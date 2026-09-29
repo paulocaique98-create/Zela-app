@@ -42,7 +42,10 @@ function listNames(names, max = 2) {
 }
 
 // today: 'YYYY-MM-DD' (fuso de Brasília, ver todayISO()).
-export function buildPendencias(data, today) {
+// opcoes.podeAprovarCorrecoes: false para Coordenação e Direção (a correção
+// pendente é da Gestão aprovar; para elas vira só acompanhamento).
+export function buildPendencias(data, today, opcoes = {}) {
+  const podeAprovarCorrecoes = opcoes.podeAprovarCorrecoes !== false;
   const rows = [];
   if (!data) return { rows, kpis: null, areas: [] };
 
@@ -81,6 +84,16 @@ export function buildPendencias(data, today) {
       action: 'Ver inadimplência', tab: 'financeiro-inadimplencia',
     });
   }
+  const contratosAlunoSaiu = data.contratosAlunoSaiu || [];
+  if (contratosAlunoSaiu.length) {
+    rows.push({
+      key: 'contratos-aluno-saiu', area: 'financeiro', priority: 'semana', icon: 'contratos',
+      title: `${plural(contratosAlunoSaiu.length, 'mensalidade ativa', 'mensalidades ativas')} de aluno que saiu da escola`,
+      meta: listNames(contratosAlunoSaiu.map(c => c.students?.name)),
+      badge: 'Cancelar contrato',
+      action: 'Ver mensalidades', tab: 'financeiro-mensalidades',
+    });
+  }
   const despesas = data.despesas || [];
   const atrasadas = despesas.filter(d => d.due_date < today);
   const aVencer = despesas.filter(d => d.due_date >= today);
@@ -107,11 +120,16 @@ export function buildPendencias(data, today) {
   const correcoes = data.correcoes || [];
   if (correcoes.length) {
     const cobram = correcoes.filter(c => c.increases_billing).length;
-    rows.push({
+    rows.push(podeAprovarCorrecoes ? {
       key: 'correcoes', area: 'presenca', priority: 'urgente', icon: 'correcoes',
       title: `${plural(correcoes.length, 'correção de presença', 'correções de presença')} para aprovar`,
       meta: cobram ? `${cobram} ${cobram === 1 ? 'aumenta' : 'aumentam'} a cobrança de hora extra` : listNames(correcoes.map(c => c.students?.name)),
       action: 'Revisar', tab: 'attendance-corrections',
+    } : {
+      key: 'correcoes', area: 'presenca', priority: 'acompanhar', icon: 'correcoes',
+      title: `${plural(correcoes.length, 'correção de presença aguardando', 'correções de presença aguardando')} a Gestão`,
+      meta: listNames(correcoes.map(c => c.students?.name)),
+      action: 'Acompanhar', tab: 'attendance-corrections',
     });
   }
 
@@ -192,7 +210,7 @@ export function buildPendencias(data, today) {
       const ex = rows.find(r => r.area === 'lgpd' && typeof r.deadlineDays === 'number');
       return ex ? `exclusão em ${plural(Math.max(ex.deadlineDays, 0), 'dia', 'dias')}` : biometria.length ? 'biometria para revisar' : '';
     },
-    financeiro: () => (vencidas.length ? `${centsToBRL(data.vencidasTotal)} em atraso` : despesas.length ? 'despesas a pagar' : ''),
+    financeiro: () => (vencidas.length ? `${centsToBRL(data.vencidasTotal)} em atraso` : despesas.length ? 'despesas a pagar' : contratosAlunoSaiu.length ? 'mensalidade de aluno que saiu' : ''),
     presenca: () => (correcoes.length ? plural(correcoes.length, 'correção', 'correções') : ''),
     cadastros: () => (cadastros.length ? `${cadastros.length} para aprovar` : ''),
     secretaria: () => [matriculas.length && plural(matriculas.length, 'matrícula', 'matrículas'), documentos.length && `${documentos.length} com documentos`].filter(Boolean).join(' · '),

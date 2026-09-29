@@ -9,6 +9,9 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import ConfirmModal from './ConfirmModal';
 
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
+// Coordenação e Direção (Gestão Pedagógica, 29/09/2026): só esses dois.
+const DEPARTAMENTOS_GESTAO_PEDAGOGICA = SETORES_CHAT.filter(s => ['coordenacao', 'diretoria_pedagogica'].includes(s.value));
+const EQUIPE_COM_DEPARTAMENTO = ['admin', 'gestao_pedagogica'];
 
 // ──────────────────────────────────────────────────────────
 // Dados de Ciclo / Turno / Período
@@ -497,6 +500,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
   // o aluno já está salvo (o 2º responsável só é cadastrado depois).
   const financeiroDoAluno = (student) => {
     if (formData.role !== 'family') return null;
+    // Coordenação e Direção veem quem paga, mas não escolhem (29/09/2026).
+    if (currentUser?.role === 'gestao_pedagogica') {
+      const atual = financeiroPorAluno[student.id];
+      const nome = atual && atual === secondGuardian?.id ? `${secondGuardian.name} (2º responsável)` : `${editingUser?.name || formData.name || 'Titular'} (titular)`;
+      return { opcoes: [{ id: atual || 'titular', label: nome }], dica: 'Só a Gestão escolhe quem paga a mensalidade.' };
+    }
     const salvo = typeof student.id === 'string' && !!editingUser?.students?.some(s => s.id === student.id);
     const titularNome = editingUser?.name || formData.name || 'Titular';
     if (!salvo || !secondGuardian) {
@@ -852,7 +861,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           profession: formData.profession || null,
           civil_status: formData.civil_status || null,
           guardian_type: guardianType,
-          ...(formData.role === 'admin' ? {
+          ...(EQUIPE_COM_DEPARTAMENTO.includes(formData.role) ? {
             departamento: formData.departamento || null,
             ...(['gestao', 'developer'].includes(currentUser.role) ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
@@ -990,7 +999,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           profession: formData.profession || null,
           civil_status: formData.civil_status || null,
           guardian_type: guardianType,
-          ...(formData.role === 'admin' ? {
+          ...(EQUIPE_COM_DEPARTAMENTO.includes(formData.role) ? {
             departamento: formData.departamento || null,
             ...(['gestao', 'developer'].includes(currentUser.role) ? { chat_visibilidade_total: formData.chat_visibilidade_total } : {}),
           } : {}),
@@ -1161,6 +1170,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'admin') && (
                 <option value="admin">Administrador (Equipe)</option>
               )}
+              {/* Coordenação e Direção: Portal da Gestão sem financeiro (29/09/2026). */}
+              {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'gestao_pedagogica') && (
+                <option value="gestao_pedagogica">Coordenação ou Direção</option>
+              )}
               <option value="teacher">Professor</option>
             </select>
           )}
@@ -1180,13 +1193,16 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             </div>
           )}
 
-          {formData.role === 'admin' && (
+          {EQUIPE_COM_DEPARTAMENTO.includes(formData.role) && (
             <div>
-              <label className="block text-xs font-semibold text-on-surface mb-1">Departamento (Chat) *</label>
+              <label className="block text-xs font-semibold text-on-surface mb-1">{formData.role === 'gestao_pedagogica' ? 'Coordenação ou Direção *' : 'Departamento (Chat) *'}</label>
               <select required value={formData.departamento} onChange={e => setFormData({ ...formData, departamento: e.target.value })} className={inputCls}>
                 <option value="">Selecionar...</option>
-                {DEPARTAMENTOS_CHAT.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                {(formData.role === 'gestao_pedagogica' ? DEPARTAMENTOS_GESTAO_PEDAGOGICA : DEPARTAMENTOS_CHAT).map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </select>
+              {formData.role === 'gestao_pedagogica' && (
+                <p className="text-[11px] text-on-surface-variant mt-1">Entra no Portal da Gestão sem financeiro, contratos, horas extras, configurações e LGPD. Na primeira entrada, a pessoa troca a senha.</p>
+              )}
             </div>
           )}
         </div>
@@ -1222,7 +1238,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           </div>
         )}
 
-        {formData.role === 'admin' && ['gestao', 'developer'].includes(currentUser.role) && (
+        {EQUIPE_COM_DEPARTAMENTO.includes(formData.role) && ['gestao', 'developer'].includes(currentUser.role) && (
           <label className="flex items-center gap-2 cursor-pointer bg-primary/10 border border-primary/10 rounded-zela-md p-3">
             <input
               type="checkbox"

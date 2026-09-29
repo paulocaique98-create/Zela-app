@@ -5,6 +5,7 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
 import { logAction } from '../lib/auditLog';
 import { perfilDasTurmas, sugerirTurma, formatIdade, idadeEmMeses, MOTIVOS_MUDANCA_TURMA } from '../lib/sugestaoTurma';
+import { recursosDoPerfil } from '../lib/perfisGestao';
 
 const TABS = [
   { key: 'pessoais', label: 'Dados Pessoais', icon: User },
@@ -62,6 +63,10 @@ const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', PAID: 'Pago', OVERDUE: 'Em a
 // initialTab/initialMoveTo: vindo do cartão "Hora de mudar de turma?" do
 // painel de Alunos, abre direto na Matrícula com a mudança já preenchida.
 export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, initialTab = 'pessoais', initialMoveTo = null }) {
+  // Coordenação e Direção (29/09/2026): sem a aba Financeiro e sem escolher
+  // quem paga (veem quem é o responsável financeiro, só leitura).
+  const recursos = recursosDoPerfil(currentUser?.role);
+  const abas = TABS.filter(t => t.key !== 'financeiro' || recursos.financeiro);
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isLoading, setIsLoading] = useState(true);
@@ -435,7 +440,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
       </div>
 
       <div className="flex gap-1 overflow-x-auto px-4 sm:px-5 pt-3 shrink-0 border-b border-outline-variant">
-        {TABS.map(tab => {
+        {abas.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
           return (
@@ -496,7 +501,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
 
         {activeTab === 'responsaveis' && (
           <div className="max-w-2xl space-y-3">
-            {guardians.length > 1 && (
+            {guardians.length > 1 && recursos.escolherResponsavelFinanceiro && (
               <p className="text-xs text-on-surface-variant">
                 A mensalidade deste aluno é cobrada no nome e CPF do responsável marcado como <strong>Financeiro</strong>.
                 {contract && ['active', 'paused'].includes(contract.status)
@@ -515,7 +520,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                   {g.is_financial && <span className="text-[10px] font-bold uppercase bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Financeiro</span>}
                 </div>
                 <p className="text-xs text-on-surface-variant/70">{g.relationship || '—'} · {g.users?.phone || '—'} · {g.users?.email || '—'}</p>
-                {!g.is_financial && guardians.length > 1 && !(contract && ['active', 'paused'].includes(contract.status)) && (
+                {recursos.escolherResponsavelFinanceiro && !g.is_financial && guardians.length > 1 && !(contract && ['active', 'paused'].includes(contract.status)) && (
                   <button
                     onClick={() => tornarFinanceiro(g.guardian_id)}
                     disabled={!!financeiroSalvando}
@@ -670,7 +675,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
           )
         )}
 
-        {activeTab === 'financeiro' && (
+        {activeTab === 'financeiro' && recursos.financeiro && (
           <div className="max-w-2xl space-y-4">
             {!contract ? (
               <EmptyState text="Nenhum contrato financeiro encontrado pra este aluno." />

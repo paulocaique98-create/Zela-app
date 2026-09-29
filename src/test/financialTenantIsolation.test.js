@@ -227,11 +227,26 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
       expect(unchanged.base_monthly_amount_cents).toBe(50000);
     });
 
-    it('admin AINDA consegue ler as próprias cobranças/contratos (acesso legítimo preservado)', async () => {
-      const { data: charges } = await adminA.client.from('financial_charges').select('id').eq('id', chargeA);
-      expect(charges).toHaveLength(1);
-      const { data: contracts } = await adminA.client.from('financial_contracts').select('id').eq('id', contractA);
-      expect(contracts).toHaveLength(1);
+    it('Recepção só lê cobranças e contratos com a permissão financeira dada pela Gestão (29/09/2026)', async () => {
+      // Sem permissão: nada (antes lia tudo, só a tela escondia).
+      const { data: semCobrancas } = await adminA.client.from('financial_charges').select('id').eq('id', chargeA);
+      expect(semCobrancas).toEqual([]);
+      const { data: semContratos } = await adminA.client.from('financial_contracts').select('id').eq('id', contractA);
+      expect(semContratos).toEqual([]);
+
+      // Com a permissão (Gestão · Perfis e Permissões): lê, acesso legítimo preservado.
+      const { error: grantErr } = await gestaoA.client.from('school_role_permissions').upsert({
+        school_id: schoolA, role: 'admin', permission: 'relatorios.financeiro.ver', granted: true,
+      });
+      expect(grantErr).toBeNull();
+      try {
+        const { data: charges } = await adminA.client.from('financial_charges').select('id').eq('id', chargeA);
+        expect(charges).toHaveLength(1);
+        const { data: contracts } = await adminA.client.from('financial_contracts').select('id').eq('id', contractA);
+        expect(contracts).toHaveLength(1);
+      } finally {
+        await adminClient.from('school_role_permissions').delete().eq('school_id', schoolA).eq('role', 'admin');
+      }
     });
 
     it('Fase 5 (migração Admin -> Gestão): admin NÃO consegue mais cancelar contrato, só gestao', async () => {

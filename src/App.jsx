@@ -15,6 +15,7 @@ import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { toast } from './lib/toast';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
+import { usaPortalGestao } from './lib/perfisGestao';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
 
 const Login = lazy(() => import('./components/Login'));
@@ -92,7 +93,7 @@ export default function App() {
     activeRole === 'admin' ? [adminTab, setAdminTab] :
     activeRole === 'family' ? [familyTab, setFamilyTab] :
     activeRole === 'teacher' ? [teacherTab, setTeacherTab] :
-    activeRole === 'gestao' ? [gestaoTab, setGestaoTab] :
+    usaPortalGestao(activeRole) ? [gestaoTab, setGestaoTab] :
     activeRole === 'developer' ? [developerTab, setDeveloperTab] :
     [null, null];
   useTabHistory(activeTab ? activeRole : null, activeTab, setActiveTab, activeRole === 'admin' ? KIOSK_LOCKED_TABS : NO_LOCKED_TABS);
@@ -111,7 +112,7 @@ export default function App() {
       currentUser?.role === 'family' ? familyTab :
       currentUser?.role === 'teacher' ? teacherTab :
       currentUser?.role === 'developer' ? `dev-${developerTab}` :
-      currentUser?.role === 'gestao' ? gestaoTab :
+      usaPortalGestao(currentUser?.role) ? gestaoTab :
       null;
     setCurrentScreen(screen);
   }, [currentUser?.role, adminTab, familyTab, teacherTab, developerTab, gestaoTab]);
@@ -536,7 +537,7 @@ export default function App() {
           // Atualiza no banco em background -- só na sessão da escola: a
           // família não grava mais em students (check-in/out centralizado
           // no autoatendimento).
-          if (['admin', 'gestao', 'developer'].includes(currentUser.role)) supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
+          if (['admin', 'gestao', 'gestao_pedagogica', 'developer'].includes(currentUser.role)) supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
             .then(({ error }) => {
               if (error) console.error('[Zela] Falha ao resetar status do aluno para idle:', s.id, error);
             });
@@ -1391,7 +1392,7 @@ export default function App() {
     currentUser.role === 'family' ? familyTab :
     currentUser.role === 'teacher' ? teacherTab :
     currentUser.role === 'developer' ? `dev-${developerTab}` :
-    currentUser.role === 'gestao' ? gestaoTab :
+    usaPortalGestao(currentUser.role) ? gestaoTab :
     null;
   const currentHeaderLabel = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabel(currentHeaderTab) : null;
   const currentHeaderLabelMobile = (currentHeaderTab && currentHeaderTab !== 'home') ? screenLabelMobile(currentHeaderTab) : null;
@@ -1429,7 +1430,7 @@ export default function App() {
             // pra decidir o que mostrar nunca mudava).
             currentUser?.role === 'admin' ? setAdminTab
             : currentUser?.role === 'teacher' ? setTeacherTab
-            : currentUser?.role === 'gestao' ? setGestaoTab
+            : usaPortalGestao(currentUser?.role) ? setGestaoTab
             : setFamilyTab
           }
         />
@@ -1522,7 +1523,7 @@ export default function App() {
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
                 />
-              ) : currentUser.role === 'gestao' ? (
+              ) : usaPortalGestao(currentUser.role) ? (
                 <GestaoPortal
                   currentUser={currentUser}
                   currentSchool={currentSchool}

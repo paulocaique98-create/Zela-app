@@ -27,7 +27,7 @@ export async function notifyAdmins(adminClient: any, params: {
     .from('users')
     .select('id')
     .eq('school_id', schoolId)
-    .in('role', ['admin', 'gestao'])
+    .in('role', ['admin', 'gestao', 'gestao_pedagogica'])
     .eq('status', 'active');
   if (adminsError) throw adminsError;
   if (!admins || admins.length === 0) return;

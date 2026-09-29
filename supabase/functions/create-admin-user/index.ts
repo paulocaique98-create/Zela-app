@@ -31,7 +31,9 @@ serve(async (req) => {
 
     // Hierarquia de contas (27/09/2026): a Gestão é o topo da escola e cria
     // admins, professores e responsáveis (Fase 1, em paralelo com o admin).
-    if (!userData || (userData.role !== 'admin' && userData.role !== 'developer' && userData.role !== 'gestao')) {
+    // Gestão Pedagógica (Coordenação/Direção, 29/09/2026): cria professoras e
+    // famílias, nunca contas da equipe.
+    if (!userData || !['admin', 'developer', 'gestao', 'gestao_pedagogica'].includes(userData.role)) {
       throw new Error('Permissão negada');
     }
 
@@ -81,15 +83,20 @@ serve(async (req) => {
     // Hierarquia de contas (decisão de 27/09/2026): a conta da Gestão é o
     // topo da escola e é criada SÓ pelo suporte (developer), na adesão da
     // escola -- nunca por admin, nem pelo admin principal.
-    if (role !== 'admin' && role !== 'teacher' && role !== 'family' && role !== 'gestao') {
-      throw new Error('role deve ser "admin", "teacher", "family" ou "gestao".');
+    if (!['admin', 'teacher', 'family', 'gestao', 'gestao_pedagogica'].includes(role)) {
+      throw new Error('role deve ser "admin", "teacher", "family", "gestao" ou "gestao_pedagogica".');
     }
     if (role === 'gestao' && userData.role !== 'developer') {
       throw new Error('Só o suporte do Zela pode criar a conta da Gestão.');
     }
-    // Fase 3: admin só é criado pela Gestão (ou pelo suporte).
-    if (role === 'admin' && userData.role !== 'gestao' && userData.role !== 'developer') {
-      throw new Error('Só a Gestão da escola pode criar contas de administrador.');
+    // Fase 3: admin só é criado pela Gestão (ou pelo suporte); a Gestão
+    // Pedagógica (Coordenação/Direção) também.
+    if ((role === 'admin' || role === 'gestao_pedagogica') && userData.role !== 'gestao' && userData.role !== 'developer') {
+      throw new Error('Só a Gestão da escola pode criar contas da equipe.');
+    }
+    const efDepartamento = (extra_fields || {}).departamento;
+    if (role === 'gestao_pedagogica' && !['coordenacao', 'diretoria_pedagogica'].includes(efDepartamento)) {
+      throw new Error('Escolha Coordenação ou Diretoria Pedagógica para esta conta.');
     }
     // Fase 2: professor/responsável criado pelo admin nasce pendente e só a
     // Gestão aprova (users.status; ver protect_admin_privilege_columns).
@@ -97,7 +104,7 @@ serve(async (req) => {
 
     // Se for admin, só pode criar para a própria escola
     let finalSchoolId = school_id;
-    if (userData.role === 'admin' || userData.role === 'gestao') {
+    if (userData.role === 'admin' || userData.role === 'gestao' || userData.role === 'gestao_pedagogica') {
       finalSchoolId = userData.school_id;
     }
 
@@ -118,7 +125,7 @@ serve(async (req) => {
       civil_status: ef.civil_status ?? null,
       guardian_type: ef.guardian_type ?? null,
     };
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'gestao_pedagogica') {
       safeExtraFields.departamento = ef.departamento ?? null;
       if (userData.role === 'developer' || userData.role === 'gestao') {
         safeExtraFields.chat_visibilidade_total = !!ef.chat_visibilidade_total;
@@ -127,8 +134,8 @@ serve(async (req) => {
     if (role === 'teacher') {
       safeExtraFields.turmas = Array.isArray(ef.turmas) ? ef.turmas : [];
     }
-    if (role === 'gestao') {
-      // Conta do financeiro com senha escolhida por outra pessoa: troca
+    if (role === 'gestao' || role === 'gestao_pedagogica') {
+      // Conta com acesso amplo e senha escolhida por outra pessoa: troca
       // obrigatória no primeiro acesso.
       safeExtraFields.must_change_password = true;
     }

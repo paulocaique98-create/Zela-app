@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3, CalendarDays, Megaphone, UserCheck, AlertOctagon, Banknote } from 'lucide-react';
+import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3, CalendarDays, Megaphone, UserCheck, AlertOctagon, Banknote, BookOpen, UtensilsCrossed, Soup } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
 import { StatCard } from './GestaoShared';
+import { podeVerAba, recursosDoPerfil, rotuloDoPerfil } from '../lib/perfisGestao';
 
 // Início da Gestão: números do dia no topo (cada um leva à tela onde se
 // resolve) e atalhos abaixo.
@@ -14,7 +15,9 @@ const MAX_ATALHOS = 8;
 
 export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab, clickCounts = {} }) {
   const features = currentSchool?.features_enabled || {};
-  const showFinanceiro = features.financeiro === true;
+  const recursos = recursosDoPerfil(currentUser?.role);
+  // Coordenação e Direção nunca veem valores (29/09/2026).
+  const showFinanceiro = features.financeiro === true && recursos.financeiro;
   const showCheckin = features.checkin !== false;
   const { data: pend } = useGestaoPendencias(currentUser);
   const [fin, setFin] = useState(null);
@@ -34,7 +37,10 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     })();
   }, [showFinanceiro, currentUser?.school_id]);
 
-  const pendTotal = pend ? pend.cadastros.length + pend.matriculas.length + pend.correcoes.length + pend.contratos.length + pend.exclusoes.length : null;
+  const pendTotal = pend
+    ? pend.cadastros.length + pend.matriculas.length
+      + (recursos.aprovarCorrecaoQueGeraCobranca ? pend.correcoes.length + pend.contratos.length + pend.exclusoes.length : 0)
+    : null;
 
   const menus = [
     { key: 'pendencias', label: 'Pendências', icon: Bell, tab: 'pendencias', badge: pendTotal || null },
@@ -45,7 +51,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     showFinanceiro && { key: 'financeiro-cobrancas', label: 'Cobranças', icon: Receipt, tab: 'financeiro-cobrancas' },
     showCheckin && { key: 'attendance-corrections', label: 'Correções de Presença', icon: ClipboardCheck, tab: 'attendance-corrections', badge: pend?.correcoes.length || null },
     showCheckin && { key: 'horas-extras', label: 'Horas Extras', icon: Clock, tab: 'horas-extras' },
-    { key: 'cadastros-usuarios', label: 'Responsáveis', icon: Users, tab: 'cadastros-usuarios', badge: pend?.cadastros.length || null },
+    { key: 'cadastros-usuarios', label: 'Usuários', icon: Users, tab: 'cadastros-usuarios', badge: pend?.cadastros.length || null },
     { key: 'cadastros-turmas', label: 'Turmas', icon: School, tab: 'cadastros-turmas' },
     { key: 'relatorios-gestao', label: 'Relatórios', icon: BarChart3, tab: 'relatorios-gestao' },
     showFinanceiro && { key: 'financeiro-inadimplencia', label: 'Inadimplência', icon: AlertOctagon, tab: 'financeiro-inadimplencia' },
@@ -53,8 +59,13 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     showCheckin && { key: 'presenca-dia', label: 'Presença do Dia', icon: UserCheck, tab: 'presenca-dia' },
     { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario' },
     { key: 'comunicacao-comunicados', label: 'Comunicados', icon: Megaphone, tab: 'comunicacao-comunicados' },
+    { key: 'academico-relatorios', label: 'Pedagógico', icon: BookOpen, tab: 'academico-relatorios' },
+    { key: 'academico-cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'academico-cardapio' },
+    { key: 'academico-diario', label: 'Diário', icon: Soup, tab: 'academico-diario' },
   ]
     .filter(Boolean)
+    // Mesmo filtro do menu: cada perfil só tem atalho para o que vê.
+    .filter(m => podeVerAba(currentUser?.role, m.tab))
     .map((m, index) => ({ ...m, index }))
     .sort((a, b) => ((clickCounts[b.tab] || 0) - (clickCounts[a.tab] || 0)) || (a.index - b.index))
     .slice(0, MAX_ATALHOS);
@@ -63,11 +74,11 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
         <div className="mb-6 shrink-0">
-          <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da Gestão</h1>
+          <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da {rotuloDoPerfil(currentUser)}</h1>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint="cadastros, matrículas, correções, contratos e exclusões" onClick={() => setGestaoTab('pendencias')} />
+          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint={recursos.financeiro ? 'cadastros, matrículas, correções, contratos e exclusões' : 'cadastros e matrículas'} onClick={() => setGestaoTab('pendencias')} />
           <StatCard label="Documentos faltando" value={pend ? pend.documentos.length : '·'} tone={pend?.documentos.length ? 'warn' : 'good'} hint="alunos ativos" onClick={() => setGestaoTab('secretaria-documentos')} />
           {showFinanceiro && (
             <>

@@ -88,7 +88,7 @@ serve(async (req) => {
     // Gestão incluída (27/09/2026): a aprovação de matrícula com 2º
     // responsável roda no Portal da Gestão desde a Fase 9 da Secretaria e
     // falhava aqui por falta desse papel.
-    if (callerData.role !== 'developer' && callerData.role !== 'admin' && callerData.role !== 'gestao' && callerData.role !== 'family') {
+    if (callerData.role !== 'developer' && callerData.role !== 'admin' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica' && callerData.role !== 'family') {
       throw new Error('Acesso negado: você não tem permissão para criar guardiões')
     }
 

@@ -5,6 +5,7 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import { buildPainelAlunos, DOCUMENTOS_OBRIGATORIOS, SEM_TURMA } from '../lib/alunosPainel';
 import { Loading, Notice, SecondaryButton, PrimaryButton, Modal } from './GestaoShared';
 import { sugestoesDaEscola, formatIdade } from '../lib/sugestaoTurma';
+import { recursosDoPerfil } from '../lib/perfisGestao';
 
 const PAGE_SIZE = 30;
 
@@ -67,6 +68,17 @@ const AJUDA = {
   },
 };
 
+// Tira dos textos de ajuda as frases sobre cobrança (Coordenação e Direção).
+function semCobranca(ajuda) {
+  const limpa = (t) => !/cobran/i.test(t);
+  return {
+    ...ajuda,
+    paragraphs: ajuda.paragraphs
+      .map(p => (Array.isArray(p) ? p.filter(limpa) : p))
+      .filter(p => (Array.isArray(p) ? p.length > 0 : limpa(p))),
+  };
+}
+
 function BotaoAjuda({ onClick, label }) {
   return (
     <button
@@ -105,12 +117,14 @@ async function selectAll(build) {
   }
 }
 
-async function loadPainelData(schoolId) {
+async function loadPainelData(schoolId, { comFinanceiro = true } = {}) {
   const [students, documentos, fichas, overdueCharges, { data: anoLetivo, error: anoError }] = await Promise.all([
     selectAll(() => supabase.from('students').select('id, name, turma, turno, birth_date, enrollment_status').eq('school_id', schoolId).order('id')),
     selectAll(() => supabase.from('student_documents').select('student_id, category').eq('school_id', schoolId).in('category', DOCUMENTOS_OBRIGATORIOS.map(d => d.key)).order('id')),
     selectAll(() => supabase.from('fichas_medicas').select('student_id').eq('school_id', schoolId).order('student_id')),
-    selectAll(() => supabase.from('financial_charges').select('student_id, amount_cents').eq('school_id', schoolId).eq('status', 'OVERDUE').order('id')),
+    comFinanceiro
+      ? selectAll(() => supabase.from('financial_charges').select('student_id, amount_cents').eq('school_id', schoolId).eq('status', 'OVERDUE').order('id'))
+      : Promise.resolve([]),
     supabase.from('school_years').select('id, created_at, starts_on').eq('school_id', schoolId).eq('status', 'aberto').maybeSingle(),
   ]);
   if (anoError) throw anoError;
@@ -286,6 +300,8 @@ function SanfonaTurma({ turma, open, onToggle, onOpen, onVerTurma }) {
 // isVisible: o portal mantém esta tela montada (escondida) enquanto o perfil
 // está aberto, para voltar no mesmo ponto; ao reaparecer, recarrega os números.
 export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula, isVisible = true }) {
+  // Coordenação e Direção (29/09/2026): o painel não considera cobrança.
+  const comFinanceiro = recursosDoPerfil(currentUser?.role).financeiro;
   const schoolId = currentUser?.school_id;
   const { turmas: schoolTurmas } = useSchoolConfig(schoolId);
 
@@ -300,7 +316,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
     if (!schoolId) return;
     setIsLoadingPainel(true);
     try {
-      setPainelData(await loadPainelData(schoolId));
+      setPainelData(await loadPainelData(schoolId, { comFinanceiro }));
       setPainelError('');
     } catch (err) {
       console.error('[GestaoAlunos] Erro ao carregar o painel:', err);
@@ -536,7 +552,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                 label="Precisam de atenção"
                 value={k.atencao}
                 valueClass={k.atencao ? 'text-amber-800' : 'text-on-surface'}
-                hint="documentos, ficha médica e financeiro"
+                hint={comFinanceiro ? 'documentos, ficha médica e financeiro' : 'documentos e ficha médica'}
                 onClick={() => abrirLista({ status: 'ativo', atencao: true })}
                 onAjuda={() => setAjuda('atencao')}
               />
@@ -581,7 +597,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                       <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-emerald-700" /> Todos os alunos ativos estão em dia.</p>
                     ) : (
                       <div>
-                        {[['Documentos faltando', porTipo.documentos], ['Sem ficha médica', porTipo.ficha], ['Cobranças em atraso', porTipo.financeiro]].map(([label, n]) => (
+                        {[['Documentos faltando', porTipo.documentos], ['Sem ficha médica', porTipo.ficha], ...(comFinanceiro ? [['Cobranças em atraso', porTipo.financeiro]] : [])].map(([label, n]) => (
                           <div key={label} className="flex justify-between gap-3 py-2 border-t border-outline-variant/50 text-[13px]">
                             <span className="text-on-surface">{label}</span>
                             <span className="text-on-surface-variant tabular-nums">{n}</span>
@@ -620,7 +636,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
           </div>
         )}
       </div>
-      {ajuda && <ModalAjuda ajuda={AJUDA[ajuda]} onClose={() => setAjuda(null)} />}
+      {ajuda && <ModalAjuda ajuda={comFinanceiro ? AJUDA[ajuda] : semCobranca(AJUDA[ajuda])} onClose={() => setAjuda(null)} />}
     </div>
   );
 }

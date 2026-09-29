@@ -32,26 +32,35 @@ function inDays(n) {
   return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
+// Coordenação e Direção (gestao_pedagogica, 29/09/2026) não consultam o que
+// é exclusivo da Gestão (financeiro, contratos, despesas, LGPD): o banco já
+// devolveria vazio ou recusaria, e a lista de biometria daria erro.
+const VAZIO = Promise.resolve({ data: [], error: null });
+
 export function useGestaoPendencias(currentUser) {
   const schoolId = currentUser?.school_id;
+  const ehGestao = currentUser?.role !== 'gestao_pedagogica';
   const [state, setState] = useState({ isLoading: true, data: null, error: '' });
 
   const refresh = useCallback(async () => {
     if (!schoolId) return;
     setState(s => ({ ...s, isLoading: true, error: '' }));
     try {
-      const [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, biometria, documentos] = await Promise.all([
+      const [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, biometria, documentos, contratosAlunoSaiu] = await Promise.all([
         supabase.from('users').select('id, name, role').eq('school_id', schoolId).eq('status', 'pending').in('role', ['family', 'teacher']),
         supabase.from('matricula_solicitacoes').select('id, tipo, criancas, submitted_at').eq('school_id', schoolId).eq('status', 'pending'),
         supabase.from('attendance_corrections').select('id, requested_at, increases_billing, students:student_id(name)').eq('school_id', schoolId).eq('status', 'pending'),
-        supabase.from('financial_charges').select('id, amount_cents, due_date, students:student_id(name)').eq('school_id', schoolId).eq('status', 'OVERDUE'),
-        supabase.from('contract_documents').select('id, title, sent_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'enviado'),
-        supabase.from('expenses').select('id, description, amount_cents, due_date').eq('school_id', schoolId).eq('status', 'pendente').lte('due_date', inDays(7)),
-        supabase.from('account_deletion_requests').select('id, user_name, user_role, requested_at').eq('school_id', schoolId).eq('status', 'pendente'),
-        supabase.rpc('list_biometria_para_limpar'),
+        ehGestao ? supabase.from('financial_charges').select('id, amount_cents, due_date, students:student_id(name)').eq('school_id', schoolId).eq('status', 'OVERDUE') : VAZIO,
+        ehGestao ? supabase.from('contract_documents').select('id, title, sent_at, students:student_id(name)').eq('school_id', schoolId).eq('status', 'enviado') : VAZIO,
+        ehGestao ? supabase.from('expenses').select('id, description, amount_cents, due_date').eq('school_id', schoolId).eq('status', 'pendente').lte('due_date', inDays(7)) : VAZIO,
+        ehGestao ? supabase.from('account_deletion_requests').select('id, user_name, user_role, requested_at').eq('school_id', schoolId).eq('status', 'pendente') : VAZIO,
+        ehGestao ? supabase.rpc('list_biometria_para_limpar') : VAZIO,
         fetchDocumentosPendentes(schoolId),
+        // Aluno que saiu da escola (transferido, inativo, cancelado) com a
+        // mensalidade ainda ativa: a Gestão precisa cancelar o contrato.
+        ehGestao ? supabase.from('financial_contracts').select('id, status, students:student_id(name, enrollment_status)').eq('school_id', schoolId).in('status', ['active', 'paused']) : VAZIO,
       ]);
-      const firstError = [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, biometria].find(r => r.error)?.error;
+      const firstError = [cadastros, matriculas, correcoes, vencidas, contratos, despesas, exclusoes, biometria, contratosAlunoSaiu].find(r => r.error)?.error;
       if (firstError) throw firstError;
       setState({
         isLoading: false,
@@ -68,13 +77,14 @@ export function useGestaoPendencias(currentUser) {
           exclusoes: exclusoes.data || [],
           biometria: (biometria.data || []).map(b => ({ ...b, id: b.person_id })),
           documentos,
+          contratosAlunoSaiu: (contratosAlunoSaiu.data || []).filter(c => c.students && (c.students.enrollment_status || 'ativo') !== 'ativo'),
         },
       });
     } catch (err) {
       console.error('[useGestaoPendencias] Erro ao carregar pendências:', err);
       setState({ isLoading: false, data: null, error: 'Não foi possível carregar as pendências.' });
     }
-  }, [schoolId]);
+  }, [schoolId, ehGestao]);
 
   useEffect(() => { refresh(); }, [refresh]);
 

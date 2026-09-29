@@ -27,7 +27,7 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
     setTurmas(currentSchool?.turmas || []);
   }, [currentSchool?.turmas]);
 
-  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
+  const canManage = ['developer', 'gestao', 'gestao_pedagogica'].includes(currentUser?.role);
 
   const saveTurmas = async (nextTurmas) => {
     setError('');
@@ -375,7 +375,7 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
 // cálculo de verdade roda na edge function check-attendance-delays (mesma
 // que já cuida do atraso no mesmo dia).
 function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = false }) {
-  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
+  const canManage = ['developer', 'gestao', 'gestao_pedagogica'].includes(currentUser?.role);
   if (!canManage) return null;
 
   const set = (field, value) => onConfigChange({ ...config, [field]: value });
@@ -430,16 +430,18 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
   const [billingConfig, setBillingConfig] = useState(mergeBillingConfig(currentSchool?.billing_config));
   const [absenceAlertConfig, setAbsenceAlertConfig] = useState(mergeAbsenceAlertConfig(currentSchool?.absence_alert_config));
   const canManageSchool = ['developer', 'gestao'].includes(currentUser?.role);
+  // Coordenação e Direção (29/09/2026): só o alerta de faltas.
+  const ehGestaoPedagogica = currentUser?.role === 'gestao_pedagogica';
   const configTabs = [
     ...(canManageSchool ? [
       { id: 'turmas', label: 'Turmas' },
       { id: 'login_image', label: 'Imagem de Login' },
       { id: 'billing', label: 'Cobrança de Hora Extra' },
       { id: 'absence_alert', label: 'Faltas' },
-    ] : []),
+    ] : ehGestaoPedagogica ? [{ id: 'absence_alert', label: 'Faltas' }] : []),
     // Personalizar Menu ajusta o menu do Portal do Admin -- não se
     // aplica à Gestão.
-    ...(currentUser?.role !== 'gestao' ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
+    ...(!['gestao', 'gestao_pedagogica'].includes(currentUser?.role) ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
   ].filter(t => !only || only.includes(t.id));
   const [activeConfigTab, setActiveConfigTab] = useState(configTabs[0]?.id || 'menu');
 
@@ -523,7 +525,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       // (o estado nunca diverge do valor de currentSchool), então isso
       // nunca aciona a checagem da trigger de proteção pra esses roles; é
       // um no-op inofensivo.
-      const updates = {
+      // Coordenação e Direção só mudam o alerta de faltas: manda só ele (o
+      // banco recusa qualquer outra coluna para esse perfil).
+      const updates = ehGestaoPedagogica ? { absence_alert_config: absenceAlertConfig } : {
         name: formData.name,
         phone: formData.phone,
         address: formData.address,

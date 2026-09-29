@@ -31,6 +31,10 @@ const STATUS_LABELS = {
 // — nunca quem pediu (a RPC approve_attendance_correction já garante isso,
 // os botões aqui só refletem essa regra na UI).
 export default function AdminAttendanceCorrections({ currentUser }) {
+  // Só a Gestão (e o suporte) aprova correção que aumenta a cobrança
+  // (approve_attendance_correction). Recepção, Coordenação e Direção veem a
+  // fila como "aguardando a Gestão" (29/09/2026).
+  const podeAprovar = ['gestao', 'developer'].includes(currentUser?.role);
   const [corrections, setCorrections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState(null);
@@ -111,7 +115,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
 
         {c.increases_billing && (
           <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700">
-            <AlertTriangle size={13} /> Aumenta a cobrança em {c.minutes_delta} min
+            <AlertTriangle size={13} /> {podeAprovar ? `Aumenta a cobrança em ${c.minutes_delta} min` : 'Gera hora extra'}
           </p>
         )}
 
@@ -120,7 +124,10 @@ export default function AdminAttendanceCorrections({ currentUser }) {
           {c.reviewed_at ? ` · Revisada em ${formatWhen(c.reviewed_at)}` : ''}
         </p>
 
-        {reviewable && (
+        {reviewable && !podeAprovar && (
+          <p className="text-[11px] italic text-on-surface-variant/70">Aguardando a Gestão aprovar.</p>
+        )}
+        {reviewable && podeAprovar && (
           isOwnRequest ? (
             <p className="text-[11px] italic text-on-surface-variant/70">Você solicitou esta correção — outro admin precisa aprovar.</p>
           ) : (

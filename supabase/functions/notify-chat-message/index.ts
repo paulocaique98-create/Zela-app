@@ -91,7 +91,7 @@ serve(async (req) => {
           .from('users')
           .select('id')
           .eq('school_id', thread.school_id)
-          .eq('role', 'admin')
+          .in('role', ['admin', 'gestao_pedagogica'])
           .or(`chat_visibilidade_total.eq.true,departamento.eq.${thread.setor}`);
         recipientIds = (staff || []).map((s: { id: string }) => s.id);
       }
