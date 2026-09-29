@@ -107,7 +107,7 @@ const emptyStudent = () => ({
 // ──────────────────────────────────────────────────────────
 // Sub-componente: card de aluno
 // ──────────────────────────────────────────────────────────
-function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, canManageExtraHours = false }) {
+function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, canManageExtraHours = false, financeiro = null }) {
   const turnos = student.ciclo ? TURNOS_POR_CICLO[Number(student.ciclo)] || [] : [];
   const periodos = (student.ciclo && student.turno)
     ? PERIODOS_POR_CICLO_TURNO[Number(student.ciclo)]?.[student.turno] || []
@@ -360,6 +360,39 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           <p className="text-[10px] text-on-surface-variant/60 pt-1 pl-6">Nunca gera cobrança de hora extra pra este aluno, em nenhum horário de entrada/saída (inclusive marcações já registradas). A família não vê esta marcação.</p>
         </div>
       )}
+
+      {/* Responsável financeiro POR ALUNO (29/09/2026): irmãos podem ter
+          pagadores diferentes (cada um com a cobrança e a nota no próprio
+          nome). Salva na hora pela set_student_financial_guardian, que
+          confere CPF, vínculo e contrato em andamento no servidor. */}
+      {financeiro && (
+        <div className="pt-3 border-t border-outline-variant space-y-1.5">
+          <label htmlFor={`financeiro-${student.id}`} className="block text-xs font-bold text-on-surface">Responsável financeiro</label>
+          {financeiro.opcoes.length > 1 ? (
+            <select
+              id={`financeiro-${student.id}`}
+              value={financeiro.atual || ''}
+              disabled={financeiro.salvando}
+              onChange={e => financeiro.onChange(e.target.value)}
+              className="w-full p-2.5 border border-outline-variant rounded-zela-md text-sm bg-white disabled:opacity-60"
+            >
+              {!financeiro.atual && <option value="">Escolha quem paga</option>}
+              {financeiro.opcoes.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          ) : (
+            <p className="text-sm text-on-surface">{financeiro.opcoes[0]?.label || 'Titular'}</p>
+          )}
+          <p className="text-[10px] text-on-surface-variant/70">
+            {financeiro.opcoes.length > 1
+              ? 'A mensalidade deste aluno é cobrada no nome e CPF de quem estiver aqui.'
+              : financeiro.dica}
+          </p>
+          {financeiro.salvando && <p className="text-[11px] text-on-surface-variant">Salvando...</p>}
+          {financeiro.mensagem && (
+            <p className={`text-[11px] font-medium ${financeiro.mensagem.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{financeiro.mensagem.texto}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -422,6 +455,67 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     name: '', email: '', password: '', phone: '', doc_number: '', relationship: 'Pai'
   });
   const [secondGuardianLoading, setSecondGuardianLoading] = useState(false);
+
+  // Responsável financeiro de cada aluno salvo: { [studentId]: guardianId }.
+  const [financeiroPorAluno, setFinanceiroPorAluno] = useState({});
+  const [financeiroMsg, setFinanceiroMsg] = useState({});
+  const [financeiroSalvando, setFinanceiroSalvando] = useState(null);
+
+  useEffect(() => {
+    let ativo = true;
+    async function carregarFinanceiros() {
+      const ids = (editingUser?.students || []).map(s => s.id);
+      if (!editingUser || ids.length === 0) { setFinanceiroPorAluno({}); return; }
+      const { data, error } = await supabase
+        .from('student_guardians')
+        .select('student_id, guardian_id')
+        .in('student_id', ids)
+        .eq('is_financial', true);
+      if (!ativo) return;
+      if (error) { console.error('[Cadastro] Erro ao carregar responsáveis financeiros:', error.message); return; }
+      setFinanceiroPorAluno(Object.fromEntries((data || []).map(r => [r.student_id, r.guardian_id])));
+    }
+    carregarFinanceiros();
+    return () => { ativo = false; };
+  }, [editingUser, secondGuardian?.id]);
+
+  const trocarFinanceiro = async (studentId, guardianId) => {
+    if (!guardianId || financeiroPorAluno[studentId] === guardianId) return;
+    setFinanceiroSalvando(studentId);
+    setFinanceiroMsg(prev => ({ ...prev, [studentId]: null }));
+    const { error } = await supabase.rpc('set_student_financial_guardian', { p_student_id: studentId, p_guardian_id: guardianId });
+    setFinanceiroSalvando(null);
+    if (error) {
+      setFinanceiroMsg(prev => ({ ...prev, [studentId]: { tipo: 'erro', texto: error.message } }));
+      return;
+    }
+    setFinanceiroPorAluno(prev => ({ ...prev, [studentId]: guardianId }));
+    setFinanceiroMsg(prev => ({ ...prev, [studentId]: { tipo: 'ok', texto: 'Responsável financeiro atualizado.' } }));
+  };
+
+  // Bloco do cartão do aluno: só família; escolha quando há 2º responsável e
+  // o aluno já está salvo (o 2º responsável só é cadastrado depois).
+  const financeiroDoAluno = (student) => {
+    if (formData.role !== 'family') return null;
+    const salvo = typeof student.id === 'string' && !!editingUser?.students?.some(s => s.id === student.id);
+    const titularNome = editingUser?.name || formData.name || 'Titular';
+    if (!salvo || !secondGuardian) {
+      return {
+        opcoes: [{ id: editingUser?.id || 'titular', label: `${titularNome} (titular)` }],
+        dica: 'Para cobrar deste aluno no nome do outro responsável, salve o cadastro e adicione o 2º responsável (seção 4); depois escolha aqui.',
+      };
+    }
+    return {
+      opcoes: [
+        { id: editingUser.id, label: `${titularNome} (titular)` },
+        { id: secondGuardian.id, label: `${secondGuardian.name} (2º responsável)` },
+      ],
+      atual: financeiroPorAluno[student.id] || null,
+      salvando: financeiroSalvando === student.id,
+      mensagem: financeiroMsg[student.id] || null,
+      onChange: (guardianId) => trocarFinanceiro(student.id, guardianId),
+    };
+  };
 
   useEffect(() => {
     async function loadSecondGuardian() {
@@ -1269,6 +1363,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 canRemove={students.length > 1}
                 turmas={schoolTurmas}
                 canManageExtraHours={['gestao', 'developer'].includes(currentUser?.role)}
+                financeiro={financeiroDoAluno(student)}
               />
             ))}
           </div>

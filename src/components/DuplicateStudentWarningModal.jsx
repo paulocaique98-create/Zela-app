@@ -35,7 +35,10 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
           guardian_id: match.newStudent.guardianId,
           school_id: match.existing.school_id,
           is_primary: false,
-          is_financial: match.newStudent.isFinancial,
+          // Nunca financeiro aqui: o aluno já existente tem o dele, e o banco
+          // aceita só um por aluno (student_guardians_um_financeiro_por_aluno).
+          // Trocar quem paga: campo "Responsável financeiro" do cadastro.
+          is_financial: false,
           relationship: 'Responsável',
         });
         // Ignora conflito de vínculo já existente (idempotente) — qualquer

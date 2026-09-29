@@ -90,6 +90,19 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
   const [isSavingTransfer, setIsSavingTransfer] = useState(false);
   const [transferError, setTransferError] = useState('');
 
+  // Troca do responsável financeiro (set_student_financial_guardian).
+  const [financeiroSalvando, setFinanceiroSalvando] = useState(null);
+  const [financeiroErro, setFinanceiroErro] = useState('');
+
+  const tornarFinanceiro = async (guardianId) => {
+    setFinanceiroSalvando(guardianId);
+    setFinanceiroErro('');
+    const { error: rpcError } = await supabase.rpc('set_student_financial_guardian', { p_student_id: studentId, p_guardian_id: guardianId });
+    setFinanceiroSalvando(null);
+    if (rpcError) { setFinanceiroErro(rpcError.message); return; }
+    await fetchAll();
+  };
+
   // Mudar de turma (dentro da escola).
   const [colegas, setColegas] = useState([]);
   const [isMoving, setIsMoving] = useState(!!initialMoveTo);
@@ -483,6 +496,15 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
 
         {activeTab === 'responsaveis' && (
           <div className="max-w-2xl space-y-3">
+            {guardians.length > 1 && (
+              <p className="text-xs text-on-surface-variant">
+                A mensalidade deste aluno é cobrada no nome e CPF do responsável marcado como <strong>Financeiro</strong>.
+                {contract && ['active', 'paused'].includes(contract.status)
+                  ? ' Há contrato em andamento: para trocar quem paga, cancele o contrato em Contratos e crie um novo no nome da outra pessoa.'
+                  : ' Enquanto não houver contrato, dá para trocar aqui.'}
+              </p>
+            )}
+            {financeiroErro && <p className="text-xs font-medium text-red-600">{financeiroErro}</p>}
             {guardians.length === 0 ? (
               <EmptyState text="Nenhum responsável vinculado." />
             ) : guardians.map(g => (
@@ -493,6 +515,15 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                   {g.is_financial && <span className="text-[10px] font-bold uppercase bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Financeiro</span>}
                 </div>
                 <p className="text-xs text-on-surface-variant/70">{g.relationship || '—'} · {g.users?.phone || '—'} · {g.users?.email || '—'}</p>
+                {!g.is_financial && guardians.length > 1 && !(contract && ['active', 'paused'].includes(contract.status)) && (
+                  <button
+                    onClick={() => tornarFinanceiro(g.guardian_id)}
+                    disabled={!!financeiroSalvando}
+                    className="mt-2 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-zela-md transition disabled:opacity-60"
+                  >
+                    {financeiroSalvando === g.guardian_id ? 'Salvando...' : 'Tornar responsável financeiro'}
+                  </button>
+                )}
               </div>
             ))}
           </div>
