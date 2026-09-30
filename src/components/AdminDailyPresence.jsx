@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { situacaoDoAluno, contarSituacoes, MENSAGEM_VAZIA, GRUPOS_PRESENCA } from '../lib/presencaDiaria';
+
+// Cor do botão ativo de cada grupo.
+const COR_DO_GRUPO = {
+  presentes: 'text-green-700',
+  solicitacoes: 'text-amber-700',
+  sairam: 'text-slate-800',
+  ausentes: 'text-red-600',
+};
 import { LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
@@ -28,10 +37,8 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
 
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
-  // Presentes = teve QUALQUER movimentação hoje (na escola, com solicitação
-  // em aberto ou já saiu) -- Ausentes = nem uma nem outra (nunca fez
-  // check-in nem foi marcado "Não irá hoje"). Mesma regra já usada no
-  // resumo em frase única logo abaixo, só que agora também filtra a lista.
+  // Presentes (na escola ou com solicitação em aberto), Já saíram e
+  // Ausentes: cada aluno em um grupo só (src/lib/presencaDiaria.js).
   const [statusFilter, setStatusFilter] = useState('presentes');
   const [allStudents, setAllStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,24 +102,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
     }
   };
 
-  const isAusente = (s) => s.status === 'absent' || s.status === 'idle';
-
-  // Filtra por turma selecionada + status (Presentes/Ausentes)
+  // Filtra por turma selecionada + grupo (Presentes / Já saíram / Ausentes)
   const displayed = allStudents
     .filter(s => selectedTurma === 'Todas as Turmas' || s.turma === selectedTurma)
-    .filter(s => statusFilter === 'ausentes' ? isAusente(s) : !isAusente(s));
+    .filter(s => situacaoDoAluno(s.status) === statusFilter);
 
-  // Contagens por status. Ausente = matriculado e hoje não está em nenhuma
-  // das outras categorias (nem na escola, nem já saiu, nem com solicitação
-  // em aberto) -- inclui tanto quem a família marcou "Não irá hoje"
-  // (status='absent') quanto quem simplesmente ainda não teve nenhuma
-  // movimentação hoje (status='idle', o padrão de todo aluno até a 1ª
-  // interação do dia).
-  const inSchool = allStudents.filter(s => s.status === 'in_school').length;
-  const left     = allStudents.filter(s => s.status === 'left').length;
-  const absent   = allStudents.filter(isAusente).length;
-  const pending  = allStudents.filter(s => s.status === 'pending_entry' || s.status === 'pending_exit').length;
-  const presentes = inSchool + left + pending;
+  // Contagem de cada grupo (regras em src/lib/presencaDiaria.js).
+  const contagem = contarSituacoes(allStudents);
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-3xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-slate-200 md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -123,8 +119,8 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
           {(() => {
             const weekday = new Date().toLocaleDateString('pt-BR', { weekday: 'long' }).split('-')[0];
             return weekday.charAt(0).toUpperCase() + weekday.slice(1);
-          })()} - {new Date().toLocaleDateString('pt-BR')}
-          {lastUpdate && <span className="text-slate-400"> - Atualizado em {lastUpdate}</span>}
+          })()} · {new Date().toLocaleDateString('pt-BR')}
+          {lastUpdate && <span className="text-slate-400"> · Atualizado em {lastUpdate}</span>}
         </p>
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
           <button
@@ -169,39 +165,22 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
         </div>
       </div>
 
-      {/* Resumo em frase única -- os 4 números continuam 100% derivados de
-          allStudents.filter(status === X) (mesma fonte de verdade da lista
-          abaixo), então a contagem nunca pode divergir do que aparece nos
-          cards. "Já saíram"/"Ausentes" zerados hoje era bug de
-          updateStudentStatus resetando o status pra idle 2s depois de
-          confirmar a saída (ver App.jsx) -- corrigido lá, não aqui. */}
-      <p className="text-sm text-slate-500 mb-3 shrink-0 leading-relaxed">
-        <span className="font-black text-green-700">{inSchool}</span> na escola,{' '}
-        <span className="font-black text-amber-700">{pending}</span> solicitaç{pending === 1 ? 'ão' : 'ões'},{' '}
-        <span className="font-black text-slate-700">{left}</span> já sa{left === 1 ? 'iu' : 'íram'} e{' '}
-        <span className="font-black text-red-600">{absent}</span> ausente{absent === 1 ? '' : 's'}.
-      </p>
-
-      {/* Presentes (na escola + solicitação + já saíram) vs. Ausentes (sem
-          nenhuma movimentação hoje) -- mesma regra do resumo acima, só que
-          agora também filtra a lista, não só informa. */}
-      <div className="flex bg-slate-100 rounded-xl p-1 gap-1 mb-5 shrink-0">
-        <button
-          onClick={() => setStatusFilter('presentes')}
-          className={`flex-1 px-3.5 py-1.5 rounded-lg text-sm font-bold transition ${
-            statusFilter === 'presentes' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Presentes <span className="text-xs opacity-70">({presentes})</span>
-        </button>
-        <button
-          onClick={() => setStatusFilter('ausentes')}
-          className={`flex-1 px-3.5 py-1.5 rounded-lg text-sm font-bold transition ${
-            statusFilter === 'ausentes' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Ausentes <span className="text-xs opacity-70">({absent})</span>
-        </button>
+      {/* Quatro botões no lugar da frase com os números (30/09/2026): cada um
+          mostra a contagem e filtra a lista. No celular, número embaixo do
+          nome, pra caber numa linha só. */}
+      <div className="grid grid-cols-4 bg-slate-100 rounded-xl p-1 gap-1 mb-5 shrink-0">
+        {GRUPOS_PRESENCA.map(grupo => (
+          <button
+            key={grupo.id}
+            onClick={() => setStatusFilter(grupo.id)}
+            className={`min-w-0 px-1 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center sm:gap-1 ${
+              statusFilter === grupo.id ? `bg-white shadow-sm ${COR_DO_GRUPO[grupo.id]}` : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <span className="truncate max-w-full">{grupo.rotulo}</span>
+            <span className="text-xs opacity-70">({contagem[grupo.id]})</span>
+          </button>
+        ))}
       </div>
 
       {/* Lista de alunos - Scrollable */}
@@ -214,9 +193,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
           <div className="flex flex-col items-center justify-center h-full py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
             <Users className="h-10 w-10 text-slate-300 mb-3"/>
             <p className="text-slate-500 font-medium text-sm">
-            {statusFilter === 'ausentes'
-                ? (selectedTurma === 'Todas as Turmas' ? 'Nenhum ausente hoje.' : `Nenhum ausente em ${selectedTurma} hoje.`)
-                : (selectedTurma === 'Todas as Turmas' ? 'Nenhum presente hoje.' : `Nenhum presente em ${selectedTurma} hoje.`)}
+            {selectedTurma === 'Todas as Turmas' ? MENSAGEM_VAZIA[statusFilter] : `${selectedTurma}: ${MENSAGEM_VAZIA[statusFilter]}`}
             </p>
           </div>
         ) : (
