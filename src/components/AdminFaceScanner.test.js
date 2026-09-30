@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -228,5 +228,24 @@ describe('podeSolicitarSozinho: pedido automático depois do reconhecimento', ()
     expect(podeSolicitarSozinho({ ...base, matchStatus: 'searching' })).toBe(false);
     expect(podeSolicitarSozinho({ ...base, isProcessing: true })).toBe(false);
     expect(podeSolicitarSozinho({ ...base, actionDone: true })).toBe(false);
+  });
+});
+
+describe('avaliarPerdaDoReconhecimento: tolerância depois de reconhecer', () => {
+  it('um quadro sem rosto não derruba o reconhecimento (começa a contar)', () => {
+    expect(avaliarPerdaDoReconhecimento(null, 10_000)).toEqual({ perdidoDesde: 10_000, cancelar: false });
+  });
+
+  it('detecção piscando por menos de 1 s mantém o reconhecimento (caso real de 30/09)', () => {
+    expect(avaliarPerdaDoReconhecimento(10_000, 10_540)).toEqual({ perdidoDesde: 10_000, cancelar: false });
+    expect(avaliarPerdaDoReconhecimento(10_000, 10_000 + MATCH_GRACE_MS - 1).cancelar).toBe(false);
+  });
+
+  it('sem rosto por 1 s seguido: cancela', () => {
+    expect(avaliarPerdaDoReconhecimento(10_000, 10_000 + MATCH_GRACE_MS)).toEqual({ perdidoDesde: 10_000, cancelar: true });
+  });
+
+  it('tolerância é de 1 segundo', () => {
+    expect(MATCH_GRACE_MS).toBe(1000);
   });
 });

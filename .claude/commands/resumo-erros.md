@@ -72,3 +72,13 @@ do rosto no quadro), base para calibrar a distância ideal entre o totem e a pes
 `react_render_crash` de "versão antiga" deve sumir desde o commit `f4ed2a9`. Os eventos
 de rosto são registrados com intervalo mínimo por categoria (FACE_LOG_THROTTLE_MS), então
 contam tentativas espaçadas, não cada quadro.
+
+### Categoria nova: `match_lost` (30/09/2026, depois da linha de base)
+
+Reconhecimento confirmado que caiu ANTES de o pedido sair (antes era invisível: só aparecia
+no `shadow_face_recognition_log` como vários reconhecimentos seguidos sem pedido). Desde
+então o reconhecimento confirmado tolera até 1 s sem rosto ou fora da distância
+(`MATCH_GRACE_MS`) antes de cair. Contexto: `reason` (`no_face`, `too-far`, `too-close`),
+`held_ms` (quanto tempo ficou reconhecido), `person_id`. Linha de base: 0. Se crescer, ver
+se o `held_ms` fica perto de 1 s (tolerância curta) ou se o motivo é distância.
+

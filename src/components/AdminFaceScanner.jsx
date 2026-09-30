@@ -134,6 +134,19 @@ export function evaluateFramePosition(box, videoWidth, videoHeight) {
   return 'ok';
 }
 
+// Tolerância depois de reconhecer (30/09/2026): um único quadro sem rosto (a
+// pessoa se mexeu, virou, a luz piscou) cancelava o reconhecimento já
+// confirmado e zerava o segundo de espera do pedido automático. Com a
+// detecção "piscando", o pedido nunca saía (caso real: 3 reconhecimentos em
+// 13 s e nenhum pedido). Agora o reconhecimento confirmado só cai depois de
+// MATCH_GRACE_MS seguidos sem rosto (ou fora da distância).
+export const MATCH_GRACE_MS = 1000;
+
+export function avaliarPerdaDoReconhecimento(perdidoDesde, agora, graceMs = MATCH_GRACE_MS) {
+  const inicio = perdidoDesde ?? agora;
+  return { perdidoDesde: inicio, cancelar: agora - inicio >= graceMs };
+}
+
 // Pedido de entrada/saída automático (sem toque): só com UM filho vinculado,
 // já carregado e marcado. Com 2 ou mais, a pessoa confere quem está ali.
 // Enquanto a lista de filhos não chega, espera (não gasta o disparo).
@@ -255,6 +268,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setSelectedStudentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
   const [actionDone, setActionDone] = useState(false);
+  // Lido dentro do ciclo de leitura (que não re-renderiza a cada mudança).
+  const actionDoneRef = useRef(false);
+  useEffect(() => { actionDoneRef.current = actionDone; }, [actionDone]);
   // true quando a confirmação foi um mero RE-reconhecimento de uma
   // solicitação que já estava pendente (a pessoa esqueceu que já passou pelo
   // totem e tentou de novo) — antes disso mostrava a mesma tela de "sucesso"
@@ -719,6 +735,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     let cancelled = false;
     let isDetecting = false;
     let matchConfirmed = false;
+    // Tolerância depois de reconhecer (ver avaliarPerdaDoReconhecimento).
+    let perdidoDesde = null;
+    let pessoaConfirmadaId = null;
+    let confirmadoEm = null;
 
     // Anti-flicker: só atualiza o estado exibido (borda/aviso de distância) depois que
     // a MESMA leitura se repetir por alguns frames seguidos, evitando que a mensagem
@@ -735,6 +755,31 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       if (stableCount === 2) {
         setFramePosition(position);
       }
+    };
+
+    // Cancela o reconhecimento confirmado. Se o pedido ainda não tinha saído,
+    // registra no resumo de erros (antes era invisível).
+    const cancelarReconhecimento = (motivo) => {
+      if (!actionDoneRef.current) {
+        logFaceEvent('match_lost', 'warn', {
+          mode: 'live',
+          reason: motivo,
+          person_id: pessoaConfirmadaId,
+          held_ms: confirmadoEm ? Date.now() - confirmadoEm : null,
+          grace_ms: MATCH_GRACE_MS,
+        });
+      }
+      matchConfirmed = false;
+      perdidoDesde = null;
+      pessoaConfirmadaId = null;
+      confirmadoEm = null;
+      setMatchedPerson(null);
+      setMatchedStudents([]);
+      // Mesma limpeza do botão X: sem isso a marcação dos filhos do
+      // reconhecimento cancelado ficava para trás.
+      setSelectedStudentIds([]);
+      setMatchDistance(null);
+      resetStuckTimer();
     };
 
     const detectFace = async () => {
@@ -779,38 +824,45 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             : await faceapi.detectSingleFace(detectionInput, LIVE_DETECTOR_OPTIONS).withFaceLandmarks().withFaceDescriptor();
 
           if (!detections) {
-            setMatchStatus('idle');
-            debouncedSetFramePosition(null);
-            recentMatchesRef.current = [];
-            earHistoryRef.current = [];
             if (matchConfirmed) {
-              matchConfirmed = false;
-              setMatchedPerson(null);
-              setMatchedStudents([]);
-              setMatchDistance(null);
-              resetStuckTimer();
+              // Já reconhecido: um quadro sem rosto não derruba (tolerância).
+              const perda = avaliarPerdaDoReconhecimento(perdidoDesde, Date.now());
+              perdidoDesde = perda.perdidoDesde;
+              if (perda.cancelar) {
+                cancelarReconhecimento('no_face');
+                setMatchStatus('idle');
+                debouncedSetFramePosition(null);
+                recentMatchesRef.current = [];
+                earHistoryRef.current = [];
+              }
+            } else {
+              setMatchStatus('idle');
+              debouncedSetFramePosition(null);
+              recentMatchesRef.current = [];
+              earHistoryRef.current = [];
             }
           } else {
             const box = matchConfirmed ? detections.box : detections.detection.box;
             const position = evaluateFramePosition(box, video.videoWidth, video.videoHeight);
             debouncedSetFramePosition(position);
 
-            if (position !== 'ok') {
-              // Longe ou perto demais: não é seguro confirmar — e se já estava
-              // confirmado, sair da distância cancela o match e volta
-              // automaticamente para "Verificando Rosto".
+            if (position !== 'ok' && matchConfirmed) {
+              // Já reconhecido e saiu da distância: mesma tolerância do "sem
+              // rosto" antes de cancelar e mostrar Aproxime-se/Afaste-se.
+              const perda = avaliarPerdaDoReconhecimento(perdidoDesde, Date.now());
+              perdidoDesde = perda.perdidoDesde;
+              if (perda.cancelar) {
+                cancelarReconhecimento(position);
+                recentMatchesRef.current = [];
+                earHistoryRef.current = [];
+                setMatchStatus('searching');
+                logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live', face_width_ratio: faceWidthRatio(box, video.videoWidth) });
+              }
+            } else if (position !== 'ok') {
+              // Longe ou perto demais e ainda não reconhecido: não é seguro
+              // confirmar; mostra Aproxime-se/Afaste-se.
               recentMatchesRef.current = [];
               earHistoryRef.current = [];
-              if (matchConfirmed) {
-                matchConfirmed = false;
-                setMatchedPerson(null);
-                setMatchedStudents([]);
-                // Mesma limpeza do botão X: sem isso a marcação dos filhos
-                // do reconhecimento cancelado ficava para trás.
-                setSelectedStudentIds([]);
-                setMatchDistance(null);
-                resetStuckTimer();
-              }
               setMatchStatus('searching');
               logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live', face_width_ratio: faceWidthRatio(box, video.videoWidth) });
             } else if (!matchConfirmed) {
@@ -899,6 +951,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   });
                 } else if (person && !cancelled) {
                   matchConfirmed = true;
+                  perdidoDesde = null;
+                  pessoaConfirmadaId = person.id;
+                  confirmadoEm = Date.now();
                   setMatchedPerson(person);
                   setMatchDistance(bestMatch.distance);
                   setMatchStatus('matched');
@@ -949,7 +1004,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 });
               }
             }
-            // Se matchConfirmed && position === 'ok': mantém o estado atual (já confirmado).
+            // Se matchConfirmed && position === 'ok': mantém o estado atual (já
+            // confirmado) e zera a contagem de tolerância.
+            if (matchConfirmed && position === 'ok') perdidoDesde = null;
           }
         }
       } catch (err) {
