@@ -71,3 +71,46 @@ export function attemptEndpoint(sub: { platform?: string | null; endpoint?: stri
   if ((sub.platform || 'web') === 'web') return sub.endpoint || 'web:?';
   return `${sub.platform}:${(sub.token || '').slice(0, 16)}`;
 }
+
+// ─── Contas vinculadas (29/09/2026) ────────────────────────────────────────
+// A mesma pessoa pode ter contas vinculadas (ex.: Coordenadora que também é
+// mãe). Aviso para uma conta chega também nos aparelhos das contas do mesmo
+// grupo, com o perfil no título ("Entrada registrada · Responsável"), e um
+// aparelho inscrito nas duas contas recebe o aviso uma vez só.
+export type Vinculo = { user_id: string; grupo: string };
+
+export const ROTULO_PERFIL: Record<string, string> = {
+  family: 'Responsável',
+  teacher: 'Professora',
+  admin: 'Recepção',
+  gestao: 'Gestão',
+  gestao_pedagogica: 'Coordenação',
+};
+
+// Quem recebe além dos destinatários originais: cada conta extra aponta
+// para o destinatário original do mesmo grupo.
+export function destinatariosComVinculos(ids: string[], vinculos: Vinculo[]): { todos: string[]; viaVinculo: Record<string, string> } {
+  const alvos = new Set(ids);
+  const grupoDe = new Map(vinculos.map(v => [v.user_id, v.grupo]));
+  const alvoDoGrupo = new Map<string, string>();
+  for (const id of ids) {
+    const grupo = grupoDe.get(id);
+    if (grupo && !alvoDoGrupo.has(grupo)) alvoDoGrupo.set(grupo, id);
+  }
+  const viaVinculo: Record<string, string> = {};
+  for (const v of vinculos) {
+    if (!alvos.has(v.user_id) && alvoDoGrupo.has(v.grupo)) viaVinculo[v.user_id] = alvoDoGrupo.get(v.grupo)!;
+  }
+  return { todos: [...ids, ...Object.keys(viaVinculo)], viaVinculo };
+}
+
+export function tituloViaVinculo(title: string, roleDoDestinatario?: string | null): string {
+  const rotulo = roleDoDestinatario ? ROTULO_PERFIL[roleDoDestinatario] : null;
+  return rotulo ? `${title} · ${rotulo}` : title;
+}
+
+// Identifica o aparelho (mesmo navegador/celular inscrito em duas contas).
+export function chaveDoAparelho(sub: { platform?: string | null; endpoint?: string | null; token?: string | null }): string {
+  const platform = sub.platform || 'web';
+  return platform === 'web' ? `web:${sub.endpoint}` : `${platform}:${sub.token}`;
+}

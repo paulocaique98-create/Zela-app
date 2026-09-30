@@ -14,6 +14,7 @@ import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
 import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { toast } from './lib/toast';
+import { mensagemDaFuncao } from './lib/contasVinculadas';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { usaPortalGestao } from './lib/perfisGestao';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
@@ -38,6 +39,9 @@ const NO_LOCKED_TABS = [];
 
 const getBrasiliaDateStr = (date = new Date()) =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+// Última aba lembrada de cada portal (limpas ao sair e ao trocar de conta).
+const ABAS_LEMBRADAS = ['zela_admin_tab', 'zela_family_tab', 'zela_teacher_tab', 'zela_developer_tab', 'zela_gestao_tab'];
 
 export default function App() {
   const [students, setStudents] = useState([]);
@@ -246,7 +250,9 @@ export default function App() {
     validateSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
+      // Na troca de conta vinculada a sessão anterior é encerrada de
+      // propósito antes de abrir a nova (ver handleTrocarConta).
+      if (event === 'SIGNED_OUT' && !trocandoContaRef.current) {
         localStorage.removeItem('zela_user');
         setCurrentUser(null);
       }
@@ -613,6 +619,37 @@ export default function App() {
     // check-in está habilitado para a escola.
   };
 
+  // Contas vinculadas (29/09/2026): troca para outra conta da mesma pessoa
+  // sem senha. O servidor confere o vínculo e devolve um código de uso
+  // único; a sessão atual é encerrada e a nova é aberta com esse código.
+  // Recarrega a página no fim para cada portal começar do zero.
+  const trocandoContaRef = useRef(false);
+  const [trocandoConta, setTrocandoConta] = useState(false);
+  const handleTrocarConta = async (userId) => {
+    trocandoContaRef.current = true;
+    setTrocandoConta(true);
+    let sessaoEncerrada = false;
+    try {
+      const { data, error } = await supabase.functions.invoke('trocar-conta', { body: { user_id: userId } });
+      if (error || !data?.token_hash) throw new Error(await mensagemDaFuncao(error, 'Não foi possível trocar de conta agora.'));
+      await supabase.auth.signOut({ scope: 'local' });
+      sessaoEncerrada = true;
+      const { data: sessao, error: otpError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' });
+      if (otpError || !sessao?.user) throw new Error('Não foi possível abrir a outra conta. Entre com o e-mail e a senha dela.');
+      const { data: perfil } = await supabase.from('users').select('*').eq('id', sessao.user.id).maybeSingle();
+      if (!perfil) throw new Error('Não foi possível abrir a outra conta. Entre com o e-mail e a senha dela.');
+      ABAS_LEMBRADAS.forEach(chave => sessionStorage.removeItem(chave));
+      if (currentSchool && currentSchool.id !== perfil.school_id) localStorage.removeItem('zela_school');
+      localStorage.setItem('zela_user', JSON.stringify(perfil));
+      window.location.assign('/');
+    } catch (err) {
+      trocandoContaRef.current = false;
+      setTrocandoConta(false);
+      toast.error(err.message || 'Não foi possível trocar de conta agora.');
+      if (sessaoEncerrada) handleLogout();
+    }
+  };
+
   const handleLogout = () => {
     setCurrentUser(null);
     // currentSchool NÃO é limpo aqui de propósito: se o próximo login for da
@@ -625,11 +662,7 @@ export default function App() {
     localStorage.removeItem('zela_user');
     // Limpa a última aba lembrada -- senão o próximo usuário a logar nesse
     // mesmo navegador (conta diferente) herdaria a aba de quem saiu.
-    sessionStorage.removeItem('zela_admin_tab');
-    sessionStorage.removeItem('zela_family_tab');
-    sessionStorage.removeItem('zela_teacher_tab');
-    sessionStorage.removeItem('zela_developer_tab');
-    sessionStorage.removeItem('zela_gestao_tab');
+    ABAS_LEMBRADAS.forEach(chave => sessionStorage.removeItem(chave));
     // Faz o logoff do Auth Supabase por garantia
     supabase.auth.signOut().catch(() => { });
   };
@@ -1409,6 +1442,12 @@ export default function App() {
 
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
+      {trocandoConta && (
+        <div className="fixed inset-0 z-[100] bg-surface/90 flex flex-col items-center justify-center gap-4">
+          <LoadingLogo logoUrl={currentSchool?.logo_url} size={96} />
+          <p className="text-sm font-semibold text-on-surface-variant">Trocando de conta…</p>
+        </div>
+      )}
       {!isKioskFullscreen && (
         <Header
           currentUser={currentUser}
@@ -1418,6 +1457,7 @@ export default function App() {
           screenLabelMobile={currentHeaderLabelMobile}
           flush={isFlushChrome}
           onLogout={handleLogout}
+          onTrocarConta={handleTrocarConta}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onTriggerEmergency={triggerEmergency}
           onNavigateTab={

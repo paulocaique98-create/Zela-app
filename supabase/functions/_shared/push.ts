@@ -1,5 +1,5 @@
 import webpush from 'npm:web-push@3.6.7';
-import { type PushPayload, buildWebPayload, buildFcmMessage, isGoneWebPush, isGoneFcm, attemptEndpoint } from './pushCore.ts';
+import { type PushPayload, buildWebPayload, buildFcmMessage, isGoneWebPush, isGoneFcm, attemptEndpoint, destinatariosComVinculos, tituloViaVinculo, chaveDoAparelho } from './pushCore.ts';
 
 // Envio único de notificações do Zela (PLANO_APPS_MOBILE.md, Fase 3).
 // Antes, o mesmo código de Web Push estava copiado em 8 lugares; agora
@@ -97,10 +97,33 @@ export async function sendPush(adminClient: any, userIds: string[], payload: Pus
   const ids = Array.from(new Set((userIds || []).filter(Boolean)));
   if (ids.length === 0) return result;
 
+  // Contas vinculadas: o aviso chega também nos aparelhos das outras contas
+  // da mesma pessoa (não vale para o envio de teste de um aparelho só).
+  let viaVinculo: Record<string, string> = {};
+  const rolePorId: Record<string, string> = {};
+  if (!options.onlyEndpoint) {
+    try {
+      const { data: meus } = await adminClient.from('contas_vinculadas').select('user_id, grupo').in('user_id', ids);
+      const grupos = Array.from(new Set((meus || []).map((v: { grupo: string }) => v.grupo)));
+      if (grupos.length) {
+        const { data: vinculos } = await adminClient.from('contas_vinculadas').select('user_id, grupo').in('grupo', grupos);
+        viaVinculo = destinatariosComVinculos(ids, vinculos || []).viaVinculo;
+        const originais = Array.from(new Set(Object.values(viaVinculo)));
+        if (originais.length) {
+          const { data: perfis } = await adminClient.from('users').select('id, role').in('id', originais);
+          for (const p of perfis || []) rolePorId[p.id] = p.role;
+        }
+      }
+    } catch (_) {
+      viaVinculo = {}; // melhor esforço: sem vínculo, segue o envio normal
+    }
+  }
+  const todos = [...ids, ...Object.keys(viaVinculo)];
+
   let query = adminClient
     .from('push_subscriptions')
     .select('id, user_id, platform, endpoint, p256dh, auth, token')
-    .in('user_id', ids);
+    .in('user_id', todos);
   if (options.onlyEndpoint) query = query.eq('endpoint', options.onlyEndpoint);
   const { data: subscriptions, error } = await query;
   // Push é sempre melhor esforço: nunca derruba o aviso dentro do app.
@@ -111,10 +134,19 @@ export async function sendPush(adminClient: any, userIds: string[], payload: Pus
   if (!subscriptions?.length) return result;
 
   const logAttempts = options.logAttempts !== false;
-  const webBody = buildWebPayload(payload);
   const fcm = getFcmAccount();
 
-  for (const sub of subscriptions as Subscription[]) {
+  // Destinatários originais primeiro; aparelho já avisado não recebe de novo.
+  const ordenadas = [...(subscriptions as Subscription[])].sort((a, b) => Number(Boolean(viaVinculo[a.user_id])) - Number(Boolean(viaVinculo[b.user_id])));
+  const aparelhosAvisados = new Set<string>();
+
+  for (const sub of ordenadas) {
+    const chave = chaveDoAparelho(sub);
+    if (aparelhosAvisados.has(chave)) continue;
+    aparelhosAvisados.add(chave);
+    const original = viaVinculo[sub.user_id];
+    const payloadDaConta = original ? { ...payload, title: tituloViaVinculo(payload.title, rolePorId[original]) } : payload;
+    const webBody = buildWebPayload(payloadDaConta);
     const platform = sub.platform || 'web';
     let ok = false;
     let statusCode: number | null = null;
@@ -140,7 +172,7 @@ export async function sendPush(adminClient: any, userIds: string[], payload: Pus
         const res = await fetch(`https://fcm.googleapis.com/v1/projects/${fcm.project_id}/messages:send`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildFcmMessage(sub.token, payload)),
+          body: JSON.stringify(buildFcmMessage(sub.token, payloadDaConta)),
         });
         statusCode = res.status;
         if (res.ok) {

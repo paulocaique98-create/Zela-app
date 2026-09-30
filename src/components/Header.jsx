@@ -1,9 +1,10 @@
 import React from 'react';
 import { ShieldCheck, LogOut, Menu } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
+import TrocaDeConta from './TrocaDeConta';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 
-export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onOpenMobileMenu, onNavigateTab }) {
+export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onTrocarConta, onOpenMobileMenu, onNavigateTab }) {
   const [isSidebarExpanded] = useSidebarExpanded();
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
@@ -77,7 +78,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
       </div>
 
       {/* DIREITA: LOGO DA ESCOLA & SAIR */}
-      <div className="flex justify-end items-center gap-3 flex-1 min-w-0">
+      <div className="flex justify-end items-center gap-1 sm:gap-3 flex-1 min-w-0">
 
         {currentUser.role === 'family' && (
           <div className="flex items-center gap-1 md:gap-3 mr-1 md:mr-2 border-r border-outline-variant pr-4">
@@ -108,6 +109,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             </div>
           )
         )}
+
+        {/* Contas vinculadas (ex.: Coordenação e Responsável): troca sem
+            senha, ao lado do Sair. */}
+        {!isDev && onTrocarConta && <TrocaDeConta currentUser={currentUser} onTrocar={onTrocarConta} />}
 
         <button
           onClick={onLogout}

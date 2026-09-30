@@ -44,6 +44,10 @@ const INTERNAL_ONLY_FUNCTIONS = [
   // Limpeza supervisionada de biometria: regra de elegibilidade interna.
   'biometria_sem_aluno_ativo',
   'list_policies_for_role',
+  // Contas vinculadas: só as funções de borda vincular-conta/trocar-conta.
+  'conta_pode_ser_vinculada',
+  'vincular_contas',
+  'conta_vinculada_ativa',
 ];
 
 runIf('Regressão de segurança — grants de EXECUTE em funções internas SECURITY DEFINER', () => {
