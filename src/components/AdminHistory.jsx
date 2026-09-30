@@ -3,6 +3,7 @@ import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizo
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularHorasExtras, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
+import { quemRegistrouDoLog } from '../lib/quemRegistrou';
 import AttendanceEditTodayModal from './AttendanceEditTodayModal';
 
 function formatMinutes(mins) {
@@ -128,6 +129,9 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           // simplesmente não mostra essa linha em vez de inventar algo.
           entryBy: group.entryLog?.performed_by_name || null,
           exitBy: group.exitLog?.performed_by_name || null,
+          // Texto pronto (tela e PDF): nome, "Lançado pela escola" ou nada.
+          entryQuem: quemRegistrouDoLog(group.entryLog),
+          exitQuem: quemRegistrouDoLog(group.exitLog),
           contracted: `${group.studentData?.contracted_hours || 0}h`,
           duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
           overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
@@ -309,7 +313,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                             <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                         </span>
-                        {log.entryBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.entryBy}</p>}
+                        {log.entryQuem && <p className="text-[11px] text-slate-400 mt-0.5 break-words">{log.entryQuem}</p>}
                       </div>
 
                       <div className="min-w-0">
@@ -319,7 +323,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                             <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                         </span>
-                        {log.exitBy && <p className="text-[11px] text-slate-400 mt-0.5 break-words">Registrado por {log.exitBy}</p>}
+                        {log.exitQuem && <p className="text-[11px] text-slate-400 mt-0.5 break-words">{log.exitQuem}</p>}
                       </div>
                     </div>
 

@@ -43,6 +43,11 @@ export default defineConfig({
     // arquivos em sequência: mais lento, mas sem corrida real contra o
     // rate limit do Supabase.
     fileParallelism: false,
+    // Testes de integração criam contas de verdade no Supabase local; o
+    // padrão de 5s do Vitest estourava de vez em quando nos que não
+    // definiam limite próprio (30/09/2026). Quem precisa de mais continua
+    // passando o próprio limite no it().
+    testTimeout: 30000,
     // "Worker exited unexpectedly" (Windows, 28/09/2026): o processo filho
     // de um arquivo às vezes morre sem aviso, em arquivos diferentes a cada
     // rodada. Testado pool 'threads': pior, a queda derruba a suíte inteira

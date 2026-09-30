@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Search, X, History, FileText, LogIn, LogOut, PencilLine } from 'lucide-react';
+import { CalendarDays, History, FileText, LogIn, LogOut, PencilLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { calcularHorasExtras, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
+import { quemRegistrouDoLog } from '../lib/quemRegistrou';
 import { ATTENDANCE_CORRECTION_REASONS } from '../lib/constants';
 
 function reasonLabel(code) {
@@ -43,7 +44,6 @@ function formatDate(isoString) {
 export default function FamilyHistory({ currentUser, familyStudents, currentSchool }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
 
@@ -83,6 +83,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
           original_event_time,
           correction_reason_code,
           corrected_at,
+          performed_by_name,
           student_id,
           students:student_id (name, turma, contracted_hours, contracted_exit_time, isento_hora_extra, users:family_id(name))
         `);
@@ -138,6 +139,10 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
               rawTime: entryTime.getTime(),
               entryCorrection: ev.corrected ? ev : null,
               exitCorrection: nextExit?.corrected ? nextExit : null,
+              // Quem fez a entrada e a saída (30/09/2026): quem foi reconhecido
+              // no autoatendimento, ou "Lançado pela escola".
+              entryQuem: quemRegistrouDoLog(ev),
+              exitQuem: quemRegistrouDoLog(nextExit),
             });
 
             if (nextExit) {
@@ -162,10 +167,8 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
 
   useEffect(() => { fetchHistory(); }, [currentUser, period, customDate]);
 
-  const filtered = logs.filter(log => {
-    const term = searchTerm.toLowerCase().trim();
-    return !term || log.studentName.toLowerCase().includes(term);
-  });
+  // Sem busca por aluno (30/09/2026): a família só vê os próprios filhos.
+  const filtered = logs;
 
   const PERIOD_LABELS = { today: 'Hoje', '7days': 'Últimos 7 dias', '30days': 'Últimos 30 dias' };
   const periodLabel = period === 'custom' && customDate
@@ -202,48 +205,36 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
       </div>
 
         {/* Filtros */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6 shrink-0">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-on-surface-variant/70" />
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mb-6 shrink-0">
+          {/* Período numa linha só, sem quebrar no celular (30/09/2026): os
+              quatro botões dividem a largura; a data do Personalizado fica
+              logo abaixo. */}
+          <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+            <div className="flex flex-nowrap gap-1 p-1 bg-surface-container rounded-zela-lg">
+              {[
+                { id: 'today', label: 'Hoje' },
+                { id: '7days', label: '7 dias' },
+                { id: '30days', label: '30 dias' },
+                { id: 'custom', label: 'Personalizado' }
+              ].map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setPeriod(p.id)}
+                  className={`flex-1 sm:flex-none whitespace-nowrap text-center px-2 sm:px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all ${
+                    period === p.id ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
-            <input
-              type="text"
-              placeholder="Buscar por aluno..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-8 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm"
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant/70 hover:text-on-surface-variant">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2 p-1 bg-surface-container rounded-zela-lg shrink-0">
-            {[
-              { id: 'today', label: 'Hoje' },
-              { id: '7days', label: 'Últimos 7 dias' },
-              { id: '30days', label: 'Últimos 30 dias' },
-              { id: 'custom', label: 'Personalizado' }
-            ].map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all ${
-                  period === p.id ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
             {period === 'custom' && (
               <input
+                id="historico-data"
                 type="date"
                 value={customDate}
                 onChange={e => setCustomDate(e.target.value)}
-                className="ml-1 px-2 py-1 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                className="w-full sm:w-auto sm:self-end px-2 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
               />
             )}
           </div>
@@ -268,11 +259,10 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                 <tr className="text-left border-b border-outline-variant">
                   <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Data</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider hidden sm:table-cell">Responsável</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Entrada</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Saída</th>
                   <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Ciclo</th>
-                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider text-right">Excedente pós tolerância (15 min)</th>
+                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider text-right">Tolerância</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
@@ -284,12 +274,13 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                   <tr className="hover:bg-surface-container-low transition-colors">
                     <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.date}</td>
                     <td className="py-3 pr-4 font-semibold text-on-surface">{log.studentName}</td>
-                    <td className="py-3 pr-4 text-on-surface-variant text-xs hidden sm:table-cell">{log.family}</td>
                     <td className="py-3 pr-4">
                       <span className="flex items-center gap-1 font-medium text-primary">
                         <LogIn size={13} /> {log.entry}
                         {log.entryCorrection && <PencilLine size={12} className="text-amber-500" title="Horário ajustado pela escola" />}
                       </span>
+                      {/* Quem fez a entrada (30/09/2026). */}
+                      {log.entryQuem && <p className="text-[11px] text-on-surface-variant mt-0.5 break-words">{log.entryQuem}</p>}
                     </td>
                     <td className="py-3 pr-4">
                       {log.exit ? (
@@ -300,6 +291,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                       ) : (
                         <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
                       )}
+                      {log.exit && log.exitQuem && <p className="text-[11px] text-on-surface-variant mt-0.5 break-words">{log.exitQuem}</p>}
                     </td>
                     <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.contracted}</td>
                     <td className="py-3 text-right">
@@ -316,7 +308,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                   </tr>
                   {(entryNote || exitNote) && (
                     <tr>
-                      <td colSpan={7} className="pb-3 pr-4">
+                      <td colSpan={6} className="pb-3 pr-4">
                         <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
                           {entryNote && <p className="text-[11px] text-amber-800 leading-relaxed">{entryNote}</p>}
                           {exitNote && <p className="text-[11px] text-amber-800 leading-relaxed">{exitNote}</p>}

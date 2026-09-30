@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { getBrasiliaDateStr } from '../utils/attendanceUtils';
+import { quemFezHoje } from '../lib/quemRegistrou';
 
 // Entrada e saída são registradas SÓ no autoatendimento da escola (decisão
 // de 27/09/2026) -- aqui a família acompanha e, antes da chegada, pode
 // avisar que o aluno não irá.
 export default function FamilyHome({ familyStudents, markStudentAbsent }) {
+  // Quem fez a entrada e a saída de hoje (30/09/2026): recarrega quando a
+  // entrada ou a saída de algum filho muda (o App já atualiza isso em tempo
+  // real).
+  const [quem, setQuem] = useState({});
+  const assinatura = (familyStudents || []).map(s => `${s.id}:${s.todayRecord?.entry || ''}:${s.todayRecord?.exit || ''}`).join('|');
+  useEffect(() => {
+    const ids = (familyStudents || []).map(s => s.id);
+    if (ids.length === 0) return undefined;
+    let cancelado = false;
+    const hoje = getBrasiliaDateStr();
+    supabase.from('attendance_logs')
+      .select('student_id, event_type, event_time, performed_by_name, corrected')
+      .in('student_id', ids)
+      .gte('event_time', `${hoje}T00:00:00-03:00`)
+      .lte('event_time', `${hoje}T23:59:59-03:00`)
+      .then(({ data, error }) => { if (!cancelado && !error) setQuem(quemFezHoje(data)); });
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assinatura]);
+
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Título "Início" removido (o Header do app já mostra "Zela Portal"
@@ -36,10 +59,16 @@ export default function FamilyHome({ familyStudents, markStudentAbsent }) {
                   <div className="bg-surface-container-low p-3 md:p-4 rounded-zela-lg border border-outline-variant">
                     <p className="text-[10px] md:text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Entrada</p>
                     <p className="text-base md:text-lg font-bold text-on-surface font-mono">{student.todayRecord.entry || '--:--'}</p>
+                    {student.todayRecord.entry && quem[student.id]?.entrada && (
+                      <p className="text-[11px] text-on-surface-variant mt-1 break-words">{quem[student.id].entrada}</p>
+                    )}
                   </div>
                   <div className="bg-surface-container-low p-3 md:p-4 rounded-zela-lg border border-outline-variant">
                     <p className="text-[10px] md:text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Saída</p>
                     <p className="text-base md:text-lg font-bold text-on-surface font-mono">{student.todayRecord.exit || '--:--'}</p>
+                    {student.todayRecord.exit && quem[student.id]?.saida && (
+                      <p className="text-[11px] text-on-surface-variant mt-1 break-words">{quem[student.id].saida}</p>
+                    )}
                   </div>
                 </div>
               </div>

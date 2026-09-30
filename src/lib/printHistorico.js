@@ -65,6 +65,7 @@ const STYLES = `
   table.data thead th:last-child { border-radius: 0 6px 6px 0; }
   table.data tbody td { padding: 8px 10px; border-bottom: 1px solid #e1e2f2; vertical-align: top; }
   table.data tbody tr:nth-child(even) { background: #f9f9ff; }
+  .quem { font-size: 9px; color: #6b6f86; margin-top: 2px; }
   .pill { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 9px; border-radius: 999px; }
   .pill-ok { background: #e3f6e8; color: #1a7d3a; }
   .pill-over { background: #fde7e7; color: #b91c1c; }
@@ -102,6 +103,13 @@ function statusPillHtml(r) {
 
 // Monta a folha de UM aluno inteira, com cabeçalho próprio no <thead> pra
 // repetir em toda página que essa tabela ocupar na impressão.
+// Horário com quem fez a entrada ou a saída embaixo (30/09/2026).
+export function printHistoricoCelula(horario, quem) {
+  const h = escapeHtml(horario);
+  if (!h) return '•';
+  return quem ? `${h}<div class="quem">${escapeHtml(quem)}</div>` : h;
+}
+
 function buildStudentSheetHtml(studentRecords, { school, periodLabel, generatedAt, index, total, isEmpty }) {
   const first = studentRecords[0];
   const totalRegistros = isEmpty ? 0 : studentRecords.length;
@@ -111,8 +119,8 @@ function buildStudentSheetHtml(studentRecords, { school, periodLabel, generatedA
   const rowsHtml = isEmpty ? '' : studentRecords.map(r => `
     <tr>
       <td>${escapeHtml(r.date)}</td>
-      <td>${escapeHtml(r.entry) || '•'}</td>
-      <td>${escapeHtml(r.exit) || '•'}</td>
+      <td>${printHistoricoCelula(r.entry, r.entryQuem)}</td>
+      <td>${printHistoricoCelula(r.exit, r.exitQuem)}</td>
       <td>${escapeHtml(r.contracted)}</td>
       <td>${statusPillHtml(r)}</td>
     </tr>
