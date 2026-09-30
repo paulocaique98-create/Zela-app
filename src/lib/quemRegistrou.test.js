@@ -13,7 +13,14 @@ describe('quem fez a entrada ou a saída', () => {
     expect(textoQuemRegistrou('  ', true)).toBe('Lançado pela escola');
   });
 
+  it('sem nome, marcado direto pela Recepção depois de 17/09: foi a escola', () => {
+    // Os 3 registros da Maitê de 24 e 25/09 (totem travado depois de uma publicação).
+    expect(quemRegistrouDoLog({ performed_by_name: null, corrected: false, event_time: '2026-09-24T21:11:00+00:00' })).toBe('Registrado pela escola');
+    expect(quemRegistrouDoLog({ performed_by_name: null, corrected: false, event_time: '2026-09-17T21:15:00-03:00' })).toBe('Registrado pela escola');
+  });
+
   it('registro antigo sem nome: não afirma nada', () => {
+    expect(quemRegistrouDoLog({ performed_by_name: null, corrected: false, event_time: '2026-09-17T18:15:00-03:00' })).toBeNull();
     expect(quemRegistrouDoLog({ performed_by_name: null, corrected: false })).toBeNull();
     expect(quemRegistrouDoLog(null)).toBeNull();
   });

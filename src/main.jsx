@@ -8,26 +8,46 @@ import App from './App.jsx'
 import Toaster from './components/Toaster.jsx'
 import { logClientError, installGlobalErrorHandlers } from './lib/errorLogger'
 import { initSentry } from './lib/sentry'
+import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga } from './lib/versaoAntiga'
 
 initSentry()
 installGlobalErrorHandlers()
+// Aberto numa versão anterior a uma publicação: recarrega sozinho (ver
+// src/lib/versaoAntiga.js).
+instalarRecuperacaoDeVersaoAntiga()
 
 // Error Boundary próprio: troca a tela branca por uma mensagem amigável
 // quando algum componente quebra o render, e registra o erro nos dois
 // destinos — client_error_logs (via logClientError, que já repassa pro
 // Sentry também, ver errorLogger.js) e visível em Painel do Dev > Logs.
 class ErrorBoundary extends Component {
-  state = { hasError: false }
+  state = { hasError: false, atualizando: false }
 
   static getDerivedStateFromError() {
     return { hasError: true }
   }
 
   componentDidCatch(error, info) {
+    // Tela de uma versão anterior à publicação: recarrega na versão nova em
+    // vez de mostrar erro (não é falha do sistema, não vai para os logs).
+    if (ehErroDeVersaoAntiga(error) && recarregarParaVersaoNova()) {
+      this.setState({ atualizando: true })
+      return
+    }
     logClientError(error, { componentStack: info?.componentStack })
   }
 
   render() {
+    if (this.state.atualizando) {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'system-ui, sans-serif', color: '#64748b',
+        }}>
+          Atualizando o Zela…
+        </div>
+      )
+    }
     if (this.state.hasError) {
       return (
         <div style={{
