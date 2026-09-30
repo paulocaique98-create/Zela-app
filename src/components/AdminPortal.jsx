@@ -205,24 +205,25 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
   const features = currentSchool?.features_enabled || {};
   const { terminology } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
-  const localPrefs = JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool?.id}`) || '{}');
+  // O menu segue só os módulos da escola (Módulos, no Portal do Dev). A
+  // antiga preferência "Personalizar Menu" (só do navegador) saiu em 30/09/2026.
 
-  const showCadastros = features.cadastros !== false && localPrefs.cadastros !== false;
-  const showGerenciamento = features.gerenciamento !== false && localPrefs.gerenciamento !== false;
-  const showCheckin = features.checkin !== false && localPrefs.checkin !== false;
-  const showConfiguracoes = features.configuracoes !== false && localPrefs.configuracoes !== false;
+  const showCadastros = features.cadastros !== false;
+  const showGerenciamento = features.gerenciamento !== false;
+  const showCheckin = features.checkin !== false;
+  const showConfiguracoes = features.configuracoes !== false;
 
-  const showFormularios = features.formularios === true && localPrefs.formularios !== false;
-  const showCalendario = features.calendario === true && localPrefs.calendario !== false;
-  const showComunicados = features.comunicados === true && localPrefs.comunicados !== false;
-  const showMural = features.mural === true && localPrefs.mural !== false;
-  const showCardapio = features.cardapio === true && localPrefs.cardapio !== false;
-  const showDiario = features.diario === true && localPrefs.diario !== false;
-  const showChat = features.chat === true && localPrefs.chat !== false;
-  const showRelatorios = features.relatorios_pedagogicos === true && localPrefs.relatorios_pedagogicos !== false;
-  const showMaterias = features.materias === true && localPrefs.materias !== false;
-  const showFrequencia = features.frequencia === true && localPrefs.frequencia !== false;
-  const showQrCheckin = features.qr_checkin === true && localPrefs.qr_checkin !== false;
+  const showFormularios = features.formularios === true;
+  const showCalendario = features.calendario === true;
+  const showComunicados = features.comunicados === true;
+  const showMural = features.mural === true;
+  const showCardapio = features.cardapio === true;
+  const showDiario = features.diario === true;
+  const showChat = features.chat === true;
+  const showRelatorios = features.relatorios_pedagogicos === true;
+  const showMaterias = features.materias === true;
+  const showFrequencia = features.frequencia === true;
+  const showQrCheckin = features.qr_checkin === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Pré-carrega os modelos de IA (~12,6MB) em background só quando o admin

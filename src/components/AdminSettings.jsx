@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
-import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX } from 'lucide-react';
+import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
 import { mergeBillingConfig, mergeAbsenceAlertConfig } from '../utils/attendanceUtils';
+import { formatarCnpj, formatarCpf, cnpjValido, cpfValido, somenteDigitos } from '../lib/documentos';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 
@@ -411,17 +412,39 @@ function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = f
   );
 }
 
+// Dados da escola no formulário (30/09/2026): nome fantasia (name), dados
+// legais do contrato e da nota fiscal, endereço por campos.
+function dadosDaEscola(school) {
+  return {
+    name: school?.name || '',
+    razao_social: school?.razao_social || '',
+    cnpj: formatarCnpj(school?.cnpj || ''),
+    inscricao_municipal: school?.inscricao_municipal || '',
+    email: school?.email || '',
+    phone: school?.phone || '',
+    ...enderecoDaEscola(school),
+    director_name: school?.director_name || '',
+    encarregado_dados_nome: school?.encarregado_dados_nome || '',
+    encarregado_dados_email: school?.encarregado_dados_email || '',
+  };
+}
+
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const ICONES_DAS_ABAS = {
+  dados: Building2,
+  responsaveis: Users,
+  identidade: ImageIcon,
+};
+
 // `only` (opcional): lista de abas a exibir; `showSchoolData` (padrão true):
 // logo e dados da escola. Usados pelo Portal da Gestão pra dividir
 // Configurações em Escola / Acadêmico / Financeiro reaproveitando esta tela.
 export default function AdminSettings({ currentUser, currentSchool, onUpdate, only = null, showSchoolData = true }) {
   const fileInputRef = useRef(null);
-  const [formData, setFormData] = useState({
-    name: currentSchool?.name || '',
-    phone: currentSchool?.phone || '',
-    ...enderecoDaEscola(currentSchool),
-    director_name: currentSchool?.director_name || '',
-  });
+  const [formData, setFormData] = useState(() => dadosDaEscola(currentSchool));
+  // Responsável legal (quem assina o contrato): tabela própria, só a Gestão lê.
+  const [responsavelLegal, setResponsavelLegal] = useState({ nome: '', cpf: '', cargo: '' });
 
   const [logoUrl, setLogoUrl] = useState(
     currentSchool?.logo_url || ''
@@ -432,46 +455,33 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
   const canManageSchool = ['developer', 'gestao'].includes(currentUser?.role);
   // Coordenação e Direção (29/09/2026): só o alerta de faltas.
   const ehGestaoPedagogica = currentUser?.role === 'gestao_pedagogica';
+  // Configurações da Escola em abas (30/09/2026, pra evitar rolagem): dados
+  // e endereço numa aba; logo e imagem de login em outra.
   const configTabs = [
+    ...(showSchoolData ? [
+      { id: 'dados', label: 'Dados da escola' },
+      ...(canManageSchool ? [{ id: 'responsaveis', label: 'Responsáveis' }] : []),
+      { id: 'identidade', label: canManageSchool ? 'Logo e Imagem de Login' : 'Logo' },
+    ] : []),
     ...(canManageSchool ? [
       { id: 'turmas', label: 'Turmas' },
       { id: 'login_image', label: 'Imagem de Login' },
       { id: 'billing', label: 'Cobrança de Hora Extra' },
       { id: 'absence_alert', label: 'Faltas' },
     ] : ehGestaoPedagogica ? [{ id: 'absence_alert', label: 'Faltas' }] : []),
-    // Personalizar Menu ajusta o menu do Portal do Admin -- não se
-    // aplica à Gestão.
-    ...(!['gestao', 'gestao_pedagogica'].includes(currentUser?.role) ? [{ id: 'menu', label: 'Personalizar Menu' }] : []),
-  ].filter(t => !only || only.includes(t.id));
-  const [activeConfigTab, setActiveConfigTab] = useState(configTabs[0]?.id || 'menu');
+    // "Personalizar Menu" saiu em 30/09/2026: o que a escola tem é decidido
+    // em Módulos (Portal do Dev) e o que a Recepção faz, em Permissões
+    // (Gestão). A preferência era só do navegador de quem clicava.
+  ].filter(t => ['dados', 'responsaveis', 'identidade'].includes(t.id) || ((!only || only.includes(t.id)) && !(showSchoolData && t.id === 'login_image')));
+  const [activeConfigTab, setActiveConfigTab] = useState(configTabs[0]?.id || 'dados');
 
   const features = currentSchool?.features_enabled || {};
-  const prefsKey = `admin_menu_prefs_${currentSchool?.id}`;
-  
-  const [localPrefs, setLocalPrefs] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(prefsKey) || '{}');
-    } catch {
-      return {};
-    }
-  });
-
-  const allModules = [
-    { id: 'cadastros', label: 'Cadastros', desc: 'Usuários e funcionários', core: true },
-    { id: 'gerenciamento', label: 'Gerenciamento', desc: 'Lista de alunos e gestão de acessos', core: true },
-    { id: 'checkin', label: 'Check-in/out', desc: 'Autoatendimento, monitor, presença e histórico', core: true },
-    { id: 'formularios', label: 'Formulários', desc: 'Matrículas e fichas médicas', core: false },
-    { id: 'calendario', label: 'Calendário Escolar', desc: 'Eventos da escola', core: false },
-    { id: 'comunicados', label: 'Comunicados', desc: 'Mural de recados', core: false },
-    { id: 'mural', label: 'Mural de Fotos', desc: 'Fotos das turmas', core: false },
-    { id: 'cardapio', label: 'Cardápio', desc: 'Lanches e refeições', core: false },
-    { id: 'financeiro', label: 'Financeiro', desc: 'Contratos, cobranças e configuração do gateway de pagamento', core: false },
-  ];
-
-  const availableModules = allModules.filter(mod => {
-    if (mod.core) return features[mod.id] !== false;
-    return features[mod.id] === true;
-  });
+  // Responsável legal: carrega só para quem pode ver (Gestão e suporte).
+  useEffect(() => {
+    if (!canManageSchool || !currentSchool?.id) return;
+    supabase.from('escola_responsavel_legal').select('nome, cpf, cargo').eq('school_id', currentSchool.id).maybeSingle()
+      .then(({ data }) => setResponsavelLegal({ nome: data?.nome || '', cpf: formatarCpf(data?.cpf || ''), cargo: data?.cargo || '' }));
+  }, [canManageSchool, currentSchool?.id]);
 
   useEffect(() => {
     if (currentSchool) {
@@ -479,17 +489,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       setLoginImageUrl(currentSchool.login_image_url || '');
       setBillingConfig(mergeBillingConfig(currentSchool.billing_config));
       setAbsenceAlertConfig(mergeAbsenceAlertConfig(currentSchool.absence_alert_config));
-      setFormData({
-        name: currentSchool.name || '',
-        phone: currentSchool.phone || '',
-        ...enderecoDaEscola(currentSchool),
-        director_name: currentSchool.director_name || '',
-      });
-      try {
-        setLocalPrefs(JSON.parse(localStorage.getItem(`admin_menu_prefs_${currentSchool.id}`) || '{}'));
-      } catch {
-        setLocalPrefs({});
-      }
+      setFormData(dadosDaEscola(currentSchool));
     }
   }, [currentSchool]);
 
@@ -516,7 +516,16 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
     setErrorMsg('');
 
     try {
-
+      if (canManageSchool) {
+        if (formData.cnpj && !cnpjValido(formData.cnpj)) throw new Error('CNPJ inválido. Confira os números.');
+        if (responsavelLegal.cpf && !cpfValido(responsavelLegal.cpf)) throw new Error('CPF do responsável legal inválido. Confira os números.');
+        for (const email of [formData.email, formData.encarregado_dados_email]) {
+          if (email && !EMAIL_OK.test(email.trim())) throw new Error(`E-mail inválido: ${email}`);
+        }
+        if ((responsavelLegal.cpf || responsavelLegal.cargo) && !responsavelLegal.nome.trim()) {
+          throw new Error('Informe o nome do responsável legal.');
+        }
+      }
 
       // 2. Update Supabase
       // login_image_url/billing_config incluídos sempre -- pra quem não é
@@ -533,6 +542,15 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
         // contrato) o banco monta sozinho.
         ...enderecoDaEscola(formData),
         director_name: formData.director_name,
+        // Dados legais: só a Gestão e o suporte alteram (o banco confere).
+        ...(canManageSchool ? {
+          razao_social: formData.razao_social.trim(),
+          cnpj: formData.cnpj,
+          inscricao_municipal: formData.inscricao_municipal.trim(),
+          email: formData.email.trim(),
+          encarregado_dados_nome: formData.encarregado_dados_nome.trim(),
+          encarregado_dados_email: formData.encarregado_dados_email.trim(),
+        } : {}),
         logo_url: logoUrl || null,
         login_image_url: loginImageUrl || null,
         billing_config: billingConfig,
@@ -545,10 +563,15 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
         .eq('id', currentUser.school_id);
 
       if (error) throw error;
-      
-      // Salvar as preferências locais
-      localStorage.setItem(prefsKey, JSON.stringify(localPrefs));
-      
+
+      if (canManageSchool && !ehGestaoPedagogica) {
+        const legal = { nome: responsavelLegal.nome.trim(), cpf: somenteDigitos(responsavelLegal.cpf), cargo: responsavelLegal.cargo.trim() };
+        const { error: legalError } = legal.nome
+          ? await supabase.from('escola_responsavel_legal').upsert({ school_id: currentUser.school_id, ...legal })
+          : await supabase.from('escola_responsavel_legal').delete().eq('school_id', currentUser.school_id);
+        if (legalError) throw legalError;
+      }
+
       setSuccessMsg('Configurações atualizadas com sucesso! A página será atualizada.');
       if (onUpdate) onUpdate();
       
@@ -567,7 +590,28 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       {/* Título "Configurações da Escola" e ícone removidos (o Header do app
           já mostra o nome da tela dinamicamente); botão de salvar sozinho
           na linha, alinhado à direita a partir de sm. */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-3 border-b border-outline-variant shrink-0">
+        {/* Abas no topo, à esquerda, do mesmo tamanho do Salvar (30/09/2026). */}
+        <div className="flex gap-2 overflow-x-auto min-w-0">
+          {configTabs.length > 1 && configTabs.map(tab => {
+            const Icone = ICONES_DAS_ABAS[tab.id];
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveConfigTab(tab.id)}
+                className={`px-5 py-2.5 font-bold rounded-zela-md transition flex items-center justify-center gap-2 whitespace-nowrap shrink-0 ${
+                  activeConfigTab === tab.id
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'
+                }`}
+              >
+                {Icone && <Icone size={18} />}
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
         <button
           type="submit"
           form="admin-settings-form"
@@ -581,108 +625,163 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
 
       <form id="admin-settings-form" onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3">
-          {showSchoolData && (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-3 items-stretch">
-
-            {/* LOGO UPLOAD */}
-            <div className="flex flex-col items-center justify-center text-center gap-2 bg-surface-container-low p-3 rounded-zela-lg border border-outline-variant">
-              <div className="w-12 h-12 bg-white rounded-full border-2 border-dashed border-primary/20 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                ) : (
-                  <Building2 className="text-indigo-200" size={22} />
-                )}
-              </div>
-              <div className="flex gap-2 items-center justify-center">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition shrink-0"
-                >
-                  <Upload size={13} /> {logoUrl ? 'Trocar logo' : 'Enviar logo'}
-                </button>
-                {logoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setLogoUrl('')}
-                    title="Remover logo"
-                    className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* DADOS DA ESCOLA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nome / Razão Social</label>
-                <input
-                  required
-                  type="text"
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nome da Diretora Pedagógica</label>
-                <input
-                  type="text"
-                  value={formData.director_name}
-                  onChange={e => setFormData({...formData, director_name: e.target.value})}
-                  placeholder="Ex: Vanessa Ramalho"
-                  className="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-                />
-              </div>
-
-              <div className="sm:col-span-2 pt-1">
-                <p className="text-xs font-bold text-on-surface-variant uppercase mb-1">Endereço (sai no contrato)</p>
-                <CamposEnderecoEscola
-                  prefixoId="config-escola"
-                  valores={enderecoDaEscola(formData)}
-                  onChange={endereco => setFormData({ ...formData, ...endereco })}
-                  labelCls="block text-[11px] font-bold text-on-surface-variant uppercase mb-1"
-                  inputCls="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-                />
-              </div>
-            </div>
-          </div>
-          )}
 
           {/* Abas horizontais: Turmas / Imagem de Login / Cobrança de Hora Extra /
               Personalizar Menu -- continuam dentro do mesmo <form>, só trocando o
               que fica visível; nenhuma delas tem save próprio (mesmo "Salvar
               Alterações" único do topo salva a aba ativa e as outras já editadas). */}
           {configTabs.length > 0 && (
-          <div className={showSchoolData ? 'pt-3 border-t border-outline-variant' : ''}>
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              {configTabs.length > 1 && configTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveConfigTab(tab.id)}
-                  className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-bold transition-all shrink-0 ${
-                    activeConfigTab === tab.id
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3">
+          <div>
+            <div>
+              {activeConfigTab === 'dados' && (() => {
+                const lbl = 'block text-xs font-bold text-on-surface-variant uppercase mb-1';
+                const inp = 'w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm disabled:bg-surface-container-low disabled:text-on-surface-variant';
+                const set = (campo) => (e) => setFormData({ ...formData, [campo]: e.target.value });
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2 content-start">
+                    <div>
+                      <label htmlFor="escola-nome" className={lbl}>Nome fantasia</label>
+                      <input id="escola-nome" required type="text" value={formData.name} onChange={set('name')} className={inp} />
+                    </div>
+                    <div>
+                      <label htmlFor="escola-razao" className={lbl}>Razão social</label>
+                      <input id="escola-razao" type="text" value={formData.razao_social} onChange={set('razao_social')} disabled={!canManageSchool} placeholder="Como está no CNPJ" className={inp} />
+                    </div>
+                    <div>
+                      <label htmlFor="escola-cnpj" className={lbl}>CNPJ</label>
+                      <input id="escola-cnpj" type="text" inputMode="numeric" value={formData.cnpj} onChange={e => setFormData({ ...formData, cnpj: formatarCnpj(e.target.value) })} disabled={!canManageSchool} placeholder="00.000.000/0000-00" className={inp} />
+                    </div>
+                    <div>
+                      <label htmlFor="escola-im" className={lbl}>Inscrição municipal</label>
+                      <input id="escola-im" type="text" value={formData.inscricao_municipal} onChange={set('inscricao_municipal')} disabled={!canManageSchool} placeholder="Usada na nota fiscal" className={inp} />
+                    </div>
+                    <div>
+                      <label htmlFor="escola-email" className={lbl}>E-mail oficial</label>
+                      <input id="escola-email" type="email" value={formData.email} onChange={set('email')} disabled={!canManageSchool} className={inp} />
+                    </div>
+                    <div>
+                      <label htmlFor="escola-telefone" className={lbl}>Telefone</label>
+                      <input id="escola-telefone" type="tel" value={formData.phone} onChange={set('phone')} className={inp} />
+                    </div>
+                    {!canManageSchool && (
+                      <p className="sm:col-span-2 text-[11px] text-on-surface-variant">Razão social, CNPJ, inscrição municipal e e-mail oficial só a Gestão altera.</p>
+                    )}
+                    <div className="sm:col-span-2 pt-1">
+                      <p className="text-xs font-bold text-on-surface-variant uppercase mb-1">Endereço (sai no contrato)</p>
+                      <CamposEnderecoEscola
+                        prefixoId="config-escola"
+                        valores={enderecoDaEscola(formData)}
+                        onChange={endereco => setFormData({ ...formData, ...endereco })}
+                        labelCls="block text-[11px] font-bold text-on-surface-variant uppercase mb-1"
+                        inputCls="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+              {activeConfigTab === 'responsaveis' && (() => {
+                const lbl = 'block text-xs font-bold text-on-surface-variant uppercase mb-1';
+                const inp = 'w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm';
+                const titulo = 'text-sm font-bold text-on-surface';
+                const ajuda = 'text-xs text-on-surface-variant mb-2';
+                return (
+                  <div className="flex flex-col gap-4">
+                    <section>
+                      <h3 className={titulo}>Responsável legal</h3>
+                      <p className={ajuda}>Quem assina o contrato em nome da escola (sócio administrador ou gestor). Os dados ficam visíveis só para a Gestão e para quem gera contratos.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label htmlFor="legal-nome" className={lbl}>Nome</label>
+                          <input id="legal-nome" type="text" value={responsavelLegal.nome} onChange={e => setResponsavelLegal({ ...responsavelLegal, nome: e.target.value })} className={inp} />
+                        </div>
+                        <div>
+                          <label htmlFor="legal-cpf" className={lbl}>CPF</label>
+                          <input id="legal-cpf" type="text" inputMode="numeric" value={responsavelLegal.cpf} onChange={e => setResponsavelLegal({ ...responsavelLegal, cpf: formatarCpf(e.target.value) })} placeholder="000.000.000-00" className={inp} />
+                        </div>
+                        <div>
+                          <label htmlFor="legal-cargo" className={lbl}>Cargo</label>
+                          <input id="legal-cargo" type="text" value={responsavelLegal.cargo} onChange={e => setResponsavelLegal({ ...responsavelLegal, cargo: e.target.value })} placeholder="Ex: Sócia administradora" className={inp} />
+                        </div>
+                      </div>
+                    </section>
+                    <section className="pt-3 border-t border-outline-variant">
+                      <h3 className={titulo}>Diretora pedagógica</h3>
+                      <p className={ajuda}>Assina os documentos pedagógicos, como o Relatório de Mitigação.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label htmlFor="escola-diretora" className={lbl}>Nome</label>
+                          <input id="escola-diretora" type="text" value={formData.director_name} onChange={e => setFormData({ ...formData, director_name: e.target.value })} placeholder="Ex: Vanessa Ramalho" className={inp} />
+                        </div>
+                      </div>
+                    </section>
+                    <section className="pt-3 border-t border-outline-variant">
+                      <h3 className={titulo}>Encarregado de dados (LGPD)</h3>
+                      <p className={ajuda}>Quem responde pelos dados pessoais das famílias e dos alunos.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label htmlFor="lgpd-nome" className={lbl}>Nome</label>
+                          <input id="lgpd-nome" type="text" value={formData.encarregado_dados_nome} onChange={e => setFormData({ ...formData, encarregado_dados_nome: e.target.value })} className={inp} />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label htmlFor="lgpd-email" className={lbl}>E-mail</label>
+                          <input id="lgpd-email" type="email" value={formData.encarregado_dados_email} onChange={e => setFormData({ ...formData, encarregado_dados_email: e.target.value })} className={inp} />
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                );
+              })()}
+              {activeConfigTab === 'identidade' && (
+                <div className="flex flex-col gap-4">
+                  {/* LOGO */}
+                  <div>
+                    <div className="mb-2">
+                      <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><Building2 size={15} className="text-primary" /> Logo da escola</h3>
+                      <p className="text-xs text-on-surface-variant">
+                        Aparece no topo do sistema, ao lado do nome da escola. Escolha o arquivo e clique em "Salvar Alterações" no topo da tela pra confirmar.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 h-24 bg-surface-container-low rounded-full border border-dashed border-outline-variant flex items-center justify-center shrink-0 overflow-hidden">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <Building2 className="text-slate-300" size={28} />
+                        )}
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition shrink-0"
+                        >
+                          <Upload size={13} /> {logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                        </button>
+                        {logoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setLogoUrl('')}
+                            title="Remover logo"
+                            className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {canManageSchool && (
+                    <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} />
+                  )}
+                </div>
+              )}
               {activeConfigTab === 'turmas' && (
                 <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdate} noBorder />
               )}
@@ -694,38 +793,6 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
               )}
               {activeConfigTab === 'absence_alert' && (
                 <AbsenceAlertSection currentUser={currentUser} config={absenceAlertConfig} onConfigChange={setAbsenceAlertConfig} noBorder />
-              )}
-              {activeConfigTab === 'menu' && (
-                <div>
-                  <div className="mb-2">
-                    <h3 className="text-sm font-bold text-on-surface">Personalizar Menu</h3>
-                    <p className="text-xs text-on-surface-variant">Escolha quais módulos ficarão visíveis para você nesta tela. Esta configuração afeta apenas o seu navegador.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
-                    {availableModules.map(mod => {
-                      const isVisible = localPrefs[mod.id] !== false; // default true if available
-                      return (
-                        <div key={mod.id} className="flex items-start gap-2 p-2 border border-outline-variant rounded-zela-md bg-white hover:bg-surface-container-low transition">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-on-surface">{mod.label}</p>
-                            <p className="text-xs text-on-surface-variant/70 mt-0.5">{mod.desc}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setLocalPrefs(prev => ({ ...prev, [mod.id]: !isVisible }))}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisible ? 'bg-primary' : 'bg-slate-200'}`}
-                          >
-                            <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isVisible ? 'translate-x-2' : '-translate-x-2'}`} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                    {availableModules.length === 0 && (
-                      <p className="text-small text-on-surface-variant italic col-span-full">Nenhum módulo customizável disponível.</p>
-                    )}
-                  </div>
-                </div>
               )}
             </div>
           </div>

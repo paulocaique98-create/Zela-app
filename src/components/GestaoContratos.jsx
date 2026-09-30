@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatarCpf } from '../lib/documentos';
 import { Plus, FileSignature, Edit, Send, Printer, XCircle, FilePlus2, ShieldCheck, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { notifyFamilies } from '../lib/notifyFamilies';
@@ -17,8 +18,13 @@ const STATUS_CLS = {
 
 // Campos que o modelo pode usar entre chaves duplas.
 export const TEMPLATE_FIELDS = [
-  ['escola_nome', 'Nome da escola'], ['escola_cnpj', 'CNPJ da escola'], ['escola_endereco', 'Endereço da escola'],
-  ['escola_cidade', 'Cidade da escola'], ['diretor_nome', 'Nome da direção'],
+  ['escola_nome', 'Razão social da escola'], ['escola_nome_fantasia', 'Nome fantasia da escola'],
+  ['escola_cnpj', 'CNPJ da escola'], ['escola_inscricao_municipal', 'Inscrição municipal'],
+  ['escola_endereco', 'Endereço da escola'], ['escola_cidade', 'Cidade da escola'],
+  ['escola_email', 'E-mail da escola'], ['escola_telefone', 'Telefone da escola'],
+  ['representante_nome', 'Responsável legal da escola'], ['representante_cpf', 'CPF do responsável legal'],
+  ['representante_cargo', 'Cargo do responsável legal'], ['diretor_nome', 'Diretora pedagógica'],
+  ['encarregado_dados', 'Encarregado de dados (LGPD)'],
   ['aluno_nome', 'Nome do aluno'], ['aluno_nascimento', 'Nascimento do aluno'], ['aluno_turma', 'Turma'],
   ['aluno_turno', 'Turno'], ['aluno_periodo', 'Período'],
   ['responsavel_nome', 'Nome do responsável'], ['responsavel_documento', 'CPF ou documento do responsável'],
@@ -30,7 +36,7 @@ export const TEMPLATE_FIELDS = [
 
 const DEFAULT_TEMPLATE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS
 
-CONTRATADA: {{escola_nome}}, CNPJ {{escola_cnpj}}, com sede em {{escola_endereco}}, {{escola_cidade}}.
+CONTRATADA: {{escola_nome}}, CNPJ {{escola_cnpj}}, com sede em {{escola_endereco}}, neste ato representada por {{representante_nome}}, {{representante_cargo}}, CPF {{representante_cpf}}.
 
 CONTRATANTE: {{responsavel_nome}}, documento {{responsavel_documento}}, residente em {{responsavel_endereco}}, telefone {{responsavel_telefone}}, e-mail {{responsavel_email}}.
 
@@ -272,10 +278,12 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
 
 // Monta os valores dos campos {{...}} a partir do aluno escolhido.
 async function buildTemplateValues(student, school) {
-  const [{ data: fc }, { data: year }] = await Promise.all([
+  const [{ data: fc }, { data: year }, { data: legal }] = await Promise.all([
     supabase.from('financial_contracts').select('id, amount_cents, first_due_date, financial_guardian_id')
       .eq('student_id', student.id).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('school_years').select('id, name').eq('school_id', student.school_id).eq('status', 'aberto').maybeSingle(),
+    // Responsável legal (quem assina pela escola): tabela própria, 30/09/2026.
+    supabase.from('escola_responsavel_legal').select('nome, cpf, cargo').eq('school_id', student.school_id).maybeSingle(),
   ]);
   const guardianId = fc?.financial_guardian_id || student.family_id;
   const { data: g } = guardianId
@@ -286,8 +294,14 @@ async function buildTemplateValues(student, school) {
     financialContractId: fc?.id || null,
     schoolYearId: year?.id || null,
     values: {
-      escola_nome: school?.name, escola_cnpj: school?.cnpj, escola_endereco: school?.address, escola_cidade: school?.city,
+      // Contrato usa a razão social; sem ela preenchida, o nome fantasia.
+      escola_nome: school?.razao_social || school?.name, escola_nome_fantasia: school?.name,
+      escola_cnpj: school?.cnpj, escola_inscricao_municipal: school?.inscricao_municipal,
+      escola_endereco: school?.address, escola_cidade: school?.city,
+      escola_email: school?.email, escola_telefone: school?.phone,
+      representante_nome: legal?.nome, representante_cpf: legal?.cpf ? formatarCpf(legal.cpf) : '', representante_cargo: legal?.cargo,
       diretor_nome: school?.director_name,
+      encarregado_dados: [school?.encarregado_dados_nome, school?.encarregado_dados_email].filter(Boolean).join(' · '),
       aluno_nome: student.name, aluno_nascimento: student.birth_date ? formatDateBR(student.birth_date) : '',
       aluno_turma: student.turma, aluno_turno: student.turno, aluno_periodo: student.periodo,
       responsavel_nome: g?.name, responsavel_documento: g?.doc_number ? `${g.doc_type ? `${g.doc_type.toUpperCase()} ` : ''}${g.doc_number}` : '',

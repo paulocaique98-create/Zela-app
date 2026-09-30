@@ -7,6 +7,7 @@ import DeveloperModulos from './DeveloperModulos';
 import { pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
 import { montarDadosEscola } from '../lib/escolaForm';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
+import { formatarCnpj } from '../lib/documentos';
 
 // Modelo 04 (tabela densa estilo painel enterprise) validado com o usuário
 // (proposta com 5 layouts, 18/09) -- tabela clássica de admin no desktop
@@ -38,6 +39,8 @@ export default function DeveloperPanel() {
   const [formData, setFormData] = useState({
     name: '',
     cnpj: '',
+    razao_social: '',
+    inscricao_municipal: '',
     email: '',
     phone: '',
     ...enderecoDaEscola(null),
@@ -93,7 +96,9 @@ export default function DeveloperPanel() {
       setEditingSchool(school);
       setFormData({
         name: school.name || '',
-        cnpj: school.cnpj || '',
+        cnpj: formatarCnpj(school.cnpj || ''),
+        razao_social: school.razao_social || '',
+        inscricao_municipal: school.inscricao_municipal || '',
         email: school.email || '',
         phone: school.phone || '',
         ...enderecoDaEscola(school),
@@ -107,7 +112,7 @@ export default function DeveloperPanel() {
     } else {
       setEditingSchool(null);
       setFormData({
-        name: '', cnpj: '', email: '', phone: '', ...enderecoDaEscola(null), plan: 'basic', is_active: true, notes: ''
+        name: '', cnpj: '', razao_social: '', inscricao_municipal: '', email: '', phone: '', ...enderecoDaEscola(null), plan: 'basic', is_active: true, notes: ''
       });
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
@@ -472,14 +477,24 @@ export default function DeveloperPanel() {
 
             <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto scrollbar-none text-dev-text">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Razão Social / Nome da Escola</label>
+                <div>
+                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome fantasia</label>
                   <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" />
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Razão social</label>
+                  <input type="text" value={formData.razao_social} onChange={e => setFormData({ ...formData, razao_social: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="Como está no CNPJ" />
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">CNPJ</label>
-                  <input type="text" value={formData.cnpj} onChange={e => setFormData({ ...formData, cnpj: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="00.000.000/0000-00" />
+                  <input type="text" inputMode="numeric" value={formData.cnpj} onChange={e => setFormData({ ...formData, cnpj: formatarCnpj(e.target.value) })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="00.000.000/0000-00" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Inscrição municipal</label>
+                  <input type="text" value={formData.inscricao_municipal} onChange={e => setFormData({ ...formData, inscricao_municipal: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="Usada na nota fiscal" />
                 </div>
 
                 <div>

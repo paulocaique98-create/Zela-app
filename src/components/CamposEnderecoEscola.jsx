@@ -6,7 +6,8 @@ import { UFS } from '../lib/cep';
 // automática; depois rua, número, complemento, bairro, cidade e UF. Usado no
 // Portal do Dev (Editar/Nova Escola) e nas Configurações da escola. O banco
 // monta sozinho o texto completo usado no contrato (schools.address).
-export const CAMPOS_ENDERECO_ESCOLA = ['zip_code', 'street', 'number', 'complement', 'neighborhood', 'city', 'state'];
+// codigo_ibge: código do município (nota fiscal), preenchido pela busca do CEP.
+export const CAMPOS_ENDERECO_ESCOLA = ['zip_code', 'street', 'number', 'complement', 'neighborhood', 'city', 'state', 'codigo_ibge'];
 
 export function enderecoDaEscola(school) {
   return Object.fromEntries(CAMPOS_ENDERECO_ESCOLA.map(c => [c, school?.[c] || '']));
@@ -20,7 +21,10 @@ export default function CamposEnderecoEscola({ valores, onChange, inputCls, labe
     neighborhood: e.bairro || valores.neighborhood,
     city: e.cidade || valores.city,
     state: e.uf || valores.state,
+    codigo_ibge: e.ibge || '',
   });
+  // Cidade ou UF mudadas à mão: o código do IBGE deixa de valer.
+  const setLocal = (campo, valor) => onChange({ ...valores, [campo]: valor, codigo_ibge: '' });
 
   return (
     <div className="grid grid-cols-6 gap-3">
@@ -47,15 +51,18 @@ export default function CamposEnderecoEscola({ valores, onChange, inputCls, labe
       </div>
       <div className="col-span-4 sm:col-span-3">
         <label htmlFor={`${prefixoId}-cidade`} className={labelCls}>Cidade</label>
-        <input id={`${prefixoId}-cidade`} type="text" value={valores.city} onChange={e => set('city', e.target.value)} className={inputCls} />
+        <input id={`${prefixoId}-cidade`} type="text" value={valores.city} onChange={e => setLocal('city', e.target.value)} className={inputCls} />
       </div>
       <div className="col-span-2 sm:col-span-1">
         <label htmlFor={`${prefixoId}-uf`} className={labelCls}>UF</label>
-        <select id={`${prefixoId}-uf`} value={valores.state} onChange={e => set('state', e.target.value)} className={inputCls}>
+        <select id={`${prefixoId}-uf`} value={valores.state} onChange={e => setLocal('state', e.target.value)} className={inputCls}>
           <option value="">··</option>
           {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
         </select>
       </div>
+      {valores.codigo_ibge && (
+        <p className={`col-span-6 text-[11px] -mt-1 ${classeMensagem || 'text-on-surface-variant'}`}>Código do município (IBGE): {valores.codigo_ibge}</p>
+      )}
     </div>
   );
 }

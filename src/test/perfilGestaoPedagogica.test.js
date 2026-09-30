@@ -80,7 +80,7 @@ const REGRAS_APROVADAS = [
 const TABELAS_EXCLUSIVAS_DA_GESTAO = [
   'financial_charges', 'financial_contracts', 'financial_billing_discounts', 'school_gateway_accounts', 'payment_webhook_events',
   'expenses', 'suppliers', 'contract_documents', 'contract_templates', 'school_role_permissions', 'account_deletion_requests',
-  'funcionarios', 'kiosk_devices', 'cron_secrets', 'financial_invoices',
+  'funcionarios', 'kiosk_devices', 'cron_secrets', 'financial_invoices', 'escola_responsavel_legal',
 ];
 
 runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {

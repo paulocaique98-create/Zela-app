@@ -27,7 +27,8 @@ async function viaCep(cep, fetchImpl) {
   if (!res.ok) throw new Error('indisponivel');
   const d = await res.json();
   if (d?.erro) return null;
-  return { rua: limpar(d.logradouro), bairro: limpar(d.bairro), cidade: limpar(d.localidade), uf: limpar(d.uf).toUpperCase() };
+  // ibge: código do município, exigido na nota fiscal.
+  return { rua: limpar(d.logradouro), bairro: limpar(d.bairro), cidade: limpar(d.localidade), uf: limpar(d.uf).toUpperCase(), ibge: limpar(d.ibge) };
 }
 
 async function brasilApi(cep, fetchImpl) {
@@ -35,7 +36,7 @@ async function brasilApi(cep, fetchImpl) {
   if (res.status === 404) return null;
   if (!res.ok) throw new Error('indisponivel');
   const d = await res.json();
-  return { rua: limpar(d.street), bairro: limpar(d.neighborhood), cidade: limpar(d.city), uf: limpar(d.state).toUpperCase() };
+  return { rua: limpar(d.street), bairro: limpar(d.neighborhood), cidade: limpar(d.city), uf: limpar(d.state).toUpperCase(), ibge: '' };
 }
 
 // Resultado: { status: 'ok', endereco } | { status: 'nao_encontrado' } |

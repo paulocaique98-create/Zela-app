@@ -25,10 +25,10 @@ describe('CEP · busca', () => {
     const chamadas = [];
     const fetchFalso = async (url) => {
       chamadas.push(url);
-      return resposta(200, { logradouro: 'Avenida Nossa Senhora da Penha', bairro: 'Santa Lúcia', localidade: 'Vitória', uf: 'es' });
+      return resposta(200, { logradouro: 'Avenida Nossa Senhora da Penha', bairro: 'Santa Lúcia', localidade: 'Vitória', uf: 'es', ibge: '3205309' });
     };
     const r = await buscarCep('29056-250', fetchFalso);
-    expect(r).toEqual({ status: 'ok', endereco: { rua: 'Avenida Nossa Senhora da Penha', bairro: 'Santa Lúcia', cidade: 'Vitória', uf: 'ES' } });
+    expect(r).toEqual({ status: 'ok', endereco: { rua: 'Avenida Nossa Senhora da Penha', bairro: 'Santa Lúcia', cidade: 'Vitória', uf: 'ES', ibge: '3205309' } });
     expect(chamadas).toEqual(['https://viacep.com.br/ws/29056250/json/']);
   });
 
@@ -37,7 +37,7 @@ describe('CEP · busca', () => {
       ? resposta(503, {})
       : resposta(200, { street: 'Rua A', neighborhood: 'Centro', city: 'Serra', state: 'ES' }));
     const r = await buscarCep('29160000', fetchFalso);
-    expect(r).toEqual({ status: 'ok', endereco: { rua: 'Rua A', bairro: 'Centro', cidade: 'Serra', uf: 'ES' } });
+    expect(r).toEqual({ status: 'ok', endereco: { rua: 'Rua A', bairro: 'Centro', cidade: 'Serra', uf: 'ES', ibge: '' } });
   });
 
   it('CEP que não existe: avisa que não encontrou', async () => {
