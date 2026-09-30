@@ -6,6 +6,7 @@ import { toast } from '../lib/toast';
 import DeveloperModulos from './DeveloperModulos';
 import { pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
 import { montarDadosEscola } from '../lib/escolaForm';
+import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
 
 // Modelo 04 (tabela densa estilo painel enterprise) validado com o usuário
 // (proposta com 5 layouts, 18/09) -- tabela clássica de admin no desktop
@@ -39,7 +40,7 @@ export default function DeveloperPanel() {
     cnpj: '',
     email: '',
     phone: '',
-    address: '',
+    ...enderecoDaEscola(null),
     plan: 'basic',
     is_active: true,
     notes: ''
@@ -95,7 +96,7 @@ export default function DeveloperPanel() {
         cnpj: school.cnpj || '',
         email: school.email || '',
         phone: school.phone || '',
-        address: school.address || '',
+        ...enderecoDaEscola(school),
         plan: school.plan || 'basic',
         is_active: school.is_active,
         notes: school.notes || ''
@@ -106,7 +107,7 @@ export default function DeveloperPanel() {
     } else {
       setEditingSchool(null);
       setFormData({
-        name: '', cnpj: '', email: '', phone: '', address: '', plan: 'basic', is_active: true, notes: ''
+        name: '', cnpj: '', email: '', phone: '', ...enderecoDaEscola(null), plan: 'basic', is_active: true, notes: ''
       });
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
@@ -512,8 +513,15 @@ export default function DeveloperPanel() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Endereço Completo</label>
-                  <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" />
+                  <p className="text-xs font-bold text-dev-text-muted uppercase mb-2">Endereço (sai no contrato)</p>
+                  <CamposEnderecoEscola
+                    prefixoId="dev-escola"
+                    valores={enderecoDaEscola(formData)}
+                    onChange={endereco => setFormData({ ...formData, ...endereco })}
+                    labelCls="block text-[11px] font-bold text-dev-text-muted uppercase mb-1"
+                    inputCls="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
+                    classeMensagem="text-dev-text-muted"
+                  />
                 </div>
 
                 <div className="md:col-span-2">

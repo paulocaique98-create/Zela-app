@@ -3,7 +3,7 @@ import { montarDadosEscola } from './escolaForm';
 import { pacoteAtual } from './modulosCatalogo';
 
 const base = {
-  formData: { name: 'Escola Teste', cnpj: '', email: 'a@b.com', phone: '', address: '', plan: 'basic', is_active: true, notes: '' },
+  formData: { name: 'Escola Teste', cnpj: '', email: 'a@b.com', phone: '', zip_code: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', plan: 'basic', is_active: true, notes: '' },
   limits: { autorizados_por_responsavel: 2, autorizados_transporte: 1 },
   pedagogicalMethod: 'montessori',
   customClassLabel: '',

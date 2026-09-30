@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
 import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
@@ -418,8 +419,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
   const [formData, setFormData] = useState({
     name: currentSchool?.name || '',
     phone: currentSchool?.phone || '',
-    address: currentSchool?.address || '',
-    city: currentSchool?.city || '',
+    ...enderecoDaEscola(currentSchool),
     director_name: currentSchool?.director_name || '',
   });
 
@@ -482,8 +482,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       setFormData({
         name: currentSchool.name || '',
         phone: currentSchool.phone || '',
-        address: currentSchool.address || '',
-        city: currentSchool.city || '',
+        ...enderecoDaEscola(currentSchool),
         director_name: currentSchool.director_name || '',
       });
       try {
@@ -530,8 +529,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       const updates = ehGestaoPedagogica ? { absence_alert_config: absenceAlertConfig } : {
         name: formData.name,
         phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
+        // Endereço por campos; o texto completo (schools.address, usado no
+        // contrato) o banco monta sozinho.
+        ...enderecoDaEscola(formData),
         director_name: formData.director_name,
         logo_url: logoUrl || null,
         login_image_url: loginImageUrl || null,
@@ -645,14 +645,14 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Cidade</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={e => setFormData({...formData, city: e.target.value})}
-                  placeholder="Ex: Vitória"
-                  className="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              <div className="sm:col-span-2 pt-1">
+                <p className="text-xs font-bold text-on-surface-variant uppercase mb-1">Endereço (sai no contrato)</p>
+                <CamposEnderecoEscola
+                  prefixoId="config-escola"
+                  valores={enderecoDaEscola(formData)}
+                  onChange={endereco => setFormData({ ...formData, ...endereco })}
+                  labelCls="block text-[11px] font-bold text-on-surface-variant uppercase mb-1"
+                  inputCls="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
                 />
               </div>
             </div>

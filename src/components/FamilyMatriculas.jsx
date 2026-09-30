@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import CampoCep from './CampoCep';
+import { aplicarEndereco, UFS } from '../lib/cep';
 import {
   FileText, Loader2, Plus, Trash2, X, Check, Upload, ChevronDown, ChevronUp,
   Clock, CheckCircle2, XCircle, User, Baby, Car, UserCheck, MapPin,
@@ -603,8 +605,11 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                   {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>CEP *</label>
-                      <input className={inputCls} placeholder="Somente números" value={c.cep} onChange={e => updateCrianca(c.id, { cep: e.target.value })} />
+                      <label htmlFor={`cep-${c.id}`} className={labelCls}>CEP *</label>
+                      <CampoCep id={`cep-${c.id}`} className={inputCls} value={c.cep}
+                        onChange={cep => updateCrianca(c.id, { cep })}
+                        onEncontrado={endereco => updateCrianca(c.id, aplicarEndereco({}, endereco))}
+                        focarDepois={`numero-${c.id}`} />
                     </div>
                     <div>
                       <label className={labelCls}>Rua / Logradouro *</label>
@@ -612,7 +617,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                     </div>
                     <div>
                       <label className={labelCls}>Número *</label>
-                      <input className={inputCls} value={c.numero} onChange={e => updateCrianca(c.id, { numero: e.target.value })} />
+                      <input id={`numero-${c.id}`} className={inputCls} value={c.numero} onChange={e => updateCrianca(c.id, { numero: e.target.value })} />
                     </div>
                     <div>
                       <label className={labelCls}>Complemento</label>
@@ -629,7 +634,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                       </div>
                       <div className="w-20">
                         <label className={labelCls}>UF *</label>
-                        <input className={inputCls} maxLength={2} placeholder="ES" value={c.uf} onChange={e => updateCrianca(c.id, { uf: e.target.value.toUpperCase() })} />
+                        <select className={inputCls} value={c.uf} onChange={e => updateCrianca(c.id, { uf: e.target.value })}><option value="">··</option>{UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}</select>
                       </div>
                     </div>
                   </div>

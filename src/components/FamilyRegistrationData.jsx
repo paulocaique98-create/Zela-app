@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import CampoCep from './CampoCep';
+import { UFS } from '../lib/cep';
 import { User, MapPin, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatPersonName } from '../utils/formatName';
@@ -42,7 +44,7 @@ export default function FamilyRegistrationData({ currentUser }) {
             complement: data.complement || '',
             neighborhood: data.neighborhood || '',
             city: data.city || '',
-            state: data.state || ''
+            state: (data.state || '').trim().toUpperCase()
           });
 
         }
@@ -193,8 +195,17 @@ export default function FamilyRegistrationData({ currentUser }) {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
               <div className="sm:col-span-2">
-                <label className={labelCls}>CEP</label>
-                <input type="text" name="zip_code" value={formData.zip_code} onChange={handleChange} className={inputCls} placeholder="00000-000" />
+                <label htmlFor="familia-cep" className={labelCls}>CEP</label>
+                <CampoCep id="familia-cep" className={inputCls} value={formData.zip_code}
+                  onChange={zip_code => setFormData(prev => ({ ...prev, zip_code }))}
+                  onEncontrado={e => setFormData(prev => ({
+                    ...prev,
+                    street: e.rua || prev.street,
+                    neighborhood: e.bairro || prev.neighborhood,
+                    city: e.cidade || prev.city,
+                    state: e.uf || prev.state,
+                  }))}
+                  focarDepois="familia-numero" />
               </div>
               <div className="sm:col-span-4">
                 <label className={labelCls}>Rua / Logradouro</label>
@@ -202,7 +213,7 @@ export default function FamilyRegistrationData({ currentUser }) {
               </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Número</label>
-                <input type="text" name="number" value={formData.number} onChange={handleChange} className={inputCls} />
+                <input id="familia-numero" type="text" name="number" value={formData.number} onChange={handleChange} className={inputCls} />
               </div>
               <div className="sm:col-span-4">
                 <label className={labelCls}>Complemento</label>
@@ -218,7 +229,7 @@ export default function FamilyRegistrationData({ currentUser }) {
               </div>
               <div className="sm:col-span-1">
                 <label className={labelCls}>UF</label>
-                <input type="text" name="state" value={formData.state} onChange={handleChange} className={inputCls} placeholder="SP" maxLength={2} />
+                <select name="state" value={formData.state} onChange={handleChange} className={inputCls}><option value="">··</option>{UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}</select>
               </div>
             </div>
           </div>

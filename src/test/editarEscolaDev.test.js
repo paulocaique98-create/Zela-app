@@ -18,7 +18,7 @@ runIf('Editar Escola (Portal do Dev)', () => {
       await adminClient.from('schools').update({ turmas, features_enabled: features }).eq('id', schoolId);
 
       const dados = montarDadosEscola({
-        formData: { name: 'Vitest Escola Editada', cnpj: '', email: 'x@y.com', phone: '', address: '', plan: 'basic', is_active: true, notes: 'nota' },
+        formData: { name: 'Vitest Escola Editada', cnpj: '', email: 'x@y.com', phone: '', zip_code: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', plan: 'basic', is_active: true, notes: 'nota' },
         limits: { autorizados_por_responsavel: 3, autorizados_transporte: 1 },
         pedagogicalMethod: 'montessori',
         customClassLabel: '',
