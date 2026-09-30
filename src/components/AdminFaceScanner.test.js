@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition, eyeAspectRatio, averageEyeAspectRatio } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -88,7 +88,7 @@ describe('findSecureMatch — regressão do achado da auditoria (confusão entre
   });
 });
 
-describe('evaluateFramePosition — enquadramento do rosto no molde do Totem', () => {
+describe('evaluateFramePosition — distância do rosto no Totem (sem molde)', () => {
   const VIDEO_W = 640;
   const VIDEO_H = 480;
 
@@ -114,12 +114,21 @@ describe('evaluateFramePosition — enquadramento do rosto no molde do Totem', (
     expect(evaluateFramePosition(box(0.60, 0.5, 0.5), VIDEO_W, VIDEO_H)).toBe('too-close');
   });
 
-  it('rejeita como "off-center" um rosto fora da tolerância horizontal', () => {
-    expect(evaluateFramePosition(box(0.30, 0.85, 0.5), VIDEO_W, VIDEO_H)).toBe('off-center');
+  it('rosto em qualquer parte da tela vale (30/09/2026: sem exigir centralizar)', () => {
+    expect(evaluateFramePosition(box(0.30, 0.85, 0.5), VIDEO_W, VIDEO_H)).toBe('ok');
+    expect(evaluateFramePosition(box(0.30, 0.5, 0.9), VIDEO_W, VIDEO_H)).toBe('ok');
+    expect(evaluateFramePosition(box(0.30, 0.1, 0.1), VIDEO_W, VIDEO_H)).toBe('ok');
   });
 
-  it('rejeita como "off-center" um rosto fora da tolerância vertical', () => {
-    expect(evaluateFramePosition(box(0.30, 0.5, 0.9), VIDEO_W, VIDEO_H)).toBe('off-center');
+  it('na borda da tela, a distância continua valendo (aproxime-se / afaste-se)', () => {
+    expect(evaluateFramePosition(box(0.10, 0.9, 0.2), VIDEO_W, VIDEO_H)).toBe('too-far');
+    expect(evaluateFramePosition(box(0.60, 0.2, 0.8), VIDEO_W, VIDEO_H)).toBe('too-close');
+  });
+
+  it('tamanho do rosto registrado para calibrar a distância', () => {
+    expect(faceWidthRatio(box(0.2345, 0.5, 0.5), VIDEO_W)).toBe(0.235);
+    expect(faceWidthRatio(null, VIDEO_W)).toBeNull();
+    expect(faceWidthRatio({ width: null }, VIDEO_W)).toBeNull();
   });
 
   it('valores de fronteira: exatamente no limite mínimo de tamanho ainda é "ok" (a comparação é sempre com <, nunca <=, então o valor exato do limite passa)', () => {
@@ -194,5 +203,30 @@ describe('eyeAspectRatio/averageEyeAspectRatio — Liveness Detection (Fase 1, o
 
     expect(variance(rostoVivo)).toBeGreaterThan(variance(fotoEstatica));
     expect(variance(fotoEstatica)).toBeCloseTo(0, 10);
+  });
+});
+
+describe('podeSolicitarSozinho: pedido automático depois do reconhecimento', () => {
+  const base = { matchStatus: 'matched', actionDone: false, isProcessing: false, jaDisparado: false, filhos: 1, marcados: 1 };
+
+  it('um filho carregado e marcado: dispara', () => {
+    expect(podeSolicitarSozinho(base)).toBe(true);
+  });
+
+  it('internet lenta: lista de filhos ainda vazia, espera sem gastar o disparo (causa do "fechar no X")', () => {
+    expect(podeSolicitarSozinho({ ...base, filhos: 0, marcados: 0 })).toBe(false);
+    // quando a lista chega, aí sim dispara
+    expect(podeSolicitarSozinho({ ...base, filhos: 1, marcados: 1 })).toBe(true);
+  });
+
+  it('dois ou mais filhos: não dispara sozinho (a pessoa confere quem está ali)', () => {
+    expect(podeSolicitarSozinho({ ...base, filhos: 2, marcados: 2 })).toBe(false);
+  });
+
+  it('não dispara de novo, nem fora do reconhecido, nem durante o envio', () => {
+    expect(podeSolicitarSozinho({ ...base, jaDisparado: true })).toBe(false);
+    expect(podeSolicitarSozinho({ ...base, matchStatus: 'searching' })).toBe(false);
+    expect(podeSolicitarSozinho({ ...base, isProcessing: true })).toBe(false);
+    expect(podeSolicitarSozinho({ ...base, actionDone: true })).toBe(false);
   });
 });

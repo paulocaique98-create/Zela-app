@@ -94,18 +94,26 @@ export function averageEyeAspectRatio(landmarks) {
   return (left + right) / 2;
 }
 
-// ── Enquadramento: exige que o rosto esteja perto (~60cm) e centralizado no molde ──
+// ── Enquadramento: só a DISTÂNCIA importa, o rosto vale em qualquer parte da tela ──
 // Sem sensor de profundidade, a distância é aproximada pela LARGURA que o rosto ocupa
 // no quadro: quanto mais perto, maior o rosto na imagem. Calibrado para uma webcam
 // comum de totem (campo de visão ~60-70°): a ~60cm o rosto ocupa por volta de 20-24%
 // da largura do quadro; abaixo disso está longe demais, acima de ~50% está perto demais.
+// 30/09/2026: saíram o molde oval e a exigência de centralizar. O resumo de erros
+// mostrou o enquadramento como a maior causa de falha (913 ocorrências, 252 só de
+// "fora do centro"); agora a tela inteira lê o rosto e só "Aproxime-se/Afaste-se"
+// continuam valendo.
 const MIN_FACE_WIDTH_RATIO = 0.20;
 const MAX_FACE_WIDTH_RATIO = 0.50;
-// Tolerância de centralização em relação ao centro do quadro (0 a 0.5)
-const CENTER_TOLERANCE_X = 0.26;
-const CENTER_TOLERANCE_Y = 0.32;
 
-// Avalia se o rosto detectado está bem posicionado (perto e dentro do molde central)
+// Largura do rosto em relação ao quadro, arredondada (vai no registro de erros
+// para calibrar a distância ideal entre o totem e a pessoa).
+export function faceWidthRatio(box, videoWidth) {
+  if (!box || !videoWidth || !Number.isFinite(box.width)) return null;
+  return Math.round((box.width / videoWidth) * 1000) / 1000;
+}
+
+// Avalia se o rosto detectado está a uma boa distância (a posição na tela não importa)
 // Cada motivo de rejeição de enquadramento vira sua própria categoria de log
 // (fingerprint separado em error_logs) -- sem isso, "muito perto" e "muito
 // longe" caíam todos em "frame_position_rejected", e como o RPC log_error só
@@ -118,18 +126,20 @@ export function frameRejectionCategory(position) {
   return 'frame_position_off_center';
 }
 
+// eslint-disable-next-line no-unused-vars
 export function evaluateFramePosition(box, videoWidth, videoHeight) {
-  const faceWidthRatio = box.width / videoWidth;
-  const cx = (box.x + box.width / 2) / videoWidth;
-  const cy = (box.y + box.height / 2) / videoHeight;
-  const isOffCenter = Math.abs(cx - 0.5) > CENTER_TOLERANCE_X || Math.abs(cy - 0.5) > CENTER_TOLERANCE_Y;
-  const isTooFar = faceWidthRatio < MIN_FACE_WIDTH_RATIO;
-  const isTooClose = faceWidthRatio > MAX_FACE_WIDTH_RATIO;
-
-  if (isTooFar) return 'too-far';
-  if (isTooClose) return 'too-close';
-  if (isOffCenter) return 'off-center';
+  const ratio = box.width / videoWidth;
+  if (ratio < MIN_FACE_WIDTH_RATIO) return 'too-far';
+  if (ratio > MAX_FACE_WIDTH_RATIO) return 'too-close';
   return 'ok';
+}
+
+// Pedido de entrada/saída automático (sem toque): só com UM filho vinculado,
+// já carregado e marcado. Com 2 ou mais, a pessoa confere quem está ali.
+// Enquanto a lista de filhos não chega, espera (não gasta o disparo).
+export function podeSolicitarSozinho({ matchStatus, actionDone, isProcessing, jaDisparado, filhos, marcados }) {
+  if (matchStatus !== 'matched' || actionDone || isProcessing || jaDisparado) return false;
+  return filhos === 1 && marcados === 1;
 }
 
 // Canvases reaproveitados entre frames. O loop de detecção roda ~5x/s por
@@ -226,7 +236,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const livenessEnforceRef = useRef(false);
   const humanDecideEnabledRef = useRef(false);
   const earHistoryRef = useRef([]);
-  // 'ok' | 'too-far' | 'off-center' | null — orienta o overlay de enquadramento
+  // 'ok' | 'too-far' | 'too-close' | null — orienta a borda e o aviso de distância
   const [framePosition, setFramePosition] = useState(null);
   const [noMatchReason, setNoMatchReason] = useState('');
 
@@ -710,9 +720,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     let isDetecting = false;
     let matchConfirmed = false;
 
-    // Anti-flicker: só atualiza o estado exibido (borda/mensagem do molde) depois que
+    // Anti-flicker: só atualiza o estado exibido (borda/aviso de distância) depois que
     // a MESMA leitura se repetir por alguns frames seguidos, evitando que a mensagem
-    // "Aproxime-se/Afaste-se/Centralize" pisque a cada pequena oscilação da detecção.
+    // "Aproxime-se/Afaste-se" pisque a cada pequena oscilação da detecção.
     let lastRawPosition = undefined;
     let stableCount = 0;
     const debouncedSetFramePosition = (position) => {
@@ -728,7 +738,19 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     };
 
     const detectFace = async () => {
-      if (!videoRef.current || videoRef.current.paused || videoRef.current.ended || isDetecting) return;
+      if (isDetecting) return;
+      // Travamento real (30/09/2026, "precisa fechar no X e abrir de novo"):
+      // antes, se o vídeo estivesse pausado ou sem quadro NESTE instante, a
+      // função saía SEM agendar a próxima leitura, e o ciclo morria de vez.
+      // Agora tenta retomar o vídeo e agenda a próxima leitura sempre.
+      const videoAtual = videoRef.current;
+      if (!videoAtual || videoAtual.paused || videoAtual.ended) {
+        if (videoAtual?.paused && !videoAtual.ended) {
+          try { videoAtual.play()?.then(null, () => {}); } catch { /* melhor esforço */ }
+        }
+        if (!cancelled) timerId = setTimeout(detectFace, DETECTION_INTERVAL_MS);
+        return;
+      }
 
       isDetecting = true;
       try {
@@ -774,20 +796,23 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             debouncedSetFramePosition(position);
 
             if (position !== 'ok') {
-              // Fora do molde (longe demais ou descentralizado): não é seguro confirmar
-              // — e se já estava confirmado, o molde é o "foco": sair dele cancela o
-              // match e volta automaticamente para "Verificando Rosto".
+              // Longe ou perto demais: não é seguro confirmar — e se já estava
+              // confirmado, sair da distância cancela o match e volta
+              // automaticamente para "Verificando Rosto".
               recentMatchesRef.current = [];
               earHistoryRef.current = [];
               if (matchConfirmed) {
                 matchConfirmed = false;
                 setMatchedPerson(null);
                 setMatchedStudents([]);
+                // Mesma limpeza do botão X: sem isso a marcação dos filhos
+                // do reconhecimento cancelado ficava para trás.
+                setSelectedStudentIds([]);
                 setMatchDistance(null);
                 resetStuckTimer();
               }
               setMatchStatus('searching');
-              logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live' });
+              logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live', face_width_ratio: faceWidthRatio(box, video.videoWidth) });
             } else if (!matchConfirmed) {
               setMatchStatus('searching');
               const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
@@ -1003,14 +1028,21 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // sozinho: o reconhecimento facial só identifica o adulto, não diz quais
   // filhos estão fisicamente ali — precisa da conferência manual das
   // marcações antes de confirmar.
+  // 30/09/2026: só dispara depois que o filho (único) JÁ foi carregado e
+  // marcado. Antes, com internet lenta, o disparo saía com a lista ainda
+  // vazia, não fazia nada e ficava marcado como "já disparado": a tela
+  // parava com a pessoa reconhecida e nada acontecia até fechar no X.
   useEffect(() => {
-    if (matchStatus !== 'matched' || actionDone || isProcessingCapture || autoTriggeredRef.current || matchedStudents.length > 1) return;
+    if (!podeSolicitarSozinho({
+      matchStatus, actionDone, isProcessing: isProcessingCapture, jaDisparado: autoTriggeredRef.current,
+      filhos: matchedStudents.length, marcados: selectedStudentIds.length,
+    })) return;
     const timer = setTimeout(() => {
       autoTriggeredRef.current = true;
       handleRequestAccess();
     }, 1000);
     return () => clearTimeout(timer);
-  }, [matchStatus, actionDone, isProcessingCapture, matchedStudents.length]);
+  }, [matchStatus, actionDone, isProcessingCapture, matchedStudents.length, selectedStudentIds.length]);
 
   useEffect(() => {
     if (matchStatus !== 'matched') {
@@ -1086,18 +1118,16 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             </>
           )}
 
-          {/* Molde de rosto central: guia o responsável a se posicionar bem próximo
-              da câmera (~60cm) para melhor precisão do reconhecimento. O tamanho grande
-              exige aproximação — se o rosto não preencher o molde, está longe demais. */}
+          {/* Sem molde (30/09/2026): a tela inteira lê o rosto. Uma borda em volta
+              da área da câmera mantém as cores de aviso (verde reconhecido,
+              vermelho não reconhecido, laranja ajustar a distância). */}
           {!capturedImage && !error && cameraReady && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 pt-16 pb-16 md:pt-0 md:pb-0">
-              <div className={`relative h-[96%] max-h-[360px] md:h-[82%] md:max-h-[420px] aspect-[3/4] rounded-full border-4 transition-colors duration-300 flex items-center justify-center ${
-                matchStatus === 'matched' ? 'border-green-500' :
-                  matchStatus === 'no-match' ? 'border-red-500' :
-                    framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center' ? 'border-orange-500' :
-                      matchStatus === 'searching' ? 'border-indigo-600' : 'border-white/80'
-              }`} />
-            </div>
+            <div className={`absolute inset-0 pointer-events-none z-20 border-4 transition-colors duration-300 ${
+              matchStatus === 'matched' ? 'border-green-500' :
+                matchStatus === 'no-match' ? 'border-red-500' :
+                  framePosition === 'too-far' || framePosition === 'too-close' ? 'border-orange-500' :
+                    matchStatus === 'searching' ? 'border-indigo-600' : 'border-transparent'
+            }`} />
           )}
 
           {/* "Calibrando Câmera" — some assim que um rosto começa a ser verificado */}
@@ -1107,19 +1137,17 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 Calibrando Câmera
               </span>
               <span className="bg-black/60 backdrop-blur-md text-slate-200 text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md">
-                Posicione o rosto dentro do molde
+                Olhe para a câmera
               </span>
             </div>
           )}
 
-          {/* Aviso de enquadramento: rosto detectado mas longe/descentralizado do molde.
-              Enquanto isso, nenhum match é confirmado — o molde é o foco obrigatório. */}
-          {!capturedImage && !error && cameraReady && matchStatus === 'searching' && (framePosition === 'too-far' || framePosition === 'too-close' || framePosition === 'off-center') && (
+          {/* Aviso de distância: rosto detectado mas longe ou perto demais. Enquanto
+              isso, nenhum match é confirmado. */}
+          {!capturedImage && !error && cameraReady && matchStatus === 'searching' && (framePosition === 'too-far' || framePosition === 'too-close') && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 gap-2 px-6 text-center">
               <span className="bg-orange-500/90 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-zela-md shadow-md animate-pulse">
-                {framePosition === 'too-far' ? 'Aproxime-se do Dispositivo' :
-                  framePosition === 'too-close' ? 'Afaste-se do Dispositivo' :
-                    'Centralize o rosto no molde'}
+                {framePosition === 'too-far' ? 'Aproxime-se do Dispositivo' : 'Afaste-se do Dispositivo'}
               </span>
             </div>
           )}
@@ -1239,7 +1267,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 <div>
                   <p className="text-sm font-semibold text-on-surface">Aguardando detecção</p>
                   <p className="text-xs mt-1 px-4 leading-relaxed">
-                    Posicione o responsável em frente à câmera, dentro do molde.
+                    Posicione o responsável em frente à câmera.
                   </p>
                 </div>
               </div>
