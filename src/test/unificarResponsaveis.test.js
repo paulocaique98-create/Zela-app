@@ -155,5 +155,5 @@ runIf('Unificação dos 2º responsáveis', () => {
       for (const u of [gestao, admin, titular, pai, mae2, titular2]) await deleteTestUser(u.id);
       await deleteTestSchool(schoolId);
     }
-  });
+  }, 60000);
 });

@@ -9,15 +9,17 @@ describe('contas vinculadas · botão do cabeçalho', () => {
     expect(rotuloDaConta({ role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica' })).toBe('Direção');
     expect(rotuloDaConta({ role: 'admin', departamento: 'recepcao' })).toBe('Recepção');
     expect(rotuloDaConta({ role: 'admin' })).toBe('Recepção');
-    expect(rotuloDaConta({ role: 'admin', departamento: 'secretaria' })).toBe('Equipe');
+    expect(rotuloDaConta({ role: 'admin', departamento: 'administrativo' })).toBe('Administrativo');
+    expect(rotuloDaConta({ role: 'admin', departamento: 'desconhecido' })).toBe('Recepção');
+    expect(rotuloDaConta({ role: 'gestao', departamento: 'administrativo' })).toBe('Gestão');
     expect(rotuloDaConta({ role: 'teacher' })).toBe('Professora');
     expect(rotuloDaConta({ role: 'gestao' })).toBe('Gestão');
   });
 
-  it('título: família mostra os filhos, equipe mostra a escola, sem hífen', () => {
+  it('título: família mostra os filhos, equipe só o perfil (sem escola), sem hífen', () => {
     expect(tituloDaConta({ role: 'family', alunos: ['Maitê'], escola: 'Montessori' })).toBe('Responsável · Maitê');
-    expect(tituloDaConta({ role: 'family', alunos: [], escola: 'Montessori' })).toBe('Responsável · Montessori');
-    expect(tituloDaConta({ role: 'gestao_pedagogica', departamento: 'coordenacao', escola: 'Montessori' })).toBe('Coordenação · Montessori');
+    expect(tituloDaConta({ role: 'family', alunos: [], escola: 'Montessori' })).toBe('Responsável');
+    expect(tituloDaConta({ role: 'gestao_pedagogica', departamento: 'coordenacao', escola: 'Montessori' })).toBe('Coordenação');
     expect(tituloDaConta({ role: 'family', alunos: ['Ana', 'Bia'] })).not.toContain('-');
   });
 

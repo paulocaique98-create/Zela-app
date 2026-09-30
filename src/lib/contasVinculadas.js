@@ -4,6 +4,10 @@
 // no servidor (migração 20260929233347_contas_vinculadas.sql e funções
 // vincular-conta / trocar-conta).
 
+import { SETORES_CHAT } from './constants';
+
+// Rótulo pelo tipo de acesso e cargo da conta: Gestão, Coordenação ou
+// Direção, o setor da Recepção, Professora, Responsável.
 const ROTULOS = {
   family: 'Responsável',
   teacher: 'Professora',
@@ -13,15 +17,15 @@ const ROTULOS = {
 export function rotuloDaConta(conta) {
   if (!conta) return '';
   if (conta.role === 'gestao_pedagogica') return conta.departamento === 'diretoria_pedagogica' ? 'Direção' : 'Coordenação';
-  if (conta.role === 'admin') return conta.departamento && conta.departamento !== 'recepcao' ? 'Equipe' : 'Recepção';
+  // Equipe da Recepção: o nome do setor do cadastro (Recepção, Administrativo...).
+  if (conta.role === 'admin') return SETORES_CHAT.find(s => s.value === conta.departamento && s.value !== 'suporte_zela')?.label || 'Recepção';
   return ROTULOS[conta.role] || 'Conta';
 }
 
-// "Responsável · Maitê" / "Coordenação · Escola Montessori".
+// "Responsável · Maitê" / "Coordenação" (sem o nome da escola, 30/09/2026).
 export function tituloDaConta(conta) {
   const rotulo = rotuloDaConta(conta);
-  const complemento = conta?.role === 'family' && conta.alunos?.length ? conta.alunos.join(', ') : conta?.escola;
-  return complemento ? `${rotulo} · ${complemento}` : rotulo;
+  return conta?.role === 'family' && conta.alunos?.length ? `${rotulo} · ${conta.alunos.join(', ')}` : rotulo;
 }
 
 export function totalNaoLidas(contas) {
