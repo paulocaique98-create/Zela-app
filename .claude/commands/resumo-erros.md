@@ -37,3 +37,38 @@ Passos:
 Não altere nenhum limiar, nenhum código de reconhecimento facial, nem qualquer configuração nesta
 execução — o comando é só para trazer o resumo. Qualquer mudança real (ex: recalibrar o limiar) deve ser
 proposta e só feita depois de confirmação explícita, como sempre.
+
+## Linha de base: totem sem molde (30/09/2026 14:54)
+
+Em 30/09/2026 o totem passou a reconhecer o rosto na tela inteira (sem molde oval e sem
+exigir centralizar; só "Aproxime-se/Afaste-se" continuam) e foram corrigidos dois
+travamentos que obrigavam fechar no X e abrir de novo (commit `393a45d`). Como `error_logs`
+soma `occurrences` desde o primeiro registro, compare SEMPRE com os números abaixo (foto
+tirada no momento da publicação) e mostre no relatório uma tabela "antes / depois", com o
+que caiu, o que continuou e o que apareceu de novo. Lembre que o totem só roda a versão
+nova depois de recarregar a página.
+
+| source | category | occurrences em 30/09 14:54 |
+|---|---|---|
+| face_recognition | below_threshold | 399 |
+| face_recognition | frame_position_too_close | 344 |
+| face_recognition | frame_position_off_center | 253 |
+| face_recognition | frame_position_rejected | 210 |
+| face_recognition | stuck_timeout | 174 |
+| face_recognition | frame_position_too_far | 109 |
+| face_recognition | ambiguous_match | 50 |
+| face_recognition | liveness_blocked | 41 |
+| face_recognition | liveness_check_observed | 23 |
+| face_recognition | camera_watchdog_recovery | 19 |
+| face_recognition | no_face_detected | 2 |
+| edge_function | notify-checkin-request | 201 |
+| client | react_render_crash | 130 |
+| client | unhandled_error | 47 |
+
+O que esperar: `frame_position_off_center` deve parar de crescer (não existe mais);
+`stuck_timeout` deve cair (os travamentos corrigidos prendiam a pessoa até os 20 s);
+`frame_position_too_close/too_far` agora guardam `face_width_ratio` no contexto (tamanho
+do rosto no quadro), base para calibrar a distância ideal entre o totem e a pessoa;
+`react_render_crash` de "versão antiga" deve sumir desde o commit `f4ed2a9`. Os eventos
+de rosto são registrados com intervalo mínimo por categoria (FACE_LOG_THROTTLE_MS), então
+contam tentativas espaçadas, não cada quadro.
