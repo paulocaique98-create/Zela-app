@@ -1607,6 +1607,7 @@ export default function App() {
                   onDismissAlert={dismissAlert}
                   onGoToMonitor={() => { dismissAlert(); setAdminTab('monitor'); }}
                   connectionStatus={connectionStatus}
+                  updateAvailable={updateAvailable}
                 />
               ) : currentUser.role === 'teacher' ? (
                 <TeacherPortal

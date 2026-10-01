@@ -4,57 +4,14 @@ import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { detectViaHumanWorker } from '../lib/humanShadowClient';
 import { medirRostoNaImagem, avaliarQualidade, mediaDeDescritores } from '../lib/qualidadeFoto';
+import { evaluateFramePosition, proximoPassoDaContagem, MENSAGEM_DO_ENQUADRAMENTO } from '../lib/enquadramentoCadastro';
+import { versaoNovaParaRecarregar, recarregarParaVersao } from '../lib/versaoDoApp';
+import { marcarAtividadeDoTotem } from '../lib/atualizacaoDoTotem';
 import ConfirmModal from './ConfirmModal';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
-
-// Verifica a posição do rosto contra a geometria REAL da oval na tela (não
-// uma proporção genérica) — projeta a caixa do rosto (coordenadas nativas do
-// vídeo) para o espaço renderizado do container levando em conta o recorte
-// do object-cover. Checa o CENTRO da caixa contra a elipse da oval (não os 4
-// cantos: uma caixa retangular bem enquadrada sempre tem cantos fora de uma
-// elipse inscrita — isso faria um rosto perfeitamente centralizado nunca
-// passar) e o tamanho do rosto relativo à oval, pra distinguir perto/longe.
-function evaluateFramePosition(box, videoWidth, videoHeight, containerRect, ovalRect) {
-  if (!containerRect || !ovalRect || !containerRect.width || !containerRect.height) return null;
-
-  const scale = Math.max(containerRect.width / videoWidth, containerRect.height / videoHeight);
-  const renderedW = videoWidth * scale;
-  const renderedH = videoHeight * scale;
-  const offsetX = (renderedW - containerRect.width) / 2;
-  const offsetY = (renderedH - containerRect.height) / 2;
-
-  // Mirror horizontal é ignorado de propósito: a oval é centralizada no
-  // container (items-center/justify-center), então o teste é simétrico em
-  // relação ao espelhamento — o resultado é o mesmo com ou sem inverter o
-  // eixo X.
-  const left = box.x * scale - offsetX;
-  const top = box.y * scale - offsetY;
-  const width = box.width * scale;
-  const height = box.height * scale;
-  const boxCenterX = left + width / 2;
-  const boxCenterY = top + height / 2;
-
-  const ovalLocalLeft = ovalRect.left - containerRect.left;
-  const ovalLocalTop = ovalRect.top - containerRect.top;
-  const ovalCenterX = ovalLocalLeft + ovalRect.width / 2;
-  const ovalCenterY = ovalLocalTop + ovalRect.height / 2;
-  const rx = ovalRect.width / 2;
-  const ry = ovalRect.height / 2;
-
-  if (rx <= 0 || ry <= 0) return null;
-
-  const nx = (boxCenterX - ovalCenterX) / rx;
-  const ny = (boxCenterY - ovalCenterY) / ry;
-  const isCentered = nx * nx + ny * ny <= 0.4 * 0.4 + 0.4 * 0.4; // até ~40% do raio em cada eixo
-
-  const boxWidthRatio = width / ovalRect.width;
-
-  if (boxWidthRatio < 0.5) return 'too-far';
-  if (boxWidthRatio > 1.15) return 'too-close';
-  if (!isCentered) return 'off-center';
-  return 'ok';
-}
+// Rede lenta: depois disso a câmera é liberada mesmo sem a conferência de versão.
+const ESPERA_MAXIMA_DA_VERSAO_MS = 4000;
 
 // Captura de biometria facial ao vivo pela câmera, com molde oval guiando o
 // enquadramento (nunca por upload de arquivo/galeria) — extraído de
@@ -89,6 +46,35 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
   // posicionado (01/10/2026). A média vira o face_descriptor_v2, em vez de
   // depender de uma foto comprimida.
   const amostrasHumanRef = useRef([]);
+  // 'conferindo' | 'ok' | 'atualizando' (ver conferência de versão abaixo)
+  const [versao, setVersao] = useState('conferindo');
+
+  // Conferência de versão antes da câmera (01/10/2026): o iPhone do totem
+  // cadastrou biometria horas depois de uma publicação ainda com a captura
+  // antiga. Se este aparelho estiver com o Zela desatualizado, recarrega
+  // antes de abrir a câmera. Rede lenta ou fora: libera a câmera assim mesmo.
+  useEffect(() => {
+    let decidido = false;
+    let recarga;
+    const limite = setTimeout(() => {
+      if (decidido) return;
+      decidido = true;
+      setVersao('ok');
+    }, ESPERA_MAXIMA_DA_VERSAO_MS);
+    versaoNovaParaRecarregar().then((build) => {
+      if (decidido) return;
+      decidido = true;
+      clearTimeout(limite);
+      if (!build) { setVersao('ok'); return; }
+      setVersao('atualizando');
+      recarga = setTimeout(() => recarregarParaVersao(build), 1500);
+    });
+    return () => {
+      decidido = true;
+      clearTimeout(limite);
+      clearTimeout(recarga);
+    };
+  }, []);
 
   // A câmera só é solicitada depois que a pessoa clica em "Iniciar Captura"
   // — nunca abre sozinha ao entrar na tela.
@@ -130,7 +116,11 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     };
   }, [cameraStarted]);
 
-  const handleStartCapture = () => { setError(''); setCameraStarted(true); };
+  const handleStartCapture = () => {
+    if (versao !== 'ok') return;
+    setError('');
+    setCameraStarted(true);
+  };
 
   // Loop leve de posicionamento: só detecta a caixa do rosto (sem descriptor)
   // pra guiar visualmente a pessoa até o enquadramento ideal antes da captura.
@@ -148,6 +138,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
             if (!detection) {
               setFramePosition(null);
             } else {
+              marcarAtividadeDoTotem();
               const containerRect = containerRef.current?.getBoundingClientRect();
               const ovalRect = ovalRef.current?.getBoundingClientRect();
               setFramePosition(evaluateFramePosition(detection.box, video.videoWidth, video.videoHeight, containerRect, ovalRect));
@@ -225,17 +216,26 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     }
   }, [framePosition, countdown]);
 
-  // Contagem regressiva de 3s antes da captura automática.
+  // Contagem regressiva de 3 s (01/10/2026): só anda com o rosto em
+  // "Perfeito". Se a pessoa sai do enquadramento, a contagem pausa e a
+  // orientação volta a aparecer; quando ela volta, retoma de onde parou.
+  // Cada número precisa de um segundo inteiro em "Perfeito", então a foto só
+  // sai com o rosto bem enquadrado (antes, quem se afastava durante a
+  // contagem saía com o rosto pequeno).
   useEffect(() => {
-    if (countdown === null) return;
-    if (countdown === 0) {
-      doCapture();
-      setCountdown(null);
-      return;
-    }
-    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    if (countdown === null || capturedImage) return undefined;
+    const passo = proximoPassoDaContagem(countdown, framePosition);
+    if (passo === 'pausada') return undefined;
+    const timer = setTimeout(() => {
+      if (passo === 'capturar') {
+        doCapture();
+        setCountdown(null);
+      } else {
+        setCountdown(c => c - 1);
+      }
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [countdown]);
+  }, [countdown, framePosition, capturedImage]);
 
   const handleRetake = () => {
     amostrasHumanRef.current = [];
@@ -341,9 +341,15 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
             <div className="bg-white/10 p-4 rounded-full mb-4">
               <Camera size={32} />
             </div>
-            <p className="text-sm font-semibold text-slate-200 max-w-xs">
-              A câmera só é ligada quando você clicar em "Iniciar Captura"
-            </p>
+            {versao === 'atualizando' ? (
+              <p className="text-sm font-semibold text-slate-200 max-w-xs">
+                Existe uma versão nova do Zela. Atualizando antes de abrir a câmera; depois, é só abrir o cadastro de novo.
+              </p>
+            ) : (
+              <p className="text-sm font-semibold text-slate-200 max-w-xs">
+                A câmera só é ligada quando você clicar em "Iniciar Captura"
+              </p>
+            )}
           </div>
         )}
 
@@ -365,24 +371,26 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         )}
 
         {!error && !capturedImage && cameraReady && (() => {
+          const pausada = countdown !== null && framePosition !== 'ok';
           const ovalColor =
-            countdown !== null ? 'border-indigo-400' :
+            countdown !== null && !pausada ? 'border-indigo-400' :
             framePosition === 'ok' ? 'border-green-500' :
             framePosition ? 'border-amber-500' : 'border-white/80';
-          const message =
-            countdown !== null ? null :
-            framePosition === 'ok' ? 'Perfeito' :
-            framePosition === 'too-far' ? 'Aproxime-se' :
-            framePosition === 'too-close' ? 'Afaste-se' :
-            framePosition === 'off-center' ? 'Centralize o rosto' :
-            'Olhe para a câmera';
+          const message = MENSAGEM_DO_ENQUADRAMENTO[framePosition] || 'Olhe para a câmera';
           return (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
               <div ref={ovalRef} className={`relative h-[82%] max-h-[380px] aspect-[3/4] rounded-full border-4 transition-colors duration-300 flex items-center justify-center ${ovalColor}`}>
                 {countdown !== null ? (
-                  <span className="text-white text-6xl font-black drop-shadow-lg animate-in zoom-in duration-300" key={countdown}>
-                    {countdown}
-                  </span>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className={`text-white text-6xl font-black drop-shadow-lg animate-in zoom-in duration-300 ${pausada ? 'opacity-40' : ''}`} key={countdown}>
+                      {countdown}
+                    </span>
+                    {pausada && (
+                      <span className="text-[11px] font-bold px-3 py-1.5 rounded-lg text-center leading-tight backdrop-blur-md bg-black/60 text-white">
+                        {message}
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <span className={`text-[11px] font-bold px-3 py-1.5 rounded-lg text-center leading-tight backdrop-blur-md ${framePosition === 'ok' ? 'bg-green-600/80 text-white' : 'bg-black/60 text-white'}`}>
                     {message}
@@ -424,13 +432,18 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         ) : !cameraStarted ? (
           <button
             onClick={handleStartCapture}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm"
+            disabled={versao !== 'ok'}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm disabled:opacity-60"
           >
-            <Camera size={16} /> Iniciar Captura
+            {versao === 'ok' ? (
+              <><Camera size={16} /> Iniciar Captura</>
+            ) : (
+              <><Loader2 size={16} className="animate-spin" /> {versao === 'atualizando' ? 'Atualizando o Zela' : 'Conferindo a versão'}</>
+            )}
           </button>
         ) : (
           <p className="text-center text-xs font-semibold text-on-surface-variant/70">
-            {countdown !== null ? `Capturando em ${countdown}` :
+            {countdown !== null ? (framePosition === 'ok' ? `Capturando em ${countdown}` : `Contagem pausada · ${MENSAGEM_DO_ENQUADRAMENTO[framePosition] || 'Olhe para a câmera'}`) :
               framePosition === 'ok' ? 'Perfeito, capturando' :
               !cameraReady || !modelsLoaded ? 'Preparando câmera' :
               'Captura automática'}

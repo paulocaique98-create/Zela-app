@@ -4,6 +4,7 @@ import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
+import { marcarAtividadeDoTotem } from '../lib/atualizacaoDoTotem';
 import { getAuthorizedPersonPhotoSignedUrl } from '../lib/storage';
 import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient';
 
@@ -886,6 +887,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             // Posição do rosto vazia (mesmo quadro ruim): ignora este quadro.
           } else {
             const box = matchConfirmed ? detections.box : detections.detection.box;
+            // Tem gente na frente: adia a atualização automática do totem.
+            marcarAtividadeDoTotem();
             const position = evaluateFramePosition(box, video.videoWidth, video.videoHeight);
             debouncedSetFramePosition(position);
 

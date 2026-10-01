@@ -9,6 +9,8 @@ import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { useAtualizacaoDoTotem } from '../hooks/useAtualizacaoDoTotem';
+import { lembrarLeitorAberto, leitorParaReabrir, esquecerLeitorAberto } from '../lib/atualizacaoDoTotem';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
 import { preloadFaceModels } from '../lib/faceModels';
@@ -69,7 +71,7 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
 ];
 
-export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus }) {
+export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus, updateAvailable = false }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const { hasUnread: hasUnreadSystemUpdates, refresh: refreshUnreadSystemUpdates } = useUnreadSystemUpdates(currentUser);
@@ -150,12 +152,26 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     }
   };
 
-  const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(false);
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  // Depois de uma atualização automática do totem, o leitor que estava
+  // aberto (rosto ou QR) volta aberto sozinho.
+  const [isFaceScannerOpen, setIsFaceScannerOpen] = useState(() => adminTab === 'kiosk' && leitorParaReabrir() === 'rosto');
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(() => adminTab === 'kiosk' && leitorParaReabrir() === 'qr');
+  useEffect(() => { esquecerLeitorAberto(); }, []);
   const [isPasswordLoginOpen, setIsPasswordLoginOpen] = useState(false);
   const [isFaceEnrollmentOpen, setIsFaceEnrollmentOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+
+  // Atualização automática do Autoatendimento (01/10/2026): com versão nova
+  // publicada, recarrega quando ninguém usa o totem há alguns minutos.
+  useAtualizacaoDoTotem({
+    ativo: adminTab === 'kiosk',
+    versaoNova: updateAvailable,
+    antesDeRecarregar: () => {
+      if (isFaceScannerOpen) lembrarLeitorAberto('rosto');
+      else if (isQrScannerOpen) lembrarLeitorAberto('qr');
+    },
+  });
 
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);
