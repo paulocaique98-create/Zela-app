@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScanFace, Play, Square } from 'lucide-react';
+import { ScanFace, Play, Square, Search, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { preloadFaceModels, faceapi } from '../lib/faceModels';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import {
-  medirRostoNaImagem, situacaoDaFoto, resumoDaQualidade, PROBLEMAS_DA_FOTO, ROTULO_DESCRITOR_HUMAN,
+  medirRostoNaImagem, situacaoDaFoto, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise,
+  PROBLEMAS_DA_FOTO, ROTULO_DESCRITOR_HUMAN,
 } from '../lib/qualidadeFoto';
-import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, PrimaryButton, SecondaryButton } from './GestaoShared';
+import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, PrimaryButton, SecondaryButton, inputCls } from './GestaoShared';
 
 // Cadastros · Qualidade da biometria (01/10/2026). Mede as fotos de rosto já
 // guardadas da escola (resolução, tamanho do rosto, brilho e nitidez) aqui
@@ -14,6 +15,8 @@ import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, Prim
 // authorized_persons.foto_qualidade. Nenhuma foto sai da escola; o suporte
 // Zela vê apenas os números. Nada é apagado nem refeito sozinho: a lista
 // mostra quem se beneficia de cadastrar o rosto de novo.
+// A análise pode ser de um grupo (Convém refazer, Sem análise, Todas) ou de
+// uma pessoa só, pelo botão da linha, sem medir de novo a escola inteira.
 
 function carregarImagem(url) {
   return new Promise((resolve, reject) => {
@@ -23,6 +26,14 @@ function carregarImagem(url) {
     img.onerror = () => reject(new Error('Não foi possível abrir a foto.'));
     img.src = url;
   });
+}
+
+// Mede a foto guardada (pelo link assinado) e devolve só os números.
+async function medirFotoGuardada(link) {
+  const img = await carregarImagem(link);
+  // Detector mais preciso (SSD) para foto parada.
+  const deteccao = await faceapi.detectSingleFace(img);
+  return medirRostoNaImagem(img, deteccao?.box, 'analise');
 }
 
 const ROTULO_SITUACAO = { ok: 'Boa', refazer: 'Refazer', sem_analise: 'Sem análise' };
@@ -37,8 +48,11 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
   const [pessoas, setPessoas] = useState(null);
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
-  const [progresso, setProgresso] = useState(null); // { feitos, total }
+  const [busca, setBusca] = useState('');
+  const [progresso, setProgresso] = useState(null); // { feitos, total, rotulo } (análise de um grupo)
+  const [analisandoId, setAnalisandoId] = useState(null); // análise de uma pessoa só
   const interromperRef = useRef(false);
+  const ocupado = Boolean(progresso || analisandoId);
 
   const carregar = useCallback(async () => {
     const { data, error } = await supabase.from('authorized_persons')
@@ -52,34 +66,40 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
   useEffect(() => { carregar(); }, [carregar]);
 
   const resumo = useMemo(() => resumoDaQualidade(pessoas || []), [pessoas]);
+  const grupos = useMemo(() => gruposParaAnalise(pessoas || []), [pessoas]);
   const linhas = useMemo(() => (pessoas || [])
     .map(p => ({ ...p, ...situacaoDaFoto(p.foto_qualidade) }))
     .sort((a, b) => ORDEM_SITUACAO[a.situacao] - ORDEM_SITUACAO[b.situacao] || a.name.localeCompare(b.name)), [pessoas]);
+  const linhasVisiveis = useMemo(() => {
+    const termo = busca.trim().toLocaleLowerCase('pt-BR');
+    if (!termo) return linhas;
+    return linhas.filter(p => `${p.name} ${p.relation || ''}`.toLocaleLowerCase('pt-BR').includes(termo));
+  }, [linhas, busca]);
 
-  const analisar = async () => {
+  const gravarQualidade = async (pessoaId, qualidade, extras = {}) => {
+    const { error } = await supabase.from('authorized_persons').update({ foto_qualidade: qualidade }).eq('id', pessoaId);
+    if (error) throw error;
+    setPessoas(prev => prev.map(p => (p.id === pessoaId ? { ...p, ...extras, foto_qualidade: qualidade } : p)));
+  };
+
+  // Analisa um grupo (Convém refazer, Sem análise ou Todas).
+  const analisarGrupo = async (lista, rotulo) => {
     setErro('');
     setAviso('');
     interromperRef.current = false;
-    const comFoto = (pessoas || []).filter(p => p.photo_storage_path);
-    if (comFoto.length === 0) { setAviso('Nenhuma foto guardada para analisar.'); return; }
-    setProgresso({ feitos: 0, total: comFoto.length });
+    if (lista.length === 0) { setAviso('Nenhuma foto guardada para analisar.'); return; }
+    setProgresso({ feitos: 0, total: lista.length, rotulo });
     let analisadas = 0;
     let falhas = 0;
     try {
       await preloadFaceModels();
-      const links = await getAuthorizedPersonPhotoSignedUrls(comFoto.map(p => p.photo_storage_path), 900);
-      for (const pessoa of comFoto) {
+      const links = await getAuthorizedPersonPhotoSignedUrls(lista.map(p => p.photo_storage_path), 900);
+      for (const pessoa of lista) {
         if (interromperRef.current) break;
         try {
           const link = links.get(pessoa.photo_storage_path);
           if (!link) throw new Error('sem link');
-          const img = await carregarImagem(link);
-          // Detector mais preciso (SSD) para foto parada.
-          const deteccao = await faceapi.detectSingleFace(img);
-          const qualidade = medirRostoNaImagem(img, deteccao?.box, 'analise');
-          const { error } = await supabase.from('authorized_persons').update({ foto_qualidade: qualidade }).eq('id', pessoa.id);
-          if (error) throw error;
-          setPessoas(prev => prev.map(p => (p.id === pessoa.id ? { ...p, foto_qualidade: qualidade } : p)));
+          await gravarQualidade(pessoa.id, await medirFotoGuardada(link));
           analisadas += 1;
         } catch {
           falhas += 1;
@@ -92,6 +112,34 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
       setErro(e.message || 'Não foi possível analisar as fotos agora.');
     } finally {
       setProgresso(null);
+    }
+  };
+
+  // Analisa a foto de uma pessoa só. Relê o cadastro antes: se a pessoa
+  // refez a biometria depois que a tela abriu, mede a foto nova.
+  const analisarPessoa = async (pessoa) => {
+    setErro('');
+    setAviso('');
+    setAnalisandoId(pessoa.id);
+    try {
+      const { data: atual, error } = await supabase.from('authorized_persons')
+        .select('photo_storage_path').eq('id', pessoa.id).single();
+      if (error) throw error;
+      if (!atual?.photo_storage_path) {
+        setErro(`${pessoa.name} não tem foto guardada para analisar.`);
+        return;
+      }
+      await preloadFaceModels();
+      const links = await getAuthorizedPersonPhotoSignedUrls([atual.photo_storage_path], 900);
+      const link = links.get(atual.photo_storage_path);
+      if (!link) throw new Error('sem link');
+      const qualidade = await medirFotoGuardada(link);
+      await gravarQualidade(pessoa.id, qualidade, { photo_storage_path: atual.photo_storage_path });
+      setAviso(resultadoDaAnalise(pessoa.name, qualidade));
+    } catch {
+      setErro(`Não foi possível analisar a foto de ${pessoa.name} agora. Tente de novo em instantes.`);
+    } finally {
+      setAnalisandoId(null);
     }
   };
 
@@ -111,6 +159,18 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
     { label: 'Brilho', hideOnMobile: true, align: 'right', className: 'tabular-nums', render: p => p.foto_qualidade?.brilho ?? '·' },
     { label: 'Nitidez', hideOnMobile: true, align: 'right', className: 'tabular-nums', render: p => p.foto_qualidade?.nitidez ?? '·' },
     { label: 'Descritor novo', hideOnMobile: true, render: p => ROTULO_DESCRITOR_HUMAN[p.face_descriptor_v2_status || 'PENDING'] || p.face_descriptor_v2_status },
+    { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: p => p.photo_storage_path && (
+      <button
+        type="button"
+        onClick={() => analisarPessoa(p)}
+        disabled={ocupado}
+        aria-label={`Analisar a foto de ${p.name}`}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-on-surface-variant border border-outline-variant rounded-zela-md hover:text-primary hover:bg-primary/10 transition disabled:opacity-50 disabled:pointer-events-none"
+      >
+        {analisandoId === p.id ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+        {analisandoId === p.id ? 'Analisando…' : 'Analisar'}
+      </button>
+    ) },
   ];
 
   return (
@@ -119,7 +179,12 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
       actions={progresso ? (
         <SecondaryButton onClick={() => { interromperRef.current = true; }}><Square size={15} /> Interromper</SecondaryButton>
       ) : (
-        <PrimaryButton onClick={analisar} disabled={!pessoas || pessoas.length === 0}><Play size={15} /> {resumo.total - resumo.sem_analise > 0 ? 'Analisar de novo' : 'Analisar fotos'}</PrimaryButton>
+        <>
+          <span className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/80">Analisar</span>
+          <PrimaryButton onClick={() => analisarGrupo(grupos.refazer, 'Convém refazer')} disabled={ocupado || grupos.refazer.length === 0}><Play size={15} /> Convém refazer ({grupos.refazer.length})</PrimaryButton>
+          <SecondaryButton onClick={() => analisarGrupo(grupos.sem_analise, 'Sem análise')} disabled={ocupado || grupos.sem_analise.length === 0}><Play size={15} /> Sem análise ({grupos.sem_analise.length})</SecondaryButton>
+          <SecondaryButton onClick={() => analisarGrupo(grupos.todas, 'Todas')} disabled={ocupado || grupos.todas.length === 0}><Play size={15} /> Todas ({grupos.todas.length})</SecondaryButton>
+        </>
       )}
     >
       <div className="space-y-4">
@@ -127,7 +192,7 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
       {aviso && <Notice type="success">{aviso}</Notice>}
       {progresso && (
         <div className="p-3 rounded-zela-md border border-outline-variant bg-surface-container-low text-sm text-on-surface">
-          Analisando {Math.min(progresso.feitos + 1, progresso.total)} de {progresso.total}… Pode continuar usando o sistema em outra aba.
+          Analisando {Math.min(progresso.feitos + 1, progresso.total)} de {progresso.total} · {progresso.rotulo}… Pode continuar usando o sistema em outra aba.
           <div className="mt-2 h-1.5 rounded-full bg-outline-variant/40 overflow-hidden">
             <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((progresso.feitos / progresso.total) * 100)}%` }} />
           </div>
@@ -146,7 +211,15 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
           <p className="text-xs text-on-surface-variant">
             Para refazer, cadastre o rosto da pessoa de novo (Recepção ou portal da família). O cadastro novo já usa a melhor resolução da câmera e confere a qualidade antes de salvar.
           </p>
-          <ResponsiveTable columns={colunas} rows={linhas} />
+          <div className="relative max-w-sm">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
+            <input id="biometria-busca" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar pessoa pelo nome" aria-label="Buscar pessoa pelo nome" className={`${inputCls} pl-9`} />
+          </div>
+          {linhasVisiveis.length === 0 ? (
+            <p className="text-sm text-on-surface-variant">Ninguém encontrado com esse nome.</p>
+          ) : (
+            <ResponsiveTable columns={colunas} rows={linhasVisiveis} />
+          )}
         </>
       )}
       </div>

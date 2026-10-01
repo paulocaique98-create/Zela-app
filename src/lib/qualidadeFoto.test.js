@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores, LIMITES_QUALIDADE, situacaoDaFoto, resumoDaQualidade } from './qualidadeFoto.js';
+import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores, LIMITES_QUALIDADE, situacaoDaFoto, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise } from './qualidadeFoto.js';
 
 function imagem(largura, altura, cor) {
   const data = new Uint8ClampedArray(largura * altura * 4);
@@ -59,5 +59,25 @@ describe('qualidade da foto de biometria', () => {
       problemas: { rosto_pequeno: 1, escura: 1, sem_rosto: 1 },
       descritorHuman: { GENERATED_LIVE: 1, GENERATED: 1, FAILED_NO_FACE: 1, PENDING: 1 },
     });
+  });
+
+  it('grupos para analisar: só quem tem foto guardada, separados por situação', () => {
+    const boa = { id: 1, photo_storage_path: 'e/1.jpg', foto_qualidade: { rosto_px: 300, brilho: 130, nitidez: 80 } };
+    const refazer = { id: 2, photo_storage_path: 'e/2.jpg', foto_qualidade: { sem_rosto: true } };
+    const semAnalise = { id: 3, photo_storage_path: 'e/3.jpg', foto_qualidade: null };
+    const semFoto = { id: 4, photo_storage_path: null, foto_qualidade: null };
+    const g = gruposParaAnalise([boa, refazer, semAnalise, semFoto]);
+    expect(g.refazer.map(p => p.id)).toEqual([2]);
+    expect(g.sem_analise.map(p => p.id)).toEqual([3]);
+    expect(g.todas.map(p => p.id)).toEqual([1, 2, 3]);
+    expect(gruposParaAnalise(null)).toEqual({ refazer: [], sem_analise: [], todas: [] });
+  });
+
+  it('frase do resultado de uma pessoa só, sem hífen', () => {
+    expect(resultadoDaAnalise('Ana Souza', { rosto_px: 300, brilho: 130, nitidez: 80 })).toBe('Foto de Ana Souza analisada: boa.');
+    const frase = resultadoDaAnalise('Ana Souza', { rosto_px: 100, brilho: 130, nitidez: 5 });
+    expect(frase).toBe('Foto de Ana Souza analisada: convém refazer (Rosto pequeno · Borrada).');
+    expect(frase).not.toContain('-');
+    expect(resultadoDaAnalise('Ana', { sem_rosto: true, rosto_px: 0 })).toBe('Foto de Ana analisada: convém refazer (Nenhum rosto encontrado).');
   });
 });

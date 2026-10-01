@@ -92,6 +92,27 @@ export function resumoDaQualidade(pessoas, limites = LIMITES_QUALIDADE) {
   return resumo;
 }
 
+// Grupos que a Gestão pode mandar analisar (01/10/2026), para não medir de
+// novo todas as fotos a cada vez. Só entra quem tem foto guardada.
+export function gruposParaAnalise(pessoas, limites = LIMITES_QUALIDADE) {
+  const grupos = { refazer: [], sem_analise: [], todas: [] };
+  for (const p of pessoas || []) {
+    if (!p.photo_storage_path) continue;
+    grupos.todas.push(p);
+    const { situacao } = situacaoDaFoto(p.foto_qualidade, limites);
+    if (situacao !== 'ok') grupos[situacao].push(p);
+  }
+  return grupos;
+}
+
+// Frase do resultado quando a Gestão analisa a foto de uma pessoa só.
+export function resultadoDaAnalise(nome, fotoQualidade, limites = LIMITES_QUALIDADE) {
+  const { situacao, codigos } = situacaoDaFoto(fotoQualidade, limites);
+  if (situacao === 'ok') return `Foto de ${nome} analisada: boa.`;
+  if (situacao === 'sem_analise') return `Foto de ${nome} ainda sem análise.`;
+  return `Foto de ${nome} analisada: convém refazer (${codigos.map(c => PROBLEMAS_DA_FOTO[c]).join(' · ')}).`;
+}
+
 // Mede o rosto numa imagem já carregada (navegador): recorta a região da
 // caixa, reduz para no máximo 200 px e calcula brilho e nitidez. Devolve o
 // objeto que vai para authorized_persons.foto_qualidade.
