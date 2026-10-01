@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { camposMudaram, CAMPOS_DO_TOTEM, agruparChamadas } from '../lib/realtimeAutorizados';
 import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
@@ -250,6 +251,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [authorizedList, setAuthorizedList] = useState([]);
+  // Lista atual lida pelo tempo real (01/10/2026), para saber se uma
+  // alteração muda algo que o totem usa.
+  const authorizedListRef = useRef([]);
+  useEffect(() => { authorizedListRef.current = authorizedList; }, [authorizedList]);
   const [labeledDescriptors, setLabeledDescriptors] = useState(null);
   const isDarkRef = useRef(false);
   const lastLuminanceCheckRef = useRef(0);
@@ -590,12 +595,25 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       }
     };
 
+    // Alterações seguidas viram uma recarga só, e só recarrega se mudou algo
+    // que o totem usa (01/10/2026): gravar os números de qualidade da foto
+    // de dezenas de pessoas recarregava todas as biometrias e reiniciava o
+    // ciclo de leitura a cada pessoa.
+    const recargaAgrupada = agruparChamadas(reloadBiometrics, 1500);
+    const aoMudar = (payload) => {
+      if (payload?.eventType === 'UPDATE') {
+        const atual = authorizedListRef.current.find(p => p.id === payload.new?.id);
+        if (!camposMudaram(atual, payload.new, CAMPOS_DO_TOTEM)) return;
+      }
+      recargaAgrupada();
+    };
+
     const channel = supabase
       .channel(`face-scanner-biometrics-${currentUser.school_id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'authorized_persons', filter: `school_id=eq.${currentUser.school_id}` },
-        reloadBiometrics
+        aoMudar
       )
       .subscribe();
 
@@ -604,6 +622,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
     return () => {
       cancelled = true;
+      recargaAgrupada.cancelar();
       window.removeEventListener('focus', onFocus);
       supabase.removeChannel(channel);
     };

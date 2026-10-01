@@ -3,7 +3,7 @@ import { X, Camera, Loader2, ArrowLeft, RefreshCw, Check, CheckCircle2 } from 'l
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { detectViaHumanWorker } from '../lib/humanShadowClient';
-import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores } from '../lib/qualidadeFoto';
+import { medirRostoNaImagem, avaliarQualidade, mediaDeDescritores } from '../lib/qualidadeFoto';
 import ConfirmModal from './ConfirmModal';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
@@ -267,18 +267,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         return;
       }
       // Qualidade da foto (01/10/2026): números da região do rosto.
-      const caixa = detection.detection.box;
-      const escala = Math.min(1, 200 / Math.max(caixa.width, caixa.height));
-      const recorte = document.createElement('canvas');
-      recorte.width = Math.max(1, Math.round(caixa.width * escala));
-      recorte.height = Math.max(1, Math.round(caixa.height * escala));
-      const rctx = recorte.getContext('2d');
-      rctx.drawImage(img, caixa.x, caixa.y, caixa.width, caixa.height, 0, 0, recorte.width, recorte.height);
-      const { brilho, nitidez } = metricasDaRegiao(rctx.getImageData(0, 0, recorte.width, recorte.height));
-      const qualidade = {
-        largura_px: img.naturalWidth, altura_px: img.naturalHeight, rosto_px: Math.round(caixa.width),
-        brilho, nitidez, avaliado_em: new Date().toISOString(), origem: 'cadastro',
-      };
+      const qualidade = medirRostoNaImagem(img, detection.detection.box, 'cadastro');
       const avaliacao = avaliarQualidade(qualidade);
       if (!avaliacao.ok) {
         setError(`${avaliacao.motivos.join(' ')} Toque em "Tirar outra" para repetir.`);

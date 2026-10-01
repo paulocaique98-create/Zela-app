@@ -41,13 +41,77 @@ export function metricasDaRegiao({ data, width, height }) {
   return { brilho: Math.round(brilho), nitidez: Math.round(nitidez * 10) / 10 };
 }
 
+// Problemas possíveis (código → rótulo curto, usado nos relatórios).
+export const PROBLEMAS_DA_FOTO = {
+  sem_rosto: 'Nenhum rosto encontrado',
+  rosto_pequeno: 'Rosto pequeno',
+  escura: 'Escura',
+  clara: 'Clara demais',
+  borrada: 'Borrada',
+};
+
 export function avaliarQualidade({ rosto_px, brilho, nitidez }, limites = LIMITES_QUALIDADE) {
   const motivos = [];
-  if (!(rosto_px >= limites.rostoMinPx)) motivos.push('Rosto pequeno na foto. Chegue um pouco mais perto da câmera.');
-  if (brilho < limites.brilhoMin) motivos.push('Foto escura. Procure um lugar mais iluminado.');
-  if (brilho > limites.brilhoMax) motivos.push('Foto clara demais. Evite luz forte atrás ou de frente para a câmera.');
-  if (nitidez < limites.nitidezMin) motivos.push('Foto borrada. Fique parado durante a contagem.');
-  return { ok: motivos.length === 0, motivos };
+  const codigos = [];
+  if (!(rosto_px >= limites.rostoMinPx)) { codigos.push('rosto_pequeno'); motivos.push('Rosto pequeno na foto. Chegue um pouco mais perto da câmera.'); }
+  if (brilho < limites.brilhoMin) { codigos.push('escura'); motivos.push('Foto escura. Procure um lugar mais iluminado.'); }
+  if (brilho > limites.brilhoMax) { codigos.push('clara'); motivos.push('Foto clara demais. Evite luz forte atrás ou de frente para a câmera.'); }
+  if (nitidez < limites.nitidezMin) { codigos.push('borrada'); motivos.push('Foto borrada. Fique parado durante a contagem.'); }
+  return { ok: motivos.length === 0, motivos, codigos };
+}
+
+// Situação da foto guardada de uma pessoa, a partir de foto_qualidade.
+export function situacaoDaFoto(fotoQualidade, limites = LIMITES_QUALIDADE) {
+  if (!fotoQualidade) return { situacao: 'sem_analise', codigos: [] };
+  if (fotoQualidade.sem_rosto) return { situacao: 'refazer', codigos: ['sem_rosto'] };
+  const { ok, codigos } = avaliarQualidade(fotoQualidade, limites);
+  return { situacao: ok ? 'ok' : 'refazer', codigos };
+}
+
+// Rótulo do descritor do motor Human (face_descriptor_v2_status).
+export const ROTULO_DESCRITOR_HUMAN = {
+  GENERATED_LIVE: 'Gerado no cadastro',
+  GENERATED: 'Gerado da foto guardada',
+  FAILED_NO_FACE: 'Rosto não encontrado',
+  FAILED_LOW_QUALITY: 'Foto de baixa qualidade',
+  FAILED_ERROR: 'Erro ao gerar',
+  PENDING: 'Pendente',
+};
+
+// Resumo de uma lista de pessoas ({ foto_qualidade, face_descriptor_v2_status }).
+export function resumoDaQualidade(pessoas, limites = LIMITES_QUALIDADE) {
+  const resumo = { total: 0, ok: 0, refazer: 0, sem_analise: 0, problemas: {}, descritorHuman: {} };
+  for (const p of pessoas || []) {
+    resumo.total += 1;
+    const { situacao, codigos } = situacaoDaFoto(p.foto_qualidade, limites);
+    resumo[situacao] += 1;
+    for (const c of codigos) resumo.problemas[c] = (resumo.problemas[c] || 0) + 1;
+    const v2 = p.face_descriptor_v2_status || 'PENDING';
+    resumo.descritorHuman[v2] = (resumo.descritorHuman[v2] || 0) + 1;
+  }
+  return resumo;
+}
+
+// Mede o rosto numa imagem já carregada (navegador): recorta a região da
+// caixa, reduz para no máximo 200 px e calcula brilho e nitidez. Devolve o
+// objeto que vai para authorized_persons.foto_qualidade.
+export function medirRostoNaImagem(img, caixa, origem) {
+  const base = {
+    largura_px: img.naturalWidth || img.width,
+    altura_px: img.naturalHeight || img.height,
+    avaliado_em: new Date().toISOString(),
+    origem,
+  };
+  const valida = caixa && [caixa.x, caixa.y, caixa.width, caixa.height].every(Number.isFinite) && caixa.width > 0 && caixa.height > 0;
+  if (!valida) return { ...base, rosto_px: 0, sem_rosto: true };
+  const escala = Math.min(1, 200 / Math.max(caixa.width, caixa.height));
+  const recorte = document.createElement('canvas');
+  recorte.width = Math.max(1, Math.round(caixa.width * escala));
+  recorte.height = Math.max(1, Math.round(caixa.height * escala));
+  const ctx = recorte.getContext('2d');
+  ctx.drawImage(img, caixa.x, caixa.y, caixa.width, caixa.height, 0, 0, recorte.width, recorte.height);
+  const { brilho, nitidez } = metricasDaRegiao(ctx.getImageData(0, 0, recorte.width, recorte.height));
+  return { ...base, rosto_px: Math.round(caixa.width), brilho, nitidez };
 }
 
 // Média de vários descritores do Human (cada um normalizado), normalizada no

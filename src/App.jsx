@@ -16,6 +16,7 @@ import { useAppUpdate } from './hooks/useAppUpdate';
 import { toast } from './lib/toast';
 import { mensagemDaFuncao } from './lib/contasVinculadas';
 import { EVENTO_SESSAO_ENCERRADA } from './lib/sessao';
+import { camposMudaram } from './lib/realtimeAutorizados';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { usaPortalGestao } from './lib/perfisGestao';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
@@ -47,6 +48,9 @@ const ABAS_LEMBRADAS = ['zela_admin_tab', 'zela_family_tab', 'zela_teacher_tab',
 export default function App() {
   const [students, setStudents] = useState([]);
   const [authorized, setAuthorized] = useState([]);
+  // Lido pelo tempo real (01/10/2026) para comparar sem depender do render.
+  const authorizedRef = useRef(authorized);
+  useEffect(() => { authorizedRef.current = authorized; }, [authorized]);
 
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('zela_user');
@@ -389,6 +393,19 @@ export default function App() {
           ? newRow.school_id === currentUserRef.current?.school_id
           : newRow.family_id === currentUserRef.current?.id;
         if (!belongs) return;
+
+        // Nada do que o app mostra mudou (ex.: só os números de qualidade da
+        // foto, 01/10/2026): não busca o link da foto de novo nem re-renderiza.
+        if (eventType === 'UPDATE') {
+          const atual = authorizedRef.current.find((p) => p.id === newRow.id);
+          const visto = {
+            name: newRow.name, relation: newRow.relation, hasPhoto: newRow.has_photo,
+            photo_storage_path: newRow.photo_storage_path, has_biometrics: newRow.face_descriptor != null,
+            status: newRow.status, emergencyOrder: newRow.emergency_order,
+            temporaryUntil: newRow.temporary_until, family_id: newRow.family_id,
+          };
+          if (!camposMudaram(atual, visto, Object.keys(visto))) return;
+        }
 
         const photo_url = newRow.photo_storage_path
           ? await getAuthorizedPersonPhotoSignedUrl(newRow.photo_storage_path).catch(() => null)

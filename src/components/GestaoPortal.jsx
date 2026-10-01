@@ -1,10 +1,11 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { ABAS_BIOMETRIAS } from './GestaoBiometrias';
 import { createPortal } from 'react-dom';
 import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
-  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace, UsersRound,
+  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
   UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2,
 } from 'lucide-react';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
@@ -49,8 +50,7 @@ const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
 const GestaoExclusoesConta = lazy(() => import('./GestaoExclusoesConta'));
-const GestaoLimpezaBiometria = lazy(() => import('./GestaoLimpezaBiometria'));
-const GestaoUnificarResponsaveis = lazy(() => import('./GestaoUnificarResponsaveis'));
+const GestaoBiometrias = lazy(() => import('./GestaoBiometrias'));
 const ConfigComunicacao = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigComunicacao })));
 const ConfigSeguranca = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigSeguranca })));
 // Telas do Admin reaproveitadas (a RLS de cada tabela já aceita gestao).
@@ -263,8 +263,11 @@ export default function GestaoPortal({
               {item('cadastros-turmas', School, 'Turmas')}
               {item('cadastros-fornecedores', Truck, 'Fornecedores')}
               {item('cadastros-exclusoes', UserX, 'Pedidos de exclusão')}
-              {item('cadastros-biometria', ScanFace, 'Limpeza de biometria')}
-              {item('cadastros-unificar', UsersRound, 'Unificar responsáveis')}
+              {/* Biometrias (01/10/2026): Qualidade, Limpeza e Unificar
+                  responsáveis num item só, com abas dentro da tela. */}
+              {pode('cadastros-qualidade-biometria') ? (
+                <SidebarItem active={ABAS_BIOMETRIAS.some(a => a.id === abaAtual)} icon={ScanFace} label="Biometrias" onClick={() => go('cadastros-qualidade-biometria')} />
+              ) : null}
             </>, pendingUsersCount > 0 ? pendingUsersCount : null)}
             {group('academico', 'Acadêmico', BookOpen, <>
               {item('academico-ano-letivo', CalendarRange, 'Ano Letivo')}
@@ -369,8 +372,7 @@ export default function GestaoPortal({
           )}
           {abaAtual === 'cadastros-fornecedores' && <GestaoFornecedores currentUser={currentUser} />}
           {abaAtual === 'cadastros-exclusoes' && <GestaoExclusoesConta currentUser={currentUser} />}
-          {abaAtual === 'cadastros-biometria' && <GestaoLimpezaBiometria />}
-          {abaAtual === 'cadastros-unificar' && <GestaoUnificarResponsaveis />}
+          {ABAS_BIOMETRIAS.some(a => a.id === abaAtual) && <GestaoBiometrias aba={abaAtual} onTrocarAba={go} currentUser={currentUser} />}
 
           {/* Acadêmico (consulta) */}
           {abaAtual === 'academico-ano-letivo' && <GestaoAnoLetivo currentUser={currentUser} />}

@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Building2, Receipt, FileText, LifeBuoy, Settings } from 'lucide-react';
+import { Building2, Receipt, FileText, LifeBuoy, Settings, ScanFace } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { SidebarToggleButton, SIDEBAR_ICON_SIZE } from './SidebarNav';
@@ -9,6 +9,7 @@ const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
 const ConfiguracoesPanel = lazy(() => import('./ConfiguracoesPanel'));
 const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
 const DeveloperErrorLogs = lazy(() => import('./DeveloperErrorLogs'));
+const DeveloperQualidadeBiometria = lazy(() => import('./DeveloperQualidadeBiometria'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
@@ -18,6 +19,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
     { id: 'schools', label: 'Gestão de Escolas', icon: Building2, enabled: true },
     { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: false },
     { id: 'logs', label: 'Logs', icon: FileText, enabled: true },
+    { id: 'biometria', label: 'Biometria', icon: ScanFace, enabled: true },
     { id: 'support', label: 'Suporte', icon: LifeBuoy, enabled: true },
     { id: 'settings', label: 'Configurações', icon: Settings, enabled: true },
   ];
@@ -119,6 +121,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           {activeTab === 'logs' && (
             <DeveloperErrorLogs currentUser={currentUser} />
           )}
+          {activeTab === 'biometria' && <DeveloperQualidadeBiometria />}
         </Suspense>
       </main>
     </div>

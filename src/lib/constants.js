@@ -111,7 +111,7 @@ export const SCREEN_LABELS = {
   'contratos-aditivos': 'Aditivos', contratos: 'Contratos',
   'financeiro-visao': 'Visão Financeira', 'financeiro-mensalidades': 'Mensalidades', 'financeiro-cobrancas': 'Cobranças',
   'financeiro-inadimplencia': 'Inadimplência', 'financeiro-recebimentos': 'Recebimentos', 'financeiro-despesas': 'Despesas',
-  'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Pedidos de Exclusão de Conta', 'cadastros-biometria': 'Limpeza de Biometria', 'cadastros-unificar': 'Unificar Responsáveis',
+  'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Pedidos de Exclusão de Conta', 'cadastros-biometria': 'Biometrias', 'cadastros-qualidade-biometria': 'Biometrias', 'cadastros-unificar': 'Biometrias',
   'academico-ano-letivo': 'Ano Letivo', 'academico-frequencia': 'Frequência', 'academico-relatorios': 'Pedagógico',
   'academico-ocorrencias': 'Ocorrências', 'comunicacao-comunicados': 'Comunicados', 'comunicacao-mural': 'Mural de Fotos',
   'relatorios-gestao': 'Relatório de Gestão', 'relatorios-financeiro': 'Relatório Financeiro',
@@ -125,7 +125,7 @@ export const SCREEN_LABELS = {
   'gestao-despesas': 'Despesas', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
   // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
   'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
-  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento',
+  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento', 'dev-biometria': 'Qualidade da Biometria',
 };
 
 export function screenLabel(screen) {
@@ -146,6 +146,8 @@ export const SCREEN_LABELS_MOBILE = {
   'duplicidade-biometrica': 'Duplicidade',
   materias: 'Matérias',
   'dev-settings': 'Config.',
+  'dev-biometria': 'Biometria',
+  'cadastros-qualidade-biometria': 'Biometrias',
   'secretaria-documentos': 'Documentos',
   'contratos-modelos': 'Modelos',
   'financeiro-recebimentos': 'Recebimentos',
