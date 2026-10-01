@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet, FileSignature } from 'lucide-react';
+import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -293,7 +293,9 @@ export default function FamilyPortal({
               <SidebarItem active={familyTab === 'financeiro'} icon={Wallet} label="Financeiro" onClick={() => go('financeiro')} />
             )}
 
-            <SidebarItem active={familyTab === 'contratos'} icon={FileSignature} label="Contratos" onClick={() => go('contratos')} />
+            {/* Contratos saiu do menu (30/09/2026): fica em Configurações >
+                Documentos. A tela continua existindo (aviso de contrato novo
+                leva direto para ela, /?tab=contratos). */}
 
             {showConfiguracoes && (
               <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
@@ -345,7 +347,7 @@ export default function FamilyPortal({
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
-          {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
           {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
           ))}
@@ -358,6 +360,7 @@ export default function FamilyPortal({
               onOpenAuthModal={onOpenAuthModal}
               currentSchool={currentSchool}
               pushData={pushData}
+              onAbrirContratos={() => go('contratos')}
             />
           )}
         </Suspense>

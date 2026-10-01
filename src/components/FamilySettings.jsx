@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AccountDeletionSection from './AccountDeletionSection';
 import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -186,10 +186,26 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
-export default function FamilySettings({ currentUser, setCurrentUser, pushData }) {
+export default function FamilySettings({ currentUser, setCurrentUser, pushData, onAbrirContratos }) {
   const [modal, setModal] = useState(null); // null | 'edit' | 'lgpd' | 'image_usage'
   const [lgpdAccepted, setLgpdAccepted] = useState(!!currentUser.lgpd_accepted);
   const [imageUsageStatus, setImageUsageStatus] = useState(currentUser.image_usage_accepted);
+  // Contratos (30/09/2026: saiu do menu lateral e entrou em Documentos).
+  const [contratos, setContratos] = useState(null); // { paraAssinar, assinados }
+
+  useEffect(() => {
+    let cancelado = false;
+    supabase.from('contract_documents').select('status').in('status', ['enviado', 'assinado'])
+      .then(({ data, error }) => {
+        if (cancelado || error) return;
+        const lista = data || [];
+        setContratos({
+          paraAssinar: lista.filter(d => d.status === 'enviado').length,
+          assinados: lista.filter(d => d.status === 'assinado').length,
+        });
+      });
+    return () => { cancelado = true; };
+  }, []);
 
   const handleLgpdAccept = async () => {
     try {
@@ -219,13 +235,13 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
         <p className="text-on-surface-variant text-small">Gestão de autorizações e informações.</p>
       </div>
 
-      {/* Grid: Conta + Documentos - Scrollable */}
+      {/* Quatro seções numa grade 2 por 2, todas da mesma altura
+          (30/09/2026): Conta | Notificações e Documentos | Excluir conta. */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:auto-rows-fr gap-6">
 
           {/* Conta da Família */}
-          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant h-full flex flex-col">
             <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
               <User className="text-primary" size={18}/> Conta da Família
             </h3>
@@ -247,52 +263,9 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
             </div>
           </div>
 
-          {/* Documentos */}
-          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
-            <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
-              <FileText className="text-primary" size={18}/> Documentos
-            </h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setModal('lgpd')}
-                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
-              >
-                <span className="text-sm font-medium text-on-surface">Consentimento LGPD</span>
-                <div className="flex items-center gap-2">
-                  {lgpdAccepted ? (
-                    <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Aceito</span>
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  )}
-                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setModal('image_usage')}
-                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
-              >
-                <span className="text-sm font-medium text-on-surface">Termo de Uso de Imagem</span>
-                <div className="flex items-center gap-2">
-                  {imageUsageStatus !== null && imageUsageStatus !== undefined ? (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${imageUsageStatus ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {imageUsageStatus ? 'Autorizado' : 'Não Autorizado'}
-                    </span>
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  )}
-                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* COLUNA 2 */}
-        <div className="space-y-4">
           {/* Notificações Push */}
           {pushData && (
-            <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+            <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant h-full flex flex-col">
               <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
                 <Bell className="text-primary" size={18}/> Notificações Push
               </h3>
@@ -344,9 +317,65 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData }
             </div>
           )}
 
-          <AccountDeletionSection />
+          {/* Documentos */}
+          <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant h-full flex flex-col">
+            <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-4">
+              <FileText className="text-primary" size={18}/> Documentos
+            </h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => setModal('lgpd')}
+                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
+              >
+                <span className="text-sm font-medium text-on-surface">Consentimento LGPD</span>
+                <div className="flex items-center gap-2">
+                  {lgpdAccepted ? (
+                    <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Aceito</span>
+                  ) : (
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                  )}
+                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setModal('image_usage')}
+                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
+              >
+                <span className="text-sm font-medium text-on-surface">Termo de Uso de Imagem</span>
+                <div className="flex items-center gap-2">
+                  {imageUsageStatus !== null && imageUsageStatus !== undefined ? (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${imageUsageStatus ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {imageUsageStatus ? 'Autorizado' : 'Não Autorizado'}
+                    </span>
+                  ) : (
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                  )}
+                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
+                </div>
+              </button>
+
+              <button
+                onClick={onAbrirContratos}
+                className="w-full flex items-center justify-between p-3 border border-outline-variant rounded-zela-md hover:bg-surface-container-low transition group"
+              >
+                <span className="text-sm font-medium text-on-surface">Contratos</span>
+                <div className="flex items-center gap-2">
+                  {contratos?.paraAssinar > 0 ? (
+                    <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded">
+                      {contratos.paraAssinar} para assinar
+                    </span>
+                  ) : contratos?.assinados > 0 ? (
+                    <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Assinados</span>
+                  ) : null}
+                  <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <AccountDeletionSection className="h-full flex flex-col" />
         </div>
-      </div>
       </div>
 
       {/* Modais */}

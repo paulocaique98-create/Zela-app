@@ -7,7 +7,7 @@ import ConfirmModal from './ConfirmModal';
 // para o app). O pedido vai para a Gestão da escola, que conclui a
 // exclusão. Dados que a lei obriga a escola a guardar (ex.: financeiro)
 // seguem as regras de retenção.
-export default function AccountDeletionSection() {
+export default function AccountDeletionSection({ className = '' } = {}) {
   const [pending, setPending] = useState(undefined);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
@@ -43,7 +43,7 @@ export default function AccountDeletionSection() {
   };
 
   return (
-    <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant">
+    <div className={`bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant ${className}`}>
       <h3 className="font-bold text-base text-on-surface flex items-center gap-2 mb-2">
         <UserX className="text-primary" size={18} /> Excluir minha conta
       </h3>

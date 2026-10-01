@@ -7,7 +7,7 @@ import { printContract } from '../lib/printContract';
 // Contratos e aditivos enviados pela escola: a família lê e assina pelo app
 // (assinatura eletrônica simples: nome digitado + confirmação, com registro
 // da data, IP e da impressão digital do texto que foi lido).
-export default function FamilyContratos({ currentUser, currentSchool }) {
+export default function FamilyContratos({ currentUser, currentSchool, onVoltar }) {
   const [docs, setDocs] = useState(null);
   const [open, setOpen] = useState(null);
   const [error, setError] = useState('');
@@ -31,6 +31,9 @@ export default function FamilyContratos({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 space-y-5">
+      {onVoltar && (
+        <button onClick={onVoltar} className="flex items-center gap-1 text-sm font-bold text-primary"><ChevronLeft size={16} /> Configurações</button>
+      )}
       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{error}</div>}
       {docs === null ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-on-surface-variant" /></div>
