@@ -82,3 +82,12 @@ então o reconhecimento confirmado tolera até 1 s sem rosto ou fora da distânc
 `held_ms` (quanto tempo ficou reconhecido), `person_id`. Linha de base: 0. Se crescer, ver
 se o `held_ms` fica perto de 1 s (tolerância curta) ou se o motivo é distância.
 
+
+### 01/10/2026: `frame_vazio_biblioteca` e fim dos erros do localhost
+
+- O erro solto "Box.constructor" (era `client/unhandled_error`, 41 até 30/09, iPhone do totem)
+  passou a ser `face_recognition/frame_vazio_biblioteca` com severidade `warn`. Além disso o
+  totem só lê quadro pronto da câmera (`quadroPronto`) e descarta posição de rosto vazia
+  (`caixaValida`). Esperado: quase zero. Se crescer, avaliar o ajuste de precisão do WebGL no iOS.
+- Erros gerados em `localhost` (testes do desenvolvedor) não são mais gravados no registro da
+  produção (`registroDeErrosAtivo` em `src/lib/errorLogger.js`).

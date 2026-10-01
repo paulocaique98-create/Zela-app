@@ -31,6 +31,28 @@ export function getCurrentScreen() {
   return currentContext.screen;
 }
 
+// Ambiente de desenvolvimento (01/10/2026): erros de testes no computador do
+// desenvolvedor (localhost) estavam caindo no registro da produção e
+// misturando com os erros reais das escolas. Lá eles não são gravados.
+export function registroDeErrosAtivo(loc = typeof window !== 'undefined' ? window.location : null) {
+  const host = String(loc?.hostname || '');
+  if (!host) return true;
+  return !['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(host) && !host.endsWith('.local');
+}
+
+// Erros soltos (fora do React) com causa conhecida ganham categoria própria.
+// "Box.constructor" (01/10/2026): a biblioteca de rosto, no iPhone do totem,
+// às vezes lê um quadro da câmera ainda vazio e quebra numa tarefa interna
+// que ela mesma não protege. O ciclo de leitura segue normalmente (perde só
+// aquele quadro), então vira aviso do reconhecimento facial, não erro de tela.
+export function classificarErroSolto(error) {
+  const mensagem = String(error?.message || error || '');
+  if (/Box\.constructor - expected box/i.test(mensagem)) {
+    return { source: 'face_recognition', category: 'frame_vazio_biblioteca', severity: 'warn' };
+  }
+  return { source: 'client', category: 'unhandled_error', severity: 'error' };
+}
+
 // Registra um erro de cliente em error_logs (source='client') E no Sentry —
 // nunca lança: se a própria gravação falhar (rede caiu, RLS mudou etc.), só
 // loga no console local em vez de mascarar o erro original com um novo erro
@@ -40,16 +62,20 @@ export function getCurrentScreen() {
 // pedido, pra a aba "Legado" do Portal do Dev poder ser removida sem perder
 // visibilidade de crash de tela/promise rejeitada.
 export async function logClientError(error, extra = {}) {
+  if (!registroDeErrosAtivo()) return;
   captureToSentry(error, extra);
   try {
     const message = (error?.message || String(error) || 'Erro desconhecido').slice(0, 2000);
     const stack = (error?.stack || '').slice(0, 8000);
     const componentStack = extra.componentStack ? String(extra.componentStack).slice(0, 8000) : null;
+    const tipo = componentStack
+      ? { source: 'client', category: 'react_render_crash', severity: 'error' }
+      : classificarErroSolto(error);
     await supabase.rpc('log_error', {
-      p_source: 'client',
-      p_category: componentStack ? 'react_render_crash' : 'unhandled_error',
+      p_source: tipo.source,
+      p_category: tipo.category,
       p_message: message,
-      p_severity: 'error',
+      p_severity: tipo.severity,
       p_stack: stack || null,
       p_context: componentStack ? { component_stack: componentStack } : null,
       p_school_id: currentContext.school_id,
@@ -72,6 +98,7 @@ export async function logClientError(error, extra = {}) {
 // Grava em error_logs (Fase A) com source='business', nunca em
 // client_error_logs (essa continua só pra erro de render/global).
 export async function logAppError(category, error, context = {}) {
+  if (!registroDeErrosAtivo()) return;
   try {
     const message = (error?.message || String(error) || 'Erro desconhecido').slice(0, 2000);
     const stack = (error?.stack || '').slice(0, 8000);

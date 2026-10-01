@@ -14,7 +14,7 @@ import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient
 // FASE_D_CALIBRACAO_THRESHOLD_HUMAN.md.
 const HUMAN_MATCH_THRESHOLD_COSINE = 0.48;
 import { useWakeLock } from '../hooks/useWakeLock';
-import { getCurrentScreen } from '../lib/errorLogger';
+import { getCurrentScreen, registroDeErrosAtivo } from '../lib/errorLogger';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
 let _audioCtx = null;
@@ -145,6 +145,17 @@ export const MATCH_GRACE_MS = 1000;
 export function avaliarPerdaDoReconhecimento(perdidoDesde, agora, graceMs = MATCH_GRACE_MS) {
   const inicio = perdidoDesde ?? agora;
   return { perdidoDesde: inicio, cancelar: agora - inicio >= graceMs };
+}
+
+// Quadro da câmera pronto para leitura: já tem imagem (readyState >= 2,
+// HAVE_CURRENT_DATA) e tamanho real.
+export function quadroPronto(video) {
+  return Boolean(video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0);
+}
+
+// Posição de rosto utilizável (a biblioteca às vezes devolve números vazios).
+export function caixaValida(box) {
+  return Boolean(box) && [box.x, box.y, box.width, box.height].every(n => Number.isFinite(n)) && box.width > 0 && box.height > 0;
 }
 
 // Pedido de entrada/saída automático (sem toque): só com UM filho vinculado,
@@ -310,6 +321,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     //      recoverOnce, resetStuckTimer); nenhum erro aqui dentro (nem
     //      futuro, nem previsto) pode voltar a interromper quem a chamou.
     try {
+      // Testes no computador do desenvolvedor não vão para o registro da
+      // produção (ver registroDeErrosAtivo).
+      if (!registroDeErrosAtivo()) return;
       const now = Date.now();
       const last = lastFaceLogAtRef.current[category] || 0;
       if (now - last < FACE_LOG_THROTTLE_MS) return;
@@ -801,7 +815,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       try {
         const video = videoRef.current;
 
-        if (video && video.videoWidth) {
+        // Só lê quadro pronto (01/10/2026): no iPhone do totem, a câmera às
+        // vezes entrega um quadro ainda vazio (ex.: o iOS reiniciando a
+        // câmera por um instante) e a biblioteca de rosto quebrava nele
+        // ("Box.constructor", 41 vezes). Quadro não pronto é pulado.
+        if (quadroPronto(video)) {
           // Reavalia a luminância periodicamente (não a cada frame — é custoso)
           const now = Date.now();
           if (now - lastLuminanceCheckRef.current > LUMINANCE_CHECK_INTERVAL_MS) {
@@ -841,6 +859,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               recentMatchesRef.current = [];
               earHistoryRef.current = [];
             }
+          } else if (!caixaValida(matchConfirmed ? detections.box : detections.detection?.box)) {
+            // Posição do rosto vazia (mesmo quadro ruim): ignora este quadro.
           } else {
             const box = matchConfirmed ? detections.box : detections.detection.box;
             const position = evaluateFramePosition(box, video.videoWidth, video.videoHeight);

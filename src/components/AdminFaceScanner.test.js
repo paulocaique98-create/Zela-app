@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS, quadroPronto, caixaValida } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -247,5 +247,23 @@ describe('avaliarPerdaDoReconhecimento: tolerância depois de reconhecer', () =>
 
   it('tolerância é de 1 segundo', () => {
     expect(MATCH_GRACE_MS).toBe(1000);
+  });
+});
+
+describe('quadro pronto e posição de rosto válida (iPhone do totem, 01/10/2026)', () => {
+  it('só lê quadro com imagem e tamanho real', () => {
+    expect(quadroPronto({ readyState: 4, videoWidth: 640, videoHeight: 480 })).toBe(true);
+    expect(quadroPronto({ readyState: 1, videoWidth: 640, videoHeight: 480 })).toBe(false);
+    expect(quadroPronto({ readyState: 4, videoWidth: 640, videoHeight: 0 })).toBe(false);
+    expect(quadroPronto({ readyState: 4, videoWidth: 0, videoHeight: 480 })).toBe(false);
+    expect(quadroPronto(null)).toBe(false);
+  });
+
+  it('descarta posição de rosto vazia (o caso do "Box.constructor")', () => {
+    expect(caixaValida({ x: 10, y: 20, width: 100, height: 120 })).toBe(true);
+    expect(caixaValida({ x: null, y: null, width: null, height: null })).toBe(false);
+    expect(caixaValida({ x: NaN, y: 1, width: 1, height: 1 })).toBe(false);
+    expect(caixaValida({ x: 1, y: 1, width: 0, height: 1 })).toBe(false);
+    expect(caixaValida(undefined)).toBe(false);
   });
 });
