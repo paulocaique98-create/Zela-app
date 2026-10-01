@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
 import { StatCard } from './GestaoShared';
-import { podeVerAba, recursosDoPerfil, rotuloDoPerfil } from '../lib/perfisGestao';
+import { podeAbrirAba, chaveLigada, recursosDoPerfil, rotuloDoPerfil } from '../lib/perfisGestao';
 
 // Início da Gestão: números do dia no topo (cada um leva à tela onde se
 // resolve) e atalhos abaixo.
@@ -17,8 +17,8 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
   const features = currentSchool?.features_enabled || {};
   const recursos = recursosDoPerfil(currentUser?.role);
   // Coordenação e Direção nunca veem valores (29/09/2026).
-  const showFinanceiro = features.financeiro === true && recursos.financeiro;
-  const showCheckin = features.checkin !== false;
+  const showFinanceiro = chaveLigada(features, 'financeiro') && recursos.financeiro;
+  const showCheckin = chaveLigada(features, 'checkin');
   const { data: pend } = useGestaoPendencias(currentUser);
   const [fin, setFin] = useState(null);
 
@@ -65,7 +65,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
   ]
     .filter(Boolean)
     // Mesmo filtro do menu: cada perfil só tem atalho para o que vê.
-    .filter(m => podeVerAba(currentUser?.role, m.tab))
+    .filter(m => podeAbrirAba(currentUser?.role, m.tab, features))
     .map((m, index) => ({ ...m, index }))
     .sort((a, b) => ((clickCounts[b.tab] || 0) - (clickCounts[a.tab] || 0)) || (a.index - b.index))
     .slice(0, MAX_ATALHOS);

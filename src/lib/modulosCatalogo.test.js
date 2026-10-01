@@ -49,14 +49,15 @@ describe('catálogo de módulos', () => {
   });
 
   it('pacotes: reconhece o atual e aplica sem mexer nas chaves técnicas', () => {
-    expect(pacoteAtual(ZL001)).toBe('livre'); // Completo + Financeiro + Prova de vida, sem QR
+    expect(pacoteAtual(ZL001)).toBe('livre'); // Completo + Chat + Prova de vida, sem QR
     const premium = aplicarPacote({ ...ZL001, face_engine_human: true }, 'premium');
     expect(pacoteAtual(premium)).toBe('premium');
     expect(premium.qr_checkin).toBe(true);
     expect(premium.face_engine_human).toBe(true);
     const essencial = aplicarPacote(premium, 'essencial');
     expect(pacoteAtual(essencial)).toBe('essencial');
-    expect([essencial.financeiro, essencial.diario, essencial.checkin]).toEqual([false, false, true]);
+    // Financeiro é do plano base (01/10/2026): continua ligado no Essencial.
+    expect([essencial.financeiro, essencial.diario, essencial.chat, essencial.checkin]).toEqual([true, false, false, true]);
     expect(pacoteAtual(aplicarPacote(ZL001, 'completo'))).toBe('completo');
   });
 
@@ -83,5 +84,31 @@ describe('catálogo de módulos', () => {
     ];
     const h = historicoDoItem(changes, ITEM_POR_ID.pedagogico);
     expect(h.map(g => [g.ligado, g.completo, g.chaves.length, g.autor])).toEqual([[false, false, 1, null], [true, true, 3, 'Paulo']]);
+  });
+});
+
+describe('planos de 01/10/2026', () => {
+  it('Financeiro e Contratos no plano base: ligado em todo plano e não se desliga', () => {
+    expect(ITEM_POR_ID.base.keys).toContain('financeiro');
+    expect(ITEM_POR_ID.base.inclui.map(i => i.nome)).toEqual(expect.arrayContaining(['Contratos e assinatura pelo app', 'Financeiro']));
+    for (const plano of ['essencial', 'completo', 'premium']) expect(aplicarPacote({}, plano).financeiro).toBe(true);
+    expect(normalizarFeatures({ financeiro: false }).financeiro).toBe(true);
+    expect(ITEM_POR_ID.financeiro).toBeUndefined();
+  });
+
+  it('Chat é adicional separado: fora do Completo, dentro do Premium', () => {
+    expect(ITEM_POR_ID.chat.grupo).toBe('adicional');
+    expect(ITEM_POR_ID.rotina.keys).not.toContain('chat');
+    expect(aplicarPacote({}, 'completo').chat).toBe(false);
+    expect(aplicarPacote({}, 'premium').chat).toBe(true);
+  });
+
+  it('Essencial = só o plano base; Completo = + Pedagógico e Rotina; Premium = + Chat, Prova de vida e QR', () => {
+    const essencial = aplicarPacote({}, 'essencial');
+    const completo = aplicarPacote({}, 'completo');
+    const premium = aplicarPacote({}, 'premium');
+    expect([essencial.frequencia, essencial.diario, essencial.chat, essencial.qr_checkin]).toEqual([false, false, false, false]);
+    expect([completo.frequencia, completo.diario, completo.chat, completo.qr_checkin]).toEqual([true, true, false, false]);
+    expect([premium.frequencia, premium.diario, premium.chat, premium.liveness_detection, premium.qr_checkin]).toEqual([true, true, true, true, true]);
   });
 });

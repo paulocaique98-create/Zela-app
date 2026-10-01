@@ -19,21 +19,26 @@ export const ITENS = [
     id: 'base',
     grupo: 'base',
     nome: 'Plano base',
-    resumo: 'Sempre incluso. O que toda escola usa no dia a dia.',
-    keys: ['cadastros', 'gerenciamento', 'formularios', 'checkin', 'comunicados', 'calendario', 'configuracoes'],
+    resumo: 'Sempre incluso. O que toda escola usa no dia a dia, inclusive receber as mensalidades.',
+    // 01/10/2026: Financeiro e Contratos entraram no plano base (toda escola
+    // recebe mensalidade e tem contrato assinado pelo app, em qualquer plano).
+    keys: ['cadastros', 'gerenciamento', 'formularios', 'checkin', 'comunicados', 'calendario', 'configuracoes', 'financeiro'],
     fixo: true,
     inclui: [
       { nome: 'Cadastros e usuários', desc: 'Famílias, alunos, funcionários e acessos' },
       { nome: 'Matrículas e ficha médica', desc: 'Formulários preenchidos pelas famílias' },
       { nome: 'Entrada e saída', desc: 'Totem, monitor, presença do dia e histórico' },
       { nome: 'Comunicados e calendário', desc: 'Avisos da escola e datas do ano letivo' },
+      { nome: 'Contratos e assinatura pelo app', desc: 'Contratos e aditivos assinados pela família' },
+      { nome: 'Financeiro', desc: 'Mensalidades, cobranças por boleto e Pix, recebimentos, inadimplência e, no futuro, nota fiscal' },
       { nome: 'Configurações', desc: 'Dados da escola e preferências do portal' },
     ],
     onde: [
       { portal: 'Recepção', menus: 'Cadastros · Gerenciamento · Formulários · Check-in/out · Calendário · Comunicados · Configurações' },
-      { portal: 'Gestão', menus: 'Presença e Horas' },
-      { portal: 'Família', menus: 'Formulários · Gerenciamento · Check-in/out · Calendário · Comunicados · Configurações' },
+      { portal: 'Gestão', menus: 'Secretaria · Contratos · Financeiro · Presença e Horas · Cadastros · Calendário · Comunicados · Configurações' },
+      { portal: 'Família', menus: 'Formulários · Gerenciamento · Check-in/out · Calendário · Comunicados · Financeiro · Configurações › Contratos' },
     ],
+    aviso: 'Para emitir cobranças, a escola conecta a conta de pagamento em Gestão › Configurações › Financeiro.',
     aoDesligar: null,
   },
   {
@@ -50,6 +55,7 @@ export const ITENS = [
     onde: [
       { portal: 'Professor', menus: 'Frequência · Relatórios' },
       { portal: 'Recepção', menus: 'Relatórios · Acadêmico › Frequência e Matérias' },
+      { portal: 'Gestão', menus: 'Acadêmico › Frequência, Pedagógico e Matérias' },
       { portal: 'Família', menus: 'Relatórios' },
     ],
     aoDesligar: 'As professoras deixam de ver Frequência e Relatórios, e a família deixa de ver os Relatórios. O que já foi registrado fica guardado.',
@@ -59,37 +65,35 @@ export const ITENS = [
     grupo: 'modulo',
     nome: 'Rotina e família',
     resumo: 'O dia da criança compartilhado com a família.',
-    keys: ['diario', 'mural', 'cardapio', 'chat'],
+    keys: ['diario', 'mural', 'cardapio'],
     inclui: [
       { nome: 'Diário', desc: 'Refeições, sono e evacuação de cada criança' },
       { nome: 'Mural de fotos', desc: 'Fotos por turma' },
       { nome: 'Cardápio', desc: 'Cardápio semanal da escola' },
-      { nome: 'Chat', desc: 'Conversa da família com os setores da escola e com o suporte Zela' },
     ],
     onde: [
-      { portal: 'Recepção', menus: 'Acadêmico › Mural, Cardápio e Diário · Chat' },
-      { portal: 'Família', menus: 'Mural de Fotos · Cardápio · Diário · Chat' },
+      { portal: 'Recepção', menus: 'Acadêmico › Mural, Cardápio e Diário' },
+      { portal: 'Gestão', menus: 'Acadêmico › Cardápio e Diário · Comunicação › Mural' },
+      { portal: 'Família', menus: 'Mural de Fotos · Cardápio · Diário' },
     ],
-    aoDesligar: 'A família deixa de ver Diário, Mural, Cardápio e Chat. O que já foi publicado fica guardado.',
+    aoDesligar: 'A família deixa de ver Diário, Mural e Cardápio. O que já foi publicado fica guardado.',
   },
   {
-    id: 'financeiro',
-    grupo: 'modulo',
-    nome: 'Financeiro',
-    resumo: 'Contratos, mensalidades e cobrança automática.',
-    keys: ['financeiro'],
+    id: 'chat',
+    grupo: 'adicional',
+    nome: 'Chat',
+    resumo: 'Conversa da família com os setores da escola.',
+    keys: ['chat'],
     inclui: [
-      { nome: 'Mensalidades', desc: 'Plano de mensalidade de cada aluno' },
-      { nome: 'Cobranças', desc: 'Boleto e Pix emitidos pela conta de pagamento da escola' },
-      { nome: 'Inadimplência', desc: 'Quem está com cobrança em atraso' },
-      { nome: 'Recebimentos e conciliação', desc: 'O que entrou e o que falta conferir' },
+      { nome: 'Chat com a escola', desc: 'Família fala com Recepção, Coordenação e demais setores' },
+      { nome: 'Suporte Zela', desc: 'A escola fala com o suporte pelo mesmo chat' },
     ],
     onde: [
-      { portal: 'Gestão', menus: 'Financeiro › Mensalidades, Cobranças, Inadimplência e Recebimentos' },
-      { portal: 'Família', menus: 'Financeiro (só o responsável financeiro)' },
+      { portal: 'Recepção', menus: 'Chat' },
+      { portal: 'Gestão', menus: 'Chat (Coordenação e Direção)' },
+      { portal: 'Família', menus: 'Chat' },
     ],
-    aviso: 'Para emitir cobranças, a escola conecta a conta de pagamento em Gestão › Configurações › Financeiro.',
-    aoDesligar: 'A Gestão deixa de ver as telas de cobrança e a família deixa de ver o Financeiro. Cobranças já emitidas não são canceladas.',
+    aoDesligar: 'O chat some para a escola e para a família. As conversas ficam guardadas.',
   },
   {
     id: 'liveness',
@@ -160,11 +164,12 @@ export const ITENS = [
 export const ITEM_POR_ID = Object.fromEntries(ITENS.map(i => [i.id, i]));
 const TODAS_AS_CHAVES = ITENS.flatMap(i => i.keys);
 
-// Pacotes: o que vai ligado além do plano base. Técnico nunca entra em pacote.
+// Pacotes: o que vai ligado além do plano base (que já inclui Financeiro e
+// Contratos). Técnico nunca entra em pacote.
 export const PACOTES = [
   { id: 'essencial', nome: 'Essencial', itens: [] },
   { id: 'completo', nome: 'Completo', itens: ['pedagogico', 'rotina'] },
-  { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'financeiro', 'liveness', 'qr'] },
+  { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr'] },
 ];
 const VENDAVEIS = ITENS.filter(i => (i.grupo === 'modulo' || i.grupo === 'adicional') && i.keys.length);
 

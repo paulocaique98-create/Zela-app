@@ -30,3 +30,21 @@ describe('gestaoUtils', () => {
     expect(await sha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
   });
 });
+
+describe('valoresManuaisDoContrato: mensalidade informada na hora de gerar o contrato', () => {
+  it('converte o valor digitado e a data para o texto do contrato', async () => {
+    const { valoresManuaisDoContrato, fillTemplate } = await import('./gestaoUtils.js');
+    const v = valoresManuaisDoContrato({ valor: '1.250,50', vencimento: '2026-11-05' });
+    expect(v.valor_mensal.replace(/\s/g, ' ')).toBe('R$ 1.250,50');
+    expect(v.primeiro_vencimento).toBe('05/11/2026');
+    const texto = fillTemplate('Mensalidade de {{valor_mensal}}, vencendo em {{primeiro_vencimento}}.', v);
+    expect(texto).not.toContain('{{');
+  });
+
+  it('o que não foi preenchido não substitui nada', async () => {
+    const { valoresManuaisDoContrato, fillTemplate } = await import('./gestaoUtils.js');
+    expect(valoresManuaisDoContrato({ valor: '', vencimento: '' })).toEqual({});
+    expect(valoresManuaisDoContrato({ valor: '0', vencimento: '' })).toEqual({});
+    expect(fillTemplate('{{valor_mensal}}', valoresManuaisDoContrato({ valor: '', vencimento: '2026-11-05' }))).toBe('{{valor_mensal}}');
+  });
+});

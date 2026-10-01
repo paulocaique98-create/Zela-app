@@ -175,7 +175,8 @@ export default function FamilyPortal({
   const showDiario = features.diario === true;
   const showRelatorios = features.relatorios_pedagogicos === true;
   const showChat = features.chat === true;
-  const showFinanceiro = features.financeiro === true && isFinancialGuardian;
+  // Financeiro é do plano base desde 01/10/2026 (sempre incluso).
+  const showFinanceiro = features.financeiro !== false && isFinancialGuardian;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   return (

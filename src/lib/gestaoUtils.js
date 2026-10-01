@@ -53,6 +53,17 @@ export function downloadCSV(filename, rows, columns) {
 }
 
 // Preenche os campos {{...}} de um modelo de contrato.
+// Contrato sem mensalidade cadastrada no Financeiro (01/10/2026): a escola
+// informa o valor e o 1º vencimento na hora de gerar. Só entra o que foi
+// preenchido; valor zero ou data vazia não substitui nada.
+export function valoresManuaisDoContrato({ valor, vencimento }) {
+  const out = {};
+  const cents = brlToCents(valor);
+  if (cents > 0) out.valor_mensal = centsToBRL(cents);
+  if (vencimento) out.primeiro_vencimento = formatDateBR(vencimento);
+  return out;
+}
+
 export function fillTemplate(body, values) {
   return String(body || '').replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (match, key) => (values[key] !== undefined && values[key] !== null && values[key] !== '' ? String(values[key]) : match));
 }

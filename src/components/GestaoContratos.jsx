@@ -4,7 +4,7 @@ import { Plus, FileSignature, Edit, Send, Printer, XCircle, FilePlus2, ShieldChe
 import { supabase } from '../lib/supabase';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { printContract } from '../lib/printContract';
-import { centsToBRL, formatDateBR, fillTemplate } from '../lib/gestaoUtils';
+import { centsToBRL, formatDateBR, fillTemplate, valoresManuaisDoContrato } from '../lib/gestaoUtils';
 import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
@@ -325,6 +325,9 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
   const [meta, setMeta] = useState({ financialContractId: null, schoolYearId: null });
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  // Mensalidade informada na hora, quando o aluno ainda não tem plano de
+  // mensalidade no Financeiro (01/10/2026).
+  const [manual, setManual] = useState({ valor: '', vencimento: '' });
 
   useEffect(() => {
     supabase.from('students').select('id, name, family_id, turma, turno, periodo, birth_date, school_id').eq('school_id', currentUser.school_id).order('name').then(({ data }) => setStudents(data || []));
@@ -357,6 +360,13 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
   }, [studentId, templateId, students, templates, currentSchool]);
 
   const missing = useMemo(() => Array.from(new Set((body.match(/\{\{\s*[a-z_]+\s*\}\}/g) || []))), [body]);
+  const faltaMensalidade = missing.some(m => /valor_mensal|primeiro_vencimento/.test(m));
+  const preencherMensalidade = () => {
+    const valores = valoresManuaisDoContrato(manual);
+    if (Object.keys(valores).length === 0) { setError('Informe o valor da mensalidade ou o primeiro vencimento.'); return; }
+    setError('');
+    setBody(atual => fillTemplate(atual, valores));
+  };
 
   const save = async () => {
     if (!studentId || !title.trim() || !body.trim()) { setError('Escolha o aluno e o modelo.'); return; }
@@ -402,6 +412,20 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
       {body && (
         <>
           <Field label="Título" id="doc-title"><input id="doc-title" value={title} onChange={e => setTitle(e.target.value)} className={inputCls} /></Field>
+          {faltaMensalidade && (
+            <div className="p-3 rounded-zela-md border border-amber-300 bg-amber-50 space-y-2">
+              <p className="text-xs text-amber-900">Este aluno ainda não tem mensalidade cadastrada no Financeiro. Informe aqui para sair no contrato:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                <Field label="Mensalidade (R$)" id="doc-valor-manual">
+                  <input id="doc-valor-manual" inputMode="decimal" placeholder="Ex: 1.250,00" value={manual.valor} onChange={e => setManual({ ...manual, valor: e.target.value })} className={inputCls} />
+                </Field>
+                <Field label="Primeiro vencimento" id="doc-vencimento-manual">
+                  <input id="doc-vencimento-manual" type="date" value={manual.vencimento} onChange={e => setManual({ ...manual, vencimento: e.target.value })} className={inputCls} />
+                </Field>
+                <SecondaryButton onClick={preencherMensalidade}>Preencher no texto</SecondaryButton>
+              </div>
+            </div>
+          )}
           {missing.length > 0 && (
             <Notice>Campos sem dado no cadastro: {missing.join(', ')}. Complete o cadastro ou edite o texto abaixo antes de enviar.</Notice>
           )}

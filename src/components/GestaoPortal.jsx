@@ -16,7 +16,7 @@ import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { PageShell, Tabs } from './GestaoShared';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
-import { podeVerAba, recursosDoPerfil, ABAS_GESTAO_PEDAGOGICA, PAPEL_GESTAO_PEDAGOGICA } from '../lib/perfisGestao';
+import { recursosDoPerfil, ABAS_GESTAO_PEDAGOGICA, PAPEL_GESTAO_PEDAGOGICA, podeAbrirAba, chaveLigada } from '../lib/perfisGestao';
 
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
@@ -111,16 +111,18 @@ export default function GestaoPortal({
   const isDesktop = useIsDesktop();
   const role = currentUser?.role;
   const recursos = recursosDoPerfil(role);
-  const pode = (tab) => podeVerAba(role, tab);
+  // Perfil + plano da escola (01/10/2026: a Gestão passou a seguir o plano).
+  const features = currentSchool?.features_enabled || {};
+  const pode = (tab) => podeAbrirAba(role, tab, features);
   // Link direto, atalho, notificação ou aba guardada que aponte para uma aba
   // que este perfil não vê: mostra o Início (nunca desenha a tela proibida).
   const abaAtual = pode(gestaoTab) ? gestaoTab : 'home';
   const collapsed = isDesktop && !isSidebarExpanded;
   const [openAccordion, setOpenAccordion] = useState(() => groupOf(gestaoTab || ''));
   const toggleAccordion = (name) => setOpenAccordion(openAccordion === name ? null : name);
-  const features = currentSchool?.features_enabled || {};
-  const showFinanceiro = features.financeiro === true;
-  const showCheckin = features.checkin !== false;
+  // Financeiro e Entrada e saída são do plano base (sempre inclusos).
+  const showFinanceiro = chaveLigada(features, 'financeiro');
+  const showCheckin = chaveLigada(features, 'checkin');
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
   // Aba e turma com que o perfil abre (ex.: "Mudar de turma" do painel).
   const [alunoIntent, setAlunoIntent] = useState(null);
@@ -153,13 +155,14 @@ export default function GestaoPortal({
 
   useEffect(() => {
     if (LEGACY_TABS[gestaoTab]) setGestaoTab(LEGACY_TABS[gestaoTab]);
-    else if (gestaoTab && !podeVerAba(role, gestaoTab)) setGestaoTab('home');
-  }, [gestaoTab, setGestaoTab, role]);
+    else if (gestaoTab && !podeAbrirAba(role, gestaoTab, features)) setGestaoTab('home');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gestaoTab, setGestaoTab, role, currentSchool?.features_enabled]);
 
   // Chat do setor (Coordenação e Direção), igual ao da Recepção.
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
-  const showChat = recursos.chat && (currentSchool?.features_enabled || {}).chat === true;
+  const showChat = recursos.chat && chaveLigada(features, 'chat');
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
   // Badge de correções de presença aguardando aprovação -- mesmo padrão e
@@ -193,9 +196,11 @@ export default function GestaoPortal({
   const item = (tab, icon, label, extra = {}) => (pode(tab) ? (
     <SidebarItem active={abaAtual === tab} icon={icon} label={label} onClick={() => go(tab)} {...extra} />
   ) : null);
-  // Grupo some quando o perfil não vê nenhuma aba dele.
+  // Grupo some quando o perfil não vê nenhuma aba dele, ou quando o plano da
+  // escola não tem nenhum item do grupo.
   const grupoVisivel = (id) => role !== PAPEL_GESTAO_PEDAGOGICA || [...ABAS_GESTAO_PEDAGOGICA].some(t => groupOf(t) === id);
-  const group = (id, label, icon, children, badge = null) => (grupoVisivel(id) ? (
+  const temItemVisivel = (children) => React.Children.toArray(children?.props?.children ?? children).some(Boolean);
+  const group = (id, label, icon, children, badge = null) => (grupoVisivel(id) && temItemVisivel(children) ? (
     <SidebarGroup collapsed={collapsed} label={label} icon={icon} badge={badge} isOpen={openAccordion === id} onToggle={() => toggleAccordion(id)}>
       {children}
     </SidebarGroup>

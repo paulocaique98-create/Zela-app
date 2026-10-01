@@ -25,7 +25,8 @@ export default function GestaoIntegracoes({ currentUser, currentSchool, setGesta
     });
   }, [currentUser.school_id]);
 
-  const financeiroOn = currentSchool?.features_enabled?.financeiro === true;
+  // Financeiro é do plano base desde 01/10/2026 (sempre incluso).
+  const financeiroOn = currentSchool?.features_enabled?.financeiro !== false;
   const asaas = info?.gateway.find(g => g.gateway === 'asaas');
   const daysSinceEvent = info?.lastEvent ? Math.floor((Date.now() - new Date(info.lastEvent.received_at)) / 86400000) : null;
 

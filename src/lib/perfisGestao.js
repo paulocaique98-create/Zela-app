@@ -1,3 +1,5 @@
+import { ITEM_POR_ID } from './modulosCatalogo';
+
 // Perfis do Portal da Gestão (PLANO_PERFIL_GESTAO_PEDAGOGICA.md, 29/09/2026).
 //
 // 'gestao'            · a Gestão da escola, vê tudo.
@@ -82,6 +84,50 @@ export function podeVerAba(role, tab) {
   if (role === PAPEL_GESTAO) return !ABAS_SO_GESTAO_PEDAGOGICA.has(tab);
   if (role === PAPEL_GESTAO_PEDAGOGICA) return ABAS_GESTAO_PEDAGOGICA.has(tab);
   return false;
+}
+
+// Abas da Gestão que dependem do plano da escola (01/10/2026). Antes a Gestão
+// mostrava Acadêmico, Mural etc. em qualquer plano; agora segue as mesmas
+// chaves de features_enabled que a Recepção, a Família e as Professoras.
+// Chave do plano base (sempre incluso) é lida como `!== false`; módulo ou
+// adicional, como `=== true` (regra "tudo começa desativado").
+export const MODULO_DA_ABA_GESTAO = {
+  'academico-frequencia': 'frequencia',
+  'academico-relatorios': 'relatorios_pedagogicos',
+  'academico-materias': 'materias',
+  'academico-cardapio': 'cardapio',
+  'academico-diario': 'diario',
+  'comunicacao-mural': 'mural',
+  'comunicacao-comunicados': 'comunicados',
+  calendario: 'calendario',
+  'presenca-dia': 'checkin',
+  'attendance-corrections': 'checkin',
+  'horas-extras': 'checkin',
+  'financeiro-visao': 'financeiro',
+  'financeiro-mensalidades': 'financeiro',
+  'financeiro-cobrancas': 'financeiro',
+  'financeiro-inadimplencia': 'financeiro',
+  'financeiro-recebimentos': 'financeiro',
+  'financeiro-despesas': 'financeiro',
+  'relatorios-financeiro': 'financeiro',
+  'config-financeiro': 'financeiro',
+};
+
+const CHAVES_DO_PLANO_BASE = new Set(ITEM_POR_ID.base.keys);
+
+export function chaveLigada(features, chave) {
+  const f = features || {};
+  return CHAVES_DO_PLANO_BASE.has(chave) ? f[chave] !== false : f[chave] === true;
+}
+
+export function abaLiberadaPeloPlano(tab, features) {
+  const chave = MODULO_DA_ABA_GESTAO[tab];
+  return !chave || chaveLigada(features, chave);
+}
+
+// Perfil pode ver a aba E o plano da escola tem o módulo dela.
+export function podeAbrirAba(role, tab, features) {
+  return podeVerAba(role, tab) && abaLiberadaPeloPlano(tab, features);
 }
 
 // O que cada perfil faz dentro das telas que os dois veem.

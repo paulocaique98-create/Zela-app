@@ -55,3 +55,43 @@ describe('Perfis do Portal da Gestão', () => {
     expect(rotuloDoPerfil({ role: 'gestao' })).toBe('Gestão');
   });
 });
+
+describe('Gestão segue o plano da escola (01/10/2026)', () => {
+  it('Essencial: some o Acadêmico de módulo e o Mural; Financeiro, Presença, Calendário e Comunicados ficam', async () => {
+    const { abaLiberadaPeloPlano } = await import('./perfisGestao.js');
+    const { aplicarPacote } = await import('./modulosCatalogo.js');
+    const essencial = aplicarPacote({}, 'essencial');
+    for (const aba of ['academico-frequencia', 'academico-relatorios', 'academico-materias', 'academico-cardapio', 'academico-diario', 'comunicacao-mural']) {
+      expect([aba, abaLiberadaPeloPlano(aba, essencial)]).toEqual([aba, false]);
+    }
+    for (const aba of ['financeiro-mensalidades', 'financeiro-cobrancas', 'presenca-dia', 'calendario', 'comunicacao-comunicados', 'contratos-lista', 'secretaria-alunos', 'academico-ano-letivo']) {
+      expect([aba, abaLiberadaPeloPlano(aba, essencial)]).toEqual([aba, true]);
+    }
+  });
+
+  it('Completo libera o Acadêmico e o Mural', async () => {
+    const { abaLiberadaPeloPlano } = await import('./perfisGestao.js');
+    const { aplicarPacote } = await import('./modulosCatalogo.js');
+    const completo = aplicarPacote({}, 'completo');
+    for (const aba of ['academico-frequencia', 'academico-relatorios', 'academico-diario', 'comunicacao-mural']) {
+      expect(abaLiberadaPeloPlano(aba, completo)).toBe(true);
+    }
+  });
+
+  it('chave do plano base vale se não estiver desligada; módulo só se estiver ligado', async () => {
+    const { chaveLigada } = await import('./perfisGestao.js');
+    expect(chaveLigada({}, 'financeiro')).toBe(true);
+    expect(chaveLigada({ financeiro: false }, 'financeiro')).toBe(false);
+    expect(chaveLigada({}, 'diario')).toBe(false);
+    expect(chaveLigada({ diario: true }, 'diario')).toBe(true);
+    expect(chaveLigada({}, 'chat')).toBe(false);
+  });
+
+  it('perfil e plano juntos: a Coordenação não vê Financeiro mesmo com o plano ligado', async () => {
+    const { podeAbrirAba } = await import('./perfisGestao.js');
+    expect(podeAbrirAba('gestao', 'financeiro-cobrancas', { financeiro: true })).toBe(true);
+    expect(podeAbrirAba('gestao_pedagogica', 'financeiro-cobrancas', { financeiro: true })).toBe(false);
+    expect(podeAbrirAba('gestao_pedagogica', 'academico-diario', { diario: false })).toBe(false);
+    expect(podeAbrirAba('gestao_pedagogica', 'academico-diario', { diario: true })).toBe(true);
+  });
+});

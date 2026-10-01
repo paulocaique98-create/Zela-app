@@ -411,9 +411,20 @@ export default function App() {
           return exists ? prev.map((p) => (p.id === formatted.id ? formatted : p)) : [...prev, formatted];
         });
       })
+      // Escola da pessoa (01/10/2026): troca de plano no Portal do Dev,
+      // configurações e logo chegam às telas já abertas, sem recarregar.
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'schools', filter: `id=eq.${currentUser.school_id}` }, (payload) => {
+        const novo = payload.new;
+        if (!novo?.id) return;
+        setCurrentSchool((prev) => {
+          const atualizada = { ...(prev || {}), ...novo };
+          try { localStorage.setItem('zela_school', JSON.stringify(atualizada)); } catch { /* melhor esforço */ }
+          return atualizada;
+        });
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.info('[Zela] Realtime secundário conectado (authorized_persons).');
+          console.info('[Zela] Realtime secundário conectado (authorized_persons e escola).');
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           if (secondaryChannelRef.current !== channel) return;
           secondaryReconnectTimerRef.current = setTimeout(() => {
