@@ -68,6 +68,15 @@ export function situacaoDaFoto(fotoQualidade, limites = LIMITES_QUALIDADE) {
   return { situacao: ok ? 'ok' : 'refazer', codigos };
 }
 
+// Situação de uma pessoa da lista da Gestão (01/10/2026): quem ainda não
+// tem biometria (pessoa nova ou biometria retirada) fica "Sem análise" até
+// cadastrar o rosto, e o cadastro novo já entra com a medição. tem_biometria
+// ausente (outras telas) = decide só pela foto_qualidade.
+export function situacaoDaPessoa(pessoa, limites = LIMITES_QUALIDADE) {
+  if (pessoa?.tem_biometria === false) return { situacao: 'sem_analise', codigos: [] };
+  return situacaoDaFoto(pessoa?.foto_qualidade, limites);
+}
+
 // Rótulo do descritor do motor Human (face_descriptor_v2_status).
 export const ROTULO_DESCRITOR_HUMAN = {
   GENERATED_LIVE: 'Gerado no cadastro',
@@ -78,14 +87,19 @@ export const ROTULO_DESCRITOR_HUMAN = {
   PENDING: 'Pendente',
 };
 
-// Resumo de uma lista de pessoas ({ foto_qualidade, face_descriptor_v2_status }).
+// Resumo de uma lista de pessoas ({ foto_qualidade, face_descriptor_v2_status,
+// tem_biometria? }). sem_biometria conta quem está na lista sem biometria.
 export function resumoDaQualidade(pessoas, limites = LIMITES_QUALIDADE) {
-  const resumo = { total: 0, ok: 0, refazer: 0, sem_analise: 0, problemas: {}, descritorHuman: {} };
+  const resumo = { total: 0, ok: 0, refazer: 0, sem_analise: 0, sem_biometria: 0, problemas: {}, descritorHuman: {} };
   for (const p of pessoas || []) {
     resumo.total += 1;
-    const { situacao, codigos } = situacaoDaFoto(p.foto_qualidade, limites);
+    const { situacao, codigos } = situacaoDaPessoa(p, limites);
     resumo[situacao] += 1;
     for (const c of codigos) resumo.problemas[c] = (resumo.problemas[c] || 0) + 1;
+    if (p.tem_biometria === false) {
+      resumo.sem_biometria += 1;
+      continue;
+    }
     const v2 = p.face_descriptor_v2_status || 'PENDING';
     resumo.descritorHuman[v2] = (resumo.descritorHuman[v2] || 0) + 1;
   }
@@ -93,13 +107,13 @@ export function resumoDaQualidade(pessoas, limites = LIMITES_QUALIDADE) {
 }
 
 // Grupos que a Gestão pode mandar analisar (01/10/2026), para não medir de
-// novo todas as fotos a cada vez. Só entra quem tem foto guardada.
+// novo todas as fotos a cada vez. Só entra quem tem biometria e foto guardada.
 export function gruposParaAnalise(pessoas, limites = LIMITES_QUALIDADE) {
   const grupos = { refazer: [], sem_analise: [], todas: [] };
   for (const p of pessoas || []) {
-    if (!p.photo_storage_path) continue;
+    if (!p.photo_storage_path || p.tem_biometria === false) continue;
     grupos.todas.push(p);
-    const { situacao } = situacaoDaFoto(p.foto_qualidade, limites);
+    const { situacao } = situacaoDaPessoa(p, limites);
     if (situacao !== 'ok') grupos[situacao].push(p);
   }
   return grupos;

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { preloadFaceModels, faceapi } from '../lib/faceModels';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import {
-  medirRostoNaImagem, situacaoDaFoto, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise,
+  medirRostoNaImagem, situacaoDaPessoa, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise,
   PROBLEMAS_DA_FOTO, ROTULO_DESCRITOR_HUMAN,
 } from '../lib/qualidadeFoto';
 import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, PrimaryButton, SecondaryButton, inputCls } from './GestaoShared';
@@ -17,6 +17,9 @@ import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, Prim
 // mostra quem se beneficia de cadastrar o rosto de novo.
 // A análise pode ser de um grupo (Convém refazer, Sem análise, Todas) ou de
 // uma pessoa só, pelo botão da linha, sem medir de novo a escola inteira.
+// A lista traz todas as pessoas autorizadas da escola e se atualiza sozinha:
+// pessoa nova ou com a biometria retirada aparece como "Sem análise" até
+// cadastrar o rosto (o cadastro novo já entra com a medição).
 
 function carregarImagem(url) {
   return new Promise((resolve, reject) => {
@@ -43,6 +46,9 @@ const ESTILO_SITUACAO = {
   sem_analise: 'bg-surface-container-low text-on-surface-variant border-outline-variant',
 };
 const ORDEM_SITUACAO = { refazer: 0, sem_analise: 1, ok: 2 };
+// A tabela de pessoas não está no tempo real do banco (o descritor facial
+// iria inteiro a cada mudança), então a lista é relida de tempos em tempos.
+const ATUALIZAR_A_CADA_MS = 15 * 1000;
 
 export default function GestaoQualidadeBiometria({ currentUser }) {
   const [pessoas, setPessoas] = useState(null);
@@ -53,22 +59,59 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
   const [analisandoId, setAnalisandoId] = useState(null); // análise de uma pessoa só
   const interromperRef = useRef(false);
   const ocupado = Boolean(progresso || analisandoId);
+  const ocupadoRef = useRef(false);
+  const geracaoRef = useRef(0); // muda a cada análise: leitura antiga não sobrescreve resultado novo
+  useEffect(() => { ocupadoRef.current = ocupado; }, [ocupado]);
 
-  const carregar = useCallback(async () => {
-    const { data, error } = await supabase.from('authorized_persons')
-      .select('id, name, relation, photo_storage_path, foto_qualidade, face_descriptor_v2_status')
-      .eq('school_id', currentUser.school_id)
-      .not('face_descriptor', 'is', null)
-      .order('name');
-    if (error) { setErro(error.message); setPessoas([]); return; }
-    setPessoas(data || []);
+  // Todas as pessoas autorizadas da escola (menos as recusadas sem
+  // biometria) e quais têm biometria. O descritor em si não é baixado: só
+  // os ids de quem tem.
+  const carregar = useCallback(async ({ silencioso = false } = {}) => {
+    const geracao = geracaoRef.current;
+    const [todas, comBiometria] = await Promise.all([
+      supabase.from('authorized_persons')
+        .select('id, name, relation, status, photo_storage_path, foto_qualidade, face_descriptor_v2_status')
+        .eq('school_id', currentUser.school_id)
+        .order('name'),
+      supabase.from('authorized_persons')
+        .select('id')
+        .eq('school_id', currentUser.school_id)
+        .not('face_descriptor', 'is', null),
+    ]);
+    if (silencioso && (geracao !== geracaoRef.current || ocupadoRef.current)) return;
+    const error = todas.error || comBiometria.error;
+    if (error) {
+      if (!silencioso) { setErro(error.message); setPessoas([]); }
+      return;
+    }
+    const ids = new Set((comBiometria.data || []).map(p => p.id));
+    setPessoas((todas.data || [])
+      .map(p => ({ ...p, tem_biometria: ids.has(p.id) }))
+      .filter(p => p.tem_biometria || p.status !== 'rejected'));
   }, [currentUser.school_id]);
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Atualiza sozinha: pessoa nova, biometria cadastrada ou retirada em outro
+  // lugar aparece aqui sem recarregar a tela. Pausa durante uma análise.
+  useEffect(() => {
+    const atualizar = () => {
+      if (ocupadoRef.current || document.visibilityState !== 'visible') return;
+      carregar({ silencioso: true });
+    };
+    const timer = setInterval(atualizar, ATUALIZAR_A_CADA_MS);
+    window.addEventListener('focus', atualizar);
+    document.addEventListener('visibilitychange', atualizar);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', atualizar);
+      document.removeEventListener('visibilitychange', atualizar);
+    };
+  }, [carregar]);
 
   const resumo = useMemo(() => resumoDaQualidade(pessoas || []), [pessoas]);
   const grupos = useMemo(() => gruposParaAnalise(pessoas || []), [pessoas]);
   const linhas = useMemo(() => (pessoas || [])
-    .map(p => ({ ...p, ...situacaoDaFoto(p.foto_qualidade) }))
+    .map(p => ({ ...p, ...situacaoDaPessoa(p) }))
     .sort((a, b) => ORDEM_SITUACAO[a.situacao] - ORDEM_SITUACAO[b.situacao] || a.name.localeCompare(b.name)), [pessoas]);
   const linhasVisiveis = useMemo(() => {
     const termo = busca.trim().toLocaleLowerCase('pt-BR');
@@ -87,6 +130,7 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
     setErro('');
     setAviso('');
     interromperRef.current = false;
+    geracaoRef.current += 1;
     if (lista.length === 0) { setAviso('Nenhuma foto guardada para analisar.'); return; }
     setProgresso({ feitos: 0, total: lista.length, rotulo });
     let analisadas = 0;
@@ -120,6 +164,7 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
   const analisarPessoa = async (pessoa) => {
     setErro('');
     setAviso('');
+    geracaoRef.current += 1;
     setAnalisandoId(pessoa.id);
     try {
       const { data: atual, error } = await supabase.from('authorized_persons')
@@ -153,13 +198,17 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
     { label: 'Situação', render: p => (
       <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${ESTILO_SITUACAO[p.situacao]}`}>{ROTULO_SITUACAO[p.situacao]}</span>
     ) },
-    { label: 'Motivo', render: p => (p.codigos.length ? p.codigos.map(c => PROBLEMAS_DA_FOTO[c]).join(' · ') : (p.photo_storage_path ? '·' : 'Sem foto guardada')) },
+    { label: 'Motivo', render: p => (
+      !p.tem_biometria ? 'Sem biometria cadastrada'
+        : p.codigos.length ? p.codigos.map(c => PROBLEMAS_DA_FOTO[c]).join(' · ')
+          : (p.photo_storage_path ? '·' : 'Sem foto guardada')
+    ) },
     { label: 'Foto', hideOnMobile: true, className: 'whitespace-nowrap tabular-nums', render: p => (p.foto_qualidade?.largura_px ? `${p.foto_qualidade.largura_px}×${p.foto_qualidade.altura_px}` : '·') },
     { label: 'Rosto (px)', hideOnMobile: true, align: 'right', className: 'tabular-nums', render: p => (p.foto_qualidade && !p.foto_qualidade.sem_rosto ? p.foto_qualidade.rosto_px : '·') },
     { label: 'Brilho', hideOnMobile: true, align: 'right', className: 'tabular-nums', render: p => p.foto_qualidade?.brilho ?? '·' },
     { label: 'Nitidez', hideOnMobile: true, align: 'right', className: 'tabular-nums', render: p => p.foto_qualidade?.nitidez ?? '·' },
-    { label: 'Descritor novo', hideOnMobile: true, render: p => ROTULO_DESCRITOR_HUMAN[p.face_descriptor_v2_status || 'PENDING'] || p.face_descriptor_v2_status },
-    { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: p => p.photo_storage_path && (
+    { label: 'Descritor novo', hideOnMobile: true, render: p => (!p.tem_biometria ? '·' : ROTULO_DESCRITOR_HUMAN[p.face_descriptor_v2_status || 'PENDING'] || p.face_descriptor_v2_status) },
+    { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: p => p.tem_biometria && p.photo_storage_path && (
       <button
         type="button"
         onClick={() => analisarPessoa(p)}
@@ -199,17 +248,17 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
         </div>
       )}
       {pessoas === null ? <Loading /> : pessoas.length === 0 ? (
-        <EmptyState icon={ScanFace} text="Nenhuma biometria cadastrada nesta escola." />
+        <EmptyState icon={ScanFace} text="Nenhuma pessoa autorizada cadastrada nesta escola." />
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard label="Com biometria" value={resumo.total} />
+            <StatCard label="Com biometria" value={resumo.total - resumo.sem_biometria} />
             <StatCard label="Fotos boas" value={resumo.ok} tone="good" />
             <StatCard label="Convém refazer" value={resumo.refazer} tone={resumo.refazer ? 'warn' : 'default'} />
-            <StatCard label="Sem análise" value={resumo.sem_analise} />
+            <StatCard label="Sem análise" value={resumo.sem_analise} hint={resumo.sem_biometria ? `${resumo.sem_biometria} sem biometria` : undefined} />
           </div>
           <p className="text-xs text-on-surface-variant">
-            Para refazer, cadastre o rosto da pessoa de novo (Recepção ou portal da família). O cadastro novo já usa a melhor resolução da câmera e confere a qualidade antes de salvar.
+            Para refazer, cadastre o rosto da pessoa de novo (Recepção ou portal da família). O cadastro novo já usa a melhor resolução da câmera e confere a qualidade antes de salvar. Pessoa nova ou com a biometria retirada fica em Sem análise até cadastrar o rosto. A lista se atualiza sozinha.
           </p>
           <div className="relative max-w-sm">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />

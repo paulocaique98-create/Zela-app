@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores, LIMITES_QUALIDADE, situacaoDaFoto, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise } from './qualidadeFoto.js';
+import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores, LIMITES_QUALIDADE, situacaoDaFoto, resumoDaQualidade, gruposParaAnalise, resultadoDaAnalise, situacaoDaPessoa } from './qualidadeFoto.js';
 
 function imagem(largura, altura, cor) {
   const data = new Uint8ClampedArray(largura * altura * 4);
@@ -55,7 +55,7 @@ describe('qualidade da foto de biometria', () => {
       { foto_qualidade: null, face_descriptor_v2_status: null },
     ]);
     expect(r).toEqual({
-      total: 4, ok: 1, refazer: 2, sem_analise: 1,
+      total: 4, ok: 1, refazer: 2, sem_analise: 1, sem_biometria: 0,
       problemas: { rosto_pequeno: 1, escura: 1, sem_rosto: 1 },
       descritorHuman: { GENERATED_LIVE: 1, GENERATED: 1, FAILED_NO_FACE: 1, PENDING: 1 },
     });
@@ -71,6 +71,25 @@ describe('qualidade da foto de biometria', () => {
     expect(g.sem_analise.map(p => p.id)).toEqual([3]);
     expect(g.todas.map(p => p.id)).toEqual([1, 2, 3]);
     expect(gruposParaAnalise(null)).toEqual({ refazer: [], sem_analise: [], todas: [] });
+  });
+
+  it('pessoa sem biometria (nova ou retirada) fica Sem análise, mesmo com número antigo', () => {
+    const boa = { rosto_px: 300, brilho: 130, nitidez: 80 };
+    expect(situacaoDaPessoa({ tem_biometria: false, foto_qualidade: boa })).toEqual({ situacao: 'sem_analise', codigos: [] });
+    expect(situacaoDaPessoa({ tem_biometria: true, foto_qualidade: boa }).situacao).toBe('ok');
+    expect(situacaoDaPessoa({ foto_qualidade: boa }).situacao).toBe('ok'); // outras telas: sem o campo
+    const r = resumoDaQualidade([
+      { tem_biometria: true, foto_qualidade: boa, face_descriptor_v2_status: 'GENERATED_LIVE' },
+      { tem_biometria: false, foto_qualidade: boa, face_descriptor_v2_status: null },
+      { tem_biometria: false, foto_qualidade: null, face_descriptor_v2_status: null },
+    ]);
+    expect(r).toMatchObject({ total: 3, ok: 1, sem_analise: 2, sem_biometria: 2, descritorHuman: { GENERATED_LIVE: 1 } });
+    const g = gruposParaAnalise([
+      { id: 1, tem_biometria: false, photo_storage_path: 'e/1.jpg', foto_qualidade: null },
+      { id: 2, tem_biometria: true, photo_storage_path: 'e/2.jpg', foto_qualidade: null },
+    ]);
+    expect(g.todas.map(p => p.id)).toEqual([2]);
+    expect(g.sem_analise.map(p => p.id)).toEqual([2]);
   });
 
   it('frase do resultado de uma pessoa só, sem hífen', () => {
