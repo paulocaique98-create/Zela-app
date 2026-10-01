@@ -222,10 +222,10 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             <FaceCameraCapture
               personName={cameraFor.name}
               consentMessage={`Ao continuar, você autoriza o uso da foto e dos dados biométricos faciais de ${cameraFor.name} exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD). Você pode remover essa autorização e os dados a qualquer momento.`}
-              onSave={async (imageDataUrl, descriptorArray) => {
+              onSave={async (imageDataUrl, descriptorArray, extras) => {
                 setIsProcessingId(cameraFor.id);
                 try {
-                  await togglePhoto(cameraFor.id, imageDataUrl, descriptorArray, true);
+                  await togglePhoto(cameraFor.id, imageDataUrl, descriptorArray, true, extras);
                 } finally {
                   setIsProcessingId(null);
                 }

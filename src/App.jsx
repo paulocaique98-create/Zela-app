@@ -763,7 +763,7 @@ export default function App() {
     };
   }, [currentUser, currentPath]);
 
-  const togglePhoto = async (id, photoUrl = null, descriptorArray = null, consentGiven = false) => {
+  const togglePhoto = async (id, photoUrl = null, descriptorArray = null, consentGiven = false, extras = {}) => {
     // Antes de gravar uma biometria nova, garante que esse rosto ainda não
     // está cadastrado em OUTRO responsável da mesma escola — foi o que
     // causou a Hanaynna Schmitz ficar irreconhecível: ela tinha duas
@@ -804,7 +804,16 @@ export default function App() {
     // fechou a tela). O upload da foto (só usada no confronto visual, não no
     // reconhecimento em si) segue em segundo plano, sem bloquear nada.
     if (photoUrl && descriptorArray) {
-      const fastUpdates = { has_photo: true, face_descriptor: JSON.stringify(descriptorArray) };
+      const fastUpdates = {
+        has_photo: true,
+        face_descriptor: JSON.stringify(descriptorArray),
+        // Descritor do Human (01/10/2026): gerado ao vivo no cadastro. Sem
+        // ele, o v2 antigo (da foto anterior) é descartado, para nunca ficar
+        // um descritor de outra foto valendo depois de refazer a biometria.
+        face_descriptor_v2: extras?.descriptorV2 ? JSON.stringify(extras.descriptorV2) : null,
+        face_descriptor_v2_status: extras?.descriptorV2 ? 'GENERATED_LIVE' : 'PENDING',
+        foto_qualidade: extras?.qualidade || null,
+      };
       if (consentGiven) fastUpdates.biometric_consent_at = new Date().toISOString();
 
       const { error: fastError } = await supabase.from('authorized_persons').update(fastUpdates).eq('id', id);

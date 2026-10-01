@@ -159,7 +159,7 @@ export default function AdminFaceEnrollment({ authorized: authorizedProp, toggle
           <FaceCameraCapture
             personName={cameraFor.name}
             consentMessage={`Ao continuar, você confirma que ${cameraFor.name} (ou seu responsável) autoriza o uso desta foto e dos dados biométricos faciais exclusivamente para identificação no sistema de reconhecimento facial da escola (check-in/check-out), conforme a Lei Geral de Proteção de Dados (LGPD).`}
-            onSave={(imageDataUrl, descriptorArray) => togglePhoto(cameraFor.id, imageDataUrl, descriptorArray, true)}
+            onSave={(imageDataUrl, descriptorArray, extras) => togglePhoto(cameraFor.id, imageDataUrl, descriptorArray, true, extras)}
             onDone={() => setCameraFor(null)}
             onCancel={() => setCameraFor(null)}
             onClose={onClose}

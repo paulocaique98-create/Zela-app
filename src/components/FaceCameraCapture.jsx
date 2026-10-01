@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { X, Camera, Loader2, ArrowLeft, RefreshCw, Check, CheckCircle2 } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
+import { detectViaHumanWorker } from '../lib/humanShadowClient';
+import { metricasDaRegiao, avaliarQualidade, mediaDeDescritores } from '../lib/qualidadeFoto';
 import ConfirmModal from './ConfirmModal';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
@@ -83,6 +85,10 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
   // null (sem rosto) | 'too-far' | 'too-close' | 'off-center' | 'ok'
   const [framePosition, setFramePosition] = useState(null);
   const [showConsent, setShowConsent] = useState(false);
+  // Descritores do motor Human tirados ao vivo enquanto o rosto está bem
+  // posicionado (01/10/2026). A média vira o face_descriptor_v2, em vez de
+  // depender de uma foto comprimida.
+  const amostrasHumanRef = useRef([]);
 
   // A câmera só é solicitada depois que a pessoa clica em "Iniciar Captura"
   // — nunca abre sozinha ao entrar na tela.
@@ -97,7 +103,10 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         if (!active) return;
         setModelsLoaded(true);
 
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        // Resolução máxima que a câmera entregar (01/10/2026): antes pedia
+        // 640x480 e a foto era reduzida para 480 px, pouco detalhe para o
+        // motor Human. O navegador escolhe o maior modo disponível.
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 4096 }, height: { ideal: 2160 }, facingMode: 'user' } });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => setCameraReady(true);
@@ -155,35 +164,47 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     return () => { cancelled = true; clearTimeout(timerId); };
   }, [cameraReady, modelsLoaded, error, capturedImage]);
 
-  // Lado maior da foto salva, em px. O getUserMedia pede 640x480, mas isso é
-  // só uma sugestão — muitos celulares e webcams ignoram e entregam a
-  // resolução nativa da câmera (bem maior), fazendo cada foto de biometria
-  // pesar várias vezes mais do que precisa. O reconhecimento facial não
-  // ganha nada com isso: os modelos redimensionam a imagem internamente pra
-  // extrair o descritor, então uma foto maior não deixa a identificação nem
-  // um pouco mais precisa, só ocupa mais espaço no Storage.
-  const MAX_CAPTURE_DIMENSION = 480;
-
+  // Foto salva na resolução cheia da câmera (01/10/2026). Antes era reduzida
+  // para 480 px (JPEG 82%) para economizar espaço; o modo observador mostrou
+  // que o motor Human, gerado a partir dessas fotos, confundia pessoas.
   const doCapture = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const nativeWidth = video.videoWidth || 640;
     const nativeHeight = video.videoHeight || 480;
-    const scale = Math.min(1, MAX_CAPTURE_DIMENSION / Math.max(nativeWidth, nativeHeight));
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(nativeWidth * scale);
-    canvas.height = Math.round(nativeHeight * scale);
+    canvas.width = nativeWidth;
+    canvas.height = nativeHeight;
     const ctx = canvas.getContext('2d');
     // Espelha pra ficar igual ao preview (que está espelhado via CSS)
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    // Qualidade 0.82 (padrão do navegador é ~0.92) — redução perceptível de
-    // tamanho sem degradar a nitidez do rosto o suficiente pra atrapalhar o
-    // reconhecimento.
-    setCapturedImage(canvas.toDataURL('image/jpeg', 0.82));
+    // Qualidade 0.92: preserva o detalhe do rosto.
+    setCapturedImage(canvas.toDataURL('image/jpeg', 0.92));
   };
+
+  // Enquanto o rosto está bem posicionado (antes e durante a contagem), tira
+  // descritores do Human de alguns quadros. Nunca bloqueia nada: se o Human
+  // não responder, o cadastro segue só com o motor atual.
+  useEffect(() => {
+    if (!cameraReady || capturedImage || framePosition !== 'ok') return undefined;
+    let cancelado = false;
+    let timer;
+    const coletar = async () => {
+      const video = videoRef.current;
+      if (cancelado || !video || video.readyState < 2) return;
+      const r = await detectViaHumanWorker(video);
+      if (cancelado) return;
+      if (r?.ok && Array.isArray(r.descriptor) && r.descriptor.length) {
+        amostrasHumanRef.current = [...amostrasHumanRef.current, r.descriptor].slice(-6);
+      }
+      timer = setTimeout(coletar, 400);
+    };
+    coletar();
+    return () => { cancelado = true; clearTimeout(timer); };
+  }, [cameraReady, capturedImage, framePosition]);
 
   // Só dispara a contagem regressiva depois que o "Perfeito" ficar estável
   // por 1s seguido — dá tempo da pessoa realmente ler a mensagem antes da
@@ -217,6 +238,8 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
   }, [countdown]);
 
   const handleRetake = () => {
+    amostrasHumanRef.current = [];
+    setError('');
     setCapturedImage(null);
     setCountdown(null);
     autoTriggeredRef.current = false;
@@ -243,8 +266,31 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         setIsSaving(false);
         return;
       }
+      // Qualidade da foto (01/10/2026): números da região do rosto.
+      const caixa = detection.detection.box;
+      const escala = Math.min(1, 200 / Math.max(caixa.width, caixa.height));
+      const recorte = document.createElement('canvas');
+      recorte.width = Math.max(1, Math.round(caixa.width * escala));
+      recorte.height = Math.max(1, Math.round(caixa.height * escala));
+      const rctx = recorte.getContext('2d');
+      rctx.drawImage(img, caixa.x, caixa.y, caixa.width, caixa.height, 0, 0, recorte.width, recorte.height);
+      const { brilho, nitidez } = metricasDaRegiao(rctx.getImageData(0, 0, recorte.width, recorte.height));
+      const qualidade = {
+        largura_px: img.naturalWidth, altura_px: img.naturalHeight, rosto_px: Math.round(caixa.width),
+        brilho, nitidez, avaliado_em: new Date().toISOString(), origem: 'cadastro',
+      };
+      const avaliacao = avaliarQualidade(qualidade);
+      if (!avaliacao.ok) {
+        setError(`${avaliacao.motivos.join(' ')} Toque em "Tirar outra" para repetir.`);
+        setIsSaving(false);
+        return;
+      }
+
       const descriptorArray = Array.from(detection.descriptor);
-      await onSave(capturedImage, descriptorArray);
+      // Descritor do Human: média dos quadros ao vivo (precisa de 2 ou mais).
+      const amostras = amostrasHumanRef.current;
+      const descriptorV2 = amostras.length >= 2 ? mediaDeDescritores(amostras) : null;
+      await onSave(capturedImage, descriptorArray, { descriptorV2, qualidade });
       setIsSaving(false);
       setSaveSuccess(true);
     } catch (err) {
