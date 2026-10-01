@@ -547,19 +547,7 @@ export default function PublicMatricula() {
                     </div>
                   </div>
 
-                  <div className="pt-2 space-y-2">
-                    <label className={labelCls}>Documentos do Responsável Financeiro</label>
-                    {RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => (
-                      <DocUploadRow
-                        key={key}
-                        label={label}
-                        doc={responsavel[key]}
-                        isUploading={uploadingKey === key}
-                        onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
-                        onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
-                      />
-                    ))}
-                  </div>
+                  <p className="text-[11px] text-on-surface-variant/70">Os documentos do responsável financeiro são enviados na seção 8 · Documentos.</p>
                 </AccordionSection>
 
                 {/* 4. SEGUNDO RESPONSÁVEL */}
@@ -745,25 +733,37 @@ export default function PublicMatricula() {
                   ))}
                 </AccordionSection>
 
-                {/* 8. DOCUMENTOS — só os da criança aqui (certidão e cartão de
-                    vacina); os do responsável já ficam dentro da seção dele. */}
-                <AccordionSection id="documentos" title="8. Documentos da Criança" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+                {/* 8. DOCUMENTOS (01/10/2026): os do responsável financeiro
+                    saíram da seção 3 e vêm para cá, junto com os da criança. */}
+                <AccordionSection id="documentos" title="8. Documentos" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
                   <div className="space-y-2">
-                    {criancas.map((c, idx) => (
-                      <React.Fragment key={c.id}>
-                        {CRIANCA_DOC_FIELDS.map(({ key, label }) => (
-                          <DocUploadRow
-                            key={key}
-                            label={criancas.length > 1 ? `${label} · ${c.nome.trim() || `Filho(a) ${idx + 1}`}` : label}
-                            doc={c[key]}
-                            isUploading={uploadingKey === `crianca-${c.id}-${key}`}
-                            onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCriancaDoc(c.id, key, f); }}
-                            onRemove={() => updateCrianca(c.id, { [key]: null })}
-                          />
-                        ))}
-                      </React.Fragment>
+                    <p className={labelCls}>Responsável financeiro</p>
+                    {RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => (
+                      <DocUploadRow
+                        key={key}
+                        label={label}
+                        doc={responsavel[key]}
+                        isUploading={uploadingKey === key}
+                        onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
+                        onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
+                      />
                     ))}
                   </div>
+                  {criancas.map((c, idx) => (
+                    <div key={c.id} className="space-y-2 pt-2">
+                      <p className={labelCls}>{c.nome.trim() || `Criança ${idx + 1}`}</p>
+                      {CRIANCA_DOC_FIELDS.map(({ key, label }) => (
+                        <DocUploadRow
+                          key={key}
+                          label={label}
+                          doc={c[key]}
+                          isUploading={uploadingKey === `crianca-${c.id}-${key}`}
+                          onFile={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCriancaDoc(c.id, key, f); }}
+                          onRemove={() => updateCrianca(c.id, { [key]: null })}
+                        />
+                      ))}
+                    </div>
+                  ))}
                 </AccordionSection>
 
                 <button

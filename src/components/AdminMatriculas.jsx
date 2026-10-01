@@ -7,6 +7,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
 import { getSignedUrl } from '../lib/storage';
+import { documentosDaSolicitacao } from '../lib/matriculaFields';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { logAction } from '../lib/auditLog';
 import { generateTempPassword } from '../utils/tempPassword';
@@ -85,14 +86,6 @@ function Field({ label, value }) {
   );
 }
 
-const DOC_FIELDS = [
-  { key: 'cpf_doc', label: 'CPF' },
-  { key: 'rg_doc', label: 'RG' },
-  { key: 'comprovante_residencia_doc', label: 'Comprovante de Residência' },
-  { key: 'plano_saude_doc', label: 'Plano de Saúde / SUS' },
-  { key: 'cartao_vacina_doc', label: 'Cartão de Vacina' },
-];
-
 function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   const [expanded, setExpanded] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -145,9 +138,6 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
           <div className="space-y-2">
             <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-primary" /> Responsável Financeiro</h5>
             <PessoaFields pessoa={resp} />
-            <div className="flex flex-wrap gap-2 pt-1">
-              {DOC_FIELDS.map(({ key, label }) => <DocLink key={key} doc={resp[key]} label={label} />)}
-            </div>
           </div>
 
           {segundo && (
@@ -185,7 +175,25 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     <Field label="Hábito Importante" value={c.habito_importante} />
                   </div>
                 )}
-                <DocLink doc={c.certidao_doc} label="Certidão de Nascimento" />
+              </div>
+            ))}
+          </div>
+
+          {/* Documentos (01/10/2026): tudo o que a família enviou na seção 8,
+              por pessoa. Antes o cartão de vacina da criança não aparecia em
+              lugar nenhum desta tela. */}
+          <div className="space-y-2">
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><FileText size={13} className="text-primary" /> Documentos</h5>
+            {documentosDaSolicitacao(solicitacao).map(grupo => (
+              <div key={grupo.titulo} className="space-y-1.5">
+                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">{grupo.titulo}</p>
+                <div className="flex flex-wrap gap-2">
+                  {grupo.itens.map(item => (item.doc?.path ? (
+                    <DocLink key={item.key} doc={item.doc} label={item.label} />
+                  ) : (
+                    <span key={item.key} className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-dashed border-outline-variant text-on-surface-variant/70">{item.label} · não enviado</span>
+                  )))}
+                </div>
               </div>
             ))}
           </div>

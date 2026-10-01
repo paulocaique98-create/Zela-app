@@ -73,3 +73,39 @@ export function montarEndereco(c) {
 
 export const inputCls = 'w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm';
 export const labelCls = 'block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5';
+
+// Seção 8 · Documentos (01/10/2026): os documentos do responsável financeiro
+// saíram da seção 3 e foram para cá, junto com os da criança. Na
+// rematrícula, todos são obrigatórios: a cada rematrícula a família envia
+// documentos novos.
+const primeiroNome = (nome) => String(nome || '').trim().split(/\s+/)[0] || 'a criança';
+
+export function documentosFaltando(responsavel, criancas) {
+  const faltando = [];
+  for (const { key, label } of RESPONSAVEL_DOC_FIELDS) {
+    if (!responsavel?.[key]?.path) faltando.push(`${label} do responsável financeiro`);
+  }
+  for (const c of (criancas || []).filter(cr => String(cr.nome || '').trim())) {
+    for (const { key, label } of CRIANCA_DOC_FIELDS) {
+      if (!c[key]?.path) faltando.push(`${label} de ${primeiroNome(c.nome)}`);
+    }
+  }
+  return faltando;
+}
+
+// O que a Gestão vê na solicitação: documentos agrupados por pessoa. O
+// cartão de vacina de rematrículas antigas, que ficava junto dos documentos
+// do responsável, continua aparecendo.
+export function documentosDaSolicitacao(solicitacao) {
+  const resp = solicitacao?.responsavel_financeiro || {};
+  const itensResp = RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => ({ key, label, doc: resp[key] || null }));
+  if (resp.cartao_vacina_doc?.path) itensResp.push({ key: 'cartao_vacina_doc', label: 'Cartão de Vacina', doc: resp.cartao_vacina_doc });
+  const grupos = [{ titulo: 'Responsável financeiro', itens: itensResp }];
+  for (const c of solicitacao?.criancas || []) {
+    grupos.push({
+      titulo: c.nome || 'Criança',
+      itens: CRIANCA_DOC_FIELDS.map(({ key, label }) => ({ key, label, doc: c[key] || null })),
+    });
+  }
+  return grupos;
+}

@@ -13,7 +13,7 @@ import { formatPersonName } from '../utils/formatName';
 import ConfirmModal from './ConfirmModal';
 import {
   ESTADO_CIVIL, PARENTESCOS, CICLOS, PERIODOS_POR_CICLO,
-  RESPONSAVEL_DOC_FIELDS, CRIANCA_DOC_FIELDS,
+  RESPONSAVEL_DOC_FIELDS, CRIANCA_DOC_FIELDS, documentosFaltando,
   emptyResponsavel, emptyCrianca, emptyAutorizado, emptyTransporteAutorizado,
   montarEndereco, inputCls, labelCls,
 } from '../lib/matriculaFields';
@@ -22,7 +22,7 @@ const BUCKET = 'matriculas-docs';
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'];
 
-function DocUploadButton({ label, doc, onUpload, onRemove, isUploading }) {
+function DocUploadButton({ label, doc, onUpload, onRemove, isUploading, obrigatorio = false }) {
   const inputId = `doc-${label.replace(/\s+/g, '-')}-${Math.random().toString(36).slice(2, 6)}`;
   return (
     <div className="flex items-center gap-2">
@@ -33,7 +33,7 @@ function DocUploadButton({ label, doc, onUpload, onRemove, isUploading }) {
         } ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}
       >
         {isUploading ? <Loader2 size={14} className="animate-spin shrink-0" /> : doc ? <Check size={14} className="shrink-0" /> : <Upload size={14} className="shrink-0" />}
-        <span className="truncate">{doc ? `${label} anexado` : `Importar ${label}`}</span>
+        <span className="truncate">{doc ? `${label} anexado` : `Importar ${label}${obrigatorio ? ' *' : ''}`}</span>
         <input id={inputId} type="file" accept={ALLOWED_TYPES.join(',')} onChange={onUpload} className="hidden" disabled={isUploading} />
       </label>
       {doc && (
@@ -440,6 +440,14 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     e.preventDefault();
     const err = validate();
     if (err) { setFormError(err); return; }
+    // Rematrícula: a seção 8 é obrigatória por inteiro (documentos novos a
+    // cada rematrícula). Abre a seção e diz exatamente o que falta.
+    const faltando = documentosFaltando(responsavel, criancas);
+    if (faltando.length) {
+      setFormError(`Na rematrícula, todos os documentos da seção 8 precisam ser enviados. Falta: ${faltando.join(', ')}.`);
+      setOpenSection('documentos');
+      return;
+    }
 
     setIsSubmitting(true);
     setFormError('');
@@ -687,19 +695,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 </div>
               </div>
 
-              <div className="pt-2 space-y-2">
-                <label className={labelCls}>Documentos do Responsável Financeiro</label>
-                {RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => (
-                  <DocUploadButton
-                    key={key}
-                    label={label}
-                    doc={responsavel[key]}
-                    isUploading={uploadingKey === key}
-                    onUpload={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
-                    onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
-                  />
-                ))}
-              </div>
+              <p className="text-[11px] text-on-surface-variant/70">Os documentos do responsável financeiro são enviados na seção 8 · Documentos.</p>
             </AccordionSection>
 
             {/* 4. SEGUNDO RESPONSÁVEL */}
@@ -899,26 +895,51 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
               ))}
             </AccordionSection>
 
-            {/* 8. DOCUMENTOS DA CRIANÇA */}
-            <AccordionSection id="documentos" title="8. Documentos da Criança" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+            {/* 8. DOCUMENTOS (01/10/2026): os do responsável financeiro saíram
+                da seção 3 e vêm para cá, junto com os da criança. Na
+                rematrícula todos são obrigatórios: a cada rematrícula a
+                família envia documentos novos. */}
+            <AccordionSection id="documentos" title="8. Documentos" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+              <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-zela-md px-3 py-2 -mt-1">
+                Na rematrícula, todos os documentos precisam ser enviados de novo, mesmo que já tenham sido enviados antes.
+              </p>
               <div className="space-y-2">
-                {criancas.map((c, idx) => (
-                  <React.Fragment key={c.id}>
-                    {CRIANCA_DOC_FIELDS.map(({ key, label }) => (
-                      <DocUploadButton
-                        key={key}
-                        label={criancas.length > 1 ? `${label} · ${c.nome.trim() || `Filho(a) ${idx + 1}`}` : label}
-                        doc={c[key]}
-                        isUploading={uploadingKey === `crianca-${c.id}-${key}`}
-                        onUpload={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCriancaDoc(c.id, key, f); }}
-                        onRemove={() => updateCrianca(c.id, { [key]: null })}
-                      />
-                    ))}
-                  </React.Fragment>
+                <p className={labelCls}>Responsável financeiro</p>
+                {RESPONSAVEL_DOC_FIELDS.map(({ key, label }) => (
+                  <DocUploadButton
+                    key={key}
+                    label={label}
+                    obrigatorio
+                    doc={responsavel[key]}
+                    isUploading={uploadingKey === key}
+                    onUpload={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadResponsavelDoc(key, f); }}
+                    onRemove={() => setResponsavel(p => ({ ...p, [key]: null }))}
+                  />
                 ))}
               </div>
+              {criancas.map((c, idx) => (
+                <div key={c.id} className="space-y-2 pt-2">
+                  <p className={labelCls}>{c.nome.trim() || `Criança ${idx + 1}`}</p>
+                  {CRIANCA_DOC_FIELDS.map(({ key, label }) => (
+                    <DocUploadButton
+                      key={key}
+                      label={label}
+                      obrigatorio
+                      doc={c[key]}
+                      isUploading={uploadingKey === `crianca-${c.id}-${key}`}
+                      onUpload={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCriancaDoc(c.id, key, f); }}
+                      onRemove={() => updateCrianca(c.id, { [key]: null })}
+                    />
+                  ))}
+                </div>
+              ))}
             </AccordionSection>
 
+            {/* O aviso também aparece aqui, perto do botão: quem envia está no
+                fim da página e não veria a mensagem lá em cima. */}
+            {formError && (
+              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
+            )}
             <button
               type="submit"
               disabled={isSubmitting}
