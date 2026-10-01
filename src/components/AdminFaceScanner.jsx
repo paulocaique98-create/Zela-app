@@ -281,6 +281,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const [actionDone, setActionDone] = useState(false);
   // Lido dentro do ciclo de leitura (que não re-renderiza a cada mudança).
   const actionDoneRef = useRef(false);
+  // Pedido já saiu e está esperando a confirmação do banco: reconhecimento
+  // que cai nesse meio tempo não é "perdido" (falso match_lost, 01/10/2026:
+  // a entrada do Vicente foi registrada normalmente às 07:46:50).
+  const pedidoEnviadoRef = useRef(false);
   useEffect(() => { actionDoneRef.current = actionDone; }, [actionDone]);
   // true quando a confirmação foi um mero RE-reconhecimento de uma
   // solicitação que já estava pendente (a pessoa esqueceu que já passou pelo
@@ -774,7 +778,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     // Cancela o reconhecimento confirmado. Se o pedido ainda não tinha saído,
     // registra no resumo de erros (antes era invisível).
     const cancelarReconhecimento = (motivo) => {
-      if (!actionDoneRef.current) {
+      if (!actionDoneRef.current && !pedidoEnviadoRef.current) {
         logFaceEvent('match_lost', 'warn', {
           mode: 'live',
           reason: motivo,
@@ -1057,6 +1061,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     setNoMatchReason('');
     recentMatchesRef.current = [];
     autoTriggeredRef.current = false;
+    pedidoEnviadoRef.current = false;
     resetStuckTimer();
   };
 
@@ -1071,11 +1076,13 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     const alreadyPending = selected.every(s => s.status === 'pending_entry' || s.status === 'pending_exit');
 
     setIsProcessingCapture(true);
+    pedidoEnviadoRef.current = true;
     try {
       await requestKioskAccess(selected.map(s => s.id), matchedPerson?.id || null);
       setWasAlreadyPending(alreadyPending);
       setActionDone(true); // Só aqui, após confirmação real do banco
     } catch (err) {
+      pedidoEnviadoRef.current = false;
       console.error('Erro ao solicitar acesso:', err);
       setError('Falha ao registrar. Tente novamente: ' + (err.message || ''));
       setMatchStatus('no-match');

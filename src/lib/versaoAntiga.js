@@ -25,6 +25,15 @@ export function ehErroDeVersaoAntiga(erro) {
   return PADROES.some(p => p.test(mensagem));
 }
 
+// Recarga em andamento (01/10/2026): depois que a recarga começa, o Vite
+// entrega a tela que falhou como vazia e o React acusava "reading 'default'"
+// por um instante, gravando um falso erro. Enquanto isto for true, a tela de
+// erro mostra "Atualizando o Zela…" e não grava nada.
+let recarregando = false;
+export function estaRecarregando() {
+  return recarregando;
+}
+
 // true se recarregou (ou vai recarregar); false se recarregou há pouco e
 // não deve tentar de novo.
 export function recarregarParaVersaoNova({
@@ -36,6 +45,7 @@ export function recarregarParaVersaoNova({
   try { ultima = Number(storage?.getItem(CHAVE)) || 0; } catch { /* sem armazenamento */ }
   if (agora - ultima < INTERVALO_MINIMO_MS) return false;
   try { storage?.setItem(CHAVE, String(agora)); } catch { /* sem armazenamento */ }
+  recarregando = true;
   recarregar();
   return true;
 }

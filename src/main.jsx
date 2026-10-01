@@ -8,7 +8,7 @@ import App from './App.jsx'
 import Toaster from './components/Toaster.jsx'
 import { logClientError, installGlobalErrorHandlers } from './lib/errorLogger'
 import { initSentry } from './lib/sentry'
-import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga } from './lib/versaoAntiga'
+import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga, estaRecarregando } from './lib/versaoAntiga'
 
 initSentry()
 installGlobalErrorHandlers()
@@ -30,7 +30,9 @@ class ErrorBoundary extends Component {
   componentDidCatch(error, info) {
     // Tela de uma versão anterior à publicação: recarrega na versão nova em
     // vez de mostrar erro (não é falha do sistema, não vai para os logs).
-    if (ehErroDeVersaoAntiga(error) && recarregarParaVersaoNova()) {
+    // Recarga já em andamento (a tela que falhou chega vazia e o React acusa
+    // "reading 'default'"): só espera a página recarregar.
+    if (estaRecarregando() || (ehErroDeVersaoAntiga(error) && recarregarParaVersaoNova())) {
       this.setState({ atualizando: true })
       return
     }

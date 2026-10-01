@@ -137,7 +137,12 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
     students.forEach(s => {
       if (!reportedStudentIds.has(s.id)) byTurma.get(s.turma).semRelatorio += 1;
     });
-    return [...byTurma.values()].sort((a, b) => a.turma.localeCompare(b.turma));
+    // Aluno sem turma (turma vazia) quebrava a ordenação e derrubava a tela
+    // (registro de erros, 27/09/2026). "Sem turma" vai por último.
+    return [...byTurma.values()].sort((a, b) => {
+      if (!a.turma || !b.turma) return (a.turma ? 0 : 1) - (b.turma ? 0 : 1);
+      return a.turma.localeCompare(b.turma);
+    });
   }, [students, reports, studentsById]);
 
   const filteredReports = reports.filter(r => {

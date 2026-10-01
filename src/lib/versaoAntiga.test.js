@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga } from './versaoAntiga.js';
+import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga, estaRecarregando } from './versaoAntiga.js';
 
 function armazenamento() {
   const dados = {};
@@ -38,5 +38,12 @@ describe('versão antiga aberta depois de uma publicação', () => {
     const ouvintes = {};
     instalarRecuperacaoDeVersaoAntiga({ addEventListener: (nome, fn) => { ouvintes[nome] = fn; } });
     expect(typeof ouvintes['vite:preloadError']).toBe('function');
+  });
+
+  it('depois que a recarga começa, avisa que está recarregando (a tela de erro não grava o falso "reading default")', () => {
+    const dados = {};
+    const storage = { getItem: k => dados[k] ?? null, setItem: (k, v) => { dados[k] = v; } };
+    recarregarParaVersaoNova({ storage, recarregar: () => {}, agora: 5_000_000 });
+    expect(estaRecarregando()).toBe(true);
   });
 });

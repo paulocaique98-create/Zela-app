@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { setSentryUserContext, captureToSentry } from './sentry';
+import { estaRecarregando } from './versaoAntiga';
 
 // Contexto do usuário atual pra anexar aos logs de erro — atualizado pelo
 // App.jsx a cada troca de sessão (login/logout). Módulo-singleton simples,
@@ -62,7 +63,9 @@ export function classificarErroSolto(error) {
 // pedido, pra a aba "Legado" do Portal do Dev poder ser removida sem perder
 // visibilidade de crash de tela/promise rejeitada.
 export async function logClientError(error, extra = {}) {
-  if (!registroDeErrosAtivo()) return;
+  // Durante a recarga para a versão nova, o que quebra é a versão antiga
+  // saindo de cena: não é erro de verdade (ver src/lib/versaoAntiga.js).
+  if (!registroDeErrosAtivo() || estaRecarregando()) return;
   captureToSentry(error, extra);
   try {
     const message = (error?.message || String(error) || 'Erro desconhecido').slice(0, 2000);
