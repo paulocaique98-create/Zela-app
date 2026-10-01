@@ -15,6 +15,7 @@ import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { toast } from './lib/toast';
 import { mensagemDaFuncao } from './lib/contasVinculadas';
+import { EVENTO_SESSAO_ENCERRADA } from './lib/sessao';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { usaPortalGestao } from './lib/perfisGestao';
 import { screenLabel, screenLabelMobile, AUTHORIZED_TRANSPORTE_RELATION } from './lib/constants';
@@ -292,7 +293,8 @@ export default function App() {
 
       // Só chega aqui se o usuário foi excluído do banco
       // Reload intencional: limpa completamente o estado após exclusão
-      await supabase.auth.signOut();
+      // (só deste aparelho; ver src/lib/sessao.js).
+      await supabase.auth.signOut({ scope: 'local' });
       localStorage.removeItem('zela_user');
       setCurrentUser(null);
     };
@@ -674,9 +676,27 @@ export default function App() {
     // Limpa a última aba lembrada -- senão o próximo usuário a logar nesse
     // mesmo navegador (conta diferente) herdaria a aba de quem saiu.
     ABAS_LEMBRADAS.forEach(chave => sessionStorage.removeItem(chave));
-    // Faz o logoff do Auth Supabase por garantia
-    supabase.auth.signOut().catch(() => { });
+    // Faz o logoff do Auth Supabase SÓ NESTE APARELHO (01/10/2026). O padrão
+    // da biblioteca (global) encerrava a mesma conta em todos os aparelhos:
+    // sair no computador da recepção (ou o deslogar por inatividade) derrubava
+    // o totem, e o aviso de entrada/saída às famílias falhava com "Token
+    // inválido ou expirado" (ver src/lib/sessao.js).
+    supabase.auth.signOut({ scope: 'local' }).catch(() => { });
   };
+
+  // Sessão encerrada em outro lugar (ex.: senha trocada, conta removida):
+  // uma chamada ao servidor não conseguiu renovar o login. Volta para a tela
+  // de entrada com um aviso, em vez de seguir parecendo funcionar.
+  useEffect(() => {
+    const aoEncerrar = () => {
+      if (!currentUserRef.current) return;
+      toast.error('Sua sessão foi encerrada. Entre novamente para continuar.', 10000);
+      handleLogout();
+    };
+    window.addEventListener(EVENTO_SESSAO_ENCERRADA, aoEncerrar);
+    return () => window.removeEventListener(EVENTO_SESSAO_ENCERRADA, aoEncerrar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Temporizador de inatividade (30 minutos).
   //

@@ -123,7 +123,7 @@ export default function Login({ onLogin }) {
 
       if (users && users.length > 0) {
         if (users[0].status === 'pending') {
-          await supabase.auth.signOut();
+          await supabase.auth.signOut({ scope: 'local' });
           setLoginError('Seu cadastro está aguardando aprovação da escola. Você receberá acesso assim que for aprovado.');
           return;
         }
@@ -146,7 +146,7 @@ export default function Login({ onLogin }) {
             // Falha ao consultar não deve travar quem tem tudo certo --
             // segue sem bloquear (mesma filosofia best-effort da imagem).
           } else if (schoolRow && schoolRow.school_code.toUpperCase() !== enteredCode.toUpperCase()) {
-            await supabase.auth.signOut();
+            await supabase.auth.signOut({ scope: 'local' });
             setLoginError('O código de escola informado não corresponde à sua instituição. Verifique e tente novamente.');
             return;
           }
@@ -159,7 +159,7 @@ export default function Login({ onLogin }) {
         onLogin(users[0]);
       } else {
         // Usuário não encontrado em public.users (excluído, inativo ou inexistente)
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
         setLoginError('Acesso não autorizado. Sua conta foi removida ou desativada. Entre em contato com a escola.');
         return;
       }
