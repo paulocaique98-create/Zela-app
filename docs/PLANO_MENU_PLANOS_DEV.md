@@ -116,3 +116,11 @@ Arquivos: nova migration, `src/lib/planosZela.js` (+ teste), `src/lib/modulosCat
 5. Valores de implantação por plano e descontos por ciclo: PENDENTE, o usuário vai informar.
 6. Desconto máximo na implantação: **50%** (sem isenção total; padrão de 50% já aplicado na migration e em `planosZela.js`; a R6 acima ainda cita 100%, texto desatualizado). RESPONDIDA.
 7. A Gestão da escola vê o próprio plano contratado, o vencimento e o que o plano contém. RESPONDIDA.
+
+## 11. Pendências (05/10/2026)
+
+1. **Cobrança por alunos ativos no pacote** (decisão 4): hoje `alunos_contratados` é fixo na contratação. Falta recontar os ativos todo mês e recalcular o valor. Exige análise antes (modelo da contratação, snapshot da R8, RLS e isolamento entre escolas).
+2. **Valores de implantação por plano e descontos por ciclo** (decisão 5): aguardando o usuário informar. Depois, atualizar a seção 4 e o seed.
+3. **Texto da R6**: ainda diz "padrão 100%"; o correto é teto de 50%.
+4. **Migration `20261005150000_planos_zela.sql`**: aplicada só no banco LOCAL; NÃO aplicada em produção. Exige análise de segurança e OK antes.
+5. **`src/test/planosZelaRls.test.js`** precisa de Supabase local para rodar; ainda não rodou em CI nem em produção.
