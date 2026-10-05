@@ -107,12 +107,12 @@ Textos da UI sem hífen; padrões visuais `dev-*` do portal; mobile ok.
 
 Arquivos: nova migration, `src/lib/planosZela.js` (+ teste), `src/lib/modulosCatalogo.js`, `src/components/DeveloperPlanos.jsx`, `src/components/DeveloperLayout.jsx`, `src/components/DeveloperPanel.jsx` (botão Contratar), `src/test/planosZelaRls.test.js`.
 
-## 10. Decisões pendentes (preciso da resposta antes da fase 1)
+## 10. Decisões (respondidas em 05/10/2026)
 
-1. Exatamente 50 alunos: ainda "por aluno" (até 50) ou já pacote (abaixo de 50 = até 49)?
-2. Escola com até 50 alunos também pode escolher Pacote, ou só "por aluno"?
-3. "Por aluno" tem ciclos (semestral, anual) ou é só mensal?
-4. No pacote, a mensalidade usa alunos **contratados** (fixo no ciclo) ou alunos **ativos** recontados todo mês?
-5. Valores de implantação por plano e descontos por ciclo da seção 4: confirmar ou informar.
-6. Desconto máximo na implantação: permitir isenção total (100%) ou limitar?
-7. A Gestão da escola deve ver o próprio plano contratado (fase 4) ou fica só no Dev?
+1. Exatamente 50 alunos: ainda "por aluno" (limite é até 50). RESPONDIDA.
+2. Escola com até 50 alunos também pode escolher Pacote. RESPONDIDA.
+3. "Por aluno" pode ter todos os ciclos (mensal, semestral, anual, bianual). RESPONDIDA.
+4. No pacote, a mensalidade usa alunos **ativos**, recontados todo mês. RESPONDIDA. Código atual ainda grava `alunos_contratados` fixo na contratação (padrão = ativos do momento); a recontagem mensal NÃO está implementada.
+5. Valores de implantação por plano e descontos por ciclo: PENDENTE, o usuário vai informar.
+6. Desconto máximo na implantação: **50%** (sem isenção total; padrão de 50% já aplicado na migration e em `planosZela.js`; a R6 acima ainda cita 100%, texto desatualizado). RESPONDIDA.
+7. A Gestão da escola vê o próprio plano contratado, o vencimento e o que o plano contém. RESPONDIDA.
