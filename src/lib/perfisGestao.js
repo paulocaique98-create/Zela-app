@@ -71,7 +71,7 @@ export const ABAS_SO_GESTAO_PEDAGOGICA = new Set([
 // aba do menu esteja numa das duas listas).
 export const ABAS_SO_GESTAO = new Set([
   'contratos-lista', 'contratos-modelos', 'contratos-assinaturas', 'contratos-aditivos',
-  'financeiro-visao', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia',
+  'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia',
   'financeiro-recebimentos', 'financeiro-despesas',
   'horas-extras',
   'cadastros-funcionarios', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-qualidade-biometria', 'cadastros-unificar',
@@ -104,6 +104,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'attendance-corrections': 'checkin',
   'horas-extras': 'checkin',
   'financeiro-visao': 'financeiro',
+  'financeiro-planos': 'financeiro',
   'financeiro-mensalidades': 'financeiro',
   'financeiro-cobrancas': 'financeiro',
   'financeiro-inadimplencia': 'financeiro',

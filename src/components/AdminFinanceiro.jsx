@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ResponsiveTable } from './GestaoShared';
 import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
+import { carregarContextoDeMensalidades, montarLinhasDeMensalidade } from '../lib/mensalidadesData';
+import { chamarFuncaoFinanceira } from '../lib/funcoesFinanceiras';
+import { todayISO } from '../lib/gestaoUtils';
+import {
+  anoDoPreco, valorMensalEquivalente, rotuloDoPlano, mensagemSemPreco, ROTULO_SITUACAO_DA_MENSALIDADE,
+} from '../../supabase/functions/_shared/planPricing.ts';
 
 const CYCLE_LABELS = { MONTHLY: 'Mensal', QUARTERLY: 'Trimestral', SEMIANNUALLY: 'Semestral', YEARLY: 'Anual' };
 const CYCLES = ['MONTHLY', 'QUARTERLY', 'SEMIANNUALLY', 'YEARLY'];
@@ -76,6 +82,7 @@ export function ContratosTab({ currentUser }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [painelVersao, setPainelVersao] = useState(0);
 
   const fetchContracts = useCallback(async () => {
     if (!currentUser?.school_id) return;
@@ -84,7 +91,7 @@ export function ContratosTab({ currentUser }) {
     try {
       const { data, error } = await supabase
         .from('financial_contracts')
-        .select('id, billing_cycle, amount_cents, status, first_due_date, gateway_subscription_id, created_at, students:student_id(name), guardian:financial_guardian_id(name, email)')
+        .select('id, billing_cycle, amount_cents, status, first_due_date, gateway_subscription_id, created_at, ciclo_horas, turno, students:student_id(name), guardian:financial_guardian_id(name, email)')
         .eq('school_id', currentUser.school_id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -121,7 +128,7 @@ export function ContratosTab({ currentUser }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-on-surface-variant">Contratos financeiros (mensalidades) vinculados a alunos desta escola.</p>
+        <p className="text-xs text-on-surface-variant">Mensalidades dos alunos, cobradas automaticamente pelo Asaas. O preço vem de Financeiro · Planos.</p>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={fetchContracts} title="Atualizar" className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition">
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
@@ -130,7 +137,7 @@ export function ContratosTab({ currentUser }) {
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-sm"
           >
-            <Plus size={16} /> Novo contrato
+            <Plus size={16} /> Nova mensalidade
           </button>
         </div>
       </div>
@@ -141,12 +148,14 @@ export function ContratosTab({ currentUser }) {
         </div>
       )}
 
+      <AguardandoMensalidade currentUser={currentUser} versao={painelVersao} onCriou={() => { fetchContracts(); setPainelVersao(v => v + 1); }} />
+
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-on-surface-variant"><Loader2 className="animate-spin" size={24} /></div>
       ) : contracts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
           <FileText className="text-outline-variant mb-2" size={32} />
-          <p className="text-on-surface-variant font-medium text-sm">Nenhum contrato criado ainda.</p>
+          <p className="text-on-surface-variant font-medium text-sm">Nenhuma mensalidade criada ainda.</p>
         </div>
       ) : (
         <ResponsiveTable
@@ -154,7 +163,8 @@ export function ContratosTab({ currentUser }) {
           columns={[
             { label: 'Aluno', primary: true, render: c => c.students?.name || '·' },
             { label: 'Responsável', className: 'text-on-surface-variant', render: c => c.guardian?.name || '·' },
-            { label: 'Ciclo', render: c => CYCLE_LABELS[c.billing_cycle] || c.billing_cycle },
+            { label: 'Plano', render: c => (c.ciclo_horas && c.turno ? `${c.ciclo_horas}h ${c.turno}` : '·') },
+            { label: 'Periodicidade', render: c => CYCLE_LABELS[c.billing_cycle] || c.billing_cycle },
             { label: 'Valor', className: 'font-bold', render: c => centsToBRL(c.amount_cents) },
             { label: '1º Vencimento', render: c => (c.first_due_date ? new Date(c.first_due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·') },
             {
@@ -181,7 +191,7 @@ export function ContratosTab({ currentUser }) {
         <NovoContratoModal
           currentUser={currentUser}
           onClose={() => setIsModalOpen(false)}
-          onCreated={() => { setIsModalOpen(false); fetchContracts(); }}
+          onCreated={() => { setIsModalOpen(false); fetchContracts(); setPainelVersao(v => v + 1); }}
         />
       )}
 
@@ -201,60 +211,54 @@ export function ContratosTab({ currentUser }) {
 }
 
 function NovoContratoModal({ currentUser, onClose, onCreated }) {
-  const [students, setStudents] = useState([]);
-  const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+  const [ctx, setCtx] = useState(null);
   const [form, setForm] = useState({
     student_id: '',
     billing_cycle: 'MONTHLY',
-    base_monthly_amount_cents: '',
     first_due_date: '',
     billing_type: 'UNDEFINED',
     description: '',
   });
+  const [digitar, setDigitar] = useState(false);
+  const [valorManual, setValorManual] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    (async () => {
-      if (!currentUser?.school_id) return;
-      setIsLoadingStudents(true);
-      const { data, error } = await supabase
-        .from('students')
-        .select('id, name')
-        .eq('school_id', currentUser.school_id)
-        .order('name', { ascending: true });
-      if (!error) setStudents(data || []);
-      setIsLoadingStudents(false);
-    })();
+    if (!currentUser?.school_id) return;
+    carregarContextoDeMensalidades(currentUser.school_id)
+      .then(setCtx)
+      .catch(e => { setErrorMsg(e.message || 'Não foi possível carregar os alunos.'); setCtx({ alunos: [], precos: [], contratos: [], vinculos: [], condicoes: [], descontos: [], responsaveis: [] }); });
   }, [currentUser?.school_id]);
+
+  const ano = anoDoPreco(form.first_due_date || todayISO());
+  const linhas = useMemo(() => (ctx ? montarLinhasDeMensalidade(ctx, { ano, periodicidade: form.billing_cycle }) : []), [ctx, ano, form.billing_cycle]);
+  const linha = linhas.find(l => l.aluno.id === form.student_id) || null;
+
+  const manualCents = (() => {
+    const n = parseFloat(String(valorManual).replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
+  })();
+  // Sem preço na tabela, ou querendo outro valor: o valor mensal é digitado.
+  const usaTabela = !digitar;
+  const bloqueado = linha && ['ja_tem', 'bolsista', 'sem_responsavel', 'sem_documento'].includes(linha.situacao);
+  const podeEnviar = Boolean(form.student_id && form.first_due_date && linha && !bloqueado
+    && (digitar ? manualCents > 0 : linha.situacao === 'pronto'));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!form.student_id || !form.base_monthly_amount_cents || !form.first_due_date) {
-      setErrorMsg('Preencha aluno, valor mensal base e data do 1º vencimento.');
-      return;
-    }
+    if (!podeEnviar) { setErrorMsg('Escolha o aluno e o 1º vencimento. Se faltar preço na tabela, digite o valor mensal.'); return; }
     setIsSaving(true);
     try {
-      const amountReais = parseFloat(String(form.base_monthly_amount_cents).replace(',', '.'));
-      if (!amountReais || amountReais <= 0) throw new Error('Valor mensal inválido.');
-
-      const { data, error } = await supabase.functions.invoke('create-financial-contract', {
-        body: {
-          student_id: form.student_id,
-          billing_cycle: form.billing_cycle,
-          base_monthly_amount_cents: Math.round(amountReais * 100),
-          first_due_date: form.first_due_date,
-          billing_type: form.billing_type,
-          description: form.description || undefined,
-        },
+      await chamarFuncaoFinanceira('create-financial-contract', {
+        student_id: form.student_id,
+        billing_cycle: form.billing_cycle,
+        first_due_date: form.first_due_date,
+        billing_type: form.billing_type,
+        description: form.description || undefined,
+        ...(digitar ? { base_monthly_amount_cents: manualCents } : {}),
       });
-      if (error) {
-        const serverMsg = error.context?.body ? await parseFnErrorBody(error) : null;
-        throw new Error(serverMsg || error.message);
-      }
-      if (data?.error) throw new Error(data.error);
       onCreated();
     } catch (err) {
       console.error('Erro ao criar contrato:', err);
@@ -264,36 +268,50 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
     }
   };
 
+  const previa = (() => {
+    if (!linha) return null;
+    if (linha.situacao === 'pronto' && usaTabela) {
+      return { tom: 'ok', texto: `Tabela de ${ano} · ${rotuloDoPlano(linha.ciclo, linha.turno)}: ${centsToBRL(linha.mensalCents)} por mês${linha.descontoPercent ? ` · desconto da família ${linha.descontoPercent}%` : ''}.`, valor: linha.valorDoCicloCents };
+    }
+    if (digitar && manualCents > 0 && !bloqueado) {
+      const cents = Math.round(manualCents * ({ MONTHLY: 1, QUARTERLY: 3, SEMIANNUALLY: 6, YEARLY: 12 }[form.billing_cycle]) * (1 - (linha.descontoPercent || 0) / 100));
+      return { tom: 'ok', texto: `Valor digitado: ${centsToBRL(manualCents)} por mês${linha.descontoPercent ? ` · desconto da família ${linha.descontoPercent}%` : ''}.`, valor: cents };
+    }
+    if (linha.situacao === 'sem_preco') return { tom: 'aviso', texto: `${mensagemSemPreco(linha.ciclo, linha.turno, ano)} Ou digite o valor mensal abaixo.` };
+    if (linha.situacao === 'sem_plano') return { tom: 'aviso', texto: `Aluno sem ${linha.faltando.join(' e sem ')} no cadastro. Complete em Financeiro · Planos ou digite o valor mensal abaixo.` };
+    return { tom: 'erro', texto: `${ROTULO_SITUACAO_DA_MENSALIDADE[linha.situacao]}${linha.situacao === 'bolsista' ? `: ${linha.responsavelNome || 'a família'} não recebe cobrança.` : '.'}` };
+  })();
+
   return (
     <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg text-on-surface">Novo contrato financeiro</h3>
+          <h3 className="font-black text-lg text-on-surface">Nova mensalidade</h3>
           <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Aluno</label>
+            <label htmlFor="nm-aluno" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Aluno</label>
             <select
+              id="nm-aluno"
               required
               value={form.student_id}
               onChange={e => setForm({ ...form, student_id: e.target.value })}
               className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-              disabled={isLoadingStudents}
+              disabled={!ctx}
             >
-              <option value="">{isLoadingStudents ? 'Carregando alunos...' : 'Selecione um aluno'}</option>
-              {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <option value="">{ctx ? 'Selecione um aluno' : 'Carregando alunos...'}</option>
+              {linhas.map(l => <option key={l.aluno.id} value={l.aluno.id}>{l.aluno.name} · {rotuloDoPlano(l.ciclo, l.turno)}{l.situacao === 'ja_tem' ? ' · já tem mensalidade' : ''}</option>)}
             </select>
-            {!isLoadingStudents && students.length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">Nenhum aluno cadastrado ainda nesta escola.</p>
-            )}
+            {ctx && ctx.alunos.length === 0 && <p className="text-xs text-amber-600 mt-1">Nenhum aluno ativo cadastrado ainda nesta escola.</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Ciclo de cobrança</label>
+              <label htmlFor="nm-periodicidade" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Periodicidade</label>
               <select
+                id="nm-periodicidade"
                 value={form.billing_cycle}
                 onChange={e => setForm({ ...form, billing_cycle: e.target.value })}
                 className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
@@ -302,27 +320,9 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Valor mensal base (R$)</label>
+              <label htmlFor="nm-vencimento" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">1º Vencimento</label>
               <input
-                required
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex: 850,00"
-                value={form.base_monthly_amount_cents}
-                onChange={e => setForm({ ...form, base_monthly_amount_cents: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-              />
-            </div>
-          </div>
-
-          <p className="text-xs text-on-surface-variant -mt-1">
-            O valor final por ciclo é calculado no servidor (mensal × meses do ciclo, com o desconto configurado em Configuração aplicado automaticamente).
-          </p>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">1º Vencimento</label>
-              <input
+                id="nm-vencimento"
                 required
                 type="date"
                 value={form.first_due_date}
@@ -330,23 +330,58 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
                 className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Forma de pagamento</label>
-              <select
-                value={form.billing_type}
-                onChange={e => setForm({ ...form, billing_type: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
-              >
-                <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
-                <option value="PIX">PIX</option>
-                <option value="BOLETO">Boleto</option>
-              </select>
+          </div>
+
+          {previa && (
+            <div className={`p-3 rounded-zela-md border text-sm ${previa.tom === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : previa.tom === 'aviso' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-red-50 border-red-200 text-red-800'}`}>
+              <p>{previa.texto}</p>
+              {previa.valor ? (
+                <p className="mt-1 font-bold">
+                  Cada cobrança {CYCLE_LABELS[form.billing_cycle].toLowerCase()}: {centsToBRL(previa.valor)}
+                  {form.billing_cycle !== 'MONTHLY' && <span className="font-normal"> · {centsToBRL(valorMensalEquivalente(previa.valor, form.billing_cycle))} por mês</span>}
+                </p>
+              ) : null}
             </div>
+          )}
+
+          <label className="flex items-center gap-2 text-sm text-on-surface">
+            <input type="checkbox" checked={digitar} onChange={e => setDigitar(e.target.checked)} />
+            Digitar o valor mensal em vez de usar a tabela de Planos
+          </label>
+          {digitar && (
+            <div>
+              <label htmlFor="nm-valor" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Valor mensal (R$)</label>
+              <input
+                id="nm-valor"
+                type="text"
+                inputMode="decimal"
+                placeholder="Ex: 850,00"
+                value={valorManual}
+                onChange={e => setValorManual(e.target.value)}
+                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              />
+              <p className="text-[11px] text-on-surface-variant/70 mt-1">O desconto da família continua sendo aplicado. A mensalidade fica marcada como valor digitado.</p>
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="nm-forma" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Forma de pagamento</label>
+            <select
+              id="nm-forma"
+              value={form.billing_type}
+              onChange={e => setForm({ ...form, billing_type: e.target.value })}
+              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+            >
+              <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
+              <option value="PIX">PIX</option>
+              <option value="BOLETO">Boleto</option>
+            </select>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição (opcional)</label>
+            <label htmlFor="nm-descricao" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição (opcional)</label>
             <input
+              id="nm-descricao"
               type="text"
               placeholder="Ex: Mensalidade · Turma Infantil II"
               value={form.description}
@@ -365,8 +400,8 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
             <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
               Cancelar
             </button>
-            <button type="submit" disabled={isSaving} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
-              {isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Criar contrato'}
+            <button type="submit" disabled={isSaving || !podeEnviar} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+              {isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Criar mensalidade'}
             </button>
           </div>
         </form>
@@ -375,13 +410,145 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
   );
 }
 
-async function parseFnErrorBody(error) {
-  try {
-    const body = await error.context.json();
-    return body?.error || null;
-  } catch {
-    return null;
+// Alunos que ainda não têm mensalidade (04/10/2026): o ciclo e o turno do
+// cadastro já trazem o preço da tabela de Planos e o desconto da família, e a
+// Gestão confirma vários de uma vez. Quem ainda não pode receber mensalidade
+// aparece com o motivo, em vez de sumir da lista.
+function AguardandoMensalidade({ currentUser, versao, onCriou }) {
+  const [ctx, setCtx] = useState(null);
+  const [aberto, setAberto] = useState(true);
+  const [periodicidade, setPeriodicidade] = useState('MONTHLY');
+  const [vencimento, setVencimento] = useState('');
+  const [forma, setForma] = useState('UNDEFINED');
+  const [marcados, setMarcados] = useState({});
+  const [criando, setCriando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [resumo, setResumo] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser?.school_id) return;
+    carregarContextoDeMensalidades(currentUser.school_id).then(setCtx).catch(e => setErro(e.message || 'Não foi possível carregar a lista.'));
+  }, [currentUser?.school_id, versao]);
+
+  const ano = anoDoPreco(vencimento || todayISO());
+  const linhas = useMemo(() => (ctx ? montarLinhasDeMensalidade(ctx, { ano, periodicidade }).filter(l => l.situacao !== 'ja_tem') : []), [ctx, ano, periodicidade]);
+  const prontas = linhas.filter(l => l.situacao === 'pronto');
+  const escolhidos = prontas.filter(l => marcados[l.aluno.id]);
+
+  useEffect(() => { setMarcados(m => Object.fromEntries(prontas.map(l => [l.aluno.id, m[l.aluno.id] ?? true]))); }, [ctx, ano, periodicidade]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!ctx) return erro ? <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{erro}</div> : null;
+  // Terminou o último aluno: a lista some, mas o resultado continua visível.
+  if (linhas.length === 0) {
+    if (!resumo) return null;
+    return (
+      <div className="space-y-1">
+        <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}. Não há mais alunos aguardando.</div>
+        {resumo.falhas.length > 0 && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{resumo.falhas.join(' · ')}</div>}
+      </div>
+    );
   }
+
+  const criar = async () => {
+    setErro('');
+    setResumo(null);
+    if (!vencimento) { setErro('Escolha o 1º vencimento.'); return; }
+    setCriando(true);
+    try {
+      const criados = [];
+      const falhas = [];
+      for (let i = 0; i < escolhidos.length; i += 40) {
+        const lote = escolhidos.slice(i, i + 40);
+        const data = await chamarFuncaoFinanceira('create-financial-contracts-batch', {
+          mode: 'manual',
+          items: lote.map(l => ({ student_id: l.aluno.id, billing_cycle: periodicidade, first_due_date: vencimento, billing_type: forma })),
+        });
+        for (const r of data.resultados) {
+          const nome = lote.find(l => l.aluno.id === r.student_id)?.aluno.name || '';
+          if (r.ok) criados.push(nome); else falhas.push(`${nome}: ${r.erro}`);
+        }
+      }
+      setResumo({ criados: criados.length, falhas });
+      onCriou();
+    } catch (e) {
+      setErro(e.message || 'Não foi possível criar as mensalidades.');
+    } finally {
+      setCriando(false);
+    }
+  };
+
+  return (
+    <div className="border border-amber-200 bg-amber-50/50 rounded-zela-lg">
+      <button type="button" onClick={() => setAberto(a => !a)} className="w-full flex items-center justify-between gap-2 p-3 text-left">
+        <span className="text-sm font-bold text-on-surface">Alunos aguardando mensalidade ({linhas.length})</span>
+        <span className="text-xs text-on-surface-variant">{prontas.length} {prontas.length === 1 ? 'pronto' : 'prontos'} · {aberto ? 'recolher' : 'ver'}</span>
+      </button>
+      {aberto && (
+        <div className="p-3 pt-0 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="ag-periodicidade" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Periodicidade</label>
+              <select id="ag-periodicidade" value={periodicidade} onChange={e => setPeriodicidade(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm">
+                {CYCLES.map(c => <option key={c} value={c}>{CYCLE_LABELS[c]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ag-vencimento" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">1º vencimento</label>
+              <input id="ag-vencimento" type="date" value={vencimento} onChange={e => setVencimento(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm" />
+            </div>
+            <div>
+              <label htmlFor="ag-forma" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Forma de pagamento</label>
+              <select id="ag-forma" value={forma} onChange={e => setForma(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm">
+                <option value="UNDEFINED">Link de pagamento</option>
+                <option value="PIX">PIX</option>
+                <option value="BOLETO">Boleto</option>
+              </select>
+            </div>
+          </div>
+          <p className="text-[11px] text-on-surface-variant">Preços da tabela de {ano}. O desconto de cada família entra sozinho. Quem estiver sem preço ou sem ciclo e turno se resolve em Financeiro · Planos.</p>
+
+          <ul className="divide-y divide-outline-variant/60 bg-white rounded-zela-md border border-outline-variant">
+            {linhas.map(l => (
+              <li key={l.aluno.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+                {l.situacao === 'pronto' ? (
+                  <input type="checkbox" aria-label={`Criar mensalidade de ${l.aluno.name}`} checked={Boolean(marcados[l.aluno.id])} onChange={e => setMarcados(m => ({ ...m, [l.aluno.id]: e.target.checked }))} />
+                ) : <span className="w-[13px]" />}
+                <span className="font-semibold text-on-surface flex-1 min-w-[160px]">{l.aluno.name}</span>
+                <span className="text-xs text-on-surface-variant whitespace-nowrap">{rotuloDoPlano(l.ciclo, l.turno)}</span>
+                {l.situacao === 'pronto' ? (
+                  <span className="text-xs tabular-nums whitespace-nowrap">
+                    <strong>{centsToBRL(l.valorDoCicloCents)}</strong>
+                    {l.descontoPercent ? <span className="text-on-surface-variant"> · desconto {l.descontoPercent}%</span> : null}
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-amber-800 whitespace-nowrap">
+                    {l.situacao === 'sem_preco' && l.ciclo && l.turno ? mensagemSemPreco(l.ciclo, l.turno, ano) : l.situacao === 'sem_plano' ? `Sem ${l.faltando.join(' e sem ')}` : ROTULO_SITUACAO_DA_MENSALIDADE[l.situacao]}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {erro && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2"><AlertCircle size={16} className="shrink-0" /> {erro}</div>}
+          {resumo && (
+            <div className="space-y-1">
+              <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}.</div>
+              {resumo.falhas.length > 0 && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{resumo.falhas.join(' · ')}</div>}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={criar}
+            disabled={criando || escolhidos.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
+          >
+            {criando ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Criar {escolhidos.length} {escolhidos.length === 1 ? 'mensalidade' : 'mensalidades'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─────────────────────────────── COBRANÇAS ───────────────────────────────
@@ -392,6 +559,7 @@ async function parseFnErrorBody(error) {
 export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPayment = false }) {
   const [charges, setCharges] = useState([]);
   const [payingCharge, setPayingCharge] = useState(null);
+  const [adjustingCharge, setAdjustingCharge] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -406,7 +574,7 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
     try {
       let query = supabase
         .from('financial_charges')
-        .select('id, due_date, amount_cents, status, payment_method, payment_link, boleto_url, pix_copy_paste, paid_at, students:student_id(name)')
+        .select('id, due_date, amount_cents, original_amount_cents, status, payment_method, payment_link, boleto_url, pix_copy_paste, paid_at, students:student_id(name)')
         .eq('school_id', currentUser.school_id)
         .order('due_date', { ascending: false })
         .limit(200);
@@ -504,7 +672,17 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
           columns={[
             { label: 'Aluno', primary: true, render: c => c.students?.name || '·' },
             { label: 'Vencimento', render: c => (c.due_date ? new Date(c.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·') },
-            { label: 'Valor', className: 'font-bold', render: c => centsToBRL(c.amount_cents) },
+            {
+              label: 'Valor', className: 'font-bold',
+              render: c => (
+                <span>
+                  {centsToBRL(c.amount_cents)}
+                  {c.original_amount_cents && c.original_amount_cents !== c.amount_cents && (
+                    <span className="block text-[11px] font-normal text-on-surface-variant line-through">{centsToBRL(c.original_amount_cents)}</span>
+                  )}
+                </span>
+              ),
+            },
             { label: 'Método', className: 'uppercase text-xs text-on-surface-variant', render: c => c.payment_method || '·' },
             {
               label: 'Status',
@@ -528,9 +706,14 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
             ...(canRegisterPayment ? [{
               label: '', actions: true, align: 'right',
               render: c => ['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(c.status) && (
-                <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
-                  <HandCoins size={13} /> Registrar pagamento
-                </button>
+                <span className="inline-flex items-center gap-3">
+                  <button onClick={() => setAdjustingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
+                    <Percent size={13} /> Ajustar valor
+                  </button>
+                  <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
+                    <HandCoins size={13} /> Registrar pagamento
+                  </button>
+                </span>
               ),
             }] : []),
           ]}
@@ -546,6 +729,14 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
         />
       )}
 
+      {adjustingCharge && (
+        <AjustarCobrancaModal
+          charge={adjustingCharge}
+          onClose={() => setAdjustingCharge(null)}
+          onDone={() => { setAdjustingCharge(null); setSuccessMsg('Valor da cobrança ajustado.'); fetchCharges(); }}
+        />
+      )}
+
       {isAvulsaModalOpen && (
         <NovaCobrancaAvulsaModal
           currentUser={currentUser}
@@ -553,6 +744,85 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
           onCreated={() => { setIsAvulsaModalOpen(false); fetchCharges(); }}
         />
       )}
+    </div>
+  );
+}
+
+// Ajuste do valor de UMA cobrança em aberto (04/10/2026), por exemplo um
+// desconto especial em um mês. O Asaas é atualizado primeiro (Edge Function
+// adjust-charge); o valor original fica guardado e o motivo vai para a
+// auditoria, sem aparecer para a família.
+function AjustarCobrancaModal({ charge, onClose, onDone }) {
+  const [valor, setValor] = useState((charge.amount_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+  const [motivo, setMotivo] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const novoCents = (() => {
+    const n = parseFloat(String(valor).replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
+  })();
+  const base = charge.original_amount_cents || charge.amount_cents;
+  const diferenca = novoCents ? novoCents - charge.amount_cents : 0;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    if (!novoCents) { setErrorMsg('Informe o novo valor, maior que zero.'); return; }
+    if (novoCents === charge.amount_cents) { setErrorMsg('O novo valor é igual ao atual.'); return; }
+    if (motivo.trim().length < 3) { setErrorMsg('Informe o motivo do ajuste.'); return; }
+    setIsSaving(true);
+    try {
+      await chamarFuncaoFinanceira('adjust-charge', { charge_id: charge.id, new_amount_cents: novoCents, reason: motivo.trim() });
+      onDone();
+    } catch (err) {
+      setErrorMsg(err.message || 'Não foi possível ajustar o valor.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-black text-lg text-on-surface">Ajustar valor da cobrança</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
+        </div>
+        <p className="text-sm text-on-surface-variant mb-3">
+          {charge.students?.name || 'Aluno'} · vence em {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'} · valor atual <strong>{centsToBRL(charge.amount_cents)}</strong>
+          {base !== charge.amount_cents && <span> (original {centsToBRL(base)})</span>}
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="aj-valor" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Novo valor (R$)</label>
+            <input id="aj-valor" type="text" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)}
+              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
+            {novoCents > 0 && diferenca !== 0 && (
+              <p className={`text-xs mt-1 font-bold ${diferenca < 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {diferenca < 0 ? `Desconto de ${centsToBRL(-diferenca)} nesta cobrança` : `Acréscimo de ${centsToBRL(diferenca)} nesta cobrança`}
+              </p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="aj-motivo" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Motivo</label>
+            <input id="aj-motivo" type="text" placeholder="Ex: Desconto especial de março" value={motivo} onChange={e => setMotivo(e.target.value)}
+              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
+            <p className="text-[11px] text-on-surface-variant/70 mt-1">O motivo fica na auditoria. A família não vê.</p>
+          </div>
+          <p className="text-xs text-on-surface-variant">Só vale para esta cobrança. As próximas continuam com o valor da mensalidade.</p>
+          {errorMsg && (
+            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0" /> {errorMsg}
+            </div>
+          )}
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">Cancelar</button>
+            <button type="submit" disabled={isSaving} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+              {isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Ajustar valor'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

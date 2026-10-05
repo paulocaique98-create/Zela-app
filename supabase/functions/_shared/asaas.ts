@@ -128,6 +128,19 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch('/v3/subscriptions', { method: 'POST', body: JSON.stringify(input) });
     },
 
+    // Ajuste do valor de UMA cobrança ainda em aberto (desconto de um mês).
+    // O Asaas só aceita enquanto a cobrança está aguardando pagamento ou vencida.
+    // deno-lint-ignore no-explicit-any
+    updatePayment(paymentId: string, input: { value?: number; dueDate?: string; description?: string }): Promise<any> {
+      return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}`, { method: 'PUT', body: JSON.stringify(input) });
+    },
+
+    // Reajuste da assinatura: vale para as cobranças que o Asaas gerar daqui
+    // pra frente. updatePendingPayments=false deixa as já emitidas como estão.
+    updateSubscription(subscriptionId: string, input: { value?: number; updatePendingPayments?: boolean; nextDueDate?: string; description?: string }): Promise<AsaasSubscription> {
+      return asaasFetch(`/v3/subscriptions/${encodeURIComponent(subscriptionId)}`, { method: 'PUT', body: JSON.stringify(input) });
+    },
+
     // Chamada leve só pra validar que a chave é válida (usada por
     // set-school-gateway-key antes de gravar no Vault).
     ping(): Promise<unknown> {

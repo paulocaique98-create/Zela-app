@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
-  HandCoins, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
+  HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
   UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2,
 } from 'lucide-react';
@@ -42,6 +42,7 @@ const GestaoDocumentosPendentes = lazy(() => import('./GestaoDocumentosPendentes
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
 const GestaoVisaoFinanceira = lazy(() => import('./GestaoVisaoFinanceira'));
 const GestaoRecebimentos = lazy(() => import('./GestaoRecebimentos'));
+const GestaoPlanos = lazy(() => import('./GestaoPlanos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
@@ -245,6 +246,7 @@ export default function GestaoPortal({
             </>)}
             {group('financeiro', 'Financeiro', Wallet, <>
               {item('financeiro-visao', PieChart, 'Visão Financeira')}
+              {showFinanceiro && item('financeiro-planos', Tag, 'Planos')}
               {showFinanceiro && item('financeiro-mensalidades', ReceiptText, 'Mensalidades')}
               {showFinanceiro && item('financeiro-cobrancas', Wallet, 'Cobranças')}
               {showFinanceiro && item('financeiro-inadimplencia', AlertOctagon, 'Inadimplência')}
@@ -346,7 +348,8 @@ export default function GestaoPortal({
 
           {/* Financeiro */}
           {abaAtual === 'financeiro-visao' && <GestaoVisaoFinanceira currentUser={currentUser} setGestaoTab={goFromShortcut} />}
-          {abaAtual === 'financeiro-mensalidades' && shell('Planos de mensalidade de cada aluno, cobrados automaticamente pelo Asaas.', <MensalidadesTab currentUser={currentUser} />)}
+          {abaAtual === 'financeiro-planos' && <GestaoPlanos currentUser={currentUser} />}
+          {abaAtual === 'financeiro-mensalidades' && shell('Mensalidade de cada aluno, cobrada automaticamente pelo Asaas.', <MensalidadesTab currentUser={currentUser} />)}
           {abaAtual === 'financeiro-cobrancas' && shell('Todas as cobranças geradas, com situação e forma de pagamento.', <CobrancasTab key="all" currentUser={currentUser} canRegisterPayment />)}
           {abaAtual === 'financeiro-inadimplencia' && shell('Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', <CobrancasTab key="overdue" currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment />)}
           {abaAtual === 'financeiro-recebimentos' && <GestaoRecebimentos currentUser={currentUser} />}

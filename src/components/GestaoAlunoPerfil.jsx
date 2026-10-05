@@ -6,6 +6,8 @@ import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/
 import { logAction } from '../lib/auditLog';
 import { perfilDasTurmas, sugerirTurma, formatIdade, idadeEmMeses, MOTIVOS_MUDANCA_TURMA } from '../lib/sugestaoTurma';
 import { recursosDoPerfil } from '../lib/perfisGestao';
+import CondicaoFinanceiraFamilia from './CondicaoFinanceiraFamilia';
+import { CICLOS_DE_HORAS, TURNOS, normalizarTurno, normalizarCiclo } from '../../supabase/functions/_shared/planPricing.ts';
 
 const TABS = [
   { key: 'pessoais', label: 'Dados Pessoais', icon: User },
@@ -564,9 +566,11 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                 <p className="mt-1 text-sm text-on-surface">{student.turma || '·'}</p>
                 <p className="text-[11px] text-on-surface-variant/60 mt-1">Para trocar a turma, salve ou cancele esta edição e use o botão "Mudar de turma".</p>
               </div>
-              <EditField label="Turno" value={form.turno} onChange={v => setForm(f => ({ ...f, turno: v }))} />
+              <SelectField label="Turno" value={form.turno} onChange={v => setForm(f => ({ ...f, turno: v }))}
+                options={[{ value: '', label: 'Sem turno' }, ...TURNOS.map(t => ({ value: t, label: t })), ...(form.turno && !normalizarTurno(form.turno) ? [{ value: form.turno, label: `${form.turno} (fora do padrão)` }] : [])]} />
               <EditField label="Período" value={form.periodo} onChange={v => setForm(f => ({ ...f, periodo: v }))} />
-              <EditField label="Ciclo contratado (horas)" type="number" value={form.contracted_hours} onChange={v => setForm(f => ({ ...f, contracted_hours: v }))} />
+              <SelectField label="Ciclo contratado" value={String(form.contracted_hours || '')} onChange={v => setForm(f => ({ ...f, contracted_hours: v }))}
+                options={[{ value: '', label: 'Sem ciclo' }, ...CICLOS_DE_HORAS.map(c => ({ value: String(c), label: `${c} horas` })), ...(form.contracted_hours && !normalizarCiclo(form.contracted_hours) ? [{ value: String(form.contracted_hours), label: `${form.contracted_hours} (fora do padrão)` }] : [])]} />
               <EditField label="Horário de entrada" type="time" value={form.contracted_entry_time} onChange={v => setForm(f => ({ ...f, contracted_entry_time: v }))} />
               <EditField label="Horário de saída" type="time" value={form.contracted_exit_time} onChange={v => setForm(f => ({ ...f, contracted_exit_time: v }))} />
             </div>
@@ -678,7 +682,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
         {activeTab === 'financeiro' && recursos.financeiro && (
           <div className="max-w-2xl space-y-4">
             {!contract ? (
-              <EmptyState text="Nenhum contrato financeiro encontrado pra este aluno." />
+              <EmptyState text="Nenhuma mensalidade encontrada pra este aluno." />
             ) : (
               <>
                 <Field label="Responsável financeiro" value={financialGuardian?.users?.name || '—'} />
@@ -697,6 +701,13 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                 <p className="text-xs text-on-surface-variant/60 pt-2">Resumo apenas — para detalhes completos e histórico de cobranças, acesse o menu Financeiro.</p>
               </>
             )}
+            <CondicaoFinanceiraFamilia
+              currentUser={currentUser}
+              student={student}
+              guardianId={financialGuardian?.guardian_id}
+              guardianName={financialGuardian?.users?.name}
+              temMensalidadeAtiva={Boolean(contract && ['active', 'paused'].includes(contract.status))}
+            />
           </div>
         )}
 
@@ -785,6 +796,21 @@ function Field({ label, value }) {
     <div>
       <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">{label}</p>
       <p className="text-sm text-on-surface mt-0.5">{value || '—'}</p>
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options }) {
+  return (
+    <div>
+      <label className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="mt-1 w-full p-2.5 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
     </div>
   );
 }

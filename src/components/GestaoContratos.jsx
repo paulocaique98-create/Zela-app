@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { printContract } from '../lib/printContract';
 import { centsToBRL, formatDateBR, fillTemplate, valoresManuaisDoContrato } from '../lib/gestaoUtils';
+import { valoresDePrecoDoContrato } from '../lib/mensalidadesData';
 import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
@@ -30,7 +31,10 @@ export const TEMPLATE_FIELDS = [
   ['responsavel_nome', 'Nome do responsável'], ['responsavel_documento', 'CPF ou documento do responsável'],
   ['responsavel_endereco', 'Endereço do responsável'], ['responsavel_telefone', 'Telefone do responsável'],
   ['responsavel_email', 'E-mail do responsável'],
-  ['valor_mensal', 'Mensalidade'], ['primeiro_vencimento', 'Primeiro vencimento'],
+  ['valor_mensal', 'Mensalidade (por mês, já com o desconto da família)'], ['primeiro_vencimento', 'Primeiro vencimento'],
+  ['plano_ciclo', 'Ciclo do aluno (6, 8 ou 10 horas)'], ['plano_turno', 'Turno do plano'],
+  ['periodicidade', 'Periodicidade da cobrança'], ['valor_parcela', 'Valor de cada cobrança'],
+  ['valor_mensal_equivalente', 'Valor por mês'], ['valor_anual', 'Valor do ano (12 meses)'], ['desconto_familia', 'Desconto da família'],
   ['ano_letivo', 'Ano letivo'], ['data_hoje', 'Data de hoje'],
 ];
 
@@ -279,7 +283,7 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
 // Monta os valores dos campos {{...}} a partir do aluno escolhido.
 async function buildTemplateValues(student, school) {
   const [{ data: fc }, { data: year }, { data: legal }] = await Promise.all([
-    supabase.from('financial_contracts').select('id, amount_cents, first_due_date, financial_guardian_id')
+    supabase.from('financial_contracts').select('id, amount_cents, first_due_date, financial_guardian_id, billing_cycle, discount_percent_applied, ciclo_horas, turno')
       .eq('student_id', student.id).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('school_years').select('id, name').eq('school_id', student.school_id).eq('status', 'aberto').maybeSingle(),
     // Responsável legal (quem assina pela escola): tabela própria, 30/09/2026.
@@ -289,6 +293,19 @@ async function buildTemplateValues(student, school) {
   const { data: g } = guardianId
     ? await supabase.from('users').select('name, doc_type, doc_number, phone, email, street, number, complement, neighborhood, city, state').eq('id', guardianId).maybeSingle()
     : { data: null };
+  // Preço (04/10/2026): mensalidade ativa, ou tabela de Planos; bolsista sai
+  // como "bolsa integral". Quem não lê essas tabelas (Recepção) só deixa o
+  // campo para preencher na hora.
+  const anoDoContrato = fc?.first_due_date ? Number(fc.first_due_date.slice(0, 4)) : Number(year?.name) || new Date().getFullYear();
+  const [{ data: condicao }, { data: precos }, { data: descontoMensal }] = await Promise.all([
+    guardianId ? supabase.from('financial_guardian_conditions').select('bolsista').eq('school_id', student.school_id).eq('guardian_id', guardianId).maybeSingle() : { data: null },
+    supabase.from('school_plan_prices').select('school_year, ciclo_horas, turno, monthly_amount_cents').eq('school_id', student.school_id).eq('school_year', anoDoContrato),
+    guardianId ? supabase.from('financial_billing_discounts').select('discount_percent').eq('school_id', student.school_id).eq('guardian_id', guardianId).eq('billing_cycle', 'MONTHLY').maybeSingle() : { data: null },
+  ]);
+  const preco = valoresDePrecoDoContrato({
+    contrato: fc, bolsista: Boolean(condicao?.bolsista), precos: precos || [], ano: anoDoContrato, aluno: student,
+    descontoMensalPercent: Number(descontoMensal?.discount_percent) || 0, formatarData: formatDateBR, formatarMoeda: centsToBRL,
+  });
   const address = g ? [[g.street, g.number].filter(Boolean).join(', '), g.complement, g.neighborhood, [g.city, g.state].filter(Boolean).join('/')].filter(Boolean).join(' · ') : '';
   return {
     financialContractId: fc?.id || null,
@@ -306,7 +323,7 @@ async function buildTemplateValues(student, school) {
       aluno_turma: student.turma, aluno_turno: student.turno, aluno_periodo: student.periodo,
       responsavel_nome: g?.name, responsavel_documento: g?.doc_number ? `${g.doc_type ? `${g.doc_type.toUpperCase()} ` : ''}${g.doc_number}` : '',
       responsavel_endereco: address, responsavel_telefone: g?.phone, responsavel_email: g?.email,
-      valor_mensal: fc?.amount_cents ? centsToBRL(fc.amount_cents) : '', primeiro_vencimento: fc?.first_due_date ? formatDateBR(fc.first_due_date) : '',
+      ...preco,
       ano_letivo: year?.name || String(new Date().getFullYear()),
       data_hoje: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' }),
     },
@@ -330,7 +347,7 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
   const [manual, setManual] = useState({ valor: '', vencimento: '' });
 
   useEffect(() => {
-    supabase.from('students').select('id, name, family_id, turma, turno, periodo, birth_date, school_id').eq('school_id', currentUser.school_id).order('name').then(({ data }) => setStudents(data || []));
+    supabase.from('students').select('id, name, family_id, turma, turno, periodo, birth_date, school_id, contracted_hours').eq('school_id', currentUser.school_id).order('name').then(({ data }) => setStudents(data || []));
     supabase.from('contract_templates').select('*').eq('school_id', currentUser.school_id).eq('kind', kind).eq('active', true).order('name').then(({ data }) => setTemplates(data || []));
     if (kind === 'aditivo') {
       supabase.from('contract_documents').select('id, title, student_id, students:student_id(name)').eq('school_id', currentUser.school_id).eq('kind', 'contrato').eq('status', 'assinado').order('created_at', { ascending: false }).then(({ data }) => setSignedContracts(data || []));

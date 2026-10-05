@@ -18,7 +18,7 @@ describe('Perfis do Portal da Gestão', () => {
 
   it('Coordenação e Direção não veem nada financeiro, de contrato, hora extra, configuração ou LGPD', () => {
     const sensiveis = [
-      'financeiro-visao', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia', 'financeiro-recebimentos',
+      'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia', 'financeiro-recebimentos',
       'financeiro-despesas', 'contratos-lista', 'contratos-modelos', 'contratos-assinaturas', 'contratos-aditivos', 'horas-extras',
       'relatorios-financeiro', 'relatorios-gestao', 'config-financeiro', 'config-seguranca', 'permissoes-perfis', 'permissoes-auditoria',
       'integracoes', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-unificar', 'cadastros-funcionarios', 'cadastros-fornecedores',

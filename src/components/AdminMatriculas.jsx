@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
 import { getSignedUrl } from '../lib/storage';
 import { documentosDaSolicitacao } from '../lib/matriculaFields';
+import { chamarFuncaoFinanceira } from '../lib/funcoesFinanceiras';
+import { resumoDaCriacaoAutomatica } from '../lib/mensalidadesData';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { logAction } from '../lib/auditLog';
 import { generateTempPassword } from '../utils/tempPassword';
@@ -323,6 +325,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [tab, setTab] = useState('approved');
   const [decidingId, setDecidingId] = useState(null);
   const [newGuardianCredentials, setNewGuardianCredentials] = useState(null);
@@ -460,11 +463,14 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       }
     }
 
-    return { segundoCredentials };
+    // Alunos desta solicitação (novos e já matriculados) para a criação automática de mensalidade.
+    const studentIds = [...new Set([...newStudentIds, ...(solicitacao.criancas || []).map(c => c.student_id).filter(Boolean)])];
+    return { segundoCredentials, studentIds };
   };
 
   const handleDecide = async (solicitacao, status, reason) => {
     setDecidingId(solicitacao.id);
+    setNotice('');
     try {
       let segundoCredentials = null;
       const patch = {
@@ -486,6 +492,17 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         // não precisa (e não deve) fazer um update solto aqui por cima.
         const result = await convertSolicitacaoToRecords(solicitacao);
         segundoCredentials = result.segundoCredentials;
+        // Mensalidade automática (04/10/2026): só age se a escola ligou em
+        // Financeiro · Planos. Nunca atrapalha a aprovação, que já foi feita.
+        try {
+          if (result.studentIds?.length) {
+            const auto = await chamarFuncaoFinanceira('create-financial-contracts-batch', { mode: 'auto', items: result.studentIds.map(student_id => ({ student_id })) });
+            setNotice(resumoDaCriacaoAutomatica(auto));
+          }
+        } catch (autoErr) {
+          console.warn('[AdminMatriculas] Criação automática de mensalidade não concluída:', autoErr);
+          setNotice('Matrícula aprovada. A mensalidade automática não pôde ser criada agora; crie em Financeiro · Mensalidades.');
+        }
       } else {
         const { error: updateError } = await supabase.from('matricula_solicitacoes').update(patch).eq('id', solicitacao.id);
         if (updateError) throw updateError;
@@ -586,6 +603,9 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+        )}
+        {notice && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-zela-md text-sm font-medium">{notice}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

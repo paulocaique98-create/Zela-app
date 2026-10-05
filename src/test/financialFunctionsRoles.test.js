@@ -15,6 +15,9 @@ const runIf = hasIntegrationCredentials ? describe : describe.skip;
 const FINANCIAL_FUNCTIONS = [
   'create-avulsa-charge',
   'create-financial-contract',
+  'create-financial-contracts-batch',
+  'adjust-charge',
+  'readjust-contracts',
   'create-payment',
   'set-school-gateway-key',
   'process-payment-webhook',
