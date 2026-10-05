@@ -84,13 +84,26 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
   };
   useEffect(() => { loadHistory(); }, [school.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pacotes do menu Planos (banco). Se não carregar ou vier vazio, usa os
+  // PACOTES fixos do catálogo.
+  const [pacotes, setPacotes] = useState(PACOTES);
+  useEffect(() => {
+    let vivo = true;
+    supabase.from('zela_planos').select('id, nome, itens').eq('modalidade', 'pacote').eq('ativo', true).order('ordem').limit(50)
+      .then(({ data }) => {
+        const validos = (data || []).map(p => ({ id: p.id, nome: p.nome, itens: (p.itens || []).filter(i => ITEM_POR_ID[i]) }));
+        if (vivo && validos.length) setPacotes(validos);
+      });
+    return () => { vivo = false; };
+  }, []);
+
   // Chaves que vão mudar ao salvar (inclui plano base que estivesse desligado).
   const alteradas = useMemo(
     () => ITENS.flatMap(i => i.keys).filter(k => draft[k] !== (original[k] === true)),
     [draft, original],
   );
   const itensAlterados = new Set(ITENS.filter(i => i.keys.some(k => alteradas.includes(k))).map(i => i.id));
-  const pacote = pacoteAtual(draft);
+  const pacote = pacoteAtual(draft, pacotes);
   const item = ITEM_POR_ID[selectedId];
 
   const selecionar = (id) => { setSelectedId(id); setMobileDetail(true); };
@@ -116,7 +129,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
 
   const status = statusDoItem(draft, item);
   const requisitoOk = !item.requer || estadoDoItem(draft, ITEM_POR_ID[item.requer]) === 'on';
-  const pacotesComItem = PACOTES.filter(p => p.itens.includes(item.id)).map(p => p.nome);
+  const pacotesComItem = pacotes.filter(p => p.itens.includes(item.id)).map(p => p.nome);
   const historico = historicoDoItem(changes, item);
   const Icone = ICONES[item.id] || Lock;
 
@@ -125,11 +138,11 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
       <div className="flex flex-col gap-1.5">
         <p className="text-[11px] font-bold uppercase tracking-wider text-dev-text-muted">Pacote</p>
         <div className="flex bg-dev-bg border border-dev-surface-high rounded-zela-md p-[3px] gap-0.5" role="group" aria-label="Pacote">
-          {PACOTES.map(p => (
+          {pacotes.map(p => (
             <button
               key={p.id}
               type="button"
-              onClick={() => setDraft(d => aplicarPacote(d, p.id))}
+              onClick={() => setDraft(d => aplicarPacote(d, p.id, pacotes))}
               aria-pressed={pacote === p.id}
               className={`flex-1 min-h-[36px] rounded-[9px] text-xs font-bold transition ${pacote === p.id ? 'bg-dev-primary text-dev-bg' : 'text-dev-text-muted hover:text-dev-text'}`}
             >
@@ -139,7 +152,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
           <span className={`flex-1 min-h-[36px] rounded-[9px] text-xs font-bold flex items-center justify-center ${pacote === 'livre' ? 'bg-dev-surface-high text-dev-text' : 'text-dev-text-muted/60'}`}>Livre</span>
         </div>
         <p className="text-[11px] text-dev-text-muted">
-          {pacote === 'livre' ? 'Combinação fora dos pacotes.' : `Pacote ${PACOTES.find(p => p.id === pacote).nome}: plano base${PACOTES.find(p => p.id === pacote).itens.map(id => ` + ${ITEM_POR_ID[id].nome}`).join('')}.`}
+          {pacote === 'livre' ? 'Combinação fora dos pacotes.' : `Pacote ${pacotes.find(p => p.id === pacote).nome}: plano base${pacotes.find(p => p.id === pacote).itens.map(id => ` + ${ITEM_POR_ID[id].nome}`).join('')}.`}
         </p>
       </div>
 
@@ -290,7 +303,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
           {alteradas.length ? (
             <p className="text-sm flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" /> {itensAlterados.size} {itensAlterados.size === 1 ? 'item alterado' : 'itens alterados'} · não salvo</p>
           ) : (
-            <p className="text-sm text-dev-text-muted truncate">{pacote === 'livre' ? 'Combinação livre' : `Pacote ${PACOTES.find(p => p.id === pacote).nome}`} · tudo salvo</p>
+            <p className="text-sm text-dev-text-muted truncate">{pacote === 'livre' ? 'Combinação livre' : `Pacote ${pacotes.find(p => p.id === pacote).nome}`} · tudo salvo</p>
           )}
         </div>
         {alteradas.length > 0 && (

@@ -6,7 +6,7 @@ import {
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
-  UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2,
+  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags,
 } from 'lucide-react';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -50,6 +50,7 @@ const GestaoOcorrencias = lazy(() => import('./GestaoOcorrencias'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
+const GestaoMeuPlano = lazy(() => import('./GestaoMeuPlano'));
 const GestaoExclusoesConta = lazy(() => import('./GestaoExclusoesConta'));
 const GestaoBiometrias = lazy(() => import('./GestaoBiometrias'));
 const ConfigComunicacao = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigComunicacao })));
@@ -58,6 +59,7 @@ const ConfigSeguranca = lazy(() => import('./GestaoConfiguracoes').then(m => ({ 
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
+const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
 const AdminCadastroComunicados = lazy(() => import('./AdminCadastroComunicados'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
@@ -275,6 +277,7 @@ export default function GestaoPortal({
               {item('academico-ano-letivo', CalendarRange, 'Ano Letivo')}
               {item('academico-frequencia', ClipboardList, 'Frequência')}
               {item('academico-relatorios', FileText, 'Pedagógico')}
+              {item('academico-mapa-habilidades', Sprout, 'Mapa de Habilidades')}
               {item('academico-ocorrencias', NotebookPen, 'Ocorrências')}
               {item('calendario', CalendarDays, 'Calendário')}
               {item('academico-cardapio', UtensilsCrossed, 'Cardápio')}
@@ -294,6 +297,7 @@ export default function GestaoPortal({
             {/* Permissões e Integrações ficam dentro de Configurações
                 (pedido de 28/09/2026: menu principal mais curto). */}
             {group('configuracoes', 'Configurações', Settings, <>
+              {item('config-meu-plano', Tags, 'Meu plano')}
               {item('config-escola', School, 'Escola')}
               {item('config-academico', BookOpen, 'Acadêmico')}
               {item('config-financeiro', Wallet, 'Financeiro')}
@@ -381,6 +385,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-ano-letivo' && <GestaoAnoLetivo currentUser={currentUser} />}
           {abaAtual === 'academico-frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-relatorios' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-mapa-habilidades' && <AdminMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-ocorrencias' && <GestaoOcorrencias currentUser={currentUser} />}
 
           {abaAtual === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
@@ -420,6 +425,7 @@ export default function GestaoPortal({
           {abaAtual === 'config-comunicacao' && <ConfigComunicacao currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />}
           {abaAtual === 'config-seguranca' && <ConfigSeguranca currentUser={currentUser} />}
 
+          {abaAtual === 'config-meu-plano' && <GestaoMeuPlano />}
           {abaAtual === 'integracoes' && <GestaoIntegracoes currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} />}
         </Suspense>
 

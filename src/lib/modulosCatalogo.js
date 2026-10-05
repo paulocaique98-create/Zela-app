@@ -48,7 +48,7 @@ export const ITENS = [
     resumo: 'Registros e relatórios de desenvolvimento das crianças.',
     keys: ['relatorios_pedagogicos', 'frequencia', 'materias'],
     inclui: [
-      { nome: 'Relatórios de desenvolvimento', desc: 'Semestral e Mitigação, preenchidos pelas professoras' },
+      { nome: 'Relatórios de desenvolvimento', desc: 'Semestral, Mitigação e Mapa de Habilidades, preenchidos pelas professoras' },
       { nome: 'Frequência', desc: 'Chamada por turma e por dia' },
       { nome: 'Matérias', desc: 'Áreas de conhecimento ligadas às turmas' },
     ],
@@ -202,19 +202,28 @@ export function normalizarFeatures(features) {
   return next;
 }
 
-export function pacoteAtual(features) {
+export function pacoteAtual(features, pacotes = PACOTES) {
   const ligados = new Set(VENDAVEIS.filter(i => estadoDoItem(features, i) === 'on').map(i => i.id));
   const algumParcial = VENDAVEIS.some(i => estadoDoItem(features, i) === 'parcial');
   if (algumParcial) return 'livre';
-  const pacote = PACOTES.find(p => p.itens.length === ligados.size && p.itens.every(id => ligados.has(id)));
+  const pacote = pacotes.find(p => p.itens.length === ligados.size && p.itens.every(id => ligados.has(id)));
   return pacote ? pacote.id : 'livre';
 }
 
-export function aplicarPacote(features, pacoteId) {
-  const pacote = PACOTES.find(p => p.id === pacoteId);
+export function aplicarPacote(features, pacoteId, pacotes = PACOTES) {
+  const pacote = pacotes.find(p => p.id === pacoteId);
   if (!pacote) return features;
   let next = normalizarFeatures(features);
   for (const item of VENDAVEIS) next = ligarItem(next, item.id, pacote.itens.includes(item.id));
+  return next;
+}
+
+// Generaliza aplicarPacote: liga o base e os itens informados e desliga os
+// demais itens vendáveis (usado pelos planos do menu Planos).
+export function aplicarItens(features, itemIds) {
+  const ids = new Set(itemIds || []);
+  let next = normalizarFeatures(features);
+  for (const item of VENDAVEIS) next = ligarItem(next, item.id, ids.has(item.id));
   return next;
 }
 

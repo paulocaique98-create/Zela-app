@@ -49,6 +49,7 @@ const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
+const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
@@ -495,7 +496,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
-        {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => adminTab === r.key && (
+        {adminTab === 'rel-mapa-habilidades' && <AdminMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+        {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => adminTab === r.key && (
           <AdminRelatorioPlaceholder key={r.key} title={r.label} />
         ))}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}

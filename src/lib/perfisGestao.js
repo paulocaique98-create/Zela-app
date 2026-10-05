@@ -44,6 +44,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'academico-ano-letivo',
   'academico-frequencia',
   'academico-relatorios',
+  'academico-mapa-habilidades',
   'academico-ocorrencias',
   'calendario',
   'academico-cardapio',
@@ -76,7 +77,7 @@ export const ABAS_SO_GESTAO = new Set([
   'horas-extras',
   'cadastros-funcionarios', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-qualidade-biometria', 'cadastros-unificar',
   'relatorios-gestao', 'relatorios-financeiro',
-  'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca',
+  'config-meu-plano', 'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca',
   'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
 ]);
 
@@ -94,6 +95,7 @@ export function podeVerAba(role, tab) {
 export const MODULO_DA_ABA_GESTAO = {
   'academico-frequencia': 'frequencia',
   'academico-relatorios': 'relatorios_pedagogicos',
+  'academico-mapa-habilidades': 'relatorios_pedagogicos',
   'academico-materias': 'materias',
   'academico-cardapio': 'cardapio',
   'academico-diario': 'diario',

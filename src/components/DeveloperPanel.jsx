@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical, LayoutGrid } from 'lucide-react';
+import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical, LayoutGrid, FileSignature } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { toast } from '../lib/toast';
 import DeveloperModulos from './DeveloperModulos';
+import { ContratarPlanoDaEscola } from './DeveloperPlanosContratacao';
 import { pacoteAtual, PACOTES } from '../lib/modulosCatalogo';
 import { montarDadosEscola } from '../lib/escolaForm';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
@@ -64,6 +65,8 @@ export default function DeveloperPanel() {
   // 28/09/2026), aberta pelo menu "⋯" da escola. Escola nova nasce no
   // pacote Essencial (featuresIniciais).
   const [modulosSchool, setModulosSchool] = useState(null);
+  // Contratar plano (menu Planos): modal aberto pelo menu "⋯" da escola.
+  const [contratarSchoolId, setContratarSchoolId] = useState(null);
 
   const defaultLimits = { autorizados_por_responsavel: 2, autorizados_transporte: 1 };
   const [limits, setLimits] = useState(defaultLimits);
@@ -286,6 +289,7 @@ export default function DeveloperPanel() {
 
   return (
     <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
+      {contratarSchoolId && <ContratarPlanoDaEscola schoolId={contratarSchoolId} onClose={() => setContratarSchoolId(null)} />}
       {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
@@ -381,6 +385,12 @@ export default function DeveloperPanel() {
                             <LayoutGrid size={13} /> Módulos
                           </button>
                           <button
+                            onClick={() => { setContratarSchoolId(school.id); setOpenMenuId(null); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
+                          >
+                            <FileSignature size={13} /> Contratar plano
+                          </button>
+                          <button
                             onClick={() => { handleDeleteSchool(school.id, school.name, school.school_code); setOpenMenuId(null); }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-error hover:bg-error/10 transition text-left"
                           >
@@ -431,6 +441,12 @@ export default function DeveloperPanel() {
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
                         >
                           <LayoutGrid size={13} /> Módulos
+                        </button>
+                        <button
+                          onClick={() => { setContratarSchoolId(school.id); setOpenMenuId(null); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
+                        >
+                          <FileSignature size={13} /> Contratar plano
                         </button>
                         <button
                           onClick={() => { handleDeleteSchool(school.id, school.name, school.school_code); setOpenMenuId(null); }}

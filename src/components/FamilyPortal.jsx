@@ -30,15 +30,18 @@ const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
 const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
 const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
 const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
+const FamilyMapaHabilidades = lazy(() => import('./FamilyMapaHabilidades'));
 const FamilyFinanceiro = lazy(() => import('./FamilyFinanceiro'));
 const FamilyContratos = lazy(() => import('./FamilyContratos'));
 
 // Submenus do menu Relatórios visíveis para a família — só os relatórios que
-// a escola de fato compartilha com os responsáveis (o Mapa de Habilidades é
-// de uso interno da equipe pedagógica e nunca aparece aqui).
+// a escola de fato compartilha com os responsáveis. O Mapa de Habilidades só
+// mostra o que a Coordenação ou a Direção publicou (a RLS garante); as
+// Observações de Normalização e de Concentração seguem de uso interno.
 const FAMILY_RELATORIOS_SUBMENU = [
   { key: 'rel-semestral', label: 'Semestral' },
   { key: 'rel-mitigacao', label: 'Mitigação' },
+  { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
 ];
 
 export default function FamilyPortal({ 
@@ -347,9 +350,10 @@ export default function FamilyPortal({
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'rel-mapa-habilidades' && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
-          {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => familyTab === r.key && (
+          {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => familyTab === r.key && (
             <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
           ))}
           {familyTab === 'settings' && (

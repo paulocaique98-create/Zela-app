@@ -11,6 +11,7 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
+const TeacherMapaHabilidades = lazy(() => import('./TeacherMapaHabilidades'));
 const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
 const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
 
@@ -133,7 +134,8 @@ export default function TeacherPortal({
             <TeacherFrequencia currentUser={currentUser} currentSchool={currentSchool} />
           )}
           {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
-          {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao').map(r => teacherTab === r.key && (
+          {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => teacherTab === r.key && (
             <AdminRelatorioPlaceholder key={r.key} title={r.label} />
           ))}
         </Suspense>

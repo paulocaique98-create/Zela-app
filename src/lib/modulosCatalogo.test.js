@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  ITENS, estadoDoItem, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, featuresIniciais, historicoDoItem, ITEM_POR_ID,
+  ITENS, estadoDoItem, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, aplicarItens, featuresIniciais, historicoDoItem, ITEM_POR_ID,
 } from './modulosCatalogo';
 
 // Como a ZL001 está hoje em produção (28/09/2026).
@@ -110,5 +110,27 @@ describe('planos de 01/10/2026', () => {
     expect([essencial.frequencia, essencial.diario, essencial.chat, essencial.qr_checkin]).toEqual([false, false, false, false]);
     expect([completo.frequencia, completo.diario, completo.chat, completo.qr_checkin]).toEqual([true, true, false, false]);
     expect([premium.frequencia, premium.diario, premium.chat, premium.liveness_detection, premium.qr_checkin]).toEqual([true, true, true, true, true]);
+  });
+});
+
+describe('aplicarItens (menu Planos)', () => {
+  it('mantém o base ligado e começa tudo desligado', () => {
+    const f = aplicarItens({}, []);
+    expect(f.financeiro).toBe(true);
+    expect(f.chat).toBe(false);
+    expect(f.relatorios_pedagogicos).toBe(false);
+  });
+
+  it('liga só os itens pedidos e equivale ao pacote', () => {
+    expect(aplicarItens({}, ['pedagogico', 'rotina'])).toEqual(aplicarPacote({}, 'completo'));
+    const f = aplicarItens({}, ['chat']);
+    expect(f.chat).toBe(true);
+    expect(f.diario).toBe(false);
+  });
+
+  it('desliga o bloqueio da prova de vida quando a prova de vida sai', () => {
+    const f = aplicarItens({ liveness_detection: true, liveness_detection_enforce: true }, ['chat']);
+    expect(f.liveness_detection).toBe(false);
+    expect(f.liveness_detection_enforce).toBe(false);
   });
 });
