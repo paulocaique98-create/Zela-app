@@ -6,7 +6,7 @@ Consulte a tabela `error_logs` (projeto Supabase linkado, `orafqopnomdrvwlvxrkz`
 `npx supabase db query --linked` e monte um relatório de observabilidade pro usuário. Não implemente
 nada nesta execução — é só leitura e análise.
 
-Contexto: existe um sistema de logging unificado (ver `PLANO_LOGGING_ERROS_PORTAL_DEV.md` na raiz do
+Contexto: existe um sistema de logging unificado (ver `docs/PLANO_LOGGING_ERROS_PORTAL_DEV.md` do
 repo) que registra falhas reais de reconhecimento facial, edge functions, cron e lógica de negócio desde
 18/09/2026. A motivação original foi entender reclamações de responsáveis não conseguindo ser reconhecidos
 no totem — então o reconhecimento facial (`source='face_recognition'`) é sempre a prioridade do relatório,

@@ -3,5 +3,21 @@
     "allow": [
       "Bash(git push:*)"
     ]
+  },
+  "skillOverrides": {
+    "plugin-authoring": "off",
+    "keybindings-help": "off",
+    "fewer-permission-prompts": "off",
+    "loop": "off",
+    "schedule": "off",
+    "claude-api": "off",
+    "anthropic-skills:docs": "off",
+    "anthropic-skills:docx": "off",
+    "anthropic-skills:pdf": "off",
+    "anthropic-skills:pptx": "off",
+    "anthropic-skills:google-workspace": "off",
+    "anthropic-skills:morning": "off",
+    "anthropic-skills:import-memory": "off",
+    "anthropic-skills:skill-creator": "off"
   }
 }
