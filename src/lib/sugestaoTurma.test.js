@@ -26,9 +26,13 @@ describe('idade', () => {
   });
 
   it('escreve a idade como a escola fala', () => {
-    expect(formatIdade(11)).toBe('11 meses');
-    expect(formatIdade(1)).toBe('1 mês');
-    expect(formatIdade(24)).toBe('2 anos');
+    expect(formatIdade(0)).toBe('0 anos e 0 meses');
+    expect(formatIdade(6)).toBe('0 anos e 6 meses');
+    expect(formatIdade(11)).toBe('0 anos e 11 meses');
+    expect(formatIdade(1)).toBe('0 anos e 1 mês');
+    expect(formatIdade(18)).toBe('1 ano e 6 meses');
+    expect(formatIdade(24)).toBe('2 anos e 0 meses');
+    expect(formatIdade(null)).toBe('idade não informada');
     expect(formatIdade(27)).toBe('2 anos e 3 meses');
     expect(formatIdade(13)).toBe('1 ano e 1 mês');
   });

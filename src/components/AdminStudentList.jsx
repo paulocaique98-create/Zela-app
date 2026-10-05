@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GraduationCap, Search, X, Users, RefreshCw, Loader2, ArrowRightLeft, Check, History } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
 
 const PAGE_SIZE = 30;
 
@@ -103,7 +104,7 @@ export default function AdminStudentList({ currentUser }) {
     try {
       let query = supabase
         .from('students')
-        .select('id, name, turma, contracted_hours, contracted_entry_time, isento_hora_extra, status, family_id, users:family_id(name, email, phone)')
+        .select('id, name, turma, birth_date, contracted_hours, contracted_entry_time, isento_hora_extra, status, family_id, users:family_id(name, email, phone)')
         .eq('school_id', currentUser.school_id)
         .order('name', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
@@ -247,6 +248,9 @@ export default function AdminStudentList({ currentUser }) {
                                 Bolsista
                               </span>
                             )}
+                          </span>
+                          <span className="text-xs text-on-surface-variant/70">
+                            {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'Idade não informada'}
                           </span>
                           {student.contracted_entry_time == null && (
                             <span className="text-[10px] font-bold text-warning bg-amber-100 px-2 py-0.5 rounded w-max mt-0.5">

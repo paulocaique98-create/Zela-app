@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { buildPainelAlunos, DOCUMENTOS_OBRIGATORIOS, SEM_TURMA } from '../lib/alunosPainel';
 import { Loading, Notice, SecondaryButton, PrimaryButton, Modal } from './GestaoShared';
-import { sugestoesDaEscola, formatIdade } from '../lib/sugestaoTurma';
+import { sugestoesDaEscola, formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
 import { recursosDoPerfil } from '../lib/perfisGestao';
 
 const PAGE_SIZE = 30;
@@ -384,7 +384,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
       }
       let query = supabase
         .from('students')
-        .select('id, name, turma, turno, enrollment_status, family_id, users:family_id(name)')
+        .select('id, name, turma, turno, birth_date, enrollment_status, family_id, users:family_id(name)')
         .eq('school_id', schoolId)
         .order('name', { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
@@ -495,7 +495,10 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                   >
                     <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${atencao ? TONE[atencao.tone].dot : 'bg-transparent'}`} aria-hidden="true" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-on-surface text-sm truncate">{student.name}</p>
+                      <p className="font-bold text-on-surface text-sm truncate">
+                        {student.name}
+                        <span className="font-normal text-on-surface-variant/70 text-xs"> · {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'idade não informada'}</span>
+                      </p>
                       <p className="text-on-surface-variant/70 text-xs truncate">
                         {student.turma || SEM_TURMA}{student.turno ? ` · ${student.turno}` : ''} · Responsável: {student.users?.name || '·'}
                       </p>

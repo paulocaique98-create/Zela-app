@@ -485,6 +485,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
             <div className="max-w-2xl space-y-4">
               <Field label="Nome completo" value={student.name} />
               <Field label="Data de nascimento" value={formatDate(student.birth_date)} />
+              <Field label="Idade do aluno" value={formatIdade(idadeMeses)} />
               <Field label="Cidade de nascimento" value={student.cidade_nascimento || '—'} />
               <Field label="Horário contratado" value={`${student.contracted_entry_time || '—'} às ${student.contracted_exit_time || '—'} (${student.contracted_hours || '—'}h)`} />
               <Field label="Autorização de imagem" value={student.autorizacao_imagem === null ? 'Não informado' : (student.autorizacao_imagem ? 'Sim' : 'Não')} />

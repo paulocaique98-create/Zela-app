@@ -42,11 +42,9 @@ export function idadeEmMeses(birthDate, hoje = new Date()) {
 
 export function formatIdade(meses) {
   if (meses === null || meses === undefined) return 'idade não informada';
-  if (meses < 12) return `${meses} ${meses === 1 ? 'mês' : 'meses'}`;
   const anos = Math.floor(meses / 12);
   const resto = meses % 12;
-  const a = `${anos} ${anos === 1 ? 'ano' : 'anos'}`;
-  return resto ? `${a} e ${resto} ${resto === 1 ? 'mês' : 'meses'}` : a;
+  return `${anos} ${anos === 1 ? 'ano' : 'anos'} e ${resto} ${resto === 1 ? 'mês' : 'meses'}`;
 }
 
 function quantil(ordenados, q) {
