@@ -9,6 +9,7 @@ const ACTION_LABELS = {
   archive: 'Arquivou',
   delete: 'Excluiu',
   correct_attendance: 'Corrigiu um registro de',
+  delete_attendance: 'Apagou um registro de',
   delete_authorized_person: 'Excluiu o cadastro de',
   enroll_biometric_consent: 'Cadastrou biometria (com consentimento) de',
   remove_biometric_photo: 'Removeu foto/biometria de',

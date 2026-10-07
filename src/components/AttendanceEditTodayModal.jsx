@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { X, Clock, AlertTriangle, Loader2, ShieldCheck, LogIn, LogOut } from 'lucide-react';
+import { X, Clock, AlertTriangle, Loader2, ShieldCheck, LogIn, LogOut, Trash2 } from 'lucide-react';
 import { ATTENDANCE_CORRECTION_REASONS } from '../lib/constants';
-import { evaluateCorrectionImpact, requestAttendanceCorrection, requestManualAttendanceEntry } from '../lib/attendanceCorrections';
+import { evaluateCorrectionImpact, requestAttendanceCorrection, requestManualAttendanceEntry, deleteAttendanceLog } from '../lib/attendanceCorrections';
 
 // "HH:MM" a partir de um ISO, no fuso do navegador (mesmo fuso da escola).
 function toTimeValue(iso) {
@@ -108,6 +108,31 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
     });
   };
 
+  // Só Gestão e Gestão Pedagógica apagam (o servidor confere de novo).
+  const canDelete = ['gestao', 'gestao_pedagogica'].includes(currentUser?.role);
+
+  const handleDelete = async (log, label) => {
+    if (!log || !reasonCode || isSaving) return;
+    if (!window.confirm(`Apagar a ${label} deste dia? O registro some das telas e da cobrança, e o motivo fica guardado.`)) return;
+    setIsSaving(true);
+    setError('');
+    try {
+      await deleteAttendanceLog({
+        logId: log.id,
+        reasonCode,
+        reasonDetail,
+        schoolId: currentUser?.school_id,
+        actorId: currentUser?.id,
+      });
+      onSaved?.();
+    } catch (err) {
+      console.error('Erro ao apagar registro:', err);
+      setError(err.message || 'Não foi possível apagar. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setIsSaving(true);
@@ -161,7 +186,14 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
                 <p className="text-[10px] text-slate-400 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
               )}
               {entryCleared && (
-                <p className="text-[10px] text-red-600 mt-1">Não dá pra apagar por aqui -- volte ao horário original ou use "Remover marcação".</p>
+                <p className="text-[10px] text-red-600 mt-1">Para apagar, use o botão "Apagar entrada" abaixo; senão volte ao horário original.</p>
+              )}
+              {canDelete && entryLog && (
+                <button type="button" onClick={() => handleDelete(entryLog, 'entrada')} disabled={!reasonCode || isSaving}
+                  title={reasonCode ? 'Apagar este registro' : 'Selecione o motivo antes de apagar'}
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  <Trash2 size={12} /> Apagar entrada
+                </button>
               )}
             </div>
             <div>
@@ -178,7 +210,14 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
                 <p className="text-[10px] text-slate-400 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
               )}
               {exitCleared && (
-                <p className="text-[10px] text-red-600 mt-1">Não dá pra apagar por aqui -- volte ao horário original ou use "Remover marcação".</p>
+                <p className="text-[10px] text-red-600 mt-1">Para apagar, use o botão "Apagar saída" abaixo; senão volte ao horário original.</p>
+              )}
+              {canDelete && exitLog && (
+                <button type="button" onClick={() => handleDelete(exitLog, 'saída')} disabled={!reasonCode || isSaving}
+                  title={reasonCode ? 'Apagar este registro' : 'Selecione o motivo antes de apagar'}
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  <Trash2 size={12} /> Apagar saída
+                </button>
               )}
             </div>
           </div>

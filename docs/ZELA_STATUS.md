@@ -31,6 +31,7 @@
 ## Pendências conhecidas
 - Mapa de Habilidades: cadastrar o catálogo real, definir a 4ª opção de situação (adiada) e testar no navegador logado (Professor, Coordenação, Família).
 - Perfil Gestão Pedagógica: publicado em produção (confirmado 05/10: migration, policies, 1 usuário no perfil). Checklist da seção 10 validado pelo usuário; seção 9 adiada. Plano concluído (PLANO_PERFIL_GESTAO_PEDAGOGICA.md).
+- Apagar registro de entrada/saída (07/10): código pronto (migration 20261007120000, botões no AttendanceEditTodayModal, só gestao e gestao_pedagogica, remoção lógica). Falta aplicar a migration em produção e validar logado: apagar, conferir que some da família e dos relatórios, e a linha em Correções.
 - Revisar e commitar CLAUDE.md e docs/. Decidir se .scratch/ e .stitch/ (não versionados) entram no .gitignore.
 
 ## Documentos de apoio (ler só se necessário)

@@ -67,6 +67,31 @@ export async function requestAttendanceCorrection({ logId, newEventTime, newEven
   return data;
 }
 
+// Apaga (remoção lógica) um registro real de entrada/saída. Só Gestão e
+// Gestão Pedagógica; o servidor exige motivo, confere a escola e guarda a
+// trilha em attendance_corrections. Nunca gera cobrança.
+export async function deleteAttendanceLog({ logId, reasonCode, reasonDetail, schoolId, actorId }) {
+  const { data, error } = await supabase.rpc('delete_attendance_log', {
+    p_log_id: logId,
+    p_reason_code: reasonCode,
+    p_reason_detail: reasonDetail || null,
+  });
+  if (error) throw error;
+
+  if (schoolId && actorId) {
+    logAction({
+      actorId,
+      schoolId,
+      action: 'delete_attendance',
+      entityType: 'attendance_log',
+      entityId: logId,
+      details: { reason_code: reasonCode },
+    });
+  }
+
+  return data;
+}
+
 // Solicita o LANÇAMENTO de um horário que nunca foi registrado (não existe
 // attendance_logs por trás) -- ex: a saída nunca passou pelo totem e o
 // campo ficou em branco pra sempre. Mesma fricção das correções normais: se
