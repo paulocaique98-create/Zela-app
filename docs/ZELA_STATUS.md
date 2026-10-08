@@ -32,6 +32,7 @@
 - Mapa de Habilidades: cadastrar o catálogo real, definir a 4ª opção de situação (adiada) e testar no navegador logado (Professor, Coordenação, Família).
 - Perfil Gestão Pedagógica: publicado em produção (confirmado 05/10: migration, policies, 1 usuário no perfil). Checklist da seção 10 validado pelo usuário; seção 9 adiada. Plano concluído (PLANO_PERFIL_GESTAO_PEDAGOGICA.md).
 - Apagar registro de entrada/saída (07/10): código pronto (migration 20261007120000, botões no AttendanceEditTodayModal, só gestao e gestao_pedagogica, remoção lógica). Falta aplicar a migration em produção e validar logado: apagar, conferir que some da família e dos relatórios, e a linha em Correções.
+- Tela preta no cadastro de biometria do totem (iPhone, 08/10): código pronto, NÃO publicado nem testado em aparelho. FaceCameraCapture agora pede 1920x1080 (era 4096x2160), faz play(), vigia quadros (reinicia 2x, depois botão "Tentar de novo") e registra em error_logs categorias cadastro_* (camera_erro, camera_travada, camera_sem_resposta, track_mudo, play_recusado, modelos_erro). Validar no iPhone e checar o resumo de erros após alguns dias. too_close/too_far/below_threshold/ambiguous_match agora têm uma linha por faixa (mensagem com a faixa); match_lost traz filhos_vinculados/filhos_marcados. Limiar e teto 0,50 NÃO alterados: decidir só com esses números.
 - Revisar e commitar CLAUDE.md e docs/. Decidir se .scratch/ e .stitch/ (não versionados) entram no .gitignore.
 
 ## Documentos de apoio (ler só se necessário)

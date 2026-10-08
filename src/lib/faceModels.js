@@ -20,7 +20,12 @@ export function preloadFaceModels() {
       faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
       faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
       faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-    ]);
+    ]).catch((err) => {
+      // Falha de rede não pode ficar em cache para sempre: a próxima
+      // chamada tenta carregar de novo em vez de repetir a rejeição.
+      _loadPromise = null;
+      throw err;
+    });
   }
   return _loadPromise;
 }

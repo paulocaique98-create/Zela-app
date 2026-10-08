@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS, quadroPronto, caixaValida } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS, quadroPronto, caixaValida, faixaDaProporcao, faixaDaDistancia } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -265,5 +265,27 @@ describe('quadro pronto e posição de rosto válida (iPhone do totem, 01/10/202
     expect(caixaValida({ x: NaN, y: 1, width: 1, height: 1 })).toBe(false);
     expect(caixaValida({ x: 1, y: 1, width: 0, height: 1 })).toBe(false);
     expect(caixaValida(undefined)).toBe(false);
+  });
+});
+
+describe('faixas do registro de erros', () => {
+  it('faixaDaProporcao separa longe, dentro do limite e perto', () => {
+    expect(faixaDaProporcao(0.05)).toBe('abaixo de 0.10');
+    expect(faixaDaProporcao(0.15)).toBe('0.10 a 0.20');
+    expect(faixaDaProporcao(0.3)).toBe('dentro do limite');
+    expect(faixaDaProporcao(0.52)).toBe('0.50 a 0.55');
+    expect(faixaDaProporcao(0.58)).toBe('0.55 a 0.60');
+    expect(faixaDaProporcao(0.62)).toBe('0.60 a 0.70');
+    expect(faixaDaProporcao(0.8)).toBe('acima de 0.70');
+    expect(faixaDaProporcao(null)).toBe('sem medida');
+  });
+
+  it('faixaDaDistancia separa quase-acerto de rosto distante', () => {
+    expect(faixaDaDistancia(0.44)).toBe('ate o limiar');
+    expect(faixaDaDistancia(0.46)).toBe('0.45 a 0.50');
+    expect(faixaDaDistancia(0.53)).toBe('0.50 a 0.55');
+    expect(faixaDaDistancia(0.6)).toBe('0.55 a 0.65');
+    expect(faixaDaDistancia(0.7)).toBe('acima de 0.65');
+    expect(faixaDaDistancia(undefined)).toBe('sem medida');
   });
 });

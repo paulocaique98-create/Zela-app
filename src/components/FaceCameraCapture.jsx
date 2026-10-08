@@ -8,10 +8,58 @@ import { evaluateFramePosition, proximoPassoDaContagem, MENSAGEM_DO_ENQUADRAMENT
 import { versaoNovaParaRecarregar, recarregarParaVersao } from '../lib/versaoDoApp';
 import { marcarAtividadeDoTotem } from '../lib/atualizacaoDoTotem';
 import ConfirmModal from './ConfirmModal';
+import { supabase } from '../lib/supabase';
+import { getCurrentScreen, registroDeErrosAtivo } from '../lib/errorLogger';
 
 const POSITION_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
 // Rede lenta: depois disso a câmera é liberada mesmo sem a conferência de versão.
 const ESPERA_MAXIMA_DA_VERSAO_MS = 4000;
+// Tela preta no cadastro (iPhone do totem, 08/10/2026): a câmera abria e o
+// vídeo nunca pintava, sem erro e sem registro. Agora a câmera é vigiada.
+const ESPERA_MAXIMA_DA_CAMERA_MS = 12000;
+const CHECAGEM_DE_QUADRO_MS = 3000;
+const CHECAGENS_SEM_QUADRO_PARA_REINICIAR = 3;
+const MAX_REINICIOS_AUTOMATICOS = 2;
+
+// Registro best-effort em error_logs (source face_recognition, categorias
+// cadastro_*). Nunca lança nem atrasa a captura. O servidor define escola e
+// usuário pela sessão (log_error), por isso não são enviados daqui.
+const SESSAO_DO_CADASTRO = typeof crypto !== 'undefined' && crypto.randomUUID
+  ? crypto.randomUUID()
+  : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const ultimoRegistroEm = {};
+function registrarCadastro(category, severity, context = {}) {
+  try {
+    if (!registroDeErrosAtivo()) return;
+    const agora = Date.now();
+    if (agora - (ultimoRegistroEm[category] || 0) < 2000) return;
+    ultimoRegistroEm[category] = agora;
+    supabase.rpc('log_error', {
+      p_source: 'face_recognition',
+      p_category: category,
+      p_message: category,
+      p_severity: severity,
+      p_context: { cadastro_session_id: SESSAO_DO_CADASTRO, ...context },
+      p_url: typeof window !== 'undefined' ? window.location.href : null,
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      p_screen: getCurrentScreen(),
+    }).then(null, () => {});
+  } catch { /* o log nunca interrompe o cadastro */ }
+}
+
+function descreverCamera(video, track) {
+  const ajustes = track?.getSettings?.() || {};
+  return {
+    video_width: video?.videoWidth ?? null,
+    video_height: video?.videoHeight ?? null,
+    video_ready_state: video?.readyState ?? null,
+    track_ready_state: track?.readyState ?? null,
+    track_muted: track?.muted ?? null,
+    track_width: ajustes.width ?? null,
+    track_height: ajustes.height ?? null,
+    track_frame_rate: ajustes.frameRate ?? null,
+  };
+}
 
 // Captura de biometria facial ao vivo pela câmera, com molde oval guiando o
 // enquadramento (nunca por upload de arquivo/galeria) — extraído de
@@ -48,6 +96,9 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
   const amostrasHumanRef = useRef([]);
   // 'conferindo' | 'ok' | 'atualizando' (ver conferência de versão abaixo)
   const [versao, setVersao] = useState('conferindo');
+  // Reinício da câmera (vigia de tela preta ou botão "Tentar de novo").
+  const [tentativa, setTentativa] = useState(0);
+  const reiniciosRef = useRef(0);
 
   // Conferência de versão antes da câmera (01/10/2026): o iPhone do totem
   // cadastrou biometria horas depois de uma publicação ainda com a captura
@@ -82,29 +133,100 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     if (!cameraStarted) return;
     let active = true;
     let stream = null;
+    let pronta = false;
+    let limiteDaCamera;
+    let vigia;
+    setCameraReady(false);
+
+    // Reinicia sozinho até MAX_REINICIOS_AUTOMATICOS vezes; depois mostra o
+    // botão "Tentar de novo" em vez de deixar a tela preta.
+    const reiniciar = (category, extra = {}) => {
+      if (!active) return;
+      const track = stream?.getVideoTracks?.()[0];
+      registrarCadastro(category, 'error', { ...descreverCamera(videoRef.current, track), reinicios: reiniciosRef.current, ...extra });
+      if (reiniciosRef.current < MAX_REINICIOS_AUTOMATICOS) {
+        reiniciosRef.current += 1;
+        setTentativa((t) => t + 1);
+      } else {
+        setError('A câmera não respondeu. Toque em "Tentar de novo".');
+      }
+    };
 
     (async () => {
       try {
         await preloadFaceModels();
-        if (!active) return;
-        setModelsLoaded(true);
-
-        // Resolução máxima que a câmera entregar (01/10/2026): antes pedia
-        // 640x480 e a foto era reduzida para 480 px, pouco detalhe para o
-        // motor Human. O navegador escolhe o maior modo disponível.
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 4096 }, height: { ideal: 2160 }, facingMode: 'user' } });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => setCameraReady(true);
-        }
       } catch (err) {
         console.error(err);
+        registrarCadastro('cadastro_modelos_erro', 'error', { erro: err?.message || String(err) });
+        if (active) setError('Não foi possível carregar a IA de reconhecimento. Verifique a internet e toque em "Tentar de novo".');
+        return;
+      }
+      if (!active) return;
+      setModelsLoaded(true);
+
+      try {
+        // 1920x1080 (08/10/2026): o pedido de 4096x2160 de 01/10 é pesado para
+        // o iPhone (face-api + Human no WebGL sobre vídeo enorme) e é suspeito
+        // da tela preta. Full HD mantém detalhe para o Human; o navegador
+        // escolhe o modo mais próximo.
+        const obtido = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'user' } });
+        if (!active) {
+          // Saiu da tela enquanto a câmera abria: não deixa a câmera presa.
+          obtido.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        stream = obtido;
+        const track = stream.getVideoTracks()[0];
+        const video = videoRef.current;
+
+        const aoFicarPronta = () => {
+          if (!active || pronta) return;
+          pronta = true;
+          clearTimeout(limiteDaCamera);
+          setCameraReady(true);
+          let ultimoTempo = videoRef.current?.currentTime ?? 0;
+          let parados = 0;
+          vigia = setInterval(() => {
+            const v = videoRef.current;
+            if (!v || document.hidden) return;
+            if (v.currentTime === ultimoTempo) {
+              parados += 1;
+              if (parados >= CHECAGENS_SEM_QUADRO_PARA_REINICIAR) {
+                clearInterval(vigia);
+                reiniciar('cadastro_camera_travada', { motivo: 'sem progresso de quadro' });
+              }
+            } else {
+              parados = 0;
+              ultimoTempo = v.currentTime;
+            }
+          }, CHECAGEM_DE_QUADRO_MS);
+        };
+
+        track?.addEventListener('ended', () => reiniciar('cadastro_camera_travada', { motivo: 'track ended' }));
+        track?.addEventListener('mute', () => registrarCadastro('cadastro_track_mudo', 'warn', descreverCamera(videoRef.current, track)));
+
+        if (video) {
+          video.srcObject = stream;
+          video.onloadedmetadata = aoFicarPronta;
+          if (video.readyState >= 1) aoFicarPronta();
+          // Só autoPlay não basta em alguns iPhones; recusa de play() é registrada.
+          try {
+            video.play()?.then(null, (e) => registrarCadastro('cadastro_play_recusado', 'warn', { erro: e?.name || String(e) }));
+          } catch { /* melhor esforço */ }
+        }
+
+        limiteDaCamera = setTimeout(() => {
+          if (!pronta) reiniciar('cadastro_camera_sem_resposta', { espera_ms: ESPERA_MAXIMA_DA_CAMERA_MS });
+        }, ESPERA_MAXIMA_DA_CAMERA_MS);
+      } catch (err) {
+        console.error(err);
+        registrarCadastro('cadastro_camera_erro', 'error', { erro: err?.name || null, mensagem: err?.message || null });
         const friendly =
-          err.name === 'NotAllowedError' ? 'Permissão de câmera negada. Habilite o acesso à câmera e tente novamente.' :
+          err.name === 'NotAllowedError' ? 'Permissão de câmera negada. Habilite o acesso à câmera e toque em "Tentar de novo".' :
           err.name === 'NotFoundError' ? 'Nenhuma câmera foi encontrada neste dispositivo.' :
-          err.name === 'NotReadableError' ? 'A câmera está em uso por outro aplicativo ou aba.' :
-          'Erro ao iniciar a câmera.';
-        setError(friendly);
+          err.name === 'NotReadableError' ? 'A câmera está em uso por outro aplicativo ou aba. Feche-o e toque em "Tentar de novo".' :
+          'Erro ao iniciar a câmera. Toque em "Tentar de novo".';
+        if (active) setError(friendly);
       }
     })();
 
@@ -112,9 +234,17 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
     // remontar o elemento perderia o srcObject já anexado ao stream ativo).
     return () => {
       active = false;
+      clearTimeout(limiteDaCamera);
+      clearInterval(vigia);
       if (stream) stream.getTracks().forEach(track => track.stop());
     };
-  }, [cameraStarted]);
+  }, [cameraStarted, tentativa]);
+
+  const tentarDeNovo = () => {
+    reiniciosRef.current = 0;
+    setError('');
+    setTentativa((t) => t + 1);
+  };
 
   const handleStartCapture = () => {
     if (versao !== 'ok') return;
@@ -356,6 +486,11 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center bg-slate-950">
             <p className="text-sm font-bold text-red-400">{error}</p>
+            {cameraStarted && (
+              <button onClick={tentarDeNovo} className="mt-4 flex items-center gap-2 bg-white text-slate-900 font-bold text-sm px-5 py-2.5 rounded-zela-md active:scale-[0.98] transition">
+                <RefreshCw size={16} /> Tentar de novo
+              </button>
+            )}
           </div>
         )}
 
@@ -364,9 +499,9 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         )}
 
         {!error && cameraStarted && !capturedImage && (!modelsLoaded || !cameraReady) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 bg-slate-950/60">
-            <Loader2 className="h-8 w-8 animate-spin mb-3" />
-            <p className="text-xs font-semibold">{!modelsLoaded ? 'Carregando IA de reconhecimento' : 'Iniciando câmera'}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 bg-slate-950/80">
+            <Loader2 className="h-10 w-10 animate-spin mb-3" />
+            <p className="text-sm font-semibold">{!modelsLoaded ? 'Carregando IA de reconhecimento' : 'Iniciando câmera'}</p>
           </div>
         )}
 

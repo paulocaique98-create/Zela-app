@@ -115,6 +115,33 @@ export function faceWidthRatio(box, videoWidth) {
   return Math.round((box.width / videoWidth) * 1000) / 1000;
 }
 
+// Faixa do tamanho do rosto, usada na mensagem do registro de "perto/longe
+// demais" (08/10/2026). O log_error só guarda o contexto da ocorrência mais
+// recente, então a distribuição real só aparece se cada faixa tiver o seu
+// próprio fingerprint (a mensagem entra nele). Serve para decidir se o teto de
+// 0,50 está apertado para a câmera do iPhone do totem.
+export function faixaDaProporcao(ratio) {
+  if (!Number.isFinite(ratio)) return 'sem medida';
+  if (ratio < 0.10) return 'abaixo de 0.10';
+  if (ratio < MIN_FACE_WIDTH_RATIO) return '0.10 a 0.20';
+  if (ratio <= MAX_FACE_WIDTH_RATIO) return 'dentro do limite';
+  if (ratio <= 0.55) return '0.50 a 0.55';
+  if (ratio <= 0.60) return '0.55 a 0.60';
+  if (ratio <= 0.70) return '0.60 a 0.70';
+  return 'acima de 0.70';
+}
+
+// Faixa da distância do melhor candidato (mesma ideia de faixaDaProporcao):
+// separa quase-acerto (logo acima do limiar) de rosto sem cadastro parecido.
+export function faixaDaDistancia(distancia) {
+  if (!Number.isFinite(distancia)) return 'sem medida';
+  if (distancia <= MATCH_THRESHOLD) return 'ate o limiar';
+  if (distancia <= 0.50) return '0.45 a 0.50';
+  if (distancia <= 0.55) return '0.50 a 0.55';
+  if (distancia <= 0.65) return '0.55 a 0.65';
+  return 'acima de 0.65';
+}
+
 // Avalia se o rosto detectado está a uma boa distância (a posição na tela não importa)
 // Cada motivo de rejeição de enquadramento vira sua própria categoria de log
 // (fingerprint separado em error_logs) -- sem isso, "muito perto" e "muito
@@ -291,6 +318,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // que cai nesse meio tempo não é "perdido" (falso match_lost, 01/10/2026:
   // a entrada do Vicente foi registrada normalmente às 07:46:50).
   const pedidoEnviadoRef = useRef(false);
+  // Espelho de quantos filhos estão vinculados/marcados, lido pelo ciclo de
+  // leitura só para o registro de match_lost: separa "pessoa foi embora sem
+  // marcar o filho" (2+ filhos) de "reconhecida e nada saiu" (0 filhos).
+  const filhosEMarcadosRef = useRef({ filhos: 0, marcados: 0 });
   useEffect(() => { actionDoneRef.current = actionDone; }, [actionDone]);
   // true quando a confirmação foi um mero RE-reconhecimento de uma
   // solicitação que já estava pendente (a pessoa esqueceu que já passou pelo
@@ -313,7 +344,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const lastFaceLogAtRef = useRef({});
   const FACE_LOG_THROTTLE_MS = 5000;
 
-  const logFaceEvent = (category, severity, context = {}) => {
+  const logFaceEvent = (category, severity, context = {}, message = category) => {
     // Achado real (Escola Montessori de Vitória, 21/09): supabase.rpc(...)
     // devolve um "query builder" que só garante implementar .then() -- não é
     // uma Promise nativa de verdade. No Safari/WebKit (totem rodando em
@@ -341,7 +372,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       supabase.rpc('log_error', {
         p_source: 'face_recognition',
         p_category: category,
-        p_message: category,
+        p_message: message,
         p_severity: severity,
         p_context: { kiosk_session_id: kioskSessionIdRef.current, ...context },
         p_school_id: currentUser?.school_id || null,
@@ -805,6 +836,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           person_id: pessoaConfirmadaId,
           held_ms: confirmadoEm ? Date.now() - confirmadoEm : null,
           grace_ms: MATCH_GRACE_MS,
+          filhos_vinculados: filhosEMarcadosRef.current.filhos,
+          filhos_marcados: filhosEMarcadosRef.current.marcados,
         });
       }
       matchConfirmed = false;
@@ -902,7 +935,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 recentMatchesRef.current = [];
                 earHistoryRef.current = [];
                 setMatchStatus('searching');
-                logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live', face_width_ratio: faceWidthRatio(box, video.videoWidth) });
+                const razao = faceWidthRatio(box, video.videoWidth);
+                const categoria = frameRejectionCategory(position);
+                logFaceEvent(categoria, 'warn', { reason: position, mode: 'live', face_width_ratio: razao }, `${categoria} ${faixaDaProporcao(razao)}`);
               }
             } else if (position !== 'ok') {
               // Longe ou perto demais e ainda não reconhecido: não é seguro
@@ -910,7 +945,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               recentMatchesRef.current = [];
               earHistoryRef.current = [];
               setMatchStatus('searching');
-              logFaceEvent(frameRejectionCategory(position), 'warn', { reason: position, mode: 'live', face_width_ratio: faceWidthRatio(box, video.videoWidth) });
+              const razao = faceWidthRatio(box, video.videoWidth);
+              const categoria = frameRejectionCategory(position);
+              logFaceEvent(categoria, 'warn', { reason: position, mode: 'live', face_width_ratio: razao }, `${categoria} ${faixaDaProporcao(razao)}`);
             } else if (!matchConfirmed) {
               setMatchStatus('searching');
               const bestMatch = findSecureMatch(detections.descriptor, labeledDescriptors);
@@ -1040,14 +1077,15 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 // que faltava pra saber SE a causa mais comum das
                 // reclamações é limiar apertado demais (below_threshold) ou
                 // ambiguidade entre cadastros parecidos (ambiguous_match).
-                logFaceEvent(bestMatch.ambiguous ? 'ambiguous_match' : 'below_threshold', 'warn', {
+                const categoriaDoMatch = bestMatch.ambiguous ? 'ambiguous_match' : 'below_threshold';
+                logFaceEvent(categoriaDoMatch, 'warn', {
                   mode: 'live',
                   distance: bestMatch.distance,
                   second_best_distance: bestMatch.secondBestDistance,
                   threshold: MATCH_THRESHOLD,
                   margin: MATCH_MARGIN,
                   candidate_count: labeledDescriptors.length,
-                });
+                }, `${categoriaDoMatch} ${faixaDaDistancia(bestMatch.distance)}`);
               }
             }
             // Se matchConfirmed && position === 'ok': mantém o estado atual (já
@@ -1138,6 +1176,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // marcado. Antes, com internet lenta, o disparo saía com a lista ainda
   // vazia, não fazia nada e ficava marcado como "já disparado": a tela
   // parava com a pessoa reconhecida e nada acontecia até fechar no X.
+  useEffect(() => {
+    filhosEMarcadosRef.current = { filhos: matchedStudents.length, marcados: selectedStudentIds.length };
+  }, [matchedStudents.length, selectedStudentIds.length]);
+
   useEffect(() => {
     if (!podeSolicitarSozinho({
       matchStatus, actionDone, isProcessing: isProcessingCapture, jaDisparado: autoTriggeredRef.current,
