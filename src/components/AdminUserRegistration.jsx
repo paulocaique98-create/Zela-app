@@ -110,7 +110,7 @@ const emptyStudent = () => ({
 // ──────────────────────────────────────────────────────────
 // Sub-componente: card de aluno
 // ──────────────────────────────────────────────────────────
-function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, canManageExtraHours = false, financeiro = null }) {
+function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, canManageExtraHours = false, canViewExtraHours = false, financeiro = null }) {
   const turnos = student.ciclo ? TURNOS_POR_CICLO[Number(student.ciclo)] || [] : [];
   const periodos = (student.ciclo && student.turno)
     ? PERIODOS_POR_CICLO_TURNO[Number(student.ciclo)]?.[student.turno] || []
@@ -361,6 +361,32 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
             <span className="text-xs font-bold text-on-surface">Bolsista -- isento de hora extra</span>
           </label>
           <p className="text-[10px] text-on-surface-variant/60 pt-1 pl-6">Nunca gera cobrança de hora extra pra este aluno, em nenhum horário de entrada/saída (inclusive marcações já registradas). A família não vê esta marcação.</p>
+        </div>
+      )}
+
+      {/* Somente leitura: gestão pedagógica e financeiro enxergam os horários
+          por dia e a isenção de hora extra, sem poder editar (a escrita
+          continua restrita a gestão/developer, inclusive no banco). */}
+      {!canManageExtraHours && canViewExtraHours && (
+        <div className="pt-3 border-t border-outline-variant space-y-2">
+          <div>
+            <span className="block text-xs font-bold text-on-surface mb-1">Horários personalizados por dia</span>
+            {DIAS_SEMANA_HORARIO.some(d => student.weekly_schedule?.[d.key]) ? (
+              <ul className="space-y-0.5">
+                {DIAS_SEMANA_HORARIO.filter(d => student.weekly_schedule?.[d.key]).map(d => (
+                  <li key={d.key} className="text-xs text-on-surface-variant">
+                    <span className="font-bold">{d.label}:</span> {String(student.weekly_schedule[d.key].entry || '').slice(0, 5) || '--:--'} às {String(student.weekly_schedule[d.key].exit || '').slice(0, 5) || '--:--'}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-on-surface-variant/70">Nenhum dia personalizado, todos usam o horário padrão.</p>
+            )}
+          </div>
+          <label className="flex items-center gap-2 select-none cursor-not-allowed opacity-80">
+            <input type="checkbox" checked={!!student.isento_hora_extra} disabled readOnly className="w-4 h-4 rounded accent-primary" />
+            <span className="text-xs font-bold text-on-surface">Bolsista, isento de hora extra</span>
+          </label>
         </div>
       )}
 
@@ -1379,6 +1405,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 canRemove={students.length > 1}
                 turmas={schoolTurmas}
                 canManageExtraHours={['gestao', 'developer'].includes(currentUser?.role)}
+                canViewExtraHours={['gestao_pedagogica', 'financeiro'].includes(currentUser?.role)}
                 financeiro={financeiroDoAluno(student)}
               />
             ))}
