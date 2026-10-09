@@ -358,7 +358,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
               onChange={e => set('isento_hora_extra', e.target.checked)}
               className="w-4 h-4 rounded accent-primary"
             />
-            <span className="text-xs font-bold text-on-surface">Bolsista -- isento de hora extra</span>
+            <span className="text-xs font-bold text-on-surface">Isento de hora extra</span>
           </label>
           <p className="text-[10px] text-on-surface-variant/60 pt-1 pl-6">Nunca gera cobrança de hora extra pra este aluno, em nenhum horário de entrada/saída (inclusive marcações já registradas). A família não vê esta marcação.</p>
         </div>
@@ -385,7 +385,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           </div>
           <label className="flex items-center gap-2 select-none cursor-not-allowed opacity-80">
             <input type="checkbox" checked={!!student.isento_hora_extra} disabled readOnly className="w-4 h-4 rounded accent-primary" />
-            <span className="text-xs font-bold text-on-surface">Bolsista, isento de hora extra</span>
+            <span className="text-xs font-bold text-on-surface">Isento de hora extra</span>
           </label>
         </div>
       )}
