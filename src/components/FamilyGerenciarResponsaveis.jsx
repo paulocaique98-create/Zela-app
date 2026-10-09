@@ -175,7 +175,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
 
   const copyCredentials = () => {
     if (!successModalData) return;
-    const text = `Acesso Portal Zela\nE-mail: ${successModalData.email}\nSenha: ${successModalData.password}`;
+    const text = `Acesso Zela Escola\nE-mail: ${successModalData.email}\nSenha: ${successModalData.password}`;
     navigator.clipboard.writeText(text);
     toast.success('Credenciais copiadas.');
   };

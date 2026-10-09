@@ -28,7 +28,7 @@ export function ConfigComunicacao({ currentUser, currentSchool, onUpdate }) {
   };
 
   return (
-    <PageShell description="Avisos automáticos que o Zela envia às famílias.">
+    <PageShell description="Avisos automáticos que o Zela Escola envia às famílias.">
       <div className="max-w-xl space-y-4">
         <Notice type={msg.type || 'error'}>{msg.text}</Notice>
         <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 space-y-3">
@@ -105,7 +105,7 @@ export function ConfigSeguranca({ currentUser }) {
         )}
         <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 space-y-3">
           <h3 className="font-bold text-sm text-on-surface flex items-center gap-2"><KeyRound size={16} /> Exigir troca de senha</h3>
-          <p className="text-sm text-on-surface-variant">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
+          <p className="text-sm text-on-surface-variant">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela Escola pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
           <div className="flex flex-wrap gap-4">
             {ROLE_OPTIONS.map(r => (
               <label key={r.id} htmlFor={`sec-role-${r.id}`} className="flex items-center gap-2 text-sm">

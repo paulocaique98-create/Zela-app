@@ -363,7 +363,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-              {editingId ? 'Salvar alterações' : 'Publicar'}
+              {editingId ? 'Salvar' : 'Publicar'}
             </button>
           </form>
         )}

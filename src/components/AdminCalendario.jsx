@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, AlertTriangle, Download, Sparkles, ListChecks } from 'lucide-react';
+import { CalendarDays, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, AlertTriangle, Download, ScanText, ListChecks } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { EVENTO_TIPOS } from '../lib/constants';
 import { parseDateTextList } from '../lib/pdfDateListParser';
@@ -570,7 +570,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
               title="Lê qualquer PDF de calendário (mesmo em layout gráfico) usando IA, sem precisar seguir o modelo"
             >
-              {isParsingIA ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+              {isParsingIA ? <Loader2 size={18} className="animate-spin" /> : <ScanText size={18} />}
               <span className="hidden sm:inline">{isParsingIA ? 'Lendo com IA...' : 'Importar com IA'}</span>
               <input type="file" accept="application/pdf" onChange={handleIaFileSelected} className="hidden" disabled={isParsingIA} />
             </label>
@@ -821,7 +821,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-              {editingId ? 'Salvar alterações' : 'Adicionar Evento'}
+              {editingId ? 'Salvar' : 'Adicionar Evento'}
             </button>
           </form>
         )}
@@ -1035,7 +1035,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSavingAula ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-              {editingAulaId ? 'Salvar alterações' : 'Adicionar Aula Especial'}
+              {editingAulaId ? 'Salvar' : 'Adicionar Aula Especial'}
             </button>
           </form>
         )}

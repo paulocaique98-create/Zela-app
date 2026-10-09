@@ -68,7 +68,7 @@ export default function AdminSystemUpdates({ currentUser, onRead }) {
         <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
           <Sparkles size={18} />
         </div>
-        <p className="text-small text-on-surface-variant">Novidades e melhorias do sistema Zela.</p>
+        <p className="text-small text-on-surface-variant">Novidades e melhorias do sistema Zela Escola.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">

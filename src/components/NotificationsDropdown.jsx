@@ -163,27 +163,27 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
     switch (type) {
       case 'checkin_confirmed':
       case 'checkout_confirmed':
-        return { icon: <CheckCircle2 size={18} className="text-emerald-600" />, bg: 'bg-emerald-100', dot: 'bg-emerald-500' };
+        return { icon: <CheckCircle2 size={18} className="text-success" />, bg: 'bg-success/10', dot: 'bg-success' };
       case 'checkin_requested':
       case 'checkout_requested':
         // Reconhecimento no totem já aconteceu, mas ainda aguarda a recepção
         // confirmar no Monitor — cor âmbar (ver notify-checkin-request).
-        return { icon: <Clock size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
+        return { icon: <Clock size={18} className="text-warning" />, bg: 'bg-warning/10', dot: 'bg-warning' };
       case 'late_entry_5min':
       case 'late_exit_5min':
       case 'late_exit_10min_warning':
-        return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
+        return { icon: <AlertTriangle size={18} className="text-warning" />, bg: 'bg-warning/10', dot: 'bg-warning' };
       case 'late_exit_15min_billing':
-        return { icon: <AlertCircle size={18} className="text-red-600" />, bg: 'bg-red-100', dot: 'bg-red-500' };
+        return { icon: <AlertCircle size={18} className="text-error" />, bg: 'bg-error/10', dot: 'bg-error' };
       case 'prolonged_absence':
-        return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
+        return { icon: <AlertTriangle size={18} className="text-warning" />, bg: 'bg-warning/10', dot: 'bg-warning' };
       case 'diario':
-        return { icon: <BookOpen size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
+        return { icon: <BookOpen size={18} className="text-primary" />, bg: 'bg-primary/10', dot: 'bg-primary' };
       case 'pending_registration':
-        return { icon: <UserRoundPlus size={18} className="text-amber-600" />, bg: 'bg-amber-100', dot: 'bg-amber-500' };
+        return { icon: <UserRoundPlus size={18} className="text-warning" />, bg: 'bg-warning/10', dot: 'bg-warning' };
       case 'welcome':
       default:
-        return { icon: <Info size={18} className="text-indigo-600" />, bg: 'bg-indigo-100', dot: 'bg-indigo-500' };
+        return { icon: <Info size={18} className="text-primary" />, bg: 'bg-primary/10', dot: 'bg-primary' };
     }
   };
 
@@ -199,46 +199,48 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={handleToggle}
-        className={`relative p-2 rounded-xl transition flex items-center justify-center ${
-          isOpen ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+        className={`relative p-2 min-w-11 min-h-11 rounded-zela-sm transition flex items-center justify-center ${
+          isOpen ? 'bg-ink-2 text-white' : 'text-ink-text hover:text-white hover:bg-ink-2'
         }`}
         title="Notificações"
+        aria-label="Notificações"
+        aria-expanded={isOpen}
       >
-        <Bell size={20} />
+        <Bell size={20} aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-brass rounded-full border-2 border-ink"></span>
         )}
       </button>
 
       {isOpen && (
         <>
           {/* Backdrop — só no mobile, fecha ao tocar fora do card */}
-          <div className="fixed inset-0 z-40 bg-slate-900/40 sm:hidden" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-40 bg-ink/60 sm:hidden" onClick={() => setIsOpen(false)} />
 
-          <div className="fixed inset-x-4 top-20 z-50 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh]">
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Bell size={16} className="text-indigo-600" />
+          <div className="fixed inset-x-4 top-20 z-50 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-80 md:w-96 bg-surface-container-lowest rounded-zela-xl shadow-md border border-outline-variant overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh]">
+          <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface">
+            <h3 className="font-serif font-semibold text-on-surface flex items-center gap-2">
+              <Bell size={16} className="text-primary" aria-hidden="true" />
               Notificações
             </h3>
             {unreadCount > 0 && (
-              <span className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-sm">
                 {unreadCount} novas
               </span>
             )}
-            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-700 md:hidden p-1">
-              <X size={20} />
+            <button onClick={() => setIsOpen(false)} aria-label="Fechar notificações" className="text-on-surface-variant hover:text-on-surface md:hidden p-2 min-w-11 min-h-11 flex items-center justify-center">
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 space-y-3">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Bell size={24} />
+              <div className="p-6 text-center text-on-surface-variant space-y-3">
+                <div className="w-12 h-12 bg-surface-container text-primary rounded-zela-md flex items-center justify-center mx-auto mb-2">
+                  <Bell size={24} aria-hidden="true" />
                 </div>
-                <h4 className="font-bold text-slate-700">Bem-vindo ao Portal Zela!</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h4 className="font-semibold text-on-surface">Bem-vindo ao Zela Escola</h4>
+                <p className="text-sm text-on-surface-variant leading-relaxed">
                   {currentUser?.role === 'admin'
                     ? 'Aqui você receberá avisos de novos cadastros e outros eventos importantes da escola.'
                     : 'Aqui você receberá avisos de check-in, check-out e lembretes importantes sobre o horário do seu filho.'}
@@ -253,21 +255,21 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
                     <div
                       key={n.id}
                       onClick={clickable ? () => handleNotificationClick(n) : undefined}
-                      className={`p-3 rounded-xl flex gap-3 transition-colors ${!n.read_at ? 'bg-slate-50' : 'hover:bg-slate-50'} ${clickable ? 'cursor-pointer' : ''}`}
+                      className={`p-3 rounded-zela-md flex gap-3 transition-colors ${!n.read_at ? 'bg-surface' : 'hover:bg-surface'} ${clickable ? 'cursor-pointer' : ''}`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex shrink-0 items-center justify-center ${style.bg}`}>
+                      <div className={`w-10 h-10 rounded-zela-sm flex shrink-0 items-center justify-center ${style.bg}`}>
                         {style.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm text-slate-700 ${!n.read_at ? 'font-semibold' : ''}`}>
+                        <p className={`text-sm text-on-surface ${!n.read_at ? 'font-semibold' : ''}`}>
                           {n.message}
                         </p>
-                        <p className="text-[11px] text-slate-400 mt-1 font-medium">
+                        <p className="text-xs text-on-surface-variant mt-1">
                           {formatTime(n.created_at)}
                         </p>
                       </div>
                       {!n.read_at && (
-                        <div className="w-2 h-2 shrink-0 rounded-full mt-1.5 shadow-sm" style={{ backgroundColor: style.dot }} />
+                        <div className={`w-2 h-2 shrink-0 rounded-full mt-1.5 ${style.dot}`} aria-label="Não lida" />
                       )}
                     </div>
                   );
@@ -277,17 +279,17 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
           </div>
           
           {notifications.length > 0 && (
-            <div className="p-2 border-t border-slate-100 bg-slate-50 text-center">
+            <div className="p-2 border-t border-outline-variant bg-surface text-center">
               {hasMore ? (
                 <button
                   onClick={loadMoreNotifications}
                   disabled={isLoadingMore}
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest disabled:opacity-60 py-1"
+                  className="text-xs font-semibold text-primary hover:underline disabled:opacity-60 py-2 min-h-11"
                 >
-                  {isLoadingMore ? 'Carregando...' : 'Carregar mais'}
+                  {isLoadingMore ? 'Carregando' : 'Carregar mais'}
                 </button>
               ) : (
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Histórico Completo</p>
+                <p className="text-xs text-on-surface-variant">Histórico completo</p>
               )}
             </div>
           )}

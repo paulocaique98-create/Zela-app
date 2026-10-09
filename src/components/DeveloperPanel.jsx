@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { Building2, Plus, Edit2, X, Trash2, AlertTriangle, MoreVertical, LayoutGrid, FileSignature } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
@@ -303,7 +304,7 @@ export default function DeveloperPanel() {
       </div>
 
       {/* Lista de escolas */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 sm:p-5">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 pb-48 sm:p-5 sm:pb-48">
         {isLoading ? (
           <div className="h-full flex items-center justify-center text-dev-text-muted">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dev-primary" />
@@ -313,7 +314,7 @@ export default function DeveloperPanel() {
         ) : (
           <>
             {/* Tabela — desktop */}
-            <table className="hidden md:table w-full border-collapse bg-dev-surface border border-dev-border rounded-zela-md overflow-hidden">
+            <table className="hidden md:table w-full border-collapse bg-dev-surface border border-dev-border rounded-zela-md">
               <thead>
                 <tr className="bg-dev-surface-high text-left text-[9.5px] font-bold uppercase tracking-wide text-dev-text-muted">
                   <th className="px-4 py-3">Escola</th>
@@ -480,18 +481,23 @@ export default function DeveloperPanel() {
       </div>
 
       {/* Modal form (criar/editar) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-slate-900/70 backdrop-blur-sm">
-          <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-2xl overflow-hidden sm:max-h-[90vh] flex flex-col">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col">
             <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
               <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
                 <Building2 size={20} className="text-dev-primary" />
                 {editingSchool ? `Editar ${editingSchool.school_code}` : 'Nova Escola Contratante'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
+              <div className="flex items-center gap-2">
+                <button type="submit" form="form-escola" className="px-4 py-2 bg-dev-primary hover:brightness-110 text-white text-sm font-bold rounded-zela-sm transition">
+                  {editingSchool ? 'Salvar' : 'Criar escola e admin'}
+                </button>
+                <button onClick={() => setIsModalOpen(false)} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
+              </div>
             </div>
 
-            <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto scrollbar-none text-dev-text">
+            <form id="form-escola" onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto scrollbar-none text-dev-text">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome fantasia</label>
@@ -553,38 +559,6 @@ export default function DeveloperPanel() {
                     inputCls="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
                     classeMensagem="text-dev-text-muted"
                   />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Notas Internas da Zela</label>
-                  <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"></textarea>
-                </div>
-
-                {/* Método pedagógico — só developer edita (protect_school_pedagogical_columns_trigger) */}
-                <div className="md:col-span-2 border-t border-dev-border pt-4 mt-2">
-                  <p className="text-xs font-black text-dev-primary uppercase tracking-wider mb-3">Método Pedagógico</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Método</label>
-                      <select value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
-                        <option value="tradicional">Tradicional</option>
-                        <option value="montessori">Montessori</option>
-                        <option value="personalizado">Personalizado</option>
-                      </select>
-                    </div>
-                    {pedagogicalMethod === 'personalizado' && (
-                      <div>
-                        <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome para "Turma"</label>
-                        <input
-                          type="text"
-                          value={customClassLabel}
-                          onChange={e => setCustomClassLabel(e.target.value)}
-                          placeholder="Ex: Agrupamento, Ambiente..."
-                          className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 {/* Responsável da escola — apenas no cadastro */}
@@ -663,6 +637,33 @@ export default function DeveloperPanel() {
                 </div>
               </div>
 
+              {/* Método pedagógico — só developer edita (protect_school_pedagogical_columns_trigger) */}
+              <div className="mt-6 border-t border-dev-border pt-6">
+                <p className="text-xs font-black text-dev-primary uppercase tracking-wider mb-3">Método Pedagógico</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Método</label>
+                    <select value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
+                      <option value="tradicional">Tradicional</option>
+                      <option value="montessori">Montessori</option>
+                      <option value="personalizado">Personalizado</option>
+                    </select>
+                  </div>
+                  {pedagogicalMethod === 'personalizado' && (
+                    <div>
+                      <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome para "Turma"</label>
+                      <input
+                        type="text"
+                        value={customClassLabel}
+                        onChange={e => setCustomClassLabel(e.target.value)}
+                        placeholder="Ex: Agrupamento, Ambiente..."
+                        className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {saveError && (
                 <div className="mt-4 p-3 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-start gap-2">
                   <AlertTriangle size={16} className="shrink-0 mt-0.5" />
@@ -675,17 +676,10 @@ export default function DeveloperPanel() {
                 </div>
               )}
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-dev-border">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-dev-text-muted font-bold hover:bg-dev-surface-high rounded-zela-md transition">
-                  Cancelar
-                </button>
-                <button type="submit" className="px-5 py-2.5 bg-dev-primary hover:brightness-110 text-dev-bg font-bold rounded-zela-md shadow-md transition">
-                  {editingSchool ? 'Salvar Alterações' : 'Criar Escola + Admin'}
-                </button>
-              </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {confirmDeleteSchool && (

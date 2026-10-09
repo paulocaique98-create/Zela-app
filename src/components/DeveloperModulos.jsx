@@ -317,7 +317,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
           disabled={!alteradas.length || isSaving}
           className="min-h-[40px] px-4 rounded-zela-md bg-dev-primary text-dev-bg text-sm font-extrabold hover:brightness-110 disabled:opacity-40 flex items-center gap-2"
         >
-          {isSaving && <Loader2 size={15} className="animate-spin" />} Salvar alterações
+          {isSaving && <Loader2 size={15} className="animate-spin" />} Salvar
         </button>
       </div>
 

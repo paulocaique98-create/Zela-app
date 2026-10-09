@@ -457,7 +457,7 @@ function ReajusteTab({ ctx }) {
       {confirmando && (
         <ConfirmModal
           title="Aplicar reajuste"
-          message={`Reajustar ${quantos} ${quantos === 1 ? 'mensalidade' : 'mensalidades'} no Asaas e no Zela? As cobranças futuras passam a sair com o valor novo.`}
+          message={`Reajustar ${quantos} ${quantos === 1 ? 'mensalidade' : 'mensalidades'} no Asaas e no Zela Escola? As cobranças futuras passam a sair com o valor novo.`}
           confirmLabel="Aplicar reajuste"
           danger={false}
           isLoading={carregando}
@@ -507,7 +507,7 @@ function AutomaticoTab({ currentUser }) {
   return (
     <div className="space-y-4 max-w-xl">
       <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
-        <p>Quando ligada, ao aprovar uma matrícula ou rematrícula o Zela já cria a mensalidade do aluno no Asaas, com o preço da tabela de Planos e o desconto da família.</p>
+        <p>Quando ligada, ao aprovar uma matrícula ou rematrícula o Zela Escola já cria a mensalidade do aluno no Asaas, com o preço da tabela de Planos e o desconto da família.</p>
         <p>Só cria quando tudo estiver pronto: aluno com ciclo e turno, preço cadastrado, responsável financeiro com CPF e família que não seja bolsista. O que ficar de fora aparece em Financeiro · Mensalidades, aguardando.</p>
       </div>
       <Notice>{erro}</Notice>

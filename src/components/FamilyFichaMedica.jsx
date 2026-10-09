@@ -218,7 +218,7 @@ export default function FamilyFichaMedica({ currentUser, currentSchool, familySt
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
               >
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-                {fichaId ? 'Salvar alterações' : 'Salvar Ficha Médica'}
+                {fichaId ? 'Salvar' : 'Salvar Ficha Médica'}
               </button>
             </form>
           )}

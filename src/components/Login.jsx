@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight, Quote } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
-import { navigateTo } from '../utils/navigate';
 
 export default function Login({ onLogin }) {
   // Imagem central customizável pelo developer (ConfiguracoesPanel) --
@@ -189,7 +188,7 @@ export default function Login({ onLogin }) {
         redirectTo: publicAppUrl('/reset-password'),
       });
       if (error) throw error;
-      setRecoveryMsg('E-mail de recuperação enviado! Verifique sua caixa de entrada (e o spam).');
+      setRecoveryMsg('E-mail de recuperação enviado. Verifique sua caixa de entrada (e o spam).');
     } catch (err) {
       console.error('[Login] Recovery error:', err);
       setLoginError(err.message || 'Erro ao enviar e-mail de recuperação.');
@@ -201,41 +200,44 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] lg:h-screen lg:overflow-hidden flex w-full relative overflow-hidden bg-surface-container-lowest">
-      {/* Elementos decorativos de fundo */}
-      <div className="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-3xl pointer-events-none mix-blend-multiply" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-secondary/5 blur-3xl pointer-events-none mix-blend-multiply" />
-
-      {/* Painel esquerdo: branding (oculto em telas pequenas) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-surface-container-low flex-col justify-between p-8 xl:p-12 overflow-hidden shadow-[inset_-24px_0_48px_-12px_rgba(0,0,0,0.02)]">
-        <div className="relative z-10 flex items-center gap-3 shrink-0">
-          <div className="w-12 h-12 bg-primary-container rounded-zela-lg flex items-center justify-center shadow-sm">
-            <ShieldCheck className="text-white" size={24} />
+      {/* Painel esquerdo: marca e garantias (oculto em telas pequenas) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-ink text-white flex-col justify-between p-8 xl:p-12 overflow-hidden">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-11 h-11 bg-primary rounded-md flex items-center justify-center">
+            <ShieldCheck className="text-white" size={24} aria-hidden="true" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-h2 text-on-surface tracking-tight leading-none">Zela</span>
-            <span className="text-caption text-on-surface-variant uppercase tracking-widest mt-1">Gestão Escolar Inteligente</span>
+          <div className="flex flex-col gap-1">
+            <span className="font-serif text-h2 leading-none">Zela Escola</span>
+            <span className="text-caption text-ink-text leading-none">Arx Tecnologia</span>
           </div>
         </div>
 
-        <div className="relative z-10 flex-1 min-h-0 my-6 flex items-center justify-center">
+        <div className="flex-1 min-h-0 my-6 flex items-center justify-center">
           {displayedImageUrl ? (
-            <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl">
+            <div className="w-full h-full max-w-lg max-h-[48vh] aspect-square rounded-xl overflow-hidden border border-ink-line">
               <img src={displayedImageUrl} alt="" className="w-full h-full object-cover" />
             </div>
           ) : (
-            <div className="w-full h-full max-w-lg max-h-[42vh] aspect-square rounded-[32px] overflow-hidden shadow-2xl bg-gradient-to-br from-primary via-secondary to-tertiary relative flex items-center justify-center">
-              <ShieldCheck className="text-white/15" size={140} strokeWidth={1} />
-              <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/30 via-transparent to-transparent" />
+            <div className="w-full h-full max-w-lg max-h-[48vh] aspect-square rounded-xl overflow-hidden border border-ink-line bg-ink-line/40 flex items-center justify-center">
+              <ShieldCheck className="text-white/20" size={140} strokeWidth={1} aria-hidden="true" />
             </div>
           )}
         </div>
 
-        <div className="relative z-10 max-w-md shrink-0">
-          <Quote className="text-primary/40 mb-3" size={32} />
-          <p className="text-h3 text-on-surface leading-relaxed">
-            Controle de entrada, saída e comunicação escolar em um só lugar com segurança para cada aluno.
-          </p>
+        <div className="max-w-md shrink-0 mb-6">
+          <h2 className="font-serif text-h1 leading-tight">Gestão e segurança para a sua escola.</h2>
         </div>
+
+        <ul className="max-w-md shrink-0 grid gap-3.5 text-small text-ink-text">
+          <li className="flex items-start gap-3">
+            <ShieldCheck className="text-brass mt-0.5 shrink-0" size={18} aria-hidden="true" />
+            Toda saída é confirmada pela recepção e registrada.
+          </li>
+          <li className="flex items-start gap-3">
+            <Lock className="text-brass mt-0.5 shrink-0" size={18} aria-hidden="true" />
+            Os dados de cada escola ficam isolados dos demais.
+          </li>
+        </ul>
       </div>
 
       {/* Painel direito: formulário */}
@@ -243,18 +245,21 @@ export default function Login({ onLogin }) {
         <div className="w-full max-w-[420px] flex flex-col">
           {/* Branding mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-primary-container rounded-zela-lg flex items-center justify-center shadow-sm">
-              <ShieldCheck className="text-white" size={20} />
+            <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
+              <ShieldCheck className="text-white" size={20} aria-hidden="true" />
             </div>
-            <span className="text-h2 text-on-surface tracking-tight leading-none">Zela</span>
+            <div className="flex flex-col gap-1">
+              <span className="font-serif text-h2 text-on-surface leading-none">Zela Escola</span>
+              <span className="text-caption text-on-surface-variant leading-none">Arx Tecnologia</span>
+            </div>
           </div>
 
           <div className="mb-8 text-left">
-            <h1 className="text-h1-mobile lg:text-display text-on-surface mb-2 tracking-tight">
-              {isRecoveringPassword ? 'Recuperar senha' : 'Bem-vindo'}
+            <h1 className="font-serif text-h1-mobile lg:text-h1 text-on-surface mb-2">
+              {isRecoveringPassword ? 'Recuperar senha' : 'Entrar no Zela Escola'}
             </h1>
             <p className="text-body text-on-surface-variant">
-              {isRecoveringPassword ? 'Enviaremos um link para redefinir sua senha.' : 'Portal de gestão e segurança escolar'}
+              {isRecoveringPassword ? 'Enviaremos um link para redefinir sua senha.' : 'Use o e-mail cadastrado na escola.'}
             </p>
           </div>
 
@@ -269,17 +274,17 @@ export default function Login({ onLogin }) {
                     type="email"
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
-                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-4 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm"
+                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-4 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline"
                     placeholder="seu@email.com"
                     required
                   />
                 </div>
               </div>
 
-              {loginError && <div className="p-3 bg-red-50 text-error text-small rounded-zela-md border border-red-100">{loginError}</div>}
-              {recoveryMsg && <div className="p-3 bg-green-50 text-green-700 text-small rounded-zela-md border border-green-200">{recoveryMsg}</div>}
+              {loginError && <div className="p-3 bg-error/5 text-error text-small rounded-md border border-error/30" role="alert">{loginError}</div>}
+              {recoveryMsg && <div className="p-3 bg-success/5 text-success text-small rounded-md border border-success/30" role="status">{recoveryMsg}</div>}
 
-              <button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-zela-md shadow-md hover:shadow-lg transition-all disabled:opacity-70">
+              <button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-md transition-colors disabled:opacity-70">
                 {isLoading ? 'Enviando...' : 'Enviar link'}
               </button>
               <button type="button" onClick={() => { setIsRecoveringPassword(false); setLoginError(''); setRecoveryMsg(''); }} className="text-small text-primary hover:underline underline-offset-4 text-center mt-1">
@@ -304,7 +309,7 @@ export default function Login({ onLogin }) {
                     value={schoolCode}
                     onChange={e => setSchoolCode(e.target.value)}
                     onBlur={() => fetchSchoolImageFor(schoolCode)}
-                    className="w-full bg-surface-container-lowest text-on-surface text-body px-4 py-2.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm uppercase"
+                    className="w-full bg-surface-container-lowest text-on-surface text-body px-4 py-2.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline uppercase"
                     placeholder="Ex: ZL001"
                     maxLength={10}
                   />
@@ -320,7 +325,7 @@ export default function Login({ onLogin }) {
                     type="email"
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
-                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-4 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm"
+                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-4 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline"
                     placeholder="seu@email.com"
                     required
                   />
@@ -336,7 +341,7 @@ export default function Login({ onLogin }) {
                     type={showPassword ? 'text' : 'password'}
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
-                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-12 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline shadow-sm tracking-widest"
+                    className="w-full bg-surface-container-lowest text-on-surface text-body pl-11 pr-12 py-3.5 rounded-zela-md border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline tracking-widest"
                     placeholder="••••••••"
                     required
                   />
@@ -351,32 +356,20 @@ export default function Login({ onLogin }) {
                 </div>
                 <div className="flex justify-end mt-1">
                   <button type="button" onClick={() => { setIsRecoveringPassword(true); setLoginError(''); }} className="text-small text-primary font-medium hover:underline underline-offset-4">
-                    Esqueceu a senha?
+                    Esqueci minha senha
                   </button>
                 </div>
               </div>
 
-              {loginError && <div className="p-3 bg-red-50 text-error text-small rounded-zela-md border border-red-100">{loginError}</div>}
+              {loginError && <div className="p-3 bg-error/5 text-error text-small rounded-md border border-error/30" role="alert">{loginError}</div>}
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-zela-md shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70 group"
+                className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                {isLoading ? 'Entrando...' : (
-                  <>
-                    Entrar
-                    <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
+                {isLoading ? 'Entrando...' : 'Entrar'}
               </button>
-
-              <div className="text-center mt-1">
-                <span className="text-small text-on-surface-variant">Novo por aqui? </span>
-                <button type="button" onClick={() => navigateTo('/cadastro')} className="text-small text-primary font-medium hover:underline underline-offset-4">
-                  Novo usuário?
-                </button>
-              </div>
             </form>
           )}
         </div>

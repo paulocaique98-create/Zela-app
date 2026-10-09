@@ -557,7 +557,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
         <p className="text-on-surface-variant text-small hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
         {/* Importação em massa — pra migrar formulários de anos anteriores
-            (ex: um Google Forms usado antes do Zela existir) sem cada
+            (ex: um Google Forms usado antes do Zela Escola existir) sem cada
             família precisar preencher tudo de novo do zero. */}
         <div className="flex items-center gap-2 shrink-0 ml-auto flex-wrap justify-end">
           {/* Link de Matrícula — copia direto pra escola mandar pra uma
@@ -645,12 +645,12 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
             </div>
             <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
               <span className="text-lg">⚠️</span>
-              <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela pede para a pessoa criar a própria senha.</p>
+              <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela Escola pede para a pessoa criar a própria senha.</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`Acesso Portal Zela\nE-mail: ${newGuardianCredentials.email}\nSenha: ${newGuardianCredentials.password}`);
+                  navigator.clipboard.writeText(`Acesso Zela Escola\nE-mail: ${newGuardianCredentials.email}\nSenha: ${newGuardianCredentials.password}`);
                 }}
                 className="w-full py-3 bg-primary/10 text-primary font-bold rounded-zela-md hover:bg-primary/20 transition flex items-center justify-center gap-2"
               >

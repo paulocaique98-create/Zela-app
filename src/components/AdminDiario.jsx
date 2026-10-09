@@ -492,7 +492,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                   className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:opacity-70 text-white px-6 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
                 >
                   {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                  {existingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
+                  {existingId ? 'Salvar' : 'Salvar Lançamento'}
                 </button>
               </div>
             </>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Bell, Monitor, X } from 'lucide-react';
+import TrilhaConfirmacao from './TrilhaConfirmacao';
 
 /**
  * CheckinAlertModal
@@ -72,89 +73,74 @@ export default function CheckinAlertModal({ alert, onDismiss, onGoToMonitor }) {
   if (!alert) return null;
 
   const isCheckin = alert.type === 'Check-in';
+  const operacao = isCheckin ? 'Entrada' : 'Saída';
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70"
       onClick={onDismiss}
     >
-      {/* Card — clique no interior não fecha */}
+      {/* Card: clique no interior não fecha */}
       <div
-        className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
-        style={{ animation: 'zelaAlertZoom 0.25s cubic-bezier(0.175,0.885,0.32,1.275) both' }}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="checkin-alert-titulo"
+        className={`relative bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-sm overflow-hidden border-l-4 ${isCheckin ? 'border-l-success' : 'border-l-primary'}`}
+        style={{ animation: 'zelaAlertZoom 0.2s ease-out both' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Barra de progresso de auto-dismiss no topo */}
-        <div className="h-1 bg-slate-100 w-full">
-          <div
-            ref={progressRef}
-            className="h-1 bg-amber-400"
-            style={{ width: '100%' }}
-          />
+        {/* Barra de progresso do fechamento automático */}
+        <div className="h-1 bg-surface-container-low w-full">
+          <div ref={progressRef} className="h-1 bg-brass" style={{ width: '100%' }} />
         </div>
 
-        {/* Cabeçalho colorido */}
-        <div className={`px-6 pt-6 pb-4 text-center ${isCheckin ? 'bg-gradient-to-b from-amber-50 to-white' : 'bg-gradient-to-b from-indigo-50 to-white'}`}>
-          {/* Ícone animado */}
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md ${isCheckin ? 'bg-amber-100' : 'bg-indigo-100'}`}
-            style={{ animation: 'zelaAlertBounce 0.6s ease infinite alternate' }}
-          >
-            <Bell
-              size={32}
-              className={isCheckin ? 'text-amber-500' : 'text-indigo-500'}
-              fill="currentColor"
-            />
-          </div>
-
-          <p className={`text-xs font-black uppercase tracking-widest mb-1 ${isCheckin ? 'text-amber-500' : 'text-indigo-500'}`}>
-            Nova Solicitação!
+        <div className="px-6 pt-6 pb-4">
+          <p className="text-sm font-semibold text-on-surface-variant flex items-center gap-2 mb-1">
+            <Bell size={16} className="text-warning" aria-hidden="true" />
+            Nova solicitação
           </p>
-          <h2 className="text-2xl font-black text-slate-800 leading-tight">
+          <h2 id="checkin-alert-titulo" className="text-2xl font-semibold text-on-surface leading-tight">
             {alert.studentName}
           </h2>
+          <p className="mt-2 text-sm text-on-surface">
+            {operacao} solicitada no Autoatendimento
+          </p>
         </div>
 
-        {/* Tipo da operação */}
-        <div className="px-6 pb-2">
-          <div className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm ${isCheckin ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}`}>
-            <span className="text-base">{isCheckin ? '📥' : '📤'}</span>
-            {alert.type} solicitado no Autoatendimento
-          </div>
+        <div className="px-6 pb-4">
+          <TrilhaConfirmacao atual={2} />
         </div>
 
-        <p className="text-center text-xs text-slate-400 font-medium px-6 pb-4">
-          Auto-dispensando em 30 segundos
+        <p className="text-xs text-on-surface-variant px-6 pb-4">
+          Este aviso fecha sozinho em 30 segundos
         </p>
 
-        {/* Botões */}
         <div className="flex gap-3 px-6 pb-6">
           <button
             onClick={onDismiss}
-            className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 font-bold py-3.5 rounded-2xl transition-all text-sm"
+            className="flex-1 flex items-center justify-center gap-2 min-h-[48px] bg-surface-container-low hover:bg-outline-variant text-on-surface font-semibold rounded-md transition-colors text-sm"
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
             Dispensar
           </button>
           <button
             onClick={onGoToMonitor}
-            className={`flex-[2] flex items-center justify-center gap-2 text-white font-black py-3.5 rounded-2xl active:scale-95 transition-all shadow-md text-sm ${isCheckin ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+            className="flex-[2] flex items-center justify-center gap-2 min-h-[48px] bg-primary hover:bg-primary-container text-white font-semibold rounded-md transition-colors text-sm"
           >
-            <Monitor size={16} />
-            Ver no Monitor
+            <Monitor size={16} aria-hidden="true" />
+            Abrir o monitor
           </button>
         </div>
       </div>
 
-      {/* Keyframes via style tag inline — compatível sem CSS externo */}
+      {/* Keyframes inline, compatível sem CSS externo. Movimento reduzido respeitado. */}
       <style>{`
         @keyframes zelaAlertZoom {
-          from { opacity: 0; transform: scale(0.88); }
-          to   { opacity: 1; transform: scale(1); }
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes zelaAlertBounce {
-          from { transform: translateY(0px) rotate(-4deg); }
-          to   { transform: translateY(-5px) rotate(4deg); }
+        @media (prefers-reduced-motion: reduce) {
+          [role="alertdialog"] { animation: none !important; }
         }
       `}</style>
     </div>

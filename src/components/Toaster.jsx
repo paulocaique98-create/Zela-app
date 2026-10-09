@@ -3,9 +3,9 @@ import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { subscribeToasts } from '../lib/toast';
 
 const STYLES = {
-  success: { icon: CheckCircle2, cls: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
-  error: { icon: AlertCircle, cls: 'bg-red-50 border-red-200 text-red-800' },
-  info: { icon: Info, cls: 'bg-surface-container-lowest border-outline-variant text-on-surface' },
+  success: { icon: CheckCircle2, cls: 'bg-surface-container-lowest border-outline-variant border-l-success text-on-surface', iconCls: 'text-success' },
+  error: { icon: AlertCircle, cls: 'bg-surface-container-lowest border-outline-variant border-l-error text-on-surface', iconCls: 'text-error' },
+  info: { icon: Info, cls: 'bg-surface-container-lowest border-outline-variant border-l-primary text-on-surface', iconCls: 'text-primary' },
 };
 
 // Mostra os avisos de src/lib/toast.js. No celular ficam acima da barra
@@ -27,13 +27,13 @@ export default function Toaster() {
       aria-live="polite"
     >
       {items.map(t => {
-        const { icon: Icon, cls } = STYLES[t.type] || STYLES.info;
+        const { icon: Icon, cls, iconCls } = STYLES[t.type] || STYLES.info;
         return (
-          <div key={t.id} className={`pointer-events-auto flex items-start gap-2 p-3 rounded-zela-lg border shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 ${cls}`}>
-            <Icon size={18} className="shrink-0 mt-0.5" />
+          <div key={t.id} className={`pointer-events-auto flex items-start gap-2 p-3 rounded-zela-md border border-l-4 shadow-md text-sm font-medium ${cls}`}>
+            <Icon size={18} aria-hidden="true" className={`shrink-0 mt-0.5 ${iconCls}`} />
             <span className="flex-1 whitespace-pre-wrap">{t.message}</span>
-            <button onClick={() => setItems(prev => prev.filter(i => i.id !== t.id))} className="shrink-0 opacity-60 hover:opacity-100" aria-label="Fechar aviso">
-              <X size={16} />
+            <button onClick={() => setItems(prev => prev.filter(i => i.id !== t.id))} className="shrink-0 -m-2 p-2 min-w-11 min-h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface" aria-label="Fechar aviso">
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
         );

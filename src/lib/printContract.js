@@ -13,7 +13,7 @@ export function printContract(doc, schoolName) {
     ? `<section class="sig">
         <h2>Assinatura eletrônica</h2>
         <p>Assinado por <strong>${escapeHtml(doc.signer_name)}</strong> em ${escapeHtml(signedAt)}.</p>
-        <p>Método: ${escapeHtml(doc.signature_meta?.metodo || 'assinatura eletrônica simples pelo app Zela')}.</p>
+        <p>Método: ${escapeHtml(doc.signature_meta?.metodo || 'assinatura eletrônica simples pelo app Zela Escola')}.</p>
         ${doc.signature_meta?.ip ? `<p>Endereço IP: ${escapeHtml(doc.signature_meta.ip)}</p>` : ''}
         <p class="hash">Impressão digital do texto (SHA 256): ${escapeHtml(doc.content_hash)}</p>
       </section>`

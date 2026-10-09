@@ -425,7 +425,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
                       </div>
                     ))}
                   </div>
-                  <p className="px-4 py-2.5 text-[11px] text-amber-700 bg-amber-50/50 border-t border-amber-100">Cada senha é única. No primeiro acesso o Zela pede para a família criar a própria senha. Copie antes de fechar esta janela.</p>
+                  <p className="px-4 py-2.5 text-[11px] text-amber-700 bg-amber-50/50 border-t border-amber-100">Cada senha é única. No primeiro acesso o Zela Escola pede para a família criar a própria senha. Copie antes de fechar esta janela.</p>
                 </div>
               )}
               {errorCount > 0 && (

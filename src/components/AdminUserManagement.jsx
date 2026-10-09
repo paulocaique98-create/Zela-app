@@ -298,7 +298,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     // verdade (não só "moldura menor").
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header -- título "Gestão de Usuários" removido (o Header do app já
-          mostra "Zela · Gestão de Usuários"/"Zela Usuários" dinamicamente),
+          mostra "Zela Escola · Gestão de Usuários"/"Zela Escola Usuários" dinamicamente),
           ícone + contador ficam numa linha só, mais compacta. */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-2.5">
@@ -355,10 +355,10 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           </div>
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition font-medium text-sm whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white hover:bg-primary-container rounded-md transition font-semibold text-sm whitespace-nowrap min-h-[44px]"
           >
             <FileSpreadsheet size={18} />
-            <span className="hidden md:inline">Importar Excel</span>
+            <span className="hidden md:inline">Importar</span>
           </button>
         </div>
       </div>

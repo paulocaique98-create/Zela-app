@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UtensilsCrossed, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, ImageUp, AlertTriangle, ArrowLeft, Calendar, Download, Sparkles } from 'lucide-react';
+import { UtensilsCrossed, Loader2, Trash2, Pencil, X, Check, Plus, FileUp, ImageUp, AlertTriangle, ArrowLeft, Calendar, Download, ScanText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { REFEICOES } from '../lib/constants';
 import { parseDateTextList } from '../lib/pdfDateListParser';
@@ -406,6 +406,12 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
         <p className="text-on-surface-variant text-small hidden sm:block">Crie cardápios mensais, com período de ativação opcional.</p>
         {!showNewForm && !weekGroups && !iaCardapios && (
           <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 sm:justify-end">
+            <button
+              onClick={() => setShowNewForm(true)}
+              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+            >
+              <Plus size={18} className="shrink-0" /> Novo Cardápio
+            </button>
             <div className="relative">
               <button
                 type="button"
@@ -452,16 +458,10 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
               className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
               title="Lê qualquer PDF de cardápio (tabela dia x refeição) usando IA, sem precisar seguir o modelo"
             >
-              {isParsingIA ? <Loader2 size={18} className="animate-spin shrink-0" /> : <Sparkles size={18} className="shrink-0" />}
+              {isParsingIA ? <Loader2 size={18} className="animate-spin shrink-0" /> : <ScanText size={18} className="shrink-0" />}
               <span className="truncate">{isParsingIA ? 'Lendo com IA...' : 'Importar com IA'}</span>
               <input type="file" accept="application/pdf" onChange={handleIaFileSelected} className="hidden" disabled={isParsingIA} />
             </label>
-            <button
-              onClick={() => setShowNewForm(true)}
-              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
-            >
-              <Plus size={18} className="shrink-0" /> Novo Cardápio
-            </button>
           </div>
         )}
       </div>
@@ -483,7 +483,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
             <div className="flex justify-between items-start gap-3">
               <div>
-                <h3 className="font-bold text-on-surface text-sm flex items-center gap-1.5"><Sparkles size={15} className="text-primary" /> A IA leu {iaCardapios.length} cardápio(s) nesse PDF</h3>
+                <h3 className="font-bold text-on-surface text-sm flex items-center gap-1.5"><ScanText size={15} className="text-primary" /> A IA leu {iaCardapios.length} cardápio(s) nesse PDF</h3>
                 <p className="text-on-surface-variant text-xs mt-0.5">
                   Esse cardápio não tem datas, só dias da semana. Escolha a partir de quando ele começa a valer; o sistema aplica os {iaCardapios.length} cardápio(s) em sequência, repetindo até a data final.
                 </p>

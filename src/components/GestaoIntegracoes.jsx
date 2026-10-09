@@ -49,12 +49,12 @@ export default function GestaoIntegracoes({ currentUser, currentSchool, setGesta
     {
       icon: Activity, title: 'Monitoramento de erros',
       state: 'ok',
-      lines: ['Falhas do sistema são registradas e acompanhadas pelo suporte do Zela automaticamente.'],
+      lines: ['Falhas do sistema são registradas e acompanhadas pelo suporte do Zela Escola automaticamente.'],
     },
   ];
 
   return (
-    <PageShell description="Conexões do Zela com serviços externos.">
+    <PageShell description="Conexões do Zela Escola com serviços externos.">
       {!info ? <Loading /> : (
         <div className="grid gap-3 lg:grid-cols-2">
           {cards.map(c => {

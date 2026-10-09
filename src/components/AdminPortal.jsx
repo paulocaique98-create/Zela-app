@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Car, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, Sparkles, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import { AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -286,13 +287,18 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
+      {/* No Autoatendimento o Header some; esta faixa preenche o topo do menu lateral */}
+      {adminTab === 'kiosk' && (
+        <div aria-hidden="true" className={`hidden md:block fixed top-0 left-0 h-16 bg-ink z-30 ${isSidebarExpanded ? 'w-[248px]' : 'w-[72px]'}`} />
+      )}
+
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-surface-container-low border-r border-outline-variant transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[280px]' : 'md:w-16'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
-          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[14px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
+          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* CADASTROS */}
@@ -435,7 +441,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => go('auditoria')} />
                 {/* "•" em vez de número -- só indica que existe novidade não
                     lida, não quantas (pedido explícito). */}
-                <SidebarItem active={adminTab === 'system-updates'} icon={Sparkles} label="Atualizações" badge={hasUnreadSystemUpdates ? '•' : null} onClick={() => go('system-updates')} />
+                <SidebarItem active={adminTab === 'system-updates'} icon={RefreshCw} label="Atualizações" badge={hasUnreadSystemUpdates ? '•' : null} onClick={() => go('system-updates')} />
                 <SidebarItem active={adminTab === 'duplicidade-biometrica'} icon={Fingerprint} label="Duplicidade Facial" onClick={() => go('duplicidade-biometrica')} />
                 <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
               </SidebarGroup>
@@ -450,21 +456,21 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           sidebar) recria a mesma linha só a partir de onde a sidebar termina,
           como uma continuação do border-r dela, sem risco em cima do próprio
           menu lateral. */}
-      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
+      <main className={`flex-1 min-w-0 h-full flex flex-col ${adminTab === 'kiosk' ? '' : 'border-t border-outline-variant/60'}`}>
       {/* BANNER NOTIFICAÇÕES PUSH — mesmo padrão de FamilyPortal.jsx.
           Sem isso, notifyAdmins() nunca tem pra quem mandar push (a
           escola nunca teria se inscrito). */}
       {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3 justify-between shrink-0">
-          <div className="flex items-center gap-2 text-amber-800 text-sm font-medium min-w-0 flex-1">
-            <Bell size={18} className="text-amber-600 shrink-0" />
+        <div className="bg-brass-50 border-b border-brass px-4 py-3 flex items-center gap-3 justify-between shrink-0">
+          <div className="flex items-center gap-2 text-on-surface text-sm font-medium min-w-0 flex-1">
+            <Bell size={18} className="text-warning shrink-0" />
             <span className="truncate">Ative as notificações para saber na hora quando um responsável se cadastrar</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+            <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-semibold text-white bg-primary hover:bg-primary-container min-h-[44px] px-3 py-1.5 rounded-md transition-colors whitespace-nowrap">
               Ativar
             </button>
-            <button onClick={dismissPushBanner} className="text-amber-500 hover:text-amber-700 p-1 rounded-md hover:bg-amber-100 transition-colors">
+            <button onClick={dismissPushBanner} aria-label="Fechar aviso" className="text-on-surface-variant hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-brass-50 transition-colors">
               <X size={16} />
             </button>
           </div>
@@ -506,14 +512,14 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
-          <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl md:rounded-none shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant md:shadow-none'}`}>
+          <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl md:rounded-none border transition-colors duration-500 overflow-hidden ${newArrival ? 'border-brass' : 'border-outline-variant'}`}>
 
             {/* Header do Monitor -- título "Monitor de Solicitações" removido
                 (o Header do app já mostra o nome da tela dinamicamente); o
                 indicador de status do tempo real se junta ao ícone. */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="relative bg-primary/10 p-2.5 rounded-zela-md text-primary">
+                <div className="relative bg-primary/10 p-2.5 rounded-md text-primary">
                   <AlertCircle size={22} />
                   {/* Indicador de status do tempo real — antes disso, uma queda
                       silenciosa do Realtime só era percebida no Console do
@@ -521,9 +527,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                       parou: a reconciliação por polling continua atualizando
                       a lista sozinha em segundo plano. */}
                   <span
-                    className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white shrink-0 ${
-                      connectionStatus === 'connected' ? 'bg-green-500' :
-                      connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
+                    className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-surface-container-lowest shrink-0 ${
+                      connectionStatus === 'connected' ? 'bg-success' :
+                      connectionStatus === 'connecting' ? 'bg-brass motion-safe:animate-pulse' : 'bg-error'
                     }`}
                     title={
                       connectionStatus === 'connected' ? 'Tempo real conectado' :
@@ -540,7 +546,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <button
                     onClick={handleApproveAll}
                     disabled={bulkApproving}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 font-bold text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 px-4 py-2.5 rounded-zela-md shadow-sm active:scale-95 transition-all"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 font-semibold text-sm text-white bg-success hover:brightness-110 disabled:opacity-60 min-h-[44px] px-4 py-2.5 rounded-md transition"
                   >
                     {bulkApproving
                       ? <><Loader2 size={16} className="animate-spin" /> Aprovando…</>
@@ -552,40 +558,40 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             {/* Alerta de nova chegada */}
             {newArrival && (
-              <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-zela-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
-                <Bell className="text-amber-600 shrink-0 animate-bounce" size={22} />
+              <div role="status" className="mb-5 p-4 bg-brass-50 border border-brass border-l-4 rounded-md flex items-center gap-3 shrink-0">
+                <Bell className="text-warning shrink-0" size={22} />
                 <div>
-                  <p className="font-bold text-amber-800">Nova atualização no painel!</p>
-                  <p className="text-xs text-amber-600">Confirme a solicitação de check-in/out abaixo.</p>
+                  <p className="font-semibold text-on-surface">Nova solicitação no painel</p>
+                  <p className="text-xs text-on-surface-variant">Confirme a solicitação de entrada ou saída abaixo.</p>
                 </div>
               </div>
             )}
 
             {/* Cards dos alunos */}
             {monitorStudents.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-                <Car className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+              <div className="flex-1 flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-md border border-dashed border-outline-variant">
+                <UserRound className="mx-auto h-12 w-12 text-outline-variant mb-3" />
                 <h3 className="text-on-surface-variant font-medium">Nenhuma solicitação no momento.</h3>
                 <p className="text-on-surface-variant/70 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                   {monitorStudents.map(student => {
-                    let badgeClass, badgeText, btnClass, btnText, btnActionStatus, cancelStatus, borderColor, bgColor;
+                    let badgeText, btnClass, btnText, btnActionStatus, cancelStatus, faixaColor;
 
                     if (student.status === 'pending_entry') {
-                      badgeClass = "text-green-700"; badgeText = "Solicitação de Entrada";
-                      btnClass = "bg-green-600 hover:bg-green-700 text-white"; btnText = "Confirmar Entrada";
+                      badgeText = "Solicitação de entrada";
+                      btnClass = "bg-success hover:brightness-110 text-white"; btnText = "Confirmar entrada";
                       btnActionStatus = "in_school";
                       cancelStatus = "idle";
-                      borderColor = "border-green-300"; bgColor = "bg-green-50";
+                      faixaColor = "border-l-success";
                     } else if (student.status === 'pending_exit') {
-                      badgeClass = "text-primary"; badgeText = "Solicitação de Saída";
-                      btnClass = "bg-primary hover:bg-primary-container text-white"; btnText = "Confirmar Saída";
+                      badgeText = "Solicitação de saída";
+                      btnClass = "bg-primary hover:bg-primary-container text-white"; btnText = "Confirmar saída";
                       btnActionStatus = "left";
                       cancelStatus = "in_school";
-                      borderColor = "border-primary/40"; bgColor = "bg-primary/5";
+                      faixaColor = "border-l-primary";
                     }
 
                     const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
@@ -593,26 +599,28 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                     return (
                       <div
                         key={student.id}
-                        className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-zela-lg shadow-sm animate-in zoom-in-95 duration-300`}
+                        className={`relative p-5 bg-surface-container-lowest border border-outline-variant border-l-4 ${faixaColor} rounded-md`}
                       >
                         {requester?.photo_url && (
                           <img
                             src={requester.photo_url}
                             alt={requester.name}
                             title={requester.name}
-                            className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                            className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border border-outline-variant"
                           />
                         )}
-                        <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
+                        <p className="text-xs font-semibold text-on-surface-variant mb-1 flex items-center gap-1 pr-11">
                           <Clock size={12} /> {badgeText}
                         </p>
-                        <h3 className="font-bold text-lg text-on-surface mb-4 pr-11">{student.name}</h3>
+                        <h3 className="font-semibold text-lg text-on-surface mb-3 pr-11">{student.name}</h3>
+                        {/* Trilha: a solicitação já passou pelo responsável e pelo totem; falta a recepção. */}
+                        <TrilhaConfirmacao atual={2} className="mb-4" />
                         <div className="flex flex-col gap-2">
                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button
                             title={student.status === 'pending_entry' ? 'Confirmar Check-in' : 'Confirmar Check-out'}
                             onClick={() => updateStudentStatus(student.id, btnActionStatus)}
-                            className={`w-full font-bold py-3 rounded-zela-md active:scale-95 transition-all shadow-sm ${btnClass}`}
+                            className={`w-full font-semibold min-h-[48px] py-3 rounded-md transition ${btnClass}`}
                           >
                             {btnText}
                           </button>
@@ -623,9 +631,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                           <button
                             title="Rejeitar solicitação"
                             onClick={() => setCancelTarget({ student, cancelStatus, badgeText })}
-                            className="w-full font-semibold py-2 rounded-zela-md text-on-surface-variant bg-surface-container-lowest border border-outline-variant hover:bg-red-50 hover:text-red-500 hover:border-red-200 active:scale-95 transition-all"
+                            className="w-full font-semibold min-h-[44px] py-2 rounded-md text-on-surface-variant bg-surface-container-lowest border border-outline-variant hover:bg-error/10 hover:text-error hover:border-error transition"
                           >
-                            Cancelar Solicitação
+                            Cancelar solicitação
                           </button>
                         </div>
                       </div>
@@ -652,15 +660,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* Faixa superior: nome da escola + engrenagem de configurações
                 (cadastrar foto de responsáveis, e agora também Sair — o
                 botão de sair do Header não existe mais nesta tela) */}
-            <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-outline-variant shrink-0">
-              <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-on-surface truncate pr-3">
-                {currentSchool?.name || 'Autoatendimento'}
+            <div className="flex items-center justify-between px-5 sm:px-8 h-[60px] md:h-16 bg-ink text-ink-text shrink-0">
+              <span className="text-sm sm:text-base font-semibold text-white truncate pr-3">
+                Zela Escola
               </span>
               <div className="relative shrink-0">
                 <button
                   onClick={() => setIsKioskSettingsOpen(v => !v)}
                   title="Configurações do Autoatendimento"
-                  className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
+                  aria-label="Configurações do Autoatendimento" className="min-w-11 min-h-11 flex items-center justify-center text-ink-text hover:text-white hover:bg-ink-2 rounded-md transition"
                 >
                   <Settings size={18} />
                 </button>
@@ -869,12 +877,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
               title="Chat"
+              aria-label="Chat"
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
               {!isChatOpen && chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
                   {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                 </span>
               )}

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, X, Check, AlertTriangle, FileSignature } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -197,14 +198,21 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
     onDone();
   };
 
-  return (
-    <div className="fixed inset-0 z-[90] bg-black/60 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-xl bg-dev-bg border border-dev-border rounded-zela-lg p-5 space-y-4 my-8 text-dev-text">
-        <div className="flex items-center justify-between">
-          <div><p className="font-bold text-lg">Contratar plano</p><p className="text-xs text-dev-text-muted">{escola?.name} · {ativos} aluno(s) ativo(s)</p></div>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text"><X size={18} /></button>
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-slate-900/70 backdrop-blur-sm">
+      <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col text-dev-text">
+        <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
+          <div>
+            <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
+              <FileSignature size={20} className="text-dev-primary" />
+              Contratar plano
+            </h3>
+            <p className="text-xs text-dev-text-muted mt-0.5">{escola?.name} · {ativos} aluno(s) ativo(s)</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
         </div>
 
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-none">
         {confirmando ? (
           <div className="space-y-3">
             <p className="text-sm">Confirme a contratação de <b>{plano.nome}</b> ({cicloSel.ciclo.toLowerCase()}) para {escola?.name}.</p>
@@ -290,8 +298,10 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
             </div>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -299,7 +309,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
 export function ContratarPlanoDaEscola({ schoolId, onClose }) {
   const dados = usePlanosZela();
   if (dados.loading) {
-    return <div className="fixed inset-0 z-[90] bg-black/60 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
+    return createPortal(<div className="fixed inset-0 z-[90] bg-black/60 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>, document.body);
   }
   return <ContratarPlanoModal dados={dados} schoolId={schoolId} onClose={onClose} onDone={onClose} />;
 }

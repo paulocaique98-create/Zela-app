@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GraduationCap, Search, X, Users, RefreshCw, Loader2, ArrowRightLeft, Check, History } from 'lucide-react';
+import { GraduationCap, Search, X, Users, Loader2, ArrowRightLeft, Check, History } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
@@ -134,11 +134,6 @@ export default function AdminStudentList({ currentUser }) {
     return () => clearTimeout(timer);
   }, [fetchPage, searchTerm, selectedTurma]);
 
-  const handleRefresh = () => {
-    fetchCounts();
-    fetchPage(0);
-  };
-
   const handleLoadMore = () => fetchPage(students.length, { append: true });
 
   return (
@@ -155,13 +150,6 @@ export default function AdminStudentList({ currentUser }) {
             {totalCount} aluno{totalCount !== 1 ? 's' : ''} matriculado{totalCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="flex items-center gap-2 text-small font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-4 py-2 rounded-zela-md transition disabled:opacity-50 shrink-0"
-        >
-          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} /> Atualizar
-        </button>
       </div>
 
       {/* Filtros: Busca + Turma */}

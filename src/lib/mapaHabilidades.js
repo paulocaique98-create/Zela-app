@@ -256,6 +256,6 @@ export function mapaIndisponivel(erro) {
 
 export function mensagemErroMapa(erro, padrao) {
   return mapaIndisponivel(erro)
-    ? 'O Mapa de Habilidades ainda não foi ativado no banco de dados. Avise o suporte do Zela.'
+    ? 'O Mapa de Habilidades ainda não foi ativado no banco de dados. Avise o suporte do Zela Escola.'
     : padrao;
 }

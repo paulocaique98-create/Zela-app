@@ -59,7 +59,7 @@ CLÁUSULA 4 · DA RESCISÃO
 Este contrato pode ser rescindido por qualquer das partes mediante aviso prévio por escrito, respeitadas as parcelas vencidas.
 
 CLÁUSULA 5 · DA ASSINATURA
-As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicativo Zela, nos termos da Lei 14.063/2020.
+As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicativo Zela Escola, nos termos da Lei 14.063/2020.
 
 {{escola_cidade}}, {{data_hoje}}.`;
 
@@ -471,7 +471,7 @@ function DocumentoModal({ doc, canManage, onClose, onSend, onCancel, onPrint, on
       footer={<>
         <SecondaryButton onClick={onPrint}><Printer size={15} /> Imprimir</SecondaryButton>
         {canManage && ['rascunho', 'enviado'].includes(doc.status) && <SecondaryButton onClick={onCancel}><XCircle size={15} /> Cancelar documento</SecondaryButton>}
-        {isDraft && <SecondaryButton onClick={saveDraft}>Salvar alterações</SecondaryButton>}
+        {isDraft && <SecondaryButton onClick={saveDraft}>Salvar</SecondaryButton>}
         {isDraft && <PrimaryButton onClick={onSend} disabled={pendingFields.length > 0 || body !== doc.body || title !== doc.title}><Send size={15} /> Enviar para assinatura</PrimaryButton>}
       </>}>
       <Notice>{error}</Notice>

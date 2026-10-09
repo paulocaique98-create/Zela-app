@@ -61,7 +61,7 @@ function openPrintWindow(title, bodyHtml) {
 export function printCarteirinhasQr(students, school) {
   const cardsHtml = students.map(s => `
     <div class="card">
-      <div class="brand"><span class="dot"></span> Zela</div>
+      <div class="brand"><span class="dot"></span> Zela Escola</div>
       <img class="qr" src="${s.qrDataUrl}" alt="QR Code de ${escapeHtml(s.name)}" />
       <div class="name">${escapeHtml(s.name)}</div>
       ${s.turma ? `<div class="turma">${escapeHtml(s.turma)}</div>` : ''}

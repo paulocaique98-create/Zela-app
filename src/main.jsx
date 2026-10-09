@@ -1,8 +1,9 @@
 import { StrictMode, Component } from 'react'
 import { createRoot } from 'react-dom/client'
-// Fonte Inter servida pelo próprio Zela (antes vinha do Google Fonts): abre
-// mais rápido e funciona sem internet no app (PLANO_APPS_MOBILE, Fase 1).
-import '@fontsource-variable/inter'
+// Fontes servidas pelo próprio Zela (sem Google Fonts): abrem mais rápido e
+// funcionam sem internet no app. Public Sans na interface, Source Serif 4 nos títulos.
+import '@fontsource-variable/public-sans'
+import '@fontsource-variable/source-serif-4'
 import './index.css'
 import App from './App.jsx'
 import Toaster from './components/Toaster.jsx'
@@ -46,7 +47,7 @@ class ErrorBoundary extends Component {
           minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'system-ui, sans-serif', color: '#64748b',
         }}>
-          Atualizando o Zela…
+          Atualizando o Zela Escola…
         </div>
       )
     }

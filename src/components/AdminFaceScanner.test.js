@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS, quadroPronto, caixaValida, faixaDaProporcao, faixaDaDistancia } from './AdminFaceScanner.jsx';
+import { findSecureMatch, evaluateFramePosition, faceWidthRatio, eyeAspectRatio, averageEyeAspectRatio, podeSolicitarSozinho, avaliarPerdaDoReconhecimento, MATCH_GRACE_MS, quadroPronto, caixaValida, faixaDaProporcao, faixaDaDistancia, faixaDaDistanciaDoAcerto, faixaDaMargem } from './AdminFaceScanner.jsx';
 
 // Descritor "sintético": vetor de 128 posições (mesmo formato do face-api.js),
 // só pra exercitar a matemática de distância euclidiana sem depender de
@@ -287,5 +287,58 @@ describe('faixas do registro de erros', () => {
     expect(faixaDaDistancia(0.6)).toBe('0.55 a 0.65');
     expect(faixaDaDistancia(0.7)).toBe('acima de 0.65');
     expect(faixaDaDistancia(undefined)).toBe('sem medida');
+  });
+});
+
+describe('faixas do acerto e da margem', () => {
+  it('faixaDaDistanciaDoAcerto separa as quatro faixas até o limiar', () => {
+    expect(faixaDaDistanciaDoAcerto(0.1)).toBe('0 a 0.30');
+    expect(faixaDaDistanciaDoAcerto(0.3)).toBe('0.30 a 0.35');
+    expect(faixaDaDistanciaDoAcerto(0.37)).toBe('0.35 a 0.40');
+    expect(faixaDaDistanciaDoAcerto(0.43)).toBe('0.40 a 0.45');
+    expect(faixaDaDistanciaDoAcerto(null)).toBe('sem medida');
+  });
+
+  it('faixaDaMargem separa as cinco faixas', () => {
+    expect(faixaDaMargem(0.01)).toBe('abaixo de 0.02');
+    expect(faixaDaMargem(0.02)).toBe('0.02 a 0.04');
+    expect(faixaDaMargem(0.05)).toBe('0.04 a 0.07');
+    expect(faixaDaMargem(0.08)).toBe('0.07 a 0.10');
+    expect(faixaDaMargem(0.1)).toBe('0.10 ou mais');
+    expect(faixaDaMargem(Infinity)).toBe('sem medida');
+  });
+});
+
+describe('findSecureMatch: campos extras de diagnóstico', () => {
+  const personA = makeDescriptor(1);
+  const personB = makeDescriptor(50);
+
+  it('segunda melhor da mesma pessoa marca secondIsSamePerson e acha o melhor de outra pessoa', () => {
+    const labeled = [
+      { label: 'a', descriptors: [personA, nudge(personA, 0.001)] },
+      { label: 'b', descriptors: [personB] },
+    ];
+    const r = findSecureMatch(personA, labeled);
+    expect(r.bestLabel).toBe('a');
+    expect(r.secondLabel).toBe('a');
+    expect(r.secondIsSamePerson).toBe(true);
+    expect(r.bestOtherPersonDistance).toBeGreaterThan(r.secondBestDistance);
+    expect(Number.isFinite(r.bestOtherPersonDistance)).toBe(true);
+  });
+
+  it('segunda melhor de outra pessoa: secondIsSamePerson falso e distância igual à segunda', () => {
+    const labeled = [
+      { label: 'a', descriptors: [personA] },
+      { label: 'b', descriptors: [personB] },
+    ];
+    const r = findSecureMatch(personA, labeled);
+    expect(r.secondLabel).toBe('b');
+    expect(r.secondIsSamePerson).toBe(false);
+    expect(r.bestOtherPersonDistance).toBe(r.secondBestDistance);
+  });
+
+  it('com uma só pessoa não há concorrente (Infinity)', () => {
+    const r = findSecureMatch(personA, [{ label: 'a', descriptors: [personA] }]);
+    expect(r.bestOtherPersonDistance).toBe(Infinity);
   });
 });

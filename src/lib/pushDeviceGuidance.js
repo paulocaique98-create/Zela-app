@@ -19,8 +19,8 @@ export function getPushGuidance(userAgent) {
       platform,
       title: 'Para garantir as notificações no iPhone',
       steps: [
-        'Adicione o Zela à tela de início: no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Notificações só funcionam em segundo plano quando o Zela é aberto assim, e não direto pelo Safari.',
-        'Em Ajustes do iPhone, procure o Zela na lista de apps e confirme que "Notificações" está permitido.',
+        'Adicione o Zela Escola à tela de início: no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Notificações só funcionam em segundo plano quando o Zela Escola é aberto assim, e não direto pelo Safari.',
+        'Em Ajustes do iPhone, procure o Zela Escola na lista de apps e confirme que "Notificações" está permitido.',
       ],
     };
   }
@@ -43,7 +43,7 @@ export function getPushGuidance(userAgent) {
     title: 'Para garantir as notificações no computador',
     steps: [
       'Mantenha o navegador instalado e permita que ele rode em segundo plano quando fechado (nas configurações do próprio navegador, em Sistema).',
-      'Confirme que as notificações do site do Zela não foram bloqueadas nas configurações do navegador.',
+      'Confirme que as notificações do site do Zela Escola não foram bloqueadas nas configurações do navegador.',
     ],
   };
 }

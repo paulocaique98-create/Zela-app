@@ -272,7 +272,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
         <p className="text-xs text-on-surface-variant">
           Aparece do lado esquerdo da tela de login quando alguém informa o código desta escola.
           Sem imagem própria configurada, a tela de login usa a imagem padrão do sistema.
-          Escolha o arquivo e clique em "Salvar Alterações" no topo da tela pra confirmar.
+          Escolha o arquivo e clique em "Salvar" no topo da tela pra confirmar.
         </p>
       </div>
 
@@ -322,7 +322,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
 // valores que eram fixos no código (tolerância de 15min pro check-out,
 // R$30/h) viram configuráveis por escola, com esses mesmos números como
 // default. Controlado pelo pai, mesmo padrão de LoginImageSection: entra no
-// mesmo "Salvar Alterações" único da tela, sem botão próprio (o bug de
+// mesmo "Salvar" único da tela, sem botão próprio (o bug de
 // "não consigo trocar a imagem" foi exatamente um botão de salvar separado
 // que não persistia -- não repetir aqui).
 function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = false }) {
@@ -619,7 +619,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
           className="px-5 py-2.5 bg-primary hover:bg-primary-container disabled:opacity-50 text-white font-bold rounded-zela-md shadow-md transition flex items-center justify-center gap-2 shrink-0"
         >
           <Save size={18} />
-          {isLoading ? 'Salvando' : 'Salvar Alterações'}
+          {isLoading ? 'Salvando' : 'Salvar'}
         </button>
       </div>
 
@@ -738,7 +738,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                     <div className="mb-2">
                       <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><Building2 size={15} className="text-primary" /> Logo da escola</h3>
                       <p className="text-xs text-on-surface-variant">
-                        Aparece no topo do sistema, ao lado do nome da escola. Escolha o arquivo e clique em "Salvar Alterações" no topo da tela pra confirmar.
+                        Aparece no topo do sistema, ao lado do nome da escola. Escolha o arquivo e clique em "Salvar" no topo da tela pra confirmar.
                       </p>
                     </div>
                     <div className="flex items-center gap-3">

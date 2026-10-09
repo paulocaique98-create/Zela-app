@@ -84,7 +84,7 @@ function buildLetterheadHtml({ title, subtitle, generatedAt }) {
     <div class="letterhead">
       <div class="lh-brand">
         <div class="lh-mark"></div>
-        <div class="lh-brand-name">Zela <span>Portal</span></div>
+        <div class="lh-brand-name">Zela Escola</div>
       </div>
       <div class="lh-title">
         <p class="lh-eyebrow">${escapeHtml(subtitle)}</p>
@@ -160,7 +160,7 @@ function buildStudentSheetHtml(studentRecords, { school, periodLabel, generatedA
             </table>
 
             <div class="sheet-footer">
-              <span>Zela, Gestão Escolar Inteligente</span>
+              <span>Zela Escola, Gestão Escolar Inteligente</span>
               <span>Aluno ${index} de ${total}</span>
             </div>
           </td></tr>

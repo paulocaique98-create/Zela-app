@@ -113,7 +113,7 @@ function Conciliar({ currentUser }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-on-surface-variant">
-        Envie o extrato do banco no formato OFX (exportado pelo internet banking). Para cada entrada, o Zela sugere a cobrança em aberto de mesmo valor com vencimento próximo; ao confirmar, a baixa é feita e o Asaas é avisado.
+        Envie o extrato do banco no formato OFX (exportado pelo internet banking). Para cada entrada, o Zela Escola sugere a cobrança em aberto de mesmo valor com vencimento próximo; ao confirmar, a baixa é feita e o Asaas é avisado.
       </p>
       <label htmlFor="ofx-file" className="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white font-bold rounded-zela-md text-sm cursor-pointer hover:bg-primary-container">
         <Upload size={15} /> Enviar extrato OFX

@@ -58,18 +58,18 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
       <button
         type="button"
         onClick={() => { setAberto(v => !v); if (!aberto) carregar(); }}
-        className="relative p-2 rounded-zela-sm transition flex items-center justify-center active:scale-95 text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
+        className="relative p-2 min-w-11 min-h-11 rounded-zela-sm transition flex items-center justify-center active:scale-95 text-ink-text hover:text-white hover:bg-ink-2"
         title="Trocar de conta"
         aria-label="Trocar de conta"
         aria-expanded={aberto}
       >
-        <ChevronDown size={20} className={`transition-transform ${aberto ? 'rotate-180' : ''}`} />
-        {naoLidas > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-error" />}
+        <ChevronDown size={20} aria-hidden="true" className={`transition-transform ${aberto ? 'rotate-180' : ''}`} />
+        {naoLidas > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brass" />}
       </button>
 
       {aberto && (
-        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-lg z-50 overflow-hidden">
-          <p className="px-4 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Suas contas</p>
+        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-md z-50 overflow-hidden">
+          <p className="px-4 pt-3 pb-2 text-xs font-semibold text-on-surface-variant">Suas contas</p>
           <ul className="pb-1">
             {contas.length === 0 && (
               <li className="px-4 py-2 flex items-center gap-3">
@@ -94,14 +94,14 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
                     <p className="text-xs text-on-surface-variant truncate">{conta.atual ? 'Aberta agora' : conta.name}</p>
                   </div>
                   {!conta.atual && conta.nao_lidas > 0 && (
-                    <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-error text-white text-[11px] font-bold flex items-center justify-center">{conta.nao_lidas}</span>
+                    <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-sm bg-error text-white text-[11px] font-bold flex items-center justify-center">{conta.nao_lidas}</span>
                   )}
                 </button>
                 {!conta.atual && (
                   <button
                     type="button"
                     onClick={() => setDesvincular(conta)}
-                    className="p-2 mr-2 rounded-zela-sm text-on-surface-variant hover:text-error hover:bg-red-50"
+                    className="p-2 mr-2 rounded-zela-sm text-on-surface-variant hover:text-error hover:bg-surface-container-low"
                     title="Desvincular esta conta"
                     aria-label="Desvincular esta conta"
                   >
@@ -119,7 +119,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
             <Link2 size={16} /> Vincular outra conta
           </button>
           {outras.length === 0 && (
-            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela, como a de responsável? Vincule para trocar sem digitar a senha.</p>
+            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela Escola, como a de responsável? Vincule para trocar sem digitar a senha.</p>
           )}
         </div>
       )}
@@ -176,7 +176,7 @@ function VincularContaModal({ onClose, onVinculada }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-on-surface">Vincular outra conta</h2>
-            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela. Você só faz isso uma vez.</p>
+            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela Escola. Você só faz isso uma vez.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded-zela-sm text-on-surface-variant hover:bg-surface-container-low" aria-label="Fechar">
             <X size={18} />

@@ -14,6 +14,9 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
   // pra não ficar um header claro "descolado" colado num menu lateral
   // escuro (ver DeveloperLayout.jsx).
   const isDev = currentUser.role === 'developer';
+  // Portais claros (Recepção, Família, Professora, Gestão): cabeçalho na mesma
+  // tinta escura do menu lateral, formando um bloco só. Dev segue claro.
+  const dark = !isDev && flush;
 
   return (
     <>
@@ -26,39 +29,40 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         em vez de uma separação de verdade (essa separação existe, só que
         recriada como borda no topo do CONTEÚDO de cada portal, não da
         sidebar -- ver AdminPortal/FamilyPortal/TeacherPortal/DeveloperLayout). */}
-    <nav className={`${isDev ? 'bg-dev-bg' : (flush ? 'bg-surface-container-low' : 'bg-surface/80 backdrop-blur-xl')} border-b sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center h-[60px] md:h-16 ${isDev || flush ? 'border-transparent shadow-none' : 'border-outline-variant/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)]'}`}>
+    <nav className={`${isDev ? 'bg-dev-bg' : (flush ? 'bg-ink text-ink-text' : 'bg-surface')} border-b sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center h-[60px] md:h-16 ${isDev ? 'border-transparent' : (flush ? 'border-transparent' : 'border-outline-variant')}`}>
 
       {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <button
           onClick={onOpenMobileMenu}
-          className={`md:hidden p-1.5 -ml-1 rounded-zela-sm transition active:scale-95 shrink-0 ${isDev ? 'text-dev-primary hover:bg-dev-surface-high' : 'text-primary hover:bg-surface-container-low'}`}
+          className={`md:hidden p-1.5 -ml-1 rounded-zela-sm transition active:scale-95 shrink-0 min-w-11 min-h-11 flex items-center justify-center ${isDev ? 'text-dev-primary hover:bg-dev-surface-high' : (dark ? 'text-white hover:bg-ink-2' : 'text-primary hover:bg-surface-container-low')}`}
           title="Abrir menu"
+          aria-label="Abrir menu"
         >
-          <Menu size={24} />
+          <Menu size={24} aria-hidden="true" />
         </button>
         {/* Logo (36px) centralizada na coluna de ícones do menu lateral
             (24px): centro a 32px da borda com o menu recolhido e a 44px com
             ele aberto. O cabeçalho começa em 24px (md:px-6). */}
-        <div className={`hidden md:flex items-center shrink-0 transition-[margin] duration-300 ${isSidebarExpanded ? 'md:ml-0.5' : 'md:-ml-2.5'}`}>
+        <div className={`hidden md:flex items-center shrink-0 transition-[margin] duration-300 ${isSidebarExpanded ? 'md:ml-0.5' : 'md:-ml-1.5'}`}>
           {zelaLogo ? (
-            <img src={zelaLogo} alt="Zela" className="w-9 h-9 object-contain" />
+            <img src={zelaLogo} alt="Zela Escola" className="w-9 h-9 object-contain" />
           ) : (
-            <div className="w-9 h-9 bg-primary rounded-zela-md flex items-center justify-center">
-              <ShieldCheck className="text-white w-5 h-5" />
+            <div className="w-9 h-9 bg-ink-2 border border-brass rounded-zela-sm flex items-center justify-center">
+              <ShieldCheck className="text-white w-5 h-5" aria-hidden="true" />
             </div>
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <h1 className={`font-bold text-lg tracking-tight leading-none flex items-center gap-1.5 whitespace-nowrap min-w-0 ${isDev ? 'text-dev-text' : 'text-on-surface'}`}>
-            Zela{' '}
+          <h1 className={`font-serif font-semibold text-lg leading-none flex items-center gap-1.5 whitespace-nowrap min-w-0 ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
+            Zela Escola{' '}
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)
-                sem separador -- "Zela Usuários" em vez de "Zela · Gestão de
+                sem separador -- "Zela Escola Usuários" em vez de "Zela Escola · Gestão de
                 Usuários". No desktop, que tem espaço de sobra, mostra o nome
                 completo com o separador. */}
-            <span className={`hidden md:inline font-normal ${isDev ? 'text-dev-text-muted' : 'text-on-surface-variant'}`}>{screenLabel ? `· ${screenLabel}` : 'Portal'}</span>
-            <span className={`md:hidden font-normal ${isDev ? 'text-dev-text-muted' : 'text-on-surface-variant'}`}>{screenLabelMobile || 'Portal'}</span>
+            <span className={`hidden md:inline font-normal ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabel || 'Escola'}</span>
+            <span className={`md:hidden font-normal ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabelMobile || 'Escola'}</span>
           </h1>
         </div>
       </div>
@@ -70,8 +74,8 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             <span className="text-label text-dev-text">Painel do Desenvolvedor</span>
           ) : (
             <>
-              <span className="text-caption text-on-surface-variant uppercase font-bold tracking-tighter leading-none">{currentSchool?.school_code}</span>
-              <span className="text-label text-on-surface">{currentSchool?.name}</span>
+              <span className={`text-caption leading-none ${dark ? 'text-ink-text' : 'text-on-surface-variant'}`}>{currentSchool?.school_code}</span>
+              <span className={`text-label ${dark ? 'text-white' : 'text-on-surface'}`}>{currentSchool?.name}</span>
             </>
           )
         )}
@@ -81,16 +85,16 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
       <div className="flex justify-end items-center gap-1 sm:gap-3 flex-1 min-w-0">
 
         {currentUser.role === 'family' && (
-          <div className="flex items-center gap-1 md:gap-3 mr-1 md:mr-2 border-r border-outline-variant pr-4">
+          <div className={`flex items-center gap-1 md:gap-3 mr-1 md:mr-2 border-r pr-4 ${dark ? 'border-ink-line' : 'border-outline-variant'}`}>
             <NotificationsDropdown currentUser={currentUser} onNavigateTab={onNavigateTab} />
             <div className="text-right hidden sm:block pl-2">
-              <p className="text-xs font-bold text-on-surface">{currentUser.name}</p>
+              <p className={`text-xs font-semibold ${dark ? 'text-white' : 'text-on-surface'}`}>{currentUser.name}</p>
             </div>
           </div>
         )}
 
         {currentUser.role === 'teacher' && (
-          <p className="text-xs font-bold text-on-surface hidden sm:block mr-2">{currentUser.name}</p>
+          <p className={`text-xs font-semibold hidden sm:block mr-2 ${dark ? 'text-white' : 'text-on-surface'}`}>{currentUser.name}</p>
         )}
 
         {currentUser.role !== 'developer' && currentSchool && (
@@ -101,10 +105,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             <img
               src={schoolLogo}
               alt="Logo da escola"
-              className={`w-9 h-9 object-cover rounded-full border border-outline-variant bg-white mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:block' : ''}`}
+              className={`w-9 h-9 object-cover rounded-md border border-outline-variant bg-white mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:block' : ''}`}
             />
           ) : (
-            <div className={`w-9 h-9 bg-surface-container-low rounded-full items-center justify-center border border-outline-variant text-primary font-black text-sm mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:flex' : 'flex'}`}>
+            <div className={`w-9 h-9 bg-ink-2 rounded-md items-center justify-center border border-ink-line text-white font-semibold text-sm mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:flex' : 'flex'}`}>
               {currentSchool.name?.charAt(0)}
             </div>
           )
@@ -116,10 +120,11 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
 
         <button
           onClick={onLogout}
-          className={`p-2 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-red-400 hover:bg-dev-surface-high' : 'text-on-surface-variant hover:text-error hover:bg-red-50'}`}
+          className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-error hover:bg-dev-surface-high' : (dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low')}`}
           title="Sair do sistema"
+          aria-label="Sair do sistema"
         >
-          <LogOut size={20} />
+          <LogOut size={20} aria-hidden="true" />
         </button>
       </div>
     </nav>

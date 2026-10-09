@@ -24,7 +24,7 @@ A Escola Montessori de Virtória (SenseKids), em conformidade com a Lei Geral de
    Você tem direito a acessar, corrigir ou solicitar a exclusão de seus dados a qualquer momento, entrando em contato com a administração escolar.
 
 6. CONSENTIMENTO
-   Ao concordar com este termo, você autoriza a Escola Zela a tratar os dados pessoais listados acima conforme descrito.`;
+   Ao concordar com este termo, você autoriza a Zela Escola a tratar os dados pessoais listados acima conforme descrito.`;
 
 // ─── Texto do Termo de Imagem ──────────────────────────────────────────────────
 const IMAGE_USAGE_TEXT = `TERMO DE USO DE IMAGEM

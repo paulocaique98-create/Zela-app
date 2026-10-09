@@ -55,11 +55,11 @@ function DocUploadRow({ label, doc, onFile, onRemove, isUploading }) {
     <div className="border border-outline-variant rounded-zela-md p-3 space-y-2 bg-white">
       <p className="text-xs font-bold text-on-surface">{label}</p>
       {doc ? (
-        <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-zela-md px-3 py-2">
+        <div className="flex items-center justify-between gap-2 bg-success/5 border border-success/30 rounded-md px-3 py-2">
           <span className="flex items-center gap-2 text-xs font-bold text-green-700 truncate">
             <Check size={14} className="shrink-0" /> <span className="truncate">{doc.name}</span>
           </span>
-          <button type="button" onClick={onRemove} className="p-1 text-green-700/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+          <button type="button" onClick={onRemove} className="p-1 text-success hover:text-error hover:bg-error/5 rounded-md transition shrink-0">
             <X size={15} />
           </button>
         </div>
@@ -69,11 +69,11 @@ function DocUploadRow({ label, doc, onFile, onRemove, isUploading }) {
         </div>
       ) : (
         <div className="flex gap-2">
-          <label htmlFor={galleryId} className="flex-1 flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 text-on-surface-variant hover:text-primary rounded-zela-md px-2 py-2.5 text-[11px] font-bold cursor-pointer transition">
+          <label htmlFor={galleryId} className="flex-1 flex items-center justify-center gap-1.5 border border-dashed border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded-zela-md px-2 py-2.5 text-[11px] font-bold cursor-pointer transition">
             <Upload size={13} /> Escolher arquivo
             <input id={galleryId} type="file" accept={ALLOWED_TYPES.join(',')} onChange={onFile} className="hidden" />
           </label>
-          <label htmlFor={cameraId} className="flex-1 flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 text-on-surface-variant hover:text-primary rounded-zela-md px-2 py-2.5 text-[11px] font-bold cursor-pointer transition">
+          <label htmlFor={cameraId} className="flex-1 flex items-center justify-center gap-1.5 border border-dashed border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded-zela-md px-2 py-2.5 text-[11px] font-bold cursor-pointer transition">
             <Camera size={13} /> Tirar foto
             <input id={cameraId} type="file" accept="image/*" capture="environment" onChange={onFile} className="hidden" />
           </label>
@@ -116,7 +116,7 @@ function CicloPills({ value, onChange }) {
           type="button"
           onClick={() => onChange(String(h))}
           className={`flex-1 text-center py-2.5 px-2 rounded-zela-md text-xs font-bold border-2 transition-all ${
-            String(value) === String(h) ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'
+            String(value) === String(h) ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/50'
           }`}
         >
           {h} horas
@@ -133,7 +133,7 @@ function RadioRow({ selected, onSelect, label }) {
       type="button"
       onClick={onSelect}
       className={`w-full flex items-start gap-2.5 p-3 rounded-zela-md border-2 text-left transition-all ${
-        selected ? 'border-primary bg-primary/5' : 'border-outline-variant bg-white hover:border-indigo-200'
+        selected ? 'border-primary bg-primary/5' : 'border-outline-variant bg-white hover:border-primary/40'
       }`}
     >
       <span className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 ${selected ? 'border-primary bg-primary shadow-[inset_0_0_0_2.5px_#fff]' : 'border-outline-variant'}`} />
@@ -326,19 +326,19 @@ export default function PublicMatricula() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] w-full bg-surface-container-lowest">
-      {/* Cabeçalho — mesmo estilo do protótipo aprovado (faixa em gradiente
-          na cor da marca, símbolo + nome do Zela, boas-vindas da escola). */}
-      <div className="bg-gradient-to-br from-primary to-primary-container px-5 sm:px-8 py-8 sm:py-10">
+      {/* Cabeçalho — mesmo estilo do protótipo aprovado (faixa escura,
+           símbolo + nome do Zela Escola, boas-vindas da escola). */}
+      <div className="bg-ink px-5 sm:px-8 py-8 sm:py-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-9 h-9 bg-white/15 rounded-zela-lg flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 bg-primary rounded-md flex items-center justify-center shrink-0">
               <ShieldCheck className="text-white" size={18} />
             </div>
-            <span className="text-lg font-extrabold text-white tracking-tight">Zela</span>
+            <span className="font-serif text-lg font-bold text-white">Zela Escola</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 tracking-tight">Requerimento de Matrícula</h1>
-          <p className="text-sm text-white/85 leading-relaxed max-w-xl">
-            Obrigada por escolher educar para a paz. Preencha os dados abaixo com atenção — todos os campos marcados são obrigatórios.
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-1.5">Requerimento de matrícula</h1>
+          <p className="text-sm text-ink-text leading-relaxed max-w-xl">
+            Obrigada por escolher educar para a paz. Preencha os dados abaixo com atenção. Todos os campos marcados são obrigatórios.
           </p>
         </div>
       </div>
@@ -347,13 +347,13 @@ export default function PublicMatricula() {
         <div className="w-full max-w-2xl flex flex-col -mt-4 sm:-mt-6">
 
           {done ? (
-            <div className="bg-white border border-outline-variant rounded-zela-lg p-8 text-center flex flex-col items-center gap-4 shadow-sm">
-              <CheckCircle2 className="text-emerald-500" size={48} />
+            <div className="bg-white border border-outline-variant rounded-lg p-8 text-center flex flex-col items-center gap-4">
+              <CheckCircle2 className="text-success" size={48} />
               <div>
                 <h1 className="text-h2 text-on-surface mb-2">Matrícula enviada!</h1>
                 <p className="text-body text-on-surface-variant">
                   Sua solicitação foi recebida e está aguardando aprovação da escola.
-                  Você poderá acessar o Zela assim que a matrícula for aprovada, usando o e-mail e a senha que você criou.
+                  Você poderá acessar o Zela Escola assim que a matrícula for aprovada, usando o e-mail e a senha que você criou.
                 </p>
               </div>
               <button type="button" onClick={() => navigateTo('/')} className="mt-2 text-small text-primary font-medium hover:underline underline-offset-4">
@@ -370,10 +370,10 @@ export default function PublicMatricula() {
 
               <form onSubmit={handleSubmit} className="space-y-3">
                 {formError && (
-                  <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
+                  <div className="bg-error/5 border border-error/30 text-error p-3 rounded-md" role="alert text-sm font-medium">{formError}</div>
                 )}
 
-                <section className="bg-white border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3 shadow-sm">
+                <section className="bg-white border border-outline-variant rounded-lg p-4 sm:p-5 space-y-3">
                   <h4 className="font-bold text-on-surface text-sm">Código da Escola</h4>
                   <div>
                     <label className={labelCls}>Código da Escola *</label>
@@ -395,9 +395,9 @@ export default function PublicMatricula() {
                     return (
                       <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-black text-primary uppercase tracking-wider">Criança {idx + 1}</span>
+                          <span className="text-label text-primary">Criança {idx + 1}</span>
                           {criancas.length > 1 && (
-                            <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-error hover:bg-error/5 rounded-md transition">
                               <Trash2 size={15} />
                             </button>
                           )}
@@ -440,7 +440,7 @@ export default function PublicMatricula() {
                   <p className="text-[11px] text-on-surface-variant/70 -mt-1">Endereço onde a criança reside.</p>
                   {criancas.map((c, idx) => (
                     <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                      {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                      {criancas.length > 1 && <span className="text-label text-primary">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label htmlFor={`cep-${c.id}`} className={labelCls}>CEP *</label>
@@ -501,7 +501,7 @@ export default function PublicMatricula() {
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
                         <input id="public-matricula-password" type="password" autoComplete="new-password" minLength={8} className={`${inputCls} pl-9`} value={password} onChange={e => setPassword(e.target.value)} required />
                       </div>
-                      <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres. Você vai usar essa senha para entrar no Zela depois que a matrícula for aprovada.</p>
+                      <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres. Você vai usar essa senha para entrar no Zela Escola depois que a matrícula for aprovada.</p>
                     </div>
                     <div>
                       <label className={labelCls}>Confirme a senha *</label>
@@ -553,7 +553,7 @@ export default function PublicMatricula() {
                 {/* 4. SEGUNDO RESPONSÁVEL */}
                 <AccordionSection id="segundo" title="4. Segundo Responsável" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
+                    <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-primary" />
                     <span className="font-bold text-on-surface text-sm">Esta matrícula tem um segundo responsável</span>
                   </label>
                   {temSegundo && (
@@ -628,7 +628,7 @@ export default function PublicMatricula() {
                             </select>
                           </div>
                           {autorizados.length > 1 && (
-                            <button type="button" onClick={() => removeAutorizado(a.id)} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0">
+                            <button type="button" onClick={() => removeAutorizado(a.id)} className="p-2.5 text-error hover:bg-error/5 rounded-md transition shrink-0">
                               <Trash2 size={15} />
                             </button>
                           )}
@@ -641,7 +641,7 @@ export default function PublicMatricula() {
                   </div>
 
                   <label className="flex items-center gap-2 cursor-pointer pt-1">
-                    <input type="checkbox" checked={temTransporte} onChange={e => setTemTransporte(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
+                    <input type="checkbox" checked={temTransporte} onChange={e => setTemTransporte(e.target.checked)} className="w-4 h-4 accent-primary" />
                     <span className="font-bold text-on-surface text-sm flex items-center gap-2"><Car size={15} className="text-primary" /> Outros autorizados pelo transporte?</span>
                   </label>
                   {temTransporte && (
@@ -650,7 +650,7 @@ export default function PublicMatricula() {
                         <div key={t.id} className="flex items-center gap-2">
                           <input className={inputCls} placeholder={`Nome do autorizado ${idx + 1}`} value={t.nome} onChange={e => updateTransporteAutorizado(t.id, e.target.value)} />
                           {transporteAutorizados.length > 1 && (
-                            <button type="button" onClick={() => removeTransporteAutorizado(t.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0">
+                            <button type="button" onClick={() => removeTransporteAutorizado(t.id)} className="p-2 text-error hover:bg-error/5 rounded-md transition shrink-0">
                               <Trash2 size={15} />
                             </button>
                           )}
@@ -678,7 +678,7 @@ export default function PublicMatricula() {
                     />
                   </div>
 
-                  <h5 className="flex items-center gap-1.5 text-xs font-bold text-on-surface uppercase tracking-wide pt-3">
+                  <h5 className="flex items-center gap-1.5 text-label text-on-surface pt-3">
                     <HeartPulse size={13} className="text-primary" /> Emergência Médica
                   </h5>
                   <p className="text-[11px] text-on-surface-variant/70">Em caso de acidente considerado grave.</p>
@@ -700,13 +700,13 @@ export default function PublicMatricula() {
                 <AccordionSection id="saude" title="7. Saúde e Alimentação" icon={<HeartPulse size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
                   {criancas.map((c, idx) => (
                     <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                      {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                      {criancas.length > 1 && <span className="text-label text-primary">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
                       <div>
                         <label className={labelCls}>Possui restrição ou alergia alimentar? Quais? *</label>
                         <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva ou 'Não possui'" value={c.restricao_alimentar} onChange={e => updateCrianca(c.id, { restricao_alimentar: e.target.value })} />
                       </div>
                       <div>
-                        <label className={labelCls}>Alimentação Atual — como se alimenta, o que costuma comer *</label>
+                        <label className={labelCls}>Alimentação atual: como se alimenta, o que costuma comer *</label>
                         <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva a rotina alimentar da criança" value={c.alimentacao_atual} onChange={e => updateCrianca(c.id, { alimentacao_atual: e.target.value })} />
                       </div>
                       <div>
@@ -769,10 +769,10 @@ export default function PublicMatricula() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm mt-2"
+                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-3.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm mt-2"
                 >
                   {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-                  {isSubmitting ? 'Enviando...' : 'Enviar Matrícula'}
+                  {isSubmitting ? 'Enviando...' : 'Enviar matrícula'}
                 </button>
               </form>
             </>

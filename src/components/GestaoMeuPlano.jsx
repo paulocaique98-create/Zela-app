@@ -18,8 +18,8 @@ export default function GestaoMeuPlano() {
 
   if (!plano) {
     return (
-      <PageShell description="O plano contratado pela escola com o Zela.">
-        <p className="text-small text-on-surface-variant">Nenhum plano registrado ainda. Fale com o suporte do Zela para conferir a contratação.</p>
+      <PageShell description="O plano contratado pela escola com o Zela Escola.">
+        <p className="text-small text-on-surface-variant">Nenhum plano registrado ainda. Fale com o suporte do Zela Escola para conferir a contratação.</p>
       </PageShell>
     );
   }
@@ -35,12 +35,12 @@ export default function GestaoMeuPlano() {
   );
 
   return (
-    <PageShell description="O plano contratado pela escola com o Zela.">
+    <PageShell description="O plano contratado pela escola com o Zela Escola.">
       <div className="max-w-2xl space-y-4">
         {dias !== null && dias <= 30 && (
           <div className={`flex items-center gap-2 text-small px-4 py-3 rounded-lg border ${dias < 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
             {dias < 0 ? <AlertTriangle size={16} /> : <CalendarClock size={16} />}
-            {dias < 0 ? 'A contratação venceu. Fale com o suporte do Zela para renovar.' : `A contratação vence em ${dias} dia(s).`}
+            {dias < 0 ? 'A contratação venceu. Fale com o suporte do Zela Escola para renovar.' : `A contratação vence em ${dias} dia(s).`}
           </div>
         )}
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-5">

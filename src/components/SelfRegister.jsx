@@ -31,7 +31,7 @@ const emptyStudent = () => ({
   custom_entry: '', custom_exit: '', is_custom_period: false,
 });
 
-const inputCls = 'w-full p-3 bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm font-medium transition-all';
+const inputCls = 'w-full p-3 bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-medium transition-all';
 const labelCls = 'block text-xs font-semibold text-on-surface mb-1';
 
 function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) {
@@ -51,12 +51,12 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) 
   return (
     <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+        <span className="text-label text-primary flex items-center gap-1.5">
           <Baby size={14} /> Aluno {index + 1}
         </span>
         {canRemove && (
           <button type="button" onClick={() => onRemove(student.id)}
-            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+            className="p-1.5 text-error hover:bg-error/5 rounded-md transition">
             <Trash2 size={15} />
           </button>
         )}
@@ -102,9 +102,9 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas }) 
         <label className={labelCls}>Período *</label>
         <select required value={student.is_custom_period ? '__custom__' : student.periodo} onChange={e => set('periodo', e.target.value)}
           disabled={!student.turno} className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`}>
-          <option value="">{student.turno ? 'Selecionar...' : '← Primeiro o Turno'}</option>
+          <option value="">{student.turno ? 'Selecionar...' : 'Escolha primeiro o turno'}</option>
           {periodos.map(p => <option key={p} value={p}>{p}</option>)}
-          {student.turno && <option value="__custom__">✏️ Personalizar Horário</option>}
+          {student.turno && <option value="__custom__">Personalizar horário</option>}
         </select>
       </div>
 
@@ -223,23 +223,21 @@ export default function SelfRegister() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex w-full relative overflow-hidden bg-surface-container-lowest">
-      <div className="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-primary/5 blur-3xl pointer-events-none mix-blend-multiply" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-secondary/5 blur-3xl pointer-events-none mix-blend-multiply" />
 
       <div className="w-full flex items-center justify-center p-6 sm:p-12 relative z-10">
         <div className="w-full max-w-2xl flex flex-col">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-primary-container rounded-zela-lg flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
               <ShieldCheck className="text-white" size={20} />
             </div>
-            <span className="text-h2 text-on-surface tracking-tight leading-none">Zela</span>
+            <span className="font-serif text-h2 text-on-surface leading-none">Zela Escola</span>
           </div>
 
           {done ? (
             <div className="bg-white border border-outline-variant rounded-zela-lg p-8 text-center flex flex-col items-center gap-4">
               <CheckCircle2 className="text-emerald-500" size={48} />
               <div>
-                <h1 className="text-h2 text-on-surface mb-2">Cadastro enviado!</h1>
+                <h1 className="text-h2 text-on-surface mb-2">Cadastro enviado</h1>
                 <p className="text-body text-on-surface-variant">
                   Seu cadastro foi recebido e está aguardando aprovação da escola.
                   Você receberá acesso assim que for aprovado.
@@ -253,7 +251,7 @@ export default function SelfRegister() {
             <>
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h1 className="text-h1-mobile lg:text-display text-on-surface mb-1 tracking-tight">Novo cadastro</h1>
+                  <h1 className="font-serif text-h1-mobile lg:text-h1 text-on-surface mb-1">Novo cadastro</h1>
                   <p className="text-body text-on-surface-variant">Crie seu acesso de Responsável e vincule seus filhos.</p>
                 </div>
                 <button type="button" onClick={() => navigateTo('/')} className="flex items-center gap-1 text-small text-on-surface-variant hover:text-primary shrink-0">
@@ -282,7 +280,7 @@ export default function SelfRegister() {
                   <div className="flex gap-2">
                     {['Responsável', 'Responsável Financeiro'].map(t => (
                       <button key={t} type="button" onClick={() => setGuardianType(t)}
-                        className={`flex-1 py-3 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                        className={`flex-1 py-3 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-primary text-white border-primary' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/50'}`}>
                         {t}
                       </button>
                     ))}
@@ -291,7 +289,7 @@ export default function SelfRegister() {
 
                 {/* Dados pessoais */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2">
+                  <h3 className="text-label text-on-surface-variant border-b border-outline-variant pb-2">
                     Seus dados
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -346,10 +344,10 @@ export default function SelfRegister() {
 
                 {/* Alunos */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 flex items-center justify-between">
+                  <h3 className="text-label text-on-surface-variant border-b border-outline-variant pb-2 flex items-center justify-between">
                     <span className="flex items-center gap-2"><Baby size={14} /> Alunos vinculados</span>
                     <button type="button" onClick={handleAddStudent}
-                      className="text-primary hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition">
+                      className="text-primary flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-md transition">
                       <Plus size={13} /> Adicionar Aluno
                     </button>
                   </h3>
@@ -360,10 +358,10 @@ export default function SelfRegister() {
                   </div>
                 </div>
 
-                {errorMsg && <div className="p-3 bg-red-50 text-error text-small rounded-zela-md border border-red-100">{errorMsg}</div>}
+                {errorMsg && <div className="p-3 bg-error/5 text-error text-small rounded-md border border-error/30" role="alert">{errorMsg}</div>}
 
                 <button type="submit" disabled={isLoading}
-                  className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-zela-md shadow-md hover:shadow-lg transition-all disabled:opacity-70">
+                  className="w-full bg-primary hover:bg-primary-container text-white text-body font-bold py-3.5 rounded-md transition-colors disabled:opacity-70">
                   {isLoading ? 'Enviando...' : 'Enviar cadastro'}
                 </button>
                 <p className="text-[11px] text-on-surface-variant/70 text-center -mt-2">

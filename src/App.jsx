@@ -1546,7 +1546,7 @@ export default function App() {
           do totem, que já recarrega ao sair). */}
       {updateAvailable && !isKioskFullscreen && (
         <div role="status" className="shrink-0 bg-primary text-white px-4 py-2 flex items-center justify-center gap-3 text-sm">
-          <span className="font-medium">Nova versão do Zela disponível.</span>
+          <span className="font-medium">Nova versão do Zela Escola disponível.</span>
           <button onClick={() => window.location.reload()} className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-zela-md font-bold text-xs">
             Atualizar
           </button>

@@ -473,7 +473,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
             </div>
             {versao === 'atualizando' ? (
               <p className="text-sm font-semibold text-slate-200 max-w-xs">
-                Existe uma versão nova do Zela. Atualizando antes de abrir a câmera; depois, é só abrir o cadastro de novo.
+                Existe uma versão nova do Zela Escola. Atualizando antes de abrir a câmera; depois, é só abrir o cadastro de novo.
               </p>
             ) : (
               <p className="text-sm font-semibold text-slate-200 max-w-xs">
@@ -573,7 +573,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
             {versao === 'ok' ? (
               <><Camera size={16} /> Iniciar Captura</>
             ) : (
-              <><Loader2 size={16} className="animate-spin" /> {versao === 'atualizando' ? 'Atualizando o Zela' : 'Conferindo a versão'}</>
+              <><Loader2 size={16} className="animate-spin" /> {versao === 'atualizando' ? 'Atualizando o Zela Escola' : 'Conferindo a versão'}</>
             )}
           </button>
         ) : (

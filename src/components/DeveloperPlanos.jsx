@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useMemo, useState } from 'react';
 import { Loader2, Plus, Pencil, Copy, Power, X, Check, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -288,9 +289,9 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
     onSaved();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] bg-black/60 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-dev-bg border border-dev-border rounded-zela-lg p-5 space-y-4 my-8">
+      <div className="w-full max-w-4xl bg-dev-bg border border-dev-border rounded-zela-lg p-5 space-y-4 my-8">
         <div className="flex items-center justify-between">
           <p className="font-bold text-lg">{plano.id ? 'Editar plano' : 'Novo plano'}</p>
           <button type="button" onClick={onClose} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text"><X size={18} /></button>
@@ -358,6 +359,7 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
           <button type="button" className={btnPrimario} disabled={salvando} onClick={salvar}>{salvando ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Salvar plano</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

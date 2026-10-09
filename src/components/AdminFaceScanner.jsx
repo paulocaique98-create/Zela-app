@@ -142,6 +142,27 @@ export function faixaDaDistancia(distancia) {
   return 'acima de 0.65';
 }
 
+// Faixa da distância de um ACERTO (match_confirmed): mostra o quão folgado
+// ficou o reconhecimento em relação ao limiar.
+export function faixaDaDistanciaDoAcerto(distancia) {
+  if (!Number.isFinite(distancia)) return 'sem medida';
+  if (distancia < 0.30) return '0 a 0.30';
+  if (distancia < 0.35) return '0.30 a 0.35';
+  if (distancia < 0.40) return '0.35 a 0.40';
+  return '0.40 a 0.45';
+}
+
+// Faixa da margem (segunda melhor menos melhor distância): separa ambiguidade
+// folgada de quase empate.
+export function faixaDaMargem(margem) {
+  if (!Number.isFinite(margem)) return 'sem medida';
+  if (margem < 0.02) return 'abaixo de 0.02';
+  if (margem < 0.04) return '0.02 a 0.04';
+  if (margem < 0.07) return '0.04 a 0.07';
+  if (margem < 0.10) return '0.07 a 0.10';
+  return '0.10 ou mais';
+}
+
 // Avalia se o rosto detectado está a uma boa distância (a posição na tela não importa)
 // Cada motivo de rejeição de enquadramento vira sua própria categoria de log
 // (fingerprint separado em error_logs) -- sem isso, "muito perto" e "muito
@@ -237,29 +258,49 @@ function enhanceForLowLight(source, width, height, luminance, boost) {
 // da primeira (rostos parecidos), em vez de simplesmente aceitar a menor distância.
 export function findSecureMatch(descriptor, labeledDescriptors) {
   let bestLabel = 'unknown';
+  let secondLabel = 'unknown';
   let bestDistance = Infinity;
   let secondBestDistance = Infinity;
+  // Menor distância por pessoa, para achar o melhor concorrente que NÃO é a
+  // melhor pessoa (a segunda melhor distância pode ser outro retrato dela).
+  const minPorPessoa = new Map();
 
   for (const ld of labeledDescriptors) {
     for (const stored of ld.descriptors) {
       const distance = faceapi.euclideanDistance(descriptor, stored);
+      const atual = minPorPessoa.get(ld.label);
+      if (atual === undefined || distance < atual) minPorPessoa.set(ld.label, distance);
       if (distance < bestDistance) {
         secondBestDistance = bestDistance;
+        secondLabel = bestLabel;
         bestDistance = distance;
         bestLabel = ld.label;
       } else if (distance < secondBestDistance) {
         secondBestDistance = distance;
+        secondLabel = ld.label;
       }
     }
   }
 
+  let bestOtherPersonDistance = Infinity;
+  for (const [label, d] of minPorPessoa) {
+    if (label !== bestLabel && d < bestOtherPersonDistance) bestOtherPersonDistance = d;
+  }
+
+  const extras = {
+    bestLabel,
+    secondLabel,
+    secondIsSamePerson: secondLabel === bestLabel,
+    bestOtherPersonDistance,
+  };
+
   if (bestDistance > MATCH_THRESHOLD) {
-    return { label: 'unknown', distance: bestDistance, secondBestDistance };
+    return { label: 'unknown', distance: bestDistance, secondBestDistance, ...extras };
   }
   if (secondBestDistance - bestDistance < MATCH_MARGIN) {
-    return { label: 'unknown', distance: bestDistance, secondBestDistance, ambiguous: true };
+    return { label: 'unknown', distance: bestDistance, secondBestDistance, ambiguous: true, ...extras };
   }
-  return { label: bestLabel, distance: bestDistance, secondBestDistance };
+  return { label: bestLabel, distance: bestDistance, secondBestDistance, ...extras };
 }
 
 export default function AdminFaceScanner({ onClose, requestKioskAccess, students, currentUser, isKioskMode = false, onUseAlternative }) {
@@ -1043,6 +1084,17 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
                   setShowAlternative(false);
                   fetchMatchedPersonPhoto(person.id);
+                  // Sem person_id de propósito: não liga biometria a um
+                  // registro de erro. Serve para ver o quão folgados são os acertos.
+                  const margemDoAcerto = bestMatch.secondBestDistance - bestMatch.distance;
+                  logFaceEvent('match_confirmed', 'warn', {
+                    mode: 'live',
+                    distance: bestMatch.distance,
+                    second_best_distance: bestMatch.secondBestDistance,
+                    margin: margemDoAcerto,
+                    face_width_ratio: faceWidthRatio(box, video.videoWidth),
+                    segunda_e_mesma_pessoa: bestMatch.secondIsSamePerson,
+                  }, `match_confirmed distancia ${faixaDaDistanciaDoAcerto(bestMatch.distance)} margem ${faixaDaMargem(margemDoAcerto)}`);
                   // Fase 1 (observação) — só grava o que a checagem de
                   // liveness decidiu; com "Bloqueio Ativo" desligado (padrão),
                   // nunca muda o resultado do reconhecimento.
@@ -1085,7 +1137,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   threshold: MATCH_THRESHOLD,
                   margin: MATCH_MARGIN,
                   candidate_count: labeledDescriptors.length,
-                }, `${categoriaDoMatch} ${faixaDaDistancia(bestMatch.distance)}`);
+                  segunda_e_mesma_pessoa: bestMatch.secondIsSamePerson,
+                  best_other_person_distance: bestMatch.bestOtherPersonDistance,
+                }, bestMatch.ambiguous
+                  ? `${categoriaDoMatch} ${bestMatch.secondIsSamePerson ? 'mesma pessoa' : 'outra pessoa'} margem ${faixaDaMargem(bestMatch.secondBestDistance - bestMatch.distance)}`
+                  : `${categoriaDoMatch} ${faixaDaDistancia(bestMatch.distance)}`);
               }
             }
             // Se matchConfirmed && position === 'ok': mantém o estado atual (já

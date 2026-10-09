@@ -80,7 +80,7 @@ export default function AccountDeletionSection({ className = '' } = {}) {
           <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-5 space-y-3" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-on-surface">Solicitar exclusão da conta</h3>
             <p className="text-sm text-on-surface-variant">
-              Depois de concluída, você perde o acesso ao Zela e não recebe mais avisos da escola. Se ainda tiver filho matriculado, converse com a escola antes: outro responsável pode precisar assumir o acompanhamento.
+              Depois de concluída, você perde o acesso ao Zela Escola e não recebe mais avisos da escola. Se ainda tiver filho matriculado, converse com a escola antes: outro responsável pode precisar assumir o acompanhamento.
             </p>
             <label htmlFor="deletion-reason" className="block text-xs font-bold text-on-surface-variant">
               Motivo (opcional)

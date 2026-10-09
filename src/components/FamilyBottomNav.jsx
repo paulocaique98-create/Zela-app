@@ -17,7 +17,7 @@ export default function FamilyBottomNav({ familyTab, go, showCheckin, showComuni
   return (
     <nav
       aria-label="Navegação principal"
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface-container-lowest border-t border-outline-variant"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex">
@@ -28,12 +28,12 @@ export default function FamilyBottomNav({ familyTab, go, showCheckin, showComuni
               <button
                 onClick={() => go(tab)}
                 aria-current={active ? 'page' : undefined}
-                className={`w-full h-16 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold transition ${active ? 'text-primary' : 'text-on-surface-variant'}`}
+                className={`w-full h-16 flex flex-col items-center justify-center gap-0.5 text-xs transition focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${active ? 'text-primary font-semibold border-t-2 border-brass' : 'text-on-surface-variant font-medium border-t-2 border-transparent'}`}
               >
                 <span className="relative">
-                  <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+                  <Icon size={22} aria-hidden="true" />
                   {badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-sm bg-brass text-[#1a1405] text-[11px] font-bold flex items-center justify-center">
                       {badge > 9 ? '9+' : badge}
                     </span>
                   )}
@@ -47,9 +47,9 @@ export default function FamilyBottomNav({ familyTab, go, showCheckin, showComuni
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-expanded={isMobileMenuOpen}
-            className={`w-full h-16 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold transition ${isMobileMenuOpen ? 'text-primary' : 'text-on-surface-variant'}`}
+            className={`w-full h-16 flex flex-col items-center justify-center gap-0.5 text-xs transition focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${isMobileMenuOpen ? 'text-primary font-semibold border-t-2 border-brass' : 'text-on-surface-variant font-medium border-t-2 border-transparent'}`}
           >
-            <Menu size={22} />
+            <Menu size={22} aria-hidden="true" />
             Menu
           </button>
         </li>

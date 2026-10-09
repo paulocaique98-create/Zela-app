@@ -20,28 +20,29 @@ import { ChevronDown, ChevronLeft } from 'lucide-react';
 // portal (Admin/Família/Professor/Developer) a partir do estado persistido
 // em localStorage (ver useSidebarExpanded.js), alternado por clique no botão
 // de SidebarToggleButton, não mais por hover.
-// Ícones do menu com 24px (pedido de 28/09/2026: 36px e 28px ficaram
-// grandes demais). No menu recolhido (64px) o destaque azul do item ativo é
-// um quadrado de 36px, do tamanho do emblema do Zela, justo ao ícone: nav
-// com 14px + quadrado de 36px + 14px (14+36+14 = 64), centro a 32px. O
-// Header desloca a logo para o mesmo centro (ver Header.jsx).
-export const SIDEBAR_ICON_SIZE = 24;
+// Ícones do menu com 20px (padrão do novo layout). Menu sobre tinta escura
+// (bg-ink, definido no <aside> de cada portal). No menu recolhido (72px) o
+// destaque do item ativo é um quadrado de 36px: nav com 18px + quadrado de
+// 36px + 18px (18+36+18 = 72), centro a 36px. O Header desloca a logo para o
+// mesmo centro (ver Header.jsx). Item ativo: fundo ink-2 e faixa de latão.
+export const SIDEBAR_ICON_SIZE = 20;
 
 export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-md text-sm font-medium transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+      aria-current={active ? 'page' : undefined}
+      className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${active ? 'bg-ink-2 text-white border-brass' : 'border-transparent text-ink-text hover:bg-ink-2 hover:text-white'}`}
     >
       <span className="relative shrink-0">
-        <Icon size={SIDEBAR_ICON_SIZE} />
+        <Icon size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
         {badge ? (
-          <span className={`absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ${active ? 'bg-white/25 text-white' : 'bg-warning text-white animate-pulse'}`}>
+          <span className="absolute -top-1.5 -right-2 text-[11px] font-bold rounded-sm min-w-[16px] h-4 px-1 flex items-center justify-center bg-brass text-[#1a1405]">
             {badge}
           </span>
         ) : null}
       </span>
-      <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
+      <span className="flex-1 min-w-0 text-left leading-tight break-words md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
     </button>
   );
 }
@@ -115,18 +116,18 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-md text-sm font-medium transition-all ${isOpen || flyoutPos ? 'text-on-surface bg-surface-container-high' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
+        className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] border-transparent text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isOpen || flyoutPos ? 'text-white bg-ink-2' : 'text-ink-text hover:bg-ink-2 hover:text-white'}`}
       >
         <span className="relative shrink-0">
-          <Icon size={SIDEBAR_ICON_SIZE} />
+          <Icon size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
           {badge ? (
-            <span className="absolute -top-1.5 -right-1.5 text-[9px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center bg-warning text-white animate-pulse">
+            <span className="absolute -top-1.5 -right-2 text-[11px] font-bold rounded-sm min-w-[16px] h-4 px-1 flex items-center justify-center bg-brass text-[#1a1405]">
               {badge}
             </span>
           ) : null}
         </span>
-        <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
-        <ChevronDown size={16} className={`shrink-0 transition-transform duration-200 md:hidden md:group-data-[expanded=true]/side:block ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="flex-1 min-w-0 text-left leading-tight break-words md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
+        <ChevronDown size={16} aria-hidden="true" className={`shrink-0 transition-transform duration-200 md:hidden md:group-data-[expanded=true]/side:block ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div className={`md:hidden md:group-data-[expanded=true]/side:grid grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="overflow-hidden">
@@ -140,7 +141,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
           <div className="fixed inset-0 z-40" onClick={() => setFlyoutPos(null)} />
           <div
             ref={panelRef}
-            className="group/side fixed z-50 min-w-[200px] bg-surface-container-lowest border border-outline-variant rounded-zela-md shadow-lg py-2 overflow-y-auto animate-in fade-in zoom-in-95 duration-150"
+            className="group/side fixed z-50 min-w-[200px] bg-ink-2 border border-ink-line rounded-zela-md shadow-md py-2 overflow-y-auto"
             data-expanded="true"
             style={{
               top: (resolvedPos ?? flyoutPos).top,
@@ -149,7 +150,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
               visibility: resolvedPos ? 'visible' : 'hidden',
             }}
           >
-            <p className="px-4 pb-1 text-[11px] font-black text-on-surface-variant uppercase tracking-widest">{label}</p>
+            <p className="px-4 pb-1 text-xs font-semibold text-ink-text">{label}</p>
             <div className="flex flex-col gap-0.5 px-1" onClick={() => setFlyoutPos(null)}>
               {children}
             </div>
@@ -168,7 +169,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
 // mover o overflow-hidden pro conteúdo interno em vez do <aside> em si.
 // `borderColorClass`/`bgColorClass` permitem o Portal do Dev usar as cores
 // próprias dele (dev-*) em vez das cores padrão dos outros 3 portais.
-export function SidebarToggleButton({ isExpanded, onToggle, borderColorClass = 'border-outline-variant', bgColorClass = 'bg-surface-container-low hover:bg-surface-container-high' }) {
+export function SidebarToggleButton({ isExpanded, onToggle, borderColorClass = 'border-ink-line', bgColorClass = 'bg-ink-2 text-ink-text hover:text-white' }) {
   // Voltou pra cor clarinha de antes (quase a cor de fundo do menu) -- tinha
   // virado azul pra tentar resolver um problema de contraste, mas o
   // problema real era a sidebar ficar ATRÁS do conteúdo em algumas telas no
@@ -181,9 +182,10 @@ export function SidebarToggleButton({ isExpanded, onToggle, borderColorClass = '
       type="button"
       onClick={onToggle}
       title={isExpanded ? 'Recolher menu' : 'Expandir menu'}
-      className={`hidden md:flex absolute top-4 -right-3 z-10 w-6 h-6 rounded-full border ${borderColorClass} ${bgColorClass} items-center justify-center shadow-sm transition-colors`}
+      aria-label={isExpanded ? 'Recolher menu' : 'Expandir menu'}
+      className={`hidden md:flex absolute top-4 -right-3 z-10 w-6 h-6 rounded-md border ${borderColorClass} ${bgColorClass} items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
     >
-      <ChevronLeft size={14} className={`transition-transform duration-300 ${isExpanded ? '' : 'rotate-180'}`} />
+      <ChevronLeft size={14} aria-hidden="true" className={`transition-transform duration-300 ${isExpanded ? '' : 'rotate-180'}`} />
     </button>
   );
 }

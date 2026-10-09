@@ -243,7 +243,7 @@ export default function FamilyRegistrationData({ currentUser }) {
             className="w-full flex justify-center items-center gap-2 bg-primary text-white px-5 py-3.5 rounded-zela-md font-bold hover:bg-primary-container transition"
           >
             {isSaving ? <Loader2 size={20} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={20} /> : <Save size={20} />)}
-            {saveSuccess ? 'Salvo com sucesso!' : 'Salvar Alterações'}
+            {saveSuccess ? 'Salvo com sucesso!' : 'Salvar'}
           </button>
         </div>
     </div>
