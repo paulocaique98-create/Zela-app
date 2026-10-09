@@ -546,7 +546,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <button
                     onClick={handleApproveAll}
                     disabled={bulkApproving}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 font-semibold text-sm text-white bg-success hover:brightness-110 disabled:opacity-60 min-h-[44px] px-4 py-2.5 rounded-md transition"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 font-semibold text-sm text-white bg-primary hover:bg-primary-container disabled:opacity-60 min-h-[44px] px-4 py-2.5 rounded-md transition"
                   >
                     {bulkApproving
                       ? <><Loader2 size={16} className="animate-spin" /> Aprovando…</>
