@@ -34,7 +34,7 @@ export default function FamilyContratos({ currentUser, currentSchool, onVoltar }
       {onVoltar && (
         <button onClick={onVoltar} className="flex items-center gap-1 text-sm font-bold text-primary"><ChevronLeft size={16} /> Configurações</button>
       )}
-      {error && <div className="p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{error}</div>}
+      {error && <div className="p-3 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{error}</div>}
       {docs === null ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-on-surface-variant" /></div>
       ) : docs.length === 0 ? (
@@ -47,13 +47,13 @@ export default function FamilyContratos({ currentUser, currentSchool, onVoltar }
         <>
           {pending.length > 0 && (
             <section>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-amber-700 mb-2">Para assinar</h3>
+              <h3 className="text-xs font-bold text-warning mb-2">Para assinar</h3>
               <div className="space-y-2">{pending.map(d => <DocCard key={d.id} doc={d} onOpen={() => setOpen(d)} />)}</div>
             </section>
           )}
           {signed.length > 0 && (
             <section>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">Assinados</h3>
+              <h3 className="text-xs font-bold text-on-surface-variant mb-2">Assinados</h3>
               <div className="space-y-2">{signed.map(d => <DocCard key={d.id} doc={d} onOpen={() => setOpen(d)} />)}</div>
             </section>
           )}
@@ -66,7 +66,7 @@ export default function FamilyContratos({ currentUser, currentSchool, onVoltar }
 function DocCard({ doc, onOpen }) {
   const pending = doc.status === 'enviado';
   return (
-    <button onClick={onOpen} className={`w-full text-left p-4 rounded-zela-lg border bg-surface-container-lowest hover:shadow-sm transition ${pending ? 'border-amber-300' : 'border-outline-variant'}`}>
+    <button onClick={onOpen} className={`w-full text-left p-4 rounded-zela-lg border bg-surface-container-lowest hover:shadow-sm transition ${pending ? 'border-outline-variant' : 'border-outline-variant'}`}>
       <p className="font-bold text-sm text-on-surface">{doc.title}</p>
       <p className="text-xs text-on-surface-variant mt-0.5">
         {doc.students?.name} · {pending ? 'Aguardando sua assinatura' : `Assinado em ${new Date(doc.signed_at).toLocaleDateString('pt-BR')}`}
@@ -112,13 +112,13 @@ function ContratoDetalhe({ doc, currentUser, currentSchool, onBack }) {
       <div className="whitespace-pre-wrap text-sm leading-relaxed text-on-surface bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">{current.body}</div>
 
       {current.status === 'assinado' ? (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-zela-lg text-sm text-emerald-800 space-y-1">
+        <div className="p-4 bg-success/10 border border-success/30 rounded-zela-lg text-sm text-success space-y-1">
           <p className="font-bold flex items-center gap-1.5"><ShieldCheck size={16} /> Contrato assinado</p>
           <p>Assinado por {current.signer_name} em {new Date(current.signed_at).toLocaleString('pt-BR')}.</p>
-          <button onClick={() => printContract(current, currentSchool?.name)} className="mt-2 flex items-center gap-1.5 px-3 py-2 bg-white border border-emerald-300 rounded-zela-md text-xs font-bold"><Printer size={14} /> Imprimir ou salvar em PDF</button>
+          <button onClick={() => printContract(current, currentSchool?.name)} className="mt-2 flex items-center gap-1.5 px-3 py-2 bg-white border border-success/30 rounded-zela-md text-xs font-bold"><Printer size={14} /> Imprimir ou salvar em PDF</button>
         </div>
       ) : (
-        <div className="p-4 bg-surface-container-lowest border border-amber-300 rounded-zela-lg space-y-3">
+        <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded-zela-lg space-y-3">
           <p className="text-sm font-bold text-on-surface">Assinar eletronicamente</p>
           <label htmlFor="sign-name" className="block text-xs font-bold text-on-surface-variant">Seu nome completo
             <input id="sign-name" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm" />
@@ -127,7 +127,7 @@ function ContratoDetalhe({ doc, currentUser, currentSchool, onBack }) {
             <input id="sign-agree" type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="mt-0.5" />
             Li todo o documento acima e concordo com os termos. Entendo que esta assinatura eletrônica tem validade legal (Lei 14.063/2020) e que ficam registrados a data, o horário e o endereço de acesso.
           </label>
-          {error && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{error}</div>}
+          {error && <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{error}</div>}
           <button onClick={sign} disabled={!agree || isSigning} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
             {isSigning ? <Loader2 size={16} className="animate-spin" /> : <FileSignature size={16} />} Assinar contrato
           </button>

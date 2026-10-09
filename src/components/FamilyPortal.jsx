@@ -313,16 +313,16 @@ export default function FamilyPortal({
 
         {/* BANNER NOTIFICAÇÕES PUSH */}
         {pushData.permission === 'default' && !pushData.isSubscribed && !dismissedPush && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3 justify-between shrink-0">
-            <div className="flex items-center gap-2 text-amber-800 text-sm font-medium min-w-0 flex-1">
-              <Bell size={18} className="text-amber-600 shrink-0" />
+          <div className="bg-brass-50 border-b border-outline-variant px-4 py-3 flex items-center gap-3 justify-between shrink-0">
+            <div className="flex items-center gap-2 text-on-surface text-sm font-medium min-w-0 flex-1">
+              <Bell size={18} className="text-warning shrink-0" />
               <span className="truncate">Ative as notificações para receber avisos de check-in</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+              <button onClick={pushData.subscribe} disabled={pushData.isLoading} className="text-xs font-semibold text-white bg-primary hover:bg-primary-container px-3 py-2 min-h-[44px] rounded-md transition-colors whitespace-nowrap">
                 Ativar
               </button>
-              <button onClick={dismissPushBanner} className="text-amber-500 hover:text-amber-700 p-1 rounded-md hover:bg-amber-100 transition-colors">
+              <button onClick={dismissPushBanner} aria-label="Dispensar aviso" className="text-on-surface-variant hover:text-on-surface p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-surface-container-low transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -392,18 +392,18 @@ export default function FamilyPortal({
               setIsChatExpanded(false);
               if (isChatOpen) refreshChatUnread();
             }}
-            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-lg bg-primary hover:bg-primary-container text-white shadow-md flex items-center justify-center transition-all active:scale-95"
             title="Chat"
           >
             {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
             {!isChatOpen && chatUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-xs font-bold flex items-center justify-center border-2 border-white">
                 {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
               </span>
             )}
           </button>
           {isChatOpen && (
-            <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
+            <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
               isChatExpanded
                 ? 'sm:inset-6 rounded-zela-xl'
                 : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'

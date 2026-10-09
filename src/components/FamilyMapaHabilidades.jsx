@@ -5,9 +5,9 @@ import { buscarTodos } from '../lib/buscarTodos';
 import { SITUACAO_LABEL, periodoLabel, mapaIndisponivel } from '../lib/mapaHabilidades';
 
 const COR = {
-  sem_interesse: 'bg-slate-100 text-slate-700 border-slate-200',
-  adquirindo: 'bg-amber-50 text-amber-700 border-amber-200',
-  adquirido: 'bg-green-50 text-green-700 border-green-200',
+  sem_interesse: 'bg-surface-container text-on-surface border-outline-variant',
+  adquirindo: 'bg-brass-50 text-warning border-outline-variant',
+  adquirido: 'bg-success/10 text-success border-success/30',
 };
 
 // A RLS só devolve registros PUBLICADOS dos próprios filhos.
@@ -70,7 +70,7 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
   }, [registros, habilidades, aluno, periodo]);
 
   if (carregando) return <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
-  if (erro) return <div className="p-4 text-sm text-red-600">{erro}</div>;
+  if (erro) return <div className="p-4 text-sm text-error">{erro}</div>;
   if (registros.length === 0) {
     return (
       <div className="text-center py-16 text-on-surface-variant">
@@ -95,12 +95,12 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
       </div>
       {linhas.map(([area, itens]) => (
         <section key={area} className="rounded-zela-lg border border-outline-variant p-4">
-          <h3 className="text-[11px] font-extrabold uppercase text-primary mb-2">{area}</h3>
+          <h3 className="text-xs font-semibold text-primary mb-2">{area}</h3>
           <ul className="space-y-2">
             {itens.map(({ r, h }) => (
               <li key={r.id} className="flex items-start justify-between gap-3 text-sm">
                 <span className="text-on-surface">{h.descricao}</span>
-                <span className={`shrink-0 text-[10px] font-extrabold uppercase px-2 py-1 rounded-md border ${COR[r.situacao]}`}>{SITUACAO_LABEL[r.situacao]}</span>
+                <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-md border ${COR[r.situacao]}`}>{SITUACAO_LABEL[r.situacao]}</span>
               </li>
             ))}
           </ul>

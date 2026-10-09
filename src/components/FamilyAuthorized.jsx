@@ -72,13 +72,13 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             onClick={onOpenAuthModal}
             disabled={limitReached}
             className={`font-bold py-2.5 px-4 rounded-zela-md transition flex items-center gap-2 text-sm shadow-sm ${
-              limitReached ? 'bg-slate-200 text-on-surface-variant/70 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-container'
+              limitReached ? 'bg-surface-container text-on-surface-variant/70 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-container'
             }`}
           >
             <Plus size={16}/> Novo Autorizado
           </button>
           {limitReached && (
-            <p className="text-[10px] text-red-500 mt-1 max-w-[180px]">
+            <p className="text-xs text-error mt-1 max-w-[180px]">
               Limite atingido: {maxGeral} autorizado{maxGeral !== 1 ? 's' : ''}{maxTransporte > 0 ? ` + ${maxTransporte} de transporte escolar` : ''}.
             </p>
           )}
@@ -100,21 +100,21 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             const handleDeleteAuthorized = () => setConfirmDeleteId(person.id);
 
             return (
-              <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-4 transition hover:border-slate-300">
+              <div key={person.id} className="flex flex-col sm:flex-row items-center justify-between p-4 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-4 transition hover:border-outline-variant">
                 {/* Avatar & Info */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setCameraFor(person)}
                     disabled={isProcessingId === person.id}
-                    className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer"
+                    className="w-14 h-14 bg-surface-container rounded-md flex items-center justify-center overflow-hidden border-4 border-white shadow-sm shrink-0 relative group cursor-pointer"
                   >
                     {isProcessingId === person.id ? (
                       <Loader2 size={20} className="text-primary animate-spin"/>
                     ) : person.photo_url ? (
                       <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
                     ) : person.hasPhoto || person.has_biometrics ? (
-                      <div className="w-full h-full bg-green-100 flex items-center justify-center text-green-600">
+                      <div className="w-full h-full bg-success/10 flex items-center justify-center text-success">
                         <Fingerprint size={24} />
                       </div>
                     ) : (
@@ -130,12 +130,12 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       <span className="text-xs font-medium text-on-surface-variant bg-white border border-outline-variant px-2 py-0.5 rounded-lg">{person.relation}</span>
                       {person.emergencyOrder && (
-                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-lg font-bold border border-red-100">
+                        <span className="text-xs bg-error/10 text-error px-2 py-0.5 rounded-lg font-bold border border-error/30">
                           {person.emergencyOrder}º Emergência
                         </span>
                       )}
                       {person.temporaryUntil && (
-                        <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-lg font-bold border border-amber-100">
+                        <span className="text-xs bg-brass-50 text-warning px-2 py-0.5 rounded-lg font-bold border border-outline-variant">
                           Até {person.temporaryUntil}
                         </span>
                       )}
@@ -174,7 +174,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
                     <button
                       onClick={handleDeleteAuthorized}
                       disabled={isProcessingId === person.id}
-                      className="text-xs text-red-600 font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-red-200 px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-50 w-full sm:w-auto"
+                      className="text-xs text-error font-bold hover:underline cursor-pointer flex items-center justify-center gap-1 bg-white border border-error/30 px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-50 w-full sm:w-auto"
                     >
                       <Trash2 size={14} /> Excluir
                     </button>
@@ -184,7 +184,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
             );
           })}
         </div>
-        <div className="mt-4 p-4 bg-primary/10 text-indigo-800 rounded-zela-md border border-primary/10 text-sm flex gap-3">
+        <div className="mt-4 p-4 bg-primary/10 text-primary rounded-zela-md border border-primary/10 text-sm flex gap-3">
           <Camera className="shrink-0 text-primary" />
           <p>
             <strong>Lembrete:</strong> É obrigatório fazer uma foto nítida do rosto do autorizado, pela câmera, para o sistema de Reconhecimento Facial na recepção.
@@ -216,7 +216,7 @@ export default function FamilyAuthorized({ authorized, togglePhoto, deleteAuthor
       {cameraFor && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setCameraFor(null)}>
           <div
-            className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="bg-white rounded-zela-xl shadow-md w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
           >
             <FaceCameraCapture

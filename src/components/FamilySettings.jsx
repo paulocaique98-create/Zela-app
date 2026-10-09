@@ -49,8 +49,8 @@ A Escola Montessori de Vitória (SenseKids) solicita sua autorização para uso 
 // ─── Modal LGPD ───────────────────────────────────────────────────────────────
 function LGPDModal({ alreadyAccepted, onAccept, onClose }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary-container/60 backdrop-blur-sm">
+      <div className="bg-white rounded-zela-xl shadow-md w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
         <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
           <h2 className="font-bold text-lg text-on-surface flex items-center gap-2">
             <FileText size={20} className="text-primary" /> Consentimento LGPD
@@ -62,7 +62,7 @@ function LGPDModal({ alreadyAccepted, onAccept, onClose }) {
         </div>
         <div className="p-5 border-t border-outline-variant shrink-0">
           {alreadyAccepted ? (
-            <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm bg-green-50 py-3 rounded-zela-md border border-green-200">
+            <div className="flex items-center justify-center gap-2 text-success font-bold text-sm bg-success/10 py-3 rounded-zela-md border border-success/30">
               <Check size={18}/> Termo aceito
             </div>
           ) : (
@@ -88,8 +88,8 @@ function ImageUsageModal({ status, onRespond, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary-container/60 backdrop-blur-sm">
+      <div className="bg-white rounded-zela-xl shadow-md w-full max-w-lg flex flex-col max-h-[70vh] md:max-h-[85vh] mt-16 md:mt-0">
         <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
           <h2 className="font-bold text-lg text-on-surface flex items-center gap-2">
             <FileText size={20} className="text-primary" /> Uso de Imagem
@@ -102,10 +102,10 @@ function ImageUsageModal({ status, onRespond, onClose }) {
         <div className="p-5 border-t border-outline-variant shrink-0">
           {status !== null && status !== undefined ? (
             <div className="space-y-3">
-              <div className={`flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-zela-md border ${status ? 'text-green-600 bg-green-50 border-green-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
+              <div className={`flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-zela-md border ${status ? 'text-success bg-success/10 border-success/30' : 'text-warning bg-brass-50 border-outline-variant'}`}>
                 <Check size={18}/> {status ? 'Autorizado' : 'Não Autorizado'}
               </div>
-              <p className="text-center text-[10px] text-on-surface-variant/70">
+              <p className="text-center text-xs text-on-surface-variant/70">
                 Para alterar esta escolha, procure a secretaria da escola.
               </p>
             </div>
@@ -114,7 +114,7 @@ function ImageUsageModal({ status, onRespond, onClose }) {
               <button 
                 onClick={() => handleAction(false)} 
                 disabled={isLoading}
-                className="flex-1 bg-white border border-red-200 text-red-600 font-bold py-3 rounded-zela-md hover:bg-red-50 transition flex items-center justify-center gap-2"
+                className="flex-1 bg-white border border-error/30 text-error font-bold py-3 rounded-zela-md hover:bg-error/10 transition flex items-center justify-center gap-2"
               >
                 Não Autorizo
               </button>
@@ -154,21 +154,21 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-sm max-h-[70vh] md:max-h-[85vh] flex flex-col mt-16 md:mt-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary-container/60 backdrop-blur-sm">
+      <div className="bg-white rounded-zela-xl shadow-md w-full max-w-sm max-h-[70vh] md:max-h-[85vh] flex flex-col mt-16 md:mt-0">
         <div className="flex items-center justify-between p-5 border-b border-outline-variant shrink-0">
           <h2 className="font-bold text-lg text-on-surface flex items-center gap-2"><Pencil size={18} className="text-primary"/> Editar Dados</h2>
           <button onClick={onClose} className="p-1.5 hover:bg-surface-container rounded-lg"><X size={20}/></button>
         </div>
         <div className="p-5 space-y-4 overflow-y-auto">
-          {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-zela-md border border-red-100">{error}</div>}
+          {error && <div className="p-3 bg-error/10 text-error text-sm rounded-zela-md border border-error/30">{error}</div>}
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">E-mail de Acesso</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">E-mail de acesso</label>
             <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm focus:ring-2 focus:ring-primary outline-none" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Telefone de Contato</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Telefone de contato</label>
             <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="(11) 90000-0000"
               className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm focus:ring-2 focus:ring-primary outline-none" />
@@ -247,11 +247,11 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold text-on-surface-variant/70 uppercase">E-mail de Acesso</label>
+                <label className="text-xs font-bold text-on-surface-variant/70">E-mail de acesso</label>
                 <p className="text-sm font-medium text-on-surface truncate">{currentUser.email}</p>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-on-surface-variant/70 uppercase">Telefone de Contato</label>
+                <label className="text-xs font-bold text-on-surface-variant/70">Telefone de contato</label>
                 <p className="text-sm font-medium text-on-surface">{currentUser.phone || 'Não cadastrado'}</p>
               </div>
               <button
@@ -271,11 +271,11 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
               </h3>
               <div className="space-y-2">
                 {pushData.permission === 'denied' ? (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-zela-md">
-                    <BellOff className="text-red-500 shrink-0" size={24} />
+                  <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/30 rounded-zela-md">
+                    <BellOff className="text-error shrink-0" size={24} />
                     <div>
-                      <p className="text-sm font-bold text-red-800">Notificações bloqueadas</p>
-                      <p className="text-xs text-red-600 mt-0.5">Habilite nas configurações do seu navegador para receber avisos.</p>
+                      <p className="text-sm font-bold text-error">Notificações bloqueadas</p>
+                      <p className="text-xs text-error mt-0.5">Habilite nas configurações do seu navegador para receber avisos.</p>
                     </div>
                   </div>
                 ) : !pushData.isSubscribed ? (
@@ -296,18 +296,18 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-zela-md">
+                  <div className="flex flex-col gap-3 p-4 bg-success/10 border border-success/30 rounded-zela-md">
                     <div className="flex items-center gap-3">
-                      <BellRing className="text-emerald-500 shrink-0" size={24} />
+                      <BellRing className="text-success shrink-0" size={24} />
                       <div>
-                        <p className="text-sm font-bold text-emerald-800 flex items-center gap-1"><Check size={14} /> Ativas</p>
-                        <p className="text-xs text-emerald-600 mt-0.5">Neste dispositivo.</p>
+                        <p className="text-sm font-bold text-success flex items-center gap-1"><Check size={14} /> Ativas</p>
+                        <p className="text-xs text-success mt-0.5">Neste dispositivo.</p>
                       </div>
                     </div>
                     <button 
                       onClick={pushData.unsubscribe} 
                       disabled={pushData.isLoading}
-                      className="w-full border border-emerald-200 text-emerald-700 font-bold py-2.5 rounded-lg hover:bg-emerald-100 transition text-sm disabled:opacity-70"
+                      className="w-full border border-success/30 text-success font-bold py-2.5 rounded-lg hover:bg-success/10 transition text-sm disabled:opacity-70"
                     >
                       {pushData.isLoading ? 'Desativando...' : 'Desativar'}
                     </button>
@@ -330,9 +330,9 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
                 <span className="text-sm font-medium text-on-surface">Consentimento LGPD</span>
                 <div className="flex items-center gap-2">
                   {lgpdAccepted ? (
-                    <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Aceito</span>
+                    <span className="text-xs bg-success/10 text-success font-bold px-2 py-0.5 rounded">Aceito</span>
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-error animate-pulse"></span>
                   )}
                   <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
                 </div>
@@ -345,11 +345,11 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
                 <span className="text-sm font-medium text-on-surface">Termo de Uso de Imagem</span>
                 <div className="flex items-center gap-2">
                   {imageUsageStatus !== null && imageUsageStatus !== undefined ? (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${imageUsageStatus ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${imageUsageStatus ? 'bg-success/10 text-success' : 'bg-brass-50 text-warning'}`}>
                       {imageUsageStatus ? 'Autorizado' : 'Não Autorizado'}
                     </span>
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-error animate-pulse"></span>
                   )}
                   <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
                 </div>
@@ -362,11 +362,11 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
                 <span className="text-sm font-medium text-on-surface">Contratos</span>
                 <div className="flex items-center gap-2">
                   {contratos?.paraAssinar > 0 ? (
-                    <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded">
+                    <span className="text-xs bg-brass-50 text-warning font-bold px-2 py-0.5 rounded">
                       {contratos.paraAssinar} para assinar
                     </span>
                   ) : contratos?.assinados > 0 ? (
-                    <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded">Assinados</span>
+                    <span className="text-xs bg-success/10 text-success font-bold px-2 py-0.5 rounded">Assinados</span>
                   ) : null}
                   <ChevronRight size={16} className="text-on-surface-variant/70 group-hover:text-primary transition"/>
                 </div>

@@ -29,7 +29,7 @@ function DocUploadButton({ label, doc, onUpload, onRemove, isUploading, obrigato
       <label
         htmlFor={inputId}
         className={`flex-1 flex items-center gap-2 border border-dashed rounded-zela-md px-3 py-2.5 text-xs font-bold cursor-pointer transition ${
-          doc ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-slate-300 hover:border-indigo-400 text-on-surface-variant hover:text-primary'
+          doc ? 'bg-success/10 border-success/30 text-success' : 'bg-white border-outline-variant hover:border-primary/30 text-on-surface-variant hover:text-primary'
         } ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}
       >
         {isUploading ? <Loader2 size={14} className="animate-spin shrink-0" /> : doc ? <Check size={14} className="shrink-0" /> : <Upload size={14} className="shrink-0" />}
@@ -37,7 +37,7 @@ function DocUploadButton({ label, doc, onUpload, onRemove, isUploading, obrigato
         <input id={inputId} type="file" accept={ALLOWED_TYPES.join(',')} onChange={onUpload} className="hidden" disabled={isUploading} />
       </label>
       {doc && (
-        <button type="button" onClick={onRemove} className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+        <button type="button" onClick={onRemove} className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition shrink-0">
           <X size={16} />
         </button>
       )}
@@ -78,7 +78,7 @@ function CicloPills({ value, onChange }) {
           type="button"
           onClick={() => onChange(String(h))}
           className={`flex-1 text-center py-2.5 px-2 rounded-zela-md text-xs font-bold border-2 transition-all ${
-            String(value) === String(h) ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'
+            String(value) === String(h) ? 'bg-primary text-white border-primary/30' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/30'
           }`}
         >
           {h} horas
@@ -94,7 +94,7 @@ function RadioRow({ selected, onSelect, label }) {
       type="button"
       onClick={onSelect}
       className={`w-full flex items-start gap-2.5 p-3 rounded-zela-md border-2 text-left transition-all ${
-        selected ? 'border-primary bg-primary/5' : 'border-outline-variant bg-white hover:border-indigo-200'
+        selected ? 'border-primary bg-primary/5' : 'border-outline-variant bg-white hover:border-primary/30'
       }`}
     >
       <span className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 ${selected ? 'border-primary bg-primary shadow-[inset_0_0_0_2.5px_#fff]' : 'border-outline-variant'}`} />
@@ -555,7 +555,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             )}
 
             {formError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{formError}</div>
             )}
 
             {/* 1. DADOS DA CRIANÇA */}
@@ -565,9 +565,9 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 return (
                   <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-primary uppercase tracking-wider">Criança {idx + 1}</span>
+                      <span className="text-xs font-semibold text-primary">Criança {idx + 1}</span>
                       {criancas.length > 1 && (
-                        <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                        <button type="button" onClick={() => removeCrianca(c.id)} className="p-1.5 text-error hover:text-error hover:bg-error/10 rounded-lg transition">
                           <Trash2 size={15} />
                         </button>
                       )}
@@ -607,10 +607,10 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
 
             {/* 2. ENDEREÇO */}
             <AccordionSection id="endereco" title="2. Endereço" icon={<MapPin size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
-              <p className="text-[11px] text-on-surface-variant/70 -mt-1">Endereço onde a criança reside.</p>
+              <p className="text-xs text-on-surface-variant/70 -mt-1">Endereço onde a criança reside.</p>
               {criancas.map((c, idx) => (
                 <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                  {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                  {criancas.length > 1 && <span className="text-xs font-semibold text-primary">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label htmlFor={`cep-${c.id}`} className={labelCls}>CEP *</label>
@@ -651,8 +651,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             </AccordionSection>
 
             {/* 3. RESPONSÁVEL FINANCEIRO */}
-            <AccordionSection id="responsavel" title="3. Responsável Financeiro" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
-              <p className="text-[11px] text-on-surface-variant/70 -mt-1">É em nome desta pessoa que sai a nota fiscal, para posterior declaração do Imposto de Renda.</p>
+            <AccordionSection id="responsavel" title="3. Responsável financeiro" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
+              <p className="text-xs text-on-surface-variant/70 -mt-1">É em nome desta pessoa que sai a nota fiscal, para posterior declaração do Imposto de Renda.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className={labelCls}>Nome completo *</label>
@@ -695,13 +695,13 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 </div>
               </div>
 
-              <p className="text-[11px] text-on-surface-variant/70">Os documentos do responsável financeiro são enviados na seção 8 · Documentos.</p>
+              <p className="text-xs text-on-surface-variant/70">Os documentos do responsável financeiro são enviados na seção 8 · Documentos.</p>
             </AccordionSection>
 
             {/* 4. SEGUNDO RESPONSÁVEL */}
             <AccordionSection id="segundo" title="4. Segundo Responsável" icon={<User size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
+                <input type="checkbox" checked={temSegundo} onChange={e => setTemSegundo(e.target.checked)} className="w-4 h-4 accent-primary" />
                 <span className="font-bold text-on-surface text-sm">Esta matrícula tem um segundo responsável</span>
               </label>
               {temSegundo && (
@@ -752,8 +752,8 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             {/* 5. AUTORIZADOS E CONTATO DE EMERGÊNCIA */}
             <AccordionSection id="autorizados" title="5. Autorizados e Contato de Emergência" icon={<UserCheck size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
               <div className="flex items-center justify-between -mt-1">
-                <p className="text-[11px] text-on-surface-variant/70">Quem mais pode buscar a criança. Também é quem entramos em contato em caso de emergência.</p>
-                <span className="text-[10px] font-bold text-on-surface-variant/70 uppercase shrink-0 ml-2">{autorizados.length}/{maxAutorizados}</span>
+                <p className="text-xs text-on-surface-variant/70">Quem mais pode buscar a criança. Também é quem entramos em contato em caso de emergência.</p>
+                <span className="text-xs font-bold text-on-surface-variant/70 shrink-0 ml-2">{autorizados.length}/{maxAutorizados}</span>
               </div>
               <div className="space-y-3">
                 {autorizados.map((a) => (
@@ -775,7 +775,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                         </select>
                       </div>
                       {autorizados.length > 1 && (
-                        <button type="button" onClick={() => removeAutorizado(a.id)} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0">
+                        <button type="button" onClick={() => removeAutorizado(a.id)} className="p-2.5 text-error hover:text-error hover:bg-error/10 rounded-lg transition shrink-0">
                           <Trash2 size={15} />
                         </button>
                       )}
@@ -795,7 +795,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                   checked={temTransporte}
                   onChange={e => setTemTransporte(e.target.checked)}
                   disabled={maxTransporte === 0}
-                  className="w-4 h-4 accent-indigo-600 disabled:opacity-40"
+                  className="w-4 h-4 accent-primary disabled:opacity-40"
                 />
                 <span className="font-bold text-on-surface text-sm flex items-center gap-2"><Car size={15} className="text-primary" /> Outros autorizados pelo transporte?</span>
               </label>
@@ -810,7 +810,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                         onChange={e => updateTransporteAutorizado(t.id, e.target.value)}
                       />
                       {transporteAutorizados.length > 1 && (
-                        <button type="button" onClick={() => removeTransporteAutorizado(t.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0">
+                        <button type="button" onClick={() => removeTransporteAutorizado(t.id)} className="p-2 text-error hover:text-error hover:bg-error/10 rounded-lg transition shrink-0">
                           <Trash2 size={15} />
                         </button>
                       )}
@@ -840,10 +840,10 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 />
               </div>
 
-              <h5 className="flex items-center gap-1.5 text-xs font-bold text-on-surface uppercase tracking-wide pt-3">
+              <h5 className="flex items-center gap-1.5 text-xs font-bold text-on-surface pt-3">
                 <HeartPulse size={13} className="text-primary" /> Emergência Médica
               </h5>
-              <p className="text-[11px] text-on-surface-variant/70">Em caso de acidente considerado grave.</p>
+              <p className="text-xs text-on-surface-variant/70">Em caso de acidente considerado grave.</p>
               <div className="space-y-2">
                 <RadioRow
                   selected={autorizacaoEmergencia === 'sim'}
@@ -862,7 +862,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             <AccordionSection id="saude" title="7. Saúde e Alimentação" icon={<HeartPulse size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
               {criancas.map((c, idx) => (
                 <div key={c.id} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-                  {criancas.length > 1 && <span className="text-xs font-black text-primary uppercase tracking-wider">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
+                  {criancas.length > 1 && <span className="text-xs font-semibold text-primary">{c.nome.trim() || `Criança ${idx + 1}`}</span>}
                   <div>
                     <label className={labelCls}>Possui restrição ou alergia alimentar? Quais? *</label>
                     <textarea className={`${inputCls} h-16 resize-none`} placeholder="Descreva ou 'Não possui'" value={c.restricao_alimentar} onChange={e => updateCrianca(c.id, { restricao_alimentar: e.target.value })} />
@@ -900,7 +900,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
                 rematrícula todos são obrigatórios: a cada rematrícula a
                 família envia documentos novos. */}
             <AccordionSection id="documentos" title="8. Documentos" icon={<FileText size={16} className="text-primary" />} openId={openSection} onToggle={toggleSection}>
-              <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-zela-md px-3 py-2 -mt-1">
+              <p className="text-xs text-warning bg-brass-50 border border-outline-variant rounded-zela-md px-3 py-2 -mt-1">
                 Na rematrícula, todos os documentos precisam ser enviados de novo, mesmo que já tenham sido enviados antes.
               </p>
               <div className="space-y-2">
@@ -938,12 +938,12 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
             {/* O aviso também aparece aqui, perto do botão: quem envia está no
                 fim da página e não veria a mensagem lá em cima. */}
             {formError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{formError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{formError}</div>
             )}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-primary-container disabled:text-on-surface-variant text-white px-5 py-3 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
               Enviar Solicitação
@@ -952,7 +952,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         ) : (
           <>
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
             )}
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -988,10 +988,10 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
 }
 
 const STATUS_INFO = {
-  pending: { label: 'Em análise', icon: Clock, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-green-50 text-green-700 border-green-200' },
-  rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-red-50 text-red-700 border-red-200' },
-  changes_requested: { label: 'Precisa de ajustes', icon: MessageSquareWarning, cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+  pending: { label: 'Em análise', icon: Clock, cls: 'bg-brass-50 text-warning border-outline-variant' },
+  approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-success/10 text-success border-success/30' },
+  rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-error/10 text-error border-error/30' },
+  changes_requested: { label: 'Precisa de ajustes', icon: MessageSquareWarning, cls: 'bg-brass-50 text-warning border-outline-variant' },
 };
 
 function SolicitacaoCard({ solicitacao, onDelete, onEdit }) {
@@ -1012,7 +1012,7 @@ function SolicitacaoCard({ solicitacao, onDelete, onEdit }) {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
+          <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border ${status.cls}`}>
             <StatusIcon size={11} /> {status.label}
           </span>
           {expanded ? <ChevronUp size={18} className="text-on-surface-variant/70" /> : <ChevronDown size={18} className="text-on-surface-variant/70" />}
@@ -1021,29 +1021,29 @@ function SolicitacaoCard({ solicitacao, onDelete, onEdit }) {
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-outline-variant pt-3">
           {solicitacao.status === 'rejected' && solicitacao.rejection_reason && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-xs font-medium">
+            <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-xs font-medium">
               Motivo: {solicitacao.rejection_reason}
             </div>
           )}
           {solicitacao.status === 'changes_requested' && solicitacao.rejection_reason && (
-            <div className="bg-orange-50 border border-orange-100 text-orange-700 p-3 rounded-zela-md text-xs font-medium">
+            <div className="bg-brass-50 border border-outline-variant text-warning p-3 rounded-zela-md text-xs font-medium">
               O que precisa corrigir: {solicitacao.rejection_reason}
             </div>
           )}
           <div>
-            <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Responsável Financeiro</p>
+            <p className="text-xs font-bold text-on-surface-variant/70 mb-1">Responsável financeiro</p>
             <p className="text-sm text-on-surface">{solicitacao.responsavel_financeiro?.nome}</p>
           </div>
           {criancas.map((c, i) => (
             <div key={i}>
-              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">Criança {i + 1}</p>
+              <p className="text-xs font-bold text-on-surface-variant/70 mb-1">Criança {i + 1}</p>
               <p className="text-sm text-on-surface">{c.nome} · {c.ciclo}h/dia, {c.periodo} ({c.turno})</p>
             </div>
           ))}
           {solicitacao.status === 'changes_requested' && (
             <button
               onClick={() => onEdit(solicitacao)}
-              className="flex items-center gap-1.5 text-orange-700 bg-orange-50 hover:bg-orange-100 font-bold text-xs px-3 py-2 rounded-zela-md transition"
+              className="flex items-center gap-1.5 text-warning bg-brass-50 hover:bg-brass-50 font-bold text-xs px-3 py-2 rounded-zela-md transition"
             >
               <Pencil size={13} /> Corrigir e reenviar
             </button>
@@ -1051,7 +1051,7 @@ function SolicitacaoCard({ solicitacao, onDelete, onEdit }) {
           {solicitacao.status === 'pending' && (
             <button
               onClick={() => onDelete(solicitacao.id)}
-              className="flex items-center gap-1.5 text-red-500 hover:text-red-600 font-bold text-xs pt-1"
+              className="flex items-center gap-1.5 text-error hover:text-error font-bold text-xs pt-1"
             >
               <Trash2 size={13} /> Excluir solicitação
             </button>

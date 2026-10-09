@@ -145,7 +145,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
           {students.length > 1 && (
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
+              <label className="block text-xs font-bold text-on-surface-variant mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
               <select
                 value={selectedStudentId || ''}
                 onChange={e => setSelectedStudentId(e.target.value)}
@@ -156,7 +156,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
             </div>
           )}
 
-          {error && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>}
+          {error && <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
@@ -175,12 +175,12 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
                       key={dateStr}
                       onClick={() => setSelectedDate(dateStr)}
                       title={feriadoTitulo || undefined}
-                      className={`shrink-0 w-16 h-20 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all relative ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : feriadoTitulo ? 'bg-red-50 border border-red-200 text-red-600 hover:border-red-300' : temLancamento ? 'bg-white border border-outline-variant text-primary/40 hover:border-indigo-300' : 'bg-surface-container-low border border-dashed border-outline-variant text-on-surface-variant/40 hover:border-indigo-300'}`}
+                      className={`shrink-0 w-16 h-20 rounded-zela-lg flex flex-col items-center justify-center gap-0.5 transition-all relative ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/25' : feriadoTitulo ? 'bg-error/10 border border-error/30 text-error hover:border-error/30' : temLancamento ? 'bg-white border border-outline-variant text-primary/40 hover:border-primary/30' : 'bg-surface-container-low border border-dashed border-outline-variant text-on-surface-variant/40 hover:border-primary/30'}`}
                     >
-                      <span className="text-[11px] font-semibold">{weekday}</span>
+                      <span className="text-xs font-semibold">{weekday}</span>
                       <span className="text-xl font-bold">{day}</span>
-                      <span className="text-[10px] font-medium">{month}</span>
-                      {temLancamento && !isSelected && <span className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${feriadoTitulo ? 'bg-red-500' : 'bg-primary'}`} />}
+                      <span className="text-xs font-medium">{month}</span>
+                      {temLancamento && !isSelected && <span className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${feriadoTitulo ? 'bg-error' : 'bg-primary'}`} />}
                     </button>
                   );
                 })}
@@ -191,7 +191,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
                   <BookOpen className="mx-auto h-12 w-12 text-outline-variant mb-3" />
                   {feriados.get(selectedDate) ? (
                     <>
-                      <p className="text-sm font-bold text-red-600">Feriado · {feriados.get(selectedDate)}</p>
+                      <p className="text-sm font-bold text-error">Feriado · {feriados.get(selectedDate)}</p>
                       <p className="text-xs text-on-surface-variant/70 mt-1">Sem aula, sem lançamento nesse dia.</p>
                     </>
                   ) : (

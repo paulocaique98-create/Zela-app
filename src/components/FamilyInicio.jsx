@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, UserCheck, History, Bell, UtensilsCrossed, ArrowRight, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
+import { Home, UserCheck, History, Bell, UtensilsCrossed, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
@@ -52,7 +52,7 @@ export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts 
     <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
         <div className="mb-6 lg:mb-8 shrink-0">
-          <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Ações Rápidas</h1>
+          <h1 className="font-serif text-h1-mobile md:text-h1 text-on-surface">Ações rápidas</h1>
           <p className="text-small text-on-surface-variant mt-1">O que você deseja acessar hoje?</p>
         </div>
 
@@ -61,11 +61,11 @@ export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts 
             <button
               key={menu.key}
               onClick={() => handleCardClick(menu)}
-              className={`bg-surface-container-lowest p-4 rounded-zela-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex-col items-start gap-3 text-left relative ${index >= 6 ? 'hidden lg:flex' : 'flex'}`}
+              className={`bg-surface-container-lowest p-4 min-h-[88px] rounded-zela-lg border border-outline-variant hover:border-primary transition-colors flex-col items-start gap-3 text-left relative ${index >= 6 ? 'hidden lg:flex' : 'flex'}`}
             >
-              {/* Badge Vermelho */}
+              {/* Contador de não lidos */}
               {menu.key === 'comunicados' && unreadNotifications > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center animate-pulse shadow-md">
+                <span className="absolute top-3 right-3 bg-error text-white text-xs font-bold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center motion-safe:animate-pulse">
                   {unreadNotifications}
                 </span>
               )}
@@ -74,9 +74,6 @@ export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts 
               </div>
               <div>
                 <span className="text-label text-on-surface block">{menu.label}</span>
-                <span className="text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">
-                  Acessar <ArrowRight size={11} />
-                </span>
               </div>
             </button>
           ))}

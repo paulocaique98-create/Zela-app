@@ -83,7 +83,7 @@ export default function FamilyCardapio({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -102,7 +102,7 @@ export default function FamilyCardapio({ currentUser, currentSchool }) {
               <div key={group.date} className={`rounded-zela-lg border p-4 ${isToday ? 'border-primary/40 bg-primary/5' : 'border-outline-variant'}`}>
                 <h3 className={`text-sm font-bold mb-2.5 ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                   {formatDateLabel(group.date)}
-                  {isToday && <span className="text-[9px] uppercase font-extrabold bg-primary text-white px-1.5 py-0.5 rounded-md ml-2 align-middle">Hoje</span>}
+                  {isToday && <span className="text-xs font-semibold bg-primary text-white px-1.5 py-0.5 rounded-md ml-2 align-middle">Hoje</span>}
                 </h3>
                 <div className="space-y-2">
                   {group.items.map(item => (

@@ -94,7 +94,7 @@ export default function FamilyMuralFotos({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-4">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium mb-4">{error}</div>
         )}
 
         {isLoading ? (
@@ -128,7 +128,7 @@ export default function FamilyMuralFotos({ currentUser, currentSchool }) {
       </div>
 
       {lightboxFoto && (
-        <div className="fixed inset-0 z-[999] bg-slate-900/90 flex items-center justify-center p-4" onClick={() => setLightboxIndex(null)}>
+        <div className="fixed inset-0 z-[999] bg-primary-container/90 flex items-center justify-center p-4" onClick={() => setLightboxIndex(null)}>
           <button className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-zela-md transition" onClick={() => setLightboxIndex(null)}>
             <X size={24} />
           </button>

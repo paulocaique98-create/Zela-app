@@ -248,7 +248,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <CalendarDays className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+            <CalendarDays className="mx-auto h-10 w-10 text-on-surface-variant mb-3" />
             <p className="text-on-surface-variant font-medium text-sm">Nenhum registro para este período.</p>
             <p className="text-on-surface-variant/70 text-xs mt-1">Os registros aparecem após o check-in ser realizado.</p>
           </div>
@@ -257,12 +257,12 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
             <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="text-left border-b border-outline-variant">
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Data</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Entrada</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Saída</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Ciclo</th>
-                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider text-right">Tolerância</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70">Data</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70">Aluno</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70">Entrada</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70">Saída</th>
+                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70">Ciclo</th>
+                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 text-right">Tolerância</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
@@ -277,41 +277,41 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
                     <td className="py-3 pr-4">
                       <span className="flex items-center gap-1 font-medium text-primary">
                         <LogIn size={13} /> {log.entry}
-                        {log.entryCorrection && <PencilLine size={12} className="text-amber-500" title="Horário ajustado pela escola" />}
+                        {log.entryCorrection && <PencilLine size={12} className="text-warning" title="Horário ajustado pela escola" />}
                       </span>
                       {/* Quem fez a entrada (30/09/2026). */}
-                      {log.entryQuem && <p className="text-[11px] text-on-surface-variant mt-0.5 break-words">{log.entryQuem}</p>}
+                      {log.entryQuem && <p className="text-xs text-on-surface-variant mt-0.5 break-words">{log.entryQuem}</p>}
                     </td>
                     <td className="py-3 pr-4">
                       {log.exit ? (
-                        <span className="flex items-center gap-1 font-medium text-rose-500">
+                        <span className="flex items-center gap-1 font-medium text-error">
                           <LogOut size={13} /> {log.exit}
-                          {log.exitCorrection && <PencilLine size={12} className="text-amber-500" title="Horário ajustado pela escola" />}
+                          {log.exitCorrection && <PencilLine size={12} className="text-warning" title="Horário ajustado pela escola" />}
                         </span>
                       ) : (
-                        <span className="text-amber-500 italic font-medium text-xs">Em andamento</span>
+                        <span className="text-warning italic font-medium text-xs">Em andamento</span>
                       )}
-                      {log.exit && log.exitQuem && <p className="text-[11px] text-on-surface-variant mt-0.5 break-words">{log.exitQuem}</p>}
+                      {log.exit && log.exitQuem && <p className="text-xs text-on-surface-variant mt-0.5 break-words">{log.exitQuem}</p>}
                     </td>
                     <td className="py-3 pr-4 font-medium text-on-surface-variant">{log.contracted}</td>
                     <td className="py-3 text-right">
                       {log.duration === null ? (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase bg-amber-50 text-amber-600">—</span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-sm bg-brass-50 text-warning whitespace-nowrap">Em andamento</span>
                       ) : log.overtime ? (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap bg-red-100 text-red-700">
+                        <span className="text-xs font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-error/10 text-error">
                           +{log.overtime}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider whitespace-nowrap bg-green-100 text-green-700">OK</span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-success/10 text-success">OK</span>
                       )}
                     </td>
                   </tr>
                   {(entryNote || exitNote) && (
                     <tr>
                       <td colSpan={6} className="pb-3 pr-4">
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
-                          {entryNote && <p className="text-[11px] text-amber-800 leading-relaxed">{entryNote}</p>}
-                          {exitNote && <p className="text-[11px] text-amber-800 leading-relaxed">{exitNote}</p>}
+                        <div className="bg-brass-50 border border-outline-variant rounded-lg px-3 py-2 space-y-1">
+                          {entryNote && <p className="text-xs text-warning leading-relaxed">{entryNote}</p>}
+                          {exitNote && <p className="text-xs text-warning leading-relaxed">{exitNote}</p>}
                         </div>
                       </td>
                     </tr>

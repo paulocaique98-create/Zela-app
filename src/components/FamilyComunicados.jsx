@@ -86,7 +86,7 @@ export default function FamilyComunicados({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -120,7 +120,7 @@ export default function FamilyComunicados({ currentUser, currentSchool }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h4 className="font-bold text-on-surface">{c.title}</h4>
                         {c.turmas && c.turmas.map(t => (
-                          <span key={t} className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border bg-primary/10 text-primary border-primary/20">
+                          <span key={t} className="text-xs font-semibold px-1.5 py-0.5 rounded-md border bg-primary/10 text-primary border-primary/20">
                             {t}
                           </span>
                         ))}

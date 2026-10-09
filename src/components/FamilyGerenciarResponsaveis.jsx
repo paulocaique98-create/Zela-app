@@ -219,17 +219,17 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
           
           {/* Card 1: Main Guardian */}
           <div className="p-5 bg-surface-container-low border border-outline-variant rounded-zela-lg flex flex-col h-full relative overflow-hidden">
-            <div className={`absolute top-0 left-0 w-1 h-full ${currentUserIsFinancial ? 'bg-primary/100' : 'bg-slate-400'}`}></div>
+            <div className={`absolute top-0 left-0 w-1 h-full ${currentUserIsFinancial ? 'bg-primary/100' : 'bg-primary-container'}`}></div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-on-surface flex items-center gap-2">
                 <ShieldCheck size={18} className="text-primary" /> Seu Perfil
               </h3>
               {currentUserIsFinancial ? (
-                <span className="text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-md">
+                <span className="text-xs font-bold bg-success/10 text-success px-2.5 py-1 rounded-md">
                   Responsável Principal
                 </span>
               ) : (
-                <span className="text-[10px] uppercase tracking-wider font-bold bg-slate-200 text-on-surface-variant px-2.5 py-1 rounded-md">
+                <span className="text-xs font-bold bg-surface-container text-on-surface-variant px-2.5 py-1 rounded-md">
                   Responsável Secundário
                 </span>
               )}
@@ -245,17 +245,17 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
           <div className="h-full">
             {secondGuardian ? (
               <div className="p-5 bg-surface-container-low border border-outline-variant rounded-zela-lg flex flex-col h-full relative overflow-hidden">
-                <div className={`absolute top-0 left-0 w-1 h-full ${secondGuardian.is_financial ? 'bg-primary/100' : 'bg-slate-400'}`}></div>
+                <div className={`absolute top-0 left-0 w-1 h-full ${secondGuardian.is_financial ? 'bg-primary/100' : 'bg-primary-container'}`}></div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-on-surface flex items-center gap-2">
                     <Users size={18} className="text-on-surface-variant" /> Outro Responsável
                   </h3>
                   {secondGuardian.is_financial ? (
-                    <span className="text-[10px] uppercase tracking-wider font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-md">
+                    <span className="text-xs font-bold bg-success/10 text-success px-2.5 py-1 rounded-md">
                       Responsável Principal
                     </span>
                   ) : (
-                    <span className="text-[10px] uppercase tracking-wider font-bold bg-slate-200 text-on-surface-variant px-2.5 py-1 rounded-md">
+                    <span className="text-xs font-bold bg-surface-container text-on-surface-variant px-2.5 py-1 rounded-md">
                       2º Responsável
                     </span>
                   )}
@@ -268,23 +268,23 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
                 {currentUserIsFinancial && (
                   <div className="mt-auto flex flex-wrap gap-2">
                     <button onClick={() => setConfirmSecondGuardianAction('remove')} disabled={actionLoading}
-                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-on-surface-variant bg-white border border-slate-300 rounded-lg hover:bg-surface-container transition disabled:opacity-50">
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-on-surface-variant bg-white border border-outline-variant rounded-lg hover:bg-surface-container transition disabled:opacity-50">
                       <UserMinus size={14} /> Remover Vínculo
                     </button>
                     <button onClick={() => setConfirmSecondGuardianAction('delete')} disabled={actionLoading}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition disabled:opacity-50">
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-error bg-white border border-error/30 rounded-lg hover:bg-error/10 transition disabled:opacity-50">
                       <Trash2 size={14} /> Excluir
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <div className={`p-5 rounded-zela-lg flex flex-col items-center justify-center h-full text-center border-2 border-dashed transition-all ${isAdding ? 'bg-primary/10 border-primary/20' : 'bg-surface-container-low border-outline-variant hover:border-indigo-300'}`}>
+              <div className={`p-5 rounded-zela-lg flex flex-col items-center justify-center h-full text-center border-2 border-dashed transition-all ${isAdding ? 'bg-primary/10 border-primary/20' : 'bg-surface-container-low border-outline-variant hover:border-primary/30'}`}>
                 {(!isAdding && currentUserIsFinancial) && (
                   <>
                     <Users className="h-10 w-10 text-outline-variant mb-3" />
                     <p className="text-on-surface-variant font-medium mb-4">Nenhum 2º Responsável cadastrado.</p>
-                    <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-primary hover:text-indigo-800 font-bold bg-indigo-100/50 hover:bg-primary/20 px-4 py-2 rounded-zela-md transition">
+                    <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 text-primary hover:text-primary font-bold bg-primary/10/50 hover:bg-primary/20 px-4 py-2 rounded-zela-md transition">
                       <Plus size={16} /> Convidar 2º Responsável
                     </button>
                   </>
@@ -313,7 +313,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
         {isAdding && !secondGuardian && (
           <form onSubmit={handleCreateSecondGuardian} className="p-6 bg-surface-container-low border border-outline-variant rounded-zela-lg space-y-4 animate-in fade-in duration-300">
             {errorMsg && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-zela-md border border-red-200 text-sm font-medium">{errorMsg}</div>
+              <div className="p-3 bg-error/10 text-error rounded-zela-md border border-error/30 text-sm font-medium">{errorMsg}</div>
             )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -346,9 +346,9 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
 
       {/* Success Modal */}
       {successModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-6 relative">
-            <div className="mx-auto w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-container/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-zela-xl shadow-md w-full max-w-md p-6 relative">
+            <div className="mx-auto w-12 h-12 bg-success/10 text-success rounded-md flex items-center justify-center mb-4">
               <CheckCircle2 size={24} />
             </div>
             <h3 className="text-xl font-bold text-center text-on-surface mb-2">Acesso criado com sucesso!</h3>
@@ -367,7 +367,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
               </div>
             </div>
             
-            <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
+            <div className="flex items-start gap-2 bg-brass-50 text-warning p-3 rounded-lg text-xs mb-6 border border-outline-variant/50">
               <span className="text-lg">⚠️</span>
               <p><strong>Guarde essas informações agora.</strong> Por segurança, a senha provisória não será exibida novamente no sistema.</p>
             </div>
@@ -376,7 +376,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
               <button onClick={copyCredentials} className="w-full py-3 bg-primary/10 text-primary font-bold rounded-zela-md hover:bg-primary/20 transition flex items-center justify-center gap-2">
                 <Copy size={16} /> Copiar credenciais
               </button>
-              <button onClick={() => setSuccessModalData(null)} className="w-full py-3 bg-slate-800 text-white font-bold rounded-zela-md hover:bg-slate-900 transition">
+              <button onClick={() => setSuccessModalData(null)} className="w-full py-3 bg-primary-container text-white font-bold rounded-zela-md hover:bg-primary-container transition">
                 Fechar
               </button>
             </div>

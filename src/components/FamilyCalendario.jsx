@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Loader2, Sparkles } from 'lucide-react';
+import { CalendarDays, Loader2, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { EVENTO_TIPOS } from '../lib/constants';
 import { formatRecorrencia } from '../lib/aulasEspeciaisUtils';
@@ -8,10 +8,10 @@ const TIPO_BY_VALUE = Object.fromEntries(EVENTO_TIPOS.map(t => [t.value, t]));
 
 const COLOR_CLASSES = {
   slate: 'bg-surface-container text-on-surface-variant border-outline-variant',
-  red: 'bg-red-50 text-red-700 border-red-200',
-  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  red: 'bg-error/10 text-error border-error/30',
+  amber: 'bg-brass-50 text-warning border-outline-variant',
   indigo: 'bg-primary/10 text-primary border-primary/20',
-  green: 'bg-green-50 text-green-700 border-green-200',
+  green: 'bg-success/10 text-success border-success/30',
 };
 
 function formatDayMonth(dateStr) {
@@ -90,7 +90,7 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -105,7 +105,7 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
         ) : (
           groups.map(group => (
             <div key={group.monthKey}>
-              <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-3">{group.label}</h3>
+              <h3 className="text-xs font-semibold text-on-surface-variant/70 mb-3">{group.label}</h3>
               <div className="space-y-2">
                 {group.items.map(ev => {
                   const tipo = TIPO_BY_VALUE[ev.event_type] || TIPO_BY_VALUE.geral;
@@ -114,13 +114,13 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
                   return (
                     <div key={ev.id} className={`flex gap-3 p-3 sm:p-4 rounded-zela-lg border ${isToday ? 'border-primary/40 bg-primary/5' : 'border-outline-variant'}`}>
                       <div className={`shrink-0 w-14 h-14 rounded-zela-md flex flex-col items-center justify-center ${isToday ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface'}`}>
-                        <span className="text-lg font-black leading-none">{day}</span>
-                        <span className="text-[9px] uppercase font-bold">{weekday}</span>
+                        <span className="text-lg font-semibold leading-none">{day}</span>
+                        <span className="text-xs font-bold">{weekday}</span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="font-bold text-on-surface text-sm">{ev.title}</h4>
-                          <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${COLOR_CLASSES[tipo.color]}`}>
+                          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-md border ${COLOR_CLASSES[tipo.color]}`}>
                             {tipo.label}
                           </span>
                         </div>
@@ -138,8 +138,8 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
 
         {!isLoading && aulas.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Sparkles size={12} /> Aulas Especiais
+            <h3 className="text-xs font-semibold text-on-surface-variant/70 mb-3 flex items-center gap-1.5">
+              <BookOpen size={12} /> Aulas especiais
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[{ key: 'geral', label: 'Geral (todos os alunos)' }, { key: 'integral', label: 'Integral' }].map(grupo => {
@@ -147,7 +147,7 @@ export default function FamilyCalendario({ currentUser, currentSchool }) {
                 if (items.length === 0) return null;
                 return (
                   <div key={grupo.key} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4">
-                    <p className="text-[10px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-2">{grupo.label}</p>
+                    <p className="text-xs font-semibold text-on-surface-variant/70 mb-2">{grupo.label}</p>
                     <div className="space-y-2">
                       {items.map(aula => (
                         <div key={aula.id} className="flex justify-between items-baseline gap-2">

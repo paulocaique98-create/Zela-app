@@ -6,13 +6,13 @@ const CYCLE_LABELS = { MONTHLY: 'Mensal', QUARTERLY: 'Trimestral', SEMIANNUALLY:
 
 const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', AWAITING_PAYMENT: 'Aguardando pagamento', PAID: 'Pago', OVERDUE: 'Atrasado', CANCELLED: 'Cancelado', REFUNDED: 'Estornado', FAILED: 'Falhou' };
 const CHARGE_STATUS_CLASSES = {
-  PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
-  AWAITING_PAYMENT: 'bg-blue-50 text-blue-700 border-blue-200',
-  PAID: 'bg-green-50 text-green-700 border-green-200',
-  OVERDUE: 'bg-red-50 text-red-700 border-red-200',
-  CANCELLED: 'bg-slate-100 text-slate-500 border-slate-200',
-  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200',
-  FAILED: 'bg-red-50 text-red-700 border-red-200',
+  PENDING: 'bg-surface-container text-on-surface border-outline-variant',
+  AWAITING_PAYMENT: 'bg-primary/10 text-primary border-primary/30',
+  PAID: 'bg-success/10 text-success border-success/30',
+  OVERDUE: 'bg-error/10 text-error border-error/30',
+  CANCELLED: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  REFUNDED: 'bg-primary/10 text-primary border-primary/30',
+  FAILED: 'bg-error/10 text-error border-error/30',
 };
 
 function centsToBRL(cents) {
@@ -73,7 +73,7 @@ export default function FamilyFinanceiro() {
           nome da tela dinamicamente). */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
         {errorMsg && (
-          <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+          <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
             <AlertCircle size={16} className="shrink-0" /> {errorMsg}
           </div>
         )}
@@ -85,14 +85,14 @@ export default function FamilyFinanceiro() {
             {/* Contratos ativos */}
             {contracts.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-on-surface-variant uppercase">Meus contratos ativos</h3>
+                <h3 className="text-xs font-bold text-on-surface-variant">Meus contratos ativos</h3>
                 {contracts.map(c => (
                   <div key={c.id} className="flex items-center justify-between gap-2 p-3 bg-surface-container-low border border-outline-variant rounded-zela-md">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-on-surface truncate">{c.students?.name || '—'}</p>
                       <p className="text-xs text-on-surface-variant">{CYCLE_LABELS[c.billing_cycle] || c.billing_cycle}</p>
                     </div>
-                    <p className="text-sm font-black text-primary shrink-0">{centsToBRL(c.amount_cents)}</p>
+                    <p className="text-sm font-semibold text-primary shrink-0">{centsToBRL(c.amount_cents)}</p>
                   </div>
                 ))}
               </div>
@@ -100,7 +100,7 @@ export default function FamilyFinanceiro() {
 
             {/* Cobranças */}
             <div className="space-y-2">
-              <h3 className="text-xs font-bold text-on-surface-variant uppercase">Cobranças</h3>
+              <h3 className="text-xs font-bold text-on-surface-variant">Cobranças</h3>
               {charges.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
                   <Receipt className="text-outline-variant mb-2" size={32} />
@@ -111,7 +111,7 @@ export default function FamilyFinanceiro() {
                   {charges.map(charge => {
                     const isOpen = ['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(charge.status);
                     return (
-                      <div key={charge.id} className={`p-3 border rounded-zela-lg ${charge.status === 'OVERDUE' ? 'bg-red-50/40 border-red-200' : 'bg-white border-outline-variant'}`}>
+                      <div key={charge.id} className={`p-3 border rounded-zela-lg ${charge.status === 'OVERDUE' ? 'bg-error/10/40 border-error/30' : 'bg-white border-outline-variant'}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-on-surface truncate">{charge.students?.name || '—'}</p>
@@ -120,15 +120,15 @@ export default function FamilyFinanceiro() {
                             </p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-base font-black text-on-surface">{centsToBRL(charge.amount_cents)}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CHARGE_STATUS_CLASSES[charge.status] || ''}`}>
+                            <span className="text-base font-semibold text-on-surface">{centsToBRL(charge.amount_cents)}</span>
+                            <span className={`px-2 py-0.5 rounded-sm text-xs font-bold border ${CHARGE_STATUS_CLASSES[charge.status] || ''}`}>
                               {CHARGE_STATUS_LABELS[charge.status] || charge.status}
                             </span>
                           </div>
                         </div>
 
                         {charge.status === 'PAID' && charge.paid_at && (
-                          <p className="text-xs text-green-700 font-bold flex items-center gap-1 mt-1">
+                          <p className="text-xs text-success font-bold flex items-center gap-1 mt-1">
                             <CheckCircle2 size={13} /> Pago em {new Date(charge.paid_at).toLocaleDateString('pt-BR')}
                           </p>
                         )}
@@ -138,7 +138,7 @@ export default function FamilyFinanceiro() {
                             {charge.pix_copy_paste && (
                               <button
                                 onClick={() => handleCopyPix(charge.id, charge.pix_copy_paste)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold rounded-zela-md transition text-xs"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-success/10 hover:bg-success/10 text-success border border-success/30 font-bold rounded-zela-md transition text-xs"
                               >
                                 {copiedId === charge.id ? <><Check size={13} /> Copiado!</> : <><Copy size={13} /> PIX Copia e Cola</>}
                               </button>

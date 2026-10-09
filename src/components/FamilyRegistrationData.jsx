@@ -136,7 +136,7 @@ export default function FamilyRegistrationData({ currentUser }) {
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-8">
           {/* Informações Pessoais */}
           <div>
-            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
               <User size={16} /> 1. Informações Pessoais
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -190,7 +190,7 @@ export default function FamilyRegistrationData({ currentUser }) {
 
           {/* Endereço */}
           <div>
-            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 border-b border-outline-variant pb-2 mb-4 flex items-center gap-2">
               <MapPin size={16} /> 2. Endereço Completo
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">

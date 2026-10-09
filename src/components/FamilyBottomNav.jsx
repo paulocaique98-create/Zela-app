@@ -33,7 +33,7 @@ export default function FamilyBottomNav({ familyTab, go, showCheckin, showComuni
                 <span className="relative">
                   <Icon size={22} aria-hidden="true" />
                   {badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-sm bg-brass text-[#1a1405] text-[11px] font-bold flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-sm bg-brass text-[#1a1405] text-xs font-bold flex items-center justify-center">
                       {badge > 9 ? '9+' : badge}
                     </span>
                   )}
