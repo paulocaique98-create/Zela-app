@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Desenvolvedor</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  /* Dev em tema claro. Diferenciais: menu lateral claro (os outros portais usam escuro),
+     faixa de estado escura no topo e números em fonte técnica. */
+  .side { background: var(--card); color: var(--text); border-right: 1px solid var(--line); }
+  .side .brand { color: var(--text); }
+  .side .brand small, .nav .grupo { color: var(--muted); }
+  .brand .mark { background: var(--ink); border-color: var(--brass); }
+  .nav a { color: var(--muted); }
+  .nav a:hover { background: var(--bg); color: var(--text); }
+  .nav a[aria-current="page"] { background: var(--petrol-50); color: var(--petrol-700); border-left-color: var(--petrol); }
+  .side .rodape { border-top-color: var(--line); }
+  .side .rodape div div:first-child { color: var(--text) !important; }
+  .mono { font-family: ui-monospace, Consolas, monospace; }
+  .log { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+  .estado { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 11px 18px; margin-bottom: 20px; border-radius: var(--r-md); background: var(--ink); border-left: 4px solid var(--brass); font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; color: #8ba0ae; }
+  .estado b { color: #fff; font-weight: 600; }
+  .estado .ok { color: #8fd1ab; }
+  .estado .warn { color: #e6bd68; }
+  .indicador .v { font-family: ui-monospace, Consolas, monospace; font-size: 28px; }
+</style>
+</head>
+<body>
+<nav class="navtopo" aria-label="Menu"><a href="#" aria-current="page">Escolas</a><a href="#">Planos</a><a href="#">Erros</a></nav>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Z</span><div><b>Zela</b><small>Desenvolvedor</small></div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="#" aria-current="page"><svg class="i"><use href="#i-banco"/></svg>Escolas</a>
+      <a href="#"><svg class="i"><use href="#i-escudo"/></svg>Planos e módulos</a>
+      <a href="#"><svg class="i"><use href="#i-alerta"/></svg>Erros<span class="tag">7</span></a>
+      <a href="#"><svg class="i"><use href="#i-pulso"/></svg>Saúde do sistema</a>
+      <a href="#"><svg class="i"><use href="#i-camera"/></svg>Reconhecimento facial</a>
+      <a href="#"><svg class="i"><use href="#i-codigo"/></svg>Versões</a>
+    </nav>
+    <div class="rodape"><span class="avatar">PC</span><div><div style="color:#fff;font-weight:600">Paulo Caique</div><div class="small">Acesso total</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="topo">
+      <div><h1>Escolas e saúde do sistema</h1><p>Visão técnica de todas as unidades.</p></div>
+      <div class="acoes"><button class="btn">Nova escola</button><button class="btn primario">Publicar versão</button></div>
+    </div>
+
+    <div class="estado" role="status" aria-label="Estado do sistema">
+      <span>banco de dados <b class="ok">operacional</b></span>
+      <span>autenticação <b class="ok">operacional</b></span>
+      <span>tempo real <b class="ok">operacional</b></span>
+      <span>reconhecimento facial <b class="warn">3 erros em 24h</b></span>
+      <span>versão <b>5.12.0</b></span>
+    </div>
+
+    <div class="grade g4" style="margin-bottom:16px">
+      <div class="indicador ok"><div class="l">Escolas ativas</div><div class="v">12</div><div class="d">2 em implantação</div></div>
+      <div class="indicador ok"><div class="l">Disponibilidade, 30 dias</div><div class="v">99,97%</div><div class="d">sem incidentes</div></div>
+      <div class="indicador warn"><div class="l">Erros nas últimas 24h</div><div class="v">7</div><div class="d">3 no reconhecimento facial</div></div>
+      <div class="indicador pet"><div class="l">Leituras faciais hoje</div><div class="v">1.842</div><div class="d">taxa de acerto de 98,4%</div></div>
+    </div>
+
+    <div class="grade g2">
+      <section class="painel" aria-labelledby="t-es">
+        <header><h2 id="t-es">Escolas</h2></header>
+        <table>
+          <thead><tr><th>Escola</th><th>Plano</th><th>Alunos</th><th>Situação</th></tr></thead>
+          <tbody>
+            <tr><td><b>Escola Modelo Aurora</b></td><td>Completo</td><td class="num">212</td><td><span class="selo ok">Ativa</span></td></tr>
+            <tr><td><b>Colégio Horizonte</b></td><td>Base</td><td class="num">140</td><td><span class="selo ok">Ativa</span></td></tr>
+            <tr><td><b>Instituto Alvorada</b></td><td>Base</td><td class="num">96</td><td><span class="selo warn">Implantação</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="painel" aria-labelledby="t-er">
+        <header><h2 id="t-er">Erros recentes</h2><span class="selo warn">7</span></header>
+        <ul class="lista log">
+          <li><span class="selo err">Facial</span><div>Câmera sem permissão no totem<div class="muted">Colégio Horizonte, 17h12</div></div></li>
+          <li><span class="selo err">Facial</span><div>Modelo não carregou a tempo<div class="muted">Escola Modelo Aurora, 16h58</div></div></li>
+          <li><span class="selo warn">Auth</span><div>Sessão expirada durante envio<div class="muted">Escola Modelo Aurora, 15h20</div></div></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>

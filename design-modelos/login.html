@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Entrar</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  body { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+  .lado { background: var(--ink); color: #fff; padding: 48px; display: flex; flex-direction: column; justify-content: space-between; }
+  .lado .brand { padding: 0; }
+  .lado h1 { font-size: 36px; max-width: 18ch; margin-bottom: 16px; }
+  .lado p { color: var(--ink-text); font-size: 17px; }
+  .lado ul { list-style: none; padding: 0; display: grid; gap: 14px; font-size: 15px; color: var(--ink-text); }
+  .lado li { display: flex; gap: 12px; align-items: flex-start; }
+  .lado li .i { color: var(--brass); margin-top: 2px; }
+  .form { display: grid; place-items: center; padding: 32px; }
+  .form form { width: 100%; max-width: 380px; display: grid; gap: 16px; }
+  @media (max-width: 860px) { body { grid-template-columns: 1fr; } .lado { padding: 28px 20px; gap: 24px; } .lado ul { display: none; } .lado h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+<section class="lado">
+  <div class="brand"><span class="mark">Z</span><b>Zela</b></div>
+  <div><h1>Cada criança com quem deve estar.</h1><p>Gestão e segurança escolar em um só lugar.</p></div>
+  <ul>
+    <li><svg class="i"><use href="#i-escudo"/></svg>Toda saída é confirmada pela recepção e registrada.</li>
+    <li><svg class="i"><use href="#i-cadeado"/></svg>Os dados de cada escola ficam isolados dos demais.</li>
+  </ul>
+</section>
+<section class="form">
+  <form>
+    <div><h2 style="font-size:26px">Entrar no Zela</h2><p class="muted" style="margin-top:4px">Use o e-mail cadastrado na escola.</p></div>
+    <label class="campo">E-mail<input type="email" autocomplete="username"></label>
+    <label class="campo">Senha<input type="password" autocomplete="current-password"></label>
+    <button class="btn primario grande" type="button">Entrar</button>
+    <a href="#" class="small" style="color:var(--petrol);font-weight:600">Esqueci minha senha</a>
+  </form>
+</section>
+<script src="icons.js"></script>
+</body>
+</html>

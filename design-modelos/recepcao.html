@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Recepção</title>
+<link rel="stylesheet" href="zela.css">
+</head>
+<body>
+<nav class="navtopo" aria-label="Menu"><a href="#" aria-current="page">Painel</a><a href="#">Entradas e saídas</a><a href="#">Alunos</a><a href="#">Autorizados</a></nav>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Z</span><div><b>Zela</b><small>Recepção</small></div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="#" aria-current="page"><svg class="i"><use href="#i-casa"/></svg>Painel</a>
+      <a href="#"><svg class="i"><use href="#i-escudo"/></svg>Entradas e saídas<span class="tag">3</span></a>
+      <a href="#"><svg class="i"><use href="#i-pessoas"/></svg>Alunos</a>
+      <a href="#"><svg class="i"><use href="#i-chave"/></svg>Autorizados</a>
+      <a href="#"><svg class="i"><use href="#i-agenda"/></svg>Presença</a>
+      <div class="grupo">Comunicação</div>
+      <a href="#"><svg class="i"><use href="#i-sino"/></svg>Avisos</a>
+      <a href="#"><svg class="i"><use href="#i-conversa"/></svg>Mensagens</a>
+      <div class="grupo">Administração</div>
+      <a href="#"><svg class="i"><use href="#i-arquivo"/></svg>Relatórios</a>
+      <a href="#"><svg class="i"><use href="#i-engrenagem"/></svg>Configurações</a>
+    </nav>
+    <div class="rodape"><span class="avatar">MA</span><div><div style="color:#fff;font-weight:600">Marina Alves</div><div class="small">Escola Modelo Aurora</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="topo">
+      <div>
+        <h1>Painel da recepção</h1>
+        <p>Quinta, 9 de outubro. Dados atualizados agora.</p>
+      </div>
+      <div class="acoes">
+        <button class="btn"><svg class="i"><use href="#i-busca"/></svg>Buscar aluno</button>
+        <button class="btn primario"><svg class="i"><use href="#i-escudo"/></svg>Registrar entrada manual</button>
+      </div>
+    </div>
+
+    <div class="grade g4" style="margin-bottom:16px">
+      <div class="indicador ok"><div class="l">Alunos presentes</div><div class="v">184</div><div class="d">de 212 matriculados</div></div>
+      <div class="indicador warn"><div class="l">Aguardando confirmação</div><div class="v">3</div><div class="d">a mais antiga há 2 minutos</div></div>
+      <div class="indicador pet"><div class="l">Saídas de hoje</div><div class="v">41</div><div class="d">38 por reconhecimento facial</div></div>
+      <div class="indicador err"><div class="l">Exigem atenção</div><div class="v">1</div><div class="d">autorizado sem foto cadastrada</div></div>
+    </div>
+
+    <div class="grade g2">
+      <section class="painel" aria-labelledby="t-fila">
+        <header>
+          <h2 id="t-fila">Solicitações aguardando você</h2>
+          <span class="selo warn">3 pendentes</span>
+        </header>
+
+        <div class="pedido novo">
+          <div class="foto">LM</div>
+          <div>
+            <h3>Lucas Martins, Maternal II</h3>
+            <p class="small muted" style="margin-bottom:10px">Saída solicitada por Carla Martins (mãe) no totem da entrada principal, às 17h42.</p>
+            <ol class="trilha" aria-label="Etapas da solicitação">
+              <li class="feito">Responsável<small>identificada por rosto</small></li>
+              <li class="feito">Totem<small>17h42</small></li>
+              <li class="atual">Recepção<small>sua confirmação</small></li>
+              <li>Concluído</li>
+            </ol>
+          </div>
+          <div class="acoes"><button class="btn primario"><svg class="i"><use href="#i-check"/></svg>Confirmar saída</button><button class="btn">Recusar</button></div>
+        </div>
+
+        <div class="pedido">
+          <div class="foto">BS</div>
+          <div>
+            <h3>Beatriz Souza, Jardim I</h3>
+            <p class="small muted" style="margin-bottom:10px">Saída solicitada por Rogério Souza (tio, autorizado) com PIN, às 17h40.</p>
+            <ol class="trilha" aria-label="Etapas da solicitação">
+              <li class="feito">Responsável<small>PIN válido</small></li>
+              <li class="feito">Totem<small>17h40</small></li>
+              <li class="atual">Recepção<small>sua confirmação</small></li>
+              <li>Concluído</li>
+            </ol>
+          </div>
+          <div class="acoes"><button class="btn primario"><svg class="i"><use href="#i-check"/></svg>Confirmar saída</button><button class="btn">Recusar</button></div>
+        </div>
+
+        <div class="pedido ok">
+          <div class="foto">TA</div>
+          <div>
+            <h3>Theo Andrade, Maternal I</h3>
+            <p class="small muted" style="margin-bottom:10px">Saída confirmada por você às 17h36. Registro guardado no histórico.</p>
+            <ol class="trilha" aria-label="Etapas da solicitação">
+              <li class="feito">Responsável</li><li class="feito">Totem</li><li class="feito">Recepção</li><li class="feito">Concluído</li>
+            </ol>
+          </div>
+          <span class="selo ok"><svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg>Concluído</span>
+        </div>
+      </section>
+
+      <div class="grade">
+        <section class="painel" aria-labelledby="t-att">
+          <header><h2 id="t-att">Pontos de atenção</h2></header>
+          <ul class="lista">
+            <li><svg class="i" style="color:var(--err)"><use href="#i-alerta"/></svg><div><b>Autorizado sem foto</b><div class="small muted">Paulo Reis (avô de Helena) ainda não tem foto. A saída dele só pode ser feita por PIN.</div></div></li>
+            <li><svg class="i" style="color:var(--warn)"><use href="#i-relogio"/></svg><div><b>Atraso na saída</b><div class="small muted">2 alunos ficaram além das 18h ontem. Veja o relatório de hora extra.</div></div></li>
+            <li><svg class="i" style="color:var(--petrol)"><use href="#i-camera"/></svg><div><b>Totem da entrada principal</b><div class="small muted">Câmera funcionando. Última leitura às 17h42.</div></div></li>
+          </ul>
+        </section>
+        <section class="painel" aria-labelledby="t-seg">
+          <header><h2 id="t-seg">Segurança desta unidade</h2><span class="selo brass"><svg class="i" style="width:14px;height:14px"><use href="#i-escudo"/></svg>Verificada</span></header>
+          <div class="corpo small muted">
+            Dados isolados por escola. Toda saída fica registrada com quem solicitou, quem confirmou e o horário.
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section class="painel" style="margin-top:16px" aria-labelledby="t-hist">
+      <header><h2 id="t-hist">Últimos registros</h2><button class="btn">Ver histórico completo</button></header>
+      <table>
+        <thead><tr><th>Aluno</th><th>Evento</th><th>Responsável</th><th>Método</th><th>Horário</th></tr></thead>
+        <tbody>
+          <tr><td><div class="pessoa"><span class="avatar">TA</span>Theo Andrade</div></td><td><span class="selo ok">Saída</span></td><td>Joana Andrade</td><td>Rosto</td><td class="num">17h36</td></tr>
+          <tr><td><div class="pessoa"><span class="avatar">HP</span>Helena Prado</div></td><td><span class="selo ok">Saída</span></td><td>Marcos Prado</td><td>QR Code</td><td class="num">17h31</td></tr>
+          <tr><td><div class="pessoa"><span class="avatar">GL</span>Gael Lima</div></td><td><span class="selo pet">Entrada</span></td><td>Sandra Lima</td><td>Rosto</td><td class="num">07h52</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>

@@ -19,16 +19,17 @@ export function printContract(doc, schoolName) {
       </section>`
     : '';
   win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapeHtml(doc.title)}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
     <style>
-      body { font-family: Georgia, 'Times New Roman', serif; color: #111; max-width: 760px; margin: 32px auto; padding: 0 24px; line-height: 1.55; }
-      header { border-bottom: 1px solid #999; margin-bottom: 20px; padding-bottom: 8px; }
-      header p { margin: 0; font-size: 12px; color: #555; font-family: system-ui, sans-serif; }
-      h1 { font-size: 20px; margin: 4px 0 0; }
+      body { font-family: "Source Serif 4", Georgia, serif; color: #17242e; max-width: 760px; margin: 32px auto; padding: 0 24px; line-height: 1.55; }
+      header { border-bottom: 1px solid #6f7f8b; margin-bottom: 20px; padding-bottom: 8px; }
+      header p { margin: 0; font-size: 12px; color: #5a6a76; font-family: "Public Sans", system-ui, sans-serif; }
+      h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 20px; margin: 4px 0 0; }
       .body { white-space: pre-wrap; font-size: 14px; }
-      .sig { margin-top: 32px; border: 1px solid #999; padding: 12px 16px; font-family: system-ui, sans-serif; font-size: 12px; }
+      .sig { margin-top: 32px; border: 1px solid #6f7f8b; padding: 12px 16px; font-family: "Public Sans", system-ui, sans-serif; font-size: 12px; }
       .sig h2 { font-size: 13px; margin: 0 0 6px; }
       .sig p { margin: 2px 0; }
-      .hash { word-break: break-all; color: #555; }
+      .hash { word-break: break-all; color: #5a6a76; }
     </style></head><body>
     <header><p>${escapeHtml(schoolName || '')}</p><h1>${escapeHtml(doc.title)}</h1></header>
     <div class="body">${escapeHtml(doc.body)}</div>

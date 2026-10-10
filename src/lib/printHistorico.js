@@ -27,7 +27,7 @@ const STYLES = `
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; }
   html, body { width: 210mm; max-width: 210mm; margin: 0 auto; overflow-x: hidden; }
-  body { font-family: "Source Sans 3", Arial, Helvetica, sans-serif; color: #1b1a30; }
+  body { font-family: "Public Sans", Arial, Helvetica, sans-serif; color: #17242e; }
   p, td, div, th { overflow-wrap: break-word; word-break: break-word; }
 
   table.student-sheet { width: 100%; max-width: 210mm; border-collapse: collapse; table-layout: fixed; margin-bottom: 0; }
@@ -36,42 +36,42 @@ const STYLES = `
   .sheet-wrap { page-break-after: always; }
   .sheet-wrap:last-child { page-break-after: auto; }
 
-  .letterhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 2.5px solid #3525cd; padding-bottom: 12px; margin-bottom: 4px; }
+  .letterhead { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 2.5px solid #1e5563; padding-bottom: 12px; margin-bottom: 4px; }
   .lh-brand { display: flex; align-items: center; gap: 10px; }
-  .lh-mark { width: 26px; height: 26px; border-radius: 7px; background: #3525cd; flex-shrink: 0; }
-  .lh-brand-name { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 14px; color: #1b1a30; }
-  .lh-brand-name span { color: #8b88a8; font-weight: 400; }
+  .lh-mark { width: 26px; height: 26px; border-radius: 4px; background: #1e5563; flex-shrink: 0; }
+  .lh-brand-name { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 14px; color: #17242e; }
+  .lh-brand-name span { color: #5a6a76; font-weight: 400; }
   .lh-title { text-align: center; flex: 1; }
-  .lh-eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: #3525cd; margin: 0 0 3px; }
-  .lh-title h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; margin: 0; font-size: 18px; color: #1b1a30; }
-  .lh-title p { margin: 3px 0 0; font-size: 10px; color: #8b88a8; }
-  .lh-meta { text-align: right; font-size: 9px; color: #8b88a8; line-height: 1.4; }
-  .lh-meta b { display: block; font-size: 10px; color: #5b5876; }
+  .lh-eyebrow { font-size: 9px; letter-spacing: 0.08em; font-weight: 700; color: #1e5563; margin: 0 0 3px; }
+  .lh-title h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; margin: 0; font-size: 18px; color: #17242e; }
+  .lh-title p { margin: 3px 0 0; font-size: 10px; color: #5a6a76; }
+  .lh-meta { text-align: right; font-size: 9px; color: #5a6a76; line-height: 1.4; }
+  .lh-meta b { display: block; font-size: 10px; color: #5a6a76; }
 
-  .student-card { background: #f6f5ff; border: 1px solid #e1e2f2; border-radius: 10px; padding: 12px 16px; margin: 16px 0 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .student-card .name { font-weight: 700; font-size: 15px; color: #1b1a30; }
-  .student-card .meta-line { font-size: 11px; color: #5b5876; margin-top: 2px; }
-  .student-card .seq { font-size: 9px; color: #8b88a8; white-space: nowrap; }
+  .student-card { background: #eaeef1; border: 1px solid #d9dfe4; border-radius: 8px; padding: 12px 16px; margin: 16px 0 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .student-card .name { font-weight: 700; font-size: 15px; color: #17242e; }
+  .student-card .meta-line { font-size: 11px; color: #5a6a76; margin-top: 2px; }
+  .student-card .seq { font-size: 9px; color: #5a6a76; white-space: nowrap; }
 
   .stats { display: flex; gap: 10px; margin-bottom: 18px; }
-  .stats .stat { flex: 1; background: #ffffff; border: 1px solid #e1e2f2; border-radius: 8px; padding: 10px 14px; }
-  .stats .stat .lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8b88a8; }
-  .stats .stat .val { font-family: "Fraunces", Georgia, serif; font-size: 19px; font-weight: 600; color: #1b1a30; margin-top: 2px; }
-  .stats .stat.warn .val { color: #9a5b00; }
+  .stats .stat { flex: 1; background: #ffffff; border: 1px solid #d9dfe4; border-radius: 8px; padding: 10px 14px; }
+  .stats .stat .lbl { font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; color: #5a6a76; }
+  .stats .stat .val { font-family: "Source Serif 4", Georgia, serif; font-size: 19px; font-weight: 600; color: #17242e; margin-top: 2px; }
+  .stats .stat.warn .val { color: #8f6411; }
 
   table.data { width: 100%; border-collapse: collapse; font-size: 11px; }
-  table.data thead th { text-align: left; background: #eeecfd; color: #5b5876; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; }
+  table.data thead th { text-align: left; background: #e8f0f2; color: #5a6a76; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; padding: 8px 10px; }
   table.data thead th:first-child { border-radius: 6px 0 0 6px; }
   table.data thead th:last-child { border-radius: 0 6px 6px 0; }
-  table.data tbody td { padding: 8px 10px; border-bottom: 1px solid #e1e2f2; vertical-align: top; }
-  table.data tbody tr:nth-child(even) { background: #f9f9ff; }
-  .quem { font-size: 9px; color: #6b6f86; margin-top: 2px; }
-  .pill { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 9px; border-radius: 999px; }
-  .pill-ok { background: #e3f6e8; color: #1a7d3a; }
-  .pill-over { background: #fde7e7; color: #b91c1c; }
-  .pill-open { background: #fff3de; color: #9a5b00; }
+  table.data tbody td { padding: 8px 10px; border-bottom: 1px solid #d9dfe4; vertical-align: top; }
+  table.data tbody tr:nth-child(even) { background: #f2f4f6; }
+  .quem { font-size: 9px; color: #5a6a76; margin-top: 2px; }
+  .pill { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; padding: 2px 9px; border-radius: 4px; }
+  .pill-ok { background: #e1efe7; color: #2b6a4b; }
+  .pill-over { background: #f6e3e1; color: #a33a32; }
+  .pill-open { background: #f5eedc; color: #8f6411; }
 
-  .sheet-footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid #e1e2f2; display: flex; justify-content: space-between; font-size: 9px; color: #8b88a8; }
+  .sheet-footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid #d9dfe4; display: flex; justify-content: space-between; font-size: 9px; color: #5a6a76; }
 
   @media print {
     table.student-sheet > thead > tr > td { padding: 16px 22px 10px; }
@@ -156,7 +156,7 @@ function buildStudentSheetHtml(studentRecords, { school, periodLabel, generatedA
               <thead>
                 <tr><th>Data</th><th>Entrada</th><th>Saída</th><th>Ciclo</th><th>Status</th></tr>
               </thead>
-              <tbody>${rowsHtml || `<tr><td colspan="5" style="text-align:center;padding:24px;color:#8b88a8;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
+              <tbody>${rowsHtml || `<tr><td colspan="5" style="text-align:center;padding:24px;color:#5a6a76;">Nenhum registro no período selecionado.</td></tr>`}</tbody>
             </table>
 
             <div class="sheet-footer">
@@ -205,7 +205,7 @@ function openPrintWindow(title, bodyHtml) {
     <head>
       <meta charset="utf-8" />
       <title>${escapeHtml(title)}</title>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
       <style>${STYLES}</style>
     </head>
     <body>${bodyHtml}</body>

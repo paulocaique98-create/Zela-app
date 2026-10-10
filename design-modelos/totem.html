@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Totem</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  body { background: var(--ink); color: #fff; min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+  .barra { display: flex; justify-content: space-between; align-items: center; padding: 20px 32px; border-bottom: 1px solid var(--ink-line); }
+  .barra .brand { padding: 0; }
+  .centro { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 32px; max-width: 1100px; margin: 0 auto; width: 100%; }
+  .camera { aspect-ratio: 4 / 3; border-radius: var(--r-lg); background: linear-gradient(160deg, #1b2f3e, #0f1b25); border: 1px solid var(--ink-line); display: grid; place-items: center; position: relative; overflow: hidden; }
+  .camera .lente { width: 46%; aspect-ratio: 3/4; border: 2px solid var(--brass); border-radius: 50%; opacity: .9; }
+  .camera .legenda { position: absolute; bottom: 14px; left: 14px; right: 14px; background: rgba(10,19,26,.8); border-radius: 8px; padding: 10px 14px; font-size: 14px; display: flex; gap: 10px; align-items: center; }
+  .centro h1 { font-size: 40px; margin-bottom: 12px; }
+  .centro p { color: var(--ink-text); font-size: 18px; margin-bottom: 28px; }
+  .opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opcoes button { background: var(--ink-2); border: 1px solid var(--ink-line); color: #fff; border-radius: var(--r-md); padding: 18px; font-size: 17px; font-weight: 600; display: flex; gap: 12px; align-items: center; min-height: 68px; }
+  .opcoes button:hover { border-color: var(--brass); }
+  .opcoes .i { width: 26px; height: 26px; color: var(--brass); }
+  .base { padding: 16px 32px; border-top: 1px solid var(--ink-line); color: var(--ink-text); font-size: 14px; display: flex; gap: 10px; align-items: center; }
+  @media (max-width: 860px) { .centro { grid-template-columns: 1fr; } .centro h1 { font-size: 30px; } }
+</style>
+</head>
+<body>
+<header class="barra">
+  <div class="brand"><span class="mark">Z</span><div><b>Zela</b><small>Escola Modelo Aurora</small></div></div>
+  <span class="selo ok" style="background:#173a2a;color:#9fd8b6">Conectado à recepção</span>
+</header>
+<main class="centro">
+  <div class="camera" role="img" aria-label="Imagem da câmera">
+    <div class="lente"></div>
+    <div class="legenda"><svg class="i"><use href="#i-camera"/></svg>Aproxime o rosto da câmera até ele preencher a tela.</div>
+  </div>
+  <div>
+    <h1>Entrada e saída de alunos</h1>
+    <p>Olhe para a câmera. Se preferir, escolha outra forma de se identificar.</p>
+    <div class="opcoes">
+      <button><svg class="i"><use href="#i-qr"/></svg>Ler QR Code</button>
+      <button><svg class="i"><use href="#i-chave"/></svg>Digitar PIN</button>
+      <button><svg class="i"><use href="#i-pessoas"/></svg>Sou autorizado</button>
+      <button><svg class="i"><use href="#i-conversa"/></svg>Chamar a recepção</button>
+    </div>
+  </div>
+</main>
+<footer class="base"><svg class="i"><use href="#i-cadeado"/></svg>Sua imagem é usada apenas para identificar você e não fica guardada neste aparelho.</footer>
+<script src="icons.js"></script>
+</body>
+</html>

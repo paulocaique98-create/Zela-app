@@ -19,17 +19,17 @@ function escapeHtml(str) {
 const STYLES = `
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Source Sans 3", Arial, Helvetica, sans-serif; color: #0b1c30; margin: 0; }
+  body { font-family: "Public Sans", Arial, Helvetica, sans-serif; color: #17242e; margin: 0; }
 
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8mm; }
 
-  .card { border: 1px dashed #c7c4d8; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; page-break-inside: avoid; }
-  .card .brand { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; color: #3525cd; }
-  .card .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: #3525cd; }
+  .card { border: 1px dashed #d9dfe4; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; page-break-inside: avoid; }
+  .card .brand { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; color: #1e5563; }
+  .card .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: #1e5563; }
   .card img.qr { width: 150px; height: 150px; }
   .card .name { font-weight: 700; font-size: 14px; text-align: center; }
-  .card .turma { font-size: 11px; color: #464555; }
-  .card .footer { font-size: 8.5px; color: #777587; text-align: center; margin-top: 4px; }
+  .card .turma { font-size: 11px; color: #5a6a76; }
+  .card .footer { font-size: 8.5px; color: #5a6a76; text-align: center; margin-top: 4px; }
 `;
 
 function openPrintWindow(title, bodyHtml) {
@@ -44,7 +44,7 @@ function openPrintWindow(title, bodyHtml) {
     <head>
       <meta charset="utf-8" />
       <title>${escapeHtml(title)}</title>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;700;800&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
       <style>${STYLES}</style>
     </head>
     <body>${bodyHtml}</body>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Modelos</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 20px 64px; display: grid; gap: 28px; }
+  .cores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .cor { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--card); font-size: 13px; }
+  .cor i { display: block; height: 56px; }
+  .cor div { padding: 8px 10px; }
+  .telas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .telas a { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--petrol); border-radius: var(--r-md); padding: 14px 16px; }
+  .telas a:hover { border-left-color: var(--brass); }
+  .telas b { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand" style="color:var(--text);padding:0;margin-bottom:18px"><span class="mark">Z</span><b>Zela</b></div>
+    <h1>Modelos de layout para análise</h1>
+    <p class="muted" style="margin-top:6px">Direção visual proposta: sóbria, institucional e moderna. Petróleo profundo como cor principal, latão discreto só para marcar o que é verificado ou está em andamento. Nenhuma cor elétrica.</p>
+  </header>
+
+  <section>
+    <h2 style="margin-bottom:12px">Telas para avaliar</h2>
+    <div class="telas">
+      <a href="login.html"><b>Entrar</b><span class="small muted">Tela de acesso</span></a>
+      <a href="recepcao.html"><b>Recepção</b><span class="small muted">Painel principal, a tela mais importante</span></a>
+      <a href="gestao.html"><b>Gestão e Financeiro</b><span class="small muted">Indicadores e revisão</span></a>
+      <a href="professora.html"><b>Professora</b><span class="small muted">Turma e presença do dia</span></a>
+      <a href="familia.html"><b>Família</b><span class="small muted">Feito para celular</span></a>
+      <a href="totem.html"><b>Totem</b><span class="small muted">Tablet da entrada</span></a>
+      <a href="dev.html"><b>Desenvolvedor</b><span class="small muted">Tema claro com menu e faixa próprios</span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:12px">Paleta</h2>
+    <div class="cores">
+      <div class="cor"><i style="background:#13222e"></i><div><b>Tinta</b><br>#13222E, menu lateral</div></div>
+      <div class="cor"><i style="background:#1e5563"></i><div><b>Petróleo</b><br>#1E5563, ações principais</div></div>
+      <div class="cor"><i style="background:#a9843b"></i><div><b>Latão</b><br>#A9843B, selo de verificação</div></div>
+      <div class="cor"><i style="background:#f2f4f6"></i><div><b>Névoa</b><br>#F2F4F6, fundo</div></div>
+      <div class="cor"><i style="background:#2b6a4b"></i><div><b>Confirmado</b><br>#2B6A4B</div></div>
+      <div class="cor"><i style="background:#8f6411"></i><div><b>Atenção</b><br>#8F6411</div></div>
+      <div class="cor"><i style="background:#a33a32"></i><div><b>Risco</b><br>#A33A32</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:12px">Formas</h2>
+    <div class="painel"><div class="corpo">
+      <p class="muted" style="margin-bottom:16px">Cantos mais quadrados, com curva suave e hierarquia: selos 4 px, botões e campos 6 px, painéis 8 px, janelas 12 px.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <span class="selo ok">Selo 4 px</span>
+        <button class="btn">Botão 6 px</button>
+        <div class="painel" style="padding:12px 16px">Painel 8 px</div>
+        <div class="painel" style="padding:12px 16px;border-radius:var(--r-lg)">Janela 12 px</div>
+      </div>
+    </div></div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:12px">Ícones</h2>
+    <div class="painel"><div class="corpo">
+      <p class="muted" style="margin-bottom:16px">Ícones de linha, traço único e cor do texto. Sem emojis e sem estrelas de IA. Quando uma função usa IA, o ícone mostra a ação e a palavra "IA" aparece num selo.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="btn"><svg class="i"><use href="#i-arquivo"/></svg>Ler PDF <span class="selo pet">IA</span></button>
+        <button class="btn"><svg class="i"><use href="#i-busca"/></svg>Analisar erro <span class="selo pet">IA</span></button>
+        <button class="btn primario"><svg class="i"><use href="#i-check"/></svg>Confirmar saída</button>
+        <button class="btn perigo"><svg class="i"><use href="#i-alerta"/></svg>Recusar</button>
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;color:var(--petrol)">
+        <svg class="i" style="width:24px;height:24px"><use href="#i-casa"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-escudo"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-pessoas"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-relogio"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-camera"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-qr"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-chave"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-carteira"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-livro"/></svg><svg class="i" style="width:24px;height:24px"><use href="#i-sino"/></svg>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="grade g2e">
+    <div class="painel"><div class="corpo">
+      <h2>Source Serif 4 para títulos</h2>
+      <p class="muted" style="margin-top:8px">Serifa de leitura que dá peso institucional aos títulos e nomes de tela.</p>
+      <h3 style="margin-top:16px">Public Sans para interface</h3>
+      <p class="muted" style="margin-top:4px">Sem serifa, desenhada para serviços públicos: legível, neutra e firme em tabelas e números.</p>
+    </div></div>
+    <div class="painel"><div class="corpo">
+      <h2>Elemento de assinatura</h2>
+      <p class="muted" style="margin: 8px 0 16px">A trilha de confirmação mostra o caminho da saída: responsável, totem, recepção, concluído. Aparece na Recepção e na Família, e é o único lugar onde o latão ganha destaque.</p>
+      <ol class="trilha"><li class="feito">Responsável</li><li class="feito">Totem</li><li class="atual">Recepção</li><li>Concluído</li></ol>
+    </div></div>
+  </section>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>

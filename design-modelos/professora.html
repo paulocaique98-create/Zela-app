@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Professora</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  .chamada { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 18px; }
+  .aluno { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); border-left: 4px solid var(--ok); background: var(--card); }
+  .aluno.falta { border-left-color: var(--err); background: var(--err-bg); }
+  .aluno.espera { border-left-color: var(--line); }
+  .aluno .nome { font-weight: 600; font-size: 14px; }
+</style>
+</head>
+<body>
+<nav class="navtopo" aria-label="Menu"><a href="#" aria-current="page">Minha turma</a><a href="#">Relatórios</a><a href="#">Avisos</a></nav>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Z</span><div><b>Zela</b><small>Professora</small></div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="#" aria-current="page"><svg class="i"><use href="#i-pessoas"/></svg>Minha turma</a>
+      <a href="#"><svg class="i"><use href="#i-agenda"/></svg>Chamada do dia</a>
+      <a href="#"><svg class="i"><use href="#i-livro"/></svg>Relatórios<span class="tag">2</span></a>
+      <a href="#"><svg class="i"><use href="#i-sino"/></svg>Avisos às famílias</a>
+      <a href="#"><svg class="i"><use href="#i-conversa"/></svg>Mensagens</a>
+    </nav>
+    <div class="rodape"><span class="avatar">PN</span><div><div style="color:#fff;font-weight:600">Paula Nunes</div><div class="small">Maternal I</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="topo">
+      <div><h1>Maternal I</h1><p>18 alunos na turma, 15 presentes agora.</p></div>
+      <div class="acoes"><button class="btn">Enviar aviso</button><button class="btn primario">Registrar atividade</button></div>
+    </div>
+
+    <div class="aviso warn" style="margin-bottom:16px"><svg class="i"><use href="#i-alerta"/></svg><div><b>Dois relatórios semestrais com prazo até sexta.</b> Gabriel Rocha e Alice Tavares ainda estão sem preenchimento.</div></div>
+
+    <section class="painel" aria-labelledby="t-ch">
+      <header><h2 id="t-ch">Presença de hoje</h2><div style="display:flex;gap:8px"><span class="selo ok">15 presentes</span><span class="selo err">1 falta</span><span class="selo">2 a chegar</span></div></header>
+      <div class="chamada">
+        <div class="aluno"><span class="avatar">AT</span><div><div class="nome">Alice Tavares</div><div class="small muted">entrou às 07h48</div></div></div>
+        <div class="aluno"><span class="avatar">GR</span><div><div class="nome">Gabriel Rocha</div><div class="small muted">entrou às 07h55</div></div></div>
+        <div class="aluno falta"><span class="avatar">IM</span><div><div class="nome">Isabela Moura</div><div class="small" style="color:var(--err)">falta avisada pela família</div></div></div>
+        <div class="aluno espera"><span class="avatar">JS</span><div><div class="nome">João Silva</div><div class="small muted">ainda não chegou</div></div></div>
+        <div class="aluno"><span class="avatar">TA</span><div><div class="nome">Theo Andrade</div><div class="small muted">entrou às 08h02</div></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>

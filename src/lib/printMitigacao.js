@@ -24,7 +24,7 @@ const STYLES = `
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   html, body { width: 210mm; max-width: 210mm; margin: 0 auto; overflow-x: hidden; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; }
+  body { font-family: "Public Sans", Arial, Helvetica, sans-serif; color: #17242e; }
   /* Texto sem espaços (ou com poucos) não tem onde quebrar por padrão —
      sem isso ele ultrapassa a borda da página em vez de ir pra linha de
      baixo, mesmo com a largura da página já travada em A4 acima. */
@@ -38,14 +38,14 @@ const STYLES = `
   table.page > tbody > tr > td { padding: 0 48px 32px; }
   .header-logo { text-align: center; }
   .header-logo img { max-height: 56px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto; }
-  h1 { text-align: center; font-size: 18px; margin: 12px 0 20px; }
+  h1 { font-family: "Source Serif 4", Georgia, serif; text-align: center; font-size: 18px; margin: 12px 0 20px; }
   table.info { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 24px; }
-  table.info td { border: 1px solid #94a3b8; padding: 8px 10px; font-size: 13px; vertical-align: top; }
+  table.info td { border: 1px solid #6f7f8b; padding: 8px 10px; font-size: 13px; vertical-align: top; }
   table.info td strong { display: inline; }
   .intro { font-size: 13px; line-height: 1.5; margin-bottom: 24px; white-space: pre-line; }
   .signatures { margin-top: 56px; text-align: center; font-size: 13px; }
   .signature-block { margin-bottom: 32px; }
-  .signature-line { border-top: 1px solid #1e293b; width: 260px; margin: 0 auto 4px; padding-top: 4px; }
+  .signature-line { border-top: 1px solid #17242e; width: 260px; margin: 0 auto 4px; padding-top: 4px; }
   .report-page { page-break-after: always; }
   .report-page:last-child { page-break-after: auto; }
   @media print {
@@ -127,6 +127,7 @@ function openPrintWindow(title, bodyHtml, logoHtml) {
     <head>
       <meta charset="utf-8" />
       <title>${escapeHtml(title)}</title>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
       <style>${STYLES}</style>
     </head>
     <body>

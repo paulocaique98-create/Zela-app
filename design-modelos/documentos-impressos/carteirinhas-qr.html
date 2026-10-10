@@ -1,0 +1,42 @@
+
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8" />
+      <title>Carteirinhas de Check-in</title>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
+      <style>
+  @page { size: A4 portrait; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Public Sans", Arial, Helvetica, sans-serif; color: #17242e; margin: 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8mm; }
+
+  .card { border: 1px dashed #d9dfe4; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; page-break-inside: avoid; }
+  .card .brand { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; color: #1e5563; }
+  .card .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: #1e5563; }
+  .card img.qr { width: 150px; height: 150px; }
+  .card .name { font-weight: 700; font-size: 14px; text-align: center; }
+  .card .turma { font-size: 11px; color: #5a6a76; }
+  .card .footer { font-size: 8.5px; color: #5a6a76; text-align: center; margin-top: 4px; }
+</style>
+    </head>
+    <body><div class="grid">
+    <div class="card">
+      <div class="brand"><span class="dot"></span> Zela Escola</div>
+      <img class="qr" src="data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="white"/><path d="M10 10h30v30H10zM60 10h30v30H60zM10 60h30v30H10zM55 55h10v10H55zM75 70h15v15H75z" fill="black"/></svg>" alt="QR Code de Helena Martins" />
+      <div class="name">Helena Martins</div>
+      <div class="turma">Maternal</div>
+      <div class="footer">Check-in/Check-out · Escola Modelo Zela</div>
+    </div>
+  
+    <div class="card">
+      <div class="brand"><span class="dot"></span> Zela Escola</div>
+      <img class="qr" src="data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="white"/><path d="M10 10h30v30H10zM60 10h30v30H60zM10 60h30v30H10zM55 55h10v10H55zM75 70h15v15H75z" fill="black"/></svg>" alt="QR Code de Pedro Lima" />
+      <div class="name">Pedro Lima</div>
+      <div class="turma">Jardim I</div>
+      <div class="footer">Check-in/Check-out · Escola Modelo Zela</div>
+    </div>
+  </div></body>
+    </html>
+  

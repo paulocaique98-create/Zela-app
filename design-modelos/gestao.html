@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Gestão</title>
+<link rel="stylesheet" href="zela.css">
+</head>
+<body>
+<nav class="navtopo" aria-label="Menu"><a href="#" aria-current="page">Visão geral</a><a href="#">Turmas</a><a href="#">Relatórios</a><a href="#">Financeiro</a></nav>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Z</span><div><b>Zela</b><small>Gestão</small></div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="#" aria-current="page"><svg class="i"><use href="#i-casa"/></svg>Visão geral</a>
+      <a href="#"><svg class="i"><use href="#i-pessoas"/></svg>Turmas e alunos</a>
+      <a href="#"><svg class="i"><use href="#i-livro"/></svg>Relatórios pedagógicos<span class="tag">5</span></a>
+      <a href="#"><svg class="i"><use href="#i-agenda"/></svg>Presença e horários</a>
+      <div class="grupo">Financeiro</div>
+      <a href="#"><svg class="i"><use href="#i-carteira"/></svg>Mensalidades</a>
+      <a href="#"><svg class="i"><use href="#i-relogio"/></svg>Hora extra</a>
+      <div class="grupo">Escola</div>
+      <a href="#"><svg class="i"><use href="#i-escudo"/></svg>Meu plano</a>
+      <a href="#"><svg class="i"><use href="#i-engrenagem"/></svg>Configurações</a>
+    </nav>
+    <div class="rodape"><span class="avatar">RC</span><div><div style="color:#fff;font-weight:600">Renata Campos</div><div class="small">Direção</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="topo">
+      <div><h1>Visão geral da escola</h1><p>Resumo do mês de outubro.</p></div>
+      <div class="acoes"><select class="btn" aria-label="Período"><option>Outubro</option><option>Setembro</option></select><button class="btn primario">Exportar resumo</button></div>
+    </div>
+
+    <div class="grade g4" style="margin-bottom:16px">
+      <div class="indicador pet"><div class="l">Frequência no mês</div><div class="v">94,2%</div><div class="d">0,8 ponto acima de setembro</div></div>
+      <div class="indicador ok"><div class="l">Mensalidades em dia</div><div class="v">89%</div><div class="d">23 famílias em aberto</div></div>
+      <div class="indicador warn"><div class="l">Relatórios para revisar</div><div class="v">5</div><div class="d">entregues pelas professoras</div></div>
+      <div class="indicador"><div class="l">Horas extras no mês</div><div class="v">36h</div><div class="d">12 alunos</div></div>
+    </div>
+
+    <div class="grade g2">
+      <section class="painel" aria-labelledby="t-turmas">
+        <header><h2 id="t-turmas">Frequência por turma</h2><span class="muted small">últimos 30 dias</span></header>
+        <table>
+          <thead><tr><th>Turma</th><th>Professora</th><th>Alunos</th><th>Frequência</th></tr></thead>
+          <tbody>
+            <tr><td><b>Maternal I</b></td><td>Paula Nunes</td><td class="num">18</td><td><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:6px;background:var(--line-soft);border-radius:3px;min-width:80px"><div style="width:96%;height:100%;background:var(--ok);border-radius:3px"></div></div><span class="num">96%</span></div></td></tr>
+            <tr><td><b>Maternal II</b></td><td>Elisa Prado</td><td class="num">22</td><td><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:6px;background:var(--line-soft);border-radius:3px;min-width:80px"><div style="width:93%;height:100%;background:var(--ok);border-radius:3px"></div></div><span class="num">93%</span></div></td></tr>
+            <tr><td><b>Jardim I</b></td><td>Camila Ramos</td><td class="num">25</td><td><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:6px;background:var(--line-soft);border-radius:3px;min-width:80px"><div style="width:88%;height:100%;background:var(--warn);border-radius:3px"></div></div><span class="num">88%</span></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="painel" aria-labelledby="t-rel">
+        <header><h2 id="t-rel">Aguardando revisão</h2></header>
+        <ul class="lista">
+          <li><span class="avatar" style="background:var(--petrol-50);color:var(--petrol)">PN</span><div><b>Relatório semestral, Maternal I</b><div class="small muted">Paula Nunes entregou ontem, 12 alunos.</div></div></li>
+          <li><span class="avatar" style="background:var(--petrol-50);color:var(--petrol)">CR</span><div><b>Relatório de mitigação, Jardim I</b><div class="small muted">Camila Ramos entregou hoje, 2 alunos.</div></div></li>
+        </ul>
+        <div class="corpo" style="border-top:1px solid var(--line-soft)"><button class="btn">Abrir fila de revisão</button></div>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>

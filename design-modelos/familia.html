@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zela Família</title>
+<link rel="stylesheet" href="zela.css">
+<style>
+  body { display: flex; justify-content: center; }
+  .tel { width: 100%; max-width: 440px; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 76px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .cab { background: var(--ink); color: #fff; padding: 20px 20px 56px; }
+  .cab .brand { padding: 0; margin-bottom: 20px; }
+  .cab h1 { font-size: 24px; }
+  .cab p { color: var(--ink-text); font-size: 14px; }
+  .conteudo { padding: 0 16px; margin-top: -40px; display: grid; gap: 14px; }
+  .criança { display: flex; gap: 14px; align-items: center; }
+  .criança .foto { width: 60px; height: 60px; border-radius: 10px; background: var(--petrol-50); color: var(--petrol); display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 22px; }
+  .atalhos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .atalhos a { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px; display: flex; flex-direction: column; gap: 8px; font-weight: 600; font-size: 14px; min-height: 84px; }
+  .atalhos .i { color: var(--petrol); width: 22px; height: 22px; }
+  .abas { position: fixed; bottom: 0; width: 100%; max-width: 440px; background: var(--card); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); }
+  .abas a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 12px; font-size: 12px; color: var(--muted); border-top: 3px solid transparent; margin-top: -1px; }
+  .abas a[aria-current="page"] { color: var(--petrol); border-top-color: var(--brass); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="tel">
+  <header class="cab">
+    <div class="brand"><span class="mark">Z</span><b>Zela</b></div>
+    <h1>Olá, Carla</h1>
+    <p>Acompanhe o dia de Lucas com tranquilidade.</p>
+  </header>
+
+  <div class="conteudo">
+    <section class="painel" aria-label="Lucas">
+      <div class="corpo">
+        <div class="criança">
+          <div class="foto">LM</div>
+          <div style="flex:1"><h2 style="font-size:19px">Lucas Martins</h2><div class="small muted">Maternal II, Escola Modelo Aurora</div></div>
+          <span class="selo ok">Na escola</span>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--line-soft);margin:16px 0">
+        <h3 style="margin-bottom:12px">Saída de hoje</h3>
+        <ol class="trilha" aria-label="Etapas da saída">
+          <li class="feito">Você<small>17h42</small></li>
+          <li class="feito">Totem</li>
+          <li class="atual">Recepção<small>confirmando</small></li>
+          <li>Concluído</li>
+        </ol>
+        <p class="small muted" style="margin-top:14px">A recepção está conferindo sua identificação. Aguarde um instante junto ao totem.</p>
+      </div>
+    </section>
+
+    <div class="atalhos">
+      <a href="#"><svg class="i"><use href="#i-qr"/></svg>Meu QR Code</a>
+      <a href="#"><svg class="i"><use href="#i-chave"/></svg>Autorizados</a>
+      <a href="#"><svg class="i"><use href="#i-livro"/></svg>Relatórios</a>
+      <a href="#"><svg class="i"><use href="#i-carteira"/></svg>Mensalidades</a>
+    </div>
+
+    <section class="painel" aria-labelledby="t-av">
+      <header><h2 id="t-av" style="font-size:17px">Avisos da escola</h2></header>
+      <ul class="lista">
+        <li><svg class="i" style="color:var(--petrol)"><use href="#i-sino"/></svg><div><b>Reunião de pais na sexta</b><div class="small muted">Às 18h, na sala de multiuso. Confirme presença.</div></div></li>
+        <li><svg class="i" style="color:var(--petrol)"><use href="#i-agenda"/></svg><div><b>Passeio ao parque</b><div class="small muted">Autorização assinada até quarta.</div></div></li>
+      </ul>
+    </section>
+  </div>
+
+  <nav class="abas" aria-label="Menu">
+    <a href="#" aria-current="page"><svg class="i"><use href="#i-casa"/></svg>Início</a>
+    <a href="#"><svg class="i"><use href="#i-livro"/></svg>Relatórios</a>
+    <a href="#"><svg class="i"><use href="#i-conversa"/></svg>Mensagens</a>
+    <a href="#"><svg class="i"><use href="#i-pessoas"/></svg>Perfil</a>
+  </nav>
+</div>
+<script src="icons.js"></script>
+</body>
+</html>
