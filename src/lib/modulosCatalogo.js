@@ -48,7 +48,7 @@ export const ITENS = [
     resumo: 'Registros e relatórios de desenvolvimento das crianças.',
     keys: ['relatorios_pedagogicos', 'frequencia', 'materias'],
     inclui: [
-      { nome: 'Relatórios de desenvolvimento', desc: 'Semestral, Mitigação e Mapa de Habilidades, preenchidos pelas professoras' },
+      { nome: 'Relatórios de desenvolvimento', desc: 'Mitigação e Mapa de Habilidades, preenchidos pelas professoras' },
       { nome: 'Frequência', desc: 'Chamada por turma e por dia' },
       { nome: 'Matérias', desc: 'Áreas de conhecimento ligadas às turmas' },
     ],

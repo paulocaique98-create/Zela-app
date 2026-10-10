@@ -156,12 +156,12 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
   if (showCreateForm) {
     return (
       <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setShowCreateForm(false)} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
-              <ArrowLeft size={20} />
+        <div className="flex items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-2.5 border-b border-outline-variant shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button onClick={() => setShowCreateForm(false)} aria-label="Voltar" className="p-2 -ml-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
+              <ArrowLeft size={18} aria-hidden="true" />
             </button>
-            <h2 className="text-h3 text-on-surface">Novo Relatório de Mitigação</h2>
+            <h2 className="text-sm font-semibold text-on-surface">Novo Relatório de Mitigação</h2>
           </div>
           {turmas.length > 1 && (
             <select
@@ -250,7 +250,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
           >
             {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-            Criar e começar a preencher
+            Começar
           </button>
         </form>
       </div>
@@ -265,9 +265,9 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
         <p className="text-on-surface-variant text-small hidden sm:block">Relatórios de Mitigação dos seus alunos.</p>
         <button
           onClick={openCreateForm}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm shrink-0"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm shrink-0"
         >
-          <Plus size={18} /> Novo Relatório
+          <Plus size={18} /> Adicionar Relatório
         </button>
       </div>
 

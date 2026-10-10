@@ -48,7 +48,6 @@ const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
-const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
 const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
@@ -70,7 +69,6 @@ const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default
 const RELATORIOS_SUBMENU = [
   { key: 'rel-mitigacao', label: 'Mitigação' },
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
-  { key: 'rel-semestral', label: 'Semestral' },
 ];
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus, updateAvailable = false }) {
@@ -503,9 +501,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
         {adminTab === 'rel-mapa-habilidades' && <AdminMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-        {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => adminTab === r.key && (
-          <AdminRelatorioPlaceholder key={r.key} title={r.label} />
-        ))}
         {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}

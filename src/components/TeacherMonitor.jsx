@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Bell, Car, Clock, Eye } from 'lucide-react';
+import { AlertCircle, Bell, UserRound, Clock, Eye } from 'lucide-react';
+import Selo from './Selo';
 
 // Monitor do Professor — SOMENTE VISUALIZAÇÃO. Confirmar/cancelar check-in e
 // check-out é responsabilidade da Recepção/Admin; o professor só acompanha as
@@ -21,35 +22,33 @@ export default function TeacherMonitor({ students, authorized }) {
   }, [monitorStudents.length]);
 
   return (
-    <div className={`h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl md:rounded-none shadow-none sm:shadow-sm border-2 transition-all duration-500 overflow-hidden ${newArrival ? 'border-amber-400 shadow-amber-100 shadow-lg' : 'border-outline-variant md:shadow-none'}`}>
+    <div className={`h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-lg md:rounded-none border transition-colors duration-500 overflow-hidden ${newArrival ? 'border-warning' : 'border-outline-variant'}`}>
       {/* Título "Monitor de Solicitações" removido (o Header do app já mostra
           o nome da tela dinamicamente); ícone + descrição numa linha
           compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
-            <AlertCircle size={18} />
+            <AlertCircle size={18} aria-hidden="true" />
           </div>
           <p className="text-small text-on-surface-variant">Acompanhe as solicitações em tempo real</p>
         </div>
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70 uppercase tracking-wide bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-zela-md shrink-0">
-          <Eye size={13} /> Somente visualização
-        </span>
+        <Selo tom="neutro" icon={Eye} className="shrink-0">Somente visualização</Selo>
       </div>
 
       {newArrival && (
-        <div className="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-zela-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
-          <Bell className="text-amber-600 shrink-0 animate-bounce" size={22} />
+        <div className="mb-5 p-4 bg-warning/10 border-l-4 border-warning rounded-zela-lg flex items-center gap-3 motion-safe:animate-in fade-in duration-300 shrink-0">
+          <Bell className="text-warning shrink-0" size={22} aria-hidden="true" />
           <div>
-            <p className="font-bold text-amber-800">Nova atualização no painel!</p>
-            <p className="text-xs text-amber-600">A recepção precisa confirmar essa solicitação.</p>
+            <p className="font-bold text-warning">Nova atualização no painel</p>
+            <p className="text-xs text-on-surface-variant">A recepção precisa confirmar essa solicitação.</p>
           </div>
         </div>
       )}
 
       {monitorStudents.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-16 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-          <Car className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+          <UserRound className="mx-auto h-12 w-12 text-outline-variant mb-3" aria-hidden="true" />
           <h3 className="text-on-surface-variant font-medium">Nenhuma solicitação no momento.</h3>
           <p className="text-on-surface-variant/70 text-sm mt-1">O painel atualiza automaticamente com o totem e avisos das famílias.</p>
         </div>
@@ -60,11 +59,11 @@ export default function TeacherMonitor({ students, authorized }) {
               let badgeClass, badgeText, borderColor, bgColor;
 
               if (student.status === 'pending_entry') {
-                badgeClass = "text-green-700"; badgeText = "Solicitação de Entrada";
-                borderColor = "border-green-300"; bgColor = "bg-green-50";
+                badgeClass = "text-success"; badgeText = "Solicitação de entrada";
+                borderColor = "border-l-success"; bgColor = "bg-success/10";
               } else if (student.status === 'pending_exit') {
-                badgeClass = "text-primary"; badgeText = "Solicitação de Saída";
-                borderColor = "border-indigo-300"; bgColor = "bg-primary/10";
+                badgeClass = "text-primary"; badgeText = "Solicitação de saída";
+                borderColor = "border-l-primary"; bgColor = "bg-primary/10";
               }
 
               const requester = student.pendingRequesterId ? (authorized || []).find(p => p.id === student.pendingRequesterId) : null;
@@ -72,18 +71,18 @@ export default function TeacherMonitor({ students, authorized }) {
               return (
                 <div
                   key={student.id}
-                  className={`relative p-5 border-2 ${borderColor} ${bgColor} rounded-zela-lg shadow-sm animate-in zoom-in-95 duration-300`}
+                  className={`relative p-5 border border-outline-variant border-l-4 ${borderColor} ${bgColor} rounded-zela-lg`}
                 >
                   {requester?.photo_url && (
                     <img
                       src={requester.photo_url}
                       alt={requester.name}
                       title={requester.name}
-                      className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      className="absolute top-3 right-3 w-10 h-10 rounded-full object-cover border border-outline-variant"
                     />
                   )}
-                  <p className={`text-[10px] md:text-xs font-bold uppercase mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
-                    <Clock size={12} /> {badgeText}
+                  <p className={`text-xs font-semibold mb-1 flex items-center gap-1 pr-11 ${badgeClass}`}>
+                    <Clock size={14} aria-hidden="true" /> {badgeText}
                   </p>
                   <h3 className="font-bold text-lg text-on-surface pr-11">{student.name}</h3>
                 </div>

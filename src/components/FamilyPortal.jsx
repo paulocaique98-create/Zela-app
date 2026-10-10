@@ -28,7 +28,6 @@ const FamilySettings = lazy(() => import('./FamilySettings'));
 const FamilyAuthorized = lazy(() => import('./FamilyAuthorized'));
 const FamilyRegistrationData = lazy(() => import('./FamilyRegistrationData'));
 const FamilyGerenciarResponsaveis = lazy(() => import('./FamilyGerenciarResponsaveis'));
-const FamilyRelatorioPlaceholder = lazy(() => import('./FamilyRelatorioPlaceholder'));
 const FamilyMitigacao = lazy(() => import('./FamilyMitigacao'));
 const FamilyMapaHabilidades = lazy(() => import('./FamilyMapaHabilidades'));
 const FamilyFinanceiro = lazy(() => import('./FamilyFinanceiro'));
@@ -39,7 +38,6 @@ const FamilyContratos = lazy(() => import('./FamilyContratos'));
 // mostra o que a Coordenação ou a Direção publicou (a RLS garante); as
 // Observações de Normalização e de Concentração seguem de uso interno.
 const FAMILY_RELATORIOS_SUBMENU = [
-  { key: 'rel-semestral', label: 'Semestral' },
   { key: 'rel-mitigacao', label: 'Mitigação' },
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
 ];
@@ -353,9 +351,6 @@ export default function FamilyPortal({
           {familyTab === 'rel-mapa-habilidades' && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
-          {FAMILY_RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => familyTab === r.key && (
-            <FamilyRelatorioPlaceholder key={r.key} title={r.label} />
-          ))}
           {familyTab === 'settings' && (
             <FamilySettings
               currentUser={currentUser}

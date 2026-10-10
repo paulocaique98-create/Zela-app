@@ -10,7 +10,6 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
-const AdminRelatorioPlaceholder = lazy(() => import('./AdminRelatorioPlaceholder'));
 const TeacherMapaHabilidades = lazy(() => import('./TeacherMapaHabilidades'));
 const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
 const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
@@ -20,7 +19,6 @@ const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
 const RELATORIOS_SUBMENU = [
   { key: 'rel-mitigacao', label: 'Mitigação' },
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
-  { key: 'rel-semestral', label: 'Semestral' },
 ];
 
 export default function TeacherPortal({
@@ -57,7 +55,7 @@ export default function TeacherPortal({
   if (!moduleEnabled) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-surface-container-lowest rounded-zela-xl border border-outline-variant shadow-sm p-8 text-center max-w-sm">
+        <div className="bg-surface-container-lowest rounded-zela-lg border border-outline-variant p-8 text-center max-w-sm">
           <h2 className="text-h3 text-on-surface mb-2">Módulo não disponível</h2>
           <p className="text-on-surface-variant text-small">
             O Módulo Pedagógico ainda não foi contratado para esta escola. Fale com a administração.
@@ -70,7 +68,7 @@ export default function TeacherPortal({
   if (isBlocked) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-surface-container-lowest rounded-zela-xl border border-outline-variant shadow-sm p-8 text-center max-w-sm">
+        <div className="bg-surface-container-lowest rounded-zela-lg border border-outline-variant p-8 text-center max-w-sm">
           <h2 className="text-h3 text-on-surface mb-2">Acesso indisponível</h2>
           <p className="text-on-surface-variant text-small">
             Sua conta de professor está {currentUser.teacher_status === 'bloqueado' ? 'bloqueada' : 'inativa'}.
@@ -125,7 +123,7 @@ export default function TeacherPortal({
       <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
           {teacherTab === 'home' && (
-            <TeacherInicio currentUser={currentUser} setTeacherTab={setTeacherTab} clickCounts={clickCounts} registerClick={registerClick} monitorCount={monitorCount} />
+            <TeacherInicio currentUser={currentUser} setTeacherTab={setTeacherTab} clickCounts={clickCounts} registerClick={registerClick} monitorCount={monitorCount} showFrequencia={showFrequencia} />
           )}
           {teacherTab === 'monitor' && (
             <TeacherMonitor students={students || []} authorized={authorized} />
@@ -135,9 +133,6 @@ export default function TeacherPortal({
           )}
           {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-          {RELATORIOS_SUBMENU.filter(r => r.key !== 'rel-mitigacao' && r.key !== 'rel-mapa-habilidades').map(r => teacherTab === r.key && (
-            <AdminRelatorioPlaceholder key={r.key} title={r.label} />
-          ))}
         </Suspense>
       </main>
     </div>

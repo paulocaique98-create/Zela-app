@@ -98,7 +98,7 @@ export const SCREEN_LABELS = {
   calendario: 'Calendário', 'mural-fotos': 'Mural de Fotos', cardapio: 'Cardápio', diario: 'Diário',
   materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
   financeiro: 'Financeiro', auditoria: 'Auditoria', 'system-updates': 'Atualizações', 'duplicidade-biometrica': 'Duplicidade Facial',
-  'rel-mapa-habilidades': 'Mapa de Habilidades', 'rel-mitigacao': 'Mitigação', 'rel-semestral': 'Semestral',
+  'rel-mapa-habilidades': 'Mapa de Habilidades', 'rel-mitigacao': 'Mitigação',
   settings: 'Configurações',
   // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
   acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
