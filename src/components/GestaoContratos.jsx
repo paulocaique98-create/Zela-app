@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatarCpf } from '../lib/documentos';
-import { Plus, FileSignature, Edit, Send, Printer, XCircle, FilePlus2, ShieldCheck, Eye } from 'lucide-react';
+import { Plus, FileSignature, Edit, Send, Printer, XCircle, FilePlus2, ShieldCheck, Eye, ListFilter, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { notifyFamilies } from '../lib/notifyFamilies';
 import { printContract } from '../lib/printContract';
@@ -11,10 +11,10 @@ import ConfirmModal from './ConfirmModal';
 
 export const CONTRACT_STATUS = { rascunho: 'Rascunho', enviado: 'Aguardando assinatura', assinado: 'Assinado', cancelado: 'Cancelado' };
 const STATUS_CLS = {
-  rascunho: 'bg-slate-100 text-slate-600 border-slate-200',
-  enviado: 'bg-amber-50 text-amber-700 border-amber-200',
-  assinado: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  cancelado: 'bg-red-50 text-red-600 border-red-200',
+  rascunho: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  enviado: 'bg-warning/10 text-warning border-warning/30',
+  assinado: 'bg-success/10 text-success border-success/30',
+  cancelado: 'bg-error/10 text-error border-error/30',
 };
 
 // Campos que o modelo pode usar entre chaves duplas.
@@ -64,7 +64,7 @@ As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicat
 {{escola_cidade}}, {{data_hoje}}.`;
 
 // Contratos (documento jurídico). A cobrança recorrente continua em
-// Financeiro · Mensalidades; aqui fica o texto que o responsável assina.
+// Financeiro, Mensalidades; aqui fica o texto que o responsável assina.
 // view: 'lista' | 'modelos' | 'assinaturas' | 'aditivos'
 export default function GestaoContratos({ currentUser, currentSchool, view = 'lista', canManage = true }) {
   if (view === 'modelos') return <Modelos currentUser={currentUser} />;
@@ -87,7 +87,8 @@ function Modelos({ currentUser }) {
   return (
     <PageShell
       description="Textos base dos contratos e aditivos. Os campos entre chaves são preenchidos com os dados do aluno."
-      actions={<PrimaryButton onClick={() => setEditing({ name: '', kind: 'contrato', body: rows?.length ? '' : DEFAULT_TEMPLATE, active: true })}><Plus size={16} /> Novo modelo</PrimaryButton>}
+      descriptionClassName="hidden sm:block"
+      actions={<PrimaryButton className="w-full sm:w-auto justify-center" onClick={() => setEditing({ name: '', kind: 'contrato', body: rows?.length ? '' : DEFAULT_TEMPLATE, active: true })}><Plus size={16} /> Novo modelo</PrimaryButton>}
     >
       <Notice>{error}</Notice>
       {rows === null ? <Loading /> : rows.length === 0 ? (
@@ -98,7 +99,7 @@ function Modelos({ currentUser }) {
             <div key={t.id} className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex justify-between gap-2 ${t.active ? '' : 'opacity-60'}`}>
               <div className="min-w-0">
                 <p className="font-bold text-sm text-on-surface truncate">{t.name}</p>
-                <p className="text-xs text-on-surface-variant">{t.kind === 'aditivo' ? 'Aditivo' : 'Contrato'}{t.active ? '' : ' · inativo'}</p>
+                <p className="text-xs text-on-surface-variant">{t.kind === 'aditivo' ? 'Aditivo' : 'Contrato'}{t.active ? '' : ', inativo'}</p>
                 <p className="text-xs text-on-surface-variant/70 mt-1 line-clamp-2">{t.body.slice(0, 160)}</p>
               </div>
               <button onClick={() => setEditing(t)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md shrink-0 self-start" aria-label="Editar modelo"><Edit size={15} /></button>
@@ -144,10 +145,10 @@ function ModeloModal({ currentUser, initial, onClose, onSaved }) {
       </div>
       <Field label="Texto" id="tpl-body"><textarea id="tpl-body" rows={14} value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))} className={`${inputCls} font-mono text-xs`} /></Field>
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Campos disponíveis (clique para inserir no fim do texto)</p>
+        <p className="text-[11px] font-bold text-on-surface-variant mb-1">Campos disponíveis (clique para inserir no fim do texto)</p>
         <div className="flex flex-wrap gap-1">
           {TEMPLATE_FIELDS.map(([key, label]) => (
-            <button key={key} type="button" onClick={() => insertField(key)} title={label} className="px-2 py-0.5 text-[11px] font-mono bg-surface-container-low border border-outline-variant rounded-full hover:border-primary hover:text-primary">{`{{${key}}}`}</button>
+            <button key={key} type="button" onClick={() => insertField(key)} title={label} className="px-2 py-0.5 text-[11px] font-mono bg-surface-container-low border border-outline-variant rounded-sm hover:border-primary hover:text-primary">{`{{${key}}}`}</button>
           ))}
         </div>
       </div>
@@ -195,7 +196,7 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
     if (familyIds.length) {
       notifyFamilies({
         type: 'contrato', title: doc.kind === 'aditivo' ? 'Aditivo de contrato para assinar' : 'Contrato para assinar',
-        message: `${doc.title} · ${doc.students?.name || ''}. Leia e assine pelo app.`, url: '/?tab=contratos', familyIds,
+        message: `${doc.title}, ${doc.students?.name || ''}. Leia e assine pelo app.`, url: '/?tab=contratos', familyIds,
       });
     }
     setSuccess('Enviado para a família assinar pelo app.');
@@ -220,10 +221,33 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
   return (
     <PageShell
       description={descriptions[view]}
-      actions={canManage && view !== 'assinaturas' && (
-        <PrimaryButton onClick={() => setCreating({ kind: view === 'aditivos' ? 'aditivo' : 'contrato' })}>
-          <Plus size={16} /> {view === 'aditivos' ? 'Novo aditivo' : 'Gerar contrato'}
-        </PrimaryButton>
+      descriptionClassName="hidden sm:block"
+      actions={(
+        <>
+          {canManage && view !== 'assinaturas' && (
+            <div className="flex-1 basis-0 min-w-0 sm:flex-none sm:basis-auto">
+              <PrimaryButton onClick={() => setCreating({ kind: view === 'aditivos' ? 'aditivo' : 'contrato' })} className="w-full h-10 justify-center">
+                <Plus size={16} /> {view === 'aditivos' ? 'Novo aditivo' : 'Novo'}
+              </PrimaryButton>
+            </div>
+          )}
+          <div className="relative flex-1 basis-0 min-w-0 sm:flex-none sm:basis-auto">
+            <ListFilter size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+            <select
+              id="contract-status"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              aria-label="Situação"
+              className={`w-full sm:w-40 h-10 appearance-none cursor-pointer pl-9 pr-9 py-0 border rounded-zela-md text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary ${
+                statusFilter ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-low'
+              }`}
+            >
+              <option value="">Todas</option>
+              {Object.entries(CONTRACT_STATUS).filter(([k]) => view !== 'assinaturas' || ['enviado', 'assinado'].includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          </div>
+        </>
       )}
     >
       <div className="space-y-3">
@@ -231,10 +255,6 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
         <Notice type="success">{success}</Notice>
         <div className="flex flex-wrap gap-2">
           <input id="contract-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por aluno ou título" className={`${inputCls} max-w-xs`} />
-          <select id="contract-status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="p-2 bg-white border border-outline-variant rounded-zela-md text-sm" aria-label="Situação">
-            <option value="">Todas as situações</option>
-            {Object.entries(CONTRACT_STATUS).filter(([k]) => view !== 'assinaturas' || ['enviado', 'assinado'].includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
         </div>
         {rows === null ? <Loading /> : filtered.length === 0 ? <EmptyState icon={FileSignature} text="Nenhum documento encontrado." /> : (
           <ResponsiveTable
@@ -242,9 +262,9 @@ function Documentos({ currentUser, currentSchool, view, canManage }) {
             columns={[
               { label: 'Aluno', primary: true, render: d => d.students?.name || '·' },
               { label: 'Documento', render: d => d.title },
-              { label: 'Situação', render: d => <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_CLS[d.status]}`}>{CONTRACT_STATUS[d.status]}</span> },
+              { label: 'Situação', render: d => <span className={`px-2 py-0.5 rounded-sm text-xs font-bold border ${STATUS_CLS[d.status]}`}>{CONTRACT_STATUS[d.status]}</span> },
               { label: view === 'assinaturas' ? 'Enviado em' : 'Criado em', className: 'whitespace-nowrap', render: d => formatDateBR(view === 'assinaturas' ? d.sent_at : d.created_at) },
-              ...(view === 'assinaturas' ? [{ label: 'Assinatura', className: 'text-xs', render: d => (d.signed_at ? `${d.signer_name} · ${new Date(d.signed_at).toLocaleString('pt-BR')}` : '·') }] : []),
+              ...(view === 'assinaturas' ? [{ label: 'Assinatura', className: 'text-xs', render: d => (d.signed_at ? `${d.signer_name}, ${new Date(d.signed_at).toLocaleString('pt-BR')}` : '·') }] : []),
               { label: '', actions: true, align: 'right', className: 'whitespace-nowrap', render: d => (
                 <span className="inline-flex items-center gap-1">
                   <button onClick={() => setViewing(d)} className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md" aria-label="Abrir"><Eye size={15} /></button>
@@ -306,7 +326,7 @@ async function buildTemplateValues(student, school) {
     contrato: fc, bolsista: Boolean(condicao?.bolsista), precos: precos || [], ano: anoDoContrato, aluno: student,
     descontoMensalPercent: Number(descontoMensal?.discount_percent) || 0, formatarData: formatDateBR, formatarMoeda: centsToBRL,
   });
-  const address = g ? [[g.street, g.number].filter(Boolean).join(', '), g.complement, g.neighborhood, [g.city, g.state].filter(Boolean).join('/')].filter(Boolean).join(' · ') : '';
+  const address = g ? [[g.street, g.number].filter(Boolean).join(', '), g.complement, g.neighborhood, [g.city, g.state].filter(Boolean).join('/')].filter(Boolean).join(', ') : '';
   return {
     financialContractId: fc?.id || null,
     schoolYearId: year?.id || null,
@@ -318,7 +338,7 @@ async function buildTemplateValues(student, school) {
       escola_email: school?.email, escola_telefone: school?.phone,
       representante_nome: legal?.nome, representante_cpf: legal?.cpf ? formatarCpf(legal.cpf) : '', representante_cargo: legal?.cargo,
       diretor_nome: school?.director_name,
-      encarregado_dados: [school?.encarregado_dados_nome, school?.encarregado_dados_email].filter(Boolean).join(' · '),
+      encarregado_dados: [school?.encarregado_dados_nome, school?.encarregado_dados_email].filter(Boolean).join(', '),
       aluno_nome: student.name, aluno_nascimento: student.birth_date ? formatDateBR(student.birth_date) : '',
       aluno_turma: student.turma, aluno_turno: student.turno, aluno_periodo: student.periodo,
       responsavel_nome: g?.name, responsavel_documento: g?.doc_number ? `${g.doc_type ? `${g.doc_type.toUpperCase()} ` : ''}${g.doc_number}` : '',
@@ -371,7 +391,7 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
       if (!active) return;
       setMeta({ financialContractId: built.financialContractId, schoolYearId: built.schoolYearId });
       setBody(fillTemplate(template.body, built.values));
-      setTitle(`${template.name} · ${student.name}`);
+      setTitle(`${template.name}, ${student.name}`);
     })();
     return () => { active = false; };
   }, [studentId, templateId, students, templates, currentSchool]);
@@ -408,18 +428,18 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
           <Field label="Contrato assinado de origem" id="doc-parent">
             <select id="doc-parent" value={parentId} onChange={e => setParentId(e.target.value)} className={inputCls} disabled={Boolean(parent)}>
               <option value="">Selecionar</option>
-              {(parent ? [{ id: parent.id, title: parent.title, students: parent.students }] : signedContracts).map(c => <option key={c.id} value={c.id}>{c.students?.name} · {c.title}</option>)}
+              {(parent ? [{ id: parent.id, title: parent.title, students: parent.students }] : signedContracts).map(c => <option key={c.id} value={c.id}>{c.students?.name}, {c.title}</option>)}
             </select>
           </Field>
         ) : (
           <Field label="Aluno" id="doc-student">
             <select id="doc-student" value={studentId} onChange={e => setStudentId(e.target.value)} className={inputCls}>
               <option value="">Selecionar</option>
-              {students.map(s => <option key={s.id} value={s.id}>{s.name}{s.turma ? ` · ${s.turma}` : ''}</option>)}
+              {students.map(s => <option key={s.id} value={s.id}>{s.name}{s.turma ? `, ${s.turma}` : ''}</option>)}
             </select>
           </Field>
         )}
-        <Field label="Modelo" id="doc-template" hint={templates.length === 0 ? `Nenhum modelo de ${kind} ativo. Cadastre em Contratos · Modelos.` : ''}>
+        <Field label="Modelo" id="doc-template" hint={templates.length === 0 ? `Nenhum modelo de ${kind} ativo. Cadastre em Contratos, Modelos.` : ''}>
           <select id="doc-template" value={templateId} onChange={e => setTemplateId(e.target.value)} className={inputCls}>
             <option value="">Selecionar</option>
             {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -430,8 +450,8 @@ function GerarModal({ currentUser, currentSchool, kind, parent, onClose, onSaved
         <>
           <Field label="Título" id="doc-title"><input id="doc-title" value={title} onChange={e => setTitle(e.target.value)} className={inputCls} /></Field>
           {faltaMensalidade && (
-            <div className="p-3 rounded-zela-md border border-amber-300 bg-amber-50 space-y-2">
-              <p className="text-xs text-amber-900">Este aluno ainda não tem mensalidade cadastrada no Financeiro. Informe aqui para sair no contrato:</p>
+            <div className="p-3 rounded-zela-md border border-warning/30 bg-warning/10 space-y-2">
+              <p className="text-xs text-warning">Este aluno ainda não tem mensalidade cadastrada no Financeiro. Informe aqui para sair no contrato:</p>
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
                 <Field label="Mensalidade (R$)" id="doc-valor-manual">
                   <input id="doc-valor-manual" inputMode="decimal" placeholder="Ex: 1.250,00" value={manual.valor} onChange={e => setManual({ ...manual, valor: e.target.value })} className={inputCls} />
@@ -476,11 +496,11 @@ function DocumentoModal({ doc, canManage, onClose, onSend, onCancel, onPrint, on
       </>}>
       <Notice>{error}</Notice>
       <p className="text-xs text-on-surface-variant">
-        {doc.students?.name} · <span className="font-bold">{CONTRACT_STATUS[doc.status]}</span>
-        {doc.sent_at ? ` · enviado em ${new Date(doc.sent_at).toLocaleString('pt-BR')}` : ''}
+        {doc.students?.name}, <span className="font-bold">{CONTRACT_STATUS[doc.status]}</span>
+        {doc.sent_at ? `, enviado em ${new Date(doc.sent_at).toLocaleString('pt-BR')}` : ''}
       </p>
       {isDraft && pendingFields.length > 0 && <Notice>Preencha os campos pendentes antes de enviar: {Array.from(new Set(pendingFields)).join(', ')}.</Notice>}
-      {isDraft && (body !== doc.body || title !== doc.title) && <p className="text-xs text-amber-700 font-bold">Salve as alterações antes de enviar.</p>}
+      {isDraft && (body !== doc.body || title !== doc.title) && <p className="text-xs text-warning font-bold">Salve as alterações antes de enviar.</p>}
       {isDraft ? (
         <>
           <Field label="Título" id="doc-edit-title"><input id="doc-edit-title" value={title} onChange={e => setTitle(e.target.value)} className={inputCls} /></Field>
@@ -490,7 +510,7 @@ function DocumentoModal({ doc, canManage, onClose, onSend, onCancel, onPrint, on
         <div className="whitespace-pre-wrap text-sm text-on-surface bg-surface-container-lowest border border-outline-variant rounded-zela-md p-4 max-h-[50vh] overflow-y-auto">{doc.body}</div>
       )}
       {doc.status === 'assinado' && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-zela-md text-xs text-emerald-800 space-y-0.5">
+        <div className="p-3 bg-success/10 border border-success/30 rounded-zela-md text-xs text-success space-y-0.5">
           <p className="font-bold flex items-center gap-1"><ShieldCheck size={14} /> Assinatura eletrônica</p>
           <p>Assinado por {doc.signer_name} em {new Date(doc.signed_at).toLocaleString('pt-BR')}.</p>
           {doc.signature_meta?.ip && <p>Endereço IP: {doc.signature_meta.ip}</p>}

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { PageShell, Loading, EmptyState, Notice } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
-// Cadastros · Unificar responsáveis (29/09/2026). O outro pai/mãe que foi
+// Cadastros, Unificar responsáveis (29/09/2026). O outro pai/mãe que foi
 // cadastrado como Autorizado "Pai/Mãe" na conta do titular, antes de ter
 // conta própria, passa a ser um cadastro só, na conta dele. Nada é feito
 // sozinho: a Gestão escolhe e confirma; o servidor recalcula a lista na hora
@@ -109,7 +109,7 @@ export default function GestaoUnificarResponsaveis() {
                         <span className="text-xs font-bold text-primary">{acao.titulo}</span>
                         <span className="text-xs text-on-surface-variant">{acao.texto(r)}</span>
                         {!r.nome_igual && (
-                          <span className="mt-1 flex items-start gap-1.5 text-xs font-semibold text-amber-800">
+                          <span className="mt-1 flex items-start gap-1.5 text-xs font-semibold text-warning">
                             <AlertTriangle size={13} className="shrink-0 mt-px" />
                             Nome diferente: em Autorizados está "{r.legacy_name}". Confira se é a mesma pessoa antes de unificar.
                           </span>

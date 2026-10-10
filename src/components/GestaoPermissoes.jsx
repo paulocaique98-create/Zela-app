@@ -9,7 +9,7 @@ const ROLES = [
   { id: 'admin', label: 'Administrativo' },
 ];
 
-// Permissões · Perfis e Permissões. A Gestão tem tudo sempre (não dá pra se
+// Permissões, Perfis e Permissões. A Gestão tem tudo sempre (não dá pra se
 // trancar pra fora); aqui ela libera ou retira dos perfis Administrativo e
 // Professoras o acesso aos módulos novos (despesas, contratos, baixa manual…).
 // O que for liberado aparece no Portal do Admin, no grupo "Gestão".
@@ -60,52 +60,61 @@ export default function GestaoPermissoes({ currentUser }) {
   const isGestao = currentUser.role === 'gestao';
 
   return (
-    <PageShell description="O que cada perfil da equipe pode fazer nos módulos de gestão. A Gestão sempre tem acesso a tudo.">
+    <PageShell description="O que cada perfil da equipe pode fazer nos módulos de gestão. A Gestão sempre tem acesso a tudo." infoOnMobile>
       <div className="space-y-4">
         <Notice>{error}</Notice>
         {!isGestao && <Notice>Somente a Gestão altera permissões.</Notice>}
         {catalog === null ? <Loading /> : (
-          <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-zela-lg">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
-                <th className="py-3 px-4">Permissão</th>
-                <th className="py-3 px-3 text-center">Gestão</th>
-                {ROLES.map(r => <th key={r.id} className="py-3 px-3 text-center">{r.label}</th>)}
-              </tr></thead>
-              <tbody>
-                {areas.map(([area, perms]) => (
-                  <React.Fragment key={area}>
-                    <tr><td colSpan={2 + ROLES.length} className="px-4 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-primary">{area}</td></tr>
-                    {perms.map(p => (
-                      <tr key={p.permission} className="border-b border-outline-variant/50">
-                        <td className="py-2.5 px-4 text-on-surface">{p.label}</td>
-                        <td className="py-2.5 px-3 text-center"><span className="inline-flex items-center gap-1 text-xs text-on-surface-variant"><Lock size={12} /> sempre</span></td>
-                        {ROLES.map(r => {
-                          const key = `${r.id}:${p.permission}`;
-                          const on = effective(p, r.id);
-                          return (
-                            <td key={r.id} className="py-2.5 px-3 text-center">
-                              <button
-                                id={`perm-${r.id}-${p.permission}`}
-                                role="switch"
-                                aria-checked={on}
-                                aria-label={`${p.label} para ${r.label}`}
-                                disabled={!isGestao || saving === key}
-                                onClick={() => toggle(p, r.id)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-50 ${on ? 'bg-primary' : 'bg-outline-variant'}`}
-                              >
-                                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${on ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                              </button>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container font-semibold"><Lock size={12} /> A Gestão sempre tem acesso a tudo</span>
+              {ROLES.length === 1 && <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold">Ligue ou desligue para o {ROLES[0].label}</span>}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+              {areas.map(([area, perms]) => {
+                const liberadas = ROLES.length === 1 ? perms.filter(p => effective(p, ROLES[0].id)).length : null;
+                return (
+                  <section key={area} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
+                      <h3 className="text-sm font-bold text-primary">{area}</h3>
+                      {liberadas !== null && (
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${liberadas ? 'bg-success/10 text-success' : 'bg-surface-container text-on-surface-variant'}`}>{liberadas} de {perms.length} liberada{perms.length !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                    <ul className="divide-y divide-outline-variant/50">
+                      {perms.map(p => (
+                        <li key={p.permission} className="flex items-center justify-between gap-3 px-4 py-3">
+                          <span className="text-sm text-on-surface min-w-0">{p.label}</span>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {ROLES.map(r => {
+                              const key = `${r.id}:${p.permission}`;
+                              const on = effective(p, r.id);
+                              return (
+                                <div key={r.id} className="flex items-center gap-2">
+                                  {ROLES.length > 1 && <span className="text-[11px] text-on-surface-variant">{r.label}</span>}
+                                  <button
+                                    id={`perm-${r.id}-${p.permission}`}
+                                    role="switch"
+                                    aria-checked={on}
+                                    aria-label={`${p.label} para ${r.label}`}
+                                    disabled={!isGestao || saving === key}
+                                    onClick={() => toggle(p, r.id)}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50 ${on ? 'bg-primary' : 'bg-outline-variant'}`}
+                                  >
+                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow transition ${on ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          </>
         )}
         <p className="text-xs text-on-surface-variant">
           O que você liberar aqui aparece no Portal do Administrativo, no menu "Gestão" (no próximo acesso ou ao recarregar a página). As telas que já existiam antes (alunos, matrículas, presença) seguem as regras fixas de cada perfil.

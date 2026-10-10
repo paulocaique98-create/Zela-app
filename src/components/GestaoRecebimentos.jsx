@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Upload, Download, HandCoins, Landmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Upload, Download, HandCoins, Landmark } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { centsToBRL, formatDateBR, monthRange, parseOFXCredits, downloadCSV } from '../lib/gestaoUtils';
 import { PageShell, Tabs, Loading, EmptyState, Notice, SecondaryButton, ResponsiveTable } from './GestaoShared';
@@ -8,14 +8,14 @@ import { RegistrarPagamentoModal } from './AdminFinanceiro';
 const METHOD_LABELS = { pix: 'PIX', boleto: 'Boleto', credit_card: 'Cartão', link: 'Link', cash: 'Dinheiro', transfer: 'Transferência', other: 'Outro' };
 const MANUAL = ['cash', 'transfer', 'other'];
 
-// Financeiro · Recebimentos e Conciliação. Pelo Asaas, a baixa já é
+// Financeiro, Recebimentos e Conciliação. Pelo Asaas, a baixa já é
 // automática (e confirmada direto com o Asaas); aqui fica o que entra por
 // fora: baixa manual e conferência do extrato bancário (OFX).
 export default function GestaoRecebimentos({ currentUser }) {
   const [tab, setTab] = useState('recebidos');
   return (
-    <PageShell description="Pagamentos recebidos e conferência com o extrato do banco.">
-      <Tabs tabs={[{ id: 'recebidos', label: 'Recebidos no mês' }, { id: 'conciliar', label: 'Conciliar extrato' }]} active={tab} onChange={setTab} />
+    <PageShell infoOnMobile description="Pagamentos recebidos e conferência com o extrato do banco.">
+      <Tabs tabs={[{ id: 'recebidos', label: 'Recebidos no mês' }, { id: 'conciliar', label: 'Conciliar extrato' }]} active={tab} onChange={setTab} equalOnMobile />
       {tab === 'recebidos' ? <Recebidos currentUser={currentUser} /> : <Conciliar currentUser={currentUser} />}
     </PageShell>
   );
@@ -42,14 +42,17 @@ function Recebidos({ currentUser }) {
   const total = (rows || []).reduce((s, r) => s + r.amount_cents, 0);
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2">
         <div className="flex items-center gap-2">
-          <SecondaryButton onClick={() => setOffset(o => o - 1)} aria-label="Mês anterior">‹</SecondaryButton>
-          <span className="text-sm font-bold text-on-surface capitalize w-24 text-center">{range.label}</span>
-          <SecondaryButton onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0} aria-label="Próximo mês">›</SecondaryButton>
+          <SecondaryButton onClick={() => setOffset(o => o - 1)} aria-label="Mês anterior"><ChevronLeft size={18} aria-hidden="true" /></SecondaryButton>
+          <span className="flex-1 sm:flex-none text-sm font-bold text-on-surface capitalize sm:w-24 text-center">{range.label}</span>
+          <SecondaryButton onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0} aria-label="Próximo mês"><ChevronRight size={18} aria-hidden="true" /></SecondaryButton>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-on-surface-variant">Total: <strong className="text-emerald-700">{centsToBRL(total)}</strong></span>
+        <div className="flex items-center justify-between sm:justify-start gap-3 bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3 sm:bg-transparent sm:border-0 sm:rounded-none sm:p-0">
+          <div className="flex flex-col sm:block text-on-surface-variant">
+            <span className="text-xs sm:text-sm">Total<span className="sm:hidden"> recebido no mês</span><span className="hidden sm:inline">:</span>{' '}</span>
+            <strong className="text-success text-h3 sm:text-sm">{centsToBRL(total)}</strong>
+          </div>
           {rows?.length > 0 && (
             <SecondaryButton onClick={() => downloadCSV(`recebimentos-${range.start.slice(0, 7)}.csv`, rows, [
               { label: 'Aluno', value: r => r.students?.name || '' }, { label: 'Vencimento', value: r => formatDateBR(r.due_date) },
@@ -70,7 +73,7 @@ function Recebidos({ currentUser }) {
             { label: 'Forma', render: r => (
               <>
                 {METHOD_LABELS[r.payment_method] || '·'}
-                {MANUAL.includes(r.payment_method) && <span className="ml-1.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full">baixa manual</span>}
+                {MANUAL.includes(r.payment_method) && <span className="ml-1.5 text-[10px] font-bold bg-warning/10 text-warning border border-warning/30 px-1.5 py-0.5 rounded-sm">baixa manual</span>}
               </>
             ) },
             { label: 'Valor', align: 'right', className: 'font-bold', render: r => centsToBRL(r.amount_cents) },
@@ -125,17 +128,17 @@ function Conciliar({ currentUser }) {
         <ResponsiveTable
           rows={credits}
           columns={[
-            { label: 'Valor', primary: true, render: cr => `${centsToBRL(cr.amount_cents)} · ${formatDateBR(cr.date)}` },
+            { label: 'Valor', primary: true, render: cr => `${centsToBRL(cr.amount_cents)}, ${formatDateBR(cr.date)}` },
             { label: 'Descrição no extrato', className: 'text-on-surface-variant', render: cr => cr.memo || '·' },
             { label: 'Cobrança sugerida', render: cr => {
               const cands = candidatesFor(cr);
-              if (done.has(cr.id)) return <span className="text-xs font-bold text-emerald-700">Baixa feita</span>;
+              if (done.has(cr.id)) return <span className="text-xs font-bold text-success">Baixa feita</span>;
               if (cands.length === 0) return <span className="text-xs text-on-surface-variant inline-flex items-center gap-1"><Landmark size={12} /> Sem cobrança correspondente</span>;
               return (
                 <div className="space-y-1">
                   {cands.slice(0, 3).map(c => (
                     <button key={c.id} onClick={() => setPaying({ charge: c, credit: cr })} className="block text-left text-xs font-bold text-primary hover:underline">
-                      {c.students?.name || 'Aluno'} · vence {formatDateBR(c.due_date)}
+                      {c.students?.name || 'Aluno'}, vence {formatDateBR(c.due_date)}
                     </button>
                   ))}
                 </div>

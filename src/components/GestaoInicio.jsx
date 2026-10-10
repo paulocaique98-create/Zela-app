@@ -88,7 +88,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
           )}
         </div>
 
-        <h2 className="text-sm font-bold uppercase tracking-wide text-on-surface-variant mb-3">Acesso rápido</h2>
+        <h2 className="text-sm font-bold text-on-surface-variant mb-3">Acesso rápido</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {menus.map(menu => (
             <button
@@ -97,7 +97,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
               className="bg-surface-container-lowest p-4 rounded-zela-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-start gap-3 text-left relative"
             >
               {menu.badge && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-black rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-md">
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-md">
                   {menu.badge}
                 </span>
               )}

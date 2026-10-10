@@ -9,7 +9,7 @@ import {
 } from '../lib/qualidadeFoto';
 import { PageShell, Loading, EmptyState, Notice, StatCard, ResponsiveTable, PrimaryButton, SecondaryButton, inputCls } from './GestaoShared';
 
-// Cadastros · Qualidade da biometria (01/10/2026). Mede as fotos de rosto já
+// Cadastros, Qualidade da biometria (01/10/2026). Mede as fotos de rosto já
 // guardadas da escola (resolução, tamanho do rosto, brilho e nitidez) aqui
 // no navegador da escola e grava SÓ os números em
 // authorized_persons.foto_qualidade. Nenhuma foto sai da escola; o suporte
@@ -41,8 +41,8 @@ async function medirFotoGuardada(link) {
 
 const ROTULO_SITUACAO = { ok: 'Boa', refazer: 'Refazer', sem_analise: 'Sem análise' };
 const ESTILO_SITUACAO = {
-  ok: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  refazer: 'bg-amber-50 text-amber-800 border-amber-300',
+  ok: 'bg-success/10 text-success border-success/30',
+  refazer: 'bg-warning/10 text-warning border-warning/30',
   sem_analise: 'bg-surface-container-low text-on-surface-variant border-outline-variant',
 };
 const ORDEM_SITUACAO = { refazer: 0, sem_analise: 1, ok: 2 };
@@ -50,7 +50,7 @@ const ORDEM_SITUACAO = { refazer: 0, sem_analise: 1, ok: 2 };
 // iria inteiro a cada mudança), então a lista é relida de tempos em tempos.
 const ATUALIZAR_A_CADA_MS = 15 * 1000;
 
-export default function GestaoQualidadeBiometria({ currentUser }) {
+export default function GestaoQualidadeBiometria({ currentUser, abasMobile = null }) {
   const [pessoas, setPessoas] = useState(null);
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
@@ -151,7 +151,7 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
         setProgresso(prev => (prev ? { ...prev, feitos: prev.feitos + 1 } : prev));
       }
       const interrompida = interromperRef.current;
-      setAviso(`${interrompida ? 'Análise interrompida. ' : ''}${analisadas} ${analisadas === 1 ? 'foto analisada' : 'fotos analisadas'}${falhas ? ` · ${falhas} não ${falhas === 1 ? 'pôde' : 'puderam'} ser aberta${falhas === 1 ? '' : 's'}` : ''}.`);
+      setAviso(`${interrompida ? 'Análise interrompida. ' : ''}${analisadas} ${analisadas === 1 ? 'foto analisada' : 'fotos analisadas'}${falhas ? `, ${falhas} não ${falhas === 1 ? 'pôde' : 'puderam'} ser aberta${falhas === 1 ? '' : 's'}` : ''}.`);
     } catch (e) {
       setErro(e.message || 'Não foi possível analisar as fotos agora.');
     } finally {
@@ -196,11 +196,11 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
       </div>
     ) },
     { label: 'Situação', render: p => (
-      <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full border ${ESTILO_SITUACAO[p.situacao]}`}>{ROTULO_SITUACAO[p.situacao]}</span>
+      <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-sm border ${ESTILO_SITUACAO[p.situacao]}`}>{ROTULO_SITUACAO[p.situacao]}</span>
     ) },
     { label: 'Motivo', render: p => (
       !p.tem_biometria ? 'Sem biometria cadastrada'
-        : p.codigos.length ? p.codigos.map(c => PROBLEMAS_DA_FOTO[c]).join(' · ')
+        : p.codigos.length ? p.codigos.map(c => PROBLEMAS_DA_FOTO[c]).join(', ')
           : (p.photo_storage_path ? '·' : 'Sem foto guardada')
     ) },
     { label: 'Foto', hideOnMobile: true, className: 'whitespace-nowrap tabular-nums', render: p => (p.foto_qualidade?.largura_px ? `${p.foto_qualidade.largura_px}×${p.foto_qualidade.altura_px}` : '·') },
@@ -222,26 +222,47 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
     ) },
   ];
 
+  const btnRefazer = { onClick: () => analisarGrupo(grupos.refazer, 'Convém refazer'), disabled: ocupado || grupos.refazer.length === 0 };
+  const btnSemAnalise = { onClick: () => analisarGrupo(grupos.sem_analise, 'Sem análise'), disabled: ocupado || grupos.sem_analise.length === 0 };
+  const btnTodas = { onClick: () => analisarGrupo(grupos.todas, 'Todas'), disabled: ocupado || grupos.todas.length === 0 };
+  const interromper = () => { interromperRef.current = true; };
+
   return (
     <PageShell
+      infoOnMobile
+      afterInfo={abasMobile ? <div className="sm:hidden">{abasMobile}</div> : null}
       description="Mede as fotos de rosto já cadastradas e mostra quem se beneficia de cadastrar o rosto de novo. Só números são guardados; nenhuma foto sai da escola."
       actions={progresso ? (
-        <SecondaryButton onClick={() => { interromperRef.current = true; }}><Square size={15} /> Interromper</SecondaryButton>
+        <SecondaryButton onClick={interromper}><Square size={15} /> Interromper</SecondaryButton>
       ) : (
         <>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/80">Analisar</span>
-          <PrimaryButton onClick={() => analisarGrupo(grupos.refazer, 'Convém refazer')} disabled={ocupado || grupos.refazer.length === 0}><Play size={15} /> Convém refazer ({grupos.refazer.length})</PrimaryButton>
-          <SecondaryButton onClick={() => analisarGrupo(grupos.sem_analise, 'Sem análise')} disabled={ocupado || grupos.sem_analise.length === 0}><Play size={15} /> Sem análise ({grupos.sem_analise.length})</SecondaryButton>
-          <SecondaryButton onClick={() => analisarGrupo(grupos.todas, 'Todas')} disabled={ocupado || grupos.todas.length === 0}><Play size={15} /> Todas ({grupos.todas.length})</SecondaryButton>
+          <span className="text-[11px] font-bold text-on-surface-variant/80">Analisar</span>
+          <PrimaryButton {...btnRefazer}><Play size={15} /> Convém refazer ({grupos.refazer.length})</PrimaryButton>
+          <SecondaryButton {...btnSemAnalise}><Play size={15} /> Sem análise ({grupos.sem_analise.length})</SecondaryButton>
+          <SecondaryButton {...btnTodas}><Play size={15} /> Todas ({grupos.todas.length})</SecondaryButton>
         </>
       )}
     >
       <div className="space-y-4">
+      <div className="sm:hidden bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-3 space-y-2">
+        {progresso ? (
+          <SecondaryButton className="w-full justify-center h-10" onClick={interromper}><Square size={15} /> Interromper</SecondaryButton>
+        ) : (
+          <>
+            <p className="text-xs font-semibold text-on-surface-variant">Analisar fotos</p>
+            <PrimaryButton className="w-full justify-center h-10" {...btnRefazer}><Play size={15} /> Convém refazer ({grupos.refazer.length})</PrimaryButton>
+            <div className="grid grid-cols-2 gap-2">
+              <SecondaryButton className="justify-center h-10 whitespace-nowrap [&>svg]:shrink-0" {...btnSemAnalise}><Play size={15} /> Sem análise ({grupos.sem_analise.length})</SecondaryButton>
+              <SecondaryButton className="justify-center h-10 whitespace-nowrap [&>svg]:shrink-0" {...btnTodas}><Play size={15} /> Todas ({grupos.todas.length})</SecondaryButton>
+            </div>
+          </>
+        )}
+      </div>
       <Notice>{erro}</Notice>
       {aviso && <Notice type="success">{aviso}</Notice>}
       {progresso && (
         <div className="p-3 rounded-zela-md border border-outline-variant bg-surface-container-low text-sm text-on-surface">
-          Analisando {Math.min(progresso.feitos + 1, progresso.total)} de {progresso.total} · {progresso.rotulo}… Pode continuar usando o sistema em outra aba.
+          Analisando {Math.min(progresso.feitos + 1, progresso.total)} de {progresso.total}, {progresso.rotulo}… Pode continuar usando o sistema em outra aba.
           <div className="mt-2 h-1.5 rounded-full bg-outline-variant/40 overflow-hidden">
             <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((progresso.feitos / progresso.total) * 100)}%` }} />
           </div>
@@ -257,12 +278,12 @@ export default function GestaoQualidadeBiometria({ currentUser }) {
             <StatCard label="Convém refazer" value={resumo.refazer} tone={resumo.refazer ? 'warn' : 'default'} />
             <StatCard label="Sem análise" value={resumo.sem_analise} hint={resumo.sem_biometria ? `${resumo.sem_biometria} sem biometria` : undefined} />
           </div>
-          <p className="text-xs text-on-surface-variant">
+          <p className="hidden sm:block text-xs text-on-surface-variant">
             Para refazer, cadastre o rosto da pessoa de novo (Recepção ou portal da família). O cadastro novo já usa a melhor resolução da câmera e confere a qualidade antes de salvar. Pessoa nova ou com a biometria retirada fica em Sem análise até cadastrar o rosto. A lista se atualiza sozinha.
           </p>
-          <div className="relative max-w-sm">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
-            <input id="biometria-busca" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar pessoa pelo nome" aria-label="Buscar pessoa pelo nome" className={`${inputCls} pl-9`} />
+          <div className="relative sm:max-w-sm">
+            <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+            <input id="biometria-busca" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar pessoa pelo nome" aria-label="Buscar pessoa pelo nome" className="w-full h-10 pl-9 pr-3 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           {linhasVisiveis.length === 0 ? (
             <p className="text-sm text-on-surface-variant">Ninguém encontrado com esse nome.</p>

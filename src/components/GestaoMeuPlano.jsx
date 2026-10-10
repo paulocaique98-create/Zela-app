@@ -38,14 +38,14 @@ export default function GestaoMeuPlano() {
     <PageShell description="O plano contratado pela escola com o Zela Escola.">
       <div className="max-w-2xl space-y-4">
         {dias !== null && dias <= 30 && (
-          <div className={`flex items-center gap-2 text-small px-4 py-3 rounded-lg border ${dias < 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+          <div className={`flex items-center gap-2 text-small px-4 py-3 rounded-lg border ${dias < 0 ? 'bg-error/10 border-error/30 text-error' : 'bg-warning/10 border-warning/30 text-warning'}`}>
             {dias < 0 ? <AlertTriangle size={16} /> : <CalendarClock size={16} />}
             {dias < 0 ? 'A contratação venceu. Fale com o suporte do Zela Escola para renovar.' : `A contratação vence em ${dias} dia(s).`}
           </div>
         )}
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-5">
           <p className="text-lg font-bold text-on-surface">{plano.plano}</p>
-          <p className="text-small text-on-surface-variant mb-3">{plano.modalidade === 'por_aluno' ? 'Cobrança por aluno' : 'Pacote'} · ciclo {ciclo.toLowerCase()}</p>
+          <p className="text-small text-on-surface-variant mb-3">{plano.modalidade === 'por_aluno' ? 'Cobrança por aluno' : 'Pacote'}, ciclo {ciclo.toLowerCase()}</p>
           <dl>
             {linha('Alunos contratados', plano.alunos_contratados)}
             {linha('Mensalidade', brl(plano.valor_mensal))}

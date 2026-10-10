@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ResponsiveTable } from './GestaoShared';
-import { Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
+import { ListFilter, ChevronDown, Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
@@ -16,20 +16,20 @@ const CYCLES = ['MONTHLY', 'QUARTERLY', 'SEMIANNUALLY', 'YEARLY'];
 
 const CONTRACT_STATUS_LABELS = { active: 'Ativo', paused: 'Pausado', cancelled: 'Cancelado' };
 const CONTRACT_STATUS_CLASSES = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  paused: 'bg-amber-50 text-amber-700 border-amber-200',
-  cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
+  active: 'bg-success/10 text-success border-success/30',
+  paused: 'bg-warning/10 text-warning border-warning/30',
+  cancelled: 'bg-surface-container text-on-surface-variant border-outline-variant',
 };
 
 export const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', AWAITING_PAYMENT: 'Aguardando', PAID: 'Pago', OVERDUE: 'Atrasado', CANCELLED: 'Cancelado', REFUNDED: 'Estornado', FAILED: 'Falhou' };
 const CHARGE_STATUS_CLASSES = {
-  PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
-  AWAITING_PAYMENT: 'bg-blue-50 text-blue-700 border-blue-200',
-  PAID: 'bg-green-50 text-green-700 border-green-200',
-  OVERDUE: 'bg-red-50 text-red-700 border-red-200',
-  CANCELLED: 'bg-slate-100 text-slate-500 border-slate-200',
-  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200',
-  FAILED: 'bg-red-50 text-red-700 border-red-200',
+  PENDING: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  AWAITING_PAYMENT: 'bg-primary/10 text-primary border-primary/30',
+  PAID: 'bg-success/10 text-success border-success/30',
+  OVERDUE: 'bg-error/10 text-error border-error/30',
+  CANCELLED: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  REFUNDED: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  FAILED: 'bg-error/10 text-error border-error/30',
 };
 
 function centsToBRL(cents) {
@@ -46,7 +46,7 @@ export default function AdminFinanceiro({ currentUser, currentSchool }) {
   const [tab, setTab] = useState('contratos');
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-3 md:p-4 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-3 md:p-4 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Título "Financeiro" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); sub-abas ganham o espaço. */}
 
@@ -128,14 +128,14 @@ export function ContratosTab({ currentUser }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-on-surface-variant">Mensalidades dos alunos, cobradas automaticamente pelo Asaas. O preço vem de Financeiro · Planos.</p>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={fetchContracts} title="Atualizar" className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition">
+        <p className="hidden sm:block text-xs text-on-surface-variant">Mensalidades dos alunos, cobradas automaticamente pelo Asaas. O preço vem de Financeiro, Planos.</p>
+        <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0">
+          <button onClick={fetchContracts} title="Atualizar" className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition">
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-sm"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-sm"
           >
             <Plus size={16} /> Nova mensalidade
           </button>
@@ -143,7 +143,7 @@ export function ContratosTab({ currentUser }) {
       </div>
 
       {errorMsg && (
-        <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+        <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
           <AlertCircle size={16} className="shrink-0" /> {errorMsg}
         </div>
       )}
@@ -170,7 +170,7 @@ export function ContratosTab({ currentUser }) {
             {
               label: 'Status',
               render: c => (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CONTRACT_STATUS_CLASSES[c.status] || ''}`}>
+                <span className={`px-2 py-0.5 rounded-sm text-xs font-bold border ${CONTRACT_STATUS_CLASSES[c.status] || ''}`}>
                   {CONTRACT_STATUS_LABELS[c.status] || c.status}
                 </span>
               ),
@@ -178,7 +178,7 @@ export function ContratosTab({ currentUser }) {
             {
               label: '', actions: true, align: 'right',
               render: c => c.status === 'active' && (
-                <button onClick={() => setCancelTarget(c)} className="text-xs font-bold text-red-600 hover:bg-red-50 px-2 py-1 rounded-zela-md transition">
+                <button onClick={() => setCancelTarget(c)} className="text-xs font-bold text-error hover:bg-error/10 px-2 py-1 rounded-zela-md transition">
                   Cancelar
                 </button>
               ),
@@ -271,74 +271,74 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
   const previa = (() => {
     if (!linha) return null;
     if (linha.situacao === 'pronto' && usaTabela) {
-      return { tom: 'ok', texto: `Tabela de ${ano} · ${rotuloDoPlano(linha.ciclo, linha.turno)}: ${centsToBRL(linha.mensalCents)} por mês${linha.descontoPercent ? ` · desconto da família ${linha.descontoPercent}%` : ''}.`, valor: linha.valorDoCicloCents };
+      return { tom: 'ok', texto: `Tabela de ${ano}, ${rotuloDoPlano(linha.ciclo, linha.turno)}: ${centsToBRL(linha.mensalCents)} por mês${linha.descontoPercent ? `, desconto da família ${linha.descontoPercent}%` : ''}.`, valor: linha.valorDoCicloCents };
     }
     if (digitar && manualCents > 0 && !bloqueado) {
       const cents = Math.round(manualCents * ({ MONTHLY: 1, QUARTERLY: 3, SEMIANNUALLY: 6, YEARLY: 12 }[form.billing_cycle]) * (1 - (linha.descontoPercent || 0) / 100));
-      return { tom: 'ok', texto: `Valor digitado: ${centsToBRL(manualCents)} por mês${linha.descontoPercent ? ` · desconto da família ${linha.descontoPercent}%` : ''}.`, valor: cents };
+      return { tom: 'ok', texto: `Valor digitado: ${centsToBRL(manualCents)} por mês${linha.descontoPercent ? `, desconto da família ${linha.descontoPercent}%` : ''}.`, valor: cents };
     }
     if (linha.situacao === 'sem_preco') return { tom: 'aviso', texto: `${mensagemSemPreco(linha.ciclo, linha.turno, ano)} Ou digite o valor mensal abaixo.` };
-    if (linha.situacao === 'sem_plano') return { tom: 'aviso', texto: `Aluno sem ${linha.faltando.join(' e sem ')} no cadastro. Complete em Financeiro · Planos ou digite o valor mensal abaixo.` };
+    if (linha.situacao === 'sem_plano') return { tom: 'aviso', texto: `Aluno sem ${linha.faltando.join(' e sem ')} no cadastro. Complete em Financeiro, Planos ou digite o valor mensal abaixo.` };
     return { tom: 'erro', texto: `${ROTULO_SITUACAO_DA_MENSALIDADE[linha.situacao]}${linha.situacao === 'bolsista' ? `: ${linha.responsavelNome || 'a família'} não recebe cobrança.` : '.'}` };
   })();
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-surface-container-lowest rounded-zela-xl shadow-lg p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg text-on-surface">Nova mensalidade</h3>
-          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
+          <h3 className="font-semibold text-lg text-on-surface">Nova mensalidade</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md transition"><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="nm-aluno" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Aluno</label>
+            <label htmlFor="nm-aluno" className="block text-xs font-bold text-on-surface-variant mb-1">Aluno</label>
             <select
               id="nm-aluno"
               required
               value={form.student_id}
               onChange={e => setForm({ ...form, student_id: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               disabled={!ctx}
             >
               <option value="">{ctx ? 'Selecione um aluno' : 'Carregando alunos...'}</option>
-              {linhas.map(l => <option key={l.aluno.id} value={l.aluno.id}>{l.aluno.name} · {rotuloDoPlano(l.ciclo, l.turno)}{l.situacao === 'ja_tem' ? ' · já tem mensalidade' : ''}</option>)}
+              {linhas.map(l => <option key={l.aluno.id} value={l.aluno.id}>{l.aluno.name}, {rotuloDoPlano(l.ciclo, l.turno)}{l.situacao === 'ja_tem' ? ', já tem mensalidade' : ''}</option>)}
             </select>
-            {ctx && ctx.alunos.length === 0 && <p className="text-xs text-amber-600 mt-1">Nenhum aluno ativo cadastrado ainda nesta escola.</p>}
+            {ctx && ctx.alunos.length === 0 && <p className="text-xs text-warning mt-1">Nenhum aluno ativo cadastrado ainda nesta escola.</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="nm-periodicidade" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Periodicidade</label>
+              <label htmlFor="nm-periodicidade" className="block text-xs font-bold text-on-surface-variant mb-1">Periodicidade</label>
               <select
                 id="nm-periodicidade"
                 value={form.billing_cycle}
                 onChange={e => setForm({ ...form, billing_cycle: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               >
                 {CYCLES.map(c => <option key={c} value={c}>{CYCLE_LABELS[c]}</option>)}
               </select>
             </div>
             <div>
-              <label htmlFor="nm-vencimento" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">1º Vencimento</label>
+              <label htmlFor="nm-vencimento" className="block text-xs font-bold text-on-surface-variant mb-1">1º Vencimento</label>
               <input
                 id="nm-vencimento"
                 required
                 type="date"
                 value={form.first_due_date}
                 onChange={e => setForm({ ...form, first_due_date: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
           </div>
 
           {previa && (
-            <div className={`p-3 rounded-zela-md border text-sm ${previa.tom === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : previa.tom === 'aviso' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-red-50 border-red-200 text-red-800'}`}>
+            <div className={`p-3 rounded-zela-md border text-sm ${previa.tom === 'ok' ? 'bg-success/10 border-success/30 text-success' : previa.tom === 'aviso' ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-error/10 border-error/30 text-error'}`}>
               <p>{previa.texto}</p>
               {previa.valor ? (
                 <p className="mt-1 font-bold">
                   Cada cobrança {CYCLE_LABELS[form.billing_cycle].toLowerCase()}: {centsToBRL(previa.valor)}
-                  {form.billing_cycle !== 'MONTHLY' && <span className="font-normal"> · {centsToBRL(valorMensalEquivalente(previa.valor, form.billing_cycle))} por mês</span>}
+                  {form.billing_cycle !== 'MONTHLY' && <span className="font-normal">, {centsToBRL(valorMensalEquivalente(previa.valor, form.billing_cycle))} por mês</span>}
                 </p>
               ) : null}
             </div>
@@ -350,7 +350,7 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
           </label>
           {digitar && (
             <div>
-              <label htmlFor="nm-valor" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Valor mensal (R$)</label>
+              <label htmlFor="nm-valor" className="block text-xs font-bold text-on-surface-variant mb-1">Valor mensal (R$)</label>
               <input
                 id="nm-valor"
                 type="text"
@@ -358,19 +358,19 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
                 placeholder="Ex: 850,00"
                 value={valorManual}
                 onChange={e => setValorManual(e.target.value)}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               />
               <p className="text-[11px] text-on-surface-variant/70 mt-1">O desconto da família continua sendo aplicado. A mensalidade fica marcada como valor digitado.</p>
             </div>
           )}
 
           <div>
-            <label htmlFor="nm-forma" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Forma de pagamento</label>
+            <label htmlFor="nm-forma" className="block text-xs font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
             <select
               id="nm-forma"
               value={form.billing_type}
               onChange={e => setForm({ ...form, billing_type: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
             >
               <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
               <option value="PIX">PIX</option>
@@ -379,25 +379,25 @@ function NovoContratoModal({ currentUser, onClose, onCreated }) {
           </div>
 
           <div>
-            <label htmlFor="nm-descricao" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição (opcional)</label>
+            <label htmlFor="nm-descricao" className="block text-xs font-bold text-on-surface-variant mb-1">Descrição (opcional)</label>
             <input
               id="nm-descricao"
               type="text"
-              placeholder="Ex: Mensalidade · Turma Infantil II"
+              placeholder="Ex: Mensalidade, Turma Infantil II"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
             />
           </div>
 
           {errorMsg && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" /> {errorMsg}
             </div>
           )}
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
               Cancelar
             </button>
             <button type="submit" disabled={isSaving || !podeEnviar} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
@@ -437,14 +437,14 @@ function AguardandoMensalidade({ currentUser, versao, onCriou }) {
 
   useEffect(() => { setMarcados(m => Object.fromEntries(prontas.map(l => [l.aluno.id, m[l.aluno.id] ?? true]))); }, [ctx, ano, periodicidade]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!ctx) return erro ? <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{erro}</div> : null;
+  if (!ctx) return erro ? <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{erro}</div> : null;
   // Terminou o último aluno: a lista some, mas o resultado continua visível.
   if (linhas.length === 0) {
     if (!resumo) return null;
     return (
       <div className="space-y-1">
-        <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}. Não há mais alunos aguardando.</div>
-        {resumo.falhas.length > 0 && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{resumo.falhas.join(' · ')}</div>}
+        <div className="p-2 bg-success/10 border border-success/30 rounded-zela-md text-sm text-success font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}. Não há mais alunos aguardando.</div>
+        {resumo.falhas.length > 0 && <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{resumo.falhas.join(', ')}</div>}
       </div>
     );
   }
@@ -478,36 +478,36 @@ function AguardandoMensalidade({ currentUser, versao, onCriou }) {
   };
 
   return (
-    <div className="border border-amber-200 bg-amber-50/50 rounded-zela-lg">
+    <div className="border border-warning/30 bg-warning/10 rounded-zela-lg">
       <button type="button" onClick={() => setAberto(a => !a)} className="w-full flex items-center justify-between gap-2 p-3 text-left">
         <span className="text-sm font-bold text-on-surface">Alunos aguardando mensalidade ({linhas.length})</span>
-        <span className="text-xs text-on-surface-variant">{prontas.length} {prontas.length === 1 ? 'pronto' : 'prontos'} · {aberto ? 'recolher' : 'ver'}</span>
+        <span className="text-xs text-on-surface-variant">{prontas.length} {prontas.length === 1 ? 'pronto' : 'prontos'}, {aberto ? 'recolher' : 'ver'}</span>
       </button>
       {aberto && (
         <div className="p-3 pt-0 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label htmlFor="ag-periodicidade" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Periodicidade</label>
-              <select id="ag-periodicidade" value={periodicidade} onChange={e => setPeriodicidade(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm">
+              <label htmlFor="ag-periodicidade" className="block text-[11px] font-bold text-on-surface-variant mb-1">Periodicidade</label>
+              <select id="ag-periodicidade" value={periodicidade} onChange={e => setPeriodicidade(e.target.value)} className="w-full p-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm">
                 {CYCLES.map(c => <option key={c} value={c}>{CYCLE_LABELS[c]}</option>)}
               </select>
             </div>
             <div>
-              <label htmlFor="ag-vencimento" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">1º vencimento</label>
-              <input id="ag-vencimento" type="date" value={vencimento} onChange={e => setVencimento(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm" />
+              <label htmlFor="ag-vencimento" className="block text-[11px] font-bold text-on-surface-variant mb-1">1º vencimento</label>
+              <input id="ag-vencimento" type="date" value={vencimento} onChange={e => setVencimento(e.target.value)} className="w-full p-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm" />
             </div>
             <div>
-              <label htmlFor="ag-forma" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Forma de pagamento</label>
-              <select id="ag-forma" value={forma} onChange={e => setForma(e.target.value)} className="w-full p-2 bg-white border border-outline-variant rounded-zela-md text-sm">
+              <label htmlFor="ag-forma" className="block text-[11px] font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
+              <select id="ag-forma" value={forma} onChange={e => setForma(e.target.value)} className="w-full p-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm">
                 <option value="UNDEFINED">Link de pagamento</option>
                 <option value="PIX">PIX</option>
                 <option value="BOLETO">Boleto</option>
               </select>
             </div>
           </div>
-          <p className="text-[11px] text-on-surface-variant">Preços da tabela de {ano}. O desconto de cada família entra sozinho. Quem estiver sem preço ou sem ciclo e turno se resolve em Financeiro · Planos.</p>
+          <p className="text-[11px] text-on-surface-variant">Preços da tabela de {ano}. O desconto de cada família entra sozinho. Quem estiver sem preço ou sem ciclo e turno se resolve em Financeiro, Planos.</p>
 
-          <ul className="divide-y divide-outline-variant/60 bg-white rounded-zela-md border border-outline-variant">
+          <ul className="divide-y divide-outline-variant/60 bg-surface-container-lowest rounded-zela-md border border-outline-variant">
             {linhas.map(l => (
               <li key={l.aluno.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
                 {l.situacao === 'pronto' ? (
@@ -518,10 +518,10 @@ function AguardandoMensalidade({ currentUser, versao, onCriou }) {
                 {l.situacao === 'pronto' ? (
                   <span className="text-xs tabular-nums whitespace-nowrap">
                     <strong>{centsToBRL(l.valorDoCicloCents)}</strong>
-                    {l.descontoPercent ? <span className="text-on-surface-variant"> · desconto {l.descontoPercent}%</span> : null}
+                    {l.descontoPercent ? <span className="text-on-surface-variant">, desconto {l.descontoPercent}%</span> : null}
                   </span>
                 ) : (
-                  <span className="text-xs font-bold text-amber-800 whitespace-nowrap">
+                  <span className="text-xs font-bold text-warning whitespace-nowrap">
                     {l.situacao === 'sem_preco' && l.ciclo && l.turno ? mensagemSemPreco(l.ciclo, l.turno, ano) : l.situacao === 'sem_plano' ? `Sem ${l.faltando.join(' e sem ')}` : ROTULO_SITUACAO_DA_MENSALIDADE[l.situacao]}
                   </span>
                 )}
@@ -529,11 +529,11 @@ function AguardandoMensalidade({ currentUser, versao, onCriou }) {
             ))}
           </ul>
 
-          {erro && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2"><AlertCircle size={16} className="shrink-0" /> {erro}</div>}
+          {erro && <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2"><AlertCircle size={16} className="shrink-0" /> {erro}</div>}
           {resumo && (
             <div className="space-y-1">
-              <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}.</div>
-              {resumo.falhas.length > 0 && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{resumo.falhas.join(' · ')}</div>}
+              <div className="p-2 bg-success/10 border border-success/30 rounded-zela-md text-sm text-success font-medium flex items-center gap-2"><CheckCircle2 size={16} className="shrink-0" /> {resumo.criados} {resumo.criados === 1 ? 'mensalidade criada' : 'mensalidades criadas'}.</div>
+              {resumo.falhas.length > 0 && <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{resumo.falhas.join(', ')}</div>}
             </div>
           )}
 
@@ -615,32 +615,40 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-on-surface-variant uppercase">Status</label>
+          <label htmlFor="charge-status" className="hidden sm:block text-xs font-bold text-on-surface-variant">Status</label>
+          <div className="relative flex-1 sm:flex-none">
+          <ListFilter size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
           <select
+            id="charge-status"
+            aria-label="Status"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="p-1.5 bg-white border border-outline-variant rounded-zela-md text-sm"
+            className={`w-full sm:w-44 h-10 appearance-none cursor-pointer pl-9 pr-9 py-0 border rounded-zela-md text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary ${
+              statusFilter !== 'all' ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-low'
+            }`}
           >
             <option value="all">Todos</option>
             {Object.keys(CHARGE_STATUS_LABELS).map(s => <option key={s} value={s}>{CHARGE_STATUS_LABELS[s]}</option>)}
           </select>
+          <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={fetchCharges} title="Atualizar" className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:shrink-0">
+          <button onClick={fetchCharges} title="Atualizar" className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition">
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={handleReprocess}
             disabled={isReprocessing}
             title="Tenta sincronizar novamente eventos de webhook que ainda não viraram cobrança"
-            className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-primary/10 hover:text-primary border border-outline-variant text-on-surface-variant font-bold rounded-zela-md transition text-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 h-10 sm:h-auto px-3 sm:py-2 bg-surface-container-low hover:bg-primary/10 hover:text-primary border border-outline-variant text-on-surface-variant font-bold rounded-zela-md transition text-sm whitespace-nowrap disabled:opacity-50"
           >
             {isReprocessing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-            Reprocessar pendências
+            Reprocessar<span className="hidden sm:inline">&nbsp;pendências</span>
           </button>
           <button
             onClick={() => setIsAvulsaModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-sm"
+            className="flex items-center justify-center gap-1.5 h-10 sm:h-auto px-3 sm:py-2 whitespace-nowrap bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-sm"
           >
             <Plus size={16} /> Cobrança avulsa
           </button>
@@ -648,12 +656,12 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
       </div>
 
       {errorMsg && (
-        <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+        <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
           <AlertCircle size={16} className="shrink-0" /> {errorMsg}
         </div>
       )}
       {successMsg && (
-        <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2">
+        <div className="p-2 bg-success/10 border border-success/30 rounded-zela-md text-sm text-success font-medium flex items-center gap-2">
           <CheckCircle2 size={16} className="shrink-0" /> {successMsg}
         </div>
       )}
@@ -683,11 +691,11 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
                 </span>
               ),
             },
-            { label: 'Método', className: 'uppercase text-xs text-on-surface-variant', render: c => c.payment_method || '·' },
+            { label: 'Método', className: 'text-xs text-on-surface-variant', render: c => c.payment_method || '·' },
             {
               label: 'Status',
               render: c => (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${CHARGE_STATUS_CLASSES[c.status] || ''}`}>
+                <span className={`px-2 py-0.5 rounded-sm text-xs font-bold border ${CHARGE_STATUS_CLASSES[c.status] || ''}`}>
                   {CHARGE_STATUS_LABELS[c.status] || c.status}
                 </span>
               ),
@@ -710,7 +718,7 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
                   <button onClick={() => setAdjustingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
                     <Percent size={13} /> Ajustar valor
                   </button>
-                  <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline whitespace-nowrap">
+                  <button onClick={() => setPayingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-success hover:underline whitespace-nowrap">
                     <HandCoins size={13} /> Registrar pagamento
                   </button>
                 </span>
@@ -782,41 +790,41 @@ function AjustarCobrancaModal({ charge, onClose, onDone }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-zela-xl shadow-lg p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg text-on-surface">Ajustar valor da cobrança</h3>
-          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
+          <h3 className="font-semibold text-lg text-on-surface">Ajustar valor da cobrança</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md transition"><X size={18} /></button>
         </div>
         <p className="text-sm text-on-surface-variant mb-3">
-          {charge.students?.name || 'Aluno'} · vence em {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'} · valor atual <strong>{centsToBRL(charge.amount_cents)}</strong>
+          {charge.students?.name || 'Aluno'}, vence em {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'}, valor atual <strong>{centsToBRL(charge.amount_cents)}</strong>
           {base !== charge.amount_cents && <span> (original {centsToBRL(base)})</span>}
         </p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="aj-valor" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Novo valor (R$)</label>
+            <label htmlFor="aj-valor" className="block text-xs font-bold text-on-surface-variant mb-1">Novo valor (R$)</label>
             <input id="aj-valor" type="text" inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
             {novoCents > 0 && diferenca !== 0 && (
-              <p className={`text-xs mt-1 font-bold ${diferenca < 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+              <p className={`text-xs mt-1 font-bold ${diferenca < 0 ? 'text-success' : 'text-warning'}`}>
                 {diferenca < 0 ? `Desconto de ${centsToBRL(-diferenca)} nesta cobrança` : `Acréscimo de ${centsToBRL(diferenca)} nesta cobrança`}
               </p>
             )}
           </div>
           <div>
-            <label htmlFor="aj-motivo" className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Motivo</label>
+            <label htmlFor="aj-motivo" className="block text-xs font-bold text-on-surface-variant mb-1">Motivo</label>
             <input id="aj-motivo" type="text" placeholder="Ex: Desconto especial de março" value={motivo} onChange={e => setMotivo(e.target.value)}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm" />
             <p className="text-[11px] text-on-surface-variant/70 mt-1">O motivo fica na auditoria. A família não vê.</p>
           </div>
           <p className="text-xs text-on-surface-variant">Só vale para esta cobrança. As próximas continuam com o valor da mensalidade.</p>
           {errorMsg && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" /> {errorMsg}
             </div>
           )}
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">Cancelar</button>
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">Cancelar</button>
             <button type="submit" disabled={isSaving} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : 'Ajustar valor'}
             </button>
@@ -890,22 +898,22 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-surface-container-lowest rounded-zela-xl shadow-lg p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg text-on-surface">Nova cobrança avulsa</h3>
-          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
+          <h3 className="font-semibold text-lg text-on-surface">Nova cobrança avulsa</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md transition"><X size={18} /></button>
         </div>
         <p className="text-xs text-on-surface-variant -mt-2 mb-4">Cobrança única, fora da mensalidade: taxa de matrícula, material, multa etc.</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Aluno</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Aluno</label>
             <select
               required
               value={form.student_id}
               onChange={e => setForm({ ...form, student_id: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               disabled={isLoadingStudents}
             >
               <option value="">{isLoadingStudents ? 'Carregando alunos...' : 'Selecione um aluno'}</option>
@@ -915,7 +923,7 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Valor (R$)</label>
+              <label className="block text-xs font-bold text-on-surface-variant mb-1">Valor (R$)</label>
               <input
                 required
                 type="text"
@@ -923,27 +931,27 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
                 placeholder="Ex: 150,00"
                 value={form.amount_cents}
                 onChange={e => setForm({ ...form, amount_cents: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Vencimento</label>
+              <label className="block text-xs font-bold text-on-surface-variant mb-1">Vencimento</label>
               <input
                 required
                 type="date"
                 value={form.due_date}
                 onChange={e => setForm({ ...form, due_date: e.target.value })}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Forma de pagamento</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
             <select
               value={form.billing_type}
               onChange={e => setForm({ ...form, billing_type: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
             >
               <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
               <option value="PIX">PIX</option>
@@ -952,24 +960,24 @@ function NovaCobrancaAvulsaModal({ currentUser, onClose, onCreated }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição (opcional)</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Descrição (opcional)</label>
             <input
               type="text"
               placeholder="Ex: Taxa de matrícula 2027"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+              className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
             />
           </div>
 
           {errorMsg && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" /> {errorMsg}
             </div>
           )}
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
               Cancelar
             </button>
             <button type="submit" disabled={isSaving} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
@@ -1109,101 +1117,105 @@ export function ConfigTab({ currentUser }) {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Chave Asaas */}
-      <div className="p-4 bg-surface-container-low rounded-zela-lg border border-outline-variant">
-        <div className="flex items-center gap-2 mb-1">
-          <KeyRound size={16} className="text-primary" />
-          <h3 className="text-sm font-bold text-on-surface">Conta Asaas desta escola</h3>
+      <div className="p-4 sm:p-5 bg-surface-container-lowest rounded-zela-lg border border-outline-variant">
+        <div className="flex items-start gap-3 mb-3">
+          <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><KeyRound size={20} /></span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-on-surface">Conta Asaas desta escola</h3>
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              Cada escola usa sua própria conta Asaas: o dinheiro cai direto para ela, nunca para outra escola.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-on-surface-variant mb-3">
-          Cada escola usa sua própria conta Asaas: o dinheiro cai direto para ela, nunca para outra escola.
-          {!isLoadingStatus && gatewayStatus.asaas && (
-            <span className="block mt-1 text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={13} /> Configurada em {new Date(gatewayStatus.asaas.updated_at).toLocaleString('pt-BR')}</span>
-          )}
-          {!isLoadingStatus && !gatewayStatus.asaas && (
-            <span className="block mt-1 text-amber-600 font-bold">Ainda não configurada.</span>
-          )}
-        </p>
+        {!isLoadingStatus && gatewayStatus.asaas && (
+          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-success/10 text-success"><CheckCircle2 size={13} /> Configurada em {new Date(gatewayStatus.asaas.updated_at).toLocaleString('pt-BR')}</span>
+        )}
+        {!isLoadingStatus && !gatewayStatus.asaas && (
+          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">Ainda não configurada</span>
+        )}
         <form onSubmit={handleSaveApiKey} className="flex flex-col sm:flex-row gap-2">
           <input
             type="password"
             placeholder={gatewayStatus.asaas ? 'Cole aqui para trocar a chave' : 'Cole a chave de API do Asaas ($aact_...)'}
             value={apiKeyInput}
             onChange={e => setApiKeyInput(e.target.value)}
-            className="flex-1 p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+            className="sm:flex-1 min-w-0 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
-          <button type="submit" disabled={isSavingKey || !apiKeyInput.trim()} className="px-4 py-2.5 bg-primary hover:bg-primary-container disabled:opacity-50 text-white font-bold rounded-zela-md shadow-sm transition text-sm shrink-0 flex items-center justify-center gap-2">
+          <button type="submit" disabled={isSavingKey || !apiKeyInput.trim()} className="h-10 px-5 bg-primary hover:bg-primary-container disabled:opacity-50 text-white font-bold rounded-zela-md transition text-sm shrink-0 flex items-center justify-center gap-2">
             {isSavingKey ? <Loader2 size={16} className="animate-spin" /> : 'Salvar'}
           </button>
         </form>
         {keyMsg.text && (
-          <p className={`text-xs mt-2 font-medium ${keyMsg.type === 'error' ? 'text-red-600' : 'text-green-700'}`}>{keyMsg.text}</p>
+          <p className={`text-xs mt-2 font-medium ${keyMsg.type === 'error' ? 'text-error' : 'text-success'}`}>{keyMsg.text}</p>
         )}
       </div>
 
       {/* Token de Webhook */}
-      <div className="p-4 bg-surface-container-low rounded-zela-lg border border-outline-variant">
-        <div className="flex items-center gap-2 mb-1">
-          <KeyRound size={16} className="text-primary" />
-          <h3 className="text-sm font-bold text-on-surface">Token de webhook</h3>
+      <div className="p-4 sm:p-5 bg-surface-container-lowest rounded-zela-lg border border-outline-variant">
+        <div className="flex items-start gap-3 mb-3">
+          <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><KeyRound size={20} /></span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-on-surface">Token de webhook</h3>
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              Ao criar o webhook no painel Asaas desta escola, defina um token (authToken) e cole-o aqui: é assim que sabemos que um evento recebido pertence a esta escola.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-on-surface-variant mb-3">
-          Ao criar o webhook no painel Asaas desta escola, defina um token (authToken) e cole-o aqui: é assim que sabemos que um evento recebido pertence a esta escola.
-          {!isLoadingStatus && gatewayStatus.asaas_webhook && (
-            <span className="block mt-1 text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={13} /> Configurado em {new Date(gatewayStatus.asaas_webhook.updated_at).toLocaleString('pt-BR')}</span>
-          )}
-          {!isLoadingStatus && !gatewayStatus.asaas_webhook && (
-            <span className="block mt-1 text-amber-600 font-bold">Ainda não configurado.</span>
-          )}
-        </p>
+        {!isLoadingStatus && gatewayStatus.asaas_webhook && (
+          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-success/10 text-success"><CheckCircle2 size={13} /> Configurado em {new Date(gatewayStatus.asaas_webhook.updated_at).toLocaleString('pt-BR')}</span>
+        )}
+        {!isLoadingStatus && !gatewayStatus.asaas_webhook && (
+          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">Ainda não configurado</span>
+        )}
         <form onSubmit={handleSaveWebhookToken} className="flex flex-col sm:flex-row gap-2">
           <input
             type="password"
             placeholder={gatewayStatus.asaas_webhook ? 'Cole aqui para trocar o token' : 'Cole o mesmo token definido no Asaas'}
             value={webhookTokenInput}
             onChange={e => setWebhookTokenInput(e.target.value)}
-            className="flex-1 p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+            className="sm:flex-1 min-w-0 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
-          <button type="submit" disabled={isSavingWebhook || !webhookTokenInput.trim()} className="px-4 py-2.5 bg-primary hover:bg-primary-container disabled:opacity-50 text-white font-bold rounded-zela-md shadow-sm transition text-sm shrink-0 flex items-center justify-center gap-2">
+          <button type="submit" disabled={isSavingWebhook || !webhookTokenInput.trim()} className="h-10 px-5 bg-primary hover:bg-primary-container disabled:opacity-50 text-white font-bold rounded-zela-md transition text-sm shrink-0 flex items-center justify-center gap-2">
             {isSavingWebhook ? <Loader2 size={16} className="animate-spin" /> : 'Salvar'}
           </button>
         </form>
         {webhookMsg.text && (
-          <p className={`text-xs mt-2 font-medium ${webhookMsg.type === 'error' ? 'text-red-600' : 'text-green-700'}`}>{webhookMsg.text}</p>
+          <p className={`text-xs mt-2 font-medium ${webhookMsg.type === 'error' ? 'text-error' : 'text-success'}`}>{webhookMsg.text}</p>
         )}
       </div>
 
       {/* Descontos por responsável */}
-      <div className="p-4 bg-surface-container-low rounded-zela-lg border border-outline-variant">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2">
-            <Percent size={16} className="text-primary" />
+      <div className="p-4 sm:p-5 bg-surface-container-lowest rounded-zela-lg border border-outline-variant">
+        <div className="flex items-start gap-3 mb-3">
+          <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Percent size={20} /></span>
+          <div className="min-w-0 flex-1">
             <h3 className="text-sm font-bold text-on-surface">Desconto por responsável</h3>
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              O desconto é específico de cada responsável financeiro já cadastrado nesta escola, aplicado automaticamente conforme o ciclo escolhido ao criar o contrato dele.
+            </p>
           </div>
-          <button
-            onClick={() => { setEditingGuardianId(null); setIsDiscountModalOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md shadow-sm transition text-xs shrink-0"
-          >
-            <Plus size={14} /> Adicionar
-          </button>
         </div>
-        <p className="text-xs text-on-surface-variant mb-3">
-          O desconto é específico de cada responsável financeiro já cadastrado nesta escola, aplicado automaticamente conforme o ciclo escolhido ao criar o contrato dele.
-        </p>
+        <button
+          onClick={() => { setEditingGuardianId(null); setIsDiscountModalOpen(true); }}
+          className="w-full sm:w-auto h-10 mb-3 flex items-center justify-center gap-1.5 px-4 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md transition text-sm"
+        >
+          <Plus size={16} /> Adicionar desconto
+        </button>
 
         {discountMsg.text && (
-          <p className={`text-xs mb-2 font-medium ${discountMsg.type === 'error' ? 'text-red-600' : 'text-green-700'}`}>{discountMsg.text}</p>
+          <p className={`text-xs mb-2 font-medium ${discountMsg.type === 'error' ? 'text-error' : 'text-success'}`}>{discountMsg.text}</p>
         )}
 
         {isLoadingDiscounts ? (
           <div className="flex items-center justify-center py-6 text-on-surface-variant"><Loader2 className="animate-spin" size={20} /></div>
         ) : discountRows.length === 0 ? (
-          <p className="text-xs text-on-surface-variant/70 italic py-2">Nenhum desconto configurado ainda.</p>
+          <p className="text-xs text-on-surface-variant py-3 text-center border border-dashed border-outline-variant rounded-zela-md">Nenhum desconto configurado ainda.</p>
         ) : (
           <div className="space-y-2">
             {discountRows.map(row => (
-              <div key={row.guardian_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white border border-outline-variant rounded-zela-md">
+              <div key={row.guardian_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-surface-container-low border border-outline-variant rounded-zela-md">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-on-surface truncate">{row.guardian?.name || '—'}</p>
+                  <p className="text-sm font-bold text-on-surface truncate">{row.guardian?.name || 'Não informado'}</p>
                   <p className="text-xs text-on-surface-variant/70 truncate">{row.guardian?.email}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1221,7 +1233,7 @@ export function ConfigTab({ currentUser }) {
                   </button>
                   <button
                     onClick={() => setRemoveTarget(row)}
-                    className="text-xs font-bold text-red-600 hover:bg-red-50 px-2 py-1 rounded-zela-md transition shrink-0"
+                    className="text-xs font-bold text-error hover:bg-error/10 px-2 py-1 rounded-zela-md transition shrink-0"
                   >
                     Remover
                   </button>
@@ -1316,16 +1328,16 @@ function DescontoResponsavelModal({ currentUser, existingRow, excludeGuardianIds
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-zela-xl shadow-lg p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg text-on-surface">{existingRow ? 'Editar desconto' : 'Novo desconto por responsável'}</h3>
-          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-full transition"><X size={18} /></button>
+          <h3 className="font-semibold text-lg text-on-surface">{existingRow ? 'Editar desconto' : 'Novo desconto por responsável'}</h3>
+          <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md transition"><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Responsável financeiro</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Responsável financeiro</label>
             {existingRow ? (
               <div className="p-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm font-bold text-on-surface">
                 {existingRow.guardian?.name}
@@ -1335,31 +1347,31 @@ function DescontoResponsavelModal({ currentUser, existingRow, excludeGuardianIds
                 required
                 value={guardianId}
                 onChange={e => setGuardianId(e.target.value)}
-                className="w-full p-2.5 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                className="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
                 disabled={isLoadingGuardians}
               >
                 <option value="">{isLoadingGuardians ? 'Carregando...' : 'Selecione um responsável'}</option>
-                {guardians.map(g => <option key={g.id} value={g.id}>{g.name} · {g.email}</option>)}
+                {guardians.map(g => <option key={g.id} value={g.id}>{g.name}, {g.email}</option>)}
               </select>
             )}
             {!existingRow && !isLoadingGuardians && guardians.length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">Nenhuma família cadastrada nesta escola ainda (ou todas já têm desconto configurado).</p>
+              <p className="text-xs text-warning mt-1">Nenhuma família cadastrada nesta escola ainda (ou todas já têm desconto configurado).</p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Desconto por ciclo</label>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1">Desconto por ciclo</label>
             <div className="grid grid-cols-2 gap-2">
               {CYCLES.map(c => (
                 <div key={c}>
-                  <label className="block text-[10px] font-bold text-on-surface-variant/70 uppercase mb-0.5">{CYCLE_LABELS[c]}</label>
+                  <label className="block text-[10px] font-bold text-on-surface-variant/70 mb-0.5">{CYCLE_LABELS[c]}</label>
                   <div className="relative">
                     <input
                       type="text"
                       inputMode="decimal"
                       value={percents[c]}
                       onChange={e => setPercents({ ...percents, [c]: e.target.value })}
-                      className="w-full p-2 pr-6 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+                      className="w-full p-2 pr-6 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">%</span>
                   </div>
@@ -1369,13 +1381,13 @@ function DescontoResponsavelModal({ currentUser, existingRow, excludeGuardianIds
           </div>
 
           {errorMsg && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" /> {errorMsg}
             </div>
           )}
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
+            <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50">
               Cancelar
             </button>
             <button type="submit" disabled={isSaving} className="flex-[1.5] bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 disabled:opacity-60">
@@ -1438,39 +1450,39 @@ export function RegistrarPagamentoModal({ currentUser, charge, onClose, onDone, 
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-5 space-y-3" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-surface-container-lowest rounded-zela-xl shadow-lg w-full max-w-md p-5 space-y-3" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-on-surface">Registrar pagamento</h3>
           <button onClick={onClose} className="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-zela-md" aria-label="Fechar"><X size={18} /></button>
         </div>
         <p className="text-xs text-on-surface-variant">
-          {charge.students?.name || 'Aluno'} · vencimento {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'} · {centsToBRL(charge.amount_cents)}.
+          {charge.students?.name || 'Aluno'}, vencimento {charge.due_date ? new Date(charge.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '·'}, {centsToBRL(charge.amount_cents)}.
           O Asaas é avisado de que a cobrança foi paga por fora e deixa de cobrar a família.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <label className="text-[11px] font-bold uppercase text-on-surface-variant">Data do pagamento
+          <label className="text-[11px] font-bold text-on-surface-variant">Data do pagamento
             <input id="manual-payment-date" type="date" value={date} max={today} onChange={e => setDate(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
           </label>
-          <label className="text-[11px] font-bold uppercase text-on-surface-variant">Valor recebido (R$)
+          <label className="text-[11px] font-bold text-on-surface-variant">Valor recebido (R$)
             <input id="manual-payment-amount" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
           </label>
         </div>
-        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Forma de pagamento
+        <label className="block text-[11px] font-bold text-on-surface-variant">Forma de pagamento
           <select id="manual-payment-method" value={method} onChange={e => setMethod(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm">
             {MANUAL_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </label>
-        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Observação
+        <label className="block text-[11px] font-bold text-on-surface-variant">Observação
           <input id="manual-payment-note" value={note} onChange={e => setNote(e.target.value)} className="mt-1 w-full p-2 border border-outline-variant rounded-zela-md text-sm" />
         </label>
-        <label className="block text-[11px] font-bold uppercase text-on-surface-variant">Comprovante (opcional)
+        <label className="block text-[11px] font-bold text-on-surface-variant">Comprovante (opcional)
           <input id="manual-payment-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-xs" />
         </label>
-        {error && <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700">{error}</div>}
+        {error && <div className="p-2 bg-error/10 border border-error/30 rounded-zela-md text-sm text-error">{error}</div>}
         <div className="flex justify-end gap-2 pt-1">
           <button onClick={onClose} className="px-3 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-zela-md">Cancelar</button>
-          <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
+          <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3.5 py-2 bg-success hover:bg-success/90 text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <HandCoins size={14} />} Confirmar recebimento
           </button>
         </div>

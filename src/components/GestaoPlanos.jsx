@@ -9,10 +9,10 @@ import { CICLOS_DE_HORAS, TURNOS, planoDoAluno, aplicarPercentual, ROTULO_PERIOD
 import { PageShell, Tabs, Loading, Notice, PrimaryButton, SecondaryButton, ResponsiveTable, inputCls } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
-// Financeiro · Planos (04/10/2026). Preço MENSAL por ciclo (6, 8 ou 10 horas)
+// Financeiro, Planos (04/10/2026). Preço MENSAL por ciclo (6, 8 ou 10 horas)
 // e turno, por ano letivo. Trimestral, semestral e anual saem do mensal com o
 // desconto da família, calculados pelo servidor na hora de criar a
-// mensalidade (Financeiro · Mensalidades). Aqui também: corrigir o ciclo e o
+// mensalidade (Financeiro, Mensalidades). Aqui também: corrigir o ciclo e o
 // turno de cada aluno, reajustar mensalidades ativas e ligar a criação
 // automática de mensalidade ao aprovar matrícula.
 
@@ -37,7 +37,7 @@ export default function GestaoPlanos({ currentUser }) {
   const semPlano = useMemo(() => (ctx ? contarAlunosPorPlano(ctx.alunos).semPlano : 0), [ctx]);
 
   return (
-    <PageShell description="Preço mensal por ciclo e turno. Trimestral, semestral e anual são calculados na hora de criar a mensalidade, com o desconto da família.">
+    <PageShell infoOnMobile description="Preço mensal por ciclo e turno. Trimestral, semestral e anual são calculados na hora de criar a mensalidade, com o desconto da família.">
       <Tabs
         tabs={[
           { id: 'precos', label: 'Preços' },
@@ -151,14 +151,14 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
     <div className="space-y-4 max-w-3xl">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label htmlFor="planos-ano" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Ano letivo</label>
+          <label htmlFor="planos-ano" className="block text-[11px] font-bold text-on-surface-variant mb-1">Ano letivo</label>
           <select id="planos-ano" value={ano} onChange={e => setAno(Number(e.target.value))} className={`${inputCls} w-32`}>
             {anos.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
         <div className="flex items-end gap-2">
           <div>
-            <label htmlFor="planos-novo-ano" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Outro ano</label>
+            <label htmlFor="planos-novo-ano" className="block text-[11px] font-bold text-on-surface-variant mb-1">Outro ano</label>
             <input id="planos-novo-ano" value={novoAno} onChange={e => setNovoAno(e.target.value)} inputMode="numeric" placeholder="2028" className={`${inputCls} w-24`} />
           </div>
           <SecondaryButton onClick={adicionarAno} disabled={!novoAno}><Plus size={15} /> Adicionar</SecondaryButton>
@@ -166,7 +166,7 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
       </div>
 
       {semPlano > 0 && (
-        <div className="p-3 rounded-zela-md bg-amber-50 border border-amber-200 text-sm text-amber-900 flex items-start gap-2">
+        <div className="p-3 rounded-zela-md bg-warning/10 border border-warning/30 text-sm text-warning flex items-start gap-2">
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span>{semPlano === 1 ? '1 aluno está sem ciclo ou sem turno e não consegue receber preço da tabela.' : `${semPlano} alunos estão sem ciclo ou sem turno e não conseguem receber preço da tabela.`} <button type="button" onClick={irParaAlunos} className="font-bold underline">Corrigir agora</button></span>
         </div>
@@ -178,7 +178,7 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
+            <tr className="text-left text-xs font-bold text-on-surface-variant border-b border-outline-variant">
               <th className="py-2 pr-3">Ciclo</th>
               {TURNOS.map(t => <th key={t} className="py-2 pr-3">{t}</th>)}
             </tr>
@@ -223,7 +223,7 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
 
       {anosComPreco.length > 0 && (
         <div className="p-3 rounded-zela-md border border-outline-variant bg-surface-container-low space-y-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">Começar de outro ano</p>
+          <p className="text-xs font-bold text-on-surface-variant">Começar de outro ano</p>
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <label htmlFor="planos-fonte" className="block text-[11px] text-on-surface-variant mb-1">Copiar de</label>
@@ -284,7 +284,7 @@ function AlunosTab({ currentUser, ctx, recarregar }) {
       if (error) throw error;
       logAction({
         schoolId: currentUser.school_id, actorId: currentUser.id, action: 'update_student_plan', entityType: 'student', entityId: a.id,
-        details: { name: a.name, de: `${a.contracted_hours || 'sem ciclo'} · ${a.turno || 'sem turno'}`, para: `${v.ciclo || 'sem ciclo'} · ${v.turno || 'sem turno'}` },
+        details: { name: a.name, de: `${a.contracted_hours || 'sem ciclo'}, ${a.turno || 'sem turno'}`, para: `${v.ciclo || 'sem ciclo'}, ${v.turno || 'sem turno'}` },
       });
       setEdicoes(e => { const { [a.id]: _, ...resto } = e; void _; return resto; });
       setAviso(`${a.name}: ${v.ciclo ? `${v.ciclo}h` : 'sem ciclo'} ${v.turno || 'sem turno'}.${comContrato.has(a.id) ? ' A mensalidade que já existe continua com o mesmo valor.' : ''}`);
@@ -405,7 +405,7 @@ function ReajusteTab({ ctx }) {
     <div className="space-y-4 max-w-4xl">
       <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
         <p>Muda o valor das mensalidades ativas. O desconto da família que já estava no contrato é mantido.</p>
-        <p>Vale para as cobranças que o Asaas gerar daqui para frente. As cobranças que já foram emitidas ficam como estão; para uma delas, use Ajustar valor em Financeiro · Cobranças.</p>
+        <p>Vale para as cobranças que o Asaas gerar daqui para frente. As cobranças que já foram emitidas ficam como estão; para uma delas, use Ajustar valor em Financeiro, Cobranças.</p>
       </div>
       <Notice>{erro}</Notice>
 
@@ -450,7 +450,7 @@ function ReajusteTab({ ctx }) {
       {resultado && (
         <div className="space-y-2">
           <Notice type="success">{`${feitos} ${feitos === 1 ? 'mensalidade reajustada' : 'mensalidades reajustadas'}.`}</Notice>
-          {falhas.length > 0 && <Notice>{`${falhas.length} não ${falhas.length === 1 ? 'pôde' : 'puderam'} ser reajustada${falhas.length === 1 ? '' : 's'}: ${falhas.map(f => `${f.student_name} (${f.erro})`).join(' · ')}`}</Notice>}
+          {falhas.length > 0 && <Notice>{`${falhas.length} não ${falhas.length === 1 ? 'pôde' : 'puderam'} ser reajustada${falhas.length === 1 ? '' : 's'}: ${falhas.map(f => `${f.student_name} (${f.erro})`).join(', ')}`}</Notice>}
         </div>
       )}
 
@@ -508,7 +508,7 @@ function AutomaticoTab({ currentUser }) {
     <div className="space-y-4 max-w-xl">
       <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
         <p>Quando ligada, ao aprovar uma matrícula ou rematrícula o Zela Escola já cria a mensalidade do aluno no Asaas, com o preço da tabela de Planos e o desconto da família.</p>
-        <p>Só cria quando tudo estiver pronto: aluno com ciclo e turno, preço cadastrado, responsável financeiro com CPF e família que não seja bolsista. O que ficar de fora aparece em Financeiro · Mensalidades, aguardando.</p>
+        <p>Só cria quando tudo estiver pronto: aluno com ciclo e turno, preço cadastrado, responsável financeiro com CPF e família que não seja bolsista. O que ficar de fora aparece em Financeiro, Mensalidades, aguardando.</p>
       </div>
       <Notice>{erro}</Notice>
       {aviso && <Notice type="success">{aviso}</Notice>}
@@ -518,12 +518,12 @@ function AutomaticoTab({ currentUser }) {
       </label>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="auto-dia" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Dia do vencimento</label>
+          <label htmlFor="auto-dia" className="block text-[11px] font-bold text-on-surface-variant mb-1">Dia do vencimento</label>
           <input id="auto-dia" value={config.default_due_day} onChange={e => setConfig(c => ({ ...c, default_due_day: e.target.value }))} inputMode="numeric" className={inputCls} />
           <p className="text-[11px] text-on-surface-variant/70 mt-1">O 1º vencimento é o próximo desse dia (de 1 a 28).</p>
         </div>
         <div>
-          <label htmlFor="auto-forma" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Forma de pagamento</label>
+          <label htmlFor="auto-forma" className="block text-[11px] font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
           <select id="auto-forma" value={config.default_billing_type} onChange={e => setConfig(c => ({ ...c, default_billing_type: e.target.value }))} className={inputCls}>
             <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
             <option value="PIX">PIX</option>
@@ -531,7 +531,7 @@ function AutomaticoTab({ currentUser }) {
           </select>
         </div>
       </div>
-      <p className="text-xs text-on-surface-variant">A criação automática é sempre mensal. Trimestral, semestral ou anual a Gestão cria em Financeiro · Mensalidades.</p>
+      <p className="text-xs text-on-surface-variant">A criação automática é sempre mensal. Trimestral, semestral ou anual a Gestão cria em Financeiro, Mensalidades.</p>
       <PrimaryButton onClick={salvar} disabled={salvando}>{salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar</PrimaryButton>
     </div>
   );

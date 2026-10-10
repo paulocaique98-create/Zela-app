@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, ChevronDown, ChevronUp, Send, Undo2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, Send, Undo2, Sprout } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
 import { logAction } from '../lib/auditLog';
 import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
 import { SITUACOES, SITUACAO_LABEL, periodoAtual, mensagemErroMapa } from '../lib/mapaHabilidades';
 import ConfirmModal from './ConfirmModal';
+import { PageShell, Tabs } from './GestaoShared';
 import MapaHabilidadesCatalogo from './MapaHabilidadesCatalogo';
 
 // Coordenação e Direção Pedagógica revisam, corrigem e publicam. Nunca criam
@@ -110,54 +111,59 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
     }
   };
 
-  const campo = 'border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-white text-on-surface';
+  const campo = 'border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-surface-container-lowest text-on-surface focus:outline-none focus:ring-2 focus:ring-primary';
+  const campoLista = `${campo} w-full h-10 appearance-none pr-8 truncate`;
+  const seta = <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />;
   const anos = [inicial.ano - 1, inicial.ano];
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant overflow-hidden">
-      <div className="flex gap-1 p-3 border-b border-outline-variant shrink-0">
-        {[['acompanhamento', 'Acompanhamento'], ['catalogo', 'Habilidades']].map(([id, rotulo]) => (
-          <button key={id} type="button" onClick={() => setAba(id)}
-            className={`px-4 py-2 rounded-zela-md text-sm font-bold ${aba === id ? 'bg-primary text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}>
-            {rotulo}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+    <PageShell>
+      <div className="space-y-4">
+        <Tabs
+          equalOnMobile
+          tabs={[{ id: 'acompanhamento', label: 'Acompanhamento' }, { id: 'catalogo', label: 'Habilidades' }]}
+          active={aba}
+          onChange={setAba}
+        />
         {erro && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-3">{erro}</div>}
 
         {aba === 'catalogo' ? (
           <MapaHabilidadesCatalogo currentUser={currentUser} schoolId={schoolId} podeEditar={podeCatalogo} />
         ) : (
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select value={ano} onChange={e => setAno(Number(e.target.value))} className={campo} aria-label="Ano">
-                {anos.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-              <select value={semestre} onChange={e => setSemestre(Number(e.target.value))} className={campo} aria-label="Semestre">
-                <option value={1}>1º Semestre</option>
-                <option value={2}>2º Semestre</option>
-              </select>
-              <select value={turma} onChange={e => { setTurma(e.target.value); setAberto(null); }} className={`${campo} flex-1`} aria-label="Turma">
-                {turmas.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:flex gap-2">
+              <div className="relative sm:w-28">
+                <select value={ano} onChange={e => setAno(Number(e.target.value))} className={campoLista} aria-label="Ano">
+                  {anos.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>{seta}
+              </div>
+              <div className="relative sm:w-40">
+                <select value={semestre} onChange={e => setSemestre(Number(e.target.value))} className={campoLista} aria-label="Semestre">
+                  <option value={1}>1º Semestre</option>
+                  <option value={2}>2º Semestre</option>
+                </select>{seta}
+              </div>
+              <div className="relative col-span-2 sm:col-span-1 sm:flex-1">
+                <select value={turma} onChange={e => { setTurma(e.target.value); setAberto(null); }} className={campoLista} aria-label="Turma">
+                  {turmas.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>{seta}
+              </div>
             </div>
 
             {podeEditarRegistros && turma && (
-              <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between rounded-zela-lg border border-outline-variant p-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between rounded-zela-lg border border-outline-variant bg-surface-container-lowest p-3">
                 <p className="text-xs text-on-surface-variant">
                   {rascunhosTurma} em rascunho e {publicadosTurma} publicados nesta turma. A família só vê o que for publicado.
                 </p>
-                <div className="flex gap-2 shrink-0">
+                <div className="grid grid-cols-2 sm:flex gap-2 shrink-0">
                   <button type="button" disabled={rascunhosTurma === 0 || processando}
                     onClick={() => setConfirmar({ de: 'RASCUNHO', para: 'PUBLICADO' })}
-                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-zela-md font-bold text-sm disabled:bg-slate-300 disabled:text-on-surface-variant">
-                    <Send size={15} /> Publicar para a família
+                    className="flex items-center justify-center gap-2 h-10 bg-primary text-white px-3 sm:px-4 rounded-zela-md font-bold text-sm whitespace-nowrap disabled:bg-slate-300 disabled:text-on-surface-variant">
+                    <Send size={15} className="shrink-0" /> <span className="sm:hidden">Publicar</span><span className="hidden sm:inline">Publicar para a família</span>
                   </button>
                   <button type="button" disabled={publicadosTurma === 0 || processando}
                     onClick={() => setConfirmar({ de: 'PUBLICADO', para: 'RASCUNHO' })}
-                    className="flex items-center gap-2 border border-outline-variant px-3 py-2 rounded-zela-md font-bold text-sm text-on-surface disabled:opacity-40">
+                    className="flex items-center justify-center gap-2 h-10 border border-outline-variant px-3 rounded-zela-md font-bold text-sm text-on-surface disabled:opacity-40">
                     <Undo2 size={15} /> Despublicar
                   </button>
                 </div>
@@ -167,9 +173,12 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
             {carregando ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
             ) : alunosDaTurma.length === 0 ? (
-              <p className="text-center text-sm text-on-surface-variant py-12">Nenhum aluno nesta turma.</p>
+              <div className="flex flex-col items-center text-center py-14 bg-surface-container-lowest rounded-zela-xl border border-dashed border-outline-variant">
+                <Sprout size={30} className="text-outline-variant mb-2" />
+                <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno nesta turma.</p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <ul className="grid gap-2.5 lg:grid-cols-2 items-start">
                 {alunosDaTurma.map(aluno => {
                   const regs = regsPorAluno.get(aluno.id) || [];
                   const rasc = regs.filter(r => r.status === 'RASCUNHO').length;
@@ -182,14 +191,17 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                     porArea.set(a, [...(porArea.get(a) || []), { r, h }]);
                   }
                   return (
-                    <li key={aluno.id} className="rounded-zela-md border border-outline-variant">
+                    <li key={aluno.id} className={`rounded-zela-lg border bg-surface-container-lowest transition ${expandido ? 'border-primary/40 shadow-sm' : 'border-outline-variant'}`}>
                       <button type="button" onClick={() => setAberto(expandido ? null : aluno.id)} className="w-full flex items-center gap-3 p-3 text-left">
+                        <span className="hidden sm:flex w-9 h-9 rounded-full bg-primary/10 text-primary font-bold text-sm items-center justify-center shrink-0">{(aluno.name || '?').trim().charAt(0).toUpperCase()}</span>
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-sm text-on-surface truncate">{aluno.name}</p>
-                          <p className="text-[11px] text-on-surface-variant">
-                            {formatIdade(idadeEmMeses(aluno.birth_date))} · {regs.length} habilidades marcadas
-                            {rasc > 0 && ` · ${rasc} em rascunho`}{pub > 0 && ` · ${pub} publicadas`}
-                          </p>
+                          <p className="text-xs text-on-surface-variant mt-0.5">{formatIdade(idadeEmMeses(aluno.birth_date))}</p>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant">{regs.length} habilidade{regs.length !== 1 ? 's' : ''}</span>
+                            {rasc > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-warning/15 text-warning">{rasc} em rascunho</span>}
+                            {pub > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{pub} publicada{pub !== 1 ? 's' : ''}</span>}
+                          </div>
                         </div>
                         {expandido ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
@@ -198,10 +210,10 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                           {regs.length === 0 && <p className="text-xs text-on-surface-variant">A professora ainda não marcou nada neste semestre.</p>}
                           {[...porArea.entries()].map(([nomeArea, linhas]) => (
                             <div key={nomeArea}>
-                              <p className="text-[10px] font-extrabold uppercase text-primary mb-1">{nomeArea}</p>
+                              <p className="text-xs font-bold text-primary mb-1.5">{nomeArea}</p>
                               <ul className="space-y-1.5">
                                 {linhas.map(({ r, h }) => (
-                                  <li key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-sm">
+                                  <li key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-sm bg-surface-container-low rounded-zela-md p-2.5">
                                     <span className="flex-1 text-on-surface">{h?.descricao || 'Habilidade removida'}</span>
                                     {podeEditarRegistros ? (
                                       <select value={r.situacao} onChange={e => corrigir(r, e.target.value)} className={`${campo} py-1 text-xs`} aria-label="Situação">
@@ -210,7 +222,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                                     ) : (
                                       <span className="text-xs font-bold text-on-surface-variant">{SITUACAO_LABEL[r.situacao]}</span>
                                     )}
-                                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border w-fit ${r.status === 'PUBLICADO' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-surface-container text-on-surface-variant border-outline-variant'}`}>
+                                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full w-fit ${r.status === 'PUBLICADO' ? 'bg-success/10 text-success' : 'bg-warning/15 text-warning'}`}>
                                       {r.status === 'PUBLICADO' ? 'Publicado' : 'Rascunho'}
                                     </span>
                                   </li>
@@ -242,6 +254,6 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
           onCancel={() => setConfirmar(null)}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

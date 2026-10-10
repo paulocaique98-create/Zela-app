@@ -1,39 +1,59 @@
-import React from 'react';
-import { Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Loader2, X, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 // Peças visuais compartilhadas pelas telas novas do Portal da Gestão.
 // O título da tela já aparece no Header do app (SCREEN_LABELS), então aqui
 // só entra a descrição curta e as ações.
 
-export function PageShell({ description, actions, children }) {
+// infoOnMobile: no celular a descrição some e vira um ícone de informação no
+// canto direito, que abre um modal explicando a tela.
+export function PageShell({ description, descriptionClassName = '', infoOnMobile = false, afterInfo = null, actions, children }) {
+  const [infoOpen, setInfoOpen] = useState(false);
+  const hideDescription = infoOnMobile ? 'hidden sm:block' : descriptionClassName;
   return (
     <div className="h-full flex flex-col bg-surface overflow-hidden">
       {(description || actions) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 md:px-6 pt-4 md:pt-5 pb-3 border-b border-outline-variant shrink-0">
-          {description ? <p className="text-small text-on-surface-variant">{description}</p> : <span />}
-          {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
+        <div className={`flex ${infoOnMobile ? 'flex-row items-center -mt-0.5 sm:mt-0' : 'flex-col pt-4 pb-3'} sm:flex-row sm:items-center justify-between gap-3 px-4 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 ${infoOnMobile ? 'sm:border-b' : 'border-b'} border-outline-variant shrink-0`}>
+          {description ? <p className={`text-small text-on-surface-variant ${hideDescription}`}>{description}</p> : <span />}
+          {actions && <div className={`flex items-center gap-2 flex-wrap shrink-0 ${infoOnMobile ? 'hidden sm:flex' : ''}`}>{actions}</div>}
+          {infoOnMobile && description && (
+            <button
+              type="button"
+              onClick={() => setInfoOpen(true)}
+              aria-label="Sobre esta tela"
+              title="Sobre esta tela"
+              className="ml-auto sm:hidden p-1 text-on-surface-variant hover:bg-surface-container rounded-zela-md"
+            >
+              <Info size={18} />
+            </button>
+          )}
         </div>
       )}
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6">{children}</div>
+      {infoOpen && (
+        <Modal title="Sobre esta tela" onClose={() => setInfoOpen(false)}>
+          <p className="text-sm text-on-surface-variant">{description}</p>
+        </Modal>
+      )}
+      <div className={`flex-1 overflow-y-auto min-h-0 ${infoOnMobile ? 'px-4 pt-3 pb-4' : 'p-4'} md:p-6`}>{afterInfo}{children}</div>
     </div>
   );
 }
 
-export function StatCard({ label, value, hint, tone = 'default', onClick }) {
+export function StatCard({ label, value, hint, tone = 'default', onClick, className = '', valueClassName = 'text-2xl' }) {
   const tones = {
     default: 'text-on-surface',
-    good: 'text-emerald-700',
-    warn: 'text-amber-700',
-    bad: 'text-red-700',
+    good: 'text-success',
+    warn: 'text-warning',
+    bad: 'text-error',
   };
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
       onClick={onClick}
-      className={`text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''}`}
+      className={`text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''} ${className}`}
     >
-      <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/80">{label}</p>
-      <p className={`text-2xl font-black mt-1 tabular-nums ${tones[tone] || tones.default}`}>{value}</p>
+      <p className="text-xs font-semibold text-on-surface-variant">{label}</p>
+      <p className={`${valueClassName} font-semibold mt-1 tabular-nums ${tones[tone] || tones.default}`}>{value}</p>
       {hint && <p className="text-xs text-on-surface-variant/70 mt-0.5">{hint}</p>}
     </Tag>
   );
@@ -57,7 +77,7 @@ export function Notice({ type = 'error', children }) {
   if (!children) return null;
   const isError = type === 'error';
   return (
-    <div className={`p-2.5 rounded-zela-md text-sm font-medium flex items-start gap-2 border ${isError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+    <div className={`p-2.5 rounded-zela-md text-sm font-medium flex items-start gap-2 border ${isError ? 'bg-error/10 border-error/30 text-error' : 'bg-success/10 border-success/30 text-success'}`}>
       {isError ? <AlertCircle size={16} className="shrink-0 mt-0.5" /> : <CheckCircle2 size={16} className="shrink-0 mt-0.5" />}
       <span>{children}</span>
     </div>
@@ -66,9 +86,9 @@ export function Notice({ type = 'error', children }) {
 
 export function Modal({ title, onClose, children, footer, wide = false }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink/60" onClick={onClose}>
       <div
-        className={`bg-white rounded-zela-xl shadow-2xl w-full ${wide ? 'max-w-3xl' : 'max-w-lg'} max-h-[90vh] flex flex-col`}
+        className={`bg-surface-container-lowest rounded-zela-xl border border-outline-variant shadow-lg w-full ${wide ? 'max-w-3xl' : 'max-w-lg'} max-h-[90vh] flex flex-col`}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant shrink-0">
@@ -82,12 +102,12 @@ export function Modal({ title, onClose, children, footer, wide = false }) {
   );
 }
 
-export const inputCls = 'w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+export const inputCls = 'w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary';
 
 export function Field({ label, id, children, hint }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-semibold text-on-surface-variant mb-1">{label}</label>
       {children}
       {hint && <p className="text-[11px] text-on-surface-variant/70 mt-1">{hint}</p>}
     </div>
@@ -96,7 +116,7 @@ export function Field({ label, id, children, hint }) {
 
 export function PrimaryButton({ children, ...props }) {
   return (
-    <button {...props} className={`flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50 ${props.className || ''}`}>
+    <button {...props} className={`flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-container text-white font-semibold rounded-zela-md text-sm transition disabled:opacity-50 ${props.className || ''}`}>
       {children}
     </button>
   );
@@ -104,7 +124,7 @@ export function PrimaryButton({ children, ...props }) {
 
 export function SecondaryButton({ children, ...props }) {
   return (
-    <button {...props} className={`flex items-center gap-1.5 px-3.5 py-2 bg-surface-container-low hover:bg-primary/10 hover:text-primary border border-outline-variant text-on-surface-variant font-bold rounded-zela-md text-sm transition disabled:opacity-50 ${props.className || ''}`}>
+    <button {...props} className={`flex items-center gap-1.5 px-3.5 py-2 bg-surface-container-low hover:bg-primary/10 hover:text-primary border border-outline-variant text-on-surface-variant font-semibold rounded-zela-md text-sm transition disabled:opacity-50 ${props.className || ''}`}>
       {children}
     </button>
   );
@@ -116,7 +136,7 @@ export function SecondaryButton({ children, ...props }) {
 // "rótulo: valor" e o campo `actions` no rodapé. Nada de rolar para os lados.
 // columns: [{ label, render: (row) => node, className?, align?: 'right',
 //            primary?: true, actions?: true, hideOnMobile?: true }]
-export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassName }) {
+export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassName, detailsGrid = false }) {
   const primary = columns.filter(c => c.primary);
   const details = columns.filter(c => !c.primary && !c.actions && !c.hideOnMobile);
   const actions = columns.filter(c => c.actions);
@@ -125,7 +145,7 @@ export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassN
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs font-bold text-on-surface-variant uppercase border-b border-outline-variant">
+            <tr className="text-left text-xs font-semibold text-on-surface-variant border-b border-outline-variant">
               {columns.map((c, i) => (
                 <th key={i} className={`py-2 pr-3 ${c.align === 'right' ? 'text-right' : ''}`}>{c.label}</th>
               ))}
@@ -152,7 +172,16 @@ export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassN
                 {primary.map((c, i) => <div key={i}>{c.render(r)}</div>)}
               </div>
             )}
-            {details.map((c, i) => (
+            {detailsGrid ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">
+                {details.map((c, i) => (
+                  <div key={i} className="min-w-0 text-sm">
+                    <p className="text-xs text-on-surface-variant">{c.label}</p>
+                    <p className="text-on-surface font-medium break-words">{c.render(r)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : details.map((c, i) => (
               <div key={i} className="flex items-start justify-between gap-3 text-sm">
                 <span className="text-xs text-on-surface-variant shrink-0 pt-0.5">{c.label}</span>
                 <span className="text-right text-on-surface min-w-0 break-words">{c.render(r)}</span>
@@ -171,16 +200,18 @@ export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassN
   );
 }
 
-export function Tabs({ tabs, active, onChange }) {
+// equalOnMobile: no celular as abas dividem a linha em colunas de mesma largura
+// (use com poucas abas).
+export function Tabs({ tabs, active, onChange, equalOnMobile = false }) {
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4">
+    <div className={`${equalOnMobile ? 'grid sm:flex' : 'flex'} ${equalOnMobile ? 'grid-flow-col auto-cols-fr' : ''} gap-1.5 overflow-x-auto pb-1 mb-4`}>
       {tabs.map(t => (
         <button
           key={t.id}
           onClick={() => onChange(t.id)}
-          className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-bold transition shrink-0 ${active === t.id ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}
+          className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-semibold transition shrink-0 ${active === t.id ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}
         >
-          {t.label}{t.badge ? ` (${t.badge})` : ''}
+          {t.shortLabel ? <><span className="sm:hidden">{t.shortLabel}</span><span className="hidden sm:inline">{t.label}</span></> : t.label}{t.badge ? ` (${t.badge})` : ''}
         </button>
       ))}
     </div>

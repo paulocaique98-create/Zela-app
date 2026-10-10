@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FileText, Loader2, Clock, CheckCircle2, XCircle, MessageSquareWarning,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
-  FileSpreadsheet, UploadCloud,
+  FileSpreadsheet, UploadCloud, SlidersHorizontal,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
@@ -28,10 +28,10 @@ const TABS = [
 ];
 
 const STATUS_INFO = {
-  pending: { label: 'Em análise', icon: Clock, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-green-50 text-green-700 border-green-200' },
-  rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-red-50 text-red-700 border-red-200' },
-  changes_requested: { label: 'Alteração solicitada', icon: MessageSquareWarning, cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+  pending: { label: 'Em análise', icon: Clock, cls: 'bg-warning/10 text-warning border-warning/30' },
+  approved: { label: 'Aprovada', icon: CheckCircle2, cls: 'bg-success/10 text-success border-success/30' },
+  rejected: { label: 'Rejeitada', icon: XCircle, cls: 'bg-error/10 text-error border-error/30' },
+  changes_requested: { label: 'Alteração solicitada', icon: MessageSquareWarning, cls: 'bg-warning/10 text-warning border-warning/30' },
 };
 
 function DocLink({ doc, label }) {
@@ -82,7 +82,7 @@ function Field({ label, value }) {
   if (!value) return null;
   return (
     <div>
-      <p className="text-[9px] font-bold text-on-surface-variant/70 uppercase tracking-wide">{label}</p>
+      <p className="text-[9px] font-bold text-on-surface-variant/70 tracking-wide">{label}</p>
       <p className="text-on-surface font-medium">{value}</p>
     </div>
   );
@@ -103,54 +103,59 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
   const transporte = solicitacao.transporte_autorizados || [];
 
   return (
-    <div className="bg-white border border-outline-variant rounded-zela-lg overflow-hidden">
-      <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between p-4 text-left">
-        <div className="min-w-0">
-          <p className="font-bold text-on-surface text-sm truncate">
-            {criancas.map(c => c.nome).join(', ') || 'Solicitação'}
-          </p>
-          <p className="text-on-surface-variant/70 text-xs mt-0.5">
-            {resp.nome} · enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
-          </p>
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg overflow-hidden">
+      <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-start justify-between gap-3 p-4 text-left">
+        <div className="min-w-0 flex-1 space-y-2">
+          <div>
+            <p className="font-semibold text-on-surface text-sm break-words">
+              {criancas.map(c => c.nome).join(', ') || 'Solicitação'}
+            </p>
+            <p className="text-on-surface-variant text-xs mt-0.5">
+              {resp.nome}
+            </p>
+            <p className="text-on-surface-variant/70 text-xs">
+              Enviado em {new Date(solicitacao.submitted_at).toLocaleString('pt-BR')}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-semibold px-2 py-1 rounded-sm border bg-surface-container-low text-on-surface-variant border-outline-variant">
+              {solicitacao.tipo === 'atualizacao_cadastral' ? 'Atualização cadastral' : solicitacao.tipo === 'rematricula' ? 'Rematrícula' : 'Matrícula'}
+            </span>
+            <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-sm border ${status.cls}`}>
+              <StatusIcon size={12} aria-hidden="true" /> {status.label}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-slate-50 text-slate-600 border-slate-200">
-            {solicitacao.tipo === 'atualizacao_cadastral' ? 'Atualização Cadastral' : solicitacao.tipo === 'rematricula' ? 'Rematrícula' : 'Matrícula'}
-          </span>
-          <span className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border ${status.cls}`}>
-            <StatusIcon size={11} /> {status.label}
-          </span>
-          {expanded ? <ChevronUp size={18} className="text-on-surface-variant/70" /> : <ChevronDown size={18} className="text-on-surface-variant/70" />}
-        </div>
+        {expanded ? <ChevronUp size={18} className="shrink-0 mt-0.5 text-on-surface-variant/70" /> : <ChevronDown size={18} className="shrink-0 mt-0.5 text-on-surface-variant/70" />}
       </button>
 
       {expanded && (
         <div className="px-4 sm:px-5 pb-5 space-y-4 border-t border-outline-variant pt-4">
           {solicitacao.status === 'rejected' && solicitacao.rejection_reason && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-xs font-medium">
+            <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-xs font-medium">
               Motivo da rejeição: {solicitacao.rejection_reason}
             </div>
           )}
           {solicitacao.status === 'changes_requested' && solicitacao.rejection_reason && (
-            <div className="bg-orange-50 border border-orange-100 text-orange-700 p-3 rounded-zela-md text-xs font-medium">
+            <div className="bg-warning/10 border border-orange-100 text-warning p-3 rounded-zela-md text-xs font-medium">
               O que a família precisa corrigir: {solicitacao.rejection_reason}
             </div>
           )}
 
           <div className="space-y-2">
-            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-primary" /> Responsável Financeiro</h5>
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 tracking-wide"><User size={13} className="text-primary" /> Responsável Financeiro</h5>
             <PessoaFields pessoa={resp} />
           </div>
 
           {segundo && (
             <div className="space-y-2">
-              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><User size={13} className="text-primary" /> Segundo Responsável</h5>
+              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 tracking-wide"><User size={13} className="text-primary" /> Segundo Responsável</h5>
               <PessoaFields pessoa={segundo} />
             </div>
           )}
 
           <div className="space-y-3">
-            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><Baby size={13} className="text-primary" /> Crianças</h5>
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 tracking-wide"><Baby size={13} className="text-primary" /> Crianças</h5>
             {criancas.map((c, i) => (
               <div key={i} className="bg-surface-container-low border border-outline-variant rounded-zela-md p-3 space-y-2">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
@@ -185,10 +190,10 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
               por pessoa. Antes o cartão de vacina da criança não aparecia em
               lugar nenhum desta tela. */}
           <div className="space-y-2">
-            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><FileText size={13} className="text-primary" /> Documentos</h5>
+            <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 tracking-wide"><FileText size={13} className="text-primary" /> Documentos</h5>
             {documentosDaSolicitacao(solicitacao).map(grupo => (
               <div key={grupo.titulo} className="space-y-1.5">
-                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">{grupo.titulo}</p>
+                <p className="text-[11px] font-bold text-on-surface-variant tracking-wide">{grupo.titulo}</p>
                 <div className="flex flex-wrap gap-2">
                   {grupo.itens.map(item => (item.doc?.path ? (
                     <DocLink key={item.key} doc={item.doc} label={item.label} />
@@ -202,7 +207,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
 
           {(autorizados.length > 0 || transporte.length > 0) && (
             <div className="space-y-2">
-              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 uppercase tracking-wide"><UserCheck size={13} className="text-primary" /> Autorizados</h5>
+              <h5 className="font-bold text-on-surface text-xs flex items-center gap-1.5 tracking-wide"><UserCheck size={13} className="text-primary" /> Autorizados</h5>
               {autorizados.map((a, i) => (
                 <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                   <Field label="Nome" value={a.nome} />
@@ -212,7 +217,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
               ))}
               {transporte.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-bold text-on-surface-variant/70 uppercase tracking-wide flex items-center gap-1 mb-1"><Car size={11} /> Autorizados pelo transporte</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant/70 tracking-wide flex items-center gap-1 mb-1"><Car size={11} /> Autorizados pelo transporte</p>
                   <p className="text-sm text-on-surface">{transporte.map(t => t.nome).join(', ')}</p>
                 </div>
               )}
@@ -228,7 +233,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     onChange={e => setRejectReason(e.target.value)}
                     placeholder="Motivo da rejeição (visível para a família)"
                     rows={2}
-                    className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   />
                   <div className="flex gap-2">
                     <button onClick={() => setShowReject(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
@@ -248,7 +253,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     onChange={e => setChangesNote(e.target.value)}
                     placeholder="O que a família precisa corrigir antes de reenviar (visível para a família)"
                     rows={2}
-                    className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
                   <div className="flex gap-2">
                     <button onClick={() => setShowChangesRequest(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
@@ -266,14 +271,14 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                   <button
                     onClick={() => setShowReject(true)}
                     disabled={isDeciding}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2.5 rounded-zela-md text-sm transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-surface-container-lowest border border-error/30 hover:bg-error/10 text-error font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     <XCircle size={15} /> Rejeitar
                   </button>
                   <button
                     onClick={() => setShowChangesRequest(true)}
                     disabled={isDeciding}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-orange-200 hover:bg-orange-50 text-orange-700 font-bold py-2.5 rounded-zela-md text-sm transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-surface-container-lowest border border-warning/30 hover:bg-warning/10 text-warning font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     <MessageSquareWarning size={15} /> Solicitar alteração
                   </button>
@@ -313,7 +318,7 @@ function CopyMatriculaLinkButton({ schoolCode }) {
       type="button"
       onClick={copy}
       title={link}
-      className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition-all active:scale-95"
+      className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-2.5 sm:px-3 py-2 rounded-zela-md transition-all active:scale-95"
     >
       <Copy size={14} /> {copied ? 'Copiado!' : 'Copiar Link'}
     </button>
@@ -327,6 +332,15 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [tab, setTab] = useState('approved');
+  const [showFiltro, setShowFiltro] = useState(false);
+  const filtroRef = useRef(null);
+  useEffect(() => {
+    if (!showFiltro) return;
+    const fora = (e) => { if (filtroRef.current && !filtroRef.current.contains(e.target)) setShowFiltro(false); };
+    document.addEventListener('mousedown', fora);
+    document.addEventListener('touchstart', fora);
+    return () => { document.removeEventListener('mousedown', fora); document.removeEventListener('touchstart', fora); };
+  }, [showFiltro]);
   const [decidingId, setDecidingId] = useState(null);
   const [newGuardianCredentials, setNewGuardianCredentials] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -551,15 +565,15 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
   const pendingCount = solicitacoes.filter(s => s.status === 'pending').length;
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Matrículas" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
+      <div className="flex items-center justify-between gap-3 px-4 py-4 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
         <p className="text-on-surface-variant text-small hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
         {/* Importação em massa — pra migrar formulários de anos anteriores
             (ex: um Google Forms usado antes do Zela Escola existir) sem cada
             família precisar preencher tudo de novo do zero. */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto flex-wrap justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto sm:shrink-0 sm:ml-auto flex-wrap justify-start sm:justify-end">
           {/* Link de Matrícula — copia direto pra escola mandar pra uma
               família nova (WhatsApp, e-mail, etc); resumido a um botão pra
               liberar espaço vertical pras abas Aprovadas/Pendentes/Rejeitadas
@@ -570,42 +584,77 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
           )}
           <button
             onClick={downloadMatriculaImportTemplate}
-            className="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container border border-outline-variant px-3 py-2 rounded-zela-md transition"
+            className="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container border border-outline-variant px-2.5 sm:px-3 py-2 rounded-zela-md transition"
           >
-            <FileSpreadsheet size={14} /> Baixar Modelo
+            <FileSpreadsheet size={14} /> Modelo
           </button>
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition"
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-container px-2.5 sm:px-3 py-2 rounded-zela-md transition"
           >
-            <UploadCloud size={14} /> Importar Planilha
+            <UploadCloud size={14} /> Importar
           </button>
+          {/* Celular: filtro de situação (mesmo modelo do período em Horas Extras). Telas maiores usam as abas abaixo. */}
+      <div className="relative sm:hidden" ref={filtroRef}>
+        <button
+          type="button"
+          onClick={() => setShowFiltro(v => !v)}
+          aria-expanded={showFiltro}
+          title="Situação das solicitações"
+          aria-label="Situação das solicitações"
+          className={`flex items-center justify-center text-sm font-semibold px-3 py-2 rounded-zela-md transition shadow-sm border ${
+            showFiltro ? 'bg-ink text-white border-ink' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low'
+          }`}
+        >
+          <SlidersHorizontal size={16} aria-hidden="true" />
+        </button>
+        {showFiltro && (
+          <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-lg p-3 z-20">
+            <p className="text-xs font-semibold text-on-surface-variant mb-1.5 px-1">Situação</p>
+            <div className="flex flex-wrap gap-1.5">
+              {TABS.map(t => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => { setTab(t.key); setShowFiltro(false); }}
+                  className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-zela-md text-xs font-semibold transition-all ${
+                    tab === t.key ? 'bg-ink text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                  }`}
+                >
+                  {t.label}
+                  {t.key === 'pending' && pendingCount > 0 && <span className="ml-1.5">({pendingCount})</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
         </div>
       </div>
 
-      <div className="flex gap-2 px-5 sm:px-6 pt-4 shrink-0">
+      <div className="hidden sm:flex flex-wrap gap-2 px-6 pt-4 shrink-0">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-zela-md text-xs font-bold transition-all ${
-              tab === t.key ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-slate-200'
+              tab === t.key ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
             {t.label}
             {t.key === 'pending' && pendingCount > 0 && (
-              <span className={`text-[10px] px-1.5 rounded-full ${tab === t.key ? 'bg-white/20' : 'bg-primary text-white'}`}>{pendingCount}</span>
+              <span className={`text-[10px] px-1.5 rounded-sm ${tab === t.key ? 'bg-surface-container-lowest/20' : 'bg-primary text-white'}`}>{pendingCount}</span>
             )}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:p-6 space-y-3">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
         {notice && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-zela-md text-sm font-medium">{notice}</div>
+          <div className="bg-success/10 border border-success/30 text-success p-3 rounded-zela-md text-sm font-medium">{notice}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -614,7 +663,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-on-surface-variant/70">
             <FileText className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma solicitação {TABS.find(t => t.key === tab)?.label.toLowerCase()}.</p>
+            <p className="text-sm font-semibold text-on-surface-variant">Nenhuma solicitação em {TABS.find(t => t.key === tab)?.label.toLowerCase()}.</p>
           </div>
         ) : (
           filtered.map(s => (
@@ -625,8 +674,8 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
 
       {newGuardianCredentials && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-6 relative">
-            <div className="mx-auto w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+          <div className="bg-surface-container-lowest rounded-zela-xl shadow-lg w-full max-w-md p-6 relative">
+            <div className="mx-auto w-12 h-12 bg-green-100 text-success rounded-full flex items-center justify-center mb-4">
               <KeyRound size={24} />
             </div>
             <h3 className="text-xl font-bold text-center text-on-surface mb-2">Acesso do 2º Responsável criado!</h3>

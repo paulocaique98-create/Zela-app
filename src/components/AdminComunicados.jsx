@@ -238,19 +238,19 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Comunicados" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Crie e gerencie avisos para as famílias da escola.</p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm ml-auto"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 h-10 w-full sm:w-auto justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm sm:ml-auto"
           >
-            <Plus size={18} /> <span className="hidden sm:inline">Novo Comunicado</span>
+            <Plus size={18} /> <span>Novo Comunicado</span>
           </button>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
@@ -377,25 +377,27 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : comunicados.length === 0 ? (
-          <div className="text-center py-16 text-on-surface-variant/70">
-            <Megaphone className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+          <div className="flex flex-col items-center text-center py-14 bg-surface-container-lowest rounded-zela-xl border border-dashed border-outline-variant">
+            <Megaphone size={30} className="text-outline-variant mb-2" />
             <p className="text-sm font-semibold text-on-surface-variant">Nenhum comunicado publicado ainda.</p>
+            <p className="text-xs text-on-surface-variant/70 mt-1">Use Novo Comunicado para avisar as famílias.</p>
           </div>
         ) : (
-          comunicados.map(c => (
-            <div key={c.id} className="bg-white border border-outline-variant rounded-zela-lg p-4 sm:p-5 shadow-sm">
+          <div className="grid gap-3 lg:grid-cols-2 items-start">
+          {comunicados.map(c => (
+            <div key={c.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-bold text-on-surface">{c.title}</h4>
+                    <h4 className="font-bold text-on-surface w-full sm:w-auto">{c.title}</h4>
                     {c.turmas && c.turmas.length > 0 ? (
                       c.turmas.map(t => (
-                        <span key={t} className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border bg-primary/10 text-primary border-primary/20">
+                        <span key={t} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                           {t}
                         </span>
                       ))
                     ) : (
-                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border bg-surface-container text-on-surface-variant border-outline-variant">
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
                         Todas as Turmas
                       </span>
                     )}
@@ -422,7 +424,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                   </button>
                 </div>
               </div>
-              <p className="text-on-surface-variant text-sm mt-3 whitespace-pre-wrap">{c.body}</p>
+              <p className="text-on-surface-variant text-sm mt-3 whitespace-pre-wrap break-words">{c.body}</p>
               {c.attachments && c.attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {c.attachments.map(a => (
@@ -439,7 +441,8 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                 </div>
               )}
             </div>
-          ))
+          ))}
+          </div>
         )}
       </div>
 

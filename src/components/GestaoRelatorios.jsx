@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Printer, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Printer, BarChart3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { centsToBRL, monthRange, downloadCSV } from '../lib/gestaoUtils';
 import { PageShell, Loading, Notice, SecondaryButton, StatCard, EmptyState, ResponsiveTable } from './GestaoShared';
@@ -46,8 +46,8 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
       <style>body{font-family:system-ui,sans-serif;margin:24px;color:#111}h1{font-size:18px;margin:0}p{color:#555;font-size:12px}
       .cards{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.c{border:1px solid #ccc;padding:8px 12px;border-radius:6px}.c b{display:block;font-size:16px}
       table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left}th{background:#f3f3f3}</style></head><body>
-      <h1>${esc(currentSchool?.name || '')} · ${esc(data.title || 'Relatório')}</h1>
-      <p>${monthly ? esc(range.label) + ' · ' : ''}Gerado em ${esc(new Date().toLocaleString('pt-BR'))}</p>
+      <h1>${esc(currentSchool?.name || '')}, ${esc(data.title || 'Relatório')}</h1>
+      <p>${monthly ? esc(range.label) + ', ' : ''}Gerado em ${esc(new Date().toLocaleString('pt-BR'))}</p>
       <div class="cards">${data.cards.map(c => `<div class="c">${esc(c.label)}<b>${esc(c.value)}</b></div>`).join('')}</div>
       ${data.table ? `<table><thead><tr>${data.table.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${data.table.rows.map(r => `<tr>${r.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : ''}
       </body></html>`);
@@ -55,20 +55,29 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
     setTimeout(() => win.print(), 400);
   };
 
+  const temTabela = data?.table?.rows?.length > 0;
+
   return (
     <PageShell
       description={DESCRIPTIONS[view]}
-      actions={data?.table?.rows?.length > 0 && <>
+      infoOnMobile
+      actions={temTabela && <>
         <SecondaryButton onClick={exportCSV}><Download size={15} /> Planilha</SecondaryButton>
         <SecondaryButton onClick={print}><Printer size={15} /> Imprimir</SecondaryButton>
       </>}
     >
       <div className="space-y-4">
+        {temTabela && (
+          <div className="grid grid-cols-2 gap-2 sm:hidden">
+            <SecondaryButton onClick={exportCSV} className="h-10 justify-center"><Download size={15} /> Planilha</SecondaryButton>
+            <SecondaryButton onClick={print} className="h-10 justify-center"><Printer size={15} /> Imprimir</SecondaryButton>
+          </div>
+        )}
         {monthly && (
           <div className="flex items-center gap-2">
-            <SecondaryButton onClick={() => setOffset(o => o - 1)} aria-label="Mês anterior">‹</SecondaryButton>
-            <span className="text-sm font-bold text-on-surface capitalize w-24 text-center">{range.label}</span>
-            <SecondaryButton onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0} aria-label="Próximo mês">›</SecondaryButton>
+            <SecondaryButton onClick={() => setOffset(o => o - 1)} aria-label="Mês anterior"><ChevronLeft size={18} aria-hidden="true" /></SecondaryButton>
+            <span className="flex-1 sm:flex-none text-sm font-bold text-on-surface first-letter:uppercase sm:w-24 text-center">{range.label}</span>
+            <SecondaryButton onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0} aria-label="Próximo mês"><ChevronRight size={18} aria-hidden="true" /></SecondaryButton>
           </div>
         )}
         <Notice>{error}</Notice>
@@ -76,13 +85,14 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
           <>
             {data.cards.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {data.cards.map(c => <StatCard key={c.label} label={c.label} value={c.value} hint={c.hint} tone={c.tone} />)}
+                {data.cards.map(c => <StatCard key={c.label} label={c.label} value={c.value} hint={c.hint} tone={c.tone} valueClassName={String(c.value).length > 8 ? 'text-lg sm:text-2xl whitespace-nowrap' : 'text-2xl'} />)}
               </div>
             )}
-            {data.table && (data.table.rows.length === 0 ? <EmptyState icon={BarChart3} text="Sem dados no período." /> : (
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">
-                {data.table.title && <h3 className="font-bold text-sm text-on-surface mb-2">{data.table.title}</h3>}
+            {data.table && (data.table.rows.length === 0 ? <EmptyState icon={BarChart3} text="Sem dados no período." hint="Mude o mês para ver outro período." /> : (
+              <section className="sm:bg-surface-container-lowest sm:border sm:border-outline-variant rounded-zela-lg sm:p-4">
+                {data.table.title && <h3 className="font-bold text-sm text-on-surface mb-3">{data.table.title}</h3>}
                 <ResponsiveTable
+                  detailsGrid={data.table.columns.length > 4}
                   rows={data.table.rows}
                   rowKey={(r, i) => i}
                   columns={data.table.columns.map((label, j) => ({
@@ -132,10 +142,10 @@ async function loadGestao(schoolId, school) {
       { label: 'Alunos ativos', value: active.length, hint: max ? `Ocupação ${pct(active.length, max)} de ${max}` : '' },
       { label: 'Saídas e trancamentos', value: all.length - active.length, tone: 'warn' },
       { label: 'Famílias', value: count('family') },
-      { label: 'Equipe', value: count('admin') + count('teacher'), hint: `${count('teacher')} professoras · ${count('admin')} administrativo` },
+      { label: 'Equipe', value: count('admin') + count('teacher'), hint: `${count('teacher')} professora${count('teacher') !== 1 ? 's' : ''}, ${count('admin')} administrativo` },
     ],
     table: {
-      title: `Alunos por turma${year.data ? ` · ano letivo ${year.data.name}` : ''}`,
+      title: `Alunos por turma${year.data ? `, ano letivo ${year.data.name}` : ''}`,
       columns: ['Turma', 'Ativos', 'Saídas', 'Participação'],
       rows: Object.entries(byTurma).sort((a, b) => a[0].localeCompare(b[0])).map(([t, v]) => [t, v.ativos, v.saidas, pct(v.ativos, active.length)]),
     },
@@ -194,7 +204,7 @@ async function loadAcademico(schoolId, _school, range) {
   return {
     title: 'Relatório Acadêmico',
     cards: [
-      { label: 'Frequência em aula', value: pct(presentes, total), hint: `${total} chamadas registradas` },
+      { label: 'Frequência em aula', value: pct(presentes, total), hint: `${total} chamada${total !== 1 ? 's' : ''} registrada${total !== 1 ? 's' : ''}` },
       { label: 'Faltas', value: (att.data || []).filter(a => a.status === 'ausente').length, tone: 'warn' },
       { label: 'Relatórios publicados', value: reports.count || 0 },
       { label: 'Mitigações publicadas', value: mitig.count || 0 },
@@ -227,7 +237,7 @@ async function loadOperacional(schoolId, _school, range) {
     cards: [
       { label: 'Entradas registradas', value: entries, hint: days ? `Média de ${Math.round(entries / days)} por dia` : '' },
       { label: 'Dias com movimento', value: days },
-      { label: 'Correções pedidas', value: c.length, hint: `${c.filter(x => x.status === 'approved').length} aprovadas · ${c.filter(x => x.status === 'rejected').length} recusadas` },
+      { label: 'Correções pedidas', value: c.length, hint: `${c.filter(x => x.status === 'approved').length} aprovadas, ${c.filter(x => x.status === 'rejected').length} recusadas` },
       { label: 'Correções que mudam cobrança', value: c.filter(x => x.increases_billing).length, tone: 'warn' },
     ],
     table: {

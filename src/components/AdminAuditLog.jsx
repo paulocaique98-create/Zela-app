@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ScrollText, Loader2 } from 'lucide-react';
+import { ScrollText, Loader2, Trash2, Pencil, Send, UserRound, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { PageShell, EmptyState } from './GestaoShared';
 
 const PAGE_SIZE = 50;
 
@@ -21,7 +22,18 @@ const ACTION_LABELS = {
   approve_matricula_solicitacao: 'Aprovou a matrícula de',
   reject_matricula_solicitacao: 'Rejeitou a matrícula de',
   request_matricula_changes: 'Pediu ajustes na matrícula de',
+  trocar_conta: 'Trocou de conta',
 };
+
+// Ações que apagam ou removem algo ganham tom de alerta; as demais, tom neutro.
+const DESTRUTIVAS = ['delete', 'delete_attendance', 'delete_authorized_person', 'remove_biometric_photo', 'delete_student_document', 'reject_matricula_solicitacao', 'cancel_checkin_request'];
+function iconeDaAcao(action) {
+  if (DESTRUTIVAS.includes(action)) return Trash2;
+  if (action === 'publish' || action === 'archive') return Send;
+  if (action === 'trocar_conta') return UserRound;
+  if (action.startsWith('approve')) return ShieldCheck;
+  return Pencil;
+}
 
 const ENTITY_LABELS = {
   mitigacao_report: 'Relatório de Mitigação',
@@ -29,6 +41,7 @@ const ENTITY_LABELS = {
   authorized_person: 'Autorizado',
   student: 'Aluno',
   matricula_solicitacao: 'Solicitação',
+  user: '',
 };
 
 function formatWhen(iso) {
@@ -85,60 +98,49 @@ export default function AdminAuditLog({ currentSchool }) {
   const handleLoadMore = () => fetchPage(logs.length, { append: true });
 
   return (
-    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Título "Auditoria" removido (o Header do app já mostra o nome da
-          tela dinamicamente); ícone + descrição numa linha compacta
-          (descrição sempre visível, mantém o ícone). */}
-      <div className="flex items-center gap-2.5 mb-6 shrink-0">
-        <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
-          <ScrollText size={18} />
+    <PageShell description="Ações sensíveis registradas por administradores da escola." infoOnMobile>
+      {loading ? (
+        <div className="flex items-center justify-center py-16 text-on-surface-variant/70">
+          <Loader2 className="animate-spin" size={28} />
         </div>
-        <p className="text-small text-on-surface-variant">Ações sensíveis registradas por administradores da escola.</p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-        {loading ? (
-          <div className="flex items-center justify-center py-16 text-on-surface-variant/70">
-            <Loader2 className="animate-spin" size={28} />
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <ScrollText className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-            <p className="text-on-surface-variant font-medium">Nenhuma ação registrada ainda.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-2">
-              {logs.map(log => (
-                <div key={log.id} className="p-3 border border-outline-variant rounded-zela-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-on-surface">
-                      {ACTION_LABELS[log.action] || log.action} {ENTITY_LABELS[log.entity_type] || log.entity_type}
-                      {(log.details?.student_name || log.details?.name) ? ` · ${log.details.student_name || log.details.name}` : ''}
+      ) : logs.length === 0 ? (
+        <EmptyState icon={ScrollText} text="Nenhuma ação registrada ainda." />
+      ) : (
+        <>
+          <ul className="grid grid-cols-1 xl:grid-cols-2 gap-2 items-start">
+            {logs.map(log => {
+              const Icone = iconeDaAcao(log.action);
+              const destrutiva = DESTRUTIVAS.includes(log.action);
+              const alvo = ENTITY_LABELS[log.entity_type] ?? log.entity_type;
+              const nome = log.details?.student_name || log.details?.name;
+              return (
+                <li key={log.id} className="flex items-start gap-3 p-3 border border-outline-variant rounded-zela-lg bg-surface-container-lowest">
+                  <span className={`w-9 h-9 shrink-0 rounded-zela-md flex items-center justify-center ${destrutiva ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'}`}><Icone size={17} /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-on-surface break-words">
+                      {[ACTION_LABELS[log.action] || log.action.replace(/_/g, ' '), alvo].filter(Boolean).join(' ')}{nome ? `, ${nome}` : ''}
                     </p>
-                    <p className="text-xs text-on-surface-variant/70">
-                      por {actorNames[log.actor_id] || log.actor_name || 'Usuário'}
-                    </p>
+                    <p className="text-xs text-on-surface-variant mt-0.5">por {actorNames[log.actor_id] || log.actor_name || 'Usuário'}</p>
+                    <p className="text-xs text-on-surface-variant/70 mt-0.5 tabular-nums">{formatWhen(log.created_at)}</p>
                   </div>
-                  <span className="text-xs text-on-surface-variant/70 shrink-0">{formatWhen(log.created_at)}</span>
-                </div>
-              ))}
+                </li>
+              );
+            })}
+          </ul>
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="w-full sm:w-auto h-10 flex items-center justify-center gap-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 px-5 rounded-zela-md transition disabled:opacity-60"
+              >
+                {loadingMore ? <Loader2 size={14} className="animate-spin" /> : null}
+                {loadingMore ? 'Carregando' : 'Carregar mais'}
+              </button>
             </div>
-            {hasMore && (
-              <div className="flex justify-center py-4">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="flex items-center gap-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 px-5 py-2.5 rounded-zela-md transition disabled:opacity-60"
-                >
-                  {loadingMore ? <Loader2 size={14} className="animate-spin" /> : null}
-                  {loadingMore ? 'Carregando...' : 'Carregar mais'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }

@@ -5,7 +5,7 @@ import { formatDateBR } from '../lib/gestaoUtils';
 import { PageShell, Loading, EmptyState, Notice } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 
-// Cadastros · Limpeza de biometria (LGPD, minimização). Lista as pessoas
+// Cadastros, Limpeza de biometria (LGPD, minimização). Lista as pessoas
 // autorizadas com foto/biometria de famílias que não têm mais aluno ativo
 // na escola. Nada é apagado sozinho: a Gestão escolhe e confirma. O
 // servidor confere de novo antes de apagar (purge_biometria).
@@ -106,7 +106,7 @@ export default function GestaoLimpezaBiometria() {
               <button
                 onClick={() => setConfirming(true)}
                 disabled={selected.size === 0 || isPurging}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-error hover:bg-error/90 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
               >
                 <Trash2 size={15} /> Apagar biometria ({selected.size})
               </button>
@@ -117,9 +117,9 @@ export default function GestaoLimpezaBiometria() {
                   <label htmlFor={`bio-${r.person_id}`} className="flex items-start gap-3 px-4 py-3 cursor-pointer">
                     <input id={`bio-${r.person_id}`} type="checkbox" className="mt-1" checked={selected.has(r.person_id)} onChange={() => toggle(r.person_id)} />
                     <span className="min-w-0">
-                      <span className="block text-sm font-bold text-on-surface">{r.person_name} · {r.relation}</span>
+                      <span className="block text-sm font-bold text-on-surface">{r.person_name}, {r.relation}</span>
                       <span className="block text-xs text-on-surface-variant">
-                        Família: {r.family_name || 'conta excluída'}{r.biometric_consent_at ? ` · consentimento em ${formatDateBR(r.biometric_consent_at)}` : ''}
+                        Família: {r.family_name || 'conta excluída'}{r.biometric_consent_at ? `, consentimento em ${formatDateBR(r.biometric_consent_at)}` : ''}
                       </span>
                       <span className="block text-xs text-on-surface-variant/80">Alunos: {r.alunos || 'nenhum vinculado'}</span>
                     </span>
@@ -144,7 +144,7 @@ export default function GestaoLimpezaBiometria() {
                 <button
                   onClick={() => setConfirmandoSoltas(true)}
                   disabled={apagandoSoltas}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-error hover:bg-error/90 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50"
                 >
                   <Trash2 size={15} /> {apagandoSoltas ? 'Apagando...' : `Apagar ${soltas.length === 1 ? 'a foto' : `as ${soltas.length} fotos`}`}
                 </button>

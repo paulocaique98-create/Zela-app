@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileText, Loader2, Search, Archive, Trash2, FileDown } from 'lucide-react';
+import { FileText, Loader2, Search, Archive, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import MitigacaoReportEditor from './MitigacaoReportEditor';
 import ConfirmModal from './ConfirmModal';
 import { logAction } from '../lib/auditLog';
-import { printMitigacaoReportsBulk } from '../lib/printMitigacao';
 
 const STATUS_BADGE = {
   RASCUNHO: 'bg-surface-container text-on-surface-variant border-outline-variant',
@@ -170,8 +169,8 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
+        <div className="hidden sm:flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
               <FileText size={22} />
@@ -183,52 +182,24 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
               </p>
             </div>
           </div>
-          {/* No mobile o botão fica ao lado do título; no desktop ele migra pro
-              bloco de ações à direita (junto da busca) — ver abaixo. */}
-          {turmaFilterActive && (
-            <button
-              onClick={() => printMitigacaoReportsBulk({
-                reports: reports.filter(r => r.status === 'PUBLICADO' && studentsById.get(r.student_id)?.turma === turmaFilter),
-                studentsById,
-                school: currentSchool,
-              })}
-              className="sm:hidden flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2.5 rounded-zela-md transition text-xs shrink-0"
-              title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
-            >
-              <FileDown size={15} /> Gerar turma
-            </button>
-          )}
         </div>
         <div className="flex items-center gap-2">
-          {turmaFilterActive && (
-            <button
-              onClick={() => printMitigacaoReportsBulk({
-                reports: reports.filter(r => r.status === 'PUBLICADO' && studentsById.get(r.student_id)?.turma === turmaFilter),
-                studentsById,
-                school: currentSchool,
-              })}
-              className="hidden sm:flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2.5 rounded-zela-md transition text-xs shrink-0"
-              title={`Gerar todos os relatórios publicados da turma ${turmaFilter || 'sem turma'}`}
-            >
-              <FileDown size={15} /> Gerar turma
-            </button>
-          )}
           {reports.length > 0 && (
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant/70" />
               <input
                 type="text"
                 placeholder="Buscar por aluno..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm w-full sm:w-64"
+                className="pl-9 pr-3 h-10 sm:h-auto sm:py-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm w-full sm:w-64"
               />
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-1 sm:p-6 space-y-2">
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
         )}
@@ -245,14 +216,18 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                   if (isSelected) { setTurmaFilterActive(false); setTurmaFilter(null); }
                   else { setTurmaFilterActive(true); setTurmaFilter(t.turma); }
                 }}
-                className={`text-left p-3 rounded-zela-md border transition ${isSelected ? 'border-indigo-400 bg-primary/10' : 'border-outline-variant bg-surface-container-low hover:border-primary/20'}`}
+                className={`relative text-left p-3 rounded-zela-lg border transition ${isSelected ? 'border-primary bg-primary/10 ring-1 ring-primary' : t.rascunho > 0 ? 'border-warning/60 bg-warning/5 hover:border-warning' : 'border-outline-variant bg-surface-container-lowest hover:border-primary/40'}`}
               >
-                <p className="text-xs font-black text-on-surface">{t.turma || 'Sem turma'}</p>
-                <p className="text-[11px] text-on-surface-variant mt-1">
-                  {t.publicado} publicado{t.publicado !== 1 ? 's' : ''} · {t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}
-                </p>
+                {t.rascunho > 0 && (
+                  <span className="absolute top-2 right-2 text-warning" title="Há rascunhos nesta turma" aria-label="Há rascunhos nesta turma"><AlertTriangle size={16} /></span>
+                )}
+                <p className={`text-sm font-bold text-on-surface leading-tight ${t.rascunho > 0 ? 'pr-5' : ''}`}>{t.turma || 'Sem turma'}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{t.publicado} publicado{t.publicado !== 1 ? 's' : ''}</span>
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${t.rascunho > 0 ? 'bg-warning/15 text-warning' : 'bg-surface-container text-on-surface-variant'}`}>{t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}</span>
+                </div>
                 {t.semRelatorio > 0 && (
-                  <p className="text-[11px] text-amber-600 font-bold mt-0.5">{t.semRelatorio} sem relatório</p>
+                  <p className="text-xs text-warning font-bold mt-2">{t.semRelatorio} sem relatório</p>
                 )}
               </button>
               );

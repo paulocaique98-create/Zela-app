@@ -183,7 +183,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
               {pending.length === 0 ? (
                 <p className="text-sm text-on-surface-variant/70 italic">Nenhuma correção pendente no momento.</p>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {pending.map(c => renderCard(c, { reviewable: true }))}
                 </div>
               )}
@@ -194,7 +194,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
               {resolved.length === 0 ? (
                 <p className="text-sm text-on-surface-variant/70 italic">Nenhuma correção registrada ainda.</p>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {resolved.map(c => renderCard(c, { reviewable: false }))}
                 </div>
               )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, Pencil, Check, X, LogOut, Upload, Download, Trash2, ArrowRightLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, Pencil, Check, X, LogOut, Upload, Download, Trash2, ArrowRightLeft, Lightbulb } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
@@ -43,12 +43,12 @@ const DOC_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application
 const DOC_MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return 'Não informado';
   return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 }
 
 function formatCurrency(cents) {
-  if (cents === null || cents === undefined) return '—';
+  if (cents === null || cents === undefined) return 'Não informado';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 }
 
@@ -164,7 +164,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
         id: `transfer-${t.id}`,
         when: t.transferred_at,
         actorName: t.users?.name || 'Usuário',
-        label: t.transfer_type === 'saida_externa' ? `Transferiu para ${t.destination_school_name}` : `Mudou de turma: ${t.from_class_name || '—'} → ${t.to_class_name}`,
+        label: t.transfer_type === 'saida_externa' ? `Transferiu para ${t.destination_school_name}` : `Mudou de turma: ${t.from_class_name || 'Não informado'} → ${t.to_class_name}`,
         detail: t.reason || '',
       }));
       setHistorico([...auditEvents, ...transferEvents].sort((a, b) => new Date(b.when) - new Date(a.when)));
@@ -298,7 +298,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
     setIsSavingMove(true);
     setMoveError('');
     try {
-      const reason = [moveMotivo, moveNota.trim()].filter(Boolean).join(' · ') || null;
+      const reason = [moveMotivo, moveNota.trim()].filter(Boolean).join(', ') || null;
       const { error: moveRpcError } = await supabase.rpc('transfer_student_class', {
         p_student_id: studentId,
         p_new_turma: moveTurma,
@@ -415,14 +415,14 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
   const turmasDestino = [...new Set([...schoolTurmas, ...colegas.map(c => c.turma).filter(Boolean)])].filter(t => t !== student.turma);
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
+    <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
       <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
         <button onClick={onBack} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
           <ArrowLeft size={20} />
         </button>
         <div className="min-w-0 flex-1">
           <h2 className="text-h3 text-on-surface truncate">{student.name}</h2>
-          <p className="text-xs text-on-surface-variant/70">{student.turma || '—'}{student.turno ? ` · ${student.turno}` : ''}</p>
+          <p className="text-xs text-on-surface-variant/70">{student.turma || 'Não informado'}{student.turno ? `, ${student.turno}` : ''}</p>
         </div>
         {canEditHere && !isEditing && (
           <button onClick={startEditing} className="flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-zela-md transition shrink-0">
@@ -459,7 +459,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {saveError && (
-          <div className="max-w-2xl mb-4 bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{saveError}</div>
+          <div className="max-w-2xl mb-4 bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{saveError}</div>
         )}
 
         {activeTab === 'pessoais' && (
@@ -486,13 +486,13 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
               <Field label="Nome completo" value={student.name} />
               <Field label="Data de nascimento" value={formatDate(student.birth_date)} />
               <Field label="Idade do aluno" value={formatIdade(idadeMeses)} />
-              <Field label="Cidade de nascimento" value={student.cidade_nascimento || '—'} />
-              <Field label="Horário contratado" value={`${student.contracted_entry_time || '—'} às ${student.contracted_exit_time || '—'} (${student.contracted_hours || '—'}h)`} />
+              <Field label="Cidade de nascimento" value={student.cidade_nascimento || 'Não informado'} />
+              <Field label="Horário contratado" value={`${student.contracted_entry_time || 'Não informado'} às ${student.contracted_exit_time || 'Não informado'} (${student.contracted_hours || 'Não informado'}h)`} />
               <Field label="Autorização de imagem" value={student.autorizacao_imagem === null ? 'Não informado' : (student.autorizacao_imagem ? 'Sim' : 'Não')} />
               <Field label="Autorização de emergência médica" value={student.autorizacao_emergencia_medica === null ? 'Não informado' : (student.autorizacao_emergencia_medica ? 'Sim' : 'Não')} />
               {fichaMedica && (
                 <div className="pt-2 border-t border-outline-variant">
-                  <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant mb-2">Ficha médica</p>
+                  <p className="text-xs font-semibold text-on-surface-variant mb-2">Ficha médica</p>
                   <Field label="Restrição alimentar" value={fichaMedica.tem_restricao_alimentar ? (fichaMedica.restricoes_alimentares || []).join(', ') || 'Sim' : 'Não'} />
                   <Field label="Restrição de saúde" value={fichaMedica.tem_restricao_saude ? (fichaMedica.restricoes_saude || []).join(', ') || 'Sim' : 'Não'} />
                   <Field label="Usa medicamento" value={fichaMedica.usa_medicamento ? (fichaMedica.medicamentos || []).join(', ') || 'Sim' : 'Não'} />
@@ -512,17 +512,17 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                   : ' Enquanto não houver contrato, dá para trocar aqui.'}
               </p>
             )}
-            {financeiroErro && <p className="text-xs font-medium text-red-600">{financeiroErro}</p>}
+            {financeiroErro && <p className="text-xs font-medium text-error">{financeiroErro}</p>}
             {guardians.length === 0 ? (
               <EmptyState text="Nenhum responsável vinculado." />
             ) : guardians.map(g => (
               <div key={g.id} className="p-3.5 border border-outline-variant rounded-zela-lg">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <p className="font-bold text-on-surface text-sm">{g.users?.name || '—'}</p>
-                  {g.is_primary && <span className="text-[10px] font-bold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-full">Titular</span>}
-                  {g.is_financial && <span className="text-[10px] font-bold uppercase bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Financeiro</span>}
+                  <p className="font-bold text-on-surface text-sm">{g.users?.name || 'Não informado'}</p>
+                  {g.is_primary && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-sm">Titular</span>}
+                  {g.is_financial && <span className="text-[10px] font-bold bg-success/10 text-success px-2 py-0.5 rounded-sm">Financeiro</span>}
                 </div>
-                <p className="text-xs text-on-surface-variant/70">{g.relationship || '—'} · {g.users?.phone || '—'} · {g.users?.email || '—'}</p>
+                <p className="text-xs text-on-surface-variant/70">{g.relationship || 'Não informado'}, {g.users?.phone || 'Não informado'}, {g.users?.email || 'Não informado'}</p>
                 {recursos.escolherResponsavelFinanceiro && !g.is_financial && guardians.length > 1 && !(contract && ['active', 'paused'].includes(contract.status)) && (
                   <button
                     onClick={() => tornarFinanceiro(g.guardian_id)}
@@ -545,9 +545,9 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
               <div key={a.id} className="p-3.5 border border-outline-variant rounded-zela-lg flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-bold text-on-surface text-sm truncate">{a.name}</p>
-                  <p className="text-xs text-on-surface-variant/70">{a.relation || '—'} · {a.has_photo ? 'Com biometria' : 'Sem biometria'}</p>
+                  <p className="text-xs text-on-surface-variant/70">{a.relation || 'Não informado'}, {a.has_photo ? 'Com biometria' : 'Sem biometria'}</p>
                 </div>
-                <span className="text-[10px] font-bold uppercase text-on-surface-variant/70 shrink-0">{a.status || '—'}</span>
+                <span className="text-[10px] font-bold text-on-surface-variant/70 shrink-0">{a.status || 'Não informado'}</span>
               </div>
             ))}
           </div>
@@ -557,13 +557,13 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
           isEditing ? (
             <div className="max-w-2xl space-y-4">
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Situação da matrícula</label>
+                <label className="text-[11px] font-bold text-on-surface-variant/70">Situação da matrícula</label>
                 <select value={form.enrollment_status} onChange={e => setForm(f => ({ ...f, enrollment_status: e.target.value }))} className="mt-1 w-full p-2.5 border border-outline-variant rounded-zela-md text-sm">
                   {Object.entries(ENROLLMENT_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Turma</p>
+                <p className="text-[11px] font-bold text-on-surface-variant/70">Turma</p>
                 <p className="mt-1 text-sm text-on-surface">{student.turma || '·'}</p>
                 <p className="text-[11px] text-on-surface-variant/60 mt-1">Para trocar a turma, salve ou cancele esta edição e use o botão "Mudar de turma".</p>
               </div>
@@ -578,15 +578,15 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
           ) : (
             <div className="max-w-2xl space-y-4">
               <Field label="Situação da matrícula" value={ENROLLMENT_STATUS_LABELS[student.enrollment_status] || student.enrollment_status} />
-              <Field label="Turma atual" value={student.turma || '—'} />
-              <Field label="Turno" value={student.turno || '—'} />
-              <Field label="Período" value={student.periodo || '—'} />
-              <Field label="Ciclo contratado" value={student.contracted_hours ? `${student.contracted_hours}h` : '—'} />
+              <Field label="Turma atual" value={student.turma || 'Não informado'} />
+              <Field label="Turno" value={student.turno || 'Não informado'} />
+              <Field label="Período" value={student.periodo || 'Não informado'} />
+              <Field label="Ciclo contratado" value={student.contracted_hours ? `${student.contracted_hours}h` : 'Não informado'} />
               <Field label="Idade" value={formatIdade(idadeMeses)} />
 
               {sugestao && !isMoving && (
-                <div className={`p-3.5 rounded-zela-lg border flex flex-col sm:flex-row sm:items-center gap-3 ${sugestao.tipo === 'evoluir' ? 'bg-primary/5 border-primary/20' : 'bg-amber-50 border-amber-200'}`}>
-                  <Sparkles size={18} className={`shrink-0 ${sugestao.tipo === 'evoluir' ? 'text-primary' : 'text-amber-800'}`} />
+                <div className={`p-3.5 rounded-zela-lg border flex flex-col sm:flex-row sm:items-center gap-3 ${sugestao.tipo === 'evoluir' ? 'bg-primary/5 border-primary/20' : 'bg-warning/10 border-warning/30'}`}>
+                  <Lightbulb size={18} className={`shrink-0 ${sugestao.tipo === 'evoluir' ? 'text-primary' : 'text-warning'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-on-surface">
                       {sugestao.tipo === 'evoluir' ? `Pode estar na hora de ir para ${sugestao.turma}` : 'Idade bem abaixo da turma'}
@@ -613,11 +613,11 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                     </button>
                   ) : (
                     <div className="space-y-3 max-w-md">
-                      <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant">Mudar de turma</p>
+                      <p className="text-xs font-semibold text-on-surface-variant">Mudar de turma</p>
                       <p className="text-[11px] text-on-surface-variant/60">O aluno continua matriculado na escola; muda só a turma. A mudança fica registrada no Histórico.</p>
                       <div>
-                        <label htmlFor="mover-turma" className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Nova turma</label>
-                        <select id="mover-turma" value={moveTurma} onChange={e => setMoveTurma(e.target.value)} className="mt-1 w-full p-2.5 border border-outline-variant rounded-zela-md text-sm bg-white">
+                        <label htmlFor="mover-turma" className="text-[11px] font-bold text-on-surface-variant/70">Nova turma</label>
+                        <select id="mover-turma" value={moveTurma} onChange={e => setMoveTurma(e.target.value)} className="mt-1 w-full p-2.5 border border-outline-variant rounded-zela-md text-sm bg-surface-container-lowest">
                           <option value="">Escolha a turma</option>
                           {turmasDestino.map(t => (
                             <option key={t} value={t}>{t}{sugestao?.tipo === 'evoluir' && sugestao.turma === t ? ' (sugerida pela idade)' : ''}</option>
@@ -625,7 +625,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                         </select>
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">Motivo</p>
+                        <p className="text-[11px] font-bold text-on-surface-variant/70">Motivo</p>
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {MOTIVOS_MUDANCA_TURMA.map(m => (
                             <button
@@ -633,7 +633,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                               type="button"
                               onClick={() => setMoveMotivo(moveMotivo === m ? '' : m)}
                               aria-pressed={moveMotivo === m}
-                              className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${moveMotivo === m ? 'bg-primary border-primary text-white' : 'bg-white border-outline-variant text-on-surface hover:border-primary/40'}`}
+                              className={`text-xs font-bold px-3 py-1.5 rounded-sm border transition ${moveMotivo === m ? 'bg-primary border-primary text-white' : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:border-primary/40'}`}
                             >
                               {m}
                             </button>
@@ -641,7 +641,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                         </div>
                       </div>
                       <EditField label="Observação (opcional)" value={moveNota} onChange={setMoveNota} />
-                      {moveError && <p className="text-xs text-red-600 font-medium">{moveError}</p>}
+                      {moveError && <p className="text-xs text-error font-medium">{moveError}</p>}
                       <div className="flex items-center gap-2">
                         <button onClick={() => setIsMoving(false)} disabled={isSavingMove} className="text-xs font-bold text-on-surface-variant hover:bg-surface-container px-3 py-2 rounded-zela-md transition">Cancelar</button>
                         <button onClick={handleConfirmMove} disabled={isSavingMove || !moveTurma} className="flex items-center gap-1 text-xs font-bold text-white bg-primary hover:bg-primary-container px-3 py-2 rounded-zela-md transition disabled:opacity-60">
@@ -656,19 +656,19 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
               {student.enrollment_status !== 'transferido' && (
                 <div className="pt-4 border-t border-outline-variant">
                   {!isTransferring ? (
-                    <button onClick={() => { setIsMoving(false); startTransfer(); }} className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-zela-md transition">
+                    <button onClick={() => { setIsMoving(false); startTransfer(); }} className="flex items-center gap-1.5 text-xs font-bold text-error bg-error/10 hover:bg-error/10 px-3 py-2 rounded-zela-md transition">
                       <LogOut size={14} /> Transferir para outra escola
                     </button>
                   ) : (
                     <div className="space-y-3 max-w-md">
-                      <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant">Transferir para outra escola</p>
+                      <p className="text-xs font-semibold text-on-surface-variant">Transferir para outra escola</p>
                       <p className="text-[11px] text-on-surface-variant/60">Marca o aluno como transferido e sai das listagens ativas da Secretaria. O histórico de presença e matrícula continua preservado.</p>
                       <EditField label="Nome da escola de destino" value={transferSchoolName} onChange={setTransferSchoolName} />
                       <EditField label="Motivo (opcional)" value={transferReason} onChange={setTransferReason} />
-                      {transferError && <p className="text-xs text-red-600 font-medium">{transferError}</p>}
+                      {transferError && <p className="text-xs text-error font-medium">{transferError}</p>}
                       <div className="flex items-center gap-2">
                         <button onClick={() => setIsTransferring(false)} disabled={isSavingTransfer} className="text-xs font-bold text-on-surface-variant hover:bg-surface-container px-3 py-2 rounded-zela-md transition">Cancelar</button>
-                        <button onClick={handleConfirmTransfer} disabled={isSavingTransfer || !transferSchoolName.trim()} className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-2 rounded-zela-md transition disabled:opacity-60">
+                        <button onClick={handleConfirmTransfer} disabled={isSavingTransfer || !transferSchoolName.trim()} className="flex items-center gap-1 text-xs font-bold text-white bg-error hover:bg-error/90 px-3 py-2 rounded-zela-md transition disabled:opacity-60">
                           {isSavingTransfer ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />} Confirmar transferência
                         </button>
                       </div>
@@ -686,20 +686,20 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
               <EmptyState text="Nenhuma mensalidade encontrada pra este aluno." />
             ) : (
               <>
-                <Field label="Responsável financeiro" value={financialGuardian?.users?.name || '—'} />
+                <Field label="Responsável financeiro" value={financialGuardian?.users?.name || 'Não informado'} />
                 <Field label="Situação do contrato" value={contract.status} />
                 <Field label="Ciclo de cobrança" value={contract.billing_cycle} />
                 <Field label="Valor contratado" value={formatCurrency(contract.amount_cents)} />
                 <Field label="Início do contrato" value={formatDate(contract.first_due_date)} />
                 {nextCharge && (
                   <div className="pt-2 border-t border-outline-variant">
-                    <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant mb-2">Próxima cobrança</p>
+                    <p className="text-xs font-semibold text-on-surface-variant mb-2">Próxima cobrança</p>
                     <Field label="Vencimento" value={formatDate(nextCharge.due_date)} />
                     <Field label="Valor" value={formatCurrency(nextCharge.amount_cents)} />
                     <Field label="Situação" value={CHARGE_STATUS_LABELS[nextCharge.status] || nextCharge.status} />
                   </div>
                 )}
-                <p className="text-xs text-on-surface-variant/60 pt-2">Resumo apenas — para detalhes completos e histórico de cobranças, acesse o menu Financeiro.</p>
+                <p className="text-xs text-on-surface-variant/60 pt-2">Resumo apenas. Para detalhes completos e histórico de cobranças, acesse o menu Financeiro.</p>
               </>
             )}
             <CondicaoFinanceiraFamilia
@@ -715,11 +715,11 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
         {activeTab === 'documentos' && (
           <div className="max-w-2xl space-y-5">
             {docsError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{docsError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{docsError}</div>
             )}
 
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant mb-2">Enviar documento</p>
+              <p className="text-xs font-semibold text-on-surface-variant mb-2">Enviar documento</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {DOCUMENT_CATEGORIES.map(cat => {
                   const inputId = `doc-upload-${cat.key}`;
@@ -747,7 +747,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
             </div>
 
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant mb-2">Documentos enviados</p>
+              <p className="text-xs font-semibold text-on-surface-variant mb-2">Documentos enviados</p>
               {documents.length === 0 ? (
                 <EmptyState text="Nenhum documento enviado ainda." />
               ) : (
@@ -756,13 +756,13 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                     <div key={doc.id} className="flex items-center justify-between gap-3 p-3 border border-outline-variant rounded-zela-lg">
                       <div className="min-w-0">
                         <p className="font-bold text-on-surface text-sm truncate">{DOCUMENT_CATEGORY_LABELS[doc.category] || doc.category}</p>
-                        <p className="text-xs text-on-surface-variant/70 truncate">{doc.file_name} · {formatDate(doc.uploaded_at?.slice(0, 10))}</p>
+                        <p className="text-xs text-on-surface-variant/70 truncate">{doc.file_name}, {formatDate(doc.uploaded_at?.slice(0, 10))}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button onClick={() => handleOpenDocument(doc)} className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition" title="Abrir">
                           <Download size={15} />
                         </button>
-                        <button onClick={() => handleDeleteDocument(doc)} disabled={deletingDocId === doc.id} className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-zela-md transition disabled:opacity-50" title="Excluir">
+                        <button onClick={() => handleDeleteDocument(doc)} disabled={deletingDocId === doc.id} className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-zela-md transition disabled:opacity-50" title="Excluir">
                           {deletingDocId === doc.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                         </button>
                       </div>
@@ -782,7 +782,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
               <div key={h.id} className="p-3 border border-outline-variant rounded-zela-lg">
                 <p className="text-sm font-bold text-on-surface">{h.label}</p>
                 {h.detail && <p className="text-xs text-on-surface-variant/80 mt-0.5">{h.detail}</p>}
-                <p className="text-xs text-on-surface-variant/60 mt-1">por {h.actorName} · {new Date(h.when).toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-on-surface-variant/60 mt-1">por {h.actorName}, {new Date(h.when).toLocaleString('pt-BR')}</p>
               </div>
             ))}
           </div>
@@ -795,8 +795,8 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
 function Field({ label, value }) {
   return (
     <div>
-      <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">{label}</p>
-      <p className="text-sm text-on-surface mt-0.5">{value || '—'}</p>
+      <p className="text-[11px] font-bold text-on-surface-variant/70">{label}</p>
+      <p className="text-sm text-on-surface mt-0.5">{value || 'Não informado'}</p>
     </div>
   );
 }
@@ -804,11 +804,11 @@ function Field({ label, value }) {
 function SelectField({ label, value, onChange, options }) {
   return (
     <div>
-      <label className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">{label}</label>
+      <label className="text-[11px] font-bold text-on-surface-variant/70">{label}</label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full p-2.5 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        className="mt-1 w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -819,7 +819,7 @@ function SelectField({ label, value, onChange, options }) {
 function EditField({ label, value, onChange, type = 'text' }) {
   return (
     <div>
-      <label className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant/70">{label}</label>
+      <label className="text-[11px] font-bold text-on-surface-variant/70">{label}</label>
       <input
         type={type}
         value={value}

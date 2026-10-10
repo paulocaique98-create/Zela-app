@@ -208,19 +208,19 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Mural de Fotos" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Compartilhe fotos com as famílias, por turma ou para todos.</p>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm ml-auto"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 h-10 w-full sm:w-auto justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm sm:ml-auto"
           >
-            <Upload size={18} /> <span className="hidden sm:inline">Adicionar Fotos</span>
+            <Upload size={18} /> <span>Adicionar Fotos</span>
           </button>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
         {showForm && (
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
@@ -312,14 +312,15 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : fotos.length === 0 ? (
-          <div className="text-center py-16 text-on-surface-variant/70">
-            <ImageIcon className="mx-auto h-12 w-12 text-outline-variant mb-3" />
+          <div className="flex flex-col items-center text-center py-14 bg-surface-container-lowest rounded-zela-xl border border-dashed border-outline-variant">
+            <ImageIcon size={30} className="text-outline-variant mb-2" />
             <p className="text-sm font-semibold text-on-surface-variant">Nenhuma foto publicada ainda.</p>
+            <p className="text-xs text-on-surface-variant/70 mt-1">Use Adicionar Fotos para compartilhar com as famílias.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
             {fotos.map((foto, index) => (
-              <div key={foto.id} className="relative aspect-square rounded-zela-md overflow-hidden border border-outline-variant group bg-surface-container">
+              <div key={foto.id} className="relative aspect-square rounded-zela-lg overflow-hidden border border-outline-variant group bg-surface-container shadow-sm">
                 {urls.get(foto.storage_path) ? (
                   <img
                     src={urls.get(foto.storage_path)}
@@ -335,12 +336,12 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                 <button
                   onClick={() => handleDelete(foto)}
                   disabled={deletingId === foto.id}
-                  className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-lg p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
+                  aria-label="Excluir foto" title="Excluir foto" className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-error text-white rounded-full p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
                 >
                   {deletingId === foto.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 </button>
                 {!foto.turmas && (
-                  <span className="absolute bottom-1.5 left-1.5 text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-black/60 text-white">
+                  <span className="absolute bottom-1.5 left-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white">
                     Geral
                   </span>
                 )}

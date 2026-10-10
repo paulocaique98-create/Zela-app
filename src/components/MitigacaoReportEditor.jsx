@@ -140,7 +140,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
             onClick={handlePrint}
             className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary font-bold px-3 py-2 rounded-zela-md transition text-xs shrink-0"
           >
-            <FileDown size={15} /> Gerar Relatório
+            <FileDown size={15} /> Enviar relatório
           </button>
         )}
         <span className={`text-[10px] font-extrabold uppercase px-2 py-1 rounded-md border shrink-0 ${statusInfo.color}`}>

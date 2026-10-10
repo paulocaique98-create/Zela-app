@@ -103,6 +103,14 @@ function groupOf(tab) {
 // Também é o portal da Coordenação e da Direção (role 'gestao_pedagogica'),
 // com o menu reduzido: src/lib/perfisGestao.js decide as abas; o banco barra
 // o resto.
+// Telas que trocam a descrição por um ícone de informação no celular: nelas a
+// linha do topo também some para a faixa do ícone não ficar entre duas linhas.
+const COM_INFO_NO_CELULAR = [
+  'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas',
+  'financeiro-inadimplencia', 'financeiro-recebimentos', 'financeiro-despesas', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-qualidade-biometria', 'academico-ano-letivo', 'academico-ocorrencias',
+  'relatorios-gestao', 'relatorios-financeiro', 'relatorios-academico', 'relatorios-operacional', 'config-financeiro', 'config-comunicacao', 'config-seguranca', 'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
+];
+
 export default function GestaoPortal({
   currentUser, currentSchool,
   gestaoTab, setGestaoTab,
@@ -212,7 +220,7 @@ export default function GestaoPortal({
   // quem não pode aprovar.
   const correcoesParaMim = recursos.aprovarCorrecaoQueGeraCobranca ? pendingCorrectionsCount : 0;
   const pendenciasBadge = pendingUsersCount + correcoesParaMim;
-  const shell = (description, children) => <PageShell description={description}>{children}</PageShell>;
+  const shell = (description, children) => <PageShell description={description} infoOnMobile>{children}</PageShell>;
 
   return (
     <div className="flex flex-col md:flex-row gap-0 w-full h-full animate-in fade-in md:relative">
@@ -311,7 +319,7 @@ export default function GestaoPortal({
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
+      <main className={`flex-1 min-w-0 h-full flex flex-col border-outline-variant/60 ${COM_INFO_NO_CELULAR.includes(abaAtual) ? 'sm:border-t' : 'border-t'}`}>
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {abaAtual === 'home' && <GestaoInicio currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} clickCounts={clickCounts} />}
           {abaAtual === 'pendencias' && <GestaoPendencias currentUser={currentUser} setGestaoTab={goFromShortcut} />}
@@ -353,7 +361,7 @@ export default function GestaoPortal({
           {/* Financeiro */}
           {abaAtual === 'financeiro-visao' && <GestaoVisaoFinanceira currentUser={currentUser} setGestaoTab={goFromShortcut} />}
           {abaAtual === 'financeiro-planos' && <GestaoPlanos currentUser={currentUser} />}
-          {abaAtual === 'financeiro-mensalidades' && shell('Mensalidade de cada aluno, cobrada automaticamente pelo Asaas.', <MensalidadesTab currentUser={currentUser} />)}
+          {abaAtual === 'financeiro-mensalidades' && shell('Mensalidade de cada aluno, cobrada automaticamente pelo Asaas. O preço vem de Financeiro, Planos.', <MensalidadesTab currentUser={currentUser} />)}
           {abaAtual === 'financeiro-cobrancas' && shell('Todas as cobranças geradas, com situação e forma de pagamento.', <CobrancasTab key="all" currentUser={currentUser} canRegisterPayment />)}
           {abaAtual === 'financeiro-inadimplencia' && shell('Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', <CobrancasTab key="overdue" currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment />)}
           {abaAtual === 'financeiro-recebimentos' && <GestaoRecebimentos currentUser={currentUser} />}
@@ -373,7 +381,7 @@ export default function GestaoPortal({
           {abaAtual === 'cadastros-turmas' && (
             <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 lg:p-8">
               <div className="max-w-3xl">
-                <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />
+                <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} noBorder />
               </div>
             </div>
           )}
@@ -413,7 +421,7 @@ export default function GestaoPortal({
           {abaAtual === 'config-financeiro' && (
             <div className="h-full flex flex-col min-h-0">
               <div className="px-4 md:px-6 pt-4 shrink-0">
-                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }]} active={financeConfigTab} onChange={setFinanceConfigTab} />
+                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }]} active={financeConfigTab} onChange={setFinanceConfigTab} equalOnMobile />
               </div>
               <div className="flex-1 min-h-0">
                 {financeConfigTab === 'gateway'
@@ -438,19 +446,19 @@ export default function GestaoPortal({
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-primary hover:bg-primary-container text-white shadow-xl flex items-center justify-center transition-all active:scale-95"
+              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
               title="Chat"
               aria-label="Chat"
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
               {!isChatOpen && chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
                   {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                 </span>
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
                 isChatExpanded
                   ? 'sm:inset-6 rounded-zela-xl'
                   : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'

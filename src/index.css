@@ -110,6 +110,16 @@ h1, h2, h3 {
   }
 }
 
+/* Barra de rolagem escondida em todo o sistema para ganhar espaço,
+   principalmente no celular. A rolagem (toque, roda, teclado) continua. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
 @layer utilities {
   /* Esconde a barra de rolagem sem desativar o scroll -- pedido
      especificamente pro Portal do Desenvolvedor (menu lateral e áreas de

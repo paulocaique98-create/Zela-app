@@ -260,19 +260,25 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
           <button
             onClick={() => setShowFilters(v => !v)}
-            className={`flex items-center justify-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm border ${
-              showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            className={`flex items-center justify-center gap-2 h-10 pl-3 pr-2.5 text-sm font-semibold rounded-zela-md transition shadow-sm border focus:outline-none focus:ring-2 focus:ring-primary ${
+              showFilters
+                ? 'bg-primary/10 border-primary/40 text-primary'
+                : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-low'
             }`}
             title="Período"
+            aria-label={`Período: ${periodLabel}`}
+            aria-expanded={showFilters}
           >
-            <SlidersHorizontal size={16} />
+            <SlidersHorizontal size={16} className={showFilters ? 'text-primary' : 'text-on-surface-variant'} aria-hidden="true" />
+            <span className="max-w-[7.5rem] truncate">{periodLabel}</span>
+            <ChevronDown size={16} aria-hidden="true" className={`transition-transform ${showFilters ? 'rotate-180 text-primary' : 'text-on-surface-variant'}`} />
           </button>
 
           <button
             onClick={handleExport}
             disabled={exportRecords.length === 0}
             title={exportRecords.length === 0 ? 'Ninguém com hora extra neste período' : undefined}
-            className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 px-3.5 sm:px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+            className="flex items-center justify-center gap-2 h-10 text-sm font-semibold text-white bg-primary hover:bg-primary-container disabled:bg-surface-container-high disabled:text-on-surface-variant px-3.5 sm:px-4 rounded-zela-md transition shadow-sm shrink-0"
           >
             <Download size={16} /> <span className="hidden sm:inline">Exportar Relatório</span>
           </button>
@@ -293,9 +299,9 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                     ].map(p => (
                       <button
                         key={p.id}
-                        onClick={() => setPeriod(p.id)}
+                        onClick={() => { setPeriod(p.id); if (p.id !== 'custom') setShowFilters(false); }}
                         className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          period === p.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          period === p.id ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'
                         }`}
                       >
                         {p.label}
@@ -306,7 +312,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                     <input
                       type="date"
                       value={customDate}
-                      onChange={e => setCustomDate(e.target.value)}
+                      onChange={e => { setCustomDate(e.target.value); if (e.target.value) setShowFilters(false); }}
                       className="mt-2 w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   )}
@@ -318,14 +324,16 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
       {/* Resumo -- vira uma frase, não mais cards: modelo "foco na lista"
           validado com o usuário (proposta com 3 layouts, 17/09). */}
-      <p className="text-sm text-slate-500 mb-4 shrink-0">
-        <span className="sm:hidden">
-          {periodLabel}: <span className="font-bold text-amber-600">{totalMinutosExcedentes} min</span> | <span className="font-bold text-rose-600">{totalValorFormatado}</span> a cobrar.
-        </span>
-        <span className="hidden sm:inline">
-          {periodLabel}: <span className="font-bold text-amber-600">{totalMinutosExcedentes} min</span> excedentes, <span className="font-bold text-rose-600">{totalValorFormatado}</span> a cobrar.
-        </span>
-      </p>
+      <div className="grid grid-cols-2 gap-3 mb-4 shrink-0 sm:max-w-md" aria-label={`Resumo: ${periodLabel}`}>
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3">
+          <p className="text-xs font-semibold text-on-surface-variant">Minutos excedentes</p>
+          <p className="text-lg font-semibold mt-0.5 tabular-nums text-warning whitespace-nowrap">{totalMinutosExcedentes} <span className="text-xs font-semibold">min</span></p>
+        </div>
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3">
+          <p className="text-xs font-semibold text-on-surface-variant">A receber</p>
+          <p className="text-lg font-semibold mt-0.5 tabular-nums text-error whitespace-nowrap">{totalValorFormatado}</p>
+        </div>
+      </div>
 
       {/* Busca */}
       <div className="relative mb-4 sm:mb-6 shrink-0">

@@ -9,7 +9,7 @@ import { centsToBRL, todayISO } from '../lib/gestaoUtils';
 import { PageShell, Loading, Notice, SecondaryButton } from './GestaoShared';
 import { recursosDoPerfil, AREAS_PENDENCIAS_GESTAO_PEDAGOGICA } from '../lib/perfisGestao';
 
-// Pendências da Gestão · Modelo 4 (aprovado em 28/09/2026): os quatro
+// Pendências da Gestão, Modelo 4 (aprovado em 28/09/2026): os quatro
 // números e as áreas do "Painel por área" + a fila do "Fila por prioridade".
 // As regras (o que é urgente, os números, as áreas) ficam em
 // src/lib/pendenciasModel.js; aqui é só a apresentação.
@@ -22,16 +22,16 @@ const ROW_ICON = {
 
 // Cores por prioridade (texto escuro o bastante sobre o fundo claro).
 const TONE = {
-  urgente: { title: 'text-error', dot: 'bg-error', tint: 'bg-red-50 text-error', num: 'bg-error text-white', badge: 'bg-red-50 text-error' },
-  semana: { title: 'text-amber-800', dot: 'bg-warning', tint: 'bg-amber-50 text-amber-800', num: 'bg-amber-100 text-amber-800', badge: 'bg-amber-50 text-amber-800' },
+  urgente: { title: 'text-error', dot: 'bg-error', tint: 'bg-error/10 text-error', num: 'bg-error text-white', badge: 'bg-error/10 text-error' },
+  semana: { title: 'text-warning', dot: 'bg-warning', tint: 'bg-warning/10 text-warning', num: 'bg-warning/10 text-warning', badge: 'bg-warning/10 text-warning' },
   acompanhar: { title: 'text-on-surface-variant', dot: 'bg-outline', tint: 'bg-surface-container-low text-primary', num: 'bg-surface-container-low text-primary', badge: 'bg-surface-container-low text-on-surface-variant' },
 };
 
 function Kpi({ label, value, hint, valueClass = 'text-on-surface' }) {
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-2.5 md:px-4 md:py-3.5 flex flex-col gap-0.5 min-w-0">
-      <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{label}</span>
-      <span className={`text-lg md:text-2xl font-black tabular-nums truncate ${valueClass}`}>{value}</span>
+      <span className="text-[10px] md:text-[11px] font-bold text-on-surface-variant">{label}</span>
+      <span className={`text-lg md:text-2xl font-semibold tabular-nums truncate ${valueClass}`}>{value}</span>
       {hint && <span className="hidden md:block text-xs text-on-surface-variant truncate">{hint}</span>}
     </div>
   );
@@ -67,8 +67,8 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
         <div className="flex flex-col gap-4 md:gap-5">
           {/* Números do topo */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-            <Kpi label="Precisam de ação hoje" value={model.kpis.hoje} hint={model.kpis.hojeHint} valueClass={model.kpis.hoje ? 'text-error' : 'text-emerald-700'} />
-            <Kpi label="Para esta semana" value={model.kpis.semana} hint={model.kpis.semanaHint} valueClass={model.kpis.semana ? 'text-amber-800' : 'text-emerald-700'} />
+            <Kpi label="Precisam de ação hoje" value={model.kpis.hoje} hint={model.kpis.hojeHint} valueClass={model.kpis.hoje ? 'text-error' : 'text-success'} />
+            <Kpi label="Para esta semana" value={model.kpis.semana} hint={model.kpis.semanaHint} valueClass={model.kpis.semana ? 'text-warning' : 'text-success'} />
             {recursos.financeiro ? (
               <Kpi label="Valor em atraso" value={centsToBRL(model.kpis.atrasoCents)} hint={model.kpis.atrasoHint} />
             ) : (
@@ -79,27 +79,27 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
 
           {model.rows.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-16">
-              <CheckCircle2 size={36} className="text-emerald-600 mb-2" />
+              <CheckCircle2 size={36} className="text-success mb-2" />
               <p className="font-bold text-on-surface">Nenhuma pendência no momento.</p>
             </div>
           ) : (
             <>
-              {/* Áreas · celular: botões que deslizam */}
+              {/* Áreas, celular: botões que deslizam */}
               <div className="md:hidden flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filtrar por área">
                 {areaButtons.map(a => (
                   <button
                     key={a.key}
                     onClick={() => setArea(a.key)}
                     aria-pressed={area === a.key}
-                    className={`shrink-0 flex items-center gap-2 min-h-[44px] rounded-full border px-3.5 text-sm font-bold whitespace-nowrap ${area === a.key ? 'bg-on-surface border-on-surface text-white' : 'bg-surface-container-lowest border-outline-variant text-on-surface'}`}
+                    className={`shrink-0 flex items-center gap-2 min-h-[44px] rounded-md border px-3.5 text-sm font-bold whitespace-nowrap ${area === a.key ? 'bg-on-surface border-on-surface text-white' : 'bg-surface-container-lowest border-outline-variant text-on-surface'}`}
                   >
-                    {a.key === 'todas' ? `Todas · ${a.count}` : a.label}
-                    {a.key !== 'todas' && <span className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-[11px] font-black flex items-center justify-center ${TONE[a.worst].num}`}>{a.count}</span>}
+                    {a.key === 'todas' ? `Todas, ${a.count}` : a.label}
+                    {a.key !== 'todas' && <span className={`min-w-[22px] h-[22px] px-1.5 rounded-sm text-[11px] font-semibold flex items-center justify-center ${TONE[a.worst].num}`}>{a.count}</span>}
                   </button>
                 ))}
               </div>
 
-              {/* Áreas · tablet: grade de cartões */}
+              {/* Áreas, tablet: grade de cartões */}
               <div className="hidden md:grid lg:hidden grid-cols-3 gap-2" role="group" aria-label="Filtrar por área">
                 {areaButtons.map(a => (
                   <AreaButton key={a.key} a={a} active={area === a.key} onClick={() => setArea(a.key)} compact />
@@ -107,9 +107,9 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
               </div>
 
               <div className="flex gap-6 items-start">
-                {/* Áreas · computador: coluna à esquerda */}
+                {/* Áreas, computador: coluna à esquerda */}
                 <aside className="hidden lg:flex w-72 shrink-0 flex-col gap-0.5" aria-label="Filtrar por área">
-                  <p className="ml-3 mb-1.5 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Por área</p>
+                  <p className="ml-3 mb-1.5 text-[11px] font-bold text-on-surface-variant">Por área</p>
                   {areaButtons.map(a => (
                     <AreaButton key={a.key} a={a} active={area === a.key} onClick={() => setArea(a.key)} />
                   ))}
@@ -123,7 +123,7 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
                     const tone = TONE[p.key];
                     return (
                       <section key={p.key} className="flex flex-col gap-2">
-                        <h2 className={`m-0 flex items-center gap-2 text-xs md:text-[13px] font-black uppercase tracking-wide ${tone.title}`}>
+                        <h2 className={`m-0 flex items-center gap-2 text-xs md:text-[13px] font-semibold ${tone.title}`}>
                           <span className={`w-2 h-2 rounded-full ${tone.dot}`} />{p.label}
                         </h2>
                         <div className="flex flex-col gap-2 md:gap-0 md:bg-surface-container-lowest md:border md:border-outline-variant md:rounded-zela-lg md:divide-y md:divide-outline-variant/50">
@@ -138,7 +138,7 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
                                     {r.meta && <p className="text-[13px] md:text-xs text-on-surface-variant">{r.meta}</p>}
                                   </div>
                                 </div>
-                                {r.badge && <span className={`hidden lg:inline-block text-xs font-bold rounded-full px-2.5 py-1 whitespace-nowrap ${tone.badge}`}>{r.badge}</span>}
+                                {r.badge && <span className={`hidden lg:inline-block text-xs font-bold rounded-sm px-2.5 py-1 whitespace-nowrap ${tone.badge}`}>{r.badge}</span>}
                                 <button
                                   onClick={() => setGestaoTab(r.tab)}
                                   className={`w-full md:w-auto min-h-[44px] md:min-h-0 rounded-zela-md px-3.5 py-2.5 md:py-2 text-sm md:text-[13px] font-bold whitespace-nowrap ${p.key === 'urgente' ? 'bg-primary text-white hover:bg-primary-container' : 'bg-surface-container-low text-primary hover:bg-primary/10'}`}
@@ -184,7 +184,7 @@ function AreaButton({ a, active, onClick, compact = false }) {
         {a.resumo && <span className={`block text-[11px] md:text-xs truncate ${compact && active ? 'text-white/80' : 'text-on-surface-variant'}`}>{a.resumo}</span>}
       </span>
       {a.key !== 'todas' && tone && (
-        <span className={`min-w-[24px] h-6 px-2 rounded-full text-xs font-black flex items-center justify-center shrink-0 ${tone.num}`}>{a.count}</span>
+        <span className={`min-w-[24px] h-6 px-2 rounded-sm text-xs font-semibold flex items-center justify-center shrink-0 ${tone.num}`}>{a.count}</span>
       )}
     </button>
   );

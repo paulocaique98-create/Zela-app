@@ -7,7 +7,7 @@ import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, Primary
 const STATUS = { pendente: 'Aguardando', concluida: 'Conta excluída', recusada: 'Recusado', cancelada: 'Cancelado pela pessoa' };
 const ROLE = { family: 'Responsável', teacher: 'Professora', admin: 'Administrativo' };
 
-// Cadastros · Pedidos de exclusão de conta (LGPD). Quem pede é a própria
+// Cadastros, Pedidos de exclusão de conta (LGPD). Quem pede é a própria
 // pessoa, em Configurações; a Gestão conclui (exclui de verdade, pela
 // mesma função segura de sempre) ou recusa explicando o motivo.
 export default function GestaoExclusoesConta({ currentUser }) {
@@ -27,42 +27,72 @@ export default function GestaoExclusoesConta({ currentUser }) {
   const pending = (rows || []).filter(r => r.status === 'pendente');
   const history = (rows || []).filter(r => r.status !== 'pendente');
 
+  const STATUS_CLS = {
+    concluida: 'bg-success/10 text-success border-success/30',
+    recusada: 'bg-error/10 text-error border-error/30',
+    cancelada: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  };
+
   return (
-    <PageShell description="Pedidos de exclusão de conta feitos pelas próprias pessoas. O prazo para responder é de até 30 dias.">
-      <div className="space-y-4">
+    <PageShell infoOnMobile description="Pedidos de exclusão de conta feitos pelas próprias pessoas. O prazo para responder é de até 30 dias.">
+      <div className="space-y-5">
         <Notice>{error}</Notice>
         <Notice type="success">{success}</Notice>
         {rows === null ? <Loading /> : rows.length === 0 ? <EmptyState icon={UserX} text="Nenhum pedido de exclusão." /> : (
           <>
             {pending.length > 0 && (
-              <section className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-amber-700">Aguardando resposta</h3>
-                {pending.map(r => {
-                  const days = Math.floor((Date.now() - new Date(r.requested_at)) / 86400000);
-                  return (
-                    <div key={r.id} className="bg-surface-container-lowest border border-amber-300 rounded-zela-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-bold text-sm text-on-surface">{r.user_name} · {ROLE[r.user_role] || r.user_role}</p>
-                        <p className="text-xs text-on-surface-variant">{r.user_email} · pedido em {formatDateBR(r.requested_at)} ({days} dia{days === 1 ? '' : 's'})</p>
-                        {r.reason && <p className="text-sm text-on-surface mt-1">“{r.reason}”</p>}
+              <section className="space-y-2.5">
+                <h3 className="text-sm font-bold text-warning flex items-center gap-2">
+                  Aguardando resposta
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warning/10 border border-warning/30">{pending.length}</span>
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {pending.map(r => {
+                    const days = Math.floor((Date.now() - new Date(r.requested_at)) / 86400000);
+                    const late = days >= 25;
+                    return (
+                      <div key={r.id} className="bg-surface-container-lowest border border-warning/30 rounded-zela-lg p-4 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-full bg-warning/10 text-warning flex items-center justify-center font-bold text-sm shrink-0">
+                            {(r.user_name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm text-on-surface truncate">{r.user_name}</p>
+                            <p className="text-xs text-on-surface-variant truncate">{r.user_email}</p>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-surface-container-low text-on-surface-variant border border-outline-variant">{ROLE[r.user_role] || r.user_role}</span>
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border ${late ? 'bg-error/10 text-error border-error/30' : 'bg-warning/10 text-warning border-warning/30'}`}>
+                                {days === 0 ? 'Pedido hoje' : `${days} dia${days === 1 ? '' : 's'} de espera`}
+                              </span>
+                              <span className="text-xs text-on-surface-variant">{formatDateBR(r.requested_at)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {r.reason && <p className="text-sm text-on-surface bg-surface-container-low rounded-zela-md px-3 py-2">“{r.reason}”</p>}
+                        <div className="grid grid-cols-2 gap-2">
+                          <SecondaryButton className="justify-center h-10" onClick={() => setActing({ req: r, kind: 'recusar' })}>Recusar</SecondaryButton>
+                          <DangerButton className="justify-center h-10" onClick={() => setActing({ req: r, kind: 'excluir' })}>Excluir conta</DangerButton>
+                        </div>
                       </div>
-                      <div className="flex gap-2 shrink-0">
-                        <SecondaryButton onClick={() => setActing({ req: r, kind: 'recusar' })}>Recusar</SecondaryButton>
-                        <DangerButton onClick={() => setActing({ req: r, kind: 'excluir' })}>Excluir conta</DangerButton>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </section>
             )}
             {history.length > 0 && (
               <section>
-                <h3 className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">Histórico</h3>
-                <ul className="divide-y divide-outline-variant/60 bg-surface-container-lowest border border-outline-variant rounded-zela-lg">
+                <h3 className="text-sm font-bold text-on-surface-variant mb-2.5">Histórico</h3>
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                   {history.map(r => (
-                    <li key={r.id} className="px-4 py-2.5 text-sm flex flex-wrap justify-between gap-2">
-                      <span className="text-on-surface">{r.user_name} · {ROLE[r.user_role] || r.user_role}</span>
-                      <span className="text-on-surface-variant">{STATUS[r.status]}{r.handled_at ? ` em ${formatDateBR(r.handled_at)}` : ''}{r.response ? ` · ${r.response}` : ''}</span>
+                    <li key={r.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-on-surface truncate">{r.user_name}</p>
+                          <p className="text-xs text-on-surface-variant">{ROLE[r.user_role] || r.user_role}{r.handled_at ? `, ${formatDateBR(r.handled_at)}` : ''}</p>
+                        </div>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border shrink-0 ${STATUS_CLS[r.status] || STATUS_CLS.cancelada}`}>{STATUS[r.status]}</span>
+                      </div>
+                      {r.response && <p className="text-xs text-on-surface-variant mt-2">{r.response}</p>}
                     </li>
                   ))}
                 </ul>
@@ -81,7 +111,7 @@ export default function GestaoExclusoesConta({ currentUser }) {
 
 function DangerButton({ children, ...props }) {
   return (
-    <button {...props} className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50">
+    <button {...props} className={`flex items-center gap-1.5 px-3.5 py-2 bg-error hover:bg-error/90 text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50 ${props.className || ''}`}>
       {children}
     </button>
   );

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { centsToBRL, formatDateBR, monthRange, todayISO } from '../lib/gestaoUtils';
 import { PageShell, StatCard, Loading, Notice } from './GestaoShared';
 
-// Financeiro · Visão Financeira: o mês em números e os últimos 6 meses
+// Financeiro, Visão Financeira: o mês em números e os últimos 6 meses
 // (previsto x recebido x despesas pagas).
 export default function GestaoVisaoFinanceira({ currentUser, setGestaoTab }) {
   const schoolId = currentUser.school_id;
@@ -42,7 +42,7 @@ export default function GestaoVisaoFinanceira({ currentUser, setGestaoTab }) {
   const max = data ? Math.max(1, ...data.series.flatMap(m => [m.previsto, m.recebido, m.despesas])) : 1;
 
   return (
-    <PageShell description="O mês em números e a evolução dos últimos 6 meses.">
+    <PageShell infoOnMobile description="O mês em números e a evolução dos últimos 6 meses.">
       <Notice>{error}</Notice>
       {!data ? (!error && <Loading />) : (
         <div className="space-y-6">
@@ -59,18 +59,18 @@ export default function GestaoVisaoFinanceira({ currentUser, setGestaoTab }) {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="font-bold text-on-surface text-sm">Últimos 6 meses</h3>
               <div className="flex gap-3 text-xs text-on-surface-variant">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-300" /> Previsto</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500" /> Recebido</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-amber-500" /> Despesas</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-outline-variant" /> Previsto</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-success" /> Recebido</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-warning" /> Despesas</span>
               </div>
             </div>
             <div className="grid grid-cols-6 gap-3 items-end h-48" role="img" aria-label="Gráfico de previsto, recebido e despesas dos últimos 6 meses">
               {data.series.map(m => (
                 <div key={m.label} className="flex flex-col items-center justify-end h-full gap-1">
                   <div className="flex items-end gap-0.5 h-full w-full justify-center">
-                    <div className="w-1/4 bg-slate-300 rounded-t" style={{ height: `${(m.previsto / max) * 100}%` }} title={`Previsto ${centsToBRL(m.previsto)}`} />
-                    <div className="w-1/4 bg-emerald-500 rounded-t" style={{ height: `${(m.recebido / max) * 100}%` }} title={`Recebido ${centsToBRL(m.recebido)}`} />
-                    <div className="w-1/4 bg-amber-500 rounded-t" style={{ height: `${(m.despesas / max) * 100}%` }} title={`Despesas ${centsToBRL(m.despesas)}`} />
+                    <div className="w-1/4 bg-outline-variant rounded-t" style={{ height: `${(m.previsto / max) * 100}%` }} title={`Previsto ${centsToBRL(m.previsto)}`} />
+                    <div className="w-1/4 bg-success rounded-t" style={{ height: `${(m.recebido / max) * 100}%` }} title={`Recebido ${centsToBRL(m.recebido)}`} />
+                    <div className="w-1/4 bg-warning rounded-t" style={{ height: `${(m.despesas / max) * 100}%` }} title={`Despesas ${centsToBRL(m.despesas)}`} />
                   </div>
                   <span className="text-[11px] text-on-surface-variant capitalize">{m.label}</span>
                 </div>
@@ -85,7 +85,7 @@ export default function GestaoVisaoFinanceira({ currentUser, setGestaoTab }) {
                 {data.upcoming.map(c => (
                   <li key={c.id} className="py-2 flex items-center justify-between text-sm gap-2">
                     <span className="text-on-surface truncate">{c.students?.name || 'Aluno'}</span>
-                    <span className="text-on-surface-variant shrink-0">{formatDateBR(c.due_date)} · <strong className="text-on-surface">{centsToBRL(c.amount_cents)}</strong></span>
+                    <span className="text-on-surface-variant shrink-0">{formatDateBR(c.due_date)}, <strong className="text-on-surface">{centsToBRL(c.amount_cents)}</strong></span>
                   </li>
                 ))}
               </ul>

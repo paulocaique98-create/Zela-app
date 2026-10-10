@@ -493,7 +493,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-contratos' && canSeeContratos && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="lista" canManage={Boolean(perms['contratos.gerenciar'])} />}
         {adminTab === 'gestao-modelos' && perms['contratos.gerenciar'] && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="modelos" />}
         {adminTab === 'gestao-inadimplencia' && perms['financeiro.baixa_manual'] && (
-          <PageShell description="Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora."><CobrancasTab currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment /></PageShell>
+          <PageShell infoOnMobile description="Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora."><CobrancasTab currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment /></PageShell>
         )}
         {adminTab === 'gestao-despesas' && canSeeDespesas && <GestaoDespesas currentUser={currentUser} canManage={Boolean(perms['despesas.gerenciar'])} />}
         {adminTab === 'gestao-fornecedores' && perms['fornecedores.gerenciar'] && <GestaoFornecedores currentUser={currentUser} />}

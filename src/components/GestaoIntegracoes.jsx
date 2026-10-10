@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, BellRing, Activity, CheckCircle2, AlertTriangle, MinusCircle } from 'lucide-react';
+import { CreditCard, BellRing, Activity, CheckCircle2, AlertTriangle, MinusCircle, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading } from './GestaoShared';
 
 const STATE = {
-  ok: { icon: CheckCircle2, cls: 'text-emerald-700 bg-emerald-50 border-emerald-200', label: 'Funcionando' },
-  warn: { icon: AlertTriangle, cls: 'text-amber-700 bg-amber-50 border-amber-200', label: 'Atenção' },
-  off: { icon: MinusCircle, cls: 'text-on-surface-variant bg-surface-container-low border-outline-variant', label: 'Não configurado' },
+  ok: { icon: CheckCircle2, cls: 'text-success bg-success/10', label: 'Funcionando' },
+  warn: { icon: AlertTriangle, cls: 'text-warning bg-warning/15', label: 'Atenção' },
+  off: { icon: MinusCircle, cls: 'text-on-surface-variant bg-surface-container', label: 'Não configurado' },
 };
 
 // Integrações: situação das conexões externas da escola. Só leitura; a
-// chave do Asaas é cadastrada em Financeiro · Configuração.
+// chave do Asaas é cadastrada em Financeiro, Configuração.
 export default function GestaoIntegracoes({ currentUser, currentSchool, setGestaoTab }) {
   const [info, setInfo] = useState(null);
 
@@ -35,8 +35,8 @@ export default function GestaoIntegracoes({ currentUser, currentSchool, setGesta
       icon: CreditCard, title: 'Asaas (cobranças, PIX e boleto)',
       state: !financeiroOn || !asaas ? 'off' : daysSinceEvent !== null && daysSinceEvent > 45 ? 'warn' : 'ok',
       lines: [
-        !financeiroOn ? 'O módulo financeiro não está ativo para esta escola.' : asaas ? `Chave cadastrada · atualizada em ${new Date(asaas.updated_at).toLocaleDateString('pt-BR')}` : 'Nenhuma chave do Asaas cadastrada.',
-        asaas ? (asaas.pix_key_registered ? 'Chave PIX registrada no Asaas.' : 'Chave PIX ainda não registrada no Asaas.') : null,
+        !financeiroOn ? { text: 'O módulo financeiro não está ativo para esta escola.', warn: true } : asaas ? `Chave cadastrada, atualizada em ${new Date(asaas.updated_at).toLocaleDateString('pt-BR')}` : { text: 'Nenhuma chave do Asaas cadastrada.', warn: true },
+        asaas ? (asaas.pix_key_registered ? 'Chave PIX registrada no Asaas.' : { text: 'Chave PIX ainda não registrada no Asaas.', warn: true }) : null,
         info.lastEvent ? `Último aviso de pagamento recebido em ${new Date(info.lastEvent.received_at).toLocaleString('pt-BR')}.` : (asaas ? 'Nenhum aviso de pagamento recebido ainda.' : null),
       ],
       action: financeiroOn ? { label: 'Abrir configuração', tab: 'config-financeiro' } : null,
@@ -54,19 +54,39 @@ export default function GestaoIntegracoes({ currentUser, currentSchool, setGesta
   ];
 
   return (
-    <PageShell description="Conexões do Zela Escola com serviços externos.">
+    <PageShell description="Conexões do Zela Escola com serviços externos." infoOnMobile>
       {!info ? <Loading /> : (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-2 items-start">
           {cards.map(c => {
             const st = STATE[c.state];
+            const chip = <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${st.cls}`}><st.icon size={12} /> {st.label}</span>;
             return (
-              <section key={c.title} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-sm text-on-surface flex items-center gap-2"><c.icon size={16} className="text-primary" /> {c.title}</h3>
-                  <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${st.cls}`}><st.icon size={12} /> {st.label}</span>
+              <section key={c.title} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><c.icon size={20} /></span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-on-surface">{c.title}</h3>
+                    <div className="mt-1.5 sm:hidden">{chip}</div>
+                  </div>
+                  <div className="hidden sm:block shrink-0">{chip}</div>
                 </div>
-                {c.lines.filter(Boolean).map(l => <p key={l} className="text-sm text-on-surface-variant">{l}</p>)}
-                {c.action && <button onClick={() => setGestaoTab(c.action.tab)} className="text-sm font-bold text-primary hover:underline">{c.action.label}</button>}
+                <ul className="space-y-1.5">
+                  {c.lines.filter(Boolean).map(l => {
+                    const text = typeof l === 'string' ? l : l.text;
+                    const warn = typeof l !== 'string' && l.warn;
+                    return (
+                      <li key={text} className={`flex items-start gap-2 text-sm ${warn ? 'text-warning font-medium' : 'text-on-surface-variant'}`}>
+                        <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${warn ? 'bg-warning' : 'bg-outline-variant'}`} />
+                        <span className="min-w-0">{text}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {c.action && (
+                  <button onClick={() => setGestaoTab(c.action.tab)} className="w-full sm:w-auto h-10 flex items-center justify-center gap-1 px-4 rounded-zela-md border border-outline-variant bg-surface-container-low hover:bg-primary/10 hover:text-primary text-sm font-bold text-on-surface-variant transition">
+                    {c.action.label} <ChevronRight size={16} />
+                  </button>
+                )}
               </section>
             );
           })}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check, UserRoundCheck } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Users, Mail, Phone, GraduationCap, Edit, Trash2, Search, X, FileSpreadsheet, Check, UserRoundCheck, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAuthorizedPersonPhotoSignedUrls } from '../lib/storage';
 import { escolherCadastroDaFoto } from '../lib/fotoResponsavel';
@@ -22,6 +22,17 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [activeTab, setActiveTab] = useState(initialTab); // 'active' | 'pending'
+  // Ordem dos cartões: pelo nome do aluno (padrão), da mãe ou do pai.
+  const [sortBy, setSortBy] = useState('aluno'); // 'aluno' | 'mae' | 'pai'
+  const [showSort, setShowSort] = useState(false);
+  const sortRef = useRef(null);
+  useEffect(() => {
+    if (!showSort) return undefined;
+    const close = (e) => { if (sortRef.current && !sortRef.current.contains(e.target)) setShowSort(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('touchstart', close);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('touchstart', close); };
+  }, [showSort]);
   const [approvingUserId, setApprovingUserId] = useState(null);
   // Hierarquia (27/09/2026): aprovar, recusar e excluir conta é só da
   // Gestão (ou do suporte). O admin consulta e edita.
@@ -256,15 +267,23 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   const familyGroups = useMemo(() => {
     const groups = new Map(agruparFamilias(filteredUsers, alunosPorId).map(g => [g.key, g]));
 
+    // Nome usado na ordenação: do aluno, ou do responsável com o parentesco
+    // escolhido (mãe/pai). Quem não tem o parentesco no grupo vai para o fim.
+    const relOf = (g) => (g.relationship || g.guardianRelationship || g.vinculos?.[0]?.relationship || '').toLowerCase();
+    const sortName = (group) => {
+      if (sortBy === 'aluno') return group.students[0]?.name || '';
+      const re = sortBy === 'mae' ? /m[ãa]e/ : /pai/;
+      return group.guardians.find(g => re.test(relOf(g)))?.name || '';
+    };
     return Array.from(groups.values()).sort((a, b) => {
-      const nameA = a.students[0]?.name || '';
-      const nameB = b.students[0]?.name || '';
+      const nameA = sortName(a);
+      const nameB = sortName(b);
       if (!nameA && !nameB) return 0;
       if (!nameA) return 1;
       if (!nameB) return -1;
       return nameA.localeCompare(nameB, 'pt-BR');
     });
-  }, [filteredUsers, alunosPorId]);
+  }, [filteredUsers, alunosPorId, sortBy]);
 
   const guardianBadges = (guardian) => (
     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -300,8 +319,8 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
       {/* Header -- título "Gestão de Usuários" removido (o Header do app já
           mostra "Zela Escola · Gestão de Usuários"/"Zela Escola Usuários" dinamicamente),
           ícone + contador ficam numa linha só, mais compacta. */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6 shrink-0">
+        <div className="hidden md:flex items-center gap-2.5">
           <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
             <Users size={18} />
           </div>
@@ -311,16 +330,16 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         </div>
 
         {/* Abas: Ativos / Pendentes de aprovação (autocadastro público) */}
-        <div className="flex gap-2 shrink-0">
+        <div className="grid grid-cols-2 md:flex gap-2 shrink-0">
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-4 py-2 rounded-zela-md text-xs font-bold transition-all border ${activeTab === 'active' ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}
+            className={`flex items-center justify-center h-10 md:h-auto px-4 md:py-2 rounded-zela-md text-sm md:text-xs font-bold transition-all border ${activeTab === 'active' ? 'bg-primary text-white border-primary' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/40'}`}
           >
             Ativos
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`relative px-4 py-2 rounded-zela-md text-xs font-bold transition-all border ${activeTab === 'pending' ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}
+            className={`relative flex items-center justify-center h-10 md:h-auto px-4 md:py-2 rounded-zela-md text-sm md:text-xs font-bold transition-all border ${activeTab === 'pending' ? 'bg-primary text-white border-primary' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/40'}`}
           >
             Pendentes
             {pendingCount > 0 && (
@@ -342,7 +361,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
               placeholder="Buscar por nome ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm"
+              className="w-full h-11 md:h-auto pl-10 pr-4 md:py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm"
             />
             {searchTerm && (
               <button
@@ -353,9 +372,39 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
               </button>
             )}
           </div>
+          <div className="relative md:hidden shrink-0" ref={sortRef}>
+            <button
+              onClick={() => setShowSort(v => !v)}
+              aria-label="Ordenar por aluno, mãe ou pai"
+              title="Ordenar"
+              aria-expanded={showSort}
+              className={`h-11 w-11 flex items-center justify-center rounded-zela-md border transition ${
+                showSort || sortBy !== 'aluno' ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-surface-container-low border-outline-variant text-on-surface-variant'
+              }`}
+            >
+              <ArrowUpDown size={18} aria-hidden="true" />
+            </button>
+            {showSort && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-lg p-1.5 z-20">
+                <p className="text-xs font-semibold text-on-surface-variant px-2.5 pt-1.5 pb-1">Ordem alfabética por</p>
+                {[{ id: 'aluno', label: 'Aluno' }, { id: 'mae', label: 'Mãe' }, { id: 'pai', label: 'Pai' }].map(o => (
+                  <button
+                    key={o.id}
+                    onClick={() => { setSortBy(o.id); setShowSort(false); }}
+                    className={`w-full flex items-center justify-between px-2.5 py-2.5 rounded-zela-md text-sm font-semibold transition ${
+                      sortBy === o.id ? 'bg-primary/10 text-primary' : 'text-on-surface hover:bg-surface-container-low'
+                    }`}
+                  >
+                    {o.label}
+                    {sortBy === o.id && <Check size={16} aria-hidden="true" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white hover:bg-primary-container rounded-md transition font-semibold text-sm whitespace-nowrap min-h-[44px]"
+            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-primary text-white hover:bg-primary-container rounded-md transition font-semibold text-sm whitespace-nowrap min-h-[44px]"
           >
             <FileSpreadsheet size={18} />
             <span className="hidden md:inline">Importar</span>

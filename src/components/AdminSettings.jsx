@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
-import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX, Users } from 'lucide-react';
+import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, Minus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
 import { mergeBillingConfig, mergeAbsenceAlertConfig } from '../utils/attendanceUtils';
@@ -99,63 +99,71 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
   if (!canManage) return null;
 
   return (
-    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
-      <div className="mb-2">
-        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><School size={15} className="text-primary" /> Turmas</h3>
-        <p className="text-xs text-on-surface-variant">
-          As turmas cadastradas aqui aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural/comunicados/frequência.
-          Use o lápis pra corrigir o nome de uma turma (atualiza todos os registros vinculados automaticamente) ou o X pra remover uma turma que não está mais em uso.
+    <div className={noBorder ? '' : 'pt-4 border-t border-outline-variant'}>
+      <div className="mb-3">
+        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5">
+          <School size={15} className="text-primary" /> Turmas
+          <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-full px-2 py-0.5">{turmas.length}</span>
+        </h3>
+        <p className="text-xs text-on-surface-variant mt-1">
+          As turmas aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural, comunicados e frequência.
+          <span className="hidden sm:inline"> Use o lápis para corrigir o nome de uma turma (atualiza todos os registros vinculados automaticamente) ou o X para remover uma turma que não está mais em uso.</span>
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
-        {turmas.map(turma => (
-          <span key={turma} className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-surface-container-low border border-outline-variant rounded-full text-sm font-medium text-on-surface">
-            {turma}
-            <button
-              type="button"
-              onClick={() => openRenameModal(turma)}
-              disabled={removingTurma === turma}
-              title={`Renomear ${turma}`}
-              className="p-0.5 text-on-surface-variant/60 hover:text-primary hover:bg-primary/10 rounded-full transition disabled:opacity-50"
-            >
-              <Pencil size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRemoveTurma(turma)}
-              disabled={removingTurma === turma}
-              title={`Remover ${turma}`}
-              className="p-0.5 text-on-surface-variant/60 hover:text-red-600 hover:bg-red-50 rounded-full transition disabled:opacity-50"
-            >
-              {removingTurma === turma ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
-            </button>
-          </span>
-        ))}
-        {turmas.length === 0 && (
-          <p className="text-xs text-on-surface-variant italic">Nenhuma turma cadastrada ainda.</p>
-        )}
-      </div>
-
-      <div className="flex gap-2 max-w-sm">
+      <div className="flex gap-2 mb-4 sm:max-w-md">
         <input
           type="text"
           value={newTurma}
           onChange={e => setNewTurma(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTurma(); } }}
-          placeholder="Ex: Kids III"
+          placeholder="Nova turma, ex: Kids III"
+          aria-label="Nome da nova turma"
           disabled={isSaving}
-          className="flex-1 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
+          className="flex-1 min-w-0 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary focus:outline-none text-sm"
         />
         <button
           type="button"
           onClick={handleAddTurma}
           disabled={isSaving || !newTurma.trim()}
-          className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-zela-md text-sm font-bold transition disabled:opacity-50 shrink-0"
+          className="flex items-center justify-center gap-1.5 h-10 px-4 bg-primary text-white hover:bg-primary-container rounded-zela-md text-sm font-semibold transition disabled:opacity-50 shrink-0"
         >
           {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
         </button>
       </div>
+
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+        {turmas.map(turma => (
+          <li key={turma} className="flex items-center justify-between gap-2 pl-3.5 pr-1.5 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md hover:border-primary/30 transition">
+            <span className="text-sm font-semibold text-on-surface truncate" title={turma}>{turma}</span>
+            <span className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => openRenameModal(turma)}
+                disabled={removingTurma === turma}
+                title={`Renomear ${turma}`}
+                aria-label={`Renomear ${turma}`}
+                className="h-9 w-9 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-zela-md transition disabled:opacity-50"
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveTurma(turma)}
+                disabled={removingTurma === turma}
+                title={`Remover ${turma}`}
+                aria-label={`Remover ${turma}`}
+                className="h-9 w-9 flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 rounded-zela-md transition disabled:opacity-50"
+              >
+                {removingTurma === turma ? <Loader2 size={15} className="animate-spin" /> : <X size={16} />}
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {turmas.length === 0 && (
+        <p className="text-xs text-on-surface-variant italic">Nenhuma turma cadastrada ainda.</p>
+      )}
 
       {error && (
         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
@@ -331,40 +339,55 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
 
   const set = (field, value) => onConfigChange({ ...config, [field]: value });
 
-  const inputCls = 'w-24 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm text-center';
+  const campo = 'w-full h-10 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-base font-semibold';
+  const rotulo = 'block text-xs font-semibold text-on-surface-variant mb-1.5';
 
   return (
-    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
-      <div className="mb-2">
-        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><Clock size={15} className="text-primary" /> Cobrança de Hora Extra</h3>
-        <p className="text-xs text-on-surface-variant">
-          Margens de tolerância e valor da hora usados no cálculo automático de cobrança (check-in antecipado e check-out tardio).
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
-        <div>
-          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Tolerância check-in (min)</label>
-          <input type="number" min="0" max="60" value={config.early_checkin_tolerance_min}
-            onChange={e => set('early_checkin_tolerance_min', Number(e.target.value))} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Tolerância check-out (min)</label>
-          <input type="number" min="0" max="60" value={config.late_checkout_tolerance_min}
-            onChange={e => set('late_checkout_tolerance_min', Number(e.target.value))} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Valor da hora (R$)</label>
-          <input type="number" min="0" step="0.01" value={(config.hourly_rate_cents / 100).toFixed(2)}
-            onChange={e => set('hourly_rate_cents', Math.round(Number(e.target.value) * 100))} className={inputCls} />
+    <div className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4 max-w-2xl ${noBorder ? '' : 'mt-3'}`}>
+      <div className="flex items-start gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Clock size={20} /></span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-on-surface">Cobrança de Hora Extra</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Margens de tolerância e valor da hora usados no cálculo automático de cobrança (check-in antecipado e check-out tardio).
+          </p>
         </div>
       </div>
 
-      <label className="flex items-center gap-2 cursor-pointer select-none mt-3">
-        <input type="checkbox" checked={config.charge_early_checkin}
-          onChange={e => set('charge_early_checkin', e.target.checked)}
-          className="w-4 h-4 rounded accent-primary" />
-        <span className="text-xs font-medium text-on-surface">Cobrar também check-in antecipado (além de check-out tardio)</span>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div>
+          <label htmlFor="hx-in" className={rotulo}>Tolerância de check-in</label>
+          <div className="relative">
+            <input id="hx-in" type="number" min="0" max="60" value={config.early_checkin_tolerance_min}
+              onChange={e => set('early_checkin_tolerance_min', Number(e.target.value))} className={`${campo} pl-3 pr-11`} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant pointer-events-none">min</span>
+          </div>
+        </div>
+        <div>
+          <label htmlFor="hx-out" className={rotulo}>Tolerância de check-out</label>
+          <div className="relative">
+            <input id="hx-out" type="number" min="0" max="60" value={config.late_checkout_tolerance_min}
+              onChange={e => set('late_checkout_tolerance_min', Number(e.target.value))} className={`${campo} pl-3 pr-11`} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant pointer-events-none">min</span>
+          </div>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <label htmlFor="hx-rate" className={rotulo}>Valor da hora</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant pointer-events-none">R$</span>
+            <input id="hx-rate" type="number" min="0" step="0.01" value={(config.hourly_rate_cents / 100).toFixed(2)}
+              onChange={e => set('hourly_rate_cents', Math.round(Number(e.target.value) * 100))} className={`${campo} pl-10 pr-3`} />
+          </div>
+        </div>
+      </div>
+
+      <label className={`flex items-center justify-between gap-3 rounded-zela-md border p-3 cursor-pointer select-none transition ${config.charge_early_checkin ? 'border-primary/40 bg-primary/5' : 'border-outline-variant bg-surface-container-low'}`}>
+        <span className="text-sm font-medium text-on-surface">Cobrar também check-in antecipado (além de check-out tardio)</span>
+        <span className="relative shrink-0">
+          <input type="checkbox" checked={config.charge_early_checkin} onChange={e => set('charge_early_checkin', e.target.checked)} className="peer sr-only" />
+          <span className="block w-11 h-6 rounded-full bg-outline-variant peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 transition" />
+          <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+        </span>
       </label>
     </div>
   );
@@ -382,31 +405,46 @@ function AbsenceAlertSection({ currentUser, config, onConfigChange, noBorder = f
 
   const set = (field, value) => onConfigChange({ ...config, [field]: value });
 
+  const dias = config.consecutive_days_threshold;
+  const mudarDias = (n) => set('consecutive_days_threshold', Math.min(30, Math.max(1, n)));
+  const botaoDias = 'w-10 h-10 shrink-0 flex items-center justify-center rounded-zela-md border border-outline-variant bg-surface-container-low text-on-surface font-bold text-lg hover:bg-primary/10 hover:text-primary transition disabled:opacity-40 disabled:pointer-events-none';
+
   return (
-    <div className={noBorder ? '' : 'pt-3 border-t border-outline-variant'}>
-      <div className="mb-2">
-        <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5"><CalendarX size={15} className="text-primary" /> Ausência Prolongada</h3>
-        <p className="text-xs text-on-surface-variant">
-          Avisa os administradores da escola quando um aluno passa muitos dias letivos seguidos sem nenhum check-in registrado.
-        </p>
+    <div className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4 max-w-2xl ${noBorder ? '' : 'mt-3'}`}>
+      <div className="flex items-start gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><CalendarX size={20} /></span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-on-surface">Ausência Prolongada</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Avisa os administradores da escola quando um aluno passa muitos dias letivos seguidos sem nenhum check-in registrado.
+          </p>
+        </div>
       </div>
 
-      <label className="flex items-center gap-2 cursor-pointer select-none">
-        <input type="checkbox" checked={config.enabled}
-          onChange={e => set('enabled', e.target.checked)}
-          className="w-4 h-4 rounded accent-primary" />
-        <span className="text-xs font-medium text-on-surface">Alertar administradores por ausência prolongada</span>
+      <label className={`flex items-center justify-between gap-3 rounded-zela-md border p-3 cursor-pointer select-none transition ${config.enabled ? 'border-primary/40 bg-primary/5' : 'border-outline-variant bg-surface-container-low'}`}>
+        <span className="text-sm font-medium text-on-surface">Alertar administradores por ausência prolongada</span>
+        <span className="relative shrink-0">
+          <input type="checkbox" checked={config.enabled} onChange={e => set('enabled', e.target.checked)} className="peer sr-only" />
+          <span className="block w-11 h-6 rounded-full bg-outline-variant peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 transition" />
+          <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+        </span>
       </label>
 
-      <div className="mt-3 max-w-xs">
-        <label className="block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide">Dias letivos consecutivos sem comparecer</label>
-        <input
-          type="number" min="1" max="30"
-          disabled={!config.enabled}
-          value={config.consecutive_days_threshold}
-          onChange={e => set('consecutive_days_threshold', Math.max(1, Number(e.target.value) || 1))}
-          className="w-24 p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-sm text-center disabled:opacity-50 disabled:cursor-not-allowed"
-        />
+      <div className={config.enabled ? '' : 'opacity-60'}>
+        <label htmlFor="absence-days" className="block text-xs font-semibold text-on-surface-variant mb-1.5">Dias letivos consecutivos sem comparecer</label>
+        <div className="flex items-center gap-2">
+          <button type="button" aria-label="Diminuir" disabled={!config.enabled || dias <= 1} onClick={() => mudarDias(dias - 1)} className={botaoDias}><Minus size={16} /></button>
+          <input
+            id="absence-days"
+            type="number" min="1" max="30"
+            disabled={!config.enabled}
+            value={dias}
+            onChange={e => mudarDias(Number(e.target.value) || 1)}
+            className="w-20 h-10 px-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-base font-semibold text-center disabled:cursor-not-allowed"
+          />
+          <button type="button" aria-label="Aumentar" disabled={!config.enabled || dias >= 30} onClick={() => mudarDias(dias + 1)} className={botaoDias}><Plus size={16} /></button>
+          <span className="text-sm text-on-surface-variant">{dias === 1 ? 'dia' : 'dias'}</span>
+        </div>
       </div>
     </div>
   );

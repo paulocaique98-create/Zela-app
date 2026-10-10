@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, GraduationCap, ChevronRight, ChevronDown, ArrowLeft, ArrowRight, Plus, RefreshCw, CheckCircle2, Info, Sparkles } from 'lucide-react';
+import { Search, GraduationCap, ChevronRight, ChevronDown, ArrowLeft, ArrowRight, Plus,CheckCircle2, Info, Lightbulb } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { buildPainelAlunos, DOCUMENTOS_OBRIGATORIOS, SEM_TURMA } from '../lib/alunosPainel';
@@ -17,18 +17,18 @@ const ENROLLMENT_STATUS_LABELS = {
 };
 
 const ENROLLMENT_STATUS_STYLES = {
-  ativo: 'bg-green-50 text-green-700 border-green-200',
-  inativo: 'bg-slate-100 text-slate-600 border-slate-200',
-  transferido: 'bg-amber-50 text-amber-700 border-amber-200',
-  cancelado: 'bg-red-50 text-red-600 border-red-200',
+  ativo: 'bg-success/10 text-success border-success/30',
+  inativo: 'bg-surface-container text-on-surface-variant border-outline-variant',
+  transferido: 'bg-warning/10 text-warning border-warning/30',
+  cancelado: 'bg-error/10 text-error border-error/30',
 };
 
 const SAIDA_LABEL = { transferido: 'transferido', inativo: 'inativo', cancelado: 'cancelado' };
 
 // Cores da atenção (mesmas da tela de Pendências).
 const TONE = {
-  bad: { chip: 'bg-red-50 text-error', num: 'bg-error text-white', text: 'text-error font-bold', dot: 'bg-error' },
-  warn: { chip: 'bg-amber-50 text-amber-800', num: 'bg-amber-100 text-amber-800', text: 'text-amber-800', dot: 'bg-warning' },
+  bad: { chip: 'bg-error/10 text-error', num: 'bg-error text-white', text: 'text-error font-bold', dot: 'bg-error' },
+  warn: { chip: 'bg-warning/10 text-warning', num: 'bg-warning/10 text-warning', text: 'text-warning', dot: 'bg-warning' },
 };
 
 const DOCS_TEXTO = DOCUMENTOS_OBRIGATORIOS.map(d => d.label).join(', ').replace(/, ([^,]*)$/, ' e $1');
@@ -85,7 +85,7 @@ function BotaoAjuda({ onClick, label }) {
       onClick={e => { e.stopPropagation(); onClick(); }}
       aria-label={`O que é ${label}?`}
       title="O que é isto?"
-      className="w-7 h-7 -m-1 rounded-full flex items-center justify-center text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 shrink-0"
+      className="w-7 h-7 -m-1 rounded-md flex items-center justify-center text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 shrink-0"
     >
       <Info size={15} />
     </button>
@@ -145,8 +145,8 @@ function Kpi({ label, value, hint, valueClass = 'text-on-surface', onClick, onAj
   return (
     <div className="relative min-w-0">
       <Tag onClick={onClick} className={`w-full h-full text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-2.5 md:px-4 md:py-3.5 flex flex-col gap-0.5 min-w-0 ${onClick ? 'hover:border-primary/40 transition' : ''}`}>
-        <span className="pr-6 text-[10px] md:text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{label}</span>
-        <span className={`text-lg md:text-2xl font-black tabular-nums truncate ${valueClass}`}>{value}</span>
+        <span className="pr-6 text-[10px] md:text-[11px] font-bold text-on-surface-variant">{label}</span>
+        <span className={`text-lg md:text-2xl font-semibold tabular-nums truncate ${valueClass}`}>{value}</span>
         {hint && <span className="hidden md:block text-xs text-on-surface-variant truncate">{hint}</span>}
       </Tag>
       <div className="absolute top-2.5 right-2.5 md:top-3 md:right-3"><BotaoAjuda onClick={onAjuda} label={label} /></div>
@@ -173,10 +173,10 @@ function LinhaAluno({ linha, onOpen }) {
 
 function ChipAtencao({ turma }) {
   if (!turma.atencao.length) {
-    return <span className="self-start text-[11px] font-bold rounded-full px-2.5 py-1 bg-emerald-50 text-emerald-800">Todos em dia</span>;
+    return <span className="self-start text-[11px] font-bold rounded-sm px-2.5 py-1 bg-success/10 text-success">Todos em dia</span>;
   }
   return (
-    <span className={`self-start text-[11px] font-bold rounded-full px-2.5 py-1 ${TONE[turma.tone].chip}`}>
+    <span className={`self-start text-[11px] font-bold rounded-sm px-2.5 py-1 ${TONE[turma.tone].chip}`}>
       {turma.atencao.length} {turma.atencao.length === 1 ? 'precisa' : 'precisam'} de atenção
     </span>
   );
@@ -190,7 +190,7 @@ function Proporcao({ turma }) {
         <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
       <p className="text-xs text-on-surface-variant tabular-nums">
-        {turma.emDia} de {turma.total} em dia · {turma.turnos.map(t => `${t.turno} ${t.total}`).join(' · ')}
+        {turma.emDia} de {turma.total} em dia, {turma.turnos.map(t => `${t.turno} ${t.total}`).join(', ')}
       </p>
     </div>
   );
@@ -200,7 +200,7 @@ function CartaoTurma({ turma, onOpen, onVerTurma }) {
   return (
     <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2.5">
-        <h3 className="flex-1 min-w-0 truncate text-base font-black text-on-surface">{turma.nome}</h3>
+        <h3 className="flex-1 min-w-0 truncate text-base font-semibold text-on-surface">{turma.nome}</h3>
         <span className="text-xs text-on-surface-variant tabular-nums"><strong className="text-on-surface">{turma.total}</strong> {turma.total === 1 ? 'aluno' : 'alunos'}</span>
       </div>
       <Proporcao turma={turma} />
@@ -222,15 +222,15 @@ function CartaoSugestoes({ sugestoes, onMudar, onOpen }) {
   return (
     <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-col gap-3 md:col-span-2 xl:col-span-3">
       <div className="flex items-center gap-2.5 flex-wrap">
-        <Sparkles size={17} className="text-primary shrink-0" />
-        <h3 className="text-base font-black text-on-surface">Hora de mudar de turma?</h3>
-        <span className="text-[10px] font-bold uppercase tracking-wide rounded-full px-2 py-0.5 bg-surface-container-low text-on-surface-variant">Prévia</span>
+        <Lightbulb size={17} className="text-primary shrink-0" />
+        <h3 className="text-base font-semibold text-on-surface">Hora de mudar de turma?</h3>
+        <span className="text-[10px] font-bold rounded-sm px-2 py-0.5 bg-surface-container-low text-on-surface-variant">Prévia</span>
       </div>
       <p className="text-xs text-on-surface-variant">
         Sugestão feita só pela idade: compara cada criança com a idade das crianças de cada turma. Em breve vai considerar também os relatórios e o desenvolvimento. A decisão é sempre da escola.
       </p>
       {sugestoes.length === 0 ? (
-        <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-emerald-700" /> Nenhuma criança com idade fora da turma agora.</p>
+        <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-success" /> Nenhuma criança com idade fora da turma agora.</p>
       ) : (
         <div className="flex flex-col">
           {visiveis.map(sg => (
@@ -238,8 +238,8 @@ function CartaoSugestoes({ sugestoes, onMudar, onOpen }) {
               <button onClick={() => onOpen(sg.id)} className="flex-1 min-w-0 text-left hover:text-primary">
                 <span className="block text-sm font-bold text-on-surface truncate">{sg.name}</span>
                 <span className="block text-xs text-on-surface-variant">
-                  {formatIdade(sg.idadeMeses)} · {sg.tipo === 'evoluir'
-                    ? `${sg.turmaAtual} → ${sg.turma}`
+                  {formatIdade(sg.idadeMeses)}, {sg.tipo === 'evoluir'
+                    ? `${sg.turmaAtual} para ${sg.turma}`
                     : `bem mais nova que ${sg.turmaAtual}; confira a data de nascimento`}
                 </span>
               </button>
@@ -248,7 +248,7 @@ function CartaoSugestoes({ sugestoes, onMudar, onOpen }) {
                   Mudar de turma
                 </button>
               ) : (
-                <button onClick={() => onOpen(sg.id)} className="self-start sm:self-auto min-h-[40px] text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-zela-md transition whitespace-nowrap">
+                <button onClick={() => onOpen(sg.id)} className="self-start sm:self-auto min-h-[40px] text-xs font-bold text-warning bg-warning/10 hover:bg-warning/10 px-3 py-2 rounded-zela-md transition whitespace-nowrap">
                   Conferir cadastro
                 </button>
               )}
@@ -271,17 +271,17 @@ function SanfonaTurma({ turma, open, onToggle, onOpen, onVerTurma }) {
     <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg">
       <button onClick={onToggle} aria-expanded={open} className="w-full flex items-center gap-3 px-3.5 py-3 min-h-[60px] text-left">
         <span className="flex-1 min-w-0">
-          <span className="block text-[15px] font-black text-on-surface truncate">{turma.nome}</span>
-          <span className="block text-xs text-on-surface-variant tabular-nums">{turma.total} {turma.total === 1 ? 'aluno' : 'alunos'} · {turma.emDia} em dia</span>
+          <span className="block text-[15px] font-semibold text-on-surface truncate">{turma.nome}</span>
+          <span className="block text-xs text-on-surface-variant tabular-nums">{turma.total} {turma.total === 1 ? 'aluno' : 'alunos'}, {turma.emDia} em dia</span>
         </span>
         {turma.atencao.length > 0 && (
-          <span className={`min-w-[26px] h-[26px] px-2 rounded-full text-xs font-black flex items-center justify-center ${TONE[turma.tone].num}`}>{turma.atencao.length}</span>
+          <span className={`min-w-[26px] h-[26px] px-2 rounded-sm text-xs font-semibold flex items-center justify-center ${TONE[turma.tone].num}`}>{turma.atencao.length}</span>
         )}
         <ChevronDown size={20} className={`text-on-surface-variant shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="px-3.5 pb-3.5 flex flex-col gap-2.5">
-          <p className="text-xs text-on-surface-variant">{turma.turnos.map(t => `${t.turno} ${t.total}`).join(' · ')}</p>
+          <p className="text-xs text-on-surface-variant">{turma.turnos.map(t => `${t.turno} ${t.total}`).join(', ')}</p>
           <div>{turma.destaque.map(l => <LinhaAluno key={l.id} linha={l} onOpen={onOpen} />)}</div>
           <button onClick={() => onVerTurma(turma.nome)} className="w-full min-h-[44px] rounded-zela-md bg-primary text-white text-sm font-bold">
             Ver {turma.total === 1 ? 'o aluno' : `os ${turma.total} alunos`}
@@ -292,7 +292,7 @@ function SanfonaTurma({ turma, open, onToggle, onOpen, onVerTurma }) {
   );
 }
 
-// Secretaria · Alunos · Modelo 2 (Painel por turma, aprovado em 28/09/2026).
+// Secretaria, Alunos, Modelo 2 (Painel por turma, aprovado em 28/09/2026).
 // O painel mostra cada turma e quem precisa de atenção (documentos
 // obrigatórios, ficha médica, cobranças em atraso; regras em
 // src/lib/alunosPainel.js). "Ver os N alunos" abre a lista já filtrada;
@@ -441,7 +441,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome..."
                 aria-label="Buscar aluno por nome"
-                className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-9 pr-3 py-2 text-sm bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
               value={selectedTurma}
               onChange={e => setSelectedTurma(e.target.value)}
               aria-label="Turma"
-              className="text-sm border border-outline-variant rounded-zela-md px-3 py-2 bg-white"
+              className="text-sm border border-outline-variant rounded-zela-md px-3 py-2 bg-surface-container-lowest"
             >
               <option value="todas">Todas as turmas</option>
               {turmaOptions.map(t => <option key={t} value={t}>{t}</option>)}
@@ -460,7 +460,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
               value={selectedStatus}
               onChange={e => setSelectedStatus(e.target.value)}
               aria-label="Situação"
-              className="text-sm border border-outline-variant rounded-zela-md px-3 py-2 bg-white"
+              className="text-sm border border-outline-variant rounded-zela-md px-3 py-2 bg-surface-container-lowest"
             >
               <option value="todos">Todas as situações</option>
               {Object.entries(ENROLLMENT_STATUS_LABELS).map(([value, label]) => (
@@ -491,20 +491,20 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
                   <button
                     key={student.id}
                     onClick={() => onOpenAluno(student.id)}
-                    className="w-full flex items-center gap-3 p-3.5 bg-white border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
+                    className="w-full flex items-center gap-3 p-3.5 bg-surface-container-lowest border border-outline-variant hover:border-primary/40 hover:bg-primary/5 rounded-zela-lg transition text-left"
                   >
                     <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${atencao ? TONE[atencao.tone].dot : 'bg-transparent'}`} aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-on-surface text-sm truncate">
                         {student.name}
-                        <span className="font-normal text-on-surface-variant/70 text-xs"> · {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'idade não informada'}</span>
+                        <span className="font-normal text-on-surface-variant/70 text-xs">, {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'idade não informada'}</span>
                       </p>
                       <p className="text-on-surface-variant/70 text-xs truncate">
-                        {student.turma || SEM_TURMA}{student.turno ? ` · ${student.turno}` : ''} · Responsável: {student.users?.name || '·'}
+                        {student.turma || SEM_TURMA}{student.turno ? `, ${student.turno}` : ''}, Responsável: {student.users?.name || '·'}
                       </p>
                       {atencao && <p className={`text-xs truncate ${TONE[atencao.tone].text}`}>{atencao.resumo.charAt(0).toUpperCase() + atencao.resumo.slice(1)}</p>}
                     </div>
-                    <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full border ${ENROLLMENT_STATUS_STYLES[student.enrollment_status] || ENROLLMENT_STATUS_STYLES.ativo}`}>
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-1 rounded-sm border ${ENROLLMENT_STATUS_STYLES[student.enrollment_status] || ENROLLMENT_STATUS_STYLES.ativo}`}>
                       {ENROLLMENT_STATUS_LABELS[student.enrollment_status] || student.enrollment_status}
                     </span>
                     <ChevronRight size={16} className="text-on-surface-variant/50 shrink-0" />
@@ -530,7 +530,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
   // ---------- Painel por turma ----------
   const k = painel?.kpis;
   const porTipo = painel?.atencaoPorTipo;
-  const saidasHint = painel && Object.entries(painel.saidasPorStatus).map(([s, n]) => `${n} ${SAIDA_LABEL[s] || s}${n > 1 ? 's' : ''}`).join(' · ');
+  const saidasHint = painel && Object.entries(painel.saidasPorStatus).map(([s, n]) => `${n} ${SAIDA_LABEL[s] || s}${n > 1 ? 's' : ''}`).join(', ');
 
   return (
     <div className="h-full flex flex-col bg-surface overflow-hidden">
@@ -539,9 +539,6 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <SecondaryButton onClick={() => abrirLista({ focarBusca: true })} className="flex-1 sm:flex-none justify-center min-h-[40px]"><Search size={15} /> Buscar aluno</SecondaryButton>
           {onNovaMatricula && <PrimaryButton onClick={onNovaMatricula} className="flex-1 sm:flex-none justify-center min-h-[40px]"><Plus size={15} /> Nova matrícula</PrimaryButton>}
-          <button onClick={loadPainel} aria-label="Atualizar" className="p-2.5 rounded-zela-md text-on-surface-variant hover:bg-surface-container-low shrink-0">
-            <RefreshCw size={16} className={isLoadingPainel ? 'animate-spin' : ''} />
-          </button>
         </div>
       </div>
 
@@ -554,12 +551,12 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
               <Kpi
                 label="Precisam de atenção"
                 value={k.atencao}
-                valueClass={k.atencao ? 'text-amber-800' : 'text-on-surface'}
+                valueClass={k.atencao ? 'text-warning' : 'text-on-surface'}
                 hint={comFinanceiro ? 'documentos, ficha médica e financeiro' : 'documentos e ficha médica'}
                 onClick={() => abrirLista({ status: 'ativo', atencao: true })}
                 onAjuda={() => setAjuda('atencao')}
               />
-              <Kpi label="Entradas no ano" value={k.entradas} valueClass={k.entradas ? 'text-emerald-800' : 'text-on-surface'} hint="matrículas novas no ano letivo" onAjuda={() => setAjuda('entradas')} />
+              <Kpi label="Entradas no ano" value={k.entradas} valueClass={k.entradas ? 'text-success' : 'text-on-surface'} hint="matrículas novas no ano letivo" onAjuda={() => setAjuda('entradas')} />
               <Kpi label="Saídas no ano" value={k.saidas} hint={saidasHint || 'ninguém saiu neste ano letivo'} onClick={k.saidas ? () => abrirLista({ status: 'saidas' }) : undefined} onAjuda={() => setAjuda('saidas')} />
             </div>
 
@@ -593,11 +590,11 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
 
                   <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2.5">
-                      <h3 className="flex-1 text-base font-black text-on-surface">Precisam de atenção</h3>
-                      <span className={`text-[11px] font-bold rounded-full px-2.5 py-1 ${k.atencao ? TONE.warn.chip : 'bg-emerald-50 text-emerald-800'}`}>{k.atencao}</span>
+                      <h3 className="flex-1 text-base font-semibold text-on-surface">Precisam de atenção</h3>
+                      <span className={`text-[11px] font-bold rounded-sm px-2.5 py-1 ${k.atencao ? TONE.warn.chip : 'bg-success/10 text-success'}`}>{k.atencao}</span>
                     </div>
                     {k.atencao === 0 ? (
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-emerald-700" /> Todos os alunos ativos estão em dia.</p>
+                      <p className="flex items-center gap-2 text-sm text-on-surface-variant"><CheckCircle2 size={16} className="text-success" /> Todos os alunos ativos estão em dia.</p>
                     ) : (
                       <div>
                         {[['Documentos faltando', porTipo.documentos], ['Sem ficha médica', porTipo.ficha], ...(comFinanceiro ? [['Cobranças em atraso', porTipo.financeiro]] : [])].map(([label, n]) => (
@@ -613,8 +610,8 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
 
                   <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2.5">
-                      <h3 className="flex-1 text-base font-black text-on-surface">Saídas no ano</h3>
-                      <span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-surface-container-low text-on-surface-variant">{k.saidas}</span>
+                      <h3 className="flex-1 text-base font-semibold text-on-surface">Saídas no ano</h3>
+                      <span className="text-[11px] font-bold rounded-sm px-2.5 py-1 bg-surface-container-low text-on-surface-variant">{k.saidas}</span>
                     </div>
                     {painel.saidas.length === 0 ? (
                       <p className="text-sm text-on-surface-variant">Ninguém saiu neste ano letivo.</p>
