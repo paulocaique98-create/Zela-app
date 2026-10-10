@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GraduationCap, Search, X, Users, Loader2, ArrowRightLeft, Check, History } from 'lucide-react';
+import { GraduationCap, Search, X, Users, Loader2, ArrowRightLeft, Check, History, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
@@ -16,6 +16,17 @@ export default function AdminStudentList({ currentUser }) {
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
+  const [turmaMenuOpen, setTurmaMenuOpen] = useState(false);
+
+  // Fecha o menu de turmas ao clicar fora ou apertar Esc.
+  useEffect(() => {
+    if (!turmaMenuOpen) return;
+    const onDown = e => { if (!e.target.closest('[data-turma-menu]')) setTurmaMenuOpen(false); };
+    const onKey = e => { if (e.key === 'Escape') setTurmaMenuOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [turmaMenuOpen]);
 
   // Contagem por turma é uma query separada e leve (só a coluna `turma`,
   // sem os outros campos) pra alimentar os badges dos filtros sem precisar
@@ -136,12 +147,47 @@ export default function AdminStudentList({ currentUser }) {
 
   const handleLoadMore = () => fetchPage(students.length, { append: true });
 
+  const renderTurmaMenu = visibilidade => (
+    <div data-turma-menu className={`relative ${visibilidade}`}>
+      <button
+        type="button"
+        onClick={() => setTurmaMenuOpen(o => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={turmaMenuOpen}
+        className="w-full md:w-auto flex items-center gap-2 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md text-sm font-semibold text-on-surface hover:bg-surface-container transition"
+      >
+        <Users size={15} className="text-on-surface-variant/70" />
+        <span className="truncate flex-1 text-left">{selectedTurma}</span>
+        <ChevronDown size={15} className={`text-on-surface-variant/70 transition-transform ${turmaMenuOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {turmaMenuOpen && (
+        <ul role="listbox" className="absolute right-0 top-full mt-1.5 z-30 min-w-full w-max max-h-80 overflow-y-auto p-1 bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-lg">
+          {turmaOptions.map(turma => (
+            <li key={turma} role="option" aria-selected={selectedTurma === turma}>
+              <button
+                type="button"
+                onClick={() => { setSelectedTurma(turma); setTurmaMenuOpen(false); }}
+                className={`w-full flex items-center justify-between gap-6 px-3 py-2 rounded-lg text-sm text-left transition ${selectedTurma === turma ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface hover:bg-surface-container-low'}`}
+              >
+                <span>{turma}</span>
+                <span className="flex items-center gap-1.5">
+                  {turma !== 'Todas as Turmas' && <span className="text-xs text-on-surface-variant/70">{turmaCounts[turma] || 0}</span>}
+                  {selectedTurma === turma && <Check size={14} />}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título "Lista de Alunos" removido (o Header do app já
           mostra o nome da tela dinamicamente), ícone + contador numa linha
           só, mais compacta. */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
+      <div className="flex items-center gap-4 mb-4 sm:mb-6 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
             <GraduationCap size={18} />
@@ -153,8 +199,8 @@ export default function AdminStudentList({ currentUser }) {
       </div>
 
       {/* Filtros: Busca + Turma */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6 shrink-0">
-        <div className="relative flex-1">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-4 sm:mb-6 shrink-0">
+        <div className="relative w-full lg:w-auto lg:flex-1 min-w-0">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-on-surface-variant/70" />
           </div>
@@ -172,25 +218,7 @@ export default function AdminStudentList({ currentUser }) {
           )}
         </div>
 
-        <div className="flex gap-2 p-1 bg-surface-container rounded-zela-lg overflow-x-auto shrink-0 max-w-full">
-          {turmaOptions.map(turma => (
-            <button
-              key={turma}
-              onClick={() => setSelectedTurma(turma)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedTurma === turma
-                  ? 'bg-surface-container-lowest shadow-sm text-primary'
-                  : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-            >
-              {turma}
-              {turma !== 'Todas as Turmas' && (
-                <span className="ml-1 text-[9px] bg-surface-container-high text-on-surface-variant rounded-full px-1.5 py-0.5">
-                  {turmaCounts[turma] || 0}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        {renderTurmaMenu('shrink-0 w-full md:w-auto md:self-end lg:self-auto')}
       </div>
 
       {/* Tabela - Scrollable Container */}
@@ -205,16 +233,56 @@ export default function AdminStudentList({ currentUser }) {
             <p className="text-on-surface-variant font-medium text-small">Nenhum aluno encontrado.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div>
+            <ul className="md:hidden space-y-2.5">
+              {students.map(student => (
+                <li key={student.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0 border border-primary/10">
+                      <span className="text-primary font-black text-sm">{(student.name || '?').charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-on-surface text-sm leading-tight break-words">{student.name || 'Sem nome'}</p>
+                      <p className="text-xs text-on-surface-variant/70 mt-0.5">
+                        {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'Idade não informada'}
+                      </p>
+                    </div>
+                    <div className="flex items-center shrink-0 -mr-1 -mt-1">
+                      <button onClick={() => openTransfer(student)} title="Transferir de turma" aria-label="Transferir de turma" className="p-2.5 text-on-surface-variant/70 active:text-primary active:bg-primary/10 rounded-lg transition">
+                        <ArrowRightLeft size={17} />
+                      </button>
+                      <button onClick={() => openHistory(student)} title="Histórico de transferências" aria-label="Histórico de transferências" className="p-2.5 text-on-surface-variant/70 active:text-primary active:bg-primary/10 rounded-lg transition">
+                        <History size={17} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                    <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-1 rounded-md">{student.turma || 'Sem turma'}</span>
+                    <span className="text-xs font-bold text-on-surface bg-surface-container px-2 py-1 rounded-md">{student.contracted_hours}h</span>
+                    {student.isento_hora_extra && (
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-1 rounded-md">Bolsista</span>
+                    )}
+                    {student.contracted_entry_time == null && (
+                      <span className="text-[10px] font-bold text-warning bg-amber-100 px-2 py-1 rounded-md">Sem período</span>
+                    )}
+                  </div>
+                  {(student.users?.name || student.users?.phone) && (
+                    <p className="text-xs text-on-surface-variant mt-2 break-words">
+                      {student.users?.name || ''}{student.users?.name && (student.users?.phone || student.users?.email) ? ' · ' : ''}{student.users?.phone || student.users?.email || ''}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <table className="w-full text-sm hidden md:table">
               <thead>
                 <tr className="text-left border-b border-outline-variant">
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Aluno</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider hidden sm:table-cell">Turma</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider hidden md:table-cell">Responsável</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider hidden lg:table-cell">Contato</th>
-                  <th className="pb-3 pr-4 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Horas/Dia</th>
-                  <th className="pb-3 text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider">Ações</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold text-on-surface-variant/70">Aluno</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold text-on-surface-variant/70">Turma</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold text-on-surface-variant/70 hidden lg:table-cell">Responsável</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold text-on-surface-variant/70 hidden xl:table-cell">Contato</th>
+                  <th className="pb-3 pr-4 text-xs font-semibold text-on-surface-variant/70">Horas/Dia</th>
+                  <th className="pb-3 text-xs font-semibold text-on-surface-variant/70">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/30">
@@ -250,7 +318,7 @@ export default function AdminStudentList({ currentUser }) {
                     </td>
 
                     {/* Turma */}
-                    <td className="py-3 pr-4 hidden sm:table-cell">
+                    <td className="py-3 pr-4">
                       {student.turma ? (
                         <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-1 rounded-md">
                           {student.turma}
@@ -261,14 +329,14 @@ export default function AdminStudentList({ currentUser }) {
                     </td>
 
                     {/* Responsável */}
-                    <td className="py-3 pr-4 hidden md:table-cell">
+                    <td className="py-3 pr-4 hidden lg:table-cell">
                       <span className="text-sm text-on-surface font-medium">
                         {student.users?.name || '—'}
                       </span>
                     </td>
 
                     {/* Contato */}
-                    <td className="py-3 pr-4 hidden lg:table-cell">
+                    <td className="py-3 pr-4 hidden xl:table-cell">
                       <span className="text-xs text-on-surface-variant">
                         {student.users?.phone || student.users?.email || '—'}
                       </span>
