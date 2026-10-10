@@ -13,7 +13,7 @@ export const ETAPAS_CHECKIN = [
 
 export default function TrilhaConfirmacao({ etapas = ETAPAS_CHECKIN, atual = 0, className = '' }) {
   return (
-    <ol aria-label="Etapas da confirmação" className={`grid grid-cols-2 gap-y-3 sm:grid-cols-4 list-none p-0 m-0 ${className}`}>
+    <ol aria-label="Etapas da confirmação" className={`grid grid-cols-4 list-none p-0 m-0 ${className}`}>
       {etapas.map((etapa, i) => {
         const feito = i < atual;
         const emCurso = i === atual;
@@ -22,7 +22,7 @@ export default function TrilhaConfirmacao({ etapas = ETAPAS_CHECKIN, atual = 0, 
           <li
             key={etapa.rotulo}
             aria-current={emCurso ? 'step' : undefined}
-            className={`relative pt-[22px] text-xs ${feito || emCurso ? 'text-on-surface' : 'text-on-surface-variant'} ${emCurso ? 'font-semibold' : ''}`}
+            className={`relative pt-[22px] text-[10px] min-[400px]:text-xs leading-tight pr-0.5 ${feito || emCurso ? 'text-on-surface' : 'text-on-surface-variant'} ${emCurso ? 'font-semibold' : ''}`}
           >
             <span aria-hidden="true" className={`absolute top-1 left-0 right-0 h-0.5 ${feito ? 'bg-primary' : 'bg-outline-variant'}`} />
             <span

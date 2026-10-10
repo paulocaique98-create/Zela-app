@@ -1258,11 +1258,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     <>
       {/* Mobile Header (Fixed at top on small screens) */}
       {!isKioskMode && (
-        <div className="md:hidden flex justify-between items-center p-4 border-b border-outline-variant bg-white shrink-0 z-10">
+        <div className="md:hidden flex justify-between items-center p-4 border-b border-outline-variant bg-surface-container-lowest shrink-0 z-10">
           <h3 className="font-bold text-on-surface flex items-center gap-1.5 text-base">
             <Camera size={18} className="text-primary" /> Biometria Facial
           </h3>
-          <button onClick={requestExit} className="p-2 -mr-2 text-on-surface-variant/70 hover:text-red-500 bg-surface-container hover:bg-red-50 rounded-lg transition-colors">
+          <button onClick={requestExit} className="p-2 -mr-2 text-on-surface-variant/70 hover:text-error bg-surface-container hover:bg-error/10 rounded-zela-md transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -1270,10 +1270,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden w-full h-full">
         {/* Left pane: Camera feed or Static Captured Image */}
-        <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-slate-950 flex items-center justify-center overflow-hidden">
+        <div className="relative flex-none h-[55%] min-h-[300px] md:h-auto md:flex-1 bg-ink flex items-center justify-center overflow-hidden">
 
           {(!cameraReady || !labeledDescriptors) && !error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/80 z-10 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-ink/80 z-10 p-6 text-center">
               <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
               <p className="text-sm font-semibold">
                 {!modelsLoaded ? "Carregando IA de reconhecimento" :
@@ -1284,19 +1284,19 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
           )}
 
           {error && !capturedImage && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-950/90 z-10 p-6 text-center">
-              <ShieldAlert className="h-12 w-12 text-red-500 mb-3" />
-              <p className="text-sm font-bold text-red-400 mb-4 max-w-sm">{error}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-ink/90 z-10 p-6 text-center">
+              <ShieldAlert className="h-12 w-12 text-secondary mb-3" />
+              <p className="text-sm font-bold text-white mb-4 max-w-sm">{error}</p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button onClick={retryInit} className="bg-primary hover:bg-primary-container text-white font-bold py-2 px-6 rounded-zela-md text-sm transition">
                   Tentar Novamente
                 </button>
                 {isKioskMode && onUseAlternative ? (
-                  <button onClick={onUseAlternative} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-zela-md text-sm transition flex items-center justify-center gap-1.5">
+                  <button onClick={onUseAlternative} className="bg-ink-line hover:bg-primary-container text-white font-bold py-2 px-6 rounded-zela-md text-sm transition flex items-center justify-center gap-1.5">
                     <QrCode size={16} /> Usar QR Code / Senha
                   </button>
                 ) : (
-                  <button onClick={requestExit} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-zela-md text-sm transition">
+                  <button onClick={requestExit} className="bg-ink-line hover:bg-primary-container text-white font-bold py-2 px-6 rounded-zela-md text-sm transition">
                     Fechar Janela
                   </button>
                 )}
@@ -1327,10 +1327,10 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               vermelho não reconhecido, laranja ajustar a distância). */}
           {!capturedImage && !error && cameraReady && (
             <div className={`absolute inset-0 pointer-events-none z-20 border-4 transition-colors duration-300 ${
-              matchStatus === 'matched' ? 'border-green-500' :
-                matchStatus === 'no-match' ? 'border-red-500' :
+              matchStatus === 'matched' ? 'border-success' :
+                matchStatus === 'no-match' ? 'border-error' :
                   framePosition === 'too-far' || framePosition === 'too-close' ? 'border-orange-500' :
-                    matchStatus === 'searching' ? 'border-indigo-600' : 'border-transparent'
+                    matchStatus === 'searching' ? 'border-primary' : 'border-transparent'
             }`} />
           )}
 
@@ -1340,7 +1340,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               <span className="bg-black/60 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-zela-md shadow-md">
                 Calibrando Câmera
               </span>
-              <span className="bg-black/60 backdrop-blur-md text-slate-200 text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md">
+              <span className="bg-black/60 backdrop-blur-md text-ink-text text-[11px] sm:text-xs font-semibold px-3 py-1.5 rounded-zela-md shadow-md">
                 Olhe para a câmera
               </span>
             </div>
@@ -1362,7 +1362,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             <div className="absolute bottom-20 left-4 right-4 flex justify-center z-30">
               <button
                 onClick={onUseAlternative}
-                className="pointer-events-auto flex items-center gap-2 bg-white text-on-surface font-bold px-4 py-2.5 rounded-zela-md shadow-lg text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-4"
+                className="pointer-events-auto flex items-center gap-2 bg-surface-container-lowest text-on-surface font-bold px-4 py-2.5 rounded-zela-md shadow-lg text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-4"
               >
                 <QrCode size={16} className="text-primary" /> Não está reconhecendo? Usar QR Code / Senha
               </button>
@@ -1371,9 +1371,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
           {/* Mirror status badge */}
           <div className="absolute top-4 left-4 md:top-auto md:bottom-4 md:left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-zela-md text-[10px] md:text-[11px] text-white flex items-center gap-1.5 font-mono max-w-[calc(100%-2rem)] md:max-w-none truncate shadow-md">
-            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${matchStatus === 'matched' ? 'bg-green-500' :
-              matchStatus === 'searching' ? 'bg-amber-500 animate-ping' :
-                matchStatus === 'no-match' ? 'bg-red-500' : 'bg-surface-container-low0'
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${matchStatus === 'matched' ? 'bg-success' :
+              matchStatus === 'searching' ? 'bg-warning animate-ping' :
+                matchStatus === 'no-match' ? 'bg-error' : 'bg-outline'
               }`}></span>
             <span className="truncate">
               {
@@ -1391,7 +1391,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               <button
                 onClick={handleRequestAccess}
                 disabled={selectedStudentIds.length === 0 || isProcessingCapture}
-                className="w-full md:w-auto flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-black py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs uppercase"
+                className="w-full md:w-auto flex justify-center items-center gap-2 bg-success hover:bg-success/90 disabled:bg-outline text-white font-bold py-2.5 px-4 rounded-zela-md shadow-lg transition active:scale-95 text-[11px] sm:text-xs"
               >
                 {isProcessingCapture ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                 {(() => {
@@ -1411,11 +1411,11 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         <div className="flex-1 md:flex-none w-full md:w-96 shrink-0 border-t md:border-t-0 md:border-l border-outline-variant flex flex-col bg-surface-container-low min-h-0">
           {/* Desktop Header (Hidden on mobile) */}
           {!isKioskMode && (
-            <div className="hidden md:flex justify-between items-center p-5 border-b border-outline-variant bg-white shrink-0">
+            <div className="hidden md:flex justify-between items-center p-5 border-b border-outline-variant bg-surface-container-lowest shrink-0">
               <h3 className="font-bold text-on-surface flex items-center gap-1.5">
                 <Camera size={18} className="text-primary" /> Biometria Facial
               </h3>
-              <button onClick={requestExit} className="p-1 text-on-surface-variant/70 hover:bg-surface-container rounded-lg transition">
+              <button onClick={requestExit} className="p-1 text-on-surface-variant/70 hover:bg-surface-container rounded-zela-md transition">
                 <X size={20} />
               </button>
             </div>
@@ -1431,7 +1431,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               </div>
             ) : matchStatus === 'no-match' ? (
               <div className="text-center py-10 space-y-4 animate-in fade-in duration-200">
-                <ShieldAlert className="mx-auto h-14 w-14 text-red-500 animate-bounce" />
+                <ShieldAlert className="mx-auto h-14 w-14 text-error animate-bounce" />
                 <div>
                   <h4 className="font-bold text-on-surface text-base">Nenhum Confronto Encontrado</h4>
                   <p className="text-on-surface-variant text-xs mt-2 px-4 leading-relaxed">
@@ -1440,14 +1440,14 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 </div>
                 <button
                   onClick={handleResetScanner}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-zela-md transition text-sm flex items-center justify-center gap-2"
+                  className="w-full bg-ink-line hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm flex items-center justify-center gap-2"
                 >
                   <RefreshCw size={16} /> Tentar Novamente
                 </button>
               </div>
             ) : actionDone ? (
               <div className="text-center py-10 space-y-4">
-                <CheckCircle className="mx-auto h-16 w-16 text-green-500 animate-bounce" />
+                <CheckCircle className="mx-auto h-16 w-16 text-success animate-bounce" />
                 <div>
                   <h4 className="font-bold text-on-surface text-lg">
                     {wasAlreadyPending ? 'Solicitação já realizada' : 'Solicitação Enviada!'}
@@ -1460,14 +1460,14 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-zela-md transition text-sm shadow-sm"
+                  className="w-full bg-ink-line hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition text-sm shadow-sm"
                 >
                   Concluir
                 </button>
               </div>
             ) : matchStatus !== 'matched' ? (
               <div className="text-center py-12 text-on-surface-variant/70 space-y-3">
-                <Camera className="mx-auto h-12 w-12 text-slate-300 animate-pulse" />
+                <Camera className="mx-auto h-12 w-12 text-outline animate-pulse" />
                 <div>
                   <p className="text-sm font-semibold text-on-surface">Aguardando detecção</p>
                   <p className="text-xs mt-1 px-4 leading-relaxed">
@@ -1480,8 +1480,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               <div className="space-y-5 animate-in fade-in duration-300">
 
                 {/* Person details */}
-                <div className="bg-white p-4 rounded-zela-lg border border-outline-variant shadow-sm flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-indigo-600 bg-surface-container shrink-0 flex items-center justify-center">
+                <div className="bg-surface-container-lowest p-4 rounded-zela-lg border border-outline-variant shadow-sm flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary bg-surface-container shrink-0 flex items-center justify-center">
                     {matchedPerson.photo_url ? (
                       <img src={matchedPerson.photo_url} alt="Responsável" className="w-full h-full object-cover" />
                     ) : (
@@ -1491,7 +1491,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-on-surface truncate text-sm">{matchedPerson.name}</p>
                     <p className="text-primary font-bold text-xs">{matchedPerson.relation}</p>
-                    <span className="inline-block bg-green-100 text-green-700 text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded-md mt-1 border border-green-200">
+                    <span className="inline-block bg-success/10 text-success text-[9px] font-extrabold px-1.5 py-0.5 rounded-zela-sm mt-1 border border-success/20">
                       Biometria Aprovada
                     </span>
                   </div>
@@ -1503,7 +1503,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                     quem tem 1 filho só), mas dá pra desmarcar quem não está
                     sendo entregue/buscado agora. */}
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Quem está aqui agora?</p>
+                  <p className="text-[10px] font-bold text-on-surface-variant/70 mb-1">Quem está aqui agora?</p>
                   {matchedStudents.length > 1 && (
                     <p className="text-[11px] text-on-surface-variant/70 mb-2">Marque quem você está entregando ou buscando agora.</p>
                   )}
@@ -1518,20 +1518,20 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
                             type="button"
                             key={student.id}
                             onClick={() => toggleStudentSelection(student.id)}
-                            className={`w-full p-3 border rounded-zela-md flex justify-between items-center text-sm shadow-sm transition-all text-left ${checked ? 'bg-white border-outline-variant' : 'bg-surface-container-lowest border-dashed border-outline-variant opacity-60'}`}
+                            className={`w-full p-3 border rounded-zela-md flex justify-between items-center text-sm shadow-sm transition-all text-left ${checked ? 'bg-surface-container-lowest border-outline-variant' : 'bg-surface-container-lowest border-dashed border-outline-variant opacity-60'}`}
                           >
                             <span className="flex items-center gap-2.5 min-w-0">
-                              <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-indigo-600' : 'border-outline-variant'}`}>
+                              <span className={`w-5 h-5 rounded-zela-sm border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary' : 'border-outline-variant'}`}>
                                 {checked && <CheckCircle size={13} className="text-white" strokeWidth={3} />}
                               </span>
                               <span className="min-w-0">
                                 <p className="font-bold text-on-surface truncate">{student.name}</p>
-                                <span className="text-[10px] text-on-surface-variant/70 uppercase">Horas/Dia: {student.contractedHours || '4h'}</span>
+                                <span className="text-[10px] text-on-surface-variant/70">Horas/Dia: {student.contractedHours || '4h'}</span>
                               </span>
                             </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' :
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-zela-sm shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-surface-container text-primary' :
                               student.status === 'left' ? 'bg-surface-container text-on-surface-variant' :
-                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-amber-100 text-amber-700' : 'bg-surface-container text-on-surface-variant'
+                                student.status === 'pending_entry' || student.status === 'pending_exit' ? 'bg-warning/10 text-warning' : 'bg-surface-container text-on-surface-variant'
                               }`}>
                               {student.status === 'in_school' ? 'Na Escola' : student.status === 'left' ? 'Saiu' : student.status === 'pending_entry' ? 'Entrada Solicitada' : student.status === 'pending_exit' ? 'Saída Solicitada' : 'Pendente de Check-in'}
                             </span>
@@ -1551,15 +1551,15 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
   if (isKioskMode) {
     return (
-      <div className="w-full h-full flex flex-col bg-white overflow-hidden">
+      <div className="w-full h-full flex flex-col bg-surface-container-lowest overflow-hidden">
         {innerContent}
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-slate-900/80 backdrop-blur-sm">
-      <div className="w-full h-full max-w-5xl max-h-[850px] bg-white rounded-zela-lg sm:rounded-zela-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-ink/80 backdrop-blur-sm">
+      <div className="w-full h-full max-w-5xl max-h-[850px] bg-surface-container-lowest rounded-zela-lg sm:rounded-zela-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         {innerContent}
       </div>
     </div>

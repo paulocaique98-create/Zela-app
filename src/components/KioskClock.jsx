@@ -21,7 +21,7 @@ export default function KioskClock() {
       <div className="font-extralight text-[40px] sm:text-[60px] tracking-wide text-on-surface leading-none [font-variant-numeric:tabular-nums]">
         {time}
       </div>
-      <div className="mt-2 text-[11px] sm:text-xs font-medium uppercase tracking-widest text-on-surface-variant">
+      <div className="mt-2 text-[11px] sm:text-xs font-medium text-on-surface-variant">
         {date}
       </div>
     </div>
