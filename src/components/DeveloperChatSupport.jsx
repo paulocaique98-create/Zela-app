@@ -212,7 +212,7 @@ export default function DeveloperChatSupport({ currentUser }) {
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-h3 text-dev-text">{activeThread.family?.name || 'Admin'}</h2>
+            <h2 className="text-h3 text-dev-text">{activeThread.family?.name || 'Recepção'}</h2>
             <p className="text-xs text-dev-text-muted">{activeThread.school?.school_code} · {activeThread.school?.name}</p>
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function DeveloperChatSupport({ currentUser }) {
                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-dev-surface-high transition text-left"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className={`text-sm truncate text-dev-text ${isUnread(t) ? 'font-bold' : 'font-semibold'}`}>{t.family?.name || 'Admin'}</p>
+                          <p className={`text-sm truncate text-dev-text ${isUnread(t) ? 'font-bold' : 'font-semibold'}`}>{t.family?.name || 'Recepção'}</p>
                           <p className="text-dev-text-muted text-xs truncate">Atualizado em {formatTime(t.updated_at)}</p>
                         </div>
                         {isUnread(t) && <span className="w-2.5 h-2.5 rounded-full bg-warning shrink-0" aria-label="Mensagem pendente" />}

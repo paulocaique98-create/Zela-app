@@ -1194,7 +1194,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               <option value="family">Responsáveis</option>
               {/* Admin só é criado pela Gestão (hierarquia de 27/09/2026). */}
               {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'admin') && (
-                <option value="admin">Administrador (Equipe)</option>
+                <option value="admin">Recepção</option>
               )}
               {/* Coordenação e Direção: Portal da Gestão sem financeiro (29/09/2026). */}
               {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'gestao_pedagogica') && (
@@ -1609,7 +1609,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex items-center gap-2.5 mb-8 shrink-0">
         <div className="bg-indigo-100 p-2 rounded-zela-md text-primary shrink-0"><UserPlus size={20} /></div>
-        <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou Administradores.</p>
+        <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou membros da Equipe.</p>
       </div>
 
       {/* Scrollable content wrapper */}

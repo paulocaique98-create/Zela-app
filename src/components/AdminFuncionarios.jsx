@@ -26,7 +26,7 @@ const CARGO_PARA_ACESSO = {
   'Recepcionista': { role: 'admin', departamento: 'recepcao' },
 };
 
-const ACCESS_ROLE_LABEL = { admin: 'Admin', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção' };
+const ACCESS_ROLE_LABEL = { admin: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção' };
 const ACCESS_ROLE_STYLE = {
   admin: 'bg-amber-50 text-amber-700 border-amber-200',
   gestao_pedagogica: 'bg-sky-50 text-sky-800 border-sky-200',
@@ -493,7 +493,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             <div>
               <h3 className="text-h3 text-on-surface">Contas de Acesso ao Sistema</h3>
               <p className="text-on-surface-variant text-small">
-                {accessUsers.length} conta{accessUsers.length !== 1 ? 's' : ''} de login (Administradores e Professores)
+                {accessUsers.length} conta{accessUsers.length !== 1 ? 's' : ''} de login (Recepção e Professores)
               </p>
             </div>
             {accessUsers.length > 0 && (

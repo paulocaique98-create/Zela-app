@@ -52,7 +52,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer')) {
+    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
       throw new Error('Permissão negada')
     }
 

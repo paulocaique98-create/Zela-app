@@ -33,10 +33,11 @@ export function totalNaoLidas(contas) {
 }
 
 // Família só vê o botão quando já tem conta vinculada (não aparece para
-// todos os responsáveis); a equipe sempre vê, para poder vincular. O
-// suporte nunca.
+// todos os responsáveis); a Gestão (Financeiro) e a equipe pedagógica sempre
+// veem, para poder vincular. A Recepção (admin) e o suporte nunca: a conta da
+// Recepção só enxerga a Recepção (10/10/2026).
 export function mostrarBotaoDeContas(role, contas) {
-  if (!role || role === 'developer') return false;
+  if (!role || role === 'developer' || role === 'admin') return false;
   if (role === 'family') return (contas || []).some(c => !c.atual);
   return true;
 }

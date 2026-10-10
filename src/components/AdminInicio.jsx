@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, UserPlus, Settings, Image, UtensilsCrossed, CalendarDays, Megaphone, FileText, UserRoundPlus } from 'lucide-react';
+import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, UserRoundPlus } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0, pendingUsersCount = 0, onGoToPendingUsers = () => {} }) {
@@ -12,13 +12,6 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
     { key: 'history', label: 'Histórico geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'users', label: 'Gestão de usuários', icon: UserCog, tab: 'users', feature: 'cadastros', defaultOn: true },
     { key: 'kiosk', label: 'Autoatendimento', icon: ShieldCheck, tab: 'kiosk', feature: 'checkin', defaultOn: true },
-    { key: 'register', label: 'Cadastro de usuários', icon: UserPlus, tab: 'register', feature: 'cadastros', defaultOn: true },
-    { key: 'settings', label: 'Configurações', icon: Settings, tab: 'settings', feature: 'configuracoes', defaultOn: true },
-    { key: 'mural-fotos', label: 'Mural de fotos', icon: Image, tab: 'mural-fotos', feature: 'mural', defaultOn: false },
-    { key: 'cardapio', label: 'Cardápio', icon: UtensilsCrossed, tab: 'cardapio', feature: 'cardapio', defaultOn: false },
-    { key: 'calendario', label: 'Calendário', icon: CalendarDays, tab: 'calendario', feature: 'calendario', defaultOn: false },
-    { key: 'comunicados', label: 'Comunicados', icon: Megaphone, tab: 'cadastro-comunicados', feature: 'comunicados', defaultOn: false },
-    { key: 'relatorios', label: 'Relatórios', icon: FileText, tab: 'rel-mitigacao', feature: 'relatorios_pedagogicos', defaultOn: false },
   ];
 
   const topMenus = useMemo(() => {

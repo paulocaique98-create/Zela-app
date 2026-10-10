@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, FolderPlus, Folders, FileText, Image as ImageIcon, UtensilsCrossed, MessageCircle, X, Maximize2, Minimize2, ScrollText, Megaphone, BookOpen, BookMarked, ClipboardCheck, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import { AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
 import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -9,7 +9,6 @@ import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
-import { useSchoolConfig } from '../lib/schoolConfig';
 import { useAtualizacaoDoTotem } from '../hooks/useAtualizacaoDoTotem';
 import { lembrarLeitorAberto, leitorParaReabrir, esquecerLeitorAberto } from '../lib/atualizacaoDoTotem';
 import AdminInicio from './AdminInicio';
@@ -31,15 +30,7 @@ import { PageShell } from './GestaoShared';
 // maioria acessada só ocasionalmente).
 const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
 const AdminQrCheckin = lazy(() => import('./AdminQrCheckin'));
-const AdminCalendario = lazy(() => import('./AdminCalendario'));
-const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
-const AdminCardapio = lazy(() => import('./AdminCardapio'));
-const AdminDiario = lazy(() => import('./AdminDiario'));
 const AdminChat = lazy(() => import('./AdminChat'));
-const AdminCadastroFuncionarios = lazy(() => import('./AdminCadastroFuncionarios'));
-const AdminGerenciarFuncionarios = lazy(() => import('./AdminGerenciarFuncionarios'));
-const AdminCadastroComunicados = lazy(() => import('./AdminCadastroComunicados'));
-const AdminUserRegistration = lazy(() => import('./AdminUserRegistration'));
 const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminStudentList = lazy(() => import('./AdminStudentList'));
@@ -47,15 +38,9 @@ const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
 const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
-const AdminSettings = lazy(() => import('./AdminSettings'));
-const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
-const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
-const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
-const AdminSubjects = lazy(() => import('./AdminSubjects'));
-const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
 // Módulos da Gestão que a Gestão pode liberar pro Administrativo
 // (Gestão · Permissões).
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
@@ -64,12 +49,6 @@ const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.CobrancasTab })));
 
-// Submenus do menu Relatórios — cada um vira sua própria tela conforme for
-// implementado; por enquanto todos apontam para o placeholder "em construção".
-const RELATORIOS_SUBMENU = [
-  { key: 'rel-mitigacao', label: 'Mitigação' },
-  { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
-];
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus, updateAvailable = false }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
@@ -220,25 +199,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   };
 
   const features = currentSchool?.features_enabled || {};
-  const { terminology } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
   // O menu segue só os módulos da escola (Módulos, no Portal do Dev). A
   // antiga preferência "Personalizar Menu" (só do navegador) saiu em 30/09/2026.
 
-  const showCadastros = features.cadastros !== false;
   const showGerenciamento = features.gerenciamento !== false;
   const showCheckin = features.checkin !== false;
   const showConfiguracoes = features.configuracoes !== false;
 
   const showFormularios = features.formularios === true;
-  const showCalendario = features.calendario === true;
-  const showComunicados = features.comunicados === true;
-  const showMural = features.mural === true;
-  const showCardapio = features.cardapio === true;
-  const showDiario = features.diario === true;
   const showChat = features.chat === true;
-  const showRelatorios = features.relatorios_pedagogicos === true;
-  const showMaterias = features.materias === true;
-  const showFrequencia = features.frequencia === true;
   const showQrCheckin = features.qr_checkin === true;
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, showChat);
 
@@ -300,19 +269,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             <SidebarItem active={adminTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
             {/* CADASTROS */}
-            {showCadastros && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Cadastros"
-                icon={FolderPlus}
-                isOpen={openAccordion === 'cadastros'}
-                onToggle={() => toggleAccordion('cadastros')}
-              >
-                <SidebarItem active={adminTab === 'register'} icon={FolderPlus} label="Usuários" onClick={() => go('register')} />
-                <SidebarItem active={adminTab === 'cadastro-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('cadastro-funcionarios')} />
-              </SidebarGroup>
-            )}
-
             {/* GERENCIAMENTO */}
             {showGerenciamento && (
               <SidebarGroup
@@ -324,7 +280,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               >
                 <SidebarItem active={adminTab === 'users'} icon={Folders} label="Usuários" badge={pendingUsersCount > 0 ? pendingUsersCount : null} onClick={() => go('users')} />
                 <SidebarItem active={adminTab === 'students'} icon={Users} label="Alunos" onClick={() => go('students')} />
-                <SidebarItem active={adminTab === 'gerenciar-funcionarios'} icon={Users} label="Funcionários" onClick={() => go('gerenciar-funcionarios')} />
               </SidebarGroup>
             )}
 
@@ -361,54 +316,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
-            {/* RELATÓRIOS PEDAGÓGICOS */}
-            {showRelatorios && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Relatórios"
-                icon={FileText}
-                isOpen={openAccordion === 'relatorios'}
-                onToggle={() => toggleAccordion('relatorios')}
-              >
-                {RELATORIOS_SUBMENU.map(r => (
-                  <SidebarItem key={r.key} active={adminTab === r.key} icon={FileText} label={r.label} onClick={() => go(r.key)} />
-                ))}
-              </SidebarGroup>
-            )}
-
-            {/* ACADÊMICO: CALENDÁRIO / MURAL / CARDÁPIO / DIÁRIO / MATÉRIAS / FREQUÊNCIA / COMUNICADOS */}
-            {(showCalendario || showMural || showCardapio || showDiario || showMaterias || showFrequencia || showComunicados) && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Acadêmico"
-                icon={CalendarDays}
-                isOpen={openAccordion === 'academico'}
-                onToggle={() => toggleAccordion('academico')}
-              >
-                {showCalendario && (
-                  <SidebarItem active={adminTab === 'calendario'} icon={CalendarDays} label="Calendário" onClick={() => go('calendario')} />
-                )}
-                {showMural && (
-                  <SidebarItem active={adminTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => go('mural-fotos')} />
-                )}
-                {showCardapio && (
-                  <SidebarItem active={adminTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
-                )}
-                {showDiario && (
-                  <SidebarItem active={adminTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
-                )}
-                {showMaterias && (
-                  <SidebarItem active={adminTab === 'materias'} icon={BookMarked} label={`${terminology.subject}s`} onClick={() => go('materias')} />
-                )}
-                {showFrequencia && (
-                  <SidebarItem active={adminTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
-                )}
-                {showComunicados && (
-                  <SidebarItem active={adminTab === 'cadastro-comunicados'} icon={Megaphone} label="Comunicados" onClick={() => go('cadastro-comunicados')} />
-                )}
-              </SidebarGroup>
-            )}
-
             {/* GESTÃO: só o que a Gestão liberou em Permissões */}
             {hasGestaoModules && (
               <SidebarGroup
@@ -436,12 +343,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 isOpen={openAccordion === 'sistema'}
                 onToggle={() => toggleAccordion('sistema')}
               >
-                <SidebarItem active={adminTab === 'auditoria'} icon={ScrollText} label="Auditoria" onClick={() => go('auditoria')} />
                 {/* "•" em vez de número -- só indica que existe novidade não
                     lida, não quantas (pedido explícito). */}
                 <SidebarItem active={adminTab === 'system-updates'} icon={RefreshCw} label="Atualizações" badge={hasUnreadSystemUpdates ? '•' : null} onClick={() => go('system-updates')} />
                 <SidebarItem active={adminTab === 'duplicidade-biometrica'} icon={Fingerprint} label="Duplicidade Facial" onClick={() => go('duplicidade-biometrica')} />
-                <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
               </SidebarGroup>
             )}
           </nav>
@@ -482,14 +387,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
         {/* NOVOS PLACEHOLDERS */}
         {adminTab === 'ficha-medica' && <AdminFichaMedica currentUser={currentUser} currentSchool={currentSchool} students={students} />}
-        {adminTab === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'mural-fotos' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'diario' && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'materias' && <AdminSubjects currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'rel-mitigacao' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'auditoria' && <AdminAuditLog currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'gestao-contratos' && canSeeContratos && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="lista" canManage={Boolean(perms['contratos.gerenciar'])} />}
         {adminTab === 'gestao-modelos' && perms['contratos.gerenciar'] && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="modelos" />}
         {adminTab === 'gestao-inadimplencia' && perms['financeiro.baixa_manual'] && (
@@ -500,10 +397,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
-        {adminTab === 'rel-mapa-habilidades' && <AdminMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'cadastro-funcionarios' && <AdminCadastroFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'gerenciar-funcionarios' && <AdminGerenciarFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
-        {adminTab === 'cadastro-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
@@ -770,10 +663,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
 
         {/* CADASTRO */}
-        {adminTab === 'register' && <AdminUserRegistration currentUser={currentUser} />}
 
         {/* CONFIGURAÇÕES */}
-        {adminTab === 'settings' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} />}
       </Suspense>
 
         {/* Face Scanner Modal */}

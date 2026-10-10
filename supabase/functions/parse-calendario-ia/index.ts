@@ -5,7 +5,7 @@ import { logEdgeError } from '../_shared/logEdgeError.ts';
 
 // Lê o calendário escolar (PDF com layout livre — lista de datas + mini
 // calendário gráfico, como o modelo real da escola) usando a API do Google
-// Gemini (mesmo padrão de parse-cardapio-ia). Autorização: só admin/
+// Gemini (mesmo padrão de parse-cardapio-ia). Autorização: só Gestão, Coordenação, Direção e
 // developer da escola, JWT do caller.
 const TIPOS = ['geral', 'feriado', 'reuniao', 'evento', 'passeio'];
 const DIAS_SEMANA = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -58,8 +58,8 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
-    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'developer')) {
-      throw new Error('Acesso negado: apenas administradores podem importar calendário.');
+    if (dbCallerError || !callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
+      throw new Error('Acesso negado: apenas a Gestão, a Coordenação e a Direção podem importar calendário.');
     }
 
     const { data: rateLimitOk, error: rateLimitError } = await adminClient.rpc('check_rate_limit', {

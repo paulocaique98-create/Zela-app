@@ -7,7 +7,7 @@ import { logEdgeError } from '../_shared/logEdgeError.ts';
 // texto — só dia da semana × refeição, como o documento real da
 // nutricionista) usando a API do Google Gemini (tier gratuito, lê o PDF
 // diretamente — sem precisar converter em imagem no cliente). Autorização
-// pelo mesmo padrão das outras Edge Functions: só admin/developer da
+// pelo mesmo padrão das outras Edge Functions: só Gestão, Coordenação, Direção e developer da
 // escola, JWT do caller.
 const REFEICOES = ['Desjejum', 'Almoço', 'Lanche', 'Jantar'];
 const DIAS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -52,8 +52,8 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
-    if (dbCallerError || !callerData || (callerData.role !== 'admin' && callerData.role !== 'developer')) {
-      throw new Error('Acesso negado: apenas administradores podem importar cardápio.');
+    if (dbCallerError || !callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
+      throw new Error('Acesso negado: apenas a Gestão, a Coordenação e a Direção podem importar cardápio.');
     }
 
     // Rate limit: chamada de IA tem custo/cota — limite baixo por caller.
