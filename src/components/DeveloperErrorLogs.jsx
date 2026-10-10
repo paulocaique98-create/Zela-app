@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, Bug, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, RotateCcw, MapPin, SlidersHorizontal, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { screenLabel } from '../lib/constants';
 
@@ -17,7 +17,7 @@ const SOURCE_LABELS = {
 };
 
 const SEVERITY_CLS = {
-  warn: 'bg-amber-500/15 text-amber-500 border-amber-500/30',
+  warn: 'bg-warning/15 text-warning border-warning/30',
   error: 'bg-error/15 text-error border-error/30',
   critical: 'bg-error/25 text-error border-error/50',
 };
@@ -42,6 +42,47 @@ const PERIOD_OPTIONS = [
 // -- histórico antigo continua consultável via SQL Editor se precisar.
 // edge_function_logs/cron_job_logs também continuam existindo à parte
 // (cron_job_logs é heartbeat de sucesso E falha, semântica diferente).
+const FILTRO_ROTULO = 'block text-[11px] font-bold text-dev-text-muted mb-1';
+const FILTRO_CAMPO = 'w-full min-h-[44px] sm:min-h-0 px-3 py-2 bg-dev-bg border border-dev-border rounded-zela-md text-base sm:text-sm text-dev-text outline-none focus:ring-2 focus:ring-dev-primary';
+
+// Lista própria no lugar do select nativo: a lista do navegador ignora o limite
+// do painel e sai da tela no celular. Esta abre dentro do fluxo do painel.
+function SeletorFiltro({ id, valor, onChange, opcoes }) {
+  const [aberto, setAberto] = useState(false);
+  const atual = opcoes.find(o => o.value === valor);
+  return (
+    <div>
+      <button
+        type="button"
+        id={id}
+        aria-haspopup="listbox"
+        aria-expanded={aberto}
+        onClick={() => setAberto(o => !o)}
+        className={`${FILTRO_CAMPO} flex items-center justify-between gap-2 text-left`}
+      >
+        <span className="truncate">{atual?.label ?? ''}</span>
+        <ChevronDown size={14} className={`shrink-0 text-dev-text-muted transition-transform ${aberto ? 'rotate-180' : ''}`} />
+      </button>
+      {aberto && (
+        <ul role="listbox" aria-labelledby={id} className="mt-1 max-h-48 overflow-y-auto rounded-zela-md border border-dev-border bg-dev-surface p-1">
+          {opcoes.map(o => (
+            <li key={o.value} role="option" aria-selected={o.value === valor}>
+              <button
+                type="button"
+                onClick={() => { onChange(o.value); setAberto(false); }}
+                className={`w-full flex items-center justify-between gap-2 px-3 min-h-[40px] rounded-zela-sm text-sm text-left ${o.value === valor ? 'bg-dev-primary-container text-dev-primary font-bold' : 'text-dev-text hover:bg-dev-surface-high'}`}
+              >
+                <span className="break-words min-w-0">{o.label}</span>
+                {o.value === valor && <Check size={14} className="shrink-0" />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function DeveloperErrorLogs({ currentUser }) {
   const [logs, setLogs] = useState([]);
   const [schools, setSchools] = useState([]);
@@ -229,31 +270,33 @@ export default function DeveloperErrorLogs({ currentUser }) {
     }
   };
 
+  const limparFiltros = () => {
+    setSource('all'); setSeverity('all'); setSchoolId('all'); setScreenFilter('all');
+    setSearchTerm(''); setSortBy('last_seen_at'); setShowResolved(false);
+  };
+
   const periodLabel = PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período';
 
   return (
     <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-dev-border shrink-0 flex-wrap">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 border-b border-dev-border shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-dev-primary-container p-2.5 rounded-zela-md text-dev-primary shrink-0">
-            <Bug size={20} />
-          </div>
           <div className="min-w-0 relative" ref={periodMenuRef}>
             <button
               onClick={() => setPeriodMenuOpen(o => !o)}
-              className="text-h3 text-dev-text flex items-center gap-1.5 hover:text-dev-primary transition"
+              className="flex items-center gap-1.5 min-h-[44px] sm:min-h-0 text-base sm:text-lg font-bold text-dev-text hover:text-dev-primary transition"
             >
-              <span className="truncate">Logs de erro</span>
-              <span className="text-dev-primary whitespace-nowrap">— {periodLabel}</span>
-              <ChevronDown size={14} className={`text-dev-primary transition-transform shrink-0 ${periodMenuOpen ? 'rotate-180' : ''}`} />
+              <span className="whitespace-nowrap">{periodLabel}</span>
+              <ChevronDown size={16} className={`text-dev-primary transition-transform shrink-0 ${periodMenuOpen ? 'rotate-180' : ''}`} />
             </button>
+            <p className="hidden sm:block text-[11px] text-dev-text-muted">{filtered.length} {filtered.length === 1 ? 'registro' : 'registros'} no filtro</p>
             {periodMenuOpen && (
               <div className="absolute left-0 top-full mt-1.5 w-40 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-1">
                 {PERIOD_OPTIONS.map(p => (
                   <button
                     key={p.id}
                     onClick={() => { setPeriod(p.id); setPeriodMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition ${period === p.id ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:bg-dev-surface-high'}`}
+                    className={`w-full text-left px-3 py-2.5 sm:py-2 rounded-zela-md text-xs font-bold transition ${period === p.id ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:bg-dev-surface-high'}`}
                   >
                     {p.label}
                   </button>
@@ -267,7 +310,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
           <div className="relative" ref={filtersRef}>
                 <button
                   onClick={() => setFiltersOpen(o => !o)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition ${filtersOpen ? 'bg-dev-primary-container text-dev-primary border-dev-primary/40' : 'bg-dev-bg text-dev-text-muted border-dev-border hover:text-dev-text'}`}
+                  className={`flex items-center gap-1.5 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-zela-md text-xs font-bold border transition ${filtersOpen ? 'bg-dev-primary-container text-dev-primary border-dev-primary/40' : 'bg-dev-bg text-dev-text-muted border-dev-border hover:text-dev-text'}`}
                 >
                   <SlidersHorizontal size={13} /> Filtros
                   {activeFilterCount > 0 && (
@@ -275,60 +318,62 @@ export default function DeveloperErrorLogs({ currentUser }) {
                   )}
                 </button>
                 {filtersOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-72 max-w-[calc(100vw-2.5rem)] bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-3 space-y-2.5">
-                    <input
-                      type="text"
-                      placeholder="Buscar por mensagem ou categoria..."
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 bg-dev-bg border border-dev-border rounded-xl text-xs font-medium text-dev-text outline-none focus:ring-2 focus:ring-dev-primary"
-                    />
-                    <select value={source} onChange={e => setSource(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                      <option value="all">Todas as fontes</option>
-                      {Object.entries(SOURCE_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                    </select>
-                    <select value={severity} onChange={e => setSeverity(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                      <option value="all">Toda severidade</option>
-                      <option value="warn">Aviso</option>
-                      <option value="error">Erro</option>
-                      <option value="critical">Crítico</option>
-                    </select>
-                    <select value={schoolId} onChange={e => setSchoolId(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                      <option value="all">Todas as escolas</option>
-                      {schools.map(s => <option key={s.id} value={s.id}>{s.name || s.school_code}</option>)}
-                    </select>
-                    <select value={screenFilter} onChange={e => setScreenFilter(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                      <option value="all">Todas as telas</option>
-                      {screensInLogs.map(s => <option key={s} value={s}>{screenLabel(s)}</option>)}
-                    </select>
-                    <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full px-3 py-1.5 bg-dev-bg border border-dev-border rounded-xl text-xs font-bold text-dev-text outline-none">
-                      <option value="occurrences">Mais frequentes</option>
-                      <option value="last_seen_at">Mais recentes</option>
-                    </select>
-                    <label className="flex items-center gap-1.5 px-1 py-1 text-xs font-bold text-dev-text-muted cursor-pointer">
-                      <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+                  <div className="fixed sm:absolute inset-x-3 sm:inset-x-auto sm:right-0 top-[124px] sm:top-full sm:mt-1.5 sm:w-80 max-h-[calc(100dvh-140px)] sm:max-h-[70vh] overflow-y-auto bg-dev-surface border border-dev-border rounded-zela-lg shadow-lg z-30 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-dev-text">Filtros</p>
+                      <button type="button" onClick={limparFiltros} disabled={activeFilterCount === 0} className="text-xs font-bold text-dev-primary disabled:text-dev-text-muted disabled:opacity-50 min-h-[32px]">Limpar</button>
+                    </div>
+                    <div>
+                      <label className={FILTRO_ROTULO} htmlFor="log-busca">Buscar</label>
+                      <input id="log-busca" type="text" placeholder="Mensagem ou categoria" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className={FILTRO_CAMPO} />
+                    </div>
+                    <div>
+                      <label className={FILTRO_ROTULO} htmlFor="log-fonte">Fonte</label>
+                      <SeletorFiltro id="log-fonte" valor={source} onChange={setSource} opcoes={[{ value: 'all', label: 'Todas as fontes' }, ...Object.entries(SOURCE_LABELS).map(([v, label]) => ({ value: v, label }))]} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={FILTRO_ROTULO} htmlFor="log-sev">Severidade</label>
+                        <SeletorFiltro id="log-sev" valor={severity} onChange={setSeverity} opcoes={[{ value: 'all', label: 'Todas' }, { value: 'warn', label: 'Aviso' }, { value: 'error', label: 'Erro' }, { value: 'critical', label: 'Crítico' }]} />
+                      </div>
+                      <div>
+                        <label className={FILTRO_ROTULO} htmlFor="log-ordem">Ordem</label>
+                        <SeletorFiltro id="log-ordem" valor={sortBy} onChange={setSortBy} opcoes={[{ value: 'occurrences', label: 'Mais frequentes' }, { value: 'last_seen_at', label: 'Mais recentes' }]} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={FILTRO_ROTULO} htmlFor="log-escola">Escola</label>
+                      <SeletorFiltro id="log-escola" valor={schoolId} onChange={setSchoolId} opcoes={[{ value: 'all', label: 'Todas as escolas' }, ...schools.map(x => ({ value: x.id, label: x.name || x.school_code }))]} />
+                    </div>
+                    <div>
+                      <label className={FILTRO_ROTULO} htmlFor="log-tela">Tela</label>
+                      <SeletorFiltro id="log-tela" valor={screenFilter} onChange={setScreenFilter} opcoes={[{ value: 'all', label: 'Todas as telas' }, ...screensInLogs.map(x => ({ value: x, label: screenLabel(x) }))]} />
+                    </div>
+                    <label className="flex items-center gap-2 min-h-[44px] sm:min-h-0 text-sm font-medium text-dev-text cursor-pointer">
+                      <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} className="w-4 h-4 accent-[var(--color-dev-primary)]" />
                       Ver resolvidos
                     </label>
                     {categoryCounts.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-dev-border">
+                      <div className="flex flex-wrap gap-1.5 pt-3 border-t border-dev-border">
                         {categoryCounts.map(([category, count]) => (
-                          <span key={category} className="text-[9.5px] font-bold px-2 py-1 rounded-full bg-dev-bg border border-dev-border text-dev-text-muted">
+                          <span key={category} className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-dev-bg border border-dev-border text-dev-text-muted">
                             {category} <span className="text-dev-text">{count}</span>
                           </span>
                         ))}
                       </div>
                     )}
+                    <button type="button" onClick={() => setFiltersOpen(false)} className="sm:hidden w-full min-h-[44px] rounded-zela-md bg-dev-primary text-white text-sm font-bold">Ver {filtered.length} {filtered.length === 1 ? 'registro' : 'registros'}</button>
                   </div>
                 )}
               </div>
-          <button onClick={fetchLogs} className="p-2 text-dev-text-muted hover:text-dev-primary hover:bg-dev-primary-container rounded-lg transition" title="Atualizar">
+          <button onClick={fetchLogs} className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center text-dev-text-muted hover:text-dev-primary hover:bg-dev-primary-container rounded-zela-md transition" title="Atualizar" aria-label="Atualizar">
             <RefreshCw size={16} />
           </button>
         </div>
       </div>
 
       {/* Lista */}
-      <div className="flex-1 overflow-y-auto scrollbar-none p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-6 space-y-3 pb-24">
         {errorMsg && <div className="bg-error/10 border border-error/20 text-error p-3 rounded-zela-md text-sm font-medium">{errorMsg}</div>}
 
             {isLoading ? (
@@ -338,7 +383,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-dev-text-muted">
                 <CheckCircle2 className="mx-auto h-12 w-12 opacity-40 mb-3" />
-                <p className="text-sm font-semibold">Nenhum erro no filtro atual. 🎉</p>
+                <p className="text-sm font-semibold">Nenhum erro no filtro atual.</p>
               </div>
             ) : (
               filtered.map(log => {
@@ -347,25 +392,25 @@ export default function DeveloperErrorLogs({ currentUser }) {
                   <div key={log.id} className={`bg-dev-bg border rounded-zela-md overflow-hidden ${log.resolved ? 'border-dev-border opacity-60' : 'border-dev-border'}`}>
                     <button
                       onClick={() => { setExpandedId(isExpanded ? null : log.id); setResolutionNoteDraft(''); }}
-                      className="w-full flex items-start gap-3 p-3.5 text-left hover:bg-dev-surface-high transition"
+                      className="w-full flex items-start gap-3 p-4 text-left hover:bg-dev-surface-high transition"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${SEVERITY_CLS[log.severity] || SEVERITY_CLS.error}`}>{log.severity}</span>
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-dev-surface-high text-dev-text-muted">{SOURCE_LABELS[log.source] || log.source}</span>
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-dev-surface-high text-dev-text-muted">{log.category}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-zela-sm border ${SEVERITY_CLS[log.severity] || SEVERITY_CLS.error}`}>{log.severity}</span>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-dev-surface-high text-dev-text-muted">{SOURCE_LABELS[log.source] || log.source}</span>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-dev-surface-high text-dev-text-muted">{log.category}</span>
                           {screenLabel(log.screen) && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-dev-primary-container text-dev-primary">📍 {screenLabel(log.screen)}</span>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-dev-primary-container text-dev-primary inline-flex items-center gap-1"><MapPin size={11} aria-hidden="true" /> {screenLabel(log.screen)}</span>
                           )}
                           {log.occurrences > 1 && (
-                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-dev-primary-container text-dev-primary">{log.occurrences}x</span>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-dev-primary-container text-dev-primary">{log.occurrences}x</span>
                           )}
                           {log.resolved && (
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Resolvido</span>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-zela-sm bg-success/15 text-success border border-success/30">Resolvido</span>
                           )}
                         </div>
-                        <p className="text-sm font-bold text-dev-text truncate">{log.message}</p>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[11px] text-dev-text-muted">
+                        <p className="text-sm font-bold text-dev-text leading-snug line-clamp-2 break-words">{log.message}</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2 text-xs text-dev-text-muted">
                           <span>1ª vez: {formatDate(log.first_seen_at)}</span>
                           <span>última: {formatDate(log.last_seen_at)}</span>
                           {log.school_id && <span>escola: {schoolNameById[log.school_id] || log.school_id.slice(0, 8) + '…'}</span>}
@@ -378,13 +423,13 @@ export default function DeveloperErrorLogs({ currentUser }) {
                       <div className="border-t border-dev-border p-3.5 space-y-3 bg-dev-surface-high/40">
                         {log.context && (
                           <div>
-                            <p className="text-[10px] font-bold text-dev-text-muted uppercase tracking-wide mb-1">Contexto</p>
+                            <p className="text-[10px] font-bold text-dev-text-muted mb-1">Contexto</p>
                             <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto scrollbar-none">{JSON.stringify(log.context, null, 2)}</pre>
                           </div>
                         )}
                         {log.stack && (
                           <div>
-                            <p className="text-[10px] font-bold text-dev-text-muted uppercase tracking-wide mb-1">Stack</p>
+                            <p className="text-[10px] font-bold text-dev-text-muted mb-1">Stack</p>
                             <pre className="text-[11px] text-dev-text-muted whitespace-pre-wrap break-all bg-dev-bg p-2.5 rounded-lg max-h-56 overflow-y-auto scrollbar-none">{log.stack}</pre>
                           </div>
                         )}
@@ -400,7 +445,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
                         <div className="border border-dashed border-dev-border rounded-lg p-3">
                             {log.ai_summary ? (
                               <>
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-amber-400 mb-1">🤖 Palpite da IA — pode estar incompleto ou errado</p>
+                                <p className="text-[10px] font-bold text-warning mb-1">Palpite da IA — pode estar incompleto ou errado</p>
                                 <p className="text-xs text-dev-text leading-relaxed">{log.ai_summary}</p>
                                 <button
                                   onClick={() => handleExplainWithAI(log, true)}
@@ -416,7 +461,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
                                 disabled={explainingId === log.id}
                                 className="flex items-center gap-1.5 text-xs font-bold text-dev-text bg-dev-bg border border-dev-border hover:bg-dev-surface-high px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                               >
-                                {explainingId === log.id ? 'Gerando explicação...' : '✨ Explicar com IA'}
+                                {explainingId === log.id ? 'Gerando explicação...' : 'Explicar com IA'}
                               </button>
                             )}
                             {explainError && explainingId === null && (
@@ -449,7 +494,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
                             <button
                               onClick={() => handleResolve(log)}
                               disabled={isSaving}
-                              className="flex items-center justify-center gap-1.5 shrink-0 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                              className="flex items-center justify-center gap-1.5 shrink-0 text-xs font-bold text-white bg-success hover:brightness-110 px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                             >
                               <CheckCircle2 size={13} /> Marcar como resolvido
                             </button>

@@ -22,11 +22,11 @@ const ICONES = {
 };
 
 const ESTADO_LABEL = { on: 'Ligado', off: 'Desligado', parcial: 'Parcial' };
-const ESTADO_DOT = { on: 'bg-emerald-400', off: 'bg-slate-600', parcial: 'bg-amber-400' };
+const ESTADO_DOT = { on: 'bg-success', off: 'bg-outline', parcial: 'bg-warning' };
 
 function statusDoItem(features, item) {
-  if (item.fixo) return { label: 'Sempre', dot: 'bg-slate-400' };
-  if (item.emBreve) return { label: 'Em breve', dot: 'border border-dashed border-slate-500' };
+  if (item.fixo) return { label: 'Sempre', dot: 'bg-outline' };
+  if (item.emBreve) return { label: 'Em breve', dot: 'border border-dashed border-outline' };
   const e = estadoDoItem(features, item);
   return { label: ESTADO_LABEL[e], dot: ESTADO_DOT[e], estado: e };
 }
@@ -50,7 +50,7 @@ function Switch({ on, disabled, onChange, label }) {
 function Secao({ titulo, children }) {
   return (
     <section className="bg-dev-bg border border-dev-surface-high rounded-zela-lg p-4 flex flex-col gap-2.5">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-dev-text-muted">{titulo}</p>
+      <p className="text-[11px] font-bold text-dev-text-muted">{titulo}</p>
       {children}
     </section>
   );
@@ -136,7 +136,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
   const lista = (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-dev-text-muted">Pacote</p>
+        <p className="text-[11px] font-bold text-dev-text-muted">Pacote</p>
         <div className="flex bg-dev-bg border border-dev-surface-high rounded-zela-md p-[3px] gap-0.5" role="group" aria-label="Pacote">
           {pacotes.map(p => (
             <button
@@ -158,7 +158,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
 
       {GRUPOS.map(g => (
         <div key={g.key} className="flex flex-col gap-0.5">
-          <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-dev-text-muted">{g.label}</p>
+          <p className="px-3 pb-1 text-[11px] font-bold text-dev-text-muted">{g.label}</p>
           {ITENS.filter(i => i.grupo === g.key).map(i => {
             const st = statusDoItem(draft, i);
             const ativo = i.id === selectedId;
@@ -172,7 +172,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
               >
                 <span className={`w-2 h-2 rounded-full shrink-0 ${st.dot}`} aria-hidden="true" />
                 <span className={`flex-1 min-w-0 truncate text-sm font-bold ${i.emBreve ? 'text-dev-text-muted' : 'text-dev-text'}`}>{i.nome}</span>
-                {itensAlterados.has(i.id) && <span className="text-[10px] font-bold text-amber-300">alterado</span>}
+                {itensAlterados.has(i.id) && <span className="text-[10px] font-bold text-warning">alterado</span>}
                 <span className="text-xs text-dev-text-muted whitespace-nowrap">{st.label}</span>
               </button>
             );
@@ -207,12 +207,12 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
       </div>
 
       {status.estado === 'parcial' && (
-        <p className="flex gap-2 text-xs text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-zela-md p-3">
+        <p className="flex gap-2 text-xs text-warning bg-warning/10 border border-warning/30 rounded-zela-md p-3">
           <AlertTriangle size={15} className="shrink-0 mt-px" /> Só parte deste módulo está ligada (configuração antiga). Ao ligar, entra inteiro.
         </p>
       )}
       {!requisitoOk && (
-        <p className="flex gap-2 text-xs text-amber-300 bg-amber-400/10 border border-amber-400/30 rounded-zela-md p-3">
+        <p className="flex gap-2 text-xs text-warning bg-warning/10 border border-warning/30 rounded-zela-md p-3">
           <AlertTriangle size={15} className="shrink-0 mt-px" /> Depende de "{ITEM_POR_ID[item.requer].nome}" ligado.
         </p>
       )}
@@ -244,7 +244,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
           {(item.aviso || item.aoDesligar) && (
             <Secao titulo="Atenção">
               {item.aviso && <p className="text-sm text-dev-text">{item.aviso}</p>}
-              {item.aoDesligar && <p className="text-sm text-amber-300"><strong>Ao desligar:</strong> {item.aoDesligar}</p>}
+              {item.aoDesligar && <p className="text-sm text-warning"><strong>Ao desligar:</strong> {item.aoDesligar}</p>}
             </Secao>
           )}
           <Secao titulo="Histórico">
@@ -301,7 +301,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-dev-border bg-dev-bg shrink-0">
         <div className="flex-1 min-w-0">
           {alteradas.length ? (
-            <p className="text-sm flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" /> {itensAlterados.size} {itensAlterados.size === 1 ? 'item alterado' : 'itens alterados'} · não salvo</p>
+            <p className="text-sm flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-warning shrink-0" /> {itensAlterados.size} {itensAlterados.size === 1 ? 'item alterado' : 'itens alterados'} · não salvo</p>
           ) : (
             <p className="text-sm text-dev-text-muted truncate">{pacote === 'livre' ? 'Combinação livre' : `Pacote ${pacotes.find(p => p.id === pacote).nome}`} · tudo salvo</p>
           )}

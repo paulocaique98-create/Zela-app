@@ -16,7 +16,7 @@ import {
 
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4';
 const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py-2 text-sm text-dev-text';
-const rotulo = 'block text-[11px] font-bold uppercase tracking-wide text-dev-text-muted mb-1';
+const rotulo = 'block text-[11px] font-bold text-dev-text-muted mb-1';
 const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm font-medium transition-all disabled:opacity-50';
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
 const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high`;
@@ -38,7 +38,7 @@ export function DeveloperPlanosSimulador({ dados }) {
     <div className="space-y-4">
       <div className={card}>
         <div className="max-w-xs"><label className={rotulo} htmlFor="sim-alunos">Quantidade de alunos</label><input id="sim-alunos" type="number" min="1" className={campo} value={alunos} onChange={e => setAlunos(e.target.value)} /></div>
-        {!permitidas.includes('por_aluno') && <p className="text-sm text-amber-300 mt-3">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
+        {!permitidas.includes('por_aluno') && <p className="text-sm text-warning mt-3">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
         {permitidas.includes('por_aluno') && planos.some(p => p.modalidade === 'por_aluno') && (
           <div className="mt-3">
             <p className={rotulo}>Módulos do plano por aluno</p>
@@ -98,7 +98,7 @@ export function DeveloperPlanosContratacoes({ dados }) {
       <div className="overflow-x-auto border border-dev-border rounded-zela-lg">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wide text-dev-text-muted bg-dev-surface">
+            <tr className="text-left text-[11px] text-dev-text-muted bg-dev-surface">
               <th className="p-3">Escola</th><th className="p-3">Plano</th><th className="p-3">Ciclo</th><th className="p-3">Alunos</th><th className="p-3">Mensal</th><th className="p-3">Vencimento</th><th className="p-3" />
             </tr>
           </thead>
@@ -115,10 +115,10 @@ export function DeveloperPlanosContratacoes({ dados }) {
                   <td className="p-3">
                     {ct ? ct.alunos_contratados : ''}{' '}
                     <span className="text-dev-text-muted text-xs">({ativos} ativos)</span>
-                    {alerta && <span className="ml-2 inline-flex items-center gap-1 text-amber-300 text-xs"><AlertTriangle size={12} /> passou do limite, migre para pacote</span>}
+                    {alerta && <span className="ml-2 inline-flex items-center gap-1 text-warning text-xs"><AlertTriangle size={12} /> passou do limite, migre para pacote</span>}
                   </td>
                   <td className="p-3">{ct ? brl(ct.valor_mensal) : ''}</td>
-                  <td className={`p-3 ${dias !== null && dias < 0 ? 'text-error' : dias !== null && dias <= 30 ? 'text-amber-300' : ''}`}>{ct ? `${formatarData(ct.fim)}${dias !== null && dias < 0 ? ' · vencida' : dias !== null && dias <= 30 ? ` · ${dias} dia(s)` : ''}` : ''}</td>
+                  <td className={`p-3 ${dias !== null && dias < 0 ? 'text-error' : dias !== null && dias <= 30 ? 'text-warning' : ''}`}>{ct ? `${formatarData(ct.fim)}${dias !== null && dias < 0 ? ' · vencida' : dias !== null && dias <= 30 ? ` · ${dias} dia(s)` : ''}` : ''}</td>
                   <td className="p-3 text-right"><button type="button" className={btnNeutro} onClick={() => setContratando(escola.id)}><FileSignature size={14} /> {ct ? 'Trocar plano' : 'Contratar'}</button></td>
                 </tr>
               );
@@ -199,7 +199,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-slate-900/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-ink/70 backdrop-blur-sm">
       <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col text-dev-text">
         <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
           <div>
@@ -253,7 +253,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
                 </select>
               </div>
             </div>
-            {!permitidas.includes('por_aluno') && <p className="text-xs text-amber-300">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
+            {!permitidas.includes('por_aluno') && <p className="text-xs text-warning">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
 
             {plano?.modalidade === 'por_aluno' && (
               <div>

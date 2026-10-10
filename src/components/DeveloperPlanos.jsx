@@ -21,7 +21,7 @@ const ABAS = [
 const MODALIDADE = { por_aluno: 'Por aluno', pacote: 'Pacote' };
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4';
 const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py-2 text-sm text-dev-text';
-const rotulo = 'block text-[11px] font-bold uppercase tracking-wide text-dev-text-muted mb-1';
+const rotulo = 'block text-[11px] font-bold text-dev-text-muted mb-1';
 const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm font-medium transition-all disabled:opacity-50';
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
 const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high`;
@@ -42,15 +42,15 @@ export default function DeveloperPlanos({ initialTab = 'planos' }) {
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-4 text-dev-text">
       {dados.erro && <p className="text-sm text-error">Não foi possível carregar tudo: {dados.erro}</p>}
       {alertas > 0 && (
-        <button type="button" onClick={() => setAba('contratacoes')} className="w-full flex items-center gap-2 text-left text-sm px-4 py-3 rounded-zela-lg bg-amber-500/10 border border-amber-500/40 text-amber-300">
+        <button type="button" onClick={() => setAba('contratacoes')} className="w-full flex items-center gap-2 text-left text-sm px-4 py-3 rounded-zela-lg bg-warning/10 border border-warning/40 text-warning">
           <AlertTriangle size={16} className="shrink-0" />
           {alertas === 1 ? '1 escola por aluno passou do limite de alunos.' : `${alertas} escolas por aluno passaram do limite de alunos.`} Migre para um pacote.
         </button>
       )}
-      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-dev-border">
+      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-dev-border -mx-4 px-4 md:mx-0 md:px-0" role="tablist">
         {ABAS.map(a => (
-          <button key={a.id} type="button" onClick={() => setAba(a.id)}
-            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${aba === a.id ? 'border-dev-primary text-dev-primary' : 'border-transparent text-dev-text-muted hover:text-dev-text'}`}>
+          <button key={a.id} type="button" role="tab" aria-selected={aba === a.id} onClick={() => setAba(a.id)}
+            className={`px-4 py-3 md:py-2.5 text-sm font-medium whitespace-nowrap shrink-0 border-b-2 -mb-px ${aba === a.id ? 'border-dev-primary text-dev-primary' : 'border-transparent text-dev-text-muted hover:text-dev-text'}`}>
             {a.label}
           </button>
         ))}
@@ -112,7 +112,7 @@ function AbaPrecos({ dados }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-dev-text-muted">
+              <tr className="text-left text-[11px] text-dev-text-muted">
                 <th className="py-2 pr-3">Item</th><th className="py-2 pr-3">Cobrança</th><th className="py-2 pr-3">Valor</th><th className="py-2 pr-3">Custo estimado</th><th className="py-2 pr-3">Ativo</th><th />
               </tr>
             </thead>
@@ -122,7 +122,7 @@ function AbaPrecos({ dados }) {
                 const emBreve = item?.emBreve;
                 return (
                   <tr key={p.item_id} className="border-t border-dev-border">
-                    <td className="py-2 pr-3 font-medium">{item?.nome || p.item_id}{emBreve && <span className="ml-2 text-[10px] uppercase text-dev-text-muted">Em breve</span>}</td>
+                    <td className="py-2 pr-3 font-medium">{item?.nome || p.item_id}{emBreve && <span className="ml-2 text-[10px] text-dev-text-muted">Em breve</span>}</td>
                     <td className="py-2 pr-3">
                       <select className={campo} value={valorDe(p, 'tipo_cobranca')} onChange={e => mudar(p, 'tipo_cobranca', e.target.value)} disabled={p.item_id === 'base'} aria-label={`Tipo de cobrança de ${item?.nome}`}>
                         <option value="por_aluno">Por aluno</option>
@@ -193,31 +193,31 @@ function AbaPlanos({ dados, nomeItem }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end"><button type="button" className={btnPrimario} onClick={abrirNovo}><Plus size={14} /> Novo plano</button></div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="flex sm:justify-end"><button type="button" className={`${btnPrimario} w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0`} onClick={abrirNovo}><Plus size={14} /> Novo plano</button></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         {dados.planos.map(p => {
           const ciclosAtivos = dados.ciclos.filter(c => c.plano_id === p.id && c.ativo);
           return (
             <div key={p.id} className={`${card} ${p.ativo ? '' : 'opacity-60'}`}>
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-bold text-base">{p.nome}</p>
-                  <p className="text-[11px] uppercase tracking-wide text-dev-text-muted">{MODALIDADE[p.modalidade]}{p.ativo ? '' : ' · desativado'}</p>
+                <div className="min-w-0">
+                  <p className="font-bold text-base leading-snug break-words">{p.nome}</p>
+                  <p className="text-[11px] text-dev-text-muted">{MODALIDADE[p.modalidade]}{p.ativo ? '' : ' · desativado'}</p>
                 </div>
-                <span className="text-xs text-dev-text-muted whitespace-nowrap">{usos[p.id] || 0} escola(s)</span>
+                <span className="text-[11px] font-bold text-dev-primary bg-dev-primary-container px-2 py-0.5 rounded-zela-sm whitespace-nowrap shrink-0">{usos[p.id] || 0} {(usos[p.id] || 0) === 1 ? 'escola' : 'escolas'}</span>
               </div>
               {p.descricao && <p className="text-sm text-dev-text-muted mt-2">{p.descricao}</p>}
-              <dl className="text-sm mt-3 space-y-1">
-                <div className="flex justify-between"><dt className="text-dev-text-muted">Itens</dt><dd className="text-right">{p.modalidade === 'por_aluno' ? 'Escolhidos na contratação' : ['Plano base', ...p.itens.map(nomeItem)].join(', ')}</dd></div>
-                {p.modalidade === 'pacote' && <div className="flex justify-between"><dt className="text-dev-text-muted">Por aluno</dt><dd>{brl(p.preco_por_aluno)}</dd></div>}
-                <div className="flex justify-between"><dt className="text-dev-text-muted">Mínimo mensal</dt><dd>{brl(p.minimo_mensal)}</dd></div>
-                <div className="flex justify-between"><dt className="text-dev-text-muted">Implantação</dt><dd>{brl(p.implantacao_valor)}</dd></div>
-                <div className="flex justify-between"><dt className="text-dev-text-muted">Ciclos</dt><dd>{ciclosAtivos.map(c => `${CICLOS.find(x => x.id === c.ciclo)?.label} ${c.desconto_percent}%`).join(' · ') || 'Nenhum'}</dd></div>
+              <dl className="text-sm mt-3 pt-3 border-t border-dev-border space-y-1.5">
+                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Itens</dt><dd className="text-right font-medium min-w-0">{p.modalidade === 'por_aluno' ? 'Escolhidos na contratação' : ['Plano base', ...p.itens.map(nomeItem)].join(', ')}</dd></div>
+                {p.modalidade === 'pacote' && <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Por aluno</dt><dd>{brl(p.preco_por_aluno)}</dd></div>}
+                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Mínimo mensal</dt><dd>{brl(p.minimo_mensal)}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Implantação</dt><dd>{brl(p.implantacao_valor)}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Ciclos</dt><dd>{ciclosAtivos.map(c => `${CICLOS.find(x => x.id === c.ciclo)?.label} ${c.desconto_percent}%`).join(' · ') || 'Nenhum'}</dd></div>
               </dl>
-              <div className="flex flex-wrap gap-2 mt-4">
-                <button type="button" className={btnNeutro} onClick={() => abrir(p)}><Pencil size={14} /> Editar</button>
-                <button type="button" className={btnNeutro} onClick={() => abrir(p, true)}><Copy size={14} /> Duplicar</button>
-                <button type="button" className={btnNeutro} onClick={() => alternarAtivo(p)}><Power size={14} /> {p.ativo ? 'Desativar' : 'Reativar'}</button>
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <button type="button" className={`${btnNeutro} justify-center`} onClick={() => abrir(p)}><Pencil size={14} /> Editar</button>
+                <button type="button" className={`${btnNeutro} justify-center`} onClick={() => abrir(p, true)}><Copy size={14} /> Duplicar</button>
+                <button type="button" className={`${btnNeutro} justify-center`} onClick={() => alternarAtivo(p)}><Power size={14} /> {p.ativo ? 'Desativar' : 'Reativar'}</button>
               </div>
             </div>
           );

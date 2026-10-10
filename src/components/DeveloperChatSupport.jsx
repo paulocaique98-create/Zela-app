@@ -258,7 +258,7 @@ export default function DeveloperChatSupport({ currentUser }) {
 
         {error && (
           <div className="px-4 sm:px-5 pb-2">
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+            <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
           </div>
         )}
 

@@ -126,7 +126,7 @@ export const SCREEN_LABELS = {
   'gestao-despesas': 'Despesas', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
   // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
   'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
-  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento', 'dev-biometria': 'Qualidade da Biometria',
+  'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento', 'dev-planos': 'Planos', 'dev-biometria': 'Qualidade da Biometria',
 };
 
 export function screenLabel(screen) {

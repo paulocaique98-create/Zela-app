@@ -16,16 +16,37 @@ import { formatarCnpj } from '../lib/documentos';
 // (cabeçalho fixo, toggle de Ativa/Suspensa direto na linha, menu "⋯" pra
 // Editar/Excluir), cards no celular/tablet (tabela não cabe). O modal
 // antigo continua existindo só pra CRIAR/EDITAR (formulário grande demais
-// pra caber inline). Também migra a tela pra paleta escura do Portal do Dev
+// pra caber inline). Também usa a paleta do Portal do Dev
 // (dev-*), que até então só o menu lateral e a tela de Logs usavam -- essa
 // tela ainda estava na paleta clara do app das famílias/escolas, destoando
 // do resto do portal.
-const AVATAR_PALETTE = ['#818cf8', '#f59e0b', '#34d399', '#fb7185', '#60a5fa', '#c084fc'];
+const AVATAR_PALETTE = ['var(--color-primary)', 'var(--color-brass)', 'var(--color-success)', 'var(--color-error)', 'var(--color-ink-2)', 'var(--color-warning)'];
 const nomeDoPacote = (school) => {
   const id = pacoteAtual(school.features_enabled || {});
   return id === 'livre' ? 'Livre' : PACOTES.find(p => p.id === id).nome;
 };
 const initials = (name) => (name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+const PlanoSelo = ({ plan }) => (
+  <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-zela-sm border ${plan === 'pro' ? 'bg-warning/15 text-warning border-warning/30' : 'bg-dev-surface-high text-dev-text-muted border-dev-border'}`}>
+    {plan}
+  </span>
+);
+const SwitchAtiva = ({ ativa, onToggle, comRotulo }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={!!ativa}
+    onClick={onToggle}
+    title={ativa ? 'Suspender acesso' : 'Reativar acesso'}
+    className="flex items-center gap-2 min-h-[44px] md:min-h-0 text-xs font-bold text-dev-text-muted"
+  >
+    {comRotulo && <span>{ativa ? 'Ativa' : 'Suspensa'}</span>}
+    <span className={`relative w-11 h-6 md:w-9 md:h-5 rounded-full transition-colors shrink-0 ${ativa ? 'bg-dev-primary' : 'bg-dev-border'}`}>
+      <span className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white shadow transition-transform ${ativa ? 'translate-x-5 md:translate-x-4' : 'translate-x-0'}`} />
+    </span>
+  </button>
+);
 
 export default function DeveloperPanel() {
   const [schools, setSchools] = useState([]);
@@ -293,11 +314,11 @@ export default function DeveloperPanel() {
       {contratarSchoolId && <ContratarPlanoDaEscola schoolId={contratarSchoolId} onClose={() => setContratarSchoolId(null)} />}
       {/* Título "Gestão de Escolas" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-dev-border shrink-0 flex-wrap">
-        <p className="text-dev-text-muted text-small hidden sm:block">{schools.length} escola(s) cadastrada(s)</p>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 border-b border-dev-border shrink-0">
+        <p className="text-dev-text-muted text-sm">{schools.length} {schools.length === 1 ? 'escola cadastrada' : 'escolas cadastradas'}</p>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center justify-center gap-2 bg-dev-primary hover:brightness-110 text-dev-bg font-bold py-2.5 px-4 rounded-zela-md transition shadow-md whitespace-nowrap text-sm shrink-0 ml-auto"
+          className="flex items-center justify-center gap-2 bg-dev-primary hover:brightness-110 text-dev-bg font-bold py-2.5 px-4 rounded-zela-md transition whitespace-nowrap text-sm shrink-0 ml-auto"
         >
           <Plus size={16} /> <span className="hidden sm:inline">Cadastrar Escola</span>
         </button>
@@ -314,9 +335,9 @@ export default function DeveloperPanel() {
         ) : (
           <>
             {/* Tabela — desktop */}
-            <table className="hidden md:table w-full border-collapse bg-dev-surface border border-dev-border rounded-zela-md">
+            <div className="hidden md:block border border-dev-border rounded-zela-md overflow-x-clip"><table className="w-full border-collapse bg-dev-surface">
               <thead>
-                <tr className="bg-dev-surface-high text-left text-[9.5px] font-bold uppercase tracking-wide text-dev-text-muted">
+                <tr className="bg-dev-surface-high text-left text-[11px] font-bold text-dev-text-muted">
                   <th className="px-4 py-3">Escola</th>
                   <th className="px-4 py-3">Plano</th>
                   <th className="px-4 py-3">Pacote</th>
@@ -331,7 +352,7 @@ export default function DeveloperPanel() {
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0"
-                          style={{ background: `${AVATAR_PALETTE[i % AVATAR_PALETTE.length]}22`, color: AVATAR_PALETTE[i % AVATAR_PALETTE.length] }}
+                          style={{ background: `color-mix(in srgb, ${AVATAR_PALETTE[i % AVATAR_PALETTE.length]} 13%, transparent)`, color: AVATAR_PALETTE[i % AVATAR_PALETTE.length] }}
                         >
                           {initials(school.name)}
                         </div>
@@ -345,9 +366,7 @@ export default function DeveloperPanel() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' : 'bg-dev-surface-high text-dev-text-muted border-dev-border'}`}>
-                        {school.plan}
-                      </span>
+                      <PlanoSelo plan={school.plan} />
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => setModulosSchool(school)} className="text-xs font-bold text-dev-primary hover:underline">
@@ -355,13 +374,7 @@ export default function DeveloperPanel() {
                       </button>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleStatus(school.id, school.is_active)}
-                        title={school.is_active ? 'Suspender acesso' : 'Reativar acesso'}
-                        className={`relative w-9 h-5 rounded-full transition-colors ${school.is_active ? 'bg-dev-primary' : 'bg-dev-surface-high'}`}
-                      >
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${school.is_active ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-                      </button>
+                      <SwitchAtiva ativa={school.is_active} onToggle={() => toggleStatus(school.id, school.is_active)} />
                     </td>
                     <td className="px-4 py-3 text-right relative">
                       <button
@@ -403,34 +416,37 @@ export default function DeveloperPanel() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
 
             {/* Cards — celular/tablet */}
-            <div className="md:hidden flex flex-col gap-2.5">
+            <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
               {schools.map((school, i) => (
-                <div key={school.id} className={`bg-dev-surface border border-dev-border rounded-zela-md p-3.5 relative ${!school.is_active ? 'opacity-60' : ''}`}>
+                <div key={school.id} className={`bg-dev-surface border border-dev-border rounded-zela-md p-4 relative ${!school.is_active ? 'opacity-60' : ''}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0"
-                        style={{ background: `${AVATAR_PALETTE[i % AVATAR_PALETTE.length]}22`, color: AVATAR_PALETTE[i % AVATAR_PALETTE.length] }}
+                        className="w-10 h-10 rounded-zela-md flex items-center justify-center font-bold text-sm shrink-0"
+                        style={{ background: `color-mix(in srgb, ${AVATAR_PALETTE[i % AVATAR_PALETTE.length]} 13%, transparent)`, color: AVATAR_PALETTE[i % AVATAR_PALETTE.length] }}
                       >
                         {initials(school.name)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-dev-text truncate">{school.name}</p>
-                        <span className="font-mono font-bold text-dev-primary bg-dev-primary-container px-1.5 py-0.5 rounded-md text-[10px]">{school.school_code}</span>
+                        <p className="text-sm font-bold text-dev-text leading-snug line-clamp-2 break-words">{school.name}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="font-mono font-bold text-dev-primary bg-dev-primary-container px-1.5 py-0.5 rounded-zela-sm text-[11px]">{school.school_code}</span>
+                          <PlanoSelo plan={school.plan} />
+                        </div>
                       </div>
                     </div>
                     <button
                       data-schools-menu
                       onClick={() => setOpenMenuId(openMenuId === school.id ? null : school.id)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high transition shrink-0"
+                      className="w-10 h-10 -mr-2 -mt-1 rounded-zela-md flex items-center justify-center text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high transition shrink-0"
                     >
                       <MoreVertical size={16} />
                     </button>
                     {openMenuId === school.id && (
-                      <div data-schools-menu className="absolute right-3 top-12 w-40 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 py-1">
+                      <div data-schools-menu className="absolute right-3 top-12 w-48 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 py-1">
                         <button
                           onClick={() => { handleOpenModal(school); setOpenMenuId(null); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-dev-text hover:bg-dev-surface-high transition text-left"
@@ -458,20 +474,12 @@ export default function DeveloperPanel() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-dashed border-dev-border">
-                    <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${school.plan === 'pro' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' : 'bg-dev-surface-high text-dev-text-muted border-dev-border'}`}>
-                      {school.plan}
-                    </span>
-                    <button onClick={() => setModulosSchool(school)} className="text-xs font-bold text-dev-primary hover:underline mr-auto ml-2">
-                      {nomeDoPacote(school)}
+                  <div className="flex items-center justify-between gap-3 mt-3 pt-2 border-t border-dev-border">
+                    <button onClick={() => setModulosSchool(school)} className="flex flex-col items-start min-h-[44px] justify-center text-left">
+                      <span className="text-[11px] text-dev-text-muted">Pacote</span>
+                      <span className="text-sm font-bold text-dev-primary">{nomeDoPacote(school)}</span>
                     </button>
-                    <button
-                      onClick={() => toggleStatus(school.id, school.is_active)}
-                      title={school.is_active ? 'Suspender acesso' : 'Reativar acesso'}
-                      className={`relative w-9 h-5 rounded-full transition-colors ${school.is_active ? 'bg-dev-primary' : 'bg-dev-surface-high'}`}
-                    >
-                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${school.is_active ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-                    </button>
+                    <SwitchAtiva comRotulo ativa={school.is_active} onToggle={() => toggleStatus(school.id, school.is_active)} />
                   </div>
                 </div>
               ))}
@@ -482,7 +490,7 @@ export default function DeveloperPanel() {
 
       {/* Modal form (criar/editar) */}
       {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-slate-900/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-ink/70 backdrop-blur-sm">
           <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col">
             <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
               <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
@@ -500,27 +508,27 @@ export default function DeveloperPanel() {
             <form id="form-escola" onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto scrollbar-none text-dev-text">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome fantasia</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Nome fantasia</label>
                   <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Razão social</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Razão social</label>
                   <input type="text" value={formData.razao_social} onChange={e => setFormData({ ...formData, razao_social: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="Como está no CNPJ" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">CNPJ</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">CNPJ</label>
                   <input type="text" inputMode="numeric" value={formData.cnpj} onChange={e => setFormData({ ...formData, cnpj: formatarCnpj(e.target.value) })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="00.000.000/0000-00" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Inscrição municipal</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Inscrição municipal</label>
                   <input type="text" value={formData.inscricao_municipal} onChange={e => setFormData({ ...formData, inscricao_municipal: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" placeholder="Usada na nota fiscal" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">E-mail da Escola</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">E-mail da Escola</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -537,12 +545,12 @@ export default function DeveloperPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Telefone</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Telefone</label>
                   <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Plano Contratado</label>
+                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Plano Contratado</label>
                   <select value={formData.plan} onChange={e => setFormData({ ...formData, plan: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
                     <option value="basic">Basic (Portaria Simples)</option>
                     <option value="pro">Pro (Reconhecimento Facial)</option>
@@ -550,12 +558,12 @@ export default function DeveloperPanel() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <p className="text-xs font-bold text-dev-text-muted uppercase mb-2">Endereço (sai no contrato)</p>
+                  <p className="text-xs font-bold text-dev-text-muted mb-2">Endereço (sai no contrato)</p>
                   <CamposEnderecoEscola
                     prefixoId="dev-escola"
                     valores={enderecoDaEscola(formData)}
                     onChange={endereco => setFormData({ ...formData, ...endereco })}
-                    labelCls="block text-[11px] font-bold text-dev-text-muted uppercase mb-1"
+                    labelCls="block text-[11px] font-bold text-dev-text-muted mb-1"
                     inputCls="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none"
                     classeMensagem="text-dev-text-muted"
                   />
@@ -565,14 +573,14 @@ export default function DeveloperPanel() {
                 {!editingSchool && (
                   <div className="md:col-span-2">
                     <div className="border-t border-dev-border pt-4 mt-2">
-                      <p className="text-xs font-black text-dev-primary uppercase tracking-wider mb-1 flex items-center gap-2">
+                      <p className="text-xs font-black text-dev-primary mb-1 flex items-center gap-2">
                         <span className="w-5 h-5 bg-dev-primary-container rounded-full flex items-center justify-center text-[10px]">1</span>
                         Gestão da Escola (Primeiro Acesso)
                       </p>
                       <p className="text-xs text-dev-text-muted mb-3">Esta será a conta da <strong>Gestão</strong>, o primeiro acesso da escola no sistema. É ela quem cria os administradores (Recepção, Coordenação, Direção). No primeiro login, a pessoa cria a própria senha.</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome do Responsável</label>
+                          <label className="block text-xs font-bold text-dev-text-muted mb-1">Nome do Responsável</label>
                           <input
                             type="text"
                             value={adminData.name}
@@ -582,7 +590,7 @@ export default function DeveloperPanel() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">E-mail de Login</label>
+                          <label className="block text-xs font-bold text-dev-text-muted mb-1">E-mail de Login</label>
                           <input
                             type="email"
                             value={adminData.email}
@@ -592,7 +600,7 @@ export default function DeveloperPanel() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Senha de Acesso</label>
+                          <label className="block text-xs font-bold text-dev-text-muted mb-1">Senha de Acesso</label>
                           <input
                             type="password"
                             value={adminData.password}
@@ -613,7 +621,7 @@ export default function DeveloperPanel() {
                 <p className="text-xs text-dev-text-muted mb-4">Quantos autorizados de retirada cada responsável pode cadastrar no formulário de matrícula, e quantos autorizados exclusivos de transporte. Básico: 2 por responsável + 1 de transporte (total de 5, com os 2 responsáveis).</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Autorizados por Responsável</label>
+                    <label className="block text-xs font-bold text-dev-text-muted mb-1">Autorizados por Responsável</label>
                     <input
                       type="number"
                       min={0}
@@ -624,7 +632,7 @@ export default function DeveloperPanel() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Autorizados de Transporte</label>
+                    <label className="block text-xs font-bold text-dev-text-muted mb-1">Autorizados de Transporte</label>
                     <input
                       type="number"
                       min={0}
@@ -639,10 +647,10 @@ export default function DeveloperPanel() {
 
               {/* Método pedagógico — só developer edita (protect_school_pedagogical_columns_trigger) */}
               <div className="mt-6 border-t border-dev-border pt-6">
-                <p className="text-xs font-black text-dev-primary uppercase tracking-wider mb-3">Método Pedagógico</p>
+                <p className="text-xs font-black text-dev-primary mb-3">Método Pedagógico</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Método</label>
+                    <label className="block text-xs font-bold text-dev-text-muted mb-1">Método</label>
                     <select value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
                       <option value="tradicional">Tradicional</option>
                       <option value="montessori">Montessori</option>
@@ -651,7 +659,7 @@ export default function DeveloperPanel() {
                   </div>
                   {pedagogicalMethod === 'personalizado' && (
                     <div>
-                      <label className="block text-xs font-bold text-dev-text-muted uppercase mb-1">Nome para "Turma"</label>
+                      <label className="block text-xs font-bold text-dev-text-muted mb-1">Nome para "Turma"</label>
                       <input
                         type="text"
                         value={customClassLabel}
@@ -671,7 +679,7 @@ export default function DeveloperPanel() {
                 </div>
               )}
               {successMsg && (
-                <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-zela-md text-sm text-emerald-400 font-medium flex items-start gap-2">
+                <div className="mt-4 p-3 bg-success/10 border border-success/30 rounded-zela-md text-sm text-success font-medium flex items-start gap-2">
                   {successMsg}
                 </div>
               )}

@@ -46,7 +46,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           bgColorClass="bg-dev-bg hover:bg-dev-surface-high"
         />
         <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-none">
-          <p className="px-4 pt-4 pb-2 text-[11px] font-black text-dev-text-muted uppercase tracking-widest shrink-0 truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:block">
+          <p className="px-4 pt-4 pb-2 text-[11px] font-black text-dev-text-muted tracking-widest shrink-0 truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:block">
             Painel do Dev
           </p>
           <nav className="flex-1 flex flex-col gap-1 min-h-0 px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4">
@@ -62,7 +62,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                   >
                     <Icon size={SIDEBAR_ICON_SIZE} className="shrink-0" />
                     <span className="truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{item.label}</span>
-                    <span className="ml-auto bg-dev-surface-high text-[9px] px-1.5 py-0.5 rounded text-dev-text-muted font-bold uppercase tracking-wide md:hidden md:group-data-[expanded=true]/side:inline-block">
+                    <span className="ml-auto bg-dev-surface-high text-[9px] px-1.5 py-0.5 rounded text-dev-text-muted font-bold md:hidden md:group-data-[expanded=true]/side:inline-block">
                       Em breve
                     </span>
                   </div>
