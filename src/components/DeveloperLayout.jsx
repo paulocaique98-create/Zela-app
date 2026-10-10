@@ -86,14 +86,14 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
                   <span className="relative shrink-0">
                     <Icon size={SIDEBAR_ICON_SIZE} />
                     {item.id === 'support' && chatUnreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-error text-white text-[9px] font-black flex items-center justify-center md:group-data-[expanded=true]/side:hidden">
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-sm bg-error text-white text-[9px] font-black flex items-center justify-center md:group-data-[expanded=true]/side:hidden">
                         {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                       </span>
                     )}
                   </span>
                   <span className="flex-1 text-left truncate whitespace-nowrap md:hidden md:group-data-[expanded=true]/side:inline">{item.label}</span>
                   {item.id === 'support' && chatUnreadCount > 0 && (
-                    <span className="hidden md:group-data-[expanded=true]/side:flex ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-error text-white text-[9px] font-black items-center justify-center">
+                    <span className="hidden md:group-data-[expanded=true]/side:flex ml-auto min-w-[18px] h-[18px] px-1 rounded-sm bg-error text-white text-[9px] font-black items-center justify-center">
                       {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                     </span>
                   )}
