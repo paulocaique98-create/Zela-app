@@ -3,10 +3,10 @@ import { situacaoDoAluno, contarSituacoes, MENSAGEM_VAZIA, GRUPOS_PRESENCA } fro
 
 // Cor do botão ativo de cada grupo.
 const COR_DO_GRUPO = {
-  presentes: 'text-green-700',
-  solicitacoes: 'text-amber-700',
-  sairam: 'text-slate-800',
-  ausentes: 'text-red-600',
+  presentes: 'text-success',
+  solicitacoes: 'text-warning',
+  sairam: 'text-on-surface',
+  ausentes: 'text-error',
 };
 import { LogOut, CheckCircle2, Users, RefreshCw, Pencil, Loader2, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -14,17 +14,17 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import AttendanceEditTodayModal from './AttendanceEditTodayModal';
 
 const STATUS_CONFIG = {
-  in_school:      { label: 'Na escola',        cls: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12}/> },
-  left:           { label: 'Já saiu',          cls: 'bg-slate-700 text-slate-100', icon: <LogOut size={12}/> },
-  absent:         { label: 'Ausente',          cls: 'bg-red-100 text-red-600',     icon: null },
-  pending_entry:  { label: 'Entrada solicitada', cls: 'bg-amber-100 text-amber-700', icon: null },
-  pending_exit:   { label: 'Saída solicitada',   cls: 'bg-amber-100 text-amber-700', icon: null },
+  in_school:      { label: 'Na escola',        cls: 'bg-success/15 text-success', icon: <CheckCircle2 size={12}/> },
+  left:           { label: 'Já saiu',          cls: 'bg-ink text-on-surface-variant/50', icon: <LogOut size={12}/> },
+  absent:         { label: 'Ausente',          cls: 'bg-error/15 text-error',     icon: null },
+  pending_entry:  { label: 'Entrada solicitada', cls: 'bg-brass-50 text-warning', icon: null },
+  pending_exit:   { label: 'Saída solicitada',   cls: 'bg-brass-50 text-warning', icon: null },
   // Aluno matriculado que hoje não está na escola, não saiu e não tem
   // nenhuma solicitação em aberto -- pro contexto de Presença Diária isso É
   // um ausente (mesmo sem a família ter marcado "Não irá hoje" no app),
   // então usa o mesmo rótulo/estilo de 'absent' em vez de "Pendente de
   // Check-in" (rótulo que só faz sentido pro responsável, na Família).
-  idle:           { label: 'Ausente',          cls: 'bg-red-100 text-red-600',     icon: null },
+  idle:           { label: 'Ausente',          cls: 'bg-error/15 text-error',     icon: null },
 };
 
 export default function AdminDailyPresence({ currentUser, currentSchool }) {
@@ -111,29 +111,29 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const contagem = contarSituacoes(allStudents);
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-3xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-slate-200 md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-2xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-outline-variant md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título "Presença Diária" e ícone removidos (o Header do
           app já mostra o nome da tela dinamicamente); só a data, direto. */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
-        <p className="text-[13px] sm:text-sm text-slate-500 whitespace-nowrap overflow-x-auto w-full text-center sm:w-auto">
+        <p className="text-[13px] sm:text-sm text-on-surface-variant whitespace-nowrap overflow-x-auto w-full text-center sm:w-auto">
           {(() => {
             const weekday = new Date().toLocaleDateString('pt-BR', { weekday: 'long' }).split('-')[0];
             return weekday.charAt(0).toUpperCase() + weekday.slice(1);
           })()} · {new Date().toLocaleDateString('pt-BR')}
-          {lastUpdate && <span className="text-slate-400"> · Atualizado em {lastUpdate}</span>}
+          {lastUpdate && <span className="text-on-surface-variant/70"> · Atualizado em {lastUpdate}</span>}
         </p>
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={fetchPresence}
             disabled={isLoading}
-            className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/40 px-4 py-2 rounded-xl transition disabled:opacity-50 shrink-0"
           >
             <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''}/> <span className="hidden sm:inline">Atualizar</span>
           </button>
           <div className="relative">
             <button
               onClick={() => setTurmaMenuOpen(o => !o)}
-              className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3.5 py-2 rounded-xl transition"
+              className="flex items-center gap-2 text-sm font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high border border-outline-variant px-3.5 py-2 rounded-xl transition"
             >
               <SlidersHorizontal size={15} />
               <span className="hidden sm:inline">{selectedTurma}</span>
@@ -141,18 +141,18 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             {turmaMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setTurmaMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-72 max-w-[85vw] bg-white border border-slate-200 rounded-2xl shadow-lg z-20 p-1.5">
+                <div className="absolute right-0 top-full mt-2 w-72 max-w-[85vw] bg-white border border-outline-variant rounded-2xl shadow-lg z-20 p-1.5">
                   {turmaOptions.map(turma => (
                     <button
                       key={turma}
                       onClick={() => { setSelectedTurma(turma); setTurmaMenuOpen(false); }}
                       className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm font-bold text-left transition ${
-                        selectedTurma === turma ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                        selectedTurma === turma ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface-container-low'
                       }`}
                     >
                       <span className="truncate">{turma}</span>
                       {turma !== 'Todas as Turmas' && (
-                        <span className="shrink-0 text-[10px] bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5">
+                        <span className="shrink-0 text-[10px] bg-surface-container text-on-surface-variant rounded-sm px-1.5 py-0.5">
                           {allStudents.filter(s => s.turma === turma).length}
                         </span>
                       )}
@@ -168,13 +168,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
       {/* Quatro botões no lugar da frase com os números (30/09/2026): cada um
           mostra a contagem e filtra a lista. No celular, número embaixo do
           nome, pra caber numa linha só. */}
-      <div className="grid grid-cols-4 bg-slate-100 rounded-xl p-1 gap-1 mb-5 shrink-0">
+      <div className="grid grid-cols-4 bg-surface-container rounded-xl p-1 gap-1 mb-5 shrink-0">
         {GRUPOS_PRESENCA.map(grupo => (
           <button
             key={grupo.id}
             onClick={() => setStatusFilter(grupo.id)}
             className={`min-w-0 px-1 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center sm:gap-1 ${
-              statusFilter === grupo.id ? `bg-white shadow-sm ${COR_DO_GRUPO[grupo.id]}` : 'text-slate-500 hover:text-slate-700'
+              statusFilter === grupo.id ? `bg-white shadow-sm ${COR_DO_GRUPO[grupo.id]}` : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <span className="truncate max-w-full">{grupo.rotulo}</span>
@@ -187,12 +187,12 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         {isLoading ? (
           <div className="flex justify-center items-center h-full py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
         ) : displayed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-            <Users className="h-10 w-10 text-slate-300 mb-3"/>
-            <p className="text-slate-500 font-medium text-sm">
+          <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-2xl border border-dashed border-outline-variant">
+            <Users className="h-10 w-10 text-on-surface-variant/50 mb-3"/>
+            <p className="text-on-surface-variant font-medium text-sm">
             {selectedTurma === 'Todas as Turmas' ? MENSAGEM_VAZIA[statusFilter] : `${selectedTurma}: ${MENSAGEM_VAZIA[statusFilter]}`}
             </p>
           </div>
@@ -201,18 +201,18 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             {displayed.map(student => {
               const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.idle;
               return (
-                <div key={student.id} className="flex flex-col gap-2.5 border border-slate-200 rounded-2xl bg-white shadow-sm p-3.5 min-w-0">
+                <div key={student.id} className="flex flex-col gap-2.5 border border-outline-variant rounded-2xl bg-white shadow-sm p-3.5 min-w-0">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
-                      <span className="text-indigo-600 font-bold text-xs">
+                    <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 border border-primary/30">
+                      <span className="text-primary font-bold text-xs">
                         {student.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <span className="font-bold text-slate-800 text-sm min-w-0 break-words">{student.name}</span>
+                    <span className="font-bold text-on-surface text-sm min-w-0 break-words">{student.name}</span>
                   </div>
 
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[11px] text-slate-400 font-semibold min-w-0 truncate">
+                    <span className="text-[11px] text-on-surface-variant/70 font-semibold min-w-0 truncate">
                       {student.turma || '—'}
                     </span>
                     <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-md shrink-0 ${cfg.cls}`}>
@@ -220,18 +220,18 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
                     </span>
                   </div>
 
-                  <div className="flex items-end justify-between gap-2 pt-2 border-t border-dashed border-slate-200">
+                  <div className="flex items-end justify-between gap-2 pt-2 border-t border-dashed border-outline-variant">
                     <div className="flex gap-5 flex-wrap">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Entrada</span>
-                        <span className="font-mono font-bold text-indigo-700 text-sm">
-                          {student.today_entry ? student.today_entry.substring(0, 5) : <span className="text-slate-300">—</span>}
+                        <span className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/70">Entrada</span>
+                        <span className="font-mono font-bold text-primary text-sm">
+                          {student.today_entry ? student.today_entry.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Saída</span>
-                        <span className="font-mono font-bold text-slate-500 text-sm">
-                          {student.today_exit ? student.today_exit.substring(0, 5) : <span className="text-slate-300">—</span>}
+                        <span className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/70">Saída</span>
+                        <span className="font-mono font-bold text-on-surface-variant text-sm">
+                          {student.today_exit ? student.today_exit.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>
                       </div>
                     </div>
@@ -239,11 +239,11 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
                         Entrada/Saída. Abre um modal só, com os dois horários
                         juntos (ver AttendanceEditTodayModal). */}
                     {resolvingCorrectionFor === student.id ? (
-                      <Loader2 size={13} className="animate-spin text-slate-300 shrink-0" />
+                      <Loader2 size={13} className="animate-spin text-on-surface-variant/50 shrink-0" />
                     ) : (
                       <button
                         onClick={() => openCorrection(student)}
-                        className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition shrink-0"
+                        className="flex items-center gap-1.5 text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/40 px-2.5 py-1.5 rounded-lg transition shrink-0"
                         title="Editar horário de entrada e/ou saída de hoje"
                       >
                         <Pencil size={12} /> Editar horário

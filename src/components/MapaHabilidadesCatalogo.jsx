@@ -168,8 +168,8 @@ export default function MapaHabilidadesCatalogo({ currentUser, schoolId, podeEdi
         )}
       </div>
 
-      {erro && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{erro}</div>}
-      {aviso && <div className="bg-green-50 border border-green-100 text-green-700 p-3 rounded-zela-md text-sm font-medium">{aviso}</div>}
+      {erro && <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{erro}</div>}
+      {aviso && <div className="bg-success/10 border border-success/30 text-success p-3 rounded-zela-md text-sm font-medium">{aviso}</div>}
 
       {importando && podeEditar && (
         <div className="rounded-zela-lg border border-outline-variant p-4 space-y-3">
@@ -182,11 +182,11 @@ export default function MapaHabilidadesCatalogo({ currentUser, schoolId, podeEdi
           {lido && (
             <div className="text-xs space-y-1">
               <p className="font-bold text-on-surface">{novas.length} novas, {lido.itens.length - novas.length} já existem, {lido.erros.length} com erro.</p>
-              {lido.erros.slice(0, 8).map(er => <p key={`${er.linha}${er.msg}`} className="text-red-600">Linha {er.linha}: {er.msg}</p>)}
-              {lido.erros.length > 8 && <p className="text-red-600">E mais {lido.erros.length - 8} erros.</p>}
+              {lido.erros.slice(0, 8).map(er => <p key={`${er.linha}${er.msg}`} className="text-error">Linha {er.linha}: {er.msg}</p>)}
+              {lido.erros.length > 8 && <p className="text-error">E mais {lido.erros.length - 8} erros.</p>}
             </div>
           )}
-          <button type="button" onClick={importar} disabled={salvando || novas.length === 0} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-zela-md font-bold text-sm disabled:bg-slate-300 disabled:text-on-surface-variant">
+          <button type="button" onClick={importar} disabled={salvando || novas.length === 0} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-zela-md font-bold text-sm disabled:bg-outline-variant disabled:text-on-surface-variant">
             {salvando ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Importar {novas.length} habilidades
           </button>
         </div>
@@ -221,7 +221,7 @@ export default function MapaHabilidadesCatalogo({ currentUser, schoolId, podeEdi
           <label className="block text-xs font-bold text-on-surface-variant sm:w-40">Ordem na área
             <input type="number" min={0} value={form.ordem} onChange={e => setForm({ ...form, ordem: e.target.value })} className={`${campo} mt-1`} />
           </label>
-          <button type="submit" disabled={salvando} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-zela-md font-bold text-sm disabled:bg-slate-300">
+          <button type="submit" disabled={salvando} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-zela-md font-bold text-sm disabled:bg-outline-variant">
             {salvando ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Salvar habilidade
           </button>
         </form>

@@ -54,7 +54,7 @@ export default function CampoCep({ id, value, onChange, onEncontrado, focarDepoi
         {estado === 'buscando' && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin opacity-60" />}
       </div>
       {estado && estado !== 'buscando' && (
-        <p className={`text-[11px] mt-1 ${estado === 'ok' ? classeMensagem : 'text-amber-600'}`}>{MENSAGENS[estado]}</p>
+        <p className={`text-[11px] mt-1 ${estado === 'ok' ? classeMensagem : 'text-warning'}`}>{MENSAGENS[estado]}</p>
       )}
     </div>
   );

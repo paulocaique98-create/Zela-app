@@ -149,23 +149,23 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
     }
   };
 
-  const fieldCls = (cleared) => `w-full px-3 py-2.5 bg-white border rounded-xl text-lg font-mono font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-center ${cleared ? 'border-red-300' : 'border-slate-300'}`;
+  const fieldCls = (cleared) => `w-full px-3 py-2.5 bg-white border rounded-xl text-lg font-mono font-bold text-on-surface focus:ring-2 focus:ring-primary outline-none text-center ${cleared ? 'border-error/60' : 'border-outline-variant'}`;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between gap-3 p-5 border-b border-slate-100">
+    <div className="fixed inset-0 z-[999] bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
+            <div className="bg-primary/10 text-primary p-2.5 rounded-xl shrink-0">
               <Clock size={18} />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-slate-800 text-sm">Editar horário</h3>
-              <p className="text-xs text-slate-600 font-semibold break-words">{student?.name}</p>
-              <p className="text-xs text-slate-500 capitalize">{todayLabel}</p>
+              <h3 className="font-bold text-on-surface text-sm">Editar horário</h3>
+              <p className="text-xs text-on-surface-variant font-semibold break-words">{student?.name}</p>
+              <p className="text-xs text-on-surface-variant capitalize">{todayLabel}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition shrink-0">
+          <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition shrink-0">
             <X size={18} />
           </button>
         </div>
@@ -173,7 +173,7 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-primary uppercase tracking-wide mb-1.5">
                 <LogIn size={13} /> Entrada
               </label>
               <input
@@ -183,21 +183,21 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
                 className={fieldCls(entryCleared)}
               />
               {!entryOriginalTime && (
-                <p className="text-[10px] text-slate-400 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
+                <p className="text-[10px] text-on-surface-variant/70 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
               )}
               {entryCleared && (
-                <p className="text-[10px] text-red-600 mt-1">Para apagar, use o botão "Apagar entrada" abaixo; senão volte ao horário original.</p>
+                <p className="text-[10px] text-error mt-1">Para apagar, use o botão "Apagar entrada" abaixo; senão volte ao horário original.</p>
               )}
               {canDelete && entryLog && (
                 <button type="button" onClick={() => handleDelete(entryLog, 'entrada')} disabled={!reasonCode || isSaving}
                   title={reasonCode ? 'Apagar este registro' : 'Selecione o motivo antes de apagar'}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-error bg-error/10 hover:bg-error/15 border border-error/40 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
                   <Trash2 size={12} /> Apagar entrada
                 </button>
               )}
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-rose-500 uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-error uppercase tracking-wide mb-1.5">
                 <LogOut size={13} /> Saída
               </label>
               <input
@@ -207,15 +207,15 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
                 className={fieldCls(exitCleared)}
               />
               {!exitOriginalTime && (
-                <p className="text-[10px] text-slate-400 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
+                <p className="text-[10px] text-on-surface-variant/70 mt-1">Ainda não registrada nesse dia -- preencher aqui lança o horário.</p>
               )}
               {exitCleared && (
-                <p className="text-[10px] text-red-600 mt-1">Para apagar, use o botão "Apagar saída" abaixo; senão volte ao horário original.</p>
+                <p className="text-[10px] text-error mt-1">Para apagar, use o botão "Apagar saída" abaixo; senão volte ao horário original.</p>
               )}
               {canDelete && exitLog && (
                 <button type="button" onClick={() => handleDelete(exitLog, 'saída')} disabled={!reasonCode || isSaving}
                   title={reasonCode ? 'Apagar este registro' : 'Selecione o motivo antes de apagar'}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-error bg-error/10 hover:bg-error/15 border border-error/40 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
                   <Trash2 size={12} /> Apagar saída
                 </button>
               )}
@@ -223,11 +223,11 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">Motivo da correção *</label>
+            <label className="text-xs font-bold text-on-surface-variant mb-1.5 block">Motivo da correção *</label>
             <select
               value={reasonCode}
               onChange={e => setReasonCode(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-medium text-on-surface focus:ring-2 focus:ring-primary outline-none"
             >
               <option value="">Selecione um motivo</option>
               {ATTENDANCE_CORRECTION_REASONS.map(r => (
@@ -237,30 +237,30 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">Detalhe (opcional)</label>
+            <label className="text-xs font-bold text-on-surface-variant mb-1.5 block">Detalhe (opcional)</label>
             <textarea
               value={reasonDetail}
               onChange={e => setReasonDetail(e.target.value)}
               rows={2}
               placeholder="Algum detalhe adicional sobre o ocorrido"
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+              className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm text-on-surface focus:ring-2 focus:ring-primary outline-none resize-none"
             />
           </div>
 
           {hasAnyChange && (
             anyIncreasesBilling ? (
-              <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 leading-relaxed">
+              <div className="flex items-start gap-2.5 bg-brass-50 border border-warning/40 rounded-xl p-3">
+                <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+                <p className="text-xs text-warning leading-relaxed">
                   Essa alteração aumenta a cobrança de hora extra deste aluno nesse dia.
                   Não entra em vigor sozinha: fica pendente até outro administrador
                   da escola aprovar.
                 </p>
               </div>
             ) : (
-              <div className="flex items-start gap-2.5 bg-green-50 border border-green-200 rounded-xl p-3">
-                <ShieldCheck size={16} className="text-green-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-green-800 leading-relaxed">
+              <div className="flex items-start gap-2.5 bg-success/10 border border-success/40 rounded-xl p-3">
+                <ShieldCheck size={16} className="text-success shrink-0 mt-0.5" />
+                <p className="text-xs text-success leading-relaxed">
                   Essa alteração não aumenta a cobrança. Aplica imediatamente e fica
                   visível para a família no Histórico.
                 </p>
@@ -269,7 +269,7 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
           )}
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">{error}</div>
+            <div className="p-3 bg-error/10 border border-error/40 rounded-xl text-xs text-error font-medium">{error}</div>
           )}
         </div>
 
@@ -277,14 +277,14 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
+            className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500"
+            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-primary hover:bg-primary disabled:bg-outline-variant disabled:text-on-surface-variant"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
             {anyIncreasesBilling ? 'Enviar para aprovação' : 'Salvar horário'}

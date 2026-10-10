@@ -14,21 +14,21 @@ export default function PushGuidanceModal({ guidance, onClose }) {
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-2 text-primary">
             <Bell size={22} />
-            <h2 className="text-lg font-bold text-gray-900">{guidance.title}</h2>
+            <h2 className="text-lg font-bold text-on-surface">{guidance.title}</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0">
+          <button onClick={onClose} className="text-on-surface-variant/70 hover:text-on-surface-variant shrink-0">
             <X size={20} />
           </button>
         </div>
 
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-on-surface-variant mb-4">
           Suas notificações foram ativadas. Alguns celulares bloqueiam avisos de apps fechados por padrão,
           então siga os passos abaixo pra garantir que você não perca nenhum aviso.
         </p>
 
         <ul className="space-y-3 mb-5">
           {guidance.steps.map((step, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+            <li key={i} className="flex items-start gap-2 text-sm text-on-surface">
               <CheckCircle2 size={16} className="text-primary mt-0.5 shrink-0" />
               <span>{step}</span>
             </li>

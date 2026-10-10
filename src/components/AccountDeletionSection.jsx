@@ -48,7 +48,7 @@ export default function AccountDeletionSection({ className = '' } = {}) {
         <UserX className="text-primary" size={18} /> Excluir minha conta
       </h3>
       {msg.text && (
-        <p className={`text-sm mb-2 ${msg.type === 'error' ? 'text-red-600' : 'text-emerald-700'}`}>{msg.text}</p>
+        <p className={`text-sm mb-2 ${msg.type === 'error' ? 'text-error' : 'text-success'}`}>{msg.text}</p>
       )}
       {pending === undefined ? (
         <Loader2 size={16} className="animate-spin text-on-surface-variant" />
@@ -68,7 +68,7 @@ export default function AccountDeletionSection({ className = '' } = {}) {
           </p>
           <button
             onClick={() => setOpen(true)}
-            className="w-full border border-red-200 text-red-600 font-bold py-2.5 rounded-zela-md hover:bg-red-50 text-sm transition"
+            className="w-full border border-error/40 text-error font-bold py-2.5 rounded-zela-md hover:bg-error/10 text-sm transition"
           >
             Solicitar exclusão da conta
           </button>
@@ -76,7 +76,7 @@ export default function AccountDeletionSection({ className = '' } = {}) {
       )}
 
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink/60" onClick={() => setOpen(false)}>
           <div className="bg-white rounded-zela-xl shadow-2xl w-full max-w-md p-5 space-y-3" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-on-surface">Solicitar exclusão da conta</h3>
             <p className="text-sm text-on-surface-variant">
@@ -86,10 +86,10 @@ export default function AccountDeletionSection({ className = '' } = {}) {
               Motivo (opcional)
               <textarea id="deletion-reason" rows={3} value={reason} onChange={e => setReason(e.target.value)} className="mt-1 w-full px-3 py-2 border border-outline-variant rounded-zela-md text-sm" />
             </label>
-            {msg.type === 'error' && <p className="text-sm text-red-600">{msg.text}</p>}
+            {msg.type === 'error' && <p className="text-sm text-error">{msg.text}</p>}
             <div className="flex justify-end gap-2">
               <button onClick={() => setOpen(false)} className="px-3 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-zela-md">Voltar</button>
-              <button onClick={request} disabled={isSaving} className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
+              <button onClick={request} disabled={isSaving} className="px-3.5 py-2 bg-error hover:bg-error text-white font-bold rounded-zela-md text-sm disabled:opacity-50">
                 {isSaving ? 'Enviando…' : 'Enviar pedido'}
               </button>
             </div>

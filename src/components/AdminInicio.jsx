@@ -75,17 +75,17 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
             >
               {/* Badges Vermelhos */}
               {menu.key === 'monitor' && monitorCount > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {monitorCount}
                 </span>
               )}
               {menu.key === 'users' && pendingUsersCount > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {pendingUsersCount}
                 </span>
               )}
               {menu.key === 'notificacoes' && unreadNotifications > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {unreadNotifications}
                 </span>
               )}

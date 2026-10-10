@@ -278,7 +278,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
         </div>
 
         {!isSupportThread && !inBusinessHours && (
-          <div className="bg-amber-50 border-b border-amber-100 text-amber-700 px-4 sm:px-5 py-2 text-xs font-semibold flex items-center gap-2 shrink-0">
+          <div className="bg-brass-50 border-b border-warning/30 text-warning px-4 sm:px-5 py-2 text-xs font-semibold flex items-center gap-2 shrink-0">
             <Clock size={14} className="shrink-0" /> Fora do horário comercial (07h-19h): só é possível ler, envio de mensagem está bloqueado.
           </div>
         )}
@@ -313,7 +313,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] sm:max-w-[65%] rounded-zela-lg px-4 py-2.5 text-sm ${mine ? 'bg-primary text-white' : 'bg-surface-container text-on-surface'}`}>
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                    <p className={`text-[10px] mt-1 ${mine ? 'text-indigo-200' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
+                    <p className={`text-[10px] mt-1 ${mine ? 'text-primary' : 'text-on-surface-variant/70'}`}>{formatTime(m.created_at)}</p>
                   </div>
                 </div>
               );
@@ -324,7 +324,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
         {error && (
           <div className="px-4 sm:px-5 pb-2">
-            <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+            <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
           </div>
         )}
 
@@ -340,7 +340,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
           <button
             type="submit"
             disabled={isSending || !body.trim() || !canSend}
-            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
+            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-outline-variant text-white p-2.5 sm:px-4 sm:py-2.5 rounded-zela-md font-bold transition-all active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             <span className="hidden sm:inline">Enviar</span>

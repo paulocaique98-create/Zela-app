@@ -192,7 +192,7 @@ export default function AdminQrScanner({ onClose, requestKioskAccess, currentUse
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[999] bg-ink/90 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-zela-xl overflow-hidden shadow-2xl flex flex-col">
         <div className="flex justify-between items-center px-5 py-4 border-b border-outline-variant">
           <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export default function AdminQrScanner({ onClose, requestKioskAccess, currentUse
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <CheckCircle size={40} className="text-green-600" />
+              <CheckCircle size={40} className="text-success" />
               <p className="font-bold text-on-surface">Presença registrada!</p>
             </div>
           )}

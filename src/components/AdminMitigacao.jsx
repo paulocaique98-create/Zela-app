@@ -7,8 +7,8 @@ import { logAction } from '../lib/auditLog';
 
 const STATUS_BADGE = {
   RASCUNHO: 'bg-surface-container text-on-surface-variant border-outline-variant',
-  PUBLICADO: 'bg-green-50 text-green-700 border-green-200',
-  ARQUIVADO: 'bg-amber-50 text-amber-700 border-amber-200',
+  PUBLICADO: 'bg-success/10 text-success border-success/40',
+  ARQUIVADO: 'bg-brass-50 text-warning border-warning/40',
 };
 const STATUS_LABEL = { RASCUNHO: 'Rascunho', PUBLICADO: 'Publicado', ARQUIVADO: 'Arquivado' };
 
@@ -201,7 +201,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-1 sm:p-6 space-y-2">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
         )}
 
         {!isLoading && turmaSummary.length > 0 && (
@@ -223,8 +223,8 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                 )}
                 <p className={`text-sm font-bold text-on-surface leading-tight ${t.rascunho > 0 ? 'pr-5' : ''}`}>{t.turma || 'Sem turma'}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{t.publicado} publicado{t.publicado !== 1 ? 's' : ''}</span>
-                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${t.rascunho > 0 ? 'bg-warning/15 text-warning' : 'bg-surface-container text-on-surface-variant'}`}>{t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}</span>
+                  <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-sm bg-success/10 text-success">{t.publicado} publicado{t.publicado !== 1 ? 's' : ''}</span>
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-sm ${t.rascunho > 0 ? 'bg-warning/15 text-warning' : 'bg-surface-container text-on-surface-variant'}`}>{t.rascunho} rascunho{t.rascunho !== 1 ? 's' : ''}</span>
                 </div>
                 {t.semRelatorio > 0 && (
                   <p className="text-xs text-warning font-bold mt-2">{t.semRelatorio} sem relatório</p>
@@ -275,7 +275,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                         onClick={() => setConfirmArchiveId(r.id)}
                         disabled={isProcessingId === r.id}
                         title="Arquivar relatório"
-                        className="p-2 text-on-surface-variant/70 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition disabled:opacity-50"
+                        className="p-2 text-on-surface-variant/70 hover:text-warning hover:bg-brass-50 rounded-lg transition disabled:opacity-50"
                       >
                         {isProcessingId === r.id ? <Loader2 size={16} className="animate-spin" /> : <Archive size={16} />}
                       </button>
@@ -284,7 +284,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                       onClick={() => setConfirmDeleteId(r.id)}
                       disabled={isProcessingId === r.id}
                       title="Excluir relatório"
-                      className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+                      className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition disabled:opacity-50"
                     >
                       <Trash2 size={16} />
                     </button>

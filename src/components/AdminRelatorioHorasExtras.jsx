@@ -252,7 +252,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-3xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-slate-200 md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-2xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-outline-variant md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
       {/* Header -- título e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); não sobrava descrição pra ficar no
           lugar, então os botões vão sozinhos na linha. */}
@@ -287,9 +287,9 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
               pela direita -- evita o painel nascer fora da tela quando o
               botão de filtro não está colado na borda direita real. */}
           {showFilters && (
-            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-slate-200 rounded-2xl shadow-lg p-3 z-20 space-y-3">
+            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-outline-variant rounded-2xl shadow-lg p-3 z-20 space-y-3">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">Período</p>
+                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1.5 px-1">Período</p>
                   <div className="flex gap-1.5 overflow-x-auto pb-0.5">
                     {[
                       { id: 'today', label: 'Hoje' },
@@ -313,7 +313,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                       type="date"
                       value={customDate}
                       onChange={e => { setCustomDate(e.target.value); if (e.target.value) setShowFilters(false); }}
-                      className="mt-2 w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="mt-2 w-full px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
                     />
                   )}
                 </div>
@@ -338,17 +338,17 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
       {/* Busca */}
       <div className="relative mb-4 sm:mb-6 shrink-0">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-slate-400" />
+          <Search className="h-4 w-4 text-on-surface-variant/70" />
         </div>
         <input
           type="text"
           placeholder="Buscar por aluno ou responsável..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+          className="w-full pl-10 pr-8 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm font-medium"
         />
         {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+          <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant/70 hover:text-on-surface-variant">
             <X size={14} />
           </button>
         )}
@@ -360,12 +360,12 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         {isLoading ? (
           <div className="flex justify-center items-center h-full py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
         ) : displayLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-            <FileText className="h-10 w-10 text-slate-300 mb-3" />
-            <p className="text-slate-500 font-medium text-sm">Nenhum registro encontrado.</p>
+          <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-2xl border border-dashed border-outline-variant">
+            <FileText className="h-10 w-10 text-on-surface-variant/50 mb-3" />
+            <p className="text-on-surface-variant font-medium text-sm">Nenhum registro encontrado.</p>
           </div>
         ) : (
           <div className="space-y-2 pb-4">
@@ -375,11 +375,11 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
               const isExpanded = expandedStudentKey === log.key;
 
               return (
-                <div key={log.key} className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+                <div key={log.key} className="rounded-2xl border border-warning/40 bg-white shadow-sm overflow-hidden">
                   <button
                     type="button"
                     onClick={() => !isSingleDay && setExpandedStudentKey(prev => (prev === log.key ? null : log.key))}
-                    className={`w-full flex flex-col gap-1.5 p-3 sm:p-4 text-left ${!isSingleDay ? 'cursor-pointer hover:bg-amber-50/50' : ''}`}
+                    className={`w-full flex flex-col gap-1.5 p-3 sm:p-4 text-left ${!isSingleDay ? 'cursor-pointer hover:bg-warning/50' : ''}`}
                   >
                     {/* Nome do aluno sozinho na linha (só disputando espaço com
                         o avatar e a seta) -- sem responsável junto, sem
@@ -388,14 +388,14 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                         nome for mesmo assim grande demais pro card, essa
                         linha rola na horizontal em vez de cortar ou quebrar. */}
                     <div className="flex items-center gap-3 w-full">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 bg-amber-100 text-amber-700">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 bg-brass-50 text-warning">
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0 overflow-x-auto">
-                        <p className="font-bold text-slate-800 text-sm whitespace-nowrap">{formatarNomeCard(log.studentName)}</p>
+                        <p className="font-bold text-on-surface text-sm whitespace-nowrap">{formatarNomeCard(log.studentName)}</p>
                       </div>
                       {!isSingleDay && (
-                        <ChevronDown size={16} className={`text-slate-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                        <ChevronDown size={16} className={`text-on-surface-variant/70 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
                       )}
                     </div>
 
@@ -406,7 +406,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                             senão fica uma informação solta sem contexto
                             nenhum antes de abrir. */}
                         {isSingleDay && (
-                          <p className="text-xs text-slate-400 truncate">
+                          <p className="text-xs text-on-surface-variant/70 truncate">
                             {log.date}
                             {log.exit ? ` · saída ${log.exit}` : (log.entry ? ' · saída pendente' : '')}
                             {log.contractedExit !== '—' ? ` (contratado ${log.contractedExit})` : ''}
@@ -414,18 +414,18 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                         )}
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-black text-rose-600 text-base sm:text-lg leading-none">{log.valorFormatado}</p>
-                        <p className="text-[10px] sm:text-xs font-bold text-amber-600 mt-1">+{excessText}</p>
+                        <p className="font-black text-error text-base sm:text-lg leading-none">{log.valorFormatado}</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-warning mt-1">+{excessText}</p>
                       </div>
                     </div>
                   </button>
 
                   {!isSingleDay && isExpanded && (
-                    <div className="border-t border-amber-100 bg-amber-50/40 divide-y divide-amber-100">
+                    <div className="border-t border-warning/30 bg-warning/40 divide-y divide-warning/30">
                       {log.dias.map(dia => (
                         <div key={dia.key} className="flex items-center gap-3 px-3 sm:px-4 py-2.5">
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-600 mb-1">{dia.date}</p>
+                            <p className="text-xs font-bold text-on-surface-variant mb-1">{dia.date}</p>
                             {/* Verde = dentro do horário combinado; vermelho = foi
                                 esse lado (entrada antecipada ou saída tardia) que
                                 gerou a cobrança do dia — dá pra escola ver de
@@ -433,26 +433,26 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                                 cada registro. */}
                             <div className="flex items-center gap-3 flex-wrap">
                               {dia.entry && (
-                                <span className={`text-[11px] font-bold ${dia.excessoEntrada ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                <span className={`text-[11px] font-bold ${dia.excessoEntrada ? 'text-error' : 'text-success'}`}>
                                   Entrada {dia.entry}
                                 </span>
                               )}
                               {dia.exit ? (
-                                <span className={`text-[11px] font-bold ${dia.excessoSaida ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                <span className={`text-[11px] font-bold ${dia.excessoSaida ? 'text-error' : 'text-success'}`}>
                                   Saída {dia.exit}
                                 </span>
                               ) : dia.entry ? (
-                                <span className="text-[11px] font-bold text-slate-400">Saída pendente</span>
+                                <span className="text-[11px] font-bold text-on-surface-variant/70">Saída pendente</span>
                               ) : null}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="font-bold text-rose-600 text-xs">{dia.valorFormatado}</p>
+                            <p className="font-bold text-error text-xs">{dia.valorFormatado}</p>
                             {dia.excessoEntrada && (
-                              <p className="text-[10px] font-semibold text-amber-600">+{dia.minutosEntrada}min entrada antecipada</p>
+                              <p className="text-[10px] font-semibold text-warning">+{dia.minutosEntrada}min entrada antecipada</p>
                             )}
                             {dia.excessoSaida && (
-                              <p className="text-[10px] font-semibold text-amber-600">+{dia.minutosSaida}min saída tardia</p>
+                              <p className="text-[10px] font-semibold text-warning">+{dia.minutosSaida}min saída tardia</p>
                             )}
                           </div>
                         </div>

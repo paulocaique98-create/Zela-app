@@ -27,8 +27,8 @@ function getCardapioStatus(cardapio, todayStr) {
 }
 
 const STATUS_CLASSES = {
-  green: 'bg-green-50 text-green-700 border-green-200',
-  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  green: 'bg-success/10 text-success border-success/40',
+  amber: 'bg-brass-50 text-warning border-warning/40',
   slate: 'bg-surface-container text-on-surface-variant border-outline-variant',
 };
 
@@ -416,7 +416,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
               <button
                 type="button"
                 onClick={() => setIsModeloMenuOpen(v => !v)}
-                className="flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm w-full"
+                className="flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm w-full"
               >
                 <Download size={18} className="shrink-0" />
                 <span className="truncate">Modelo</span>
@@ -447,7 +447,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                 </>
               )}
             </div>
-            <label className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
+            <label className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingMonthPdf || isParsingMonthImage) ? 'opacity-60 pointer-events-none' : ''}`}>
               {(isParsingMonthPdf || isParsingMonthImage) ? <Loader2 size={18} className="animate-spin shrink-0" /> : <FileUp size={18} className="shrink-0" />}
               <span className="truncate">
                 {isParsingMonthPdf ? 'Lendo PDF...' : isParsingMonthImage ? `Lendo imagem... ${Math.round(monthImageProgress * 100)}%` : 'Importar'}
@@ -455,7 +455,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
               <input type="file" accept="application/pdf,image/*" onChange={handleMonthFileSelected} className="hidden" disabled={isParsingMonthPdf || isParsingMonthImage} />
             </label>
             <label
-              className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
+              className={`flex items-center justify-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
               title="Lê qualquer PDF de cardápio (tabela dia x refeição) usando IA, sem precisar seguir o modelo"
             >
               {isParsingIA ? <Loader2 size={18} className="animate-spin shrink-0" /> : <ScanText size={18} className="shrink-0" />}
@@ -468,13 +468,13 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
         {monthImportError && !weekGroups && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
+          <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {monthImportError}
           </div>
         )}
 
         {iaError && !iaCardapios && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
+          <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {iaError}
           </div>
         )}
@@ -488,13 +488,13 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                   Esse cardápio não tem datas, só dias da semana. Escolha a partir de quando ele começa a valer; o sistema aplica os {iaCardapios.length} cardápio(s) em sequência, repetindo até a data final.
                 </p>
               </div>
-              <button onClick={() => { setIaCardapios(null); setIaError(''); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => { setIaCardapios(null); setIaError(''); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
 
             {iaError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{iaError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{iaError}</div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -513,7 +513,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             <button
               onClick={handleConfirmIaDates}
               disabled={!iaStartMonday || !iaEndDate}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
             >
               <Check size={16} /> Gerar semanas pra revisão
             </button>
@@ -523,7 +523,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
         {weekGroups && (
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
             {weekGroupsFromIA && (
-              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
+              <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
                 <AlertTriangle size={15} className="shrink-0 mt-0.5" />
                 Esses itens foram lidos por IA e podem conter erros. Nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o cardápio fica visível pras famílias.
               </div>
@@ -535,13 +535,13 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                   Cada semana vira um cardápio separado, já com ativação na segunda e desativação no sábado. Confira antes de confirmar.
                 </p>
               </div>
-              <button onClick={() => { setWeekGroups(null); setWeekGroupsFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => { setWeekGroups(null); setWeekGroupsFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
 
             {monthImportError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{monthImportError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{monthImportError}</div>
             )}
 
             <div className="max-h-[55vh] overflow-y-auto space-y-4">
@@ -569,7 +569,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                           type="checkbox"
                           checked={item.selected}
                           onChange={e => updateWeekItem(week.id, item.id, { selected: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-indigo-600 shrink-0"
+                          className="w-3.5 h-3.5 accent-primary shrink-0"
                         />
                         <input
                           type="date"
@@ -598,13 +598,13 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => setWeekGroups(null)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
+              <button onClick={() => setWeekGroups(null)} className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmMonthImport}
                 disabled={isImportingMonth || totalSelectedInMonth === 0}
-                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
               >
                 {isImportingMonth ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Criar {weekGroups.filter(w => w.items.some(i => i.selected)).length} cardápio(s) semanal(is)
@@ -617,7 +617,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
           <form onSubmit={handleCreateCardapio} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">Novo cardápio</h3>
-              <button type="button" onClick={() => setShowNewForm(false)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={() => setShowNewForm(false)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -654,7 +654,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSavingNew || !newTitulo.trim()}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSavingNew ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               Criar e Adicionar Itens
@@ -663,7 +663,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -703,7 +703,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                   <button
                     onClick={() => handleDeleteCardapio(c.id)}
                     disabled={deletingCardapioId === c.id}
-                    className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                     title="Excluir"
                   >
                     {deletingCardapioId === c.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -1009,18 +1009,18 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {/* Importar PDF / Imagem */}
         {!importCandidates && (
           <div className="flex justify-end gap-2 flex-wrap">
-            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingPdf || isParsingImage) ? 'opacity-60 pointer-events-none' : ''}`}>
+            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingPdf || isParsingImage) ? 'opacity-60 pointer-events-none' : ''}`}>
               {isParsingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
               {isParsingPdf ? 'Lendo PDF...' : 'Importar PDF'}
               <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="hidden" disabled={isParsingPdf || isParsingImage} />
             </label>
-            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingPdf || isParsingImage) ? 'opacity-60 pointer-events-none' : ''}`}>
+            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${(isParsingPdf || isParsingImage) ? 'opacity-60 pointer-events-none' : ''}`}>
               {isParsingImage ? <Loader2 size={18} className="animate-spin" /> : <ImageUp size={18} />}
               {isParsingImage ? `Lendo imagem... ${Math.round(imageProgress * 100)}%` : 'Importar Imagem'}
               <input type="file" accept="image/*" onChange={handleImageSelected} className="hidden" disabled={isParsingPdf || isParsingImage} />
@@ -1028,7 +1028,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
           </div>
         )}
         {importError && !importCandidates && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
+          <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {importError}
           </div>
         )}
@@ -1042,13 +1042,13 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
                   {importCandidates.length} item(ns) detectado(s). Confira data, refeição e descrição antes de importar: a leitura automática pode errar, principalmente em imagens.
                 </p>
               </div>
-              <button onClick={() => setImportCandidates(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => setImportCandidates(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
 
             {importError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{importError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{importError}</div>
             )}
 
             <div className="max-h-[45vh] overflow-y-auto space-y-2">
@@ -1058,7 +1058,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
                     type="checkbox"
                     checked={c.selected}
                     onChange={e => updateCandidate(c.id, { selected: e.target.checked })}
-                    className="w-4 h-4 accent-indigo-600 shrink-0"
+                    className="w-4 h-4 accent-primary shrink-0"
                   />
                   <input
                     type="date"
@@ -1084,13 +1084,13 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => setImportCandidates(null)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
+              <button onClick={() => setImportCandidates(null)} className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmImport}
                 disabled={isImporting || selectedImportCount === 0}
-                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
               >
                 {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Importar {selectedImportCount} item(ns)
@@ -1119,7 +1119,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
               className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-xs text-on-surface" />
           </div>
           <button type="submit" disabled={isAddingItem || !newDate || !newDescricao.trim()}
-            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white px-4 py-2 rounded-zela-md font-bold text-xs transition-all active:scale-95">
+            className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container disabled:bg-outline-variant text-white px-4 py-2 rounded-zela-md font-bold text-xs transition-all active:scale-95">
             {isAddingItem ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Adicionar
           </button>
         </form>
@@ -1153,14 +1153,14 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
                           autoFocus
                           className="flex-1 min-w-0 px-2 py-1 bg-surface-container-low border border-outline-variant rounded-lg text-xs text-on-surface"
                         />
-                        <button onClick={() => handleSaveEdit(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition"><Check size={14} /></button>
+                        <button onClick={() => handleSaveEdit(item)} className="p-1.5 text-success hover:bg-success/10 rounded-lg transition"><Check size={14} /></button>
                         <button onClick={() => setEditingItemId(null)} className="p-1.5 text-on-surface-variant/70 hover:bg-surface-container rounded-lg transition"><X size={14} /></button>
                       </>
                     ) : (
                       <>
                         <span className="flex-1 min-w-0 text-xs text-on-surface-variant truncate">{item.descricao}</span>
                         <button onClick={() => { setEditingItemId(item.id); setEditDescricao(item.descricao); }} className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"><Pencil size={14} /></button>
-                        <button onClick={() => handleDeleteItem(item.id)} disabled={deletingItemId === item.id} className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                        <button onClick={() => handleDeleteItem(item.id)} disabled={deletingItemId === item.id} className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition">
                           {deletingItemId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         </button>
                       </>

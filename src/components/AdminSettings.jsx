@@ -103,7 +103,7 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
       <div className="mb-3">
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5">
           <School size={15} className="text-primary" /> Turmas
-          <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-full px-2 py-0.5">{turmas.length}</span>
+          <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-sm px-2 py-0.5">{turmas.length}</span>
         </h3>
         <p className="text-xs text-on-surface-variant mt-1">
           As turmas aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural, comunicados e frequência.
@@ -166,14 +166,14 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
       )}
 
       {error && (
-        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
+        <div className="mt-2 p-2 bg-error/10 border border-error/40 rounded-zela-md text-xs text-error font-medium flex items-start gap-2">
           <AlertCircle size={14} className="shrink-0 mt-0.5" />
           {error}
         </div>
       )}
 
       {editingTurma && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40" onClick={closeRenameModal}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40" onClick={closeRenameModal}>
           <div className="bg-white rounded-zela-lg shadow-2xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
             <h4 className="text-sm font-bold text-on-surface mb-1">Renomear turma</h4>
             <p className="text-xs text-on-surface-variant mb-3">
@@ -189,7 +189,7 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
               className="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm mb-2"
             />
             {renameError && (
-              <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2">
+              <div className="mb-2 p-2 bg-error/10 border border-error/40 rounded-zela-md text-xs text-error font-medium flex items-start gap-2">
                 <AlertCircle size={14} className="shrink-0 mt-0.5" />
                 {renameError}
               </div>
@@ -289,7 +289,7 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
           {imageUrl ? (
             <img src={imageUrl} alt="Imagem de login" className="w-full h-full object-cover" />
           ) : (
-            <ImageIcon className="text-slate-300" size={28} />
+            <ImageIcon className="text-on-surface-variant/50" size={28} />
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -308,14 +308,14 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
                 type="button"
                 onClick={() => onImageChange('')}
                 title="Remover imagem"
-                className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition shrink-0"
               >
                 <Trash2 size={14} />
               </button>
             )}
           </div>
           {error && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-xs text-red-700 font-medium flex items-start gap-2 max-w-sm">
+            <div className="p-2 bg-error/10 border border-error/40 rounded-zela-md text-xs text-error font-medium flex items-start gap-2 max-w-sm">
               <AlertCircle size={14} className="shrink-0 mt-0.5" />
               {error}
             </div>
@@ -784,7 +784,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                         {logoUrl ? (
                           <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
-                          <Building2 className="text-slate-300" size={28} />
+                          <Building2 className="text-on-surface-variant/50" size={28} />
                         )}
                       </div>
                       <div className="flex gap-2 items-center">
@@ -807,7 +807,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                             type="button"
                             onClick={() => setLogoUrl('')}
                             title="Remover logo"
-                            className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                            className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition shrink-0"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -837,14 +837,14 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
           )}
 
           {errorMsg && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-error/10 border border-error/40 rounded-zela-md text-sm text-error font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" />
               {errorMsg}
             </div>
           )}
 
           {successMsg && (
-            <div className="p-2 bg-green-50 border border-green-200 rounded-zela-md text-sm text-green-700 font-medium flex items-center gap-2">
+            <div className="p-2 bg-success/10 border border-success/40 rounded-zela-md text-sm text-success font-medium flex items-center gap-2">
               <AlertCircle size={16} className="shrink-0" />
               {successMsg}
             </div>

@@ -16,7 +16,7 @@ export default function LoadingLogo({ logoUrl, size = 56 }) {
         />
       ) : (
         <div
-          className="animate-gentle-pulse bg-indigo-950 rounded-xl flex items-center justify-center"
+          className="animate-gentle-pulse bg-primary rounded-xl flex items-center justify-center"
           style={{ width: size, height: size }}
         >
           <ShieldCheck className="text-white" size={size * 0.55} />

@@ -5,8 +5,8 @@ import MitigacaoReportEditor from './MitigacaoReportEditor';
 
 const STATUS_BADGE = {
   RASCUNHO: 'bg-surface-container text-on-surface-variant border-outline-variant',
-  PUBLICADO: 'bg-green-50 text-green-700 border-green-200',
-  ARQUIVADO: 'bg-amber-50 text-amber-700 border-amber-200',
+  PUBLICADO: 'bg-success/10 text-success border-success/40',
+  ARQUIVADO: 'bg-brass-50 text-warning border-warning/40',
 };
 const STATUS_LABEL = { RASCUNHO: 'Rascunho', PUBLICADO: 'Publicado', ARQUIVADO: 'Arquivado' };
 
@@ -247,7 +247,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
           <button
             type="submit"
             disabled={isCreating || !createForm.student_id}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
           >
             {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
             Começar
@@ -273,7 +273,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium mb-2">{error}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

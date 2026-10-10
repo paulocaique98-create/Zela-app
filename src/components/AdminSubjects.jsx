@@ -160,7 +160,7 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
 
       {error && (
         <div className="px-5 sm:px-6 pt-4">
-          <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         </div>
       )}
 
@@ -192,7 +192,7 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
               <button onClick={() => openEdit(s)} className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-zela-md transition shrink-0">
                 <Pencil size={16} />
               </button>
-              <button onClick={() => setConfirmDelete(s)} className="p-2 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-zela-md transition shrink-0">
+              <button onClick={() => setConfirmDelete(s)} className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-zela-md transition shrink-0">
                 <Trash2 size={16} />
               </button>
             </div>
@@ -233,7 +233,7 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
                     const isSelected = selectedTurmas.includes(t);
                     return (
                       <button key={t} type="button" onClick={() => toggleTurma(t)}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold border transition ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/40'}`}>
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-xs font-bold border transition ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/40'}`}>
                         {isSelected && <Check size={12} />} {t}
                       </button>
                     );

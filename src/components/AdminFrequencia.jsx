@@ -5,10 +5,10 @@ import { useSchoolConfig } from '../lib/schoolConfig';
 import { SecondaryButton } from './GestaoShared';
 
 const STATUS_LABEL = {
-  presente: { label: 'Presente', icon: Check, cls: 'text-emerald-600 bg-emerald-50' },
-  ausente: { label: 'Ausente', icon: XIcon, cls: 'text-red-600 bg-red-50' },
-  atrasado: { label: 'Atrasado', icon: Clock, cls: 'text-amber-600 bg-amber-50' },
-  justificado: { label: 'Justificado', icon: FileWarning, cls: 'text-slate-600 bg-slate-100' },
+  presente: { label: 'Presente', icon: Check, cls: 'text-success bg-success/10' },
+  ausente: { label: 'Ausente', icon: XIcon, cls: 'text-error bg-error/10' },
+  atrasado: { label: 'Atrasado', icon: Clock, cls: 'text-warning bg-brass-50' },
+  justificado: { label: 'Justificado', icon: FileWarning, cls: 'text-on-surface-variant bg-surface-container' },
 };
 
 const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
@@ -78,7 +78,7 @@ export default function AdminFrequencia({ currentUser, currentSchool }) {
 
       {error && (
         <div className="px-5 sm:px-6 pt-4">
-          <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         </div>
       )}
 
@@ -87,7 +87,7 @@ export default function AdminFrequencia({ currentUser, currentSchool }) {
           <div className="flex flex-wrap gap-1.5 pb-1">
             {Object.entries(STATUS_LABEL).map(([k, v]) => {
               const n = rows.filter(r => r.status === k).length;
-              return n > 0 ? <span key={k} className={`text-xs font-bold px-2.5 py-1 rounded-full ${v.cls}`}>{n} {v.label.toLowerCase()}</span> : null;
+              return n > 0 ? <span key={k} className={`text-xs font-bold px-2.5 py-1 rounded-sm ${v.cls}`}>{n} {v.label.toLowerCase()}</span> : null;
             })}
           </div>
         )}
@@ -109,7 +109,7 @@ export default function AdminFrequencia({ currentUser, currentSchool }) {
                   <p className="font-bold text-on-surface text-sm truncate">{r.students?.name || 'Aluno'}</p>
                   <p className="text-[11px] text-on-surface-variant/70">{r.class_name}</p>
                 </div>
-                <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full shrink-0 ${info.cls}`}>
+                <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-sm shrink-0 ${info.cls}`}>
                   <Icon size={12} /> {info.label}
                 </span>
               </div>

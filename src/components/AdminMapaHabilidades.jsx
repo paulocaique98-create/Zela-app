@@ -125,7 +125,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
           active={aba}
           onChange={setAba}
         />
-        {erro && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-3">{erro}</div>}
+        {erro && <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium mb-3">{erro}</div>}
 
         {aba === 'catalogo' ? (
           <MapaHabilidadesCatalogo currentUser={currentUser} schoolId={schoolId} podeEditar={podeCatalogo} />
@@ -158,7 +158,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                 <div className="grid grid-cols-2 sm:flex gap-2 shrink-0">
                   <button type="button" disabled={rascunhosTurma === 0 || processando}
                     onClick={() => setConfirmar({ de: 'RASCUNHO', para: 'PUBLICADO' })}
-                    className="flex items-center justify-center gap-2 h-10 bg-primary text-white px-3 sm:px-4 rounded-zela-md font-bold text-sm whitespace-nowrap disabled:bg-slate-300 disabled:text-on-surface-variant">
+                    className="flex items-center justify-center gap-2 h-10 bg-primary text-white px-3 sm:px-4 rounded-zela-md font-bold text-sm whitespace-nowrap disabled:bg-outline-variant disabled:text-on-surface-variant">
                     <Send size={15} className="shrink-0" /> <span className="sm:hidden">Publicar</span><span className="hidden sm:inline">Publicar para a família</span>
                   </button>
                   <button type="button" disabled={publicadosTurma === 0 || processando}
@@ -198,9 +198,9 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                           <p className="font-bold text-sm text-on-surface truncate">{aluno.name}</p>
                           <p className="text-xs text-on-surface-variant mt-0.5">{formatIdade(idadeEmMeses(aluno.birth_date))}</p>
                           <div className="flex flex-wrap gap-1 mt-1.5">
-                            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant">{regs.length} habilidade{regs.length !== 1 ? 's' : ''}</span>
-                            {rasc > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-warning/15 text-warning">{rasc} em rascunho</span>}
-                            {pub > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{pub} publicada{pub !== 1 ? 's' : ''}</span>}
+                            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-sm bg-surface-container text-on-surface-variant">{regs.length} habilidade{regs.length !== 1 ? 's' : ''}</span>
+                            {rasc > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-sm bg-warning/15 text-warning">{rasc} em rascunho</span>}
+                            {pub > 0 && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-sm bg-success/10 text-success">{pub} publicada{pub !== 1 ? 's' : ''}</span>}
                           </div>
                         </div>
                         {expandido ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -222,7 +222,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                                     ) : (
                                       <span className="text-xs font-bold text-on-surface-variant">{SITUACAO_LABEL[r.situacao]}</span>
                                     )}
-                                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full w-fit ${r.status === 'PUBLICADO' ? 'bg-success/10 text-success' : 'bg-warning/15 text-warning'}`}>
+                                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-sm w-fit ${r.status === 'PUBLICADO' ? 'bg-success/10 text-success' : 'bg-warning/15 text-warning'}`}>
                                       {r.status === 'PUBLICADO' ? 'Publicado' : 'Rascunho'}
                                     </span>
                                   </li>

@@ -35,7 +35,7 @@ function StudentQrCard({ student, dataUrl, isGenerating, error, onGenerate, sele
           </div>
         </div>
         {hasQr && !dataUrl && (
-          <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-green-50 text-green-700 border-green-200 shrink-0 flex items-center gap-1">
+          <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40 shrink-0 flex items-center gap-1">
             <CheckCircle2 size={12} /> Gerado
           </span>
         )}
@@ -186,7 +186,7 @@ export default function AdminQrCheckin({ students, currentSchool }) {
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         {(students || []).length === 0 ? (
           <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <QrCode className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+            <QrCode className="mx-auto h-10 w-10 text-on-surface-variant/50 mb-3" />
             <p className="text-on-surface-variant font-medium">Nenhum aluno cadastrado ainda.</p>
           </div>
         ) : (

@@ -95,7 +95,7 @@ export default function AdminDuplicateBiometrics({ currentUser }) {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium shrink-0">{error}</div>
+        <div className="mb-4 p-3 bg-error/10 border border-error/40 rounded-zela-md text-sm text-error font-medium shrink-0">{error}</div>
       )}
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
@@ -105,14 +105,14 @@ export default function AdminDuplicateBiometrics({ currentUser }) {
           </div>
         ) : pairs && pairs.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-zela-lg border border-dashed border-outline-variant">
-            <Fingerprint className="mx-auto h-10 w-10 text-green-400 mb-3" />
+            <Fingerprint className="mx-auto h-10 w-10 text-success mb-3" />
             <p className="text-on-surface-variant font-medium">Nenhuma duplicidade encontrada — cada biometria cadastrada corresponde a uma pessoa diferente.</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {(pairs || []).map((pair, i) => (
-              <div key={i} className="p-4 bg-white border-2 border-amber-200 rounded-zela-lg space-y-3">
-                <p className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 uppercase tracking-wide">
+              <div key={i} className="p-4 bg-white border-2 border-warning/40 rounded-zela-lg space-y-3">
+                <p className="flex items-center gap-1.5 text-[11px] font-bold text-warning uppercase tracking-wide">
                   <ShieldAlert size={13} /> Possível mesma pessoa em 2 contas
                 </p>
                 <div className="flex items-center gap-3">

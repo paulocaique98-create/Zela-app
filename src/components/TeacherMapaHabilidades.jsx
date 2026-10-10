@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, Lock, Sparkles } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, Lock, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
 import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
@@ -11,9 +11,9 @@ const COLUNAS_HABILIDADE = 'id, school_id, area, descricao, idade_min_meses, ida
 const COLUNAS_REGISTRO = 'id, school_id, student_id, habilidade_id, ano, semestre, situacao, status, author_id';
 
 const BOTAO_SITUACAO = {
-  sem_interesse: 'data-[on=true]:bg-slate-600 data-[on=true]:text-white data-[on=true]:border-slate-600',
-  adquirindo: 'data-[on=true]:bg-amber-500 data-[on=true]:text-white data-[on=true]:border-amber-500',
-  adquirido: 'data-[on=true]:bg-green-600 data-[on=true]:text-white data-[on=true]:border-green-600',
+  sem_interesse: 'data-[on=true]:bg-on-surface-variant data-[on=true]:text-white data-[on=true]:border-outline',
+  adquirindo: 'data-[on=true]:bg-warning data-[on=true]:text-white data-[on=true]:border-warning',
+  adquirido: 'data-[on=true]:bg-success data-[on=true]:text-white data-[on=true]:border-success',
 };
 
 export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
@@ -170,7 +170,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-        {erro && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium mb-3">{erro}</div>}
+        {erro && <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium mb-3">{erro}</div>}
 
         {carregando || !pronto ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
@@ -180,7 +180,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
           </div>
         ) : !passo ? (
           <div className="text-center py-16">
-            <Sparkles className="mx-auto h-10 w-10 text-primary mb-3" />
+            <Target className="mx-auto h-10 w-10 text-primary mb-3" aria-hidden="true" />
             <p className="text-sm font-bold text-on-surface">Nada para preencher neste filtro.</p>
             <p className="text-xs text-on-surface-variant mt-1">Nenhuma criança da sua turma está na faixa de idade das habilidades desta área.</p>
           </div>
@@ -207,7 +207,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
                       <p className="font-bold text-sm text-on-surface truncate">{item.aluno.name}</p>
                       <p className="text-[11px] text-on-surface-variant">
                         {formatIdade(meses)}
-                        {travado && <span className="ml-2 inline-flex items-center gap-1 font-bold text-green-700"><Lock size={11} /> Publicado</span>}
+                        {travado && <span className="ml-2 inline-flex items-center gap-1 font-bold text-success"><Lock size={11} /> Publicado</span>}
                       </p>
                     </div>
                     <div className="flex gap-1.5 flex-wrap" role="radiogroup" aria-label={`Situação de ${item.aluno.name}`}>
@@ -244,7 +244,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
                 <ChevronLeft size={18} /> Anterior
               </button>
               {passo.completa ? (
-                <span className="hidden sm:flex items-center gap-1 text-xs font-bold text-green-700"><CheckCircle2 size={14} /> Habilidade preenchida</span>
+                <span className="hidden sm:flex items-center gap-1 text-xs font-bold text-success"><CheckCircle2 size={14} /> Habilidade preenchida</span>
               ) : (
                 <span className="text-xs text-on-surface-variant text-center">Marque todas as crianças para seguir</span>
               )}
@@ -252,7 +252,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
                 type="button"
                 onClick={() => setIndice(indiceAtual + 1)}
                 disabled={!podeSeguir}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-zela-md bg-primary text-white text-sm font-bold disabled:bg-slate-300 disabled:text-on-surface-variant"
+                className="flex items-center gap-1 px-4 py-2.5 rounded-zela-md bg-primary text-white text-sm font-bold disabled:bg-outline-variant disabled:text-on-surface-variant"
               >
                 Próxima <ChevronRight size={18} />
               </button>

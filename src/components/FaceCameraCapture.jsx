@@ -453,12 +453,12 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
 
       {saveSuccess ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3 bg-white">
-          <CheckCircle2 size={56} className="text-green-500" />
+          <CheckCircle2 size={56} className="text-success" />
           <h3 className="font-bold text-lg text-on-surface">Biometria cadastrada!</h3>
           <p className="text-sm text-on-surface-variant max-w-xs">Já pode usar o reconhecimento facial no Autoatendimento.</p>
         </div>
       ) : (
-      <div ref={containerRef} className="relative flex-1 bg-slate-950 overflow-hidden">
+      <div ref={containerRef} className="relative flex-1 bg-ink overflow-hidden">
         {/* O <video> fica sempre montado (a partir do momento em que a câmera é
             iniciada) — desmontá-lo (ex: ao mostrar a foto capturada) perde o
             srcObject e a câmera não volta em "Tirar Outra". */}
@@ -472,11 +472,11 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
               <Camera size={32} />
             </div>
             {versao === 'atualizando' ? (
-              <p className="text-sm font-semibold text-slate-200 max-w-xs">
+              <p className="text-sm font-semibold text-on-surface-variant/50 max-w-xs">
                 Existe uma versão nova do Zela Escola. Atualizando antes de abrir a câmera; depois, é só abrir o cadastro de novo.
               </p>
             ) : (
-              <p className="text-sm font-semibold text-slate-200 max-w-xs">
+              <p className="text-sm font-semibold text-on-surface-variant/50 max-w-xs">
                 A câmera só é ligada quando você clicar em "Iniciar Captura"
               </p>
             )}
@@ -484,10 +484,10 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center bg-slate-950">
-            <p className="text-sm font-bold text-red-400">{error}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center bg-ink">
+            <p className="text-sm font-bold text-error">{error}</p>
             {cameraStarted && (
-              <button onClick={tentarDeNovo} className="mt-4 flex items-center gap-2 bg-white text-slate-900 font-bold text-sm px-5 py-2.5 rounded-zela-md active:scale-[0.98] transition">
+              <button onClick={tentarDeNovo} className="mt-4 flex items-center gap-2 bg-white text-on-surface font-bold text-sm px-5 py-2.5 rounded-zela-md active:scale-[0.98] transition">
                 <RefreshCw size={16} /> Tentar de novo
               </button>
             )}
@@ -499,7 +499,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         )}
 
         {!error && cameraStarted && !capturedImage && (!modelsLoaded || !cameraReady) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 bg-slate-950/80">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 bg-ink/80">
             <Loader2 className="h-10 w-10 animate-spin mb-3" />
             <p className="text-sm font-semibold">{!modelsLoaded ? 'Carregando IA de reconhecimento' : 'Iniciando câmera'}</p>
           </div>
@@ -508,9 +508,9 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
         {!error && !capturedImage && cameraReady && (() => {
           const pausada = countdown !== null && framePosition !== 'ok';
           const ovalColor =
-            countdown !== null && !pausada ? 'border-indigo-400' :
-            framePosition === 'ok' ? 'border-green-500' :
-            framePosition ? 'border-amber-500' : 'border-white/80';
+            countdown !== null && !pausada ? 'border-primary/60' :
+            framePosition === 'ok' ? 'border-success' :
+            framePosition ? 'border-warning' : 'border-white/80';
           const message = MENSAGEM_DO_ENQUADRAMENTO[framePosition] || 'Olhe para a câmera';
           return (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
@@ -527,7 +527,7 @@ export default function FaceCameraCapture({ personName, consentMessage, onSave, 
                     )}
                   </div>
                 ) : (
-                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-lg text-center leading-tight backdrop-blur-md ${framePosition === 'ok' ? 'bg-green-600/80 text-white' : 'bg-black/60 text-white'}`}>
+                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-lg text-center leading-tight backdrop-blur-md ${framePosition === 'ok' ? 'bg-success/80 text-white' : 'bg-black/60 text-white'}`}>
                     {message}
                   </span>
                 )}

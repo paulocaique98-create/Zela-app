@@ -1498,7 +1498,7 @@ export default function App() {
   const isFlushChrome = !isKioskFullscreen;
 
   return (
-    <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-slate-100 font-sans text-slate-800 selection:bg-indigo-100">
+    <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col bg-surface-container font-sans text-on-surface selection:bg-primary/15">
       {trocandoConta && (
         <div className="fixed inset-0 z-[100] bg-surface/90 flex flex-col items-center justify-center gap-4">
           <LoadingLogo logoUrl={currentSchool?.logo_url} size={96} />
@@ -1537,7 +1537,7 @@ export default function App() {
           Autoatendimento também aparece (a equipe precisa saber que o totem
           está sem conexão). */}
       {!isOnline && (
-        <div role="alert" className="shrink-0 bg-amber-500 text-white px-4 py-2 text-center text-sm font-bold">
+        <div role="alert" className="shrink-0 bg-warning text-white px-4 py-2 text-center text-sm font-bold">
           Sem conexão com a internet · as informações podem estar desatualizadas e nada será salvo até a conexão voltar.
         </div>
       )}
@@ -1669,24 +1669,24 @@ export default function App() {
 
       {/* EMERGENCY OVERLAY */}
       {isEmergency && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-red-900/90 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-red-600 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border-4 border-red-500 flex flex-col animate-pulse">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-error/90 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-error rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border-4 border-error flex flex-col animate-pulse">
             <div className="p-8 text-center text-white space-y-6">
-              <div className="w-24 h-24 bg-white text-red-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-24 h-24 bg-white text-error rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               </div>
               <div>
                 <h1 className="text-4xl font-black uppercase tracking-widest mb-2">Emergência!</h1>
-                <p className="text-red-100 text-lg font-medium">Atenção: A equipe da escola acionou o botão de pânico.</p>
+                <p className="text-error text-lg font-medium">Atenção: A equipe da escola acionou o botão de pânico.</p>
               </div>
-              <div className="bg-red-800/50 p-4 rounded-2xl border border-red-700/50 backdrop-blur-sm text-left">
-                <p className="text-sm font-bold text-red-200 uppercase mb-1">Detalhes da Ocorrência:</p>
+              <div className="bg-error/50 p-4 rounded-2xl border border-error/50 backdrop-blur-sm text-left">
+                <p className="text-sm font-bold text-error uppercase mb-1">Detalhes da Ocorrência:</p>
                 <p className="font-mono text-white mb-1">Acionado por: {emergencyData?.triggeredBy || 'Equipe Zela'}</p>
                 <p className="font-mono text-white">Horário: {emergencyData?.time || '--:--'}</p>
-                {emergencyData?.message && <p className="font-mono text-amber-300 mt-2">"{emergencyData.message}"</p>}
+                {emergencyData?.message && <p className="font-mono text-warning mt-2">"{emergencyData.message}"</p>}
               </div>
-              <div className="pt-6 border-t border-red-500">
-                <button onClick={dismissEmergency} className="bg-white text-red-600 font-black py-4 px-8 rounded-2xl hover:bg-red-50 active:scale-95 transition-all shadow-xl w-full text-lg uppercase tracking-wider">
+              <div className="pt-6 border-t border-error">
+                <button onClick={dismissEmergency} className="bg-white text-error font-black py-4 px-8 rounded-2xl hover:bg-error/10 active:scale-95 transition-all shadow-xl w-full text-lg uppercase tracking-wider">
                   Ciente / Dispensar Alerta
                 </button>
               </div>

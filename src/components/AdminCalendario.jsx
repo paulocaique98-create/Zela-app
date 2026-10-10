@@ -12,10 +12,10 @@ const TIPO_BY_VALUE = Object.fromEntries(EVENTO_TIPOS.map(t => [t.value, t]));
 
 const COLOR_CLASSES = {
   slate: 'bg-surface-container text-on-surface-variant border-outline-variant',
-  red: 'bg-red-50 text-red-700 border-red-200',
-  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  red: 'bg-error/10 text-error border-error/40',
+  amber: 'bg-brass-50 text-warning border-warning/40',
   indigo: 'bg-primary/10 text-primary border-primary/20',
-  green: 'bg-green-50 text-green-700 border-green-200',
+  green: 'bg-success/10 text-success border-success/40',
 };
 
 function formatDateLabel(dateStr) {
@@ -539,7 +539,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <button
                 type="button"
                 onClick={() => setIsModeloMenuOpen(v => !v)}
-                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
               >
                 <Download size={18} />
                 <span className="text-xs sm:text-sm">Modelo</span>
@@ -561,13 +561,13 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 </>
               )}
             </div>
-            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingPdf ? 'opacity-60 pointer-events-none' : ''}`}>
+            <label className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingPdf ? 'opacity-60 pointer-events-none' : ''}`}>
               {isParsingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
               <span className="text-xs sm:text-sm">{isParsingPdf ? 'Lendo PDF...' : 'Importar'}</span>
               <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="hidden" disabled={isParsingPdf} />
             </label>
             <label
-              className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
+              className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
               title="Lê qualquer PDF de calendário (mesmo em layout gráfico) usando IA, sem precisar seguir o modelo"
             >
               {isParsingIA ? <Loader2 size={18} className="animate-spin" /> : <ScanText size={18} />}
@@ -577,7 +577,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             {eventos.length > 0 && (
               <button
                 onClick={() => setIsSelectingEventos(true)}
-                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
               >
                 <ListChecks size={18} /> <span className="text-xs sm:text-sm">Selecionar</span>
               </button>
@@ -591,7 +591,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 type="checkbox"
                 checked={eventos.length > 0 && selectedEventoIds.size === eventos.length}
                 onChange={toggleSelectAllEventos}
-                className="w-4 h-4 accent-indigo-600"
+                className="w-4 h-4 accent-primary"
               />
               Todos
             </label>
@@ -599,13 +599,13 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             <button
               onClick={() => setConfirmBulkDeleteEventos(true)}
               disabled={selectedEventoIds.size === 0}
-              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none text-red-600 px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="flex items-center gap-2 bg-error/10 hover:bg-error/15 disabled:opacity-50 disabled:pointer-events-none text-error px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               <Trash2 size={16} /> <span className="hidden sm:inline">Excluir selecionados</span>
             </button>
             <button
               onClick={exitSelectEventos}
-              className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-on-surface px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="flex items-center gap-2 bg-surface-container-high hover:bg-outline-variant text-on-surface px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               Cancelar
             </button>
@@ -616,7 +616,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             {aulas.length > 0 && (
               <button
                 onClick={() => setIsSelectingAulas(true)}
-                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-indigo-300 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+                className="flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm"
               >
                 <ListChecks size={18} /> <span className="text-xs sm:text-sm">Selecionar</span>
               </button>
@@ -636,7 +636,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 type="checkbox"
                 checked={aulas.length > 0 && selectedAulaIds.size === aulas.length}
                 onChange={toggleSelectAllAulas}
-                className="w-4 h-4 accent-indigo-600"
+                className="w-4 h-4 accent-primary"
               />
               Todas
             </label>
@@ -644,13 +644,13 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             <button
               onClick={() => setConfirmBulkDeleteAulas(true)}
               disabled={selectedAulaIds.size === 0}
-              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none text-red-600 px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="flex items-center gap-2 bg-error/10 hover:bg-error/15 disabled:opacity-50 disabled:pointer-events-none text-error px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               <Trash2 size={16} /> <span className="hidden sm:inline">Excluir selecionadas</span>
             </button>
             <button
               onClick={exitSelectAulas}
-              className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-on-surface px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="flex items-center gap-2 bg-surface-container-high hover:bg-outline-variant text-on-surface px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               Cancelar
             </button>
@@ -671,7 +671,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
         >
           Aulas Especiais
           {iaAulaCandidates && (
-            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-black align-middle">
+            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-sm bg-warning text-white text-[10px] font-black align-middle">
               {iaAulaCandidates.length}
             </span>
           )}
@@ -681,7 +681,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
       {activeTab === 'eventos' && (
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
         {importError && !importCandidates && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
+          <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {importError}
           </div>
         )}
@@ -689,7 +689,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
         {importCandidates && (
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             {importFromIA && (
-              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
+              <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
                 <AlertTriangle size={15} className="shrink-0 mt-0.5" />
                 Esses eventos foram lidos por IA e podem conter erros. Nada foi publicado ainda. Confira e corrija cada linha com atenção antes de confirmar; só depois disso o calendário fica visível pras famílias.
               </div>
@@ -701,13 +701,13 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                   {importCandidates.length} evento(s) detectado(s). Confira as datas e títulos antes de importar: a extração automática pode errar em PDFs com layout complexo.
                 </p>
               </div>
-              <button onClick={() => { setImportCandidates(null); setImportFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => { setImportCandidates(null); setImportFromIA(false); }} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
 
             {importError && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{importError}</div>
+              <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{importError}</div>
             )}
 
             <div className="max-h-[50vh] overflow-y-auto space-y-2">
@@ -717,7 +717,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                     type="checkbox"
                     checked={c.selected}
                     onChange={e => updateCandidate(c.id, { selected: e.target.checked })}
-                    className="w-4 h-4 accent-indigo-600 shrink-0"
+                    className="w-4 h-4 accent-primary shrink-0"
                   />
                   <input
                     type="date"
@@ -747,14 +747,14 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             <div className="flex gap-2">
               <button
                 onClick={() => { setImportCandidates(null); setImportFromIA(false); }}
-                className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm"
+                className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmImport}
                 disabled={isImporting || selectedImportCount === 0}
-                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
               >
                 {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Importar {selectedImportCount} evento(s)
@@ -767,7 +767,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingId ? 'Editar evento' : 'Novo evento'}</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -818,7 +818,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSaving || !title.trim() || !eventDate}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {editingId ? 'Salvar' : 'Adicionar Evento'}
@@ -827,7 +827,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -848,7 +848,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <div
                 key={ev.id}
                 onClick={() => isSelectingEventos && toggleSelectEvento(ev.id)}
-                className={`bg-white border rounded-zela-lg p-4 sm:p-5 shadow-sm ${isPast ? 'opacity-60' : ''} ${isSelectingEventos ? 'cursor-pointer' : ''} ${isSelectingEventos && selectedEventoIds.has(ev.id) ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-outline-variant'}`}
+                className={`bg-white border rounded-zela-lg p-4 sm:p-5 shadow-sm ${isPast ? 'opacity-60' : ''} ${isSelectingEventos ? 'cursor-pointer' : ''} ${isSelectingEventos && selectedEventoIds.has(ev.id) ? 'border-primary ring-1 ring-primary' : 'border-outline-variant'}`}
               >
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex items-start gap-3 min-w-0">
@@ -858,17 +858,17 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                         checked={selectedEventoIds.has(ev.id)}
                         onChange={() => toggleSelectEvento(ev.id)}
                         onClick={e => e.stopPropagation()}
-                        className="w-4 h-4 mt-1 accent-indigo-600 shrink-0"
+                        className="w-4 h-4 mt-1 accent-primary shrink-0"
                       />
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-on-surface">{ev.title}</h4>
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${COLOR_CLASSES[tipo.color]}`}>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-sm border ${COLOR_CLASSES[tipo.color]}`}>
                           {tipo.label}
                         </span>
                         {ev.event_date === todayStr && (
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary text-white">Hoje</span>
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-primary text-white">Hoje</span>
                         )}
                       </div>
                       <p className="text-on-surface-variant text-xs mt-0.5 capitalize">{formatDateLabel(ev.event_date)}</p>
@@ -886,7 +886,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                       <button
                         onClick={() => handleDelete(ev.id)}
                         disabled={deletingId === ev.id}
-                        className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                         title="Excluir"
                       >
                         {deletingId === ev.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -907,18 +907,18 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
       {activeTab === 'aulas' && (
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
         {aulaError && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{aulaError}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{aulaError}</div>
         )}
 
         {iaAulaCandidates && (
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
+            <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-xs font-medium flex gap-2 items-start">
               <AlertTriangle size={15} className="shrink-0 mt-0.5" />
               A IA também encontrou aulas especiais nesse PDF. Confira antes de importar.
             </div>
             <div className="flex justify-between items-start gap-3">
               <h3 className="font-bold text-on-surface text-sm">{iaAulaCandidates.length} aula(s) especial(is) detectada(s)</h3>
-              <button onClick={() => setIaAulaCandidates(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition shrink-0">
+              <button onClick={() => setIaAulaCandidates(null)} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition shrink-0">
                 <X size={18} />
               </button>
             </div>
@@ -929,7 +929,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                     type="checkbox"
                     checked={c.selected}
                     onChange={e => setIaAulaCandidates(prev => prev.map(x => (x.id === c.id ? { ...x, selected: e.target.checked } : x)))}
-                    className="w-4 h-4 mt-1 accent-indigo-600 shrink-0"
+                    className="w-4 h-4 mt-1 accent-primary shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <input
@@ -946,13 +946,13 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setIaAulaCandidates(null)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
+              <button onClick={() => setIaAulaCandidates(null)} className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2.5 rounded-zela-md transition-all text-sm">
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmIaAulas}
                 disabled={isImportingAulas || iaAulaCandidates.filter(c => c.selected).length === 0}
-                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
+                className="flex-[2] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 rounded-zela-md transition-all active:scale-95 text-sm"
               >
                 {isImportingAulas ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Importar {iaAulaCandidates.filter(c => c.selected).length} aula(s)
@@ -965,7 +965,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
           <form onSubmit={handleSubmitAula} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingAulaId ? 'Editar aula especial' : 'Nova aula especial'}</h3>
-              <button type="button" onClick={resetAulaForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetAulaForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -985,7 +985,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <div className="flex gap-2">
                 {[{ v: 'geral', l: 'Geral (todos os alunos)' }, { v: 'integral', l: 'Integral' }].map(opt => (
                   <button key={opt.v} type="button" onClick={() => setAulaCategoria(opt.v)}
-                    className={`flex-1 py-2.5 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaCategoria === opt.v ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                    className={`flex-1 py-2.5 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaCategoria === opt.v ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`}>
                     {opt.l}
                   </button>
                 ))}
@@ -997,7 +997,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <div className="flex gap-2">
                 {[{ v: 'semanal', l: 'Toda semana' }, { v: 'mensal', l: 'Semana(s) específica(s) do mês' }].map(opt => (
                   <button key={opt.v} type="button" onClick={() => setAulaFrequencia(opt.v)}
-                    className={`flex-1 py-2.5 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaFrequencia === opt.v ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                    className={`flex-1 py-2.5 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaFrequencia === opt.v ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`}>
                     {opt.l}
                   </button>
                 ))}
@@ -1009,7 +1009,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <div className="flex flex-wrap gap-2">
                 {DIAS_SEMANA.map(dia => (
                   <button key={dia} type="button" onClick={() => toggleAulaDia(dia)}
-                    className={`px-3 py-1.5 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaDiasSemana.includes(dia) ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                    className={`px-3 py-1.5 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaDiasSemana.includes(dia) ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`}>
                     {dia}
                   </button>
                 ))}
@@ -1022,7 +1022,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 <div className="flex flex-wrap gap-2">
                   {OCORRENCIAS_MES.map(oc => (
                     <button key={oc.value} type="button" onClick={() => toggleAulaOcorrencia(oc.value)}
-                      className={`px-3 py-1.5 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaOcorrencias.includes(oc.value) ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                      className={`px-3 py-1.5 rounded-zela-md text-xs font-bold border-2 transition-all ${aulaOcorrencias.includes(oc.value) ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`}>
                       {oc.label}
                     </button>
                   ))}
@@ -1033,7 +1033,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSavingAula || !aulaNome.trim() || aulaDiasSemana.length === 0 || (aulaFrequencia === 'mensal' && aulaOcorrencias.length === 0)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSavingAula ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {editingAulaId ? 'Salvar' : 'Adicionar Aula Especial'}
@@ -1059,14 +1059,14 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <div key={grupo.key} className="space-y-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-on-surface">
                   {grupo.label}
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary tabular-nums">{items.length}</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-primary/10 text-primary tabular-nums">{items.length}</span>
                 </h3>
                 <div className="grid gap-2 lg:grid-cols-2">
                 {items.map(aula => (
                   <div
                     key={aula.id}
                     onClick={() => isSelectingAulas && toggleSelectAula(aula.id)}
-                    className={`bg-surface-container-lowest border rounded-zela-lg p-3.5 flex justify-between items-center gap-3 ${isSelectingAulas ? 'cursor-pointer' : ''} ${isSelectingAulas && selectedAulaIds.has(aula.id) ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-outline-variant'}`}
+                    className={`bg-surface-container-lowest border rounded-zela-lg p-3.5 flex justify-between items-center gap-3 ${isSelectingAulas ? 'cursor-pointer' : ''} ${isSelectingAulas && selectedAulaIds.has(aula.id) ? 'border-primary ring-1 ring-primary' : 'border-outline-variant'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {isSelectingAulas && (
@@ -1075,7 +1075,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                           checked={selectedAulaIds.has(aula.id)}
                           onChange={() => toggleSelectAula(aula.id)}
                           onClick={e => e.stopPropagation()}
-                          className="w-4 h-4 accent-indigo-600 shrink-0"
+                          className="w-4 h-4 accent-primary shrink-0"
                         />
                       )}
                       <span className="hidden sm:flex w-9 h-9 rounded-zela-md bg-primary/10 text-primary items-center justify-center shrink-0"><CalendarDays size={18} /></span>
@@ -1089,7 +1089,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                         <button onClick={() => handleEditAula(aula)} className="p-2 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition" title="Editar">
                           <Pencil size={16} />
                         </button>
-                        <button onClick={() => handleDeleteAula(aula.id)} disabled={deletingAulaId === aula.id} className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Excluir">
+                        <button onClick={() => handleDeleteAula(aula.id)} disabled={deletingAulaId === aula.id} className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition" title="Excluir">
                           {deletingAulaId === aula.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                         </button>
                       </div>

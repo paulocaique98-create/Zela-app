@@ -19,12 +19,12 @@ function FichaCard({ student, ficha }) {
     <div className="bg-white border border-outline-variant rounded-zela-lg overflow-hidden">
       <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 text-left">
         <div className="flex items-start gap-2.5 min-w-0">
-          {hasAlerta && <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />}
+          {hasAlerta && <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />}
           <p className="font-bold text-on-surface text-sm break-words">{student.name}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           {ficha ? (
-            <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-green-50 text-green-700 border-green-200">Preenchida</span>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40">Preenchida</span>
           ) : (
             <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-surface-container text-on-surface-variant border-outline-variant">Não preenchida</span>
           )}
@@ -119,7 +119,7 @@ export default function AdminFichaMedica({ currentUser, currentSchool, students 
 
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">

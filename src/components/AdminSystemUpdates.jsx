@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
+import { PackageCheck, Inbox, Loader2, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 function formatDate(iso) {
@@ -66,7 +66,7 @@ export default function AdminSystemUpdates({ currentUser, onRead }) {
           sempre visível, mantém o ícone). */}
       <div className="flex items-center gap-2.5 mb-6 shrink-0">
         <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
-          <Sparkles size={18} />
+          <PackageCheck size={18} aria-hidden="true" />
         </div>
         <p className="text-small text-on-surface-variant">Novidades e melhorias do sistema Zela Escola.</p>
       </div>
@@ -78,7 +78,7 @@ export default function AdminSystemUpdates({ currentUser, onRead }) {
           </div>
         ) : updates.length === 0 ? (
           <div className="text-center py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <Sparkles className="mx-auto h-10 w-10 text-slate-300 mb-3" />
+            <Inbox className="mx-auto h-10 w-10 text-on-surface-variant/50 mb-3" aria-hidden="true" />
             <p className="text-on-surface-variant font-medium">Nenhuma atualização publicada ainda.</p>
           </div>
         ) : (

@@ -1329,7 +1329,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
             <div className={`absolute inset-0 pointer-events-none z-20 border-4 transition-colors duration-300 ${
               matchStatus === 'matched' ? 'border-success' :
                 matchStatus === 'no-match' ? 'border-error' :
-                  framePosition === 'too-far' || framePosition === 'too-close' ? 'border-orange-500' :
+                  framePosition === 'too-far' || framePosition === 'too-close' ? 'border-warning' :
                     matchStatus === 'searching' ? 'border-primary' : 'border-transparent'
             }`} />
           )}
@@ -1350,7 +1350,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
               isso, nenhum match é confirmado. */}
           {!capturedImage && !error && cameraReady && matchStatus === 'searching' && (framePosition === 'too-far' || framePosition === 'too-close') && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 gap-2 px-6 text-center">
-              <span className="bg-orange-500/90 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-zela-md shadow-md animate-pulse">
+              <span className="bg-warning/90 backdrop-blur-md text-white text-sm sm:text-base font-bold px-4 py-2 rounded-zela-md shadow-md animate-pulse">
                 {framePosition === 'too-far' ? 'Aproxime-se do Dispositivo' : 'Afaste-se do Dispositivo'}
               </span>
             </div>

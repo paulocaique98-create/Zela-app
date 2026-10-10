@@ -242,7 +242,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-[999] bg-ink/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       <div className="w-full max-w-sm bg-white rounded-zela-xl overflow-hidden shadow-2xl flex flex-col">
 
         {/* Header */}
@@ -268,7 +268,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
           {/* ──── ETAPA: done ──── */}
           {step === 'done' && (
             <div className="text-center py-8 space-y-4 animate-in zoom-in">
-              <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+              <CheckCircle className="mx-auto h-16 w-16 text-success" />
               <div>
                 <h4 className="font-bold text-on-surface text-lg">Solicitação Enviada!</h4>
                 <p className="text-on-surface-variant text-small mt-1">Aguardando confirmação da recepção.</p>
@@ -288,15 +288,15 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     key={u.id}
                     disabled={isLoading}
                     onClick={() => loadStudentsForUser(u)}
-                    className="w-full flex items-center gap-3 p-3 bg-surface-container-low hover:bg-primary/10 hover:border-indigo-300 active:scale-98 border border-outline-variant rounded-zela-lg transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 bg-surface-container-low hover:bg-primary/10 hover:border-primary/60 active:scale-98 border border-outline-variant rounded-zela-lg transition-all text-left"
                   >
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 bg-primary/15 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-base font-black text-primary">
                         {u.name?.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <span className="font-bold text-on-surface">{u.name}</span>
-                    {isLoading && <Loader2 size={16} className="ml-auto animate-spin text-indigo-400" />}
+                    {isLoading && <Loader2 size={16} className="ml-auto animate-spin text-primary" />}
                   </button>
                 ))}
               </div>
@@ -347,12 +347,12 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                           className={`w-full p-3 border rounded-zela-md flex justify-between items-center text-sm shadow-sm transition-all text-left ${checked ? 'bg-white border-outline-variant' : 'bg-surface-container-lowest border-dashed border-outline-variant opacity-60'}`}
                         >
                           <span className="flex items-center gap-2.5 min-w-0">
-                            <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-indigo-600' : 'border-outline-variant'}`}>
+                            <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-primary border-primary' : 'border-outline-variant'}`}>
                               {checked && <CheckCircle size={13} className="text-white" strokeWidth={3} />}
                             </span>
                             <span className="font-bold text-on-surface truncate">{student.name}</span>
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-indigo-100 text-primary' : 'bg-green-100 text-green-700'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm shrink-0 ml-2 ${student.status === 'in_school' ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success'}`}>
                             {student.status === 'in_school' ? 'SAÍDA' : 'ENTRADA'}
                           </span>
                         </button>
@@ -363,7 +363,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
+                <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
                   <ShieldAlert size={18} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -379,7 +379,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={handleRequestAccess}
                   disabled={isLoading || selectedStudentIds.length === 0}
-                  className="flex-[2] bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-black py-3.5 rounded-zela-lg active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider flex justify-center items-center gap-2"
+                  className="flex-[2] bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-black py-3.5 rounded-zela-lg active:scale-95 transition-all shadow-md text-sm uppercase tracking-wider flex justify-center items-center gap-2"
                 >
                   {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar'}
                 </button>
@@ -401,16 +401,16 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     key={i}
                     className={`w-12 h-12 rounded-zela-lg border-2 flex items-center justify-center transition-all ${
                       pin.length > i
-                        ? 'bg-primary border-indigo-600 scale-105'
+                        ? 'bg-primary border-primary scale-105'
                         : pin.length === i
-                        ? 'border-indigo-400 bg-primary/10 animate-pulse'
+                        ? 'border-primary/60 bg-primary/10 animate-pulse'
                         : 'border-outline-variant bg-surface-container-low'
                     }`}
                   >
                     {pin.length > i ? (
                       <span className="text-white text-xl font-black">●</span>
                     ) : (
-                      <span className="text-slate-200 text-xl">○</span>
+                      <span className="text-on-surface-variant/50 text-xl">○</span>
                     )}
                   </div>
                 ))}
@@ -418,7 +418,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
 
               {/* Erro */}
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
+                <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm flex gap-2 items-start font-medium">
                   <ShieldAlert size={18} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -431,7 +431,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                     key={digit}
                     onClick={() => handleKeyPress(String(digit))}
                     disabled={isLoading || pin.length >= 4}
-                    className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-indigo-300 select-none"
+                    className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-primary/15 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-primary/60 select-none"
                   >
                     {digit}
                   </button>
@@ -441,7 +441,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={handleDelete}
                   disabled={isLoading || pin.length === 0}
-                  className="h-14 bg-surface-container hover:bg-red-50 hover:text-red-500 active:scale-95 disabled:opacity-30 text-on-surface-variant rounded-zela-lg transition-all shadow-sm border border-outline-variant flex items-center justify-center select-none"
+                  className="h-14 bg-surface-container hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-30 text-on-surface-variant rounded-zela-lg transition-all shadow-sm border border-outline-variant flex items-center justify-center select-none"
                 >
                   <Delete size={22} />
                 </button>
@@ -449,7 +449,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={() => handleKeyPress('0')}
                   disabled={isLoading || pin.length >= 4}
-                  className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-indigo-100 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-indigo-300 select-none"
+                  className="h-14 bg-surface-container hover:bg-primary/10 hover:text-primary active:bg-primary/15 active:scale-95 disabled:opacity-50 text-on-surface text-xl font-black rounded-zela-lg transition-all shadow-sm border border-outline-variant hover:border-primary/60 select-none"
                 >
                   0
                 </button>
@@ -457,7 +457,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                 <button
                   onClick={() => handleSearch()}
                   disabled={isLoading || pin.length < 4 || getLockRemainingSeconds() > 0}
-                  className="h-14 bg-primary hover:bg-primary-container active:scale-95 disabled:bg-slate-200 disabled:text-on-surface-variant/70 text-white text-sm font-black rounded-zela-lg transition-all shadow-md flex items-center justify-center select-none"
+                  className="h-14 bg-primary hover:bg-primary-container active:scale-95 disabled:bg-surface-container-high disabled:text-on-surface-variant/70 text-white text-sm font-black rounded-zela-lg transition-all shadow-md flex items-center justify-center select-none"
                 >
                   {isLoading ? <Loader2 size={20} className="animate-spin" /> : 'OK'}
                 </button>

@@ -255,7 +255,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingId ? 'Editar comunicado' : 'Novo comunicado'}</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -286,8 +286,8 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                   onClick={() => { setSendToAll(true); setSelectedTurmas([]); }}
                   className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
                     sendToAll
-                      ? 'bg-primary border-indigo-600 text-white'
-                      : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                      ? 'bg-primary border-primary text-white'
+                      : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                   }`}
                 >
                   Todas as Turmas
@@ -301,8 +301,8 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                       onClick={() => { setSendToAll(false); toggleTurma(t); }}
                       className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
                         isSelected
-                          ? 'bg-primary border-indigo-600 text-white'
-                          : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                          ? 'bg-primary border-primary text-white'
+                          : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                       }`}
                     >
                       {t}
@@ -311,7 +311,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                 })}
               </div>
               {!sendToAll && selectedTurmas.length === 0 && (
-                <p className="text-[11px] text-amber-600 font-semibold mt-1.5">Selecione ao menos uma turma.</p>
+                <p className="text-[11px] text-warning font-semibold mt-1.5">Selecione ao menos uma turma.</p>
               )}
             </div>
 
@@ -326,7 +326,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                     <div key={a.path} className="flex items-center gap-1.5 bg-white border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs">
                       <AttachmentIcon type={a.type} />
                       <span className="max-w-[140px] truncate text-on-surface font-medium">{a.name}</span>
-                      <button type="button" onClick={() => removeExistingAttachment(a)} className="text-on-surface-variant/70 hover:text-red-500">
+                      <button type="button" onClick={() => removeExistingAttachment(a)} className="text-on-surface-variant/70 hover:text-error">
                         <X size={14} />
                       </button>
                     </div>
@@ -335,7 +335,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                     <div key={`${f.name}-${i}`} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 text-xs">
                       <AttachmentIcon type={f.type} />
                       <span className="max-w-[140px] truncate text-primary font-medium">{f.name}</span>
-                      <button type="button" onClick={() => removePendingFile(i)} className="text-indigo-400 hover:text-red-500">
+                      <button type="button" onClick={() => removePendingFile(i)} className="text-primary hover:text-error">
                         <X size={14} />
                       </button>
                     </div>
@@ -344,7 +344,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
               )}
 
               {totalAttachmentCount < MAX_FILES && (
-                <label className="inline-flex items-center gap-2 bg-white border border-dashed border-slate-300 hover:border-indigo-400 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
+                <label className="inline-flex items-center gap-2 bg-white border border-dashed border-outline-variant hover:border-primary/60 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
                   <Paperclip size={14} /> Adicionar arquivo
                   <input
                     type="file"
@@ -360,7 +360,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSaving || !title.trim() || !body.trim()}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {editingId ? 'Salvar' : 'Publicar'}
@@ -369,7 +369,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -392,12 +392,12 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                     <h4 className="font-bold text-on-surface w-full sm:w-auto">{c.title}</h4>
                     {c.turmas && c.turmas.length > 0 ? (
                       c.turmas.map(t => (
-                        <span key={t} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        <span key={t} className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-primary/10 text-primary">
                           {t}
                         </span>
                       ))
                     ) : (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-surface-container text-on-surface-variant">
                         Todas as Turmas
                       </span>
                     )}
@@ -417,7 +417,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                     title="Excluir"
                   >
                     {deletingId === c.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -432,7 +432,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                       key={a.path}
                       onClick={() => openAttachment(a)}
                       disabled={openingPath === a.path}
-                      className="flex items-center gap-1.5 bg-surface-container-low hover:bg-primary/10 border border-outline-variant hover:border-indigo-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary transition"
+                      className="flex items-center gap-1.5 bg-surface-container-low hover:bg-primary/10 border border-outline-variant hover:border-primary/60 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary transition"
                     >
                       {openingPath === a.path ? <Loader2 size={14} className="animate-spin" /> : <AttachmentIcon type={a.type} />}
                       <span className="max-w-[160px] truncate">{a.name}</span>

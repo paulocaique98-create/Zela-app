@@ -229,7 +229,7 @@ export default function AdminStudentList({ currentUser }) {
           </div>
         ) : students.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <Users className="h-10 w-10 text-slate-300 mb-3" />
+            <Users className="h-10 w-10 text-on-surface-variant/50 mb-3" />
             <p className="text-on-surface-variant font-medium text-small">Nenhum aluno encontrado.</p>
           </div>
         ) : (
@@ -263,7 +263,7 @@ export default function AdminStudentList({ currentUser }) {
                       <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-1 rounded-md">Bolsista</span>
                     )}
                     {student.contracted_entry_time == null && (
-                      <span className="text-[10px] font-bold text-warning bg-amber-100 px-2 py-1 rounded-md">Sem período</span>
+                      <span className="text-[10px] font-bold text-warning bg-brass-50 px-2 py-1 rounded-md">Sem período</span>
                     )}
                   </div>
                   {(student.users?.name || student.users?.phone) && (
@@ -309,7 +309,7 @@ export default function AdminStudentList({ currentUser }) {
                             {student.birth_date ? formatIdade(idadeEmMeses(student.birth_date)) : 'Idade não informada'}
                           </span>
                           {student.contracted_entry_time == null && (
-                            <span className="text-[10px] font-bold text-warning bg-amber-100 px-2 py-0.5 rounded w-max mt-0.5">
+                            <span className="text-[10px] font-bold text-warning bg-brass-50 px-2 py-0.5 rounded w-max mt-0.5">
                               Sem período
                             </span>
                           )}
@@ -402,7 +402,7 @@ export default function AdminStudentList({ currentUser }) {
                 <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Motivo (opcional)</label>
                 <input type="text" value={transferReason} onChange={e => setTransferReason(e.target.value)} placeholder="Ex: Progressão de idade" className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary" />
               </div>
-              {transferError && <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{transferError}</div>}
+              {transferError && <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{transferError}</div>}
             </div>
             <div className="flex items-center justify-end gap-2 p-5 border-t border-outline-variant">
               <button type="button" onClick={() => setTransferTarget(null)} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-zela-md transition">Cancelar</button>

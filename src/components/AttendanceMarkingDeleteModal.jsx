@@ -42,27 +42,27 @@ export default function AttendanceMarkingDeleteModal({ student, eventType, stale
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between gap-3 p-5 border-b border-slate-100">
+    <div className="fixed inset-0 z-[999] bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-red-50 text-red-600 p-2.5 rounded-xl shrink-0">
+            <div className="bg-error/10 text-error p-2.5 rounded-xl shrink-0">
               <Trash2 size={18} />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-slate-800 text-sm">Remover marcação indevida</h3>
-              <p className="text-xs text-slate-500 truncate">{student?.name}</p>
+              <h3 className="font-bold text-on-surface text-sm">Remover marcação indevida</h3>
+              <p className="text-xs text-on-surface-variant truncate">{student?.name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition shrink-0">
+          <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition shrink-0">
             <X size={18} />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
-          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800 leading-relaxed">
+          <div className="flex items-start gap-2.5 bg-brass-50 border border-warning/40 rounded-xl p-3">
+            <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+            <p className="text-xs text-warning leading-relaxed">
               Essa {eventType === 'entry' ? 'entrada' : 'saída'} de <span className="font-mono font-bold">{formatTime(staleTime)}</span> não
               tem nenhum registro confirmado por trás — normalmente sobra de uma solicitação que foi cancelada. Removê-la não apaga nenhum
               histórico oficial, só limpa esse horário da tela.
@@ -70,11 +70,11 @@ export default function AttendanceMarkingDeleteModal({ student, eventType, stale
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">Motivo</label>
+            <label className="text-xs font-bold text-on-surface-variant mb-1.5 block">Motivo</label>
             <select
               value={reasonCode}
               onChange={e => setReasonCode(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm font-medium text-on-surface focus:ring-2 focus:ring-primary outline-none"
             >
               <option value="">Selecione um motivo</option>
               {ATTENDANCE_CORRECTION_REASONS.map(r => (
@@ -84,18 +84,18 @@ export default function AttendanceMarkingDeleteModal({ student, eventType, stale
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">Detalhe (opcional)</label>
+            <label className="text-xs font-bold text-on-surface-variant mb-1.5 block">Detalhe (opcional)</label>
             <textarea
               value={reasonDetail}
               onChange={e => setReasonDetail(e.target.value)}
               rows={2}
               placeholder="Algum detalhe adicional sobre o ocorrido"
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+              className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm text-on-surface focus:ring-2 focus:ring-primary outline-none resize-none"
             />
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">{error}</div>
+            <div className="p-3 bg-error/10 border border-error/40 rounded-xl text-xs text-error font-medium">{error}</div>
           )}
         </div>
 
@@ -103,14 +103,14 @@ export default function AttendanceMarkingDeleteModal({ student, eventType, stale
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
+            className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={!reasonCode || isSaving}
-            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:text-slate-500"
+            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-error hover:bg-error disabled:bg-outline-variant disabled:text-on-surface-variant"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={15} />}
             Remover marcação

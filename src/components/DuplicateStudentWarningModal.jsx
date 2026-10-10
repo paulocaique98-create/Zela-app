@@ -58,34 +58,34 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between gap-3 p-5 border-b border-slate-100">
+    <div className="fixed inset-0 z-[999] bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="bg-amber-50 text-amber-600 p-2.5 rounded-xl shrink-0">
+            <div className="bg-brass-50 text-warning p-2.5 rounded-xl shrink-0">
               <AlertTriangle size={18} />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-slate-800 text-sm">Possível aluno duplicado</h3>
-              <p className="text-xs text-slate-500">Confirme antes de aprovar o cadastro</p>
+              <h3 className="font-bold text-on-surface text-sm">Possível aluno duplicado</h3>
+              <p className="text-xs text-on-surface-variant">Confirme antes de aprovar o cadastro</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition shrink-0">
+          <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-lg transition shrink-0">
             <X size={18} />
           </button>
         </div>
 
         <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-on-surface-variant leading-relaxed">
             Já existe um aluno com esse nome nesta escola, cadastrado por outro responsável. Se for a mesma criança,
             o certo é vincular como 2º responsável em vez de criar um registro novo (evita duas contas de presença
             e cobrança separadas para o mesmo filho).
           </p>
 
           {matches.map(m => (
-            <div key={m.newStudent.id} className="border border-slate-200 rounded-xl p-3">
-              <p className="text-sm font-bold text-slate-800">{m.newStudent.name}</p>
-              <p className="text-xs text-slate-500 mb-3">
+            <div key={m.newStudent.id} className="border border-outline-variant rounded-xl p-3">
+              <p className="text-sm font-bold text-on-surface">{m.newStudent.name}</p>
+              <p className="text-xs text-on-surface-variant mb-3">
                 Já cadastrado por <span className="font-semibold">{m.existing.family_name}</span>
               </p>
               <div className="flex gap-2">
@@ -93,7 +93,7 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
                   type="button"
                   onClick={() => setDecisions(prev => ({ ...prev, [m.newStudent.id]: true }))}
                   className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg border-2 transition ${
-                    decisions[m.newStudent.id] ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-500'
+                    decisions[m.newStudent.id] ? 'bg-primary/10 border-primary text-primary' : 'bg-white border-outline-variant text-on-surface-variant'
                   }`}
                 >
                   <Link2 size={13} /> Mesmo aluno, vincular
@@ -102,7 +102,7 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
                   type="button"
                   onClick={() => toggle(m.newStudent.id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg border-2 transition ${
-                    !decisions[m.newStudent.id] ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-500'
+                    !decisions[m.newStudent.id] ? 'bg-ink border-outline text-white' : 'bg-white border-outline-variant text-on-surface-variant'
                   }`}
                 >
                   <UserPlus size={13} /> Crianças diferentes
@@ -112,7 +112,7 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
           ))}
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">{error}</div>
+            <div className="p-3 bg-error/10 border border-error/40 rounded-xl text-xs text-error font-medium">{error}</div>
           )}
         </div>
 
@@ -120,14 +120,14 @@ export default function DuplicateStudentWarningModal({ matches, onClose, onResol
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
+            className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-bold py-3 rounded-xl transition text-sm disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={isSaving}
-            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60"
+            className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-primary hover:bg-primary disabled:opacity-60"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
             Confirmar e aprovar cadastro

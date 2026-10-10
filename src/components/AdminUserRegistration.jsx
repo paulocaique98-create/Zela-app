@@ -177,7 +177,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
         </span>
         {canRemove && (
           <button type="button" onClick={() => onRemove(student.id)}
-            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+            className="p-1.5 text-error hover:text-error hover:bg-error/10 rounded-lg transition">
             <Trash2 size={15} />
           </button>
         )}
@@ -236,7 +236,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`}>
           <option value="">{student.turno ? 'Selecionar...' : '← Primeiro o Turno'}</option>
           {periodos.map(p => <option key={p} value={p}>{p}</option>)}
-          {student.turno && <option value="__custom__">✏️ Personalizar Horário</option>}
+          {student.turno && <option value="__custom__">Personalizar horário</option>}
         </select>
       </div>
 
@@ -326,7 +326,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
                       </div>
                       {hasOverride ? (
                         <button type="button" onClick={() => clearDayOverride(dia.key)} title="Voltar ao horário padrão"
-                          className="mt-1.5 text-[11px] font-bold text-amber-600 hover:text-red-600 underline underline-offset-2">
+                          className="mt-1.5 text-[11px] font-bold text-warning hover:text-error underline underline-offset-2">
                           Voltar ao horário padrão
                         </button>
                       ) : (
@@ -418,7 +418,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
           </p>
           {financeiro.salvando && <p className="text-[11px] text-on-surface-variant">Salvando...</p>}
           {financeiro.mensagem && (
-            <p className={`text-[11px] font-medium ${financeiro.mensagem.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{financeiro.mensagem.texto}</p>
+            <p className={`text-[11px] font-medium ${financeiro.mensagem.tipo === 'erro' ? 'text-error' : 'text-success'}`}>{financeiro.mensagem.texto}</p>
           )}
         </div>
       )}
@@ -1211,7 +1211,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 {['Responsável', 'Responsável Financeiro'].map(t => (
                   <button key={t} type="button"
                     onClick={() => setGuardianType(t)}
-                    className={`flex-1 py-3 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-primary text-white border-indigo-600' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}>
+                    className={`flex-1 py-3 px-3 rounded-zela-md text-xs font-bold border-2 transition-all ${guardianType === t ? 'bg-primary text-white border-primary' : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/60'}`}>
                     {t}
                   </button>
                 ))}
@@ -1249,8 +1249,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                     })}
                     className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
                       isSelected
-                        ? 'bg-primary border-indigo-600 text-white'
-                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                        ? 'bg-primary border-primary text-white'
+                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                     }`}
                   >
                     {t}
@@ -1259,7 +1259,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               })}
             </div>
             {formData.turmas.length === 0 && (
-              <p className="text-[11px] text-amber-600 font-semibold mt-1.5">Selecione ao menos uma turma.</p>
+              <p className="text-[11px] text-warning font-semibold mt-1.5">Selecione ao menos uma turma.</p>
             )}
           </div>
         )}
@@ -1270,7 +1270,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               type="checkbox"
               checked={formData.chat_visibilidade_total}
               onChange={e => setFormData({ ...formData, chat_visibilidade_total: e.target.checked })}
-              className="w-4 h-4 accent-indigo-600"
+              className="w-4 h-4 accent-primary"
             />
             <span className="text-xs font-bold text-primary">Visualiza e responde o chat de todos os departamentos</span>
           </label>
@@ -1389,7 +1389,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             <button
               type="button"
               onClick={handleAddStudent}
-              className="text-primary hover:text-indigo-800 flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition"
+              className="text-primary hover:text-primary flex items-center gap-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition"
             >
               <Plus size={13} /> Adicionar Aluno
             </button>
@@ -1442,7 +1442,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h4 className="font-bold text-on-surface break-words">{secondGuardian.name}</h4>
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-indigo-100 text-primary px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-md shrink-0">
                     2º Responsável
                   </span>
                 </div>
@@ -1453,7 +1453,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                   type="button"
                   onClick={() => setConfirmSecondGuardianAction('remove')}
                   disabled={secondGuardianLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-on-surface-variant border border-slate-300 rounded-lg hover:bg-surface-container-low transition disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-container-low transition disabled:opacity-50"
                 >
                   <UserMinus size={14} /> Remover Vínculo
                 </button>
@@ -1463,7 +1463,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                     type="button"
                     onClick={() => setConfirmSecondGuardianAction('delete')}
                     disabled={secondGuardianLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-error border border-error/60 rounded-lg hover:bg-error/10 transition disabled:opacity-50"
                   >
                     <Trash2 size={14} /> Excluir 2º Responsável
                   </button>
@@ -1503,7 +1503,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             <button
               type="button"
               onClick={() => setIsAddingSecondGuardian(true)}
-              className="w-full py-4 border-2 border-dashed border-outline-variant rounded-zela-lg text-on-surface-variant font-bold hover:bg-surface-container-low hover:border-indigo-300 hover:text-primary transition flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-outline-variant rounded-zela-lg text-on-surface-variant font-bold hover:bg-surface-container-low hover:border-primary/60 hover:text-primary transition flex items-center justify-center gap-2"
             >
               <Plus size={18} /> Cadastrar 2º Responsável
             </button>
@@ -1546,7 +1546,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
   if (editingUser || forceModal) {
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-slate-900/60 sm:backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-ink/60 sm:backdrop-blur-sm animate-in fade-in duration-300">
         <div className="bg-white sm:rounded-zela-xl shadow-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] flex flex-col overflow-hidden">
           {/* Header -- reduzido ao máximo no celular (sem subtítulo, ícone e
               padding menores) pra sobrar o máximo de espaço vertical
@@ -1575,7 +1575,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               >
                 {isLoading ? 'Salvando...' : 'Salvar'}
               </button>
-              <button onClick={onClose} className="p-1 sm:p-1.5 hover:bg-slate-200 rounded-lg transition text-on-surface-variant shrink-0">
+              <button onClick={onClose} className="p-1 sm:p-1.5 hover:bg-surface-container-high rounded-lg transition text-on-surface-variant shrink-0">
                 <X size={18} className="sm:hidden" />
                 <X size={20} className="hidden sm:block" />
               </button>
@@ -1585,12 +1585,12 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           {/* Scrollable Body */}
           <div className="p-3 sm:p-6 overflow-y-auto flex-1">
             {successMsg && (
-              <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-zela-md border border-green-200 flex items-center gap-2 font-medium">
+              <div className="mb-6 p-4 bg-success/10 text-success rounded-zela-md border border-success/40 flex items-center gap-2 font-medium">
                 <CheckCircle2 size={20} /> {successMsg}
               </div>
             )}
             {errorMsg && (
-              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-zela-md border border-red-200 font-medium">{errorMsg}</div>
+              <div className="mb-6 p-4 bg-error/10 text-error rounded-zela-md border border-error/40 font-medium">{errorMsg}</div>
             )}
 
             {formContent}
@@ -1608,7 +1608,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           mostra o nome da tela dinamicamente); ícone + descrição numa linha
           compacta (descrição sempre visível, mantém o ícone). */}
       <div className="flex items-center gap-2.5 mb-8 shrink-0">
-        <div className="bg-indigo-100 p-2 rounded-zela-md text-primary shrink-0"><UserPlus size={20} /></div>
+        <div className="bg-primary/15 p-2 rounded-zela-md text-primary shrink-0"><UserPlus size={20} /></div>
         <p className="text-small text-on-surface-variant">Crie perfis para novas Famílias ou membros da Equipe.</p>
       </div>
 
@@ -1616,41 +1616,41 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-6">
         {/* Feedback */}
         {successMsg && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-zela-md border border-green-200 flex items-center gap-2 font-medium">
+          <div className="p-4 bg-success/10 text-success rounded-zela-md border border-success/40 flex items-center gap-2 font-medium">
             <CheckCircle2 size={20} /> {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-zela-md border border-red-200 font-medium">{errorMsg}</div>
+          <div className="p-4 bg-error/10 text-error rounded-zela-md border border-error/40 font-medium">{errorMsg}</div>
         )}
 
         {duplicateAlert && (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-zela-md space-y-2">
-            <p className="font-bold text-amber-800 text-sm flex items-center gap-2">
+          <div className="p-4 bg-brass-50 border border-warning/40 rounded-zela-md space-y-2">
+            <p className="font-bold text-warning text-sm flex items-center gap-2">
               <AlertTriangle size={16} /> Possível aluno duplicado
             </p>
-            <ul className="text-xs text-amber-700 space-y-0.5">
+            <ul className="text-xs text-warning space-y-0.5">
               {duplicateAlert.map((m, i) => (
                 <li key={i}>
                   <span className="font-semibold">{m.name}</span> já está cadastrado por <span className="font-semibold">{m.familyName}</span>
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-warning">
               Se for a mesma criança, cancele e vincule esta pessoa como 2º responsável em Gestão de Usuários, em vez de criar um cadastro novo.
             </p>
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setDuplicateAlert(null)}
-                className="text-xs font-bold text-amber-800 bg-white border border-amber-300 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition"
+                className="text-xs font-bold text-warning bg-white border border-warning/60 hover:bg-brass-50 px-3 py-1.5 rounded-lg transition"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={() => { setForceCreateDespiteDuplicate(true); setDuplicateAlert(null); }}
-                className="text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition"
+                className="text-xs font-bold text-white bg-warning hover:bg-warning px-3 py-1.5 rounded-lg transition"
               >
                 São crianças diferentes, cadastrar mesmo assim
               </button>

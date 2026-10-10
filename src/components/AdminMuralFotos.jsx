@@ -225,7 +225,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
           <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">Adicionar fotos</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -246,7 +246,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
               </div>
             )}
 
-            <label className="inline-flex items-center gap-2 bg-white border border-dashed border-slate-300 hover:border-indigo-400 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
+            <label className="inline-flex items-center gap-2 bg-white border border-dashed border-outline-variant hover:border-primary/60 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
               <Upload size={14} /> Escolher fotos (até 10MB cada)
               <input type="file" multiple accept={ALLOWED_TYPES.join(',')} onChange={handleFilesSelected} className="hidden" />
             </label>
@@ -269,7 +269,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                   type="button"
                   onClick={() => { setSendToAll(true); setSelectedTurmas([]); }}
                   className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
-                    sendToAll ? 'bg-primary border-indigo-600 text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                    sendToAll ? 'bg-primary border-primary text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                   }`}
                 >
                   Todas as Turmas
@@ -282,7 +282,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                       type="button"
                       onClick={() => { setSendToAll(false); toggleTurma(t); }}
                       className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
-                        isSelected ? 'bg-primary border-indigo-600 text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                        isSelected ? 'bg-primary border-primary text-white' : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                       }`}
                     >
                       {t}
@@ -295,7 +295,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
             <button
               onClick={handleUpload}
               disabled={isUploading || pendingFiles.length === 0}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               Publicar {pendingFiles.length > 0 ? `(${pendingFiles.length})` : ''}
@@ -304,7 +304,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -336,12 +336,12 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                 <button
                   onClick={() => handleDelete(foto)}
                   disabled={deletingId === foto.id}
-                  aria-label="Excluir foto" title="Excluir foto" className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-error text-white rounded-full p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
+                  aria-label="Excluir foto" title="Excluir foto" className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-error text-white rounded-md p-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
                 >
                   {deletingId === foto.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 </button>
                 {!foto.turmas && (
-                  <span className="absolute bottom-1.5 left-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white">
+                  <span className="absolute bottom-1.5 left-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-black/60 text-white">
                     Geral
                   </span>
                 )}
@@ -352,7 +352,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
       </div>
 
       {lightboxFoto && (
-        <div className="fixed inset-0 z-[999] bg-slate-900/90 flex items-center justify-center p-4" onClick={() => setLightboxIndex(null)}>
+        <div className="fixed inset-0 z-[999] bg-ink/90 flex items-center justify-center p-4" onClick={() => setLightboxIndex(null)}>
           <button className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-zela-md transition" onClick={() => setLightboxIndex(null)}>
             <X size={24} />
           </button>
@@ -389,7 +389,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
               <button
                 onClick={() => handleDelete(lightboxFoto)}
                 disabled={deletingId === lightboxFoto.id}
-                className="flex items-center gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-100 px-3 py-1.5 rounded-zela-md text-xs font-bold transition disabled:opacity-50"
+                className="flex items-center gap-1.5 bg-error/20 hover:bg-error/30 text-error px-3 py-1.5 rounded-zela-md text-xs font-bold transition disabled:opacity-50"
               >
                 {deletingId === lightboxFoto.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 Excluir

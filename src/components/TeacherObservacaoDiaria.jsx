@@ -178,7 +178,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">Nova observação</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -265,7 +265,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 type="checkbox"
                 checked={form.necessitou_orientacao}
                 onChange={e => setForm({ ...form, necessitou_orientacao: e.target.checked })}
-                className="w-4 h-4 accent-indigo-600"
+                className="w-4 h-4 accent-primary"
               />
               <span className="text-xs font-semibold text-on-surface">Necessitou de orientação do guia</span>
             </label>
@@ -284,7 +284,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
             <button
               type="submit"
               disabled={isSaving || !form.student_id || !form.record_date}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               Salvar
@@ -293,7 +293,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {!showForm && records.length > 0 && (
@@ -335,7 +335,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                     <button
                       onClick={() => handleDelete(r.id)}
                       disabled={deletingId === r.id}
-                      className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                      className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition shrink-0"
                       title="Excluir"
                     >
                       {deletingId === r.id ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
@@ -347,7 +347,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                   {c.material && <span className="text-[11px] font-semibold bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-lg">Material: {c.material}</span>}
                   {c.concentracao && <span className="text-[11px] font-semibold bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-lg">Concentração: {NIVEL_CONCENTRACAO.find(n => n.value === c.concentracao)?.label || c.concentracao}</span>}
                   {c.autonomia && <span className="text-[11px] font-semibold bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-lg">Autonomia: {NIVEL_AUTONOMIA.find(n => n.value === c.autonomia)?.label || c.autonomia}</span>}
-                  {c.necessitou_orientacao && <span className="text-[11px] font-semibold bg-amber-50 text-amber-700 px-2 py-1 rounded-lg">Necessitou orientação</span>}
+                  {c.necessitou_orientacao && <span className="text-[11px] font-semibold bg-brass-50 text-warning px-2 py-1 rounded-lg">Necessitou orientação</span>}
                 </div>
                 {c.foco && <p className="text-on-surface-variant text-sm mt-2"><strong className="font-semibold text-on-surface">Foco:</strong> {c.foco}</p>}
                 {c.observacoes && <p className="text-on-surface-variant text-sm mt-2 whitespace-pre-wrap">{c.observacoes}</p>}

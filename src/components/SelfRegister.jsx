@@ -235,7 +235,7 @@ export default function SelfRegister() {
 
           {done ? (
             <div className="bg-white border border-outline-variant rounded-zela-lg p-8 text-center flex flex-col items-center gap-4">
-              <CheckCircle2 className="text-emerald-500" size={48} />
+              <CheckCircle2 className="text-success" size={48} />
               <div>
                 <h1 className="text-h2 text-on-surface mb-2">Cadastro enviado</h1>
                 <p className="text-body text-on-surface-variant">

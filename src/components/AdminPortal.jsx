@@ -584,7 +584,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                       {/* Sair: desloga da conta de verdade. */}
                       <button
                         onClick={() => { setIsKioskSettingsOpen(false); onLogout?.(); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition text-left"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/10 transition text-left"
                       >
                         <LogOut size={16} /> Sair
                       </button>
@@ -769,7 +769,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
               {!isChatOpen && chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
                   {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                 </span>
               )}

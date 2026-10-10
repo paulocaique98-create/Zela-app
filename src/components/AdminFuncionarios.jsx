@@ -28,9 +28,9 @@ const CARGO_PARA_ACESSO = {
 
 const ACCESS_ROLE_LABEL = { admin: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção' };
 const ACCESS_ROLE_STYLE = {
-  admin: 'bg-amber-50 text-amber-700 border-amber-200',
-  gestao_pedagogica: 'bg-sky-50 text-sky-800 border-sky-200',
-  teacher: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  admin: 'bg-brass-50 text-warning border-warning/40',
+  gestao_pedagogica: 'bg-primary/10 text-primary border-primary/40',
+  teacher: 'bg-success/10 text-success border-success/40',
   gestao: 'bg-primary/10 text-primary border-primary/20',
 };
 
@@ -328,7 +328,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingId ? 'Editar funcionário' : 'Novo funcionário'}</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-slate-200 rounded-lg transition">
+              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
@@ -392,8 +392,8 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                     onClick={() => setForm({ ...form, status: s })}
                     className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border capitalize ${
                       form.status === s
-                        ? s === 'ativo' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-surface-container-low0 border-slate-500 text-white'
-                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                        ? s === 'ativo' ? 'bg-success border-success text-white' : 'bg-surface-container-low0 border-outline text-white'
+                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                     }`}
                   >
                     {s}
@@ -413,7 +413,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             <button
               type="submit"
               disabled={isSaving || !form.name.trim() || !form.cargo.trim()}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {editingId ? 'Salvar' : 'Cadastrar'}
@@ -422,7 +422,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
         {isLoading ? (
@@ -444,7 +444,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-bold text-on-surface">{f.name}</h4>
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${
-                      f.status === 'ativo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-surface-container text-on-surface-variant border-outline-variant'
+                      f.status === 'ativo' ? 'bg-success/10 text-success border-success/40' : 'bg-surface-container text-on-surface-variant border-outline-variant'
                     }`}>
                       {f.status}
                     </span>
@@ -460,7 +460,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   {canCreateAccessFor(f.cargo) && (
                     <button
                       onClick={() => setCreatingAccessFor(f)}
-                      className="p-2 text-on-surface-variant/70 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                      className="p-2 text-on-surface-variant/70 hover:text-success hover:bg-success/10 rounded-lg transition"
                       title="Criar acesso de login"
                     >
                       <KeyRound size={16} />
@@ -476,7 +476,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   <button
                     onClick={() => handleDelete(f.id)}
                     disabled={deletingId === f.id}
-                    className="p-2 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                     title="Excluir"
                   >
                     {deletingId === f.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -553,7 +553,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                         <button
                           onClick={() => handleDeleteAccessUser(u.id)}
                           disabled={deletingAccessId === u.id}
-                          className="p-1.5 text-on-surface-variant/70 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                          className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                           title="Excluir"
                         >
                           {deletingAccessId === u.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -566,7 +566,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                     <button
                       onClick={() => mudarTipoDeAcesso(u, 'gestao_pedagogica')}
                       disabled={mudandoTipoId === u.id}
-                      className="mt-3 w-full py-1.5 bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                      className="mt-3 w-full py-1.5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/40 rounded-lg transition font-bold text-xs disabled:opacity-50"
                     >
                       {mudandoTipoId === u.id ? 'Mudando...' : 'Mudar para o Portal da Gestão (sem financeiro)'}
                     </button>
@@ -586,12 +586,12 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                       <button
                         onClick={() => approveAccessUser(u)}
                         disabled={approvingAccessId === u.id}
-                        className="mt-3 w-full py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                        className="mt-3 w-full py-1.5 bg-success/10 text-success hover:bg-success/15 border border-success/40 rounded-lg transition font-bold text-xs disabled:opacity-50"
                       >
                         {approvingAccessId === u.id ? 'Aprovando...' : 'Aprovar acesso'}
                       </button>
                     ) : (
-                      <p className="mt-3 w-full py-1.5 text-center bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs">
+                      <p className="mt-3 w-full py-1.5 text-center bg-brass-50 text-warning border border-warning/40 rounded-lg font-bold text-xs">
                         Aguardando aprovação da Gestão
                       </p>
                     )
@@ -605,7 +605,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                         </p>
                         <button
                           onClick={() => openTurmasEditor(u)}
-                          className="text-[10px] font-bold text-primary hover:text-indigo-800 transition"
+                          className="text-[10px] font-bold text-primary hover:text-primary transition"
                         >
                           Trocar
                         </button>
@@ -619,7 +619,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-amber-600 font-semibold">Nenhuma turma vinculada</p>
+                        <p className="text-[11px] text-warning font-semibold">Nenhuma turma vinculada</p>
                       )}
                     </div>
                   )}
@@ -674,7 +674,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
       )}
 
       {editingTurmasFor && (
-        <div className="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[999] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-sm bg-white rounded-zela-xl shadow-2xl p-6 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -696,8 +696,8 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                     onClick={() => toggleTurmaDraft(t)}
                     className={`px-3 py-1.5 rounded-zela-md text-xs font-bold transition-all border ${
                       isSelected
-                        ? 'bg-primary border-indigo-600 text-white'
-                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-indigo-300'
+                        ? 'bg-primary border-primary text-white'
+                        : 'bg-white border-outline-variant text-on-surface-variant hover:border-primary/60'
                     }`}
                   >
                     {t}
@@ -717,7 +717,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
               <button
                 onClick={saveTurmas}
                 disabled={isSavingTurmas}
-                className="flex-[1.5] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 text-white font-bold py-3 rounded-zela-md transition text-sm"
+                className="flex-[1.5] flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant text-white font-bold py-3 rounded-zela-md transition text-sm"
               >
                 {isSavingTurmas ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Salvar

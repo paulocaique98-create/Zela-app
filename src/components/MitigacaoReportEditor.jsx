@@ -8,8 +8,8 @@ import { logAction } from '../lib/auditLog';
 
 const STATUS_LABEL = {
   RASCUNHO: { label: 'Rascunho', color: 'bg-surface-container text-on-surface-variant border-outline-variant' },
-  PUBLICADO: { label: 'Publicado', color: 'bg-green-50 text-green-700 border-green-200' },
-  ARQUIVADO: { label: 'Arquivado', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  PUBLICADO: { label: 'Publicado', color: 'bg-success/10 text-success border-success/40' },
+  ARQUIVADO: { label: 'Arquivado', color: 'bg-brass-50 text-warning border-warning/40' },
 };
 
 function formatDate(dateStr) {
@@ -162,7 +162,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
+          <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         )}
 
         {/* Introdução — texto padrão do modelo, fixo e não editável */}
@@ -189,7 +189,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
                 className={`w-full flex items-center justify-between gap-3 px-4 py-3 ${isUnlocked ? 'cursor-pointer hover:bg-surface-container-low' : 'cursor-not-allowed'}`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${isUnlocked ? (values[section.key]?.trim() ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-primary') : 'bg-slate-200 text-on-surface-variant/70'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${isUnlocked ? (values[section.key]?.trim() ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary') : 'bg-surface-container-high text-on-surface-variant/70'}`}>
                     {isUnlocked && values[section.key]?.trim() ? <Check size={13} /> : stepNumber}
                   </span>
                   <span className={`text-sm font-bold ${isUnlocked ? 'text-on-surface' : 'text-on-surface-variant/70'}`}>{section.label}</span>
@@ -199,7 +199,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setExpandedKey(section.key); }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-indigo-800 hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition shrink-0"
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 px-2.5 py-1.5 rounded-lg transition shrink-0"
                   >
                     <Pencil size={13} /> Editar
                   </button>
@@ -220,7 +220,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
                     <button
                       onClick={() => handleSaveSection(index)}
                       disabled={savingKey === section.key || !values[section.key]?.trim()}
-                      className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-2.5 px-4 rounded-zela-md transition text-sm"
+                      className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-2.5 px-4 rounded-zela-md transition text-sm"
                     >
                       {savingKey === section.key ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                       Salvar Rascunho
@@ -239,7 +239,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
             onClick={handlePublish}
             disabled={!allStepsFilled || isPublishing}
             title={!allStepsFilled ? 'Preencha todas as seções antes de publicar' : ''}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-slate-300 disabled:text-on-surface-variant text-white font-bold py-3 rounded-zela-md transition text-sm"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white font-bold py-3 rounded-zela-md transition text-sm"
           >
             {isPublishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             Publicar para a Família
@@ -251,7 +251,7 @@ export default function MitigacaoReportEditor({ report, student, school, current
           <button
             onClick={handleArchive}
             disabled={isPublishing}
-            className="flex items-center gap-2 text-on-surface-variant/70 hover:text-amber-600 font-bold text-sm transition"
+            className="flex items-center gap-2 text-on-surface-variant/70 hover:text-warning font-bold text-sm transition"
           >
             <Archive size={16} /> Arquivar
           </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, UserMinus, Trash2, ShieldCheck, CheckCircle2, Copy } from 'lucide-react';
+import { Users, Plus, UserMinus, Trash2, ShieldCheck, CheckCircle2, Copy, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 import { formatPersonName } from '../utils/formatName';
@@ -368,7 +368,7 @@ export default function FamilyGerenciarResponsaveis({ currentUser, familyStudent
             </div>
             
             <div className="flex items-start gap-2 bg-brass-50 text-warning p-3 rounded-lg text-xs mb-6 border border-outline-variant/50">
-              <span className="text-lg">⚠️</span>
+              <AlertTriangle size={18} className="shrink-0" aria-hidden="true" />
               <p><strong>Guarde essas informações agora.</strong> Por segurança, a senha provisória não será exibida novamente no sistema.</p>
             </div>
             

@@ -36,7 +36,7 @@ function emptyRefeicaoState(slot, saved) {
 }
 
 const segCls = (active) =>
-  `flex-1 text-center py-2.5 rounded-zela-md text-xs font-bold border-2 transition-all ${active ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`;
+  `flex-1 text-center py-2.5 rounded-zela-md text-xs font-bold border-2 transition-all ${active ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`;
 
 export default function AdminDiario({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
@@ -323,8 +323,8 @@ export default function AdminDiario({ currentUser, currentSchool }) {
             </div>
           </div>
 
-          {error && <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-zela-md text-sm font-medium">{error}</div>}
-          {successMsg && <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-zela-md text-sm font-medium">{successMsg}</div>}
+          {error && <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>}
+          {successMsg && <div className="bg-success/10 border border-success/40 text-success p-3 rounded-zela-md text-sm font-medium">{successMsg}</div>}
 
           {!selectedStudentId ? (
             <div className="flex flex-col items-center justify-center text-center py-16 text-on-surface-variant/70">
@@ -358,7 +358,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                               key={item}
                               type="button"
                               onClick={() => toggleItem(idx, item)}
-                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-zela-md text-xs font-bold border-2 transition-all ${active ? 'bg-primary text-white border-indigo-600' : 'bg-white text-on-surface-variant border-outline-variant hover:border-indigo-300'}`}
+                              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-zela-md text-xs font-bold border-2 transition-all ${active ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:border-primary/60'}`}
                             >
                               {active && <Check size={13} />} {item}
                             </button>

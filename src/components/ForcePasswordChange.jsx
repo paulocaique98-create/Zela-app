@@ -63,7 +63,7 @@ export default function ForcePasswordChange({ currentUser, onPasswordChanged, on
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm" />
           </div>
 
-          {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-zela-md border border-red-100">{error}</div>}
+          {error && <div className="p-3 bg-error/10 text-error text-sm rounded-zela-md border border-error/30">{error}</div>}
 
           <button type="submit" disabled={isSaving}
             className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-zela-md transition disabled:opacity-60">

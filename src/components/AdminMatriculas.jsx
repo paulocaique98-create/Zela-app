@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   FileText, Loader2, Clock, CheckCircle2, XCircle, MessageSquareWarning,
   Download, ChevronDown, ChevronUp, User, Baby, UserCheck, Car, Copy, KeyRound,
-  FileSpreadsheet, UploadCloud, SlidersHorizontal,
+  FileSpreadsheet, UploadCloud, SlidersHorizontal, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
@@ -137,7 +137,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
             </div>
           )}
           {solicitacao.status === 'changes_requested' && solicitacao.rejection_reason && (
-            <div className="bg-warning/10 border border-orange-100 text-warning p-3 rounded-zela-md text-xs font-medium">
+            <div className="bg-warning/10 border border-warning/30 text-warning p-3 rounded-zela-md text-xs font-medium">
               O que a família precisa corrigir: {solicitacao.rejection_reason}
             </div>
           )}
@@ -233,14 +233,14 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     onChange={e => setRejectReason(e.target.value)}
                     placeholder="Motivo da rejeição (visível para a família)"
                     rows={2}
-                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-error/60"
                   />
                   <div className="flex gap-2">
-                    <button onClick={() => setShowReject(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
+                    <button onClick={() => setShowReject(false)} className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
                     <button
                       onClick={() => onDecide(solicitacao, 'rejected', rejectReason)}
                       disabled={isDeciding || !rejectReason.trim()}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 text-white font-bold py-2 rounded-zela-md text-sm transition"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-error hover:bg-error disabled:bg-outline-variant text-white font-bold py-2 rounded-zela-md text-sm transition"
                     >
                       {isDeciding ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />} Confirmar Rejeição
                     </button>
@@ -253,14 +253,14 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                     onChange={e => setChangesNote(e.target.value)}
                     placeholder="O que a família precisa corrigir antes de reenviar (visível para a família)"
                     rows={2}
-                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-warning/60"
                   />
                   <div className="flex gap-2">
-                    <button onClick={() => setShowChangesRequest(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
+                    <button onClick={() => setShowChangesRequest(false)} className="flex-1 bg-surface-container-high hover:bg-outline-variant text-on-surface font-bold py-2 rounded-zela-md text-sm transition">Cancelar</button>
                     <button
                       onClick={() => onDecide(solicitacao, 'changes_requested', changesNote)}
                       disabled={isDeciding || !changesNote.trim()}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 text-white font-bold py-2 rounded-zela-md text-sm transition"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-warning hover:bg-warning disabled:bg-outline-variant text-white font-bold py-2 rounded-zela-md text-sm transition"
                     >
                       {isDeciding ? <Loader2 size={14} className="animate-spin" /> : <MessageSquareWarning size={14} />} Confirmar Solicitação de Alteração
                     </button>
@@ -285,7 +285,7 @@ function SolicitacaoCard({ solicitacao, onDecide, isDeciding }) {
                   <button
                     onClick={() => onDecide(solicitacao, 'approved')}
                     disabled={isDeciding}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-zela-md text-sm transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-success hover:bg-success text-white font-bold py-2.5 rounded-zela-md text-sm transition"
                   >
                     {isDeciding ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />} Aprovar
                   </button>
@@ -673,9 +673,9 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
       </div>
 
       {newGuardianCredentials && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm">
           <div className="bg-surface-container-lowest rounded-zela-xl shadow-lg w-full max-w-md p-6 relative">
-            <div className="mx-auto w-12 h-12 bg-green-100 text-success rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-success/15 text-success rounded-full flex items-center justify-center mb-4">
               <KeyRound size={24} />
             </div>
             <h3 className="text-xl font-bold text-center text-on-surface mb-2">Acesso do 2º Responsável criado!</h3>
@@ -692,8 +692,8 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
                 <span className="font-bold text-on-surface">{newGuardianCredentials.password}</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-xs mb-6 border border-yellow-200/50">
-              <span className="text-lg">⚠️</span>
+            <div className="flex items-start gap-2 bg-brass-50 text-warning p-3 rounded-lg text-xs mb-6 border border-warning/50">
+              <AlertTriangle size={18} className="shrink-0" aria-hidden="true" />
               <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela Escola pede para a pessoa criar a própria senha.</p>
             </div>
             <div className="flex flex-col gap-2">
@@ -705,7 +705,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
               >
                 <Copy size={16} /> Copiar credenciais
               </button>
-              <button onClick={() => setNewGuardianCredentials(null)} className="w-full py-3 bg-slate-800 text-white font-bold rounded-zela-md hover:bg-slate-900 transition">
+              <button onClick={() => setNewGuardianCredentials(null)} className="w-full py-3 bg-ink text-white font-bold rounded-zela-md hover:bg-ink transition">
                 Fechar
               </button>
             </div>

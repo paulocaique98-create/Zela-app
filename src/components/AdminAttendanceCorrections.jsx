@@ -19,10 +19,10 @@ function formatTime(iso) {
 }
 
 const STATUS_LABELS = {
-  applied: { label: 'Aplicada', cls: 'bg-green-100 text-green-700' },
-  pending: { label: 'Aguardando aprovação', cls: 'bg-amber-100 text-amber-700' },
-  approved: { label: 'Aprovada', cls: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Rejeitada', cls: 'bg-red-100 text-red-600' },
+  applied: { label: 'Aplicada', cls: 'bg-success/15 text-success' },
+  pending: { label: 'Aguardando aprovação', cls: 'bg-brass-50 text-warning' },
+  approved: { label: 'Aprovada', cls: 'bg-success/15 text-success' },
+  rejected: { label: 'Rejeitada', cls: 'bg-error/15 text-error' },
 };
 
 // Fila de aprovação + histórico de correções manuais de horário. Correções
@@ -83,7 +83,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
   };
 
   const renderCard = (c, { reviewable }) => {
-    const status = STATUS_LABELS[c.status] || { label: c.status, cls: 'bg-slate-100 text-slate-600' };
+    const status = STATUS_LABELS[c.status] || { label: c.status, cls: 'bg-surface-container text-on-surface-variant' };
     const isOwnRequest = c.requested_by === currentUser?.id;
     return (
       <div key={c.id} className="p-4 border border-outline-variant rounded-zela-lg bg-white shadow-sm space-y-2">
@@ -114,7 +114,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
         </p>
 
         {c.increases_billing && (
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-warning">
             <AlertTriangle size={13} /> {podeAprovar ? `Aumenta a cobrança em ${c.minutes_delta} min` : 'Gera hora extra'}
           </p>
         )}
@@ -135,14 +135,14 @@ export default function AdminAttendanceCorrections({ currentUser }) {
               <button
                 onClick={() => handleReview(c, true)}
                 disabled={actingOn === c.id}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-2 rounded-lg text-xs transition"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-success hover:bg-success disabled:opacity-50 text-white font-bold py-2 rounded-lg text-xs transition"
               >
                 {actingOn === c.id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Aprovar
               </button>
               <button
                 onClick={() => handleReview(c, false)}
                 disabled={actingOn === c.id}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 font-bold py-2 rounded-lg text-xs transition"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-error/40 text-error hover:bg-error/10 disabled:opacity-50 font-bold py-2 rounded-lg text-xs transition"
               >
                 <XIcon size={13} /> Rejeitar
               </button>
@@ -166,7 +166,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium shrink-0">{error}</div>
+        <div className="mb-4 p-3 bg-error/10 border border-error/40 rounded-zela-md text-sm text-error font-medium shrink-0">{error}</div>
       )}
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-6">

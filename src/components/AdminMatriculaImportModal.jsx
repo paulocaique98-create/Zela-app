@@ -163,10 +163,10 @@ function buildFamiliesFromRows(rows) {
 }
 
 function StatusIcon({ status }) {
-  if (status === 'pending') return <div className="w-5 h-5 rounded-full border-2 border-slate-200 shrink-0" />;
-  if (status === 'processing') return <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />;
-  if (status === 'success') return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
-  if (status === 'error') return <XCircle className="w-5 h-5 text-red-500 shrink-0" />;
+  if (status === 'pending') return <div className="w-5 h-5 rounded-full border-2 border-outline-variant shrink-0" />;
+  if (status === 'processing') return <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />;
+  if (status === 'success') return <CheckCircle2 className="w-5 h-5 text-success shrink-0" />;
+  if (status === 'error') return <XCircle className="w-5 h-5 text-error shrink-0" />;
   return null;
 }
 
@@ -269,17 +269,17 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
       onClick={!isImporting ? onClose : undefined}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-outline-variant shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-100 p-2.5 rounded-xl text-emerald-600">
+            <div className="bg-success/15 p-2.5 rounded-xl text-success">
               <FileSpreadsheet size={20} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">Importar Matrículas em Massa</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-base font-bold text-on-surface">Importar Matrículas em Massa</h2>
+              <p className="text-xs text-on-surface-variant/70">
                 {step === 'upload' && 'Carregue a planilha preenchida a partir do modelo'}
                 {step === 'preview' && `${families.length} família(s), ${totalCriancas} criança(s) encontradas — cada uma vira uma solicitação pendente`}
                 {step === 'importing' && `Processando… ${progress}%`}
@@ -288,7 +288,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
             </div>
           </div>
           {!isImporting && (
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition" title="Fechar">
+            <button onClick={onClose} className="p-2 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-xl transition" title="Fechar">
               <X size={18} />
             </button>
           )}
@@ -303,25 +303,25 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
                 onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all select-none ${
-                  isDragging ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50/40'
+                  isDragging ? 'border-success/60 bg-success/10' : 'border-outline-variant bg-surface-container-low hover:border-primary/60 hover:bg-primary/40'
                 }`}
               >
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" />
-                <div className={`mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${isDragging ? 'bg-emerald-100' : 'bg-white border border-slate-200'}`}>
-                  <Upload size={26} className={isDragging ? 'text-emerald-500' : 'text-slate-400'} />
+                <div className={`mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${isDragging ? 'bg-success/15' : 'bg-white border border-outline-variant'}`}>
+                  <Upload size={26} className={isDragging ? 'text-success' : 'text-on-surface-variant/70'} />
                 </div>
-                <p className="font-semibold text-slate-700 text-sm">{isDragging ? 'Solte o arquivo aqui' : 'Arraste a planilha aqui'}</p>
-                <p className="text-xs text-slate-400 mt-1">ou clique para selecionar · <span className="font-mono">.xlsx</span> / <span className="font-mono">.xls</span></p>
+                <p className="font-semibold text-on-surface text-sm">{isDragging ? 'Solte o arquivo aqui' : 'Arraste a planilha aqui'}</p>
+                <p className="text-xs text-on-surface-variant/70 mt-1">ou clique para selecionar · <span className="font-mono">.xlsx</span> / <span className="font-mono">.xls</span></p>
               </div>
 
               {parseError && (
-                <div className="flex items-start gap-2.5 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                <div className="flex items-start gap-2.5 p-4 bg-error/10 border border-error/40 rounded-xl text-sm text-error">
                   <AlertTriangle size={15} className="mt-0.5 shrink-0" />
                   <span>{parseError}</span>
                 </div>
               )}
 
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-xs text-indigo-700 leading-relaxed">
+              <div className="bg-primary/10 border border-primary/30 rounded-2xl p-4 text-xs text-primary leading-relaxed">
                 Cada linha da planilha é uma criança. Irmãos repetem os dados do responsável em cada linha própria — a importação junta automaticamente pelo CPF do responsável numa única solicitação. Baixe o modelo antes de preencher, pelo botão ao lado do de importar.
               </div>
             </div>
@@ -329,30 +329,30 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
 
           {step === 'preview' && (
             <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-700">
-                <CheckCircle2 size={15} className="shrink-0 text-indigo-500" />
+              <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-xl text-sm text-primary">
+                <CheckCircle2 size={15} className="shrink-0 text-primary" />
                 <span><strong>{families.length}</strong> família(s) e <strong>{totalCriancas}</strong> criança(s) em <strong className="font-mono">{fileName}</strong></span>
               </div>
 
-              <div className="border border-slate-200 rounded-2xl overflow-x-auto">
+              <div className="border border-outline-variant rounded-2xl overflow-x-auto">
                 <table className="w-full text-sm min-w-[560px]">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
+                    <tr className="bg-surface-container-low border-b border-outline-variant">
                       {['#', 'Responsável Financeiro', 'Criança(s)', 'Autorizados'].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{h}</th>
+                        <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-outline-variant">
                     {families.map((f, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3 text-xs text-slate-400 font-mono w-8">{idx + 1}</td>
+                      <tr key={idx} className="hover:bg-surface-container-low/50 transition-colors">
+                        <td className="px-4 py-3 text-xs text-on-surface-variant/70 font-mono w-8">{idx + 1}</td>
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-slate-800 text-xs">{f.responsavel.nome}</div>
-                          <div className="text-[11px] text-slate-400">{f.responsavel.email}</div>
+                          <div className="font-semibold text-on-surface text-xs">{f.responsavel.nome}</div>
+                          <div className="text-[11px] text-on-surface-variant/70">{f.responsavel.email}</div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-700">{f.criancas.map(c => c.nome).join(', ')}</td>
-                        <td className="px-4 py-3 text-[11px] text-slate-500">{f.autorizados.length > 0 ? f.autorizados.map(a => a.nome).join(', ') : '—'}</td>
+                        <td className="px-4 py-3 text-xs text-on-surface">{f.criancas.map(c => c.nome).join(', ')}</td>
+                        <td className="px-4 py-3 text-[11px] text-on-surface-variant">{f.autorizados.length > 0 ? f.autorizados.map(a => a.nome).join(', ') : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -364,24 +364,24 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
           {step === 'importing' && (
             <div className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-xs text-on-surface-variant">
                   <span>{doneCount} de {results.length} famílias</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
                 </div>
               </div>
               <div className="space-y-2">
                 {results.map((r, idx) => (
                   <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
-                    r.status === 'success' ? 'bg-emerald-50 border-emerald-100' : r.status === 'error' ? 'bg-red-50 border-red-100' : r.status === 'processing' ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-50 border-slate-100'
+                    r.status === 'success' ? 'bg-success/10 border-success/30' : r.status === 'error' ? 'bg-error/10 border-error/30' : r.status === 'processing' ? 'bg-primary/10 border-primary/30' : 'bg-surface-container-low border-outline-variant'
                   }`}>
                     <div className="mt-0.5"><StatusIcon status={r.status} /></div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-slate-800 text-xs truncate">{r.nome}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{r.criancas}</div>
-                      {r.msg && <div className={`text-[11px] mt-0.5 font-medium ${r.status === 'error' ? 'text-red-600' : 'text-emerald-600'}`}>{r.msg}</div>}
+                      <div className="font-semibold text-on-surface text-xs truncate">{r.nome}</div>
+                      <div className="text-[11px] text-on-surface-variant/70 truncate">{r.criancas}</div>
+                      {r.msg && <div className={`text-[11px] mt-0.5 font-medium ${r.status === 'error' ? 'text-error' : 'text-success'}`}>{r.msg}</div>}
                     </div>
                   </div>
                 ))}
@@ -393,51 +393,51 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
           {step === 'done' && (
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
-                  <CheckCircle2 className="mx-auto mb-2 text-emerald-500" size={28} />
-                  <div className="text-4xl font-black text-emerald-700">{successCount}</div>
-                  <div className="text-xs text-emerald-600 font-medium mt-1">Solicitação(ões) criada(s)</div>
+                <div className="bg-success/10 border border-success/40 rounded-2xl p-5 text-center">
+                  <CheckCircle2 className="mx-auto mb-2 text-success" size={28} />
+                  <div className="text-4xl font-black text-success">{successCount}</div>
+                  <div className="text-xs text-success font-medium mt-1">Solicitação(ões) criada(s)</div>
                 </div>
-                <div className={`border rounded-2xl p-5 text-center ${errorCount > 0 ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
-                  <XCircle className={`mx-auto mb-2 ${errorCount > 0 ? 'text-red-400' : 'text-slate-300'}`} size={28} />
-                  <div className={`text-4xl font-black ${errorCount > 0 ? 'text-red-700' : 'text-slate-400'}`}>{errorCount}</div>
-                  <div className={`text-xs font-medium mt-1 ${errorCount > 0 ? 'text-red-600' : 'text-slate-400'}`}>Erro(s)</div>
+                <div className={`border rounded-2xl p-5 text-center ${errorCount > 0 ? 'bg-error/10 border-error/40' : 'bg-surface-container-low border-outline-variant'}`}>
+                  <XCircle className={`mx-auto mb-2 ${errorCount > 0 ? 'text-error' : 'text-on-surface-variant/50'}`} size={28} />
+                  <div className={`text-4xl font-black ${errorCount > 0 ? 'text-error' : 'text-on-surface-variant/70'}`}>{errorCount}</div>
+                  <div className={`text-xs font-medium mt-1 ${errorCount > 0 ? 'text-error' : 'text-on-surface-variant/70'}`}>Erro(s)</div>
                 </div>
               </div>
               {successCount > 0 && (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700">
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 text-xs text-primary">
                   As solicitações importadas já aparecem em "Pendentes" — revise e aprove cada uma normalmente.
                 </div>
               )}
               {newAccesses.length > 0 && (
-                <div className="border border-amber-200 rounded-2xl overflow-hidden">
-                  <div className="bg-amber-50 px-4 py-2.5 border-b border-amber-200 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Acessos provisórios criados · mostrados só agora</p>
-                    <button type="button" onClick={copyAccesses} className="text-[11px] font-bold text-amber-800 bg-white border border-amber-200 hover:bg-amber-100 px-2.5 py-1 rounded-lg transition shrink-0">
+                <div className="border border-warning/40 rounded-2xl overflow-hidden">
+                  <div className="bg-brass-50 px-4 py-2.5 border-b border-warning/40 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-bold text-warning uppercase tracking-wider">Acessos provisórios criados · mostrados só agora</p>
+                    <button type="button" onClick={copyAccesses} className="text-[11px] font-bold text-warning bg-white border border-warning/40 hover:bg-brass-50 px-2.5 py-1 rounded-lg transition shrink-0">
                       {copiedAccesses ? 'Copiado' : 'Copiar todos'}
                     </button>
                   </div>
-                  <div className="divide-y divide-amber-100 max-h-48 overflow-y-auto">
+                  <div className="divide-y divide-warning/30 max-h-48 overflow-y-auto">
                     {newAccesses.map((r, idx) => (
                       <div key={idx} className="px-4 py-2.5 text-xs">
-                        <div className="font-semibold text-slate-700">{r.nome}</div>
-                        <div className="text-slate-500 break-all">{r.credentials.email} · <span className="font-mono font-bold text-slate-700">{r.credentials.password}</span></div>
+                        <div className="font-semibold text-on-surface">{r.nome}</div>
+                        <div className="text-on-surface-variant break-all">{r.credentials.email} · <span className="font-mono font-bold text-on-surface">{r.credentials.password}</span></div>
                       </div>
                     ))}
                   </div>
-                  <p className="px-4 py-2.5 text-[11px] text-amber-700 bg-amber-50/50 border-t border-amber-100">Cada senha é única. No primeiro acesso o Zela Escola pede para a família criar a própria senha. Copie antes de fechar esta janela.</p>
+                  <p className="px-4 py-2.5 text-[11px] text-warning bg-warning/50 border-t border-warning/30">Cada senha é única. No primeiro acesso o Zela Escola pede para a família criar a própria senha. Copie antes de fechar esta janela.</p>
                 </div>
               )}
               {errorCount > 0 && (
-                <div className="border border-red-200 rounded-2xl overflow-hidden">
-                  <div className="bg-red-50 px-4 py-2.5 border-b border-red-200">
-                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Famílias com erro: corrija na planilha e importe de novo só essas</p>
+                <div className="border border-error/40 rounded-2xl overflow-hidden">
+                  <div className="bg-error/10 px-4 py-2.5 border-b border-error/40">
+                    <p className="text-[10px] font-bold text-error uppercase tracking-wider">Famílias com erro: corrija na planilha e importe de novo só essas</p>
                   </div>
-                  <div className="divide-y divide-red-100 max-h-48 overflow-y-auto">
+                  <div className="divide-y divide-error/30 max-h-48 overflow-y-auto">
                     {results.filter((r) => r.status === 'error').map((r, idx) => (
                       <div key={idx} className="px-4 py-3">
-                        <div className="text-xs font-semibold text-slate-700">{r.nome}</div>
-                        <div className="text-[11px] text-red-600 mt-0.5">{r.msg}</div>
+                        <div className="text-xs font-semibold text-on-surface">{r.nome}</div>
+                        <div className="text-[11px] text-error mt-0.5">{r.msg}</div>
                       </div>
                     ))}
                   </div>
@@ -447,12 +447,12 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-between gap-3 shrink-0">
           <div>
             {step === 'preview' && (
               <button
                 onClick={() => { setStep('upload'); setFamilies([]); setFileName(''); setParseError(''); }}
-                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition"
+                className="flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface transition"
               >
                 <ArrowLeft size={15} /> Outro arquivo
               </button>
@@ -460,14 +460,14 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
           </div>
           <div className="flex items-center gap-3">
             {!isImporting && (
-              <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 hover:border-slate-300 rounded-xl transition">
+              <button onClick={onClose} className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface border border-outline-variant hover:border-outline-variant rounded-xl transition">
                 {step === 'done' ? 'Fechar' : 'Cancelar'}
               </button>
             )}
             {step === 'preview' && (
               <button
                 onClick={handleImport}
-                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 bg-success hover:bg-success active:bg-success text-white text-sm font-semibold rounded-xl transition shadow-sm"
               >
                 <Play size={14} /> Importar {families.length} família(s)
               </button>

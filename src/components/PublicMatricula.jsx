@@ -56,7 +56,7 @@ function DocUploadRow({ label, doc, onFile, onRemove, isUploading }) {
       <p className="text-xs font-bold text-on-surface">{label}</p>
       {doc ? (
         <div className="flex items-center justify-between gap-2 bg-success/5 border border-success/30 rounded-md px-3 py-2">
-          <span className="flex items-center gap-2 text-xs font-bold text-green-700 truncate">
+          <span className="flex items-center gap-2 text-xs font-bold text-success truncate">
             <Check size={14} className="shrink-0" /> <span className="truncate">{doc.name}</span>
           </span>
           <button type="button" onClick={onRemove} className="p-1 text-success hover:text-error hover:bg-error/5 rounded-md transition shrink-0">

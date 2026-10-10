@@ -296,7 +296,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
         </span>
       )}
       {guardian.status === 'pending' && (
-        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-amber-100 text-amber-700">
+        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-brass-50 text-warning">
           Pendente
         </span>
       )}
@@ -343,7 +343,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           >
             Pendentes
             {pendingCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-black">
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-sm bg-warning text-white text-[10px] font-black">
                 {pendingCount}
               </span>
             )}
@@ -420,7 +420,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant">
-            <Users className="h-12 w-12 text-slate-300 mb-3" />
+            <Users className="h-12 w-12 text-on-surface-variant/50 mb-3" />
             <h3 className="text-on-surface-variant font-medium text-small">
               {searchTerm
                 ? `Nenhum resultado para "${searchTerm}"`
@@ -466,7 +466,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                           </button>
                           {canDelete && <button
                             onClick={() => guardian.status === 'pending' ? handleRejectUser(guardian.id) : handleDeleteUser(guardian.id)}
-                            className="p-1.5 text-on-surface-variant/70 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                            className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"
                             title={guardian.status === 'pending' ? 'Rejeitar cadastro' : 'Excluir usuário'}
                           >
                             <Trash2 size={15} />
@@ -516,7 +516,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                           )}
 
                           {guardian.status === 'pending' && !canApprove && (
-                            <p className="mt-2 w-full py-1.5 text-center bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs">
+                            <p className="mt-2 w-full py-1.5 text-center bg-brass-50 text-warning border border-warning/40 rounded-lg font-bold text-xs">
                               Aguardando aprovação da Gestão
                             </p>
                           )}
@@ -524,7 +524,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                             <button
                               onClick={() => handleApproveUser(guardian.id)}
                               disabled={approvingUserId === guardian.id}
-                              className="mt-2 flex items-center justify-center gap-2 w-full py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition font-bold text-xs disabled:opacity-50"
+                              className="mt-2 flex items-center justify-center gap-2 w-full py-1.5 bg-success/10 text-success hover:bg-success/15 border border-success/40 rounded-lg transition font-bold text-xs disabled:opacity-50"
                             >
                               <Check size={13} /> {approvingUserId === guardian.id ? 'Aprovando...' : 'Aprovar cadastro'}
                             </button>

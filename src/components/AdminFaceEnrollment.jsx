@@ -220,7 +220,7 @@ export default function AdminFaceEnrollment({ authorized: authorizedProp, toggle
 
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-zela-md text-sm text-red-700 font-medium">{error}</div>
+                <div className="p-3 bg-error/10 border border-error/40 rounded-zela-md text-sm text-error font-medium">{error}</div>
               )}
 
               {activeList.length === 0 ? (
@@ -239,7 +239,7 @@ export default function AdminFaceEnrollment({ authorized: authorizedProp, toggle
                 filtered.map(person => (
                   <div key={person.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-outline-variant rounded-zela-lg bg-surface-container-low gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 bg-slate-200 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm overflow-hidden">
+                      <div className="w-11 h-11 bg-surface-container-high rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm overflow-hidden">
                         {tab === 'enrolled' && person.photo_url ? (
                           <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
                         ) : (
@@ -263,7 +263,7 @@ export default function AdminFaceEnrollment({ authorized: authorizedProp, toggle
                     ) : (
                       <button
                         onClick={() => { setError(''); setRemoveTarget(person); }}
-                        className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-red-200 px-3 py-2 rounded-lg shadow-sm shrink-0 text-red-600 hover:bg-red-50 transition"
+                        className="w-full sm:w-auto text-xs font-bold flex items-center justify-center gap-1.5 bg-white border border-error/40 px-3 py-2 rounded-lg shadow-sm shrink-0 text-error hover:bg-error/10 transition"
                       >
                         <Trash2 size={14} /> Remover Foto
                       </button>
