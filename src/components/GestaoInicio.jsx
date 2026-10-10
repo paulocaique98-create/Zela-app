@@ -4,14 +4,15 @@ import { supabase } from '../lib/supabase';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
 import { StatCard } from './GestaoShared';
+import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { podeAbrirAba, chaveLigada, recursosDoPerfil, rotuloDoPerfil } from '../lib/perfisGestao';
 
 // Início da Gestão: números do dia no topo (cada um leva à tela onde se
 // resolve) e atalhos abaixo.
-// Acesso rápido: só 8 atalhos, os mais usados por esta conta primeiro
+// Acesso rápido: só 6 atalhos, os mais usados por esta conta primeiro
 // (mesma regra dos outros portais: ordem por clickCounts; empate mantém a
 // ordem abaixo, que é o padrão de quem ainda não usou nada).
-const MAX_ATALHOS = 8;
+const MAX_ATALHOS = 6;
 
 export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab, clickCounts = {} }) {
   const features = currentSchool?.features_enabled || {};
@@ -21,6 +22,31 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
   const showCheckin = chaveLigada(features, 'checkin');
   const { data: pend } = useGestaoPendencias(currentUser);
   const [fin, setFin] = useState(null);
+  const [ops, setOps] = useState(null);
+
+  // Horas extras do mês (mesmo cálculo da tela Horas Extras).
+  useEffect(() => {
+    const schoolId = currentUser?.school_id;
+    if (!schoolId || !showFinanceiro || !showCheckin) return;
+    (async () => {
+      const { data } = await supabase.from('attendance_logs')
+        .select('id, event_type, event_time, student_id, students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra)')
+        .eq('school_id', schoolId)
+        .gte('event_time', `${monthRange(0).start}T00:00:00-03:00`)
+        .lte('event_time', `${getBrasiliaDateStr()}T23:59:59-03:00`)
+        .order('student_id').order('event_time');
+      const cfg = mergeBillingConfig(currentSchool?.billing_config);
+      let extrasCents = 0;
+      const alunosComExtra = new Set();
+      agruparEventosPorDia(data || []).forEach(d => {
+        const st = d.studentData || {};
+        const v = calcularHorasExtras(d.exitLog?.event_time || null, st.contracted_exit_time, st.weekly_schedule, cfg, st.isento_hora_extra).valor
+          + calcularEntradaAntecipada(d.entryLog?.event_time || null, st.contracted_entry_time, st.weekly_schedule, cfg, st.isento_hora_extra).valor;
+        if (v > 0) { extrasCents += Math.round(v * 100); alunosComExtra.add(d.student_id); }
+      });
+      setOps({ extrasCents, extrasAlunos: alunosComExtra.size });
+    })();
+  }, [showFinanceiro, showCheckin, currentUser?.school_id, currentSchool?.billing_config]);
 
   useEffect(() => {
     if (!showFinanceiro || !currentUser?.school_id) return;
@@ -71,37 +97,42 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     .slice(0, MAX_ATALHOS);
 
   return (
-    <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
+    <div className="h-full bg-surface p-4 md:p-6 lg:p-8 overflow-y-auto lg:overflow-hidden flex flex-col">
       <div className="w-full mt-0">
-        <div className="mb-6 shrink-0">
+        <div className="mb-4 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da {rotuloDoPerfil(currentUser)}</h1>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          <StatCard label="Pendências" value={pendTotal ?? '·'} tone={pendTotal ? 'warn' : 'good'} hint={recursos.financeiro ? 'cadastros, matrículas, correções, contratos e exclusões' : 'cadastros e matrículas'} onClick={() => setGestaoTab('pendencias')} />
-          <StatCard label="Documentos faltando" value={pend ? pend.documentos.length : '·'} tone={pend?.documentos.length ? 'warn' : 'good'} hint="alunos ativos" onClick={() => setGestaoTab('secretaria-documentos')} />
-          {showFinanceiro && (
-            <>
+        {showFinanceiro && (
+          <>
+            <h2 className="text-sm font-bold text-on-surface-variant mb-2">Financeiro</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               <StatCard label="Recebido no mês" value={fin ? centsToBRL(fin.recebido) : '·'} tone="good" hint={fin ? `de ${centsToBRL(fin.previsto)} previstos` : ''} onClick={() => setGestaoTab('financeiro-visao')} />
+              <StatCard label="A receber no mês" value={fin ? centsToBRL(Math.max(fin.previsto - fin.recebido, 0)) : '·'} tone="warn" hint="mensalidades em aberto" onClick={() => setGestaoTab('financeiro-cobrancas')} />
               <StatCard label="Em atraso" value={pend ? centsToBRL(pend.vencidasTotal) : '·'} tone={pend?.vencidasTotal ? 'bad' : 'good'} hint={pend ? `${pend.vencidas.length} cobrança(s)` : ''} onClick={() => setGestaoTab('financeiro-inadimplencia')} />
-            </>
-          )}
-        </div>
+              {showCheckin ? (
+                <StatCard label="A receber de horas extras" value={ops ? centsToBRL(ops.extrasCents) : '·'} tone={ops?.extrasCents ? 'warn' : 'good'} hint={ops ? `${ops.extrasAlunos} aluno(s) no mês` : ''} onClick={() => setGestaoTab('horas-extras')} />
+              ) : (
+                <StatCard label="Contas a pagar" value={pend ? pend.despesas.length : '·'} tone={pend?.despesasAtrasadas.length ? 'bad' : 'default'} hint="vencem em até 7 dias" onClick={() => setGestaoTab('financeiro-despesas')} />
+              )}
+            </div>
+          </>
+        )}
 
-        <h2 className="text-sm font-bold text-on-surface-variant mb-3">Acesso rápido</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <h2 className="text-sm font-bold text-on-surface-variant mb-2">Operacional</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {menus.map(menu => (
             <button
               key={menu.key}
               onClick={() => setGestaoTab(menu.tab)}
-              className="bg-surface-container-lowest p-4 rounded-zela-lg shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-start gap-3 text-left relative"
+              className="bg-surface-container-lowest px-4 py-3 rounded-zela-lg shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left relative"
             >
               {menu.badge && (
                 <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-md">
                   {menu.badge}
                 </span>
               )}
-              <div className="w-10 h-10 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
+              <div className="w-9 h-9 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
                 <menu.icon size={20} />
               </div>
               <div>

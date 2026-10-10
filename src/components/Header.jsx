@@ -55,14 +55,14 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         </div>
         <div className="flex flex-col min-w-0 flex-1">
           <h1 className={`font-serif font-semibold text-base sm:text-lg leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
-            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">Zela Escola</span></span>
+            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Escola'}</span></span>
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)
                 sem separador -- "Zela Escola Usuários" em vez de "Zela Escola · Gestão de
                 Usuários". No desktop, que tem espaço de sobra, mostra o nome
                 completo com o separador. */}
-            <span className={`hidden md:inline font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabel || 'Escola'}</span>
-            <span className={`md:hidden font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabelMobile || 'Escola'}</span>
+            <span className={`hidden md:inline font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabel}</span>
+            <span className={`md:hidden font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabelMobile}</span>
           </h1>
         </div>
       </div>
