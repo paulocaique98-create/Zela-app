@@ -112,7 +112,7 @@ export default function AdminDuplicateBiometrics({ currentUser }) {
           <div className="grid gap-3 sm:grid-cols-2">
             {(pairs || []).map((pair, i) => (
               <div key={i} className="p-4 bg-white border-2 border-warning/40 rounded-zela-lg space-y-3">
-                <p className="flex items-center gap-1.5 text-[11px] font-bold text-warning uppercase tracking-wide">
+                <p className="flex items-center gap-1.5 text-[11px] font-bold text-warning">
                   <ShieldAlert size={13} /> Possível mesma pessoa em 2 contas
                 </p>
                 <div className="flex items-center gap-3">

@@ -205,7 +205,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
 
           {showFilters && (
             <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-outline-variant rounded-2xl shadow-lg p-3 z-20">
-              <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1.5 px-1">Período</p>
+              <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1.5 px-1">Período</p>
               <div className="flex gap-1.5 overflow-x-auto pb-0.5">
                 {[
                   { id: 'today', label: 'Hoje' },
@@ -294,11 +294,11 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                   <div className="flex items-center justify-between gap-2 flex-wrap mt-2">
                     <p className="text-xs text-on-surface-variant/70 min-w-0 break-words">{log.date} · ciclo {log.contracted}</p>
                     {log.duration === null ? (
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-sm uppercase bg-brass-50 text-warning border border-warning/40 shrink-0">Na Escola</span>
+                      <span className="text-[11px] font-bold px-2 py-1 rounded-sm bg-brass-50 text-warning border border-warning/40 shrink-0">Na Escola</span>
                     ) : log.overtime ? (
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider whitespace-nowrap bg-error/15 text-error shrink-0">+{log.overtime}</span>
+                      <span className="text-[11px] font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-error/15 text-error shrink-0">+{log.overtime}</span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider whitespace-nowrap bg-success/15 text-success shrink-0">
+                      <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-success/15 text-success shrink-0">
                         <CheckCircle2 size={11} /> No prazo
                       </span>
                     )}
@@ -310,7 +310,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                         <span className="flex items-center gap-1.5 font-bold text-primary text-sm flex-wrap">
                           <LogIn size={13} className="shrink-0" /> {log.entry || <span className="text-on-surface-variant/50">—</span>}
                           {log.entryCorrected && (
-                            <span className="text-[9px] font-bold uppercase text-warning bg-brass-50 px-1 py-0.5 rounded">Ajustado</span>
+                            <span className="text-[11px] font-bold text-warning bg-brass-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                         </span>
                         {log.entryQuem && <p className="text-[11px] text-on-surface-variant/70 mt-0.5 break-words">{log.entryQuem}</p>}
@@ -320,7 +320,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                         <span className="flex items-center gap-1.5 font-bold text-error text-sm flex-wrap">
                           <LogOut size={13} className="shrink-0" /> {log.exit || <span className="text-on-surface-variant/50">—</span>}
                           {log.exitCorrected && (
-                            <span className="text-[9px] font-bold uppercase text-warning bg-brass-50 px-1 py-0.5 rounded">Ajustado</span>
+                            <span className="text-[11px] font-bold text-warning bg-brass-50 px-1 py-0.5 rounded">Ajustado</span>
                           )}
                         </span>
                         {log.exitQuem && <p className="text-[11px] text-on-surface-variant/70 mt-0.5 break-words">{log.exitQuem}</p>}

@@ -35,7 +35,7 @@ function StudentQrCard({ student, dataUrl, isGenerating, error, onGenerate, sele
           </div>
         </div>
         {hasQr && !dataUrl && (
-          <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40 shrink-0 flex items-center gap-1">
+          <span className="text-[11px] font-extrabold px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40 shrink-0 flex items-center gap-1">
             <CheckCircle2 size={12} /> Gerado
           </span>
         )}

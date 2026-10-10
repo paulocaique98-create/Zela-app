@@ -215,7 +215,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
                     <span className="text-[11px] text-on-surface-variant/70 font-semibold min-w-0 truncate">
                       {student.turma || '—'}
                     </span>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-md shrink-0 ${cfg.cls}`}>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md shrink-0 ${cfg.cls}`}>
                       {cfg.icon} {cfg.label}
                     </span>
                   </div>
@@ -223,13 +223,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
                   <div className="flex items-end justify-between gap-2 pt-2 border-t border-dashed border-outline-variant">
                     <div className="flex gap-5 flex-wrap">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/70">Entrada</span>
+                        <span className="text-[11px] font-bold text-on-surface-variant/70">Entrada</span>
                         <span className="font-mono font-bold text-primary text-sm">
                           {student.today_entry ? student.today_entry.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant/70">Saída</span>
+                        <span className="text-[11px] font-bold text-on-surface-variant/70">Saída</span>
                         <span className="font-mono font-bold text-on-surface-variant text-sm">
                           {student.today_exit ? student.today_exit.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>

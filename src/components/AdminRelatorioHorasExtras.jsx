@@ -289,7 +289,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           {showFilters && (
             <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-outline-variant rounded-2xl shadow-lg p-3 z-20 space-y-3">
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1.5 px-1">Período</p>
+                  <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1.5 px-1">Período</p>
                   <div className="flex gap-1.5 overflow-x-auto pb-0.5">
                     {[
                       { id: 'today', label: 'Hoje' },

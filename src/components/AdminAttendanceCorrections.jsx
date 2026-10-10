@@ -105,7 +105,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
               )}
             </p>
           </div>
-          <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-md ${status.cls}`}>{status.label}</span>
+          <span className={`shrink-0 text-[11px] font-bold px-2 py-1 rounded-md ${status.cls}`}>{status.label}</span>
         </div>
 
         <p className="text-xs text-on-surface-variant">
@@ -177,7 +177,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
         ) : (
           <>
             <div>
-              <h3 className="text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-bold text-on-surface-variant/70 mb-2">
                 Aguardando aprovação {pending.length > 0 ? `(${pending.length})` : ''}
               </h3>
               {pending.length === 0 ? (
@@ -190,7 +190,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
             </div>
 
             <div>
-              <h3 className="text-xs font-bold text-on-surface-variant/70 uppercase tracking-wider mb-2">Histórico</h3>
+              <h3 className="text-xs font-bold text-on-surface-variant/70 mb-2">Histórico</h3>
               {resolved.length === 0 ? (
                 <p className="text-sm text-on-surface-variant/70 italic">Nenhuma correção registrada ainda.</p>
               ) : (

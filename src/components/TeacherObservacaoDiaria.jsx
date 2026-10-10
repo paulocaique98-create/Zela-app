@@ -185,7 +185,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Aluno *</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Aluno *</label>
                 <select
                   required
                   value={form.student_id}
@@ -197,7 +197,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Data *</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Data *</label>
                 <input
                   type="date"
                   required
@@ -207,7 +207,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Atividade escolhida</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Atividade escolhida</label>
                 <input
                   type="text"
                   value={form.atividade}
@@ -217,7 +217,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Material utilizado</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Material utilizado</label>
                 <input
                   type="text"
                   value={form.material}
@@ -226,7 +226,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Nível de concentração</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Nível de concentração</label>
                 <select
                   value={form.concentracao}
                   onChange={e => setForm({ ...form, concentracao: e.target.value })}
@@ -237,7 +237,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Autonomia</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Autonomia</label>
                 <select
                   value={form.autonomia}
                   onChange={e => setForm({ ...form, autonomia: e.target.value })}
@@ -250,7 +250,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Foco observado</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Foco observado</label>
               <input
                 type="text"
                 value={form.foco}
@@ -271,7 +271,7 @@ export default function TeacherObservacaoDiaria({ currentUser, currentSchool }) 
             </label>
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Observações</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Observações</label>
               <textarea
                 value={form.observacoes}
                 onChange={e => setForm({ ...form, observacoes: e.target.value })}

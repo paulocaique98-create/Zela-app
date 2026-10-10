@@ -320,7 +320,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                   </span>
                 </div>
                 <h4 className="font-bold text-lg text-on-surface">{familyPerson?.name}</h4>
-                <p className="text-on-surface-variant text-xs font-medium uppercase tracking-wider mt-0.5">Autorizado(a)</p>
+                <p className="text-on-surface-variant text-xs font-medium mt-0.5">Autorizado(a)</p>
               </div>
 
               {/* Alunos vinculados — o PIN identifica o responsável, não diz
@@ -329,7 +329,7 @@ export default function AdminPasswordLogin({ onClose, updateStudentStatus, reque
                   mas dá pra desmarcar quem não está sendo entregue/buscado
                   agora. */}
               <div className="bg-surface-container-low p-4 rounded-zela-lg border border-outline-variant">
-                <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-1">Quem está aqui agora?</p>
+                <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1">Quem está aqui agora?</p>
                 {matchedStudents.length > 1 && (
                   <p className="text-[11px] text-on-surface-variant mb-2">Marque quem você está entregando ou buscando agora.</p>
                 )}

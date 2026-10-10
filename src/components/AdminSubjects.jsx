@@ -209,15 +209,15 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nome *</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Nome *</label>
                 <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary" placeholder={`Ex: ${terminology.subject === 'Matéria' ? 'Matemática' : 'Vida Prática'}`} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Descrição</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Descrição</label>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Cor</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Cor</label>
                 <div className="flex gap-2">
                   {COLOR_OPTIONS.map(c => (
                     <button key={c.value} type="button" onClick={() => setColor(c.value)}
@@ -227,7 +227,7 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">{terminology.class}s</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">{terminology.class}s</label>
                 <div className="flex flex-wrap gap-2">
                   {schoolTurmas.map(t => {
                     const isSelected = selectedTurmas.includes(t);

@@ -392,14 +392,14 @@ export default function AdminStudentList({ currentUser }) {
                 <strong className="text-on-surface">{transferTarget.name}</strong> · turma atual: <strong className="text-on-surface">{transferTarget.turma || 'não definida'}</strong>
               </p>
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nova turma *</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Nova turma *</label>
                 <select required value={transferTurma} onChange={e => setTransferTurma(e.target.value)} className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary bg-white">
                   <option value="">Selecionar...</option>
                   {schoolTurmas.filter(t => t !== transferTarget.turma).map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Motivo (opcional)</label>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Motivo (opcional)</label>
                 <input type="text" value={transferReason} onChange={e => setTransferReason(e.target.value)} placeholder="Ex: Progressão de idade" className="w-full p-2.5 border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary" />
               </div>
               {transferError && <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{transferError}</div>}

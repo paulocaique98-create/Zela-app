@@ -672,7 +672,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
           <div>
             <div>
               {activeConfigTab === 'dados' && (() => {
-                const lbl = 'block text-xs font-bold text-on-surface-variant uppercase mb-1';
+                const lbl = 'block text-xs font-bold text-on-surface-variant mb-1';
                 const inp = 'w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm disabled:bg-surface-container-low disabled:text-on-surface-variant';
                 const set = (campo) => (e) => setFormData({ ...formData, [campo]: e.target.value });
                 return (
@@ -705,12 +705,12 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                       <p className="sm:col-span-2 text-[11px] text-on-surface-variant">Razão social, CNPJ, inscrição municipal e e-mail oficial só a Gestão altera.</p>
                     )}
                     <div className="sm:col-span-2 pt-1">
-                      <p className="text-xs font-bold text-on-surface-variant uppercase mb-1">Endereço (sai no contrato)</p>
+                      <p className="text-xs font-bold text-on-surface-variant mb-1">Endereço (sai no contrato)</p>
                       <CamposEnderecoEscola
                         prefixoId="config-escola"
                         valores={enderecoDaEscola(formData)}
                         onChange={endereco => setFormData({ ...formData, ...endereco })}
-                        labelCls="block text-[11px] font-bold text-on-surface-variant uppercase mb-1"
+                        labelCls="block text-[11px] font-bold text-on-surface-variant mb-1"
                         inputCls="w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm"
                       />
                     </div>
@@ -718,7 +718,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                 );
               })()}
               {activeConfigTab === 'responsaveis' && (() => {
-                const lbl = 'block text-xs font-bold text-on-surface-variant uppercase mb-1';
+                const lbl = 'block text-xs font-bold text-on-surface-variant mb-1';
                 const inp = 'w-full p-2 bg-white border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary text-sm';
                 const titulo = 'text-sm font-bold text-on-surface';
                 const ajuda = 'text-xs text-on-surface-variant mb-2';

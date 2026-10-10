@@ -83,7 +83,7 @@ export default function CondicaoFinanceiraFamilia({ currentUser, student, guardi
   if (!guardianId) return null;
   return (
     <div className="space-y-3 pt-4 border-t border-outline-variant">
-      <p className="text-xs font-black uppercase tracking-wide text-on-surface-variant">Plano e condição da família</p>
+      <p className="text-xs font-black text-on-surface-variant">Plano e condição da família</p>
 
       <div className="text-sm text-on-surface space-y-0.5">
         <p><strong>Plano do aluno:</strong> {rotuloDoPlano(plano.ciclo, plano.turno)}</p>
@@ -105,15 +105,15 @@ export default function CondicaoFinanceiraFamilia({ currentUser, student, guardi
             <p className="text-xs text-warning bg-brass-50 border border-warning/40 rounded-zela-md p-2">Este aluno já tem mensalidade ativa. Marcar como bolsista não cancela a cobrança: cancele em Financeiro · Mensalidades.</p>
           )}
           <div>
-            <label htmlFor="cond-obs" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Observação (só a escola vê)</label>
+            <label htmlFor="cond-obs" className="block text-[11px] font-bold text-on-surface-variant mb-1">Observação (só a escola vê)</label>
             <input id="cond-obs" value={observacao} onChange={e => setObservacao(e.target.value)} placeholder="Ex: bolsa integral 2026" className="w-full p-2.5 border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1 flex items-center gap-1"><Percent size={12} /> Desconto por periodicidade</p>
+            <p className="text-[11px] font-bold text-on-surface-variant mb-1 flex items-center gap-1"><Percent size={12} /> Desconto por periodicidade</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PERIODICIDADES.map(c => (
                 <div key={c}>
-                  <label htmlFor={`cond-desc-${c}`} className="block text-[10px] font-bold text-on-surface-variant/70 uppercase mb-0.5">{ROTULO_PERIODICIDADE[c]}</label>
+                  <label htmlFor={`cond-desc-${c}`} className="block text-[11px] font-bold text-on-surface-variant/70 mb-0.5">{ROTULO_PERIODICIDADE[c]}</label>
                   <div className="relative">
                     <input id={`cond-desc-${c}`} value={descontos[c]} onChange={e => setDescontos(d => ({ ...d, [c]: e.target.value }))} inputMode="decimal" disabled={bolsista}
                       className="w-full p-2 pr-6 bg-white border border-outline-variant rounded-zela-md text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" />

@@ -477,10 +477,10 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
 
               {/* Referência de colunas */}
               <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-4">
-                <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider mb-3">
+                <p className="text-xs font-bold text-on-surface-variant/70 mb-3">
                   Colunas esperadas no modelo
                 </p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                   {[
                     ['Nome Completo *', 'Responsável principal'],
                     ['E-mail *', 'Login de acesso'],
@@ -497,7 +497,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                     ['Nome Aluno 2', 'Segundo aluno (opcional)'],
                   ].map(([col, hint]) => (
                     <div key={col} className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-semibold text-on-surface font-mono leading-relaxed">
+                      <span className="text-[11px] font-semibold text-on-surface font-mono leading-relaxed whitespace-nowrap">
                         {col}
                       </span>
                       <span className="text-[10px] text-on-surface-variant/70">· {hint}</span>
@@ -528,7 +528,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
                       {['#', '1º Responsável', '2º Responsável', 'Aluno(s)', 'Turma / Período'].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-4 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider"
+                          className="text-left px-4 py-3 text-xs font-bold text-on-surface-variant"
                         >
                           {h}
                         </th>
@@ -690,7 +690,7 @@ export default function AdminImportModal({ currentUser, onClose, onImportComplet
               {errorCount > 0 && (
                 <div className="border border-error/40 rounded-2xl overflow-hidden">
                   <div className="bg-error/10 px-4 py-2.5 border-b border-error/40">
-                    <p className="text-[10px] font-bold text-error uppercase tracking-wider">
+                    <p className="text-xs font-bold text-error">
                       Registros com erro: verifique e corrija no arquivo
                     </p>
                   </div>

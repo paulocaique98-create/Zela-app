@@ -386,7 +386,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
           >
             <ChevronLeft size={20} />
           </button>
-          <span key={tab} className="flex-1 text-center bg-primary/10 text-primary px-3 py-2 rounded-zela-md text-xs font-black uppercase tracking-wide leading-tight animate-in fade-in duration-150">
+          <span key={tab} className="flex-1 text-center bg-primary/10 text-primary px-3 py-2 rounded-zela-md text-xs font-black leading-tight animate-in fade-in duration-150">
             {allowedSetores.find(s => s.value === tab)?.label}
           </span>
           <button

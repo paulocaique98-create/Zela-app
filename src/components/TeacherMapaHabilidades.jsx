@@ -187,7 +187,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
             <div className="rounded-zela-lg border border-outline-variant p-4 bg-surface-container-lowest">
-              <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold uppercase text-primary">
+              <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold text-primary">
                 <span>{passo.habilidade.area}</span>
                 <span className="text-on-surface-variant">Habilidade {indiceAtual + 1} de {fila.length}</span>
               </div>

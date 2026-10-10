@@ -52,13 +52,13 @@ export default function ForcePasswordChange({ currentUser, onPasswordChanged, on
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="force-new-password" className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Nova senha</label>
+            <label htmlFor="force-new-password" className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Nova senha</label>
             <input id="force-new-password" type="password" autoComplete="new-password" minLength={8} value={password} onChange={e => setPassword(e.target.value)} required
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm" />
             <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres.</p>
           </div>
           <div>
-            <label htmlFor="force-confirm-password" className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Confirme a nova senha</label>
+            <label htmlFor="force-confirm-password" className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Confirme a nova senha</label>
             <input id="force-confirm-password" type="password" autoComplete="new-password" minLength={8} value={confirm} onChange={e => setConfirm(e.target.value)} required
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm" />
           </div>

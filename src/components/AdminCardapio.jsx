@@ -499,12 +499,12 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Começa na segunda-feira</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Começa na segunda-feira</label>
                 <input type="date" value={iaStartMonday} onChange={e => setIaStartMonday(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Repete até</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Repete até</label>
                 <input type="date" value={iaEndDate} onChange={e => setIaEndDate(e.target.value)}
                   className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm" />
               </div>
@@ -632,7 +632,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Ativação (opcional)</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Ativação (opcional)</label>
                 <input
                   type="date"
                   value={newAtivacao}
@@ -641,7 +641,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Desativação (opcional)</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Desativação (opcional)</label>
                 <input
                   type="date"
                   value={newDesativacao}
@@ -686,7 +686,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
                 <button onClick={() => setSelectedId(c.id)} className="min-w-0 text-left flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-bold text-on-surface">{c.titulo}</h4>
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${STATUS_CLASSES[status.color]}`}>
+                    <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border ${STATUS_CLASSES[status.color]}`}>
                       {status.label}
                     </span>
                   </div>
@@ -974,7 +974,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
         </button>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
           <div className="flex-1">
-            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Título</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Título</label>
             <input
               type="text"
               value={titulo}
@@ -984,7 +984,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Ativação</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Ativação</label>
             <input
               type="date"
               value={ativacao}
@@ -994,7 +994,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Desativação</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Desativação</label>
             <input
               type="date"
               value={desativacao}
@@ -1102,19 +1102,19 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
         {/* Adicionar item manualmente */}
         <form onSubmit={handleAddItem} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 flex flex-col sm:flex-row gap-2 sm:items-end">
           <div>
-            <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Data</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Data</label>
             <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} required
               className="px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-xs font-semibold text-on-surface" />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Refeição</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Refeição</label>
             <select value={newRefeicao} onChange={e => setNewRefeicao(e.target.value)}
               className="px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-xs font-semibold text-on-surface">
               {REFEICOES.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Descrição</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Descrição</label>
             <input type="text" value={newDescricao} onChange={e => setNewDescricao(e.target.value)} placeholder="Ex: Arroz, feijão, frango grelhado" required
               className="w-full px-3 py-2 bg-white border border-outline-variant rounded-zela-md text-xs text-on-surface" />
           </div>
@@ -1137,11 +1137,11 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
         ) : (
           groups.map(group => (
             <div key={group.date}>
-              <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 uppercase tracking-wider mb-2 capitalize">{formatDateLabel(group.date)}</h3>
+              <h3 className="text-[11px] font-extrabold text-on-surface-variant/70 mb-2 capitalize">{formatDateLabel(group.date)}</h3>
               <div className="space-y-1.5 mb-3">
                 {group.items.map(item => (
                   <div key={item.id} className="flex items-center gap-2 bg-white border border-outline-variant rounded-zela-md p-2.5">
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border bg-primary/10 text-primary border-primary/20 shrink-0">
+                    <span className="text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border bg-primary/10 text-primary border-primary/20 shrink-0">
                       {item.refeicao}
                     </span>
                     {editingItemId === item.id ? (

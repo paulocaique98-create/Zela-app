@@ -372,7 +372,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                 className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Data de admissão</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Data de admissão</label>
                 <input
                   type="date"
                   value={form.admission_date}
@@ -383,7 +383,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Status</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Status</label>
               <div className="flex gap-2">
                 {['ativo', 'inativo'].map(s => (
                   <button
@@ -443,7 +443,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-bold text-on-surface">{f.name}</h4>
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border ${
+                    <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border ${
                       f.status === 'ativo' ? 'bg-success/10 text-success border-success/40' : 'bg-surface-container text-on-surface-variant border-outline-variant'
                     }`}>
                       {f.status}
@@ -530,7 +530,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h4 className="font-bold text-on-surface text-sm truncate">{u.name}</h4>
-                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${
+                        <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border shrink-0 ${
                           ACCESS_ROLE_STYLE[u.role] || ACCESS_ROLE_STYLE.teacher
                         }`}>
                           {ACCESS_ROLE_LABEL[u.role] || u.role}
@@ -600,7 +600,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
                   {u.role === 'teacher' && (
                     <div className="mt-3 pt-3 border-t border-outline-variant">
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-1">
+                        <p className="text-[11px] font-bold text-on-surface-variant/70 flex items-center gap-1">
                           <GraduationCap size={11} /> Turmas
                         </p>
                         <button

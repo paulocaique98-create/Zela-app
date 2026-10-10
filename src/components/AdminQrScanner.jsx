@@ -224,7 +224,7 @@ export default function AdminQrScanner({ onClose, requestKioskAccess, currentUse
           ) : step === 'confirming' ? (
             <div className="flex flex-col gap-4">
               <div className="text-center">
-                <p className="text-xs text-on-surface-variant/70 uppercase font-bold tracking-wide">Aluno identificado</p>
+                <p className="text-xs text-on-surface-variant/70 font-bold">Aluno identificado</p>
                 <p className="text-lg font-bold text-on-surface">{matchedStudent?.student_name}</p>
               </div>
               <p className="text-sm text-on-surface-variant text-center">Quem está entregando ou buscando agora?</p>

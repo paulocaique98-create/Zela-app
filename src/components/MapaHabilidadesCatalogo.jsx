@@ -238,7 +238,7 @@ export default function MapaHabilidadesCatalogo({ currentUser, schoolId, podeEdi
           {visiveis.map(h => (
             <li key={h.id} className={`rounded-zela-md border border-outline-variant p-3 flex items-start gap-3 ${h.ativa ? '' : 'opacity-60'}`}>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-extrabold uppercase text-primary">{h.area}{h.ativa ? '' : ' · Desativada'}</p>
+                <p className="text-[11px] font-extrabold text-primary">{h.area}{h.ativa ? '' : ' · Desativada'}</p>
                 <p className="text-sm font-bold text-on-surface">{h.descricao}</p>
                 <p className="text-[11px] text-on-surface-variant">{formatFaixa(h.idade_min_meses, h.idade_max_meses)}</p>
               </div>

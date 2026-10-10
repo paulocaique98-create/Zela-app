@@ -287,16 +287,16 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
 
   const guardianBadges = (guardian) => (
     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
+      <span className="text-[11px] font-bold px-2 py-0.5 rounded w-fit inline-block bg-secondary/10 text-secondary">
         Família
       </span>
       {guardian.linkedStudents?.length > 0 && (
-        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-primary/10 text-primary">
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded w-fit inline-block bg-primary/10 text-primary">
           2º Responsável
         </span>
       )}
       {guardian.status === 'pending' && (
-        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded w-fit inline-block bg-brass-50 text-warning">
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded w-fit inline-block bg-brass-50 text-warning">
           Pendente
         </span>
       )}
@@ -441,7 +441,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                       aluno (titular ou vínculo de 2º Responsável); grupo
                       "solo" (ninguém vinculado a aluno) não mostra essa faixa. */}
                   {group.students.length > 0 && (
-                    <div className="bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-wider px-4 py-2 flex items-center gap-1.5">
+                    <div className="bg-secondary/10 text-secondary text-[11px] font-bold px-4 py-2 flex items-center gap-1.5">
                       <GraduationCap size={12} className="shrink-0"/>
                       <span className="truncate">
                         {group.students.map(s => s.name).join('  •  ')}

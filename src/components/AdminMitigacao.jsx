@@ -260,7 +260,7 @@ export default function AdminMitigacao({ currentUser, currentSchool }) {
                 >
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-bold text-on-surface text-sm">{student?.name || 'Aluno removido'}</p>
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
+                    <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </div>

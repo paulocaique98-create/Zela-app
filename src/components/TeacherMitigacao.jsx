@@ -176,7 +176,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
         </div>
         <form onSubmit={handleCreate} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
           <div ref={studentComboRef} className="relative">
-            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Aluno *</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Aluno *</label>
             <div className="relative">
               <input
                 type="text"
@@ -215,7 +215,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Período</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Período</label>
               <select
                 value={createForm.periodo}
                 onChange={e => setCreateForm({ ...createForm, periodo: e.target.value })}
@@ -225,7 +225,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Ano</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Ano</label>
               <select
                 value={createForm.ano}
                 onChange={e => setCreateForm({ ...createForm, ano: Number(e.target.value) })}
@@ -236,7 +236,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
             </div>
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1">Guia Responsável</label>
+            <label className="block text-[11px] font-bold text-on-surface-variant mb-1">Guia Responsável</label>
             <input
               type="text"
               value={createForm.guia_responsavel}
@@ -296,7 +296,7 @@ export default function TeacherMitigacao({ currentUser, currentSchool }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-bold text-on-surface text-sm">{student?.name || 'Aluno removido'}</p>
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
+                    <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-md border shrink-0 ${STATUS_BADGE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </div>

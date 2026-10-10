@@ -277,7 +277,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm resize-none"
             />
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant mb-1.5">
                 <Users size={12} /> Enviar para
               </label>
               <div className="flex flex-wrap gap-2">
@@ -316,7 +316,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant mb-1.5">
                 <Paperclip size={12} /> Anexos (imagem, PDF, Word, até {MAX_FILES}, 15MB cada)
               </label>
 

@@ -261,7 +261,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
             />
 
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant mb-1.5">
                 <Users size={12} /> Visível para
               </label>
               <div className="flex flex-wrap gap-2">

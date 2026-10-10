@@ -166,13 +166,13 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
   };
 
   const inputCls = 'w-full p-2.5 bg-white border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm';
-  const labelCls = 'block text-[10px] font-bold text-on-surface-variant uppercase mb-1 tracking-wide';
+  const labelCls = 'block text-[11px] font-bold text-on-surface-variant mb-1';
 
   return (
     <div className="p-4 bg-surface-container-low border border-outline-variant rounded-zela-lg space-y-3">
       {/* Cabeçalho do card */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+        <span className="text-xs font-black text-primary flex items-center gap-1.5">
           <Baby size={14} /> Aluno {index + 1}
         </span>
         {canRemove && (
@@ -304,7 +304,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
                       <span className="block text-xs font-bold text-on-surface mb-1.5">{dia.label}</span>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-[9px] font-bold text-on-surface-variant/70 uppercase mb-0.5">Entrada</label>
+                          <label className="block text-[11px] font-bold text-on-surface-variant/70 mb-0.5">Entrada</label>
                           <input
                             type="time"
                             value={override?.entry ?? ''}
@@ -314,7 +314,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
                           />
                         </div>
                         <div>
-                          <label className="block text-[9px] font-bold text-on-surface-variant/70 uppercase mb-0.5">Saída</label>
+                          <label className="block text-[11px] font-bold text-on-surface-variant/70 mb-0.5">Saída</label>
                           <input
                             type="time"
                             value={override?.exit ?? ''}
@@ -1181,7 +1181,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           onClick={() => toggleSection('tipo-conta')}
           className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
         >
-          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-on-surface-variant/70 flex items-center gap-2">
             <UserCog size={14} /> 1. Tipo de Conta
           </h3>
           <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'tipo-conta' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
@@ -1286,7 +1286,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           onClick={() => toggleSection('dados-responsavel')}
           className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
         >
-          <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-on-surface-variant/70 flex items-center gap-2">
             <Users size={14} /> 2. Dados do Responsável
           </h3>
           <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'dados-responsavel' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
@@ -1378,7 +1378,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             onClick={() => toggleSection('alunos-vinculados')}
             className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
           >
-            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 flex items-center gap-2">
               <Clock size={14} /> 3. Alunos Vinculados
             </h3>
             <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'alunos-vinculados' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
@@ -1423,7 +1423,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             onClick={() => toggleSection('segundo-responsavel')}
             className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container transition text-left"
           >
-            <h3 className="text-sm font-bold text-on-surface-variant/70 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface-variant/70 flex items-center gap-2">
               <Users size={14} /> 4. 2º Responsável
             </h3>
             <ChevronDown size={16} className={`shrink-0 transition-transform ${openSection === 'segundo-responsavel' ? 'rotate-180 text-primary' : 'text-on-surface-variant/50'}`} />
@@ -1442,7 +1442,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h4 className="font-bold text-on-surface break-words">{secondGuardian.name}</h4>
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-[11px] font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-md shrink-0">
                     2º Responsável
                   </span>
                 </div>

@@ -339,7 +339,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
                   <thead>
                     <tr className="bg-surface-container-low border-b border-outline-variant">
                       {['#', 'Responsável Financeiro', 'Criança(s)', 'Autorizados'].map((h) => (
-                        <th key={h} className="text-left px-4 py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">{h}</th>
+                        <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-on-surface-variant">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -412,7 +412,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
               {newAccesses.length > 0 && (
                 <div className="border border-warning/40 rounded-2xl overflow-hidden">
                   <div className="bg-brass-50 px-4 py-2.5 border-b border-warning/40 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold text-warning uppercase tracking-wider">Acessos provisórios criados · mostrados só agora</p>
+                    <p className="text-[11px] font-bold text-warning">Acessos provisórios criados · mostrados só agora</p>
                     <button type="button" onClick={copyAccesses} className="text-[11px] font-bold text-warning bg-white border border-warning/40 hover:bg-brass-50 px-2.5 py-1 rounded-lg transition shrink-0">
                       {copiedAccesses ? 'Copiado' : 'Copiar todos'}
                     </button>
@@ -431,7 +431,7 @@ export default function AdminMatriculaImportModal({ onClose, onImportComplete })
               {errorCount > 0 && (
                 <div className="border border-error/40 rounded-2xl overflow-hidden">
                   <div className="bg-error/10 px-4 py-2.5 border-b border-error/40">
-                    <p className="text-[10px] font-bold text-error uppercase tracking-wider">Famílias com erro: corrija na planilha e importe de novo só essas</p>
+                    <p className="text-[11px] font-bold text-error">Famílias com erro: corrija na planilha e importe de novo só essas</p>
                   </div>
                   <div className="divide-y divide-error/30 max-h-48 overflow-y-auto">
                     {results.filter((r) => r.status === 'error').map((r, idx) => (

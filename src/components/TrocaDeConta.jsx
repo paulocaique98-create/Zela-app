@@ -184,12 +184,12 @@ function VincularContaModal({ onClose, onVinculada }) {
         </div>
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">E-mail da outra conta</span>
+            <span className="text-[11px] font-bold text-on-surface-variant">E-mail da outra conta</span>
             <input id="vincular-email" type="email" required autoComplete="off" value={email} onChange={e => setEmail(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">Senha da outra conta</span>
+            <span className="text-[11px] font-bold text-on-surface-variant">Senha da outra conta</span>
             <input id="vincular-senha" type="password" required autoComplete="off" value={senha} onChange={e => setSenha(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
           </label>

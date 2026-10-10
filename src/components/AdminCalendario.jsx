@@ -792,7 +792,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Data</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Data</label>
                 <input
                   type="date"
                   value={eventDate}
@@ -802,7 +802,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Tipo</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Tipo</label>
                 <select
                   value={eventType}
                   onChange={e => setEventType(e.target.value)}
@@ -981,7 +981,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             />
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Categoria</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Categoria</label>
               <div className="flex gap-2">
                 {[{ v: 'geral', l: 'Geral (todos os alunos)' }, { v: 'integral', l: 'Integral' }].map(opt => (
                   <button key={opt.v} type="button" onClick={() => setAulaCategoria(opt.v)}
@@ -993,7 +993,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Frequência</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Frequência</label>
               <div className="flex gap-2">
                 {[{ v: 'semanal', l: 'Toda semana' }, { v: 'mensal', l: 'Semana(s) específica(s) do mês' }].map(opt => (
                   <button key={opt.v} type="button" onClick={() => setAulaFrequencia(opt.v)}
@@ -1005,7 +1005,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Dia(s) da semana</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Dia(s) da semana</label>
               <div className="flex flex-wrap gap-2">
                 {DIAS_SEMANA.map(dia => (
                   <button key={dia} type="button" onClick={() => toggleAulaDia(dia)}
@@ -1018,7 +1018,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
 
             {aulaFrequencia === 'mensal' && (
               <div>
-                <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Qual(is) semana(s) do mês</label>
+                <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Qual(is) semana(s) do mês</label>
                 <div className="flex flex-wrap gap-2">
                   {OCORRENCIAS_MES.map(oc => (
                     <button key={oc.value} type="button" onClick={() => toggleAulaOcorrencia(oc.value)}

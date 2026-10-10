@@ -24,9 +24,9 @@ function FichaCard({ student, ficha }) {
         </div>
         <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           {ficha ? (
-            <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40">Preenchida</span>
+            <span className="text-[11px] font-extrabold px-2 py-1 rounded-lg border bg-success/10 text-success border-success/40">Preenchida</span>
           ) : (
-            <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-lg border bg-surface-container text-on-surface-variant border-outline-variant">Não preenchida</span>
+            <span className="text-[11px] font-extrabold px-2 py-1 rounded-lg border bg-surface-container text-on-surface-variant border-outline-variant">Não preenchida</span>
           )}
           {expanded ? <ChevronUp size={18} className="text-on-surface-variant/70" /> : <ChevronDown size={18} className="text-on-surface-variant/70" />}
         </div>
@@ -40,7 +40,7 @@ function FichaCard({ student, ficha }) {
             <>
               {BLOCKS.map(b => (
                 <div key={b.flagKey}>
-                  <p className="text-[10px] font-bold text-on-surface-variant/70 uppercase tracking-wide mb-1">{b.label}</p>
+                  <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1">{b.label}</p>
                   {ficha[b.flagKey] && ficha[b.listKey]?.length > 0 ? (
                     <ul className="space-y-1">
                       {ficha[b.listKey].map((item, i) => (

@@ -173,7 +173,7 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-primary uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-primary mb-1.5">
                 <LogIn size={13} /> Entrada
               </label>
               <input
@@ -197,7 +197,7 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
               )}
             </div>
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-error uppercase tracking-wide mb-1.5">
+              <label className="flex items-center gap-1.5 text-[11px] font-bold text-error mb-1.5">
                 <LogOut size={13} /> Saída
               </label>
               <input

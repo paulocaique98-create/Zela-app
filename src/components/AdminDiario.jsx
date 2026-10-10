@@ -268,7 +268,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Data</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Data</label>
               <input
                 type="date"
                 value={selectedDate}
@@ -278,7 +278,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Turma</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Turma</label>
               <select
                 value={turmaFiltro}
                 onChange={e => { setTurmaFiltro(e.target.value); setBuscaQuery(''); }}
@@ -289,7 +289,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
               </select>
             </div>
             <div className="sm:col-span-2 relative">
-              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
                 <input
@@ -346,7 +346,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                   const pedeComeuTudo = mealAsksComeuTudo(r.refeicao);
                   return (
                   <div key={r.refeicao} className="border border-outline-variant rounded-zela-lg p-5 space-y-4">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{idx + 1}ª Refeição · {r.refeicao}</span>
+                    <span className="text-xs font-bold text-on-surface-variant">{idx + 1}ª Refeição · {r.refeicao}</span>
 
                     <div>
                       <label className="block text-xs font-semibold text-on-surface mb-2">Cardápio de hoje: o que a criança se serviu?</label>
@@ -440,7 +440,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
               )}
 
               <div className="border border-outline-variant rounded-zela-lg p-5">
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Sono</span>
+                <span className="text-xs font-bold text-on-surface-variant">Sono</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                   <div>
                     <label className="block text-xs font-semibold text-on-surface mb-1.5">Dormiu das</label>
@@ -454,7 +454,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
               </div>
 
               <div className="border border-outline-variant rounded-zela-lg p-5">
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Evacuação</span>
+                <span className="text-xs font-bold text-on-surface-variant">Evacuação</span>
                 <div className="flex gap-2 mt-3 max-w-[320px]">
                   <button type="button" onClick={() => setEvacuou(true)} className={segCls(evacuou === true)}>Sim</button>
                   <button type="button" onClick={() => { setEvacuou(false); setAparenciaEvacuacao(''); }} className={segCls(evacuou === false)}>Não</button>
