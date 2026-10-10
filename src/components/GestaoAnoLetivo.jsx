@@ -64,7 +64,7 @@ export default function GestaoAnoLetivo({ currentUser }) {
                 <button key={y.id} onClick={() => setSelected(y.id)}
                   className={`shrink-0 h-10 flex items-center gap-2 px-4 rounded-zela-md text-sm font-bold border transition ${selected === y.id ? 'bg-primary text-white border-primary shadow-sm' : 'bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:border-primary/40'}`}>
                   {y.name}
-                  {y.status === 'aberto' && <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${selected === y.id ? 'bg-white/20 text-white' : 'bg-success/10 text-success'}`}>Aberto</span>}
+                  {y.status === 'aberto' && <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-sm ${selected === y.id ? 'bg-white/20 text-white' : 'bg-success/10 text-success'}`}>Aberto</span>}
                 </button>
               ))}
             </div>
@@ -72,7 +72,7 @@ export default function GestaoAnoLetivo({ currentUser }) {
               <div className="flex items-center gap-2 text-sm text-on-surface-variant bg-surface-container-low rounded-zela-md px-3 py-2">
                 <CalendarRange size={16} className="shrink-0 text-primary" />
                 <span>{formatDateBR(year.starts_on)} a {formatDateBR(year.ends_on)}</span>
-                <span className={`ml-auto shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${year.status === 'aberto' ? 'bg-success/10 text-success' : 'bg-surface-container text-on-surface-variant'}`}>
+                <span className={`ml-auto shrink-0 text-xs font-semibold px-2 py-0.5 rounded-sm ${year.status === 'aberto' ? 'bg-success/10 text-success' : 'bg-surface-container text-on-surface-variant'}`}>
                   {year.status === 'aberto' ? 'Em andamento' : `Encerrado em ${formatDateBR(year.closed_at)}`}
                 </span>
               </div>
@@ -94,7 +94,7 @@ export default function GestaoAnoLetivo({ currentUser }) {
                       {byTurma.map(([turma, count]) => (
                         <div key={turma} className="flex items-center justify-between gap-2 px-3 py-2.5 bg-surface-container-low rounded-zela-md text-sm">
                           <span className="text-on-surface font-medium truncate">{turma}</span>
-                          <span className="shrink-0 min-w-7 text-center text-xs font-bold tabular-nums text-primary bg-primary/10 rounded-full px-2 py-0.5">{count}</span>
+                          <span className="shrink-0 min-w-7 text-center text-xs font-bold tabular-nums text-primary bg-primary/10 rounded-sm px-2 py-0.5">{count}</span>
                         </div>
                       ))}
                     </div>

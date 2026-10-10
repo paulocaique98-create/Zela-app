@@ -1128,10 +1128,10 @@ export function ConfigTab({ currentUser }) {
           </div>
         </div>
         {!isLoadingStatus && gatewayStatus.asaas && (
-          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-success/10 text-success"><CheckCircle2 size={13} /> Configurada em {new Date(gatewayStatus.asaas.updated_at).toLocaleString('pt-BR')}</span>
+          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-sm bg-success/10 text-success"><CheckCircle2 size={13} /> Configurada em {new Date(gatewayStatus.asaas.updated_at).toLocaleString('pt-BR')}</span>
         )}
         {!isLoadingStatus && !gatewayStatus.asaas && (
-          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">Ainda não configurada</span>
+          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-sm bg-warning/15 text-warning">Ainda não configurada</span>
         )}
         <form onSubmit={handleSaveApiKey} className="flex flex-col sm:flex-row gap-2">
           <input
@@ -1162,10 +1162,10 @@ export function ConfigTab({ currentUser }) {
           </div>
         </div>
         {!isLoadingStatus && gatewayStatus.asaas_webhook && (
-          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-success/10 text-success"><CheckCircle2 size={13} /> Configurado em {new Date(gatewayStatus.asaas_webhook.updated_at).toLocaleString('pt-BR')}</span>
+          <span className="inline-flex items-center gap-1.5 mb-3 text-xs font-semibold px-2.5 py-1 rounded-sm bg-success/10 text-success"><CheckCircle2 size={13} /> Configurado em {new Date(gatewayStatus.asaas_webhook.updated_at).toLocaleString('pt-BR')}</span>
         )}
         {!isLoadingStatus && !gatewayStatus.asaas_webhook && (
-          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">Ainda não configurado</span>
+          <span className="inline-flex items-center mb-3 text-xs font-semibold px-2.5 py-1 rounded-sm bg-warning/15 text-warning">Ainda não configurado</span>
         )}
         <form onSubmit={handleSaveWebhookToken} className="flex flex-col sm:flex-row gap-2">
           <input

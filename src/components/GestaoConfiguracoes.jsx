@@ -124,7 +124,7 @@ export function ConfigSeguranca({ currentUser }) {
                 <div key={r.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex sm:flex-col items-center sm:items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-on-surface-variant">{r.label}</p>
-                    <span className={`inline-flex items-center gap-1 mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${pending ? 'bg-warning/15 text-warning' : 'bg-success/10 text-success'}`}>
+                    <span className={`inline-flex items-center gap-1 mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-sm ${pending ? 'bg-warning/15 text-warning' : 'bg-success/10 text-success'}`}>
                       {!pending && <CheckCircle2 size={12} />}
                       {pending ? `${pending} precisam trocar a senha` : 'Todas com senha própria'}
                     </span>

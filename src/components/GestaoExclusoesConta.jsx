@@ -44,7 +44,7 @@ export default function GestaoExclusoesConta({ currentUser }) {
               <section className="space-y-2.5">
                 <h3 className="text-sm font-bold text-warning flex items-center gap-2">
                   Aguardando resposta
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warning/10 border border-warning/30">{pending.length}</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-sm bg-warning/10 border border-warning/30">{pending.length}</span>
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {pending.map(r => {

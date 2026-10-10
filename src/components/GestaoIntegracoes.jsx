@@ -59,7 +59,7 @@ export default function GestaoIntegracoes({ currentUser, currentSchool, setGesta
         <div className="grid gap-3 lg:grid-cols-2 items-start">
           {cards.map(c => {
             const st = STATE[c.state];
-            const chip = <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${st.cls}`}><st.icon size={12} /> {st.label}</span>;
+            const chip = <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-sm text-[11px] font-semibold ${st.cls}`}><st.icon size={12} /> {st.label}</span>;
             return (
               <section key={c.title} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
                 <div className="flex items-start gap-3">

@@ -102,7 +102,7 @@ export default function CondicaoFinanceiraFamilia({ currentUser, student, guardi
             Bolsista, sem cobrança de mensalidade
           </label>
           {bolsista && temMensalidadeAtiva && (
-            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-zela-md p-2">Este aluno já tem mensalidade ativa. Marcar como bolsista não cancela a cobrança: cancele em Financeiro · Mensalidades.</p>
+            <p className="text-xs text-warning bg-brass-50 border border-warning/40 rounded-zela-md p-2">Este aluno já tem mensalidade ativa. Marcar como bolsista não cancela a cobrança: cancele em Financeiro · Mensalidades.</p>
           )}
           <div>
             <label htmlFor="cond-obs" className="block text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mb-1">Observação (só a escola vê)</label>
@@ -124,8 +124,8 @@ export default function CondicaoFinanceiraFamilia({ currentUser, student, guardi
             </div>
             <p className="text-[11px] text-on-surface-variant/70 mt-1">Hoje a escola cobra só o mensal; o desconto de trimestral, semestral e anual já fica guardado para quando a família optar por pagar assim.</p>
           </div>
-          {erro && <p className="text-xs font-medium text-red-600">{erro}</p>}
-          {aviso && <p className="text-xs font-medium text-green-700">{aviso}</p>}
+          {erro && <p className="text-xs font-medium text-error">{erro}</p>}
+          {aviso && <p className="text-xs font-medium text-success">{aviso}</p>}
           <button type="button" onClick={salvar} disabled={salvando} className="flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-zela-md text-sm transition disabled:opacity-50">
             {salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar condição da família
           </button>

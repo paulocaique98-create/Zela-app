@@ -43,9 +43,10 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
     if (!win) return;
     const esc = (t) => String(t ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório</title>
-      <style>body{font-family:system-ui,sans-serif;margin:24px;color:#111}h1{font-size:18px;margin:0}p{color:#555;font-size:12px}
-      .cards{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.c{border:1px solid #ccc;padding:8px 12px;border-radius:6px}.c b{display:block;font-size:16px}
-      table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left}th{background:#f3f3f3}</style></head><body>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" />
+      <style>body{font-family:"Public Sans",Arial,sans-serif;margin:24px;color:#17242e}h1{font-family:"Source Serif 4",Georgia,serif;font-size:18px;margin:0;border-bottom:2.5px solid #1e5563;padding-bottom:10px}p{color:#5a6a76;font-size:12px}
+      .cards{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.c{border:1px solid #d9dfe4;background:#eaeef1;padding:8px 12px;border-radius:8px;font-size:11px;color:#5a6a76}.c b{display:block;font-family:"Source Serif 4",Georgia,serif;font-size:16px;color:#17242e}
+      table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #d9dfe4;padding:6px 8px;text-align:left}th{background:#e8f0f2;color:#5a6a76;font-size:10px;font-weight:700}</style></head><body>
       <h1>${esc(currentSchool?.name || '')}, ${esc(data.title || 'Relatório')}</h1>
       <p>${monthly ? esc(range.label) + ', ' : ''}Gerado em ${esc(new Date().toLocaleString('pt-BR'))}</p>
       <div class="cards">${data.cards.map(c => `<div class="c">${esc(c.label)}<b>${esc(c.value)}</b></div>`).join('')}</div>

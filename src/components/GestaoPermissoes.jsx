@@ -67,8 +67,8 @@ export default function GestaoPermissoes({ currentUser }) {
         {catalog === null ? <Loading /> : (
           <>
             <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container font-semibold"><Lock size={12} /> A Gestão sempre tem acesso a tudo</span>
-              {ROLES.length === 1 && <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold">Ligue ou desligue para o {ROLES[0].label}</span>}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-surface-container font-semibold"><Lock size={12} /> A Gestão sempre tem acesso a tudo</span>
+              {ROLES.length === 1 && <span className="px-2.5 py-1 rounded-sm bg-primary/10 text-primary font-semibold">Ligue ou desligue para o {ROLES[0].label}</span>}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
               {areas.map(([area, perms]) => {
@@ -78,7 +78,7 @@ export default function GestaoPermissoes({ currentUser }) {
                     <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
                       <h3 className="text-sm font-bold text-primary">{area}</h3>
                       {liberadas !== null && (
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${liberadas ? 'bg-success/10 text-success' : 'bg-surface-container text-on-surface-variant'}`}>{liberadas} de {perms.length} liberada{perms.length !== 1 ? 's' : ''}</span>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-sm ${liberadas ? 'bg-success/10 text-success' : 'bg-surface-container text-on-surface-variant'}`}>{liberadas} de {perms.length} liberada{perms.length !== 1 ? 's' : ''}</span>
                       )}
                     </div>
                     <ul className="divide-y divide-outline-variant/50">

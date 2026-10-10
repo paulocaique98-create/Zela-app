@@ -103,7 +103,7 @@ export default function GestaoOcorrencias({ currentUser }) {
                   </div>
                   <span className="text-xs font-semibold text-on-surface-variant shrink-0 tabular-nums">{formatDateBR(r.date)}</span>
                 </div>
-                <span className={`inline-block mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${TYPE_TONE[r.type] || 'bg-surface-container text-on-surface-variant'}`}>{TYPE_LABELS[r.type] || r.type}</span>
+                <span className={`inline-block mt-2 text-[11px] font-semibold px-2 py-0.5 rounded-sm ${TYPE_TONE[r.type] || 'bg-surface-container text-on-surface-variant'}`}>{TYPE_LABELS[r.type] || r.type}</span>
                 <p className="text-sm text-on-surface mt-2 whitespace-pre-wrap break-words">{r.text}</p>
               </li>
             ))}
