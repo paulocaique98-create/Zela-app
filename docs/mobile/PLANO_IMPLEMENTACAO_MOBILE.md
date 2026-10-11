@@ -90,3 +90,12 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - https://capacitorjs.com/docs/getting-started/environment-setup (Capacitor 8, Node 22, Xcode 26, SPM, Android Studio 2025.2.1)
 - https://support.google.com/googleplay/android-developer/answer/11926878 (API 36)
 - Demais fontes do prompt mestre serão consultadas nas fases em que forem aplicadas (não lidas nesta fase: páginas de Android, iOS, workflow, Apple, LGPD).
+
+## 9. Atualização da FASE 2 (11/10/2026)
+
+- **appId definido:** `br.com.zelaedu.app` (domínio `zelaedu.com.br`). Nome visível: Zela Escola.
+- **Branch criada:** `feature/mobile-capacitor` (a partir da `main` em `7d0ebfb`, já enviada ao GitHub).
+- **Linha de base de testes com Supabase local (Docker):** 100 arquivos, 89 passaram, 11 falharam (39 testes). A causa amostrada é HTTP 503 das Edge Functions, porque `supabase functions serve` não estava rodando. Antes, sem o banco local: 55 arquivos falhando. Refazer com as funções servidas na Fase 6.
+- **Contas:** início como Pessoa Física, mudança posterior para PJ (transferência do app). Google Play pessoal exige teste fechado de 12 pessoas por 14 dias.
+- **iOS sem Mac:** CI em nuvem com Mac (Codemagic ou GitHub Actions) para compilar e assinar, TestFlight no iPhone 11 Pro Max, Mac remoto por hora só para depurar a câmera. Custos a confirmar.
+- **Aparelhos:** Galaxy S23 Ultra e iPhone 11 Pro Max; falta um Android de entrada para desempenho.
