@@ -1,7 +1,7 @@
 import webpush from 'npm:web-push@3.6.7';
 import { type PushPayload, buildWebPayload, buildFcmMessage, isGoneWebPush, isGoneFcm, attemptEndpoint, destinatariosComVinculos, tituloViaVinculo, chaveDoAparelho } from './pushCore.ts';
 
-// Envio único de notificações do Zela (PLANO_APPS_MOBILE.md, Fase 3).
+// Envio único de notificações do Zela.
 // Antes, o mesmo código de Web Push estava copiado em 8 lugares; agora
 // todos chamam sendPush(). Cada inscrição sai pelo canal certo:
 //   · web (navegador): Web Push com VAPID, como sempre foi;

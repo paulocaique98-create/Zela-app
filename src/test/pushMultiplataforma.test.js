@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { hasIntegrationCredentials } from './envForTests.js';
 import { adminClient, createTestUser, deleteTestUser, createTestSchool, deleteTestSchool } from './supabaseTestHelpers.js';
 
-// Inscrições de notificação para web e apps (PLANO_APPS_MOBILE Fase 3).
+// Inscrições de notificação para web e apps.
 const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 runIf('Inscrições de notificação · web e apps', () => {

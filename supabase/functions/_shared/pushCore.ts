@@ -1,6 +1,6 @@
 // Regras puras do envio de notificações (sem rede, sem Deno.env, sem npm:),
 // para poderem ser testadas no Vitest. O envio em si fica em push.ts.
-// PLANO_APPS_MOBILE.md, Fase 3: o mesmo aviso sai por Web Push (navegador)
+// Push: o mesmo aviso sai por Web Push (navegador)
 // ou por FCM (app Android e iOS), conforme a inscrição do aparelho.
 
 export type PushPayload = {

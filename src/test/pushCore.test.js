@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { channelForTag, buildWebPayload, buildFcmMessage, isGoneWebPush, isGoneFcm, attemptEndpoint } from '../../supabase/functions/_shared/pushCore.ts';
 
 // Regras puras do envio único de notificações (_shared/push.ts), usadas
-// tanto no Web Push de hoje quanto no FCM dos apps (PLANO_APPS_MOBILE Fase 3).
+// tanto no Web Push de hoje quanto no FCM dos apps.
 describe('pushCore · canais do Android por tipo de aviso', () => {
   it('agrupa os avisos existentes nos canais certos', () => {
     expect(channelForTag('chat')).toBe('chat');

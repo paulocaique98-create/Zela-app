@@ -130,7 +130,7 @@ export function SecondaryButton({ children, ...props }) {
   );
 }
 
-// Tabela que vira lista de cartões no celular (PLANO_APPS_MOBILE, Fase 7):
+// Tabela que vira lista de cartões no celular:
 // no computador (md+) é a tabela de sempre; no celular cada linha vira um
 // cartão, com o(s) campo(s) `primary` como título, os demais como
 // "rótulo: valor" e o campo `actions` no rodapé. Nada de rolar para os lados.

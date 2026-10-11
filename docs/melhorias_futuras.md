@@ -35,7 +35,7 @@ Sugestões técnicas e de usabilidade por ambiente e prioridade. Reorganizado em
 ## 3. Portal do Responsável (Família)
 
 ### 🔴 Prioridade Alta
-- **Notificações Push Nativas:** o Web Push (VAPID) funciona e o servidor já aceita FCM; falta o app nativo registrar o token (depende de `PLANO_APPS_MOBILE.md`).
+- **Notificações Push Nativas:** o Web Push (VAPID) funciona e o servidor já aceita FCM; falta o app nativo registrar o token.
 
 ### 🟡 Prioridade Média
 - **Justificativa de Faltas via App:** o responsável envia atestado (foto) ou justificativa pelo portal e a escola aprova (não verificado).
