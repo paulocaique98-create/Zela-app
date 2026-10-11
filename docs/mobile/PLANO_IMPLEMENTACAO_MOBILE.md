@@ -116,3 +116,10 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - **Não verificado:** Android Studio e SDK não estão instalados nesta máquina, então o projeto não foi aberto nem compilado em APK/AAB, nem rodou em aparelho.
 - **Atenção:** o build de `dist` usa o `.env` atual (Supabase de produção). Antes de qualquer teste em aparelho, criar `.env.mobile` com a homologação e compilar com `vite build --mode mobile`.
 - Em aberto: o plugin de compressão grava `dist/C:/Users/.../*.gz` (caminho absoluto no Windows); não afeta o app, a corrigir depois.
+
+## 12. Estado ao fim da sessão 1 (11/10/2026)
+
+- Android Studio Rabbit 2026.2.1 instalado; JVM 21 escolhido; projeto `android/` abriu e o Gradle sincronizou (BUILD SUCCESSFUL).
+- `.env.mobile.local` (gitignorado) aponta para a homologação; `npm run build:mobile` compila e sincroniza. Verificado: nenhuma referência ao ref de produção no pacote.
+- **Próximos passos:** (1) rodar no Galaxy S23 Ultra (Depuração USB) e confirmar que o app abre; (2) semear homologação com escola e usuários fictícios; (3) CORS das Edge Functions para a origem do app (com análise de segurança e aprovação); (4) segredos de teste das funções; (5) Fase 4 (UX mobile, ícones, splash).
+- iOS segue pendente: CI com Mac, conta Apple Developer, TestFlight.
