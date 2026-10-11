@@ -99,3 +99,11 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - **Contas:** início como Pessoa Física, mudança posterior para PJ (transferência do app). Google Play pessoal exige teste fechado de 12 pessoas por 14 dias.
 - **iOS sem Mac:** CI em nuvem com Mac (Codemagic ou GitHub Actions) para compilar e assinar, TestFlight no iPhone 11 Pro Max, Mac remoto por hora só para depurar a câmera. Custos a confirmar.
 - **Aparelhos:** Galaxy S23 Ultra e iPhone 11 Pro Max; falta um Android de entrada para desempenho.
+
+## 10. Homologação criada (11/10/2026)
+
+- Projeto Supabase novo e isolado: `zela-homologacao`, ref `biybjifoxnuxwkaametp`, região sa-east-1, org "Acesso". Produção ("Zela Portal") não foi tocada e o `supabase/.temp/project-ref` continua apontando para ela.
+- Aplicadas as 30 migrations (`migration list`: local = remoto). Publicadas 32 Edge Functions.
+- Senha do banco em `.env.homolog.local` (ignorado pelo Git, nunca commitar). Comandos de homologação usam `--db-url` ou `--project-ref`, nunca `supabase link`.
+- Pendente: segredos das funções (Asaas, VAPID, FCM etc., com valores de teste), buckets de Storage (confirmar se vêm das migrations), usuário e escola fictícios, CORS com a origem do app, `.env.mobile` com URL e chave pública.
+- Limite do plano gratuito: projetos pausam após inatividade.
