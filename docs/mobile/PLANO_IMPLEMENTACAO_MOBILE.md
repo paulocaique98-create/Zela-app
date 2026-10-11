@@ -93,7 +93,7 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 
 ## 9. Atualização da FASE 2 (11/10/2026)
 
-- **appId definido:** `zelaedu.com.br` (definido pelo responsável em 11/10; fora da convenção de domínio invertido, mas válido no Android e no iOS; em minúsculas). Nome visível: Zela Escola.
+- **appId definido:** `br.com.zelaedu.app` (domínio `zelaedu.com.br` fica para site, suporte e privacidade; decisão de 11/10). Nome visível: Zela Escola.
 - **Branch criada:** `feature/mobile-capacitor` (a partir da `main` em `7d0ebfb`, já enviada ao GitHub).
 - **Linha de base de testes com Supabase local (Docker):** 100 arquivos, 89 passaram, 11 falharam (39 testes). A causa amostrada é HTTP 503 das Edge Functions, porque `supabase functions serve` não estava rodando. Antes, sem o banco local: 55 arquivos falhando. Refazer com as funções servidas na Fase 6.
 - **Contas:** início como Pessoa Física, mudança posterior para PJ (transferência do app). Google Play pessoal exige teste fechado de 12 pessoas por 14 dias.
@@ -107,3 +107,12 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Senha do banco em `.env.homolog.local` (ignorado pelo Git, nunca commitar). Comandos de homologação usam `--db-url` ou `--project-ref`, nunca `supabase link`.
 - Pendente: segredos das funções (Asaas, VAPID, FCM etc., com valores de teste), buckets de Storage (confirmar se vêm das migrations), usuário e escola fictícios, CORS com a origem do app, `.env.mobile` com URL e chave pública.
 - Limite do plano gratuito: projetos pausam após inatividade.
+
+## 11. FASE 3 executada em parte (11/10/2026)
+
+- Capacitor `8.5.3` exato em `@capacitor/core`, `@capacitor/android` e `@capacitor/cli` (iOS adiado até existir Mac ou CI).
+- `capacitor.config.json`: appId `br.com.zelaedu.app`, nome Zela Escola, `webDir` `dist`. Sem `server.url`.
+- Projeto `android/` criado: minSdk 24, compileSdk e targetSdk 36, única permissão `INTERNET`. `npm run build` + `npx cap sync android` OK. `npx cap doctor`: Android OK.
+- **Não verificado:** Android Studio e SDK não estão instalados nesta máquina, então o projeto não foi aberto nem compilado em APK/AAB, nem rodou em aparelho.
+- **Atenção:** o build de `dist` usa o `.env` atual (Supabase de produção). Antes de qualquer teste em aparelho, criar `.env.mobile` com a homologação e compilar com `vite build --mode mobile`.
+- Em aberto: o plugin de compressão grava `dist/C:/Users/.../*.gz` (caminho absoluto no Windows); não afeta o app, a corrigir depois.
