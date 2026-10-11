@@ -123,3 +123,8 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - `.env.mobile.local` (gitignorado) aponta para a homologação; `npm run build:mobile` compila e sincroniza. Verificado: nenhuma referência ao ref de produção no pacote.
 - **Próximos passos:** (1) rodar no Galaxy S23 Ultra (Depuração USB) e confirmar que o app abre; (2) semear homologação com escola e usuários fictícios; (3) CORS das Edge Functions para a origem do app (com análise de segurança e aprovação); (4) segredos de teste das funções; (5) Fase 4 (UX mobile, ícones, splash).
 - iOS segue pendente: CI com Mac, conta Apple Developer, TestFlight.
+
+## 13. Primeiro teste em aparelho (11/10/2026)
+
+- Correção: `vite.config.js` desliga o gzip no modo `mobile` (Gradle falhava com "Duplicate resources" por X.js e X.js.gz). Build da Web inalterado.
+- Resultado: build Android passou e o app abriu na tela de login no Galaxy S23 Ultra (SM-S918B), apontando para a homologação. Verificado pelo responsável; sem evidência automatizada. Login e demais fluxos ainda não testados (banco de homologação vazio).
