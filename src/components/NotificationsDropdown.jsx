@@ -239,7 +239,7 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
                 <div className="w-12 h-12 bg-surface-container text-primary rounded-zela-md flex items-center justify-center mx-auto mb-2">
                   <Bell size={24} aria-hidden="true" />
                 </div>
-                <h4 className="font-semibold text-on-surface">Bem-vindo ao Zela Escola</h4>
+                <h4 className="font-semibold text-on-surface">Bem-vindo ao Zela Edu</h4>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
                   {currentUser?.role === 'admin'
                     ? 'Aqui você receberá avisos de novos cadastros e outros eventos importantes da escola.'

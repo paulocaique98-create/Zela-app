@@ -119,7 +119,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
             <Link2 size={16} /> Vincular outra conta
           </button>
           {outras.length === 0 && (
-            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela Escola, como a de responsável? Vincule para trocar sem digitar a senha.</p>
+            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela Edu, como a de responsável? Vincule para trocar sem digitar a senha.</p>
           )}
         </div>
       )}
@@ -176,7 +176,7 @@ function VincularContaModal({ onClose, onVinculada }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-on-surface">Vincular outra conta</h2>
-            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela Escola. Você só faz isso uma vez.</p>
+            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela Edu. Você só faz isso uma vez.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded-zela-sm text-on-surface-variant hover:bg-surface-container-low" aria-label="Fechar">
             <X size={18} />

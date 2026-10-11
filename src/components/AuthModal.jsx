@@ -78,7 +78,7 @@ export default function AuthModal({ authForm, setAuthForm, onClose, onSave, erro
           </div>
           
           <p className="text-xs text-on-surface-variant">
-            O outro pai ou a outra mãe da criança não entra como autorizado: cadastre em <strong>Gerenciamento › Responsáveis</strong>, com acesso próprio ao Zela Escola.
+            O outro pai ou a outra mãe da criança não entra como autorizado: cadastre em <strong>Gerenciamento › Responsáveis</strong>, com acesso próprio ao Zela Edu.
           </p>
 
           <div className="pt-2">

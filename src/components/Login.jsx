@@ -207,7 +207,7 @@ export default function Login({ onLogin }) {
             <ShieldCheck className="text-white" size={24} aria-hidden="true" />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="font-serif text-h2 leading-none">Zela Escola</span>
+            <span className="font-serif text-h2 leading-none">Zela Edu</span>
             <span className="text-caption text-ink-text leading-none">Arx Tecnologia</span>
           </div>
         </div>
@@ -249,14 +249,14 @@ export default function Login({ onLogin }) {
               <ShieldCheck className="text-white" size={20} aria-hidden="true" />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="font-serif text-h2 text-on-surface leading-none">Zela Escola</span>
+              <span className="font-serif text-h2 text-on-surface leading-none">Zela Edu</span>
               <span className="text-caption text-on-surface-variant leading-none">Arx Tecnologia</span>
             </div>
           </div>
 
           <div className="mb-8 text-left">
             <h1 className="font-serif text-h1-mobile lg:text-h1 text-on-surface mb-2">
-              {isRecoveringPassword ? 'Recuperar senha' : 'Entrar no Zela Escola'}
+              {isRecoveringPassword ? 'Recuperar senha' : 'Entrar no Zela Edu'}
             </h1>
             <p className="text-body text-on-surface-variant">
               {isRecoveringPassword ? 'Enviaremos um link para redefinir sua senha.' : 'Use o e-mail cadastrado na escola.'}

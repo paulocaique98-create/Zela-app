@@ -317,7 +317,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
     // verdade (não só "moldura menor").
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header -- título "Gestão de Usuários" removido (o Header do app já
-          mostra "Zela Escola · Gestão de Usuários"/"Zela Escola Usuários" dinamicamente),
+          mostra "Zela Edu · Gestão de Usuários"/"Zela Edu Usuários" dinamicamente),
           ícone + contador ficam numa linha só, mais compacta. */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6 shrink-0">
         <div className="hidden md:flex items-center gap-2.5">

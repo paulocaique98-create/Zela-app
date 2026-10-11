@@ -46,7 +46,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             ele aberto. O cabeçalho começa em 24px (md:px-6). */}
         <div className={`hidden md:flex items-center shrink-0 transition-[margin] duration-300 ${isSidebarExpanded ? 'md:ml-0.5' : 'md:-ml-1.5'}`}>
           {zelaLogo ? (
-            <img src={zelaLogo} alt="Zela Escola" className="w-9 h-9 object-contain" />
+            <img src={zelaLogo} alt="Zela Edu" className="w-9 h-9 object-contain" />
           ) : (
             <div className="w-9 h-9 bg-ink-2 border border-brass rounded-zela-sm flex items-center justify-center">
               <ShieldCheck className="text-white w-5 h-5" aria-hidden="true" />
@@ -55,10 +55,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         </div>
         <div className="flex flex-col min-w-0 flex-1">
           <h1 className={`font-serif font-semibold text-base sm:text-lg leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
-            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Escola'}</span></span>
+            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Edu'}</span></span>
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)
-                sem separador -- "Zela Escola Usuários" em vez de "Zela Escola · Gestão de
+                sem separador -- "Zela Edu Usuários" em vez de "Zela Edu · Gestão de
                 Usuários". No desktop, que tem espaço de sobra, mostra o nome
                 completo com o separador. */}
             <span className={`hidden md:inline font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabel}</span>

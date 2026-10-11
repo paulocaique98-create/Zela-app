@@ -1,4 +1,4 @@
-# Plano de implementação mobile do Zela Escola (revisado na FASE 1)
+# Plano de implementação mobile do Zela Edu (revisado na FASE 1)
 
 Data da auditoria: 11/10/2026. Prazo final: 31/01/2027. Somente leitura: nenhum código, dependência ou projeto nativo foi alterado.
 
@@ -93,7 +93,7 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 
 ## 9. Atualização da FASE 2 (11/10/2026)
 
-- **appId definido:** `br.com.zelaedu.app` (domínio `zelaedu.com.br` fica para site, suporte e privacidade; decisão de 11/10). Nome visível: Zela Escola.
+- **appId definido:** `br.com.zelaedu.app` (domínio `zelaedu.com.br` fica para site, suporte e privacidade; decisão de 11/10). Nome visível: Zela Edu.
 - **Branch criada:** `feature/mobile-capacitor` (a partir da `main` em `7d0ebfb`, já enviada ao GitHub).
 - **Linha de base de testes com Supabase local (Docker):** 100 arquivos, 89 passaram, 11 falharam (39 testes). A causa amostrada é HTTP 503 das Edge Functions, porque `supabase functions serve` não estava rodando. Antes, sem o banco local: 55 arquivos falhando. Refazer com as funções servidas na Fase 6.
 - **Contas:** início como Pessoa Física, mudança posterior para PJ (transferência do app). Google Play pessoal exige teste fechado de 12 pessoas por 14 dias.
@@ -111,7 +111,7 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 ## 11. FASE 3 executada em parte (11/10/2026)
 
 - Capacitor `8.5.3` exato em `@capacitor/core`, `@capacitor/android` e `@capacitor/cli` (iOS adiado até existir Mac ou CI).
-- `capacitor.config.json`: appId `br.com.zelaedu.app`, nome Zela Escola, `webDir` `dist`. Sem `server.url`.
+- `capacitor.config.json`: appId `br.com.zelaedu.app`, nome Zela Edu, `webDir` `dist`. Sem `server.url`.
 - Projeto `android/` criado: minSdk 24, compileSdk e targetSdk 36, única permissão `INTERNET`. `npm run build` + `npx cap sync android` OK. `npx cap doctor`: Android OK.
 - **Não verificado:** Android Studio e SDK não estão instalados nesta máquina, então o projeto não foi aberto nem compilado em APK/AAB, nem rodou em aparelho.
 - **Atenção:** o build de `dist` usa o `.env` atual (Supabase de produção). Antes de qualquer teste em aparelho, criar `.env.mobile` com a homologação e compilar com `vite build --mode mobile`.

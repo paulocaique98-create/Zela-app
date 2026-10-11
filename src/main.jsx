@@ -47,7 +47,7 @@ class ErrorBoundary extends Component {
           minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'system-ui, sans-serif', color: '#64748b',
         }}>
-          Atualizando o Zela Escola…
+          Atualizando o Zela Edu…
         </div>
       )
     }

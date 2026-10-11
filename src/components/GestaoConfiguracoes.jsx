@@ -31,7 +31,7 @@ export function ConfigComunicacao({ currentUser, currentSchool, onUpdate }) {
   const botaoDias = 'w-10 h-10 shrink-0 flex items-center justify-center rounded-zela-md border border-outline-variant bg-surface-container-low text-on-surface hover:bg-primary/10 hover:text-primary transition disabled:opacity-40 disabled:pointer-events-none';
 
   return (
-    <PageShell description="Avisos automáticos que o Zela Escola envia às famílias." infoOnMobile>
+    <PageShell description="Avisos automáticos que o Zela Edu envia às famílias." infoOnMobile>
       <div className="max-w-2xl space-y-4">
         <Notice type={msg.type || 'error'}>{msg.text}</Notice>
         <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
@@ -140,7 +140,7 @@ export function ConfigSeguranca({ currentUser }) {
             <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><KeyRound size={20} /></span>
             <div className="min-w-0">
               <h3 className="font-bold text-sm text-on-surface">Exigir troca de senha</h3>
-              <p className="text-xs text-on-surface-variant mt-0.5">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela Escola pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela Edu pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
             </div>
           </div>
           <div>

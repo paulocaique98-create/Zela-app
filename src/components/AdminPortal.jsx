@@ -550,7 +550,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 botão de sair do Header não existe mais nesta tela) */}
             <div className="flex items-center justify-between px-5 sm:px-8 h-[60px] md:h-16 bg-ink text-ink-text shrink-0">
               <span className="text-sm sm:text-base font-semibold text-white truncate pr-3">
-                Zela Escola
+                Zela Edu
               </span>
               <div className="relative shrink-0">
                 <button

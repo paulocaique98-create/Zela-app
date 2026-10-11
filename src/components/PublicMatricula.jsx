@@ -327,14 +327,14 @@ export default function PublicMatricula() {
   return (
     <div className="min-h-screen min-h-[100dvh] w-full bg-surface-container-lowest">
       {/* Cabeçalho — mesmo estilo do protótipo aprovado (faixa escura,
-           símbolo + nome do Zela Escola, boas-vindas da escola). */}
+           símbolo + nome do Zela Edu, boas-vindas da escola). */}
       <div className="bg-ink px-5 sm:px-8 py-8 sm:py-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-9 h-9 bg-primary rounded-md flex items-center justify-center shrink-0">
               <ShieldCheck className="text-white" size={18} />
             </div>
-            <span className="font-serif text-lg font-bold text-white">Zela Escola</span>
+            <span className="font-serif text-lg font-bold text-white">Zela Edu</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-1.5">Requerimento de matrícula</h1>
           <p className="text-sm text-ink-text leading-relaxed max-w-xl">
@@ -353,7 +353,7 @@ export default function PublicMatricula() {
                 <h1 className="text-h2 text-on-surface mb-2">Matrícula enviada!</h1>
                 <p className="text-body text-on-surface-variant">
                   Sua solicitação foi recebida e está aguardando aprovação da escola.
-                  Você poderá acessar o Zela Escola assim que a matrícula for aprovada, usando o e-mail e a senha que você criou.
+                  Você poderá acessar o Zela Edu assim que a matrícula for aprovada, usando o e-mail e a senha que você criou.
                 </p>
               </div>
               <button type="button" onClick={() => navigateTo('/')} className="mt-2 text-small text-primary font-medium hover:underline underline-offset-4">
@@ -501,7 +501,7 @@ export default function PublicMatricula() {
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
                         <input id="public-matricula-password" type="password" autoComplete="new-password" minLength={8} className={`${inputCls} pl-9`} value={password} onChange={e => setPassword(e.target.value)} required />
                       </div>
-                      <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres. Você vai usar essa senha para entrar no Zela Escola depois que a matrícula for aprovada.</p>
+                      <p className="text-[11px] text-on-surface-variant/70 mt-1">Mínimo de 8 caracteres. Você vai usar essa senha para entrar no Zela Edu depois que a matrícula for aprovada.</p>
                     </div>
                     <div>
                       <label className={labelCls}>Confirme a senha *</label>
