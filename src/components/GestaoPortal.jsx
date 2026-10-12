@@ -9,6 +9,7 @@ import {
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags,
 } from 'lucide-react';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { supabase } from '../lib/supabase';
@@ -231,7 +232,7 @@ export default function GestaoPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -319,7 +320,7 @@ export default function GestaoPortal({
         </div>
       </aside>
 
-      <main className={`flex-1 min-w-0 h-full flex flex-col border-outline-variant/60 ${COM_INFO_NO_CELULAR.includes(abaAtual) ? 'sm:border-t' : 'border-t'}`}>
+      <main className={`flex-1 min-w-0 h-full flex flex-col border-outline-variant/60 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 ${COM_INFO_NO_CELULAR.includes(abaAtual) ? 'sm:border-t' : 'border-t'}`}>
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {abaAtual === 'home' && <GestaoInicio currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} clickCounts={clickCounts} />}
           {abaAtual === 'pendencias' && <GestaoPendencias currentUser={currentUser} setGestaoTab={goFromShortcut} />}
@@ -446,7 +447,7 @@ export default function GestaoPortal({
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
+              className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
               title="Chat"
               aria-label="Chat"
             >
@@ -479,6 +480,17 @@ export default function GestaoPortal({
           document.body
         )}
       </main>
+
+      <MobileBottomNav
+        items={[
+          { key: 'home', label: 'Início', icon: Home },
+          { key: 'pendencias', label: 'Pendências', icon: Inbox, badge: pendenciasBadge },
+          { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap },
+          { key: 'financeiro-visao', label: 'Financeiro', icon: PieChart },
+        ].map(i => ({ ...i, active: abaAtual === i.key, onClick: () => goFromShortcut(i.key), show: pode(i.key) }))}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
     </div>
   );
 }

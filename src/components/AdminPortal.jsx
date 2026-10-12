@@ -19,6 +19,7 @@ import ConfirmExitPassword from './ConfirmExitPassword';
 import ConfirmModal from './ConfirmModal';
 import { logAction } from '../lib/auditLog';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import KioskClock from './KioskClock';
 import { useIsDesktop } from '../hooks/useIsDesktop';
@@ -261,7 +262,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 ${adminTab === 'kiosk' ? 'h-[calc(100dvh-60px)]' : 'h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))]'} md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -359,7 +360,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           sidebar) recria a mesma linha só a partir de onde a sidebar termina,
           como uma continuação do border-r dela, sem risco em cima do próprio
           menu lateral. */}
-      <main className={`flex-1 min-w-0 h-full flex flex-col ${adminTab === 'kiosk' ? '' : 'border-t border-outline-variant/60'}`}>
+      <main className={`flex-1 min-w-0 h-full flex flex-col ${adminTab === 'kiosk' ? '' : 'border-t border-outline-variant/60 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0'}`}>
       {/* BANNER NOTIFICAÇÕES PUSH — mesmo padrão de FamilyPortal.jsx.
           Sem isso, notifyAdmins() nunca tem pra quem mandar push (a
           escola nunca teria se inscrito). */}
@@ -600,21 +601,19 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <div className="w-10 h-1 rounded-full bg-primary mb-4"></div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-on-surface mb-1.5">Identifique-se</h2>
                 <p className="text-on-surface-variant text-sm mb-8">
-                  {currentSchool?.plan === 'pro' ? 'Selecione como deseja continuar' : 'Toque para digitar sua senha'}
+                  Selecione como deseja continuar
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  {currentSchool?.plan === 'pro' && (
-                    <button
-                      onClick={() => setIsFaceScannerOpen(true)}
-                      className="flex items-center gap-3.5 bg-primary hover:bg-primary-container text-white p-4 sm:p-5 rounded-zela-lg transition-all shadow-sm active:scale-[0.98] group"
-                    >
-                      <span className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                        <Camera size={20} />
-                      </span>
-                      <span className="font-bold text-sm sm:text-base text-left">Reconhecimento Facial</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setIsFaceScannerOpen(true)}
+                    className="flex items-center gap-3.5 bg-primary hover:bg-primary-container text-white p-4 sm:p-5 rounded-zela-lg transition-all shadow-sm active:scale-[0.98] group"
+                  >
+                    <span className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Camera size={20} />
+                    </span>
+                    <span className="font-bold text-sm sm:text-base text-left">Reconhecimento Facial</span>
+                  </button>
 
                   {showQrCheckin && (
                     <button
@@ -763,7 +762,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
+              className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
               title="Chat"
               aria-label="Chat"
             >
@@ -796,6 +795,19 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           document.body
         )}
       </main>
+
+      {adminTab !== 'kiosk' && (
+        <MobileBottomNav
+          items={[
+            { key: 'home', label: 'Início', icon: Home, active: adminTab === 'home', onClick: () => go('home') },
+            { key: 'students', label: 'Alunos', icon: Users, active: adminTab === 'students', onClick: () => go('students'), show: showGerenciamento },
+            { key: 'monitor', label: 'Monitor', icon: ShieldCheck, active: adminTab === 'monitor', onClick: () => go('monitor'), badge: monitorStudents.length, show: showCheckin },
+            { key: 'presence', label: 'Presença', icon: CalendarDays, active: adminTab === 'presence', onClick: () => go('presence'), show: showCheckin },
+          ]}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
+      )}
     </div>
   );
 }

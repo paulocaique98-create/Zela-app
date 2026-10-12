@@ -86,7 +86,7 @@ export default function GestaoRelatorios({ currentUser, currentSchool, view = 'g
           <>
             {data.cards.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {data.cards.map(c => <StatCard key={c.label} label={c.label} value={c.value} hint={c.hint} tone={c.tone} valueClassName={String(c.value).length > 8 ? 'text-lg sm:text-2xl whitespace-nowrap' : 'text-2xl'} />)}
+                {data.cards.map(c => <StatCard key={c.label} label={c.label} value={c.value} hint={c.hint} tone={c.tone} />)}
               </div>
             )}
             {data.table && (data.table.rows.length === 0 ? <EmptyState icon={BarChart3} text="Sem dados no período." hint="Mude o mês para ver outro período." /> : (
