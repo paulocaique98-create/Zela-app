@@ -128,3 +128,55 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 
 - Correção: `vite.config.js` desliga o gzip no modo `mobile` (Gradle falhava com "Duplicate resources" por X.js e X.js.gz). Build da Web inalterado.
 - Resultado: build Android passou e o app abriu na tela de login no Galaxy S23 Ultra (SM-S918B), apontando para a homologação. Verificado pelo responsável; sem evidência automatizada. Login e demais fluxos ainda não testados (banco de homologação vazio).
+
+## 14. CORS e login em aparelho (11/10/2026)
+
+- `supabase/functions/_shared/cors.ts` aceita origens extras via secret `EXTRA_ALLOWED_ORIGINS` (sem `*`). Na homologação o secret vale `https://localhost` (origem do app Android) e as 32 funções foram redeployadas. Produção intocada: o secret só deve ser definido lá no release.
+- Verificado: preflight com `Origin: https://localhost` é aceito e origem estranha continua barrada. Login de `admin@teste.example.com` no Galaxy S23 Ultra funcionou (confirmado pelo responsável).
+- A homologação já tinha escola `TST01` e 5 usuários `@teste.example.com`; senha do admin redefinida só na homologação.
+- **Pendente:** exercitar uma Edge Function pelo app (ex.: cadastrar responsável); segredos de teste (Asaas sandbox, VAPID, FCM); Fase 4 (UX mobile, ícones, splash). `.trim()` no e-mail do login (Login.jsx) sugerido, não aplicado.
+
+## 15. FASE 4 executada (11/10/2026)
+
+- Plugins Capacitor com versão exata: `@capacitor/app` 8.1.2, `status-bar` 8.0.4, `splash-screen` 8.0.2; dev: `@capacitor/assets` 3.0.5.
+- Safe areas: **não** usar `viewport-fit=cover`. Com ele o Capacitor 8 deixa a WebView sob a barra de status e o cabeçalho ficou atrás do relógio (visto no aparelho). Sem ele, o Capacitor reserva notch e gestos para o app todo. Se um dia for adotado edge-to-edge, tratar o topo em todos os cabeçalhos antes.
+- Botão voltar: já funciona pelo `useTabHistory` (histórico do WebView); testado no aparelho (aba Alunos, Voltar, volta às Ações rápidas sem fechar o app). Nenhum listener nativo foi necessário.
+- `src/lib/nativeInit.js` (chamado em `main.jsx`): status bar com ícones claros e cor `#1e5563` (a cor de fundo é ignorada no Android 15+ edge-to-edge; a barra segue cinza escuro). Splash na cor da marca.
+- Ícone adaptativo e splash gerados em `assets/` (escudo branco sobre `#1e5563`, a mesma marca do login) e aplicados em `android/res`. O ícone antigo de `public/` (Z roxo) está desatualizado e a Web ainda o usa.
+- Login: `.trim()` no e-mail.
+- Build: `JAVA_HOME` = `~/.jdks/jbr-21.0.11` (o JBR do Android Studio é Java 25 e quebra o Gradle). `assembleDebug` gera APK test-only; instalar com `adb install -r -t`.
+- Não feito: ajustes de toque/teclado (sem problema visto; o zoom em inputs é do iOS) e ícone/splash do iOS.
+
+## 16. FASE 5 iniciada (11/10/2026)
+
+- Manifest Android: permissões `CAMERA` e `POST_NOTIFICATIONS`; câmera declarada como não obrigatória.
+- Push nativo: `@capacitor/push-notifications` 8.1.3 (exato). `src/lib/pushNativo.js` registra no FCM e grava o token em `push_subscriptions` (`platform='android'`, upsert por `token`); `usePushNotifications.js` usa esse caminho só em app nativo (web intocada); `handleLogout` apaga o token do aparelho antes do signOut. Sem mudança de banco nem de RLS.
+- Cuidado: se sobrar token de outra conta no mesmo aparelho (logout sem rede), o upsert falha pela RLS (só o dono altera a linha). A tratar se aparecer nos testes.
+- `send-test-push` só aceita `endpoint` (web); o teste de push no app depende do Firebase.
+- Verificado: lint dos 2 arquivos sem erros, `build:mobile` e `cap sync` ok (4 plugins). NÃO testado no aparelho (câmera, permissão, token).
+- Pendente (usuário): criar projeto Firebase, app Android `br.com.zelaedu.app`, colocar `google-services.json` em `android/app/` e a service account em `FCM_SERVICE_ACCOUNT` (só homologação).
+- Reconhecimento facial passou a base (sem depender de `plan`): botão do totem sempre visível; campo "Plano contratado" e selo basic/pro saíram do Portal do Dev (coluna `plan` mantida no banco). Confirmado pelo responsável que o botão aparece no app (11/10).
+- Firebase: projeto `zela-homologacao`, `google-services.json` em `android/app/`, secret `FCM_SERVICE_ACCOUNT` definido só na homologação.
+- `send-test-push` aceita `token` (app) além de `endpoint` (web); publicada só na homologação. As demais funções que importam `_shared/push.ts` não foram redeployadas (mudança compatível). Push de ponta a ponta ainda NÃO testado no aparelho.
+- Correções em aparelho (11/10): shards do face-api renomeados para `.bin` no build do app (`scripts/mobile-modelos.mjs`), porque o servidor local do Capacitor entregava os arquivos sem extensão truncados (erro "tensor should have 512 values but has 290"); faixa de ativar notificações no app não depende mais de `Notification.permission` do WebView.
+- Verificado pelo responsável no Galaxy S23 Ultra (homologação): cadastro de biometria da família, ativação de notificações e reconhecimento facial no totem funcionaram. Sem evidência automatizada. Continua pendente: iOS, privacidade/LGPD (rascunho de permissões), teste em Android de entrada, segredos de teste (Asaas, VAPID).
+
+## 17. FASE 6 iniciada (11/10/2026)
+
+- Criados `docs/mobile/CHECKLIST_TESTES_APARELHO.md` (roteiro para o aparelho) e `docs/mobile/RASCUNHO_PRIVACIDADE_PERMISSOES.md` (permissões, dados, perguntas para o jurídico).
+- Testes automatizados novos em `src/test/mobileNative.test.js` (8 testes de `nativeInit` e `pushNativo`, plugins e Supabase simulados): 8 passaram; oxlint sem erros nos 3 arquivos alterados. Não substituem o teste em aparelho.
+- **Push e RLS:** migration `20261011120000_registrar_token_push_app.sql` cria `registrar_token_push_app(p_token, p_platform, p_device_info)` (SECURITY DEFINER, `search_path` fixo, só `authenticated`; `user_id` vem de `auth.uid()` e `school_id` do perfil; apaga a linha do mesmo token de outra conta e grava para a logada). `pushNativo.js` agora chama essa função. **A migration ainda NÃO foi aplicada em nenhum banco.** Aplicar primeiro na homologação (ref `biybjifoxnuxwkaametp`); sem ela o push do app falha. Produção só no release.
+- Pendente: checklist no aparelho, Edge Function pelo app, segredos Asaas/VAPID, Android de entrada, iOS, revisão jurídica.
+- **Checklist no S23 Ultra (12/10):** o responsável informou que todos os itens de `CHECKLIST_TESTES_APARELHO.md` passaram ("aparentemente"), na homologação. Sem evidência automatizada; datas por item não registradas. Não confirmado aqui se a migration `registrar_token_push_app` já estava aplicada na homologação durante o teste de troca de conta.
+- **Ainda aberto na Fase 6:** Android de entrada, segredos Asaas/VAPID, revisão jurídica, iOS; migration em produção só no release.
+
+## 18. FASE 7 iniciada (12/10/2026)
+
+- Criado `docs/mobile/PREPARACAO_LOJAS.md`: política de privacidade pública (rascunho), textos da loja, respostas para Segurança de dados do Google Play e App Privacy da Apple, lista de imagens e checklist de release Android. Só documentação, sem mudança de código, banco ou RLS.
+- Verificado no código: a foto do rosto é guardada no bucket `person-photos`, além do descritor facial; a política já diz isso. Não verificado: se o bucket é privado e o prazo de retenção.
+- Revisão jurídica: o responsável informou que está tranquila (12/10), sem parecer registrado.
+- Pendente: itens [CONFIRMAR] do documento, keystore, imagens da loja, URL da política, contas de loja.
+- **VAPID na homologação (12/10):** par novo gerado; `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT` definidos como secrets só na homologação, e `VITE_VAPID_PUBLIC_KEY` do `.env` atualizada. É preciso refazer `build:mobile` e reativar push web nos aparelhos de teste. Push web de ponta a ponta NÃO testado. Produção usa outro par, a gerar no release. Asaas: a chave é por escola no banco, não há secret global a cadastrar (base padrão = sandbox).
+- **Release Android (12/10):** `signingConfigs.release` em `android/app/build.gradle` lê `android/keystore.properties` (ignorado pelo git, junto de `*.jks`). Keystore de upload criada em `C:\Users\User\zela-keys\zela-upload.jks` (alias `zela-upload`); **fazer backup dela e da senha em cofre**, fora do repositório. Trocado `proguard-android.txt` por `proguard-android-optimize.txt` (o AGP atual recusava; `minifyEnabled` segue false). `bundleRelease` gerou `app-release.aab` (~23 MB) assinado. Ícone da loja 512 em `docs/mobile/loja/icone-512.png`. AAB NÃO foi instalado nem testado em aparelho; ainda aponta para a homologação.
+- **Contas das lojas (12/10):** decisão do responsável de abrir as contas como pessoa física, sem CNPJ e sem D-U-N-S. Consequências (conhecimento geral, regras das lojas NÃO reconferidas): teste fechado do Google Play com 12 testadores por 14 dias; publicador exibido com nome pessoal; migração futura para conta de empresa depende de manter `applicationId` e keystore. Pedir ao jurídico que olhe o enquadramento do publicador pessoa física com dados de crianças e biometria.
+- **Pessoa física é temporária (12/10):** o responsável pretende migrar para conta de empresa depois. Pelo conhecimento geral (NÃO reconferido nas lojas), a conta não muda de tipo: cria-se conta de organização e transfere-se o app. Preparar: manter `applicationId` e keystore, usar Play App Signing, nome "Zela Edu" e e-mail institucional (não pessoal) na política, nas fichas e no suporte, e evitar vender pelo app até migrar.
