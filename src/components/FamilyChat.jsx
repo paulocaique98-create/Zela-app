@@ -22,7 +22,9 @@ function formatTime(dateStr) {
   return new Date(dateStr).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function FamilyChat({ currentUser, currentSchool }) {
+import ChatCloseButton from './ChatCloseButton';
+
+export default function FamilyChat({ currentUser, currentSchool, onClose }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const [threads, setThreads] = useState(new Map()); // setor -> thread row
   const [lastMessages, setLastMessages] = useState(new Map()); // thread_id -> última mensagem
@@ -249,7 +251,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
     const Icon = SETOR_ICONS[activeSetor] || MessageCircle;
     return (
       <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-2.5 sm:p-5 border-b border-outline-variant shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 sm:p-5 border-b border-outline-variant shrink-0">
           <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
@@ -257,6 +259,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
             <Icon size={20} />
           </div>
           <h2 className="text-h3 text-on-surface">{setorInfo?.label}</h2>
+          <ChatCloseButton onClose={onClose} />
         </div>
 
         {activeSetor !== 'suporte_zela' && (
@@ -265,7 +268,7 @@ export default function FamilyChat({ currentUser, currentSchool }) {
           </div>
         )}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 sm:p-5 space-y-3">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
           {isLoadingThread ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -335,8 +338,10 @@ export default function FamilyChat({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Chat" e ícone removidos (o Header do app já mostra o nome
           da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center px-4 py-3 sm:p-6 border-b border-outline-variant shrink-0">
+        <h2 className="sm:hidden text-h3 text-on-surface">Chat</h2>
         <p className="text-on-surface-variant text-small hidden sm:block">Escolha o setor com quem deseja falar.</p>
+        <ChatCloseButton onClose={onClose} />
       </div>
 
       <div className="flex-1 min-h-0 p-5 sm:p-6 flex flex-col">

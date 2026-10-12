@@ -447,7 +447,7 @@ export default function GestaoPortal({
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
+              className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors ${isChatOpen ? 'max-sm:hidden' : ''}`}
               title="Chat"
               aria-label="Chat"
             >
@@ -472,7 +472,7 @@ export default function GestaoPortal({
                   {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                 </button>
                 <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
-                  <AdminChat currentUser={currentUser} currentSchool={currentSchool} />
+                  <AdminChat currentUser={currentUser} currentSchool={currentSchool} onClose={() => { setIsChatOpen(false); setIsChatExpanded(false); refreshChatUnread(); }} />
                 </Suspense>
               </div>
             )}

@@ -387,7 +387,7 @@ export default function FamilyPortal({
               setIsChatExpanded(false);
               if (isChatOpen) refreshChatUnread();
             }}
-            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-lg bg-primary hover:bg-primary-container text-white shadow-md flex items-center justify-center transition-all active:scale-95"
+            className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-lg bg-primary hover:bg-primary-container text-white shadow-md flex items-center justify-center transition-all active:scale-95 ${isChatOpen ? 'max-sm:hidden' : ''}`}
             title="Chat"
           >
             {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -411,7 +411,7 @@ export default function FamilyPortal({
                 {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
               </button>
               <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                <FamilyChat currentUser={currentUser} currentSchool={currentSchool} />
+                <FamilyChat currentUser={currentUser} currentSchool={currentSchool} onClose={() => { setIsChatOpen(false); setIsChatExpanded(false); refreshChatUnread(); }} />
               </Suspense>
             </div>
           )}
