@@ -774,7 +774,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-2xl overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-x-3 top-[60px] bottom-[calc(4rem+env(safe-area-inset-bottom))] ${
                 isChatExpanded
                   ? 'sm:inset-6 rounded-zela-xl'
                   : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'

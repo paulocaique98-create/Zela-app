@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Menu } from 'lucide-react';
 
 // Barra de navegação inferior dos portais, só no celular (md:hidden). Os
@@ -26,6 +26,10 @@ const VARIANTS = {
 
 export default function MobileBottomNav({ items, isMobileMenuOpen, setIsMobileMenuOpen, variant = 'default' }) {
   const v = VARIANTS[variant] || VARIANTS.default;
+  useEffect(() => {
+    document.documentElement.classList.add('has-mobile-chrome');
+    return () => document.documentElement.classList.remove('has-mobile-chrome');
+  }, []);
   const itemClass = (on) => `w-full h-16 flex flex-col items-center justify-center gap-0.5 text-xs transition border-t-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${on ? v.on : v.off}`;
 
   return (

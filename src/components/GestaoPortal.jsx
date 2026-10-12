@@ -380,7 +380,7 @@ export default function GestaoPortal({
           {abaAtual === 'cadastros-novo' && <AdminUserRegistration currentUser={currentUser} />}
           {abaAtual === 'cadastros-funcionarios' && <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'cadastros-turmas' && (
-            <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 lg:p-8">
+            <div className="h-full -m-3 sm:m-0 overflow-y-auto bg-surface p-2.5 sm:p-4 md:p-6 lg:p-8">
               <div className="max-w-3xl">
                 <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} noBorder />
               </div>
@@ -459,7 +459,7 @@ export default function GestaoPortal({
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-x-3 top-[60px] bottom-[calc(4rem+env(safe-area-inset-bottom))] ${
                 isChatExpanded
                   ? 'sm:inset-6 rounded-zela-xl'
                   : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'

@@ -516,7 +516,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
         {/* Título "Calendário" e ícone removidos (o Header do app já mostra
             o nome da tela dinamicamente); só a descrição, direto. */}
         <div className="hidden sm:flex items-center">
@@ -658,7 +658,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:flex gap-2 px-4 sm:px-6 sm:pt-4 border-b border-outline-variant shrink-0">
+      <div className="grid grid-cols-2 sm:flex gap-2 px-2.5 sm:px-6 sm:pt-4 border-b border-outline-variant shrink-0">
         <button
           onClick={() => setActiveTab('eventos')}
           className={`px-3 py-3 sm:py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'eventos' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}
@@ -679,7 +679,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
       </div>
 
       {activeTab === 'eventos' && (
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-3 sm:space-y-4">
         {importError && !importCandidates && (
           <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {importError}
@@ -905,7 +905,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
       )}
 
       {activeTab === 'aulas' && (
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-3 sm:space-y-4">
         {aulaError && (
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{aulaError}</div>
         )}

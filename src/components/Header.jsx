@@ -46,7 +46,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
           )}
         </div>
         <div className="flex flex-col min-w-0 flex-1">
-          <h1 className={`font-serif font-semibold text-base sm:text-lg leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
+          <h1 className={`font-serif font-semibold text-lg sm:text-xl leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
             <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Edu'}</span></span>
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)

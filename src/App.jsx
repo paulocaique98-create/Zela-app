@@ -1565,7 +1565,7 @@ export default function App() {
           padding (que nos outros 3 é quase invisível, mesma cor clara do
           fundo) aparecia bem visível como uma margem branca em volta do
           conteúdo escuro numa janela de navegador não maximizada. */}
-      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : (currentUser?.role === 'developer' ? 'p-3 sm:p-0' : 'p-3 sm:p-4 md:p-0')}`}>
+      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : (currentUser?.role === 'developer' ? 'p-3 sm:p-0' : 'px-3 pt-3 pb-0 sm:p-4 md:p-0')}`}>
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex justify-center items-center">

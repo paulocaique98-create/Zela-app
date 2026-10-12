@@ -426,8 +426,8 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
 
   if (view === 'lista') {
     return (
-      <div className="h-full flex flex-col bg-surface overflow-hidden">
-        <div className="flex flex-col gap-3 px-4 md:px-6 pt-4 md:pt-5 pb-3 border-b border-outline-variant shrink-0">
+      <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
+        <div className="flex flex-col gap-3 px-2.5 md:px-6 pt-4 md:pt-5 pb-3 border-b border-outline-variant shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <button onClick={() => setView('painel')} className="self-start flex items-center gap-1.5 min-h-[40px] text-sm font-bold text-primary hover:underline shrink-0">
               <ArrowLeft size={16} /> Painel por turma
@@ -475,7 +475,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="flex-1 overflow-y-auto p-2.5 md:p-6">
           {isLoading ? (
             <Loading />
           ) : students.length === 0 ? (
@@ -533,8 +533,8 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
   const saidasHint = painel && Object.entries(painel.saidasPorStatus).map(([s, n]) => `${n} ${SAIDA_LABEL[s] || s}${n > 1 ? 's' : ''}`).join(', ');
 
   return (
-    <div className="h-full flex flex-col bg-surface overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-4 md:px-6 pt-4 md:pt-5 pb-3 border-b border-outline-variant shrink-0">
+    <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-2.5 md:px-6 pt-4 md:pt-5 pb-3 border-b border-outline-variant shrink-0">
         <p className="hidden sm:block text-small text-on-surface-variant">Os alunos da escola, organizados por turma.</p>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <SecondaryButton onClick={() => abrirLista({ focarBusca: true })} className="flex-1 sm:flex-none justify-center min-h-[40px]"><Search size={15} /> Buscar aluno</SecondaryButton>
@@ -542,7 +542,7 @@ export default function GestaoAlunos({ currentUser, onOpenAluno, onNovaMatricula
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6">
+      <div className="flex-1 overflow-y-auto min-h-0 p-2.5 md:p-6">
         <Notice>{painelError}</Notice>
         {isLoadingPainel && !painel ? <Loading /> : painel && (
           <div className="flex flex-col gap-4 md:gap-5">

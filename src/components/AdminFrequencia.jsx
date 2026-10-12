@@ -77,7 +77,7 @@ export default function AdminFrequencia({ currentUser, currentSchool }) {
       </div>
 
       {error && (
-        <div className="px-5 sm:px-6 pt-4">
+        <div className="px-2.5 sm:px-6 pt-4">
           <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         </div>
       )}

@@ -121,7 +121,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Diário" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Acompanhe o dia a dia do seu filho(a) na escola.</p>
         {students.length > 0 && (
           <div className="flex items-center gap-1 shrink-0 ml-auto">
@@ -142,7 +142,7 @@ export default function FamilyDiario({ currentUser, currentSchool, familyStudent
           <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno vinculado a esta conta ainda.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-5">
           {students.length > 1 && (
             <div>
               <label className="block text-xs font-bold text-on-surface-variant mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>

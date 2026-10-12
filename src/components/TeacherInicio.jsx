@@ -25,7 +25,7 @@ export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts 
   };
 
   return (
-    <div className="h-full bg-surface p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
+    <div className="h-full -m-3 sm:m-0 bg-surface p-2.5 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-y-auto flex flex-col">
       <div className="w-full mt-0">
         <div className="mb-6 lg:mb-8 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">

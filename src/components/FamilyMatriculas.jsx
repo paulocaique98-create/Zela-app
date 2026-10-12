@@ -526,7 +526,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Matrículas" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Preencha e acompanhe as matrículas dos seus filhos.</p>
         {step === 'list' && (
           <button
@@ -538,7 +538,7 @@ export default function FamilyMatriculas({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
         {step === 'form' ? (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex justify-between items-center">

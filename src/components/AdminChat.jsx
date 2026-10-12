@@ -267,7 +267,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
   if (activeThread) {
     return (
       <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+        <div className="flex items-center gap-3 p-2.5 sm:p-5 border-b border-outline-variant shrink-0">
           <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
@@ -283,7 +283,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
           </div>
         )}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 sm:p-5 space-y-3">
           {isLoadingThread ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -354,7 +354,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
             <MessageCircle size={22} />
@@ -401,7 +401,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-2">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />

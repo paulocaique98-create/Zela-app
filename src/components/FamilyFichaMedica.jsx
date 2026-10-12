@@ -182,7 +182,7 @@ export default function FamilyFichaMedica({ currentUser, currentSchool, familySt
           <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno vinculado a esta conta ainda.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
           {students.length > 1 && (
             <div>
               <label className="block text-xs font-bold text-on-surface-variant mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
