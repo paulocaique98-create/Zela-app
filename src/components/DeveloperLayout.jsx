@@ -3,6 +3,7 @@ import { Building2, Receipt, Tags, FileText, LifeBuoy, Settings, ScanFace } from
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { SidebarToggleButton, SIDEBAR_ICON_SIZE } from './SidebarNav';
+import MobileBottomNav from './MobileBottomNav';
 
 // Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
 const DeveloperPanel = lazy(() => import('./DeveloperPanel'));
@@ -37,7 +38,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:relative top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px)] md:h-auto w-64 shrink-0 z-20 md:z-30 bg-dev-bg border-r border-dev-border transform transition-all duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:relative top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-auto w-64 shrink-0 z-20 md:z-30 bg-dev-bg border-r border-dev-border transform transition-all duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton
           isExpanded={isSidebarExpanded}
@@ -105,7 +106,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-dev-border">
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-dev-border pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {activeTab === 'schools' && (
             <DeveloperPanel
@@ -127,6 +128,25 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           {activeTab === 'planos' && <DeveloperPlanos />}
         </Suspense>
       </main>
+
+      <MobileBottomNav
+        variant="dev"
+        items={[
+          { key: 'schools', label: 'Escolas', icon: Building2 },
+          { key: 'logs', label: 'Logs', icon: FileText },
+          { key: 'support', label: 'Suporte', icon: LifeBuoy, badge: chatUnreadCount },
+        ].map(i => ({
+          ...i,
+          active: activeTab === i.key,
+          onClick: () => {
+            setActiveTab(i.key);
+            setIsMobileMenuOpen(false);
+            if (i.key === 'support') refreshChatUnread();
+          },
+        }))}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
     </div>
   );
 }

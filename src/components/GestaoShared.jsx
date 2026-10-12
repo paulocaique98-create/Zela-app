@@ -39,7 +39,10 @@ export function PageShell({ description, descriptionClassName = '', infoOnMobile
   );
 }
 
-export function StatCard({ label, value, hint, tone = 'default', onClick, className = '', valueClassName = 'text-2xl' }) {
+// O valor acompanha a largura do card (container query, 16px a 24px) e quebra
+// de linha se ainda assim não couber: nunca vaza para fora do card, mesmo com
+// "R$ 12.345,67" em um card de celular. `min-w-0` deixa o card encolher na grade.
+export function StatCard({ label, value, hint, tone = 'default', onClick, className = '', valueClassName = 'text-[length:clamp(1rem,13cqw,1.5rem)]' }) {
   const tones = {
     default: 'text-on-surface',
     good: 'text-success',
@@ -50,11 +53,11 @@ export function StatCard({ label, value, hint, tone = 'default', onClick, classN
   return (
     <Tag
       onClick={onClick}
-      className={`text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''} ${className}`}
+      className={`@container min-w-0 text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''} ${className}`}
     >
       <p className="text-xs font-semibold text-on-surface-variant">{label}</p>
-      <p className={`${valueClassName} font-semibold mt-1 tabular-nums ${tones[tone] || tones.default}`}>{value}</p>
-      {hint && <p className="text-xs text-on-surface-variant/70 mt-0.5">{hint}</p>}
+      <p className={`${valueClassName} font-semibold mt-1 tabular-nums break-words ${tones[tone] || tones.default}`}>{value}</p>
+      {hint && <p className="text-xs text-on-surface-variant/70 mt-0.5 break-words">{hint}</p>}
     </Tag>
   );
 }

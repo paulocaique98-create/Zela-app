@@ -31,7 +31,7 @@ function Kpi({ label, value, hint, valueClass = 'text-on-surface' }) {
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-2.5 md:px-4 md:py-3.5 flex flex-col gap-0.5 min-w-0">
       <span className="text-[10px] md:text-[11px] font-bold text-on-surface-variant">{label}</span>
-      <span className={`text-lg md:text-2xl font-semibold tabular-nums truncate ${valueClass}`}>{value}</span>
+      <span className={`text-lg md:text-2xl font-semibold tabular-nums break-words ${valueClass}`}>{value}</span>
       {hint && <span className="hidden md:block text-xs text-on-surface-variant truncate">{hint}</span>}
     </div>
   );

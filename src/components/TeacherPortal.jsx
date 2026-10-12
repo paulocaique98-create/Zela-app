@@ -3,6 +3,7 @@ import { Home, AlertCircle, FileText, ClipboardCheck } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 
@@ -91,7 +92,7 @@ export default function TeacherPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px)] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -120,7 +121,7 @@ export default function TeacherPortal({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60">
+      <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
           {teacherTab === 'home' && (
             <TeacherInicio currentUser={currentUser} setTeacherTab={setTeacherTab} clickCounts={clickCounts} registerClick={registerClick} monitorCount={monitorCount} showFrequencia={showFrequencia} />
@@ -135,6 +136,16 @@ export default function TeacherPortal({
           {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
         </Suspense>
       </main>
+
+      <MobileBottomNav
+        items={[
+          { key: 'home', label: 'Início', icon: Home, active: teacherTab === 'home', onClick: () => go('home') },
+          { key: 'monitor', label: 'Monitor', icon: AlertCircle, active: teacherTab === 'monitor', onClick: () => go('monitor'), badge: monitorCount },
+          { key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, active: teacherTab === 'frequencia', onClick: () => go('frequencia'), show: showFrequencia },
+        ]}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
     </div>
   );
 }
