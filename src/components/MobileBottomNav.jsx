@@ -39,7 +39,7 @@ export default function MobileBottomNav({ items, isMobileMenuOpen, setIsMobileMe
           const on = active && !isMobileMenuOpen;
           return (
             <li key={key} className="flex-1 min-w-0">
-              <button onClick={onClick} aria-current={on ? 'page' : undefined} className={itemClass(on)}>
+              <button onClick={(e) => { setIsMobileMenuOpen(false); onClick?.(e); }} aria-current={on ? 'page' : undefined} className={itemClass(on)}>
                 <span className="relative">
                   <Icon size={22} aria-hidden="true" />
                   {badge > 0 && (

@@ -38,7 +38,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:relative top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-auto w-64 shrink-0 z-20 md:z-30 bg-dev-bg border-r border-dev-border transform transition-all duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:relative top-[60px] md:top-auto left-0 md:left-auto h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-auto w-full md:w-64 shrink-0 z-20 md:z-30 bg-dev-bg border-r border-dev-border transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton
           isExpanded={isSidebarExpanded}

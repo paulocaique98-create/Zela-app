@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, LogOut, Menu } from 'lucide-react';
+import { ShieldCheck, LogOut } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import TrocaDeConta from './TrocaDeConta';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -33,14 +33,6 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
 
       {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-        <button
-          onClick={onOpenMobileMenu}
-          className={`md:hidden p-1.5 -ml-1 rounded-zela-sm transition active:scale-95 shrink-0 min-w-11 min-h-11 flex items-center justify-center ${isDev ? 'text-dev-primary hover:bg-dev-surface-high' : (dark ? 'text-white hover:bg-ink-2' : 'text-primary hover:bg-surface-container-low')}`}
-          title="Abrir menu"
-          aria-label="Abrir menu"
-        >
-          <Menu size={24} aria-hidden="true" />
-        </button>
         {/* Logo (36px) centralizada na coluna de ícones do menu lateral
             (24px): centro a 32px da borda com o menu recolhido e a 44px com
             ele aberto. O cabeçalho começa em 24px (md:px-6). */}
