@@ -1,11 +1,13 @@
-import React from 'react';
-import { ShieldCheck, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, LogOut, UserX, X } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import TrocaDeConta from './TrocaDeConta';
+import AccountDeletionSection from './AccountDeletionSection';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 
 export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onTrocarConta, onOpenMobileMenu, onNavigateTab }) {
   const [isSidebarExpanded] = useSidebarExpanded();
+  const [excluirContaAberto, setExcluirContaAberto] = useState(false);
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
@@ -17,6 +19,9 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
   // Portais claros (Recepção, Família, Professora, Gestão): cabeçalho na mesma
   // tinta escura do menu lateral, formando um bloco só. Dev segue claro.
   const dark = !isDev && flush;
+  // Exclusão de conta dentro do app (exigência da Apple): a Família tem a seção nas
+  // Configurações; Professora e Recepção abrem por aqui. A Gestão só pelo suporte.
+  const podeExcluirConta = ['teacher', 'admin'].includes(currentUser.role);
 
   return (
     <>
@@ -110,6 +115,17 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             senha, ao lado do Sair. */}
         {!isDev && onTrocarConta && <TrocaDeConta currentUser={currentUser} onTrocar={onTrocarConta} />}
 
+        {podeExcluirConta && (
+          <button
+            onClick={() => setExcluirContaAberto(true)}
+            className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low'}`}
+            title="Excluir minha conta"
+            aria-label="Excluir minha conta"
+          >
+            <UserX size={20} aria-hidden="true" />
+          </button>
+        )}
+
         <button
           onClick={onLogout}
           className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-error hover:bg-dev-surface-high' : (dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low')}`}
@@ -120,6 +136,20 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         </button>
       </div>
     </nav>
+    {excluirContaAberto && (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Excluir minha conta">
+        <div className="w-full max-w-md relative">
+          <button
+            onClick={() => setExcluirContaAberto(false)}
+            className="absolute -top-3 -right-3 z-10 p-2 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-white shadow border border-outline-variant text-on-surface-variant hover:text-error"
+            aria-label="Fechar"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+          <AccountDeletionSection />
+        </div>
+      </div>
+    )}
     </>
   );
 }
