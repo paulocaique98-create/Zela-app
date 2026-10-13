@@ -215,3 +215,8 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Antes do deploy, as 32 funções de produção foram baixadas e comparadas com a main: idênticas. Descoberto: o secret `EXTRA_ALLOWED_ORIGINS` só existe no código das branches mobile; na produção ele só passa a valer depois do merge e do redeploy no release.
 - Escola "Escola Demonstração Apple" (ZL003, basic) criada na produção com Gestão, Recepção, Família, 1 aluno e 1 autorizado. Financeiro ligado por padrão porque faz parte do plano base (decisão do responsável; mantido). Falha de e-mail inválido na primeira tentativa de cadastro foi só de digitação.
 - A tela mostra "non-2xx" em vez da mensagem real do servidor; melhoria possível, não feita.
+
+## 23. Bloco 4, backend de teste do iOS (13/10/2026)
+
+- Homologação (`biybjifoxnuxwkaametp`): secret `EXTRA_ALLOWED_ORIGINS` = `https://localhost,capacitor://localhost` (antes só `https://localhost`). Verificado por preflight em `create-admin-user`: as duas origens do app aceitas, origem estranha barrada, sem redeploy. Produção intocada (lá a mesma lista entra no release, depois do merge do código das branches mobile).
+- Exclusão de conta (verificada só no código): `AccountDeletionSection` chama `request_account_deletion`, que aceita família, professor e recepção (`admin`); a Gestão só pelo suporte. O botão só aparece na tela da Família (`FamilySettings`). A escola conclui em `GestaoExclusoesConta` (função `delete-user`) em até 30 dias. Lacuna: professor e recepção têm o RPC mas não têm botão. Para a Apple, entregar ao revisor a conta de FAMÍLIA. Teste em aparelho ainda NÃO feito.
