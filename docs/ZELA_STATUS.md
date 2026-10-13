@@ -11,6 +11,8 @@
 - Arquivos grandes (não ler inteiros): src/App.jsx, src/components/AdminFaceScanner.jsx, src/components/AdminPortal.jsx.
 
 ## Entregue recentemente (do mais novo para o mais antigo, via git)
+- Docs (13/10): SLA_ATENDIMENTO.md na raiz (valores para operação solo, falta jurídico e WhatsApp); destaque 1024x500 da loja pronto; protótipos de logo apagados (fica o modelo I). Pendente: capturas de tela, Android de entrada, iOS.
+- Mobile (13/10): exclusão de conta testada no S23 (login falha após concluída; informado pelo responsável). Fase 6 resta: Android de entrada e iOS.
 - Mobile iOS (13/10, branch feature/mobile-ios, NÃO commitado): projeto ios/ (Capacitor SPM), push via Firebase no AppDelegate, workflows ios-build.yml e ios-release.yml (só manuais), docs em docs/mobile (seção 20 do plano). Nada compilado ainda: rodar ios-build.yml. Release depende da conta Apple.
 - Mobile (13/10, commit 535ba33 na feature/mobile-capacitor): listener pushNotificationReceived (toast com o app aberto) em src/lib/pushNativo.js. Teste 4 aprovado no S23 (homologação): solicitação e confirmação em segundo plano, app aberto e app fechado; familia2 sem vínculo não recebeu nada. 1º check-in do aluno é silencioso por regra.
 - Escola suspensa (13/10): migration 20261012130000_escola_suspensa_bloqueia_acesso analisada e APLICADA só na homologação; testada (aviso com sessão aberta, sem acesso no login, developer isento, reativar restaura). Produção: só no release, junto com registrar_token_push_app. google-services.json fora do repositório (público).
