@@ -6,6 +6,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 - **Menu Planos no Portal do Dev** — planos por aluno (até 50 alunos) e pacotes (Essencial, Completo, Premium e outros) nos ciclos mensal, semestral, anual e bianual, preços dos módulos, simulador, contratações com desconto de implantação (máx. 50%, com motivo) e alerta de escola por aluno que passou do limite. Migration `20261005150000_planos_zela.sql` (testada no banco local, não aplicada em produção), RPC `contratar_plano_escola`, `src/lib/planosZela.js`.
 - **Meu plano** na Gestão da escola (Configurações): plano, ciclo, valores e vencimento da própria escola, via RPC `meu_plano_escola`.
 - Botão Contratar plano no menu da escola em Gestão de Escolas; Módulos do Dev passa a ler os pacotes do banco (com fallback fixo).
+- **Política de SLA e Atendimento** (`SLA_ATENDIMENTO.md`, rascunho para revisão jurídica) e imagem de destaque 1024x500 da Google Play; protótipos de logo não usados removidos e pasta `docs/mobile/logo/nova-logo/` criada.
 
 ## [1.2.3] - 2026-08-04
 ### Corrigido
