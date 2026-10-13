@@ -1,0 +1,143 @@
+name: iOS release (TestFlight)
+
+# SÓ FUNCIONA DEPOIS da conta Apple Developer e dos secrets listados em
+# docs/mobile/SECRETS_CI.md. Sem eles o primeiro passo falha com a lista do que falta.
+# Só manual, e o ambiente "ios-release" deve exigir aprovação (Settings > Environments),
+# porque o repositório é público.
+# Assinatura gerenciada pela Apple via chave da API do App Store Connect: não há
+# certificado nem provisioning profile para guardar.
+# O app sai apontando para a PRODUÇÃO (secrets PROD_*).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-release
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    name: Arquivar, assinar e enviar ao TestFlight
+    runs-on: macos-latest
+    environment: ios-release
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Conferir secrets
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+          PROD_URL: ${{ secrets.PROD_VITE_SUPABASE_URL }}
+          PROD_KEY: ${{ secrets.PROD_VITE_SUPABASE_ANON_KEY }}
+        run: |
+          FALTA=""
+          [ -z "$TEAM" ] && FALTA="$FALTA APPLE_TEAM_ID"
+          [ -z "$KEY_ID" ] && FALTA="$FALTA ASC_KEY_ID"
+          [ -z "$ISSUER" ] && FALTA="$FALTA ASC_ISSUER_ID"
+          [ -z "$KEY_P8" ] && FALTA="$FALTA ASC_KEY_P8_BASE64"
+          [ -z "$PLIST" ] && FALTA="$FALTA GOOGLE_SERVICE_INFO_PLIST_BASE64"
+          [ -z "$PROD_URL" ] && FALTA="$FALTA PROD_VITE_SUPABASE_URL"
+          [ -z "$PROD_KEY" ] && FALTA="$FALTA PROD_VITE_SUPABASE_ANON_KEY"
+          if [ -n "$FALTA" ]; then
+            echo "Secrets ausentes:$FALTA (ver docs/mobile/SECRETS_CI.md)."
+            exit 1
+          fi
+
+      - name: Selecionar o Xcode mais novo instalado
+        run: |
+          NOVO=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$NOVO" ]; then sudo xcode-select -s "$NOVO/Contents/Developer"; fi
+          xcodebuild -version
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Variáveis do app (produção) e Firebase
+        env:
+          PROD_URL: ${{ secrets.PROD_VITE_SUPABASE_URL }}
+          PROD_KEY: ${{ secrets.PROD_VITE_SUPABASE_ANON_KEY }}
+          PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        run: |
+          {
+            echo "VITE_SUPABASE_URL=$PROD_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$PROD_KEY"
+          } > .env.mobile.local
+          echo "$PLIST" | base64 --decode > ios/App/App/GoogleService-Info.plist
+
+      - name: Build web + sincronizar iOS
+        run: npm run build:mobile:ios
+
+      - name: Chave da API do App Store Connect
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          echo "$KEY_P8" | base64 --decode > "$RUNNER_TEMP/asc/AuthKey_${KEY_ID}.p8"
+
+      - name: Arquivar
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_${KEY_ID}.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER" \
+            DEVELOPMENT_TEAM="$TEAM" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" 2>&1 | tail -n 60
+          test ${PIPESTATUS[0]} -eq 0
+        shell: bash
+
+      - name: Exportar e enviar ao TestFlight
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${TEAM}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_${KEY_ID}.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER" 2>&1 | tail -n 40
+          test ${PIPESTATUS[0]} -eq 0
+        shell: bash
+
+      - name: Apagar a chave do runner
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

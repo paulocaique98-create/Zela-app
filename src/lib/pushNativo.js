@@ -2,7 +2,8 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import { toast } from './toast';
 
-// Push do app (Android via FCM). No navegador nada disso roda: o plugin só é
+// Push do app (Android e iOS, ambos via FCM; no iOS o AppDelegate troca o token
+// APNs pelo token FCM antes de entregar ao plugin). No navegador nada disso roda: o plugin só é
 // baixado (import dinâmico) quando o app é nativo.
 const CHAVE_TOKEN = 'zela_push_token';
 

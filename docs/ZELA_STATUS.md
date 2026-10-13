@@ -1,6 +1,6 @@
 # ZELA — STATUS ATUAL (atualizar em poucas linhas a cada mudança significativa)
 
-Última atualização: 2026-10-13 (mobile: push em primeiro plano, escola suspensa).
+Última atualização: 2026-10-13 (mobile: iOS preparado na feature/mobile-ios, não compilado).
 
 ## Comandos
 - Dev: npm run dev · Build: npm run build · Lint: npm run lint (oxlint)
@@ -11,6 +11,7 @@
 - Arquivos grandes (não ler inteiros): src/App.jsx, src/components/AdminFaceScanner.jsx, src/components/AdminPortal.jsx.
 
 ## Entregue recentemente (do mais novo para o mais antigo, via git)
+- Mobile iOS (13/10, branch feature/mobile-ios, NÃO commitado): projeto ios/ (Capacitor SPM), push via Firebase no AppDelegate, workflows ios-build.yml e ios-release.yml (só manuais), docs em docs/mobile (seção 20 do plano). Nada compilado ainda: rodar ios-build.yml. Release depende da conta Apple.
 - Mobile (13/10, commit 535ba33 na feature/mobile-capacitor): listener pushNotificationReceived (toast com o app aberto) em src/lib/pushNativo.js. Teste 4 aprovado no S23 (homologação): solicitação e confirmação em segundo plano, app aberto e app fechado; familia2 sem vínculo não recebeu nada. 1º check-in do aluno é silencioso por regra.
 - Escola suspensa (13/10): migration 20261012130000_escola_suspensa_bloqueia_acesso analisada e APLICADA só na homologação; testada (aviso com sessão aberta, sem acesso no login, developer isento, reativar restaura). Produção: só no release, junto com registrar_token_push_app. google-services.json fora do repositório (público).
 - Mobile (11/10, branch feature/mobile-capacitor, NÃO commitado): Fase 5 em parte. Push nativo Android (FCM), câmera e reconhecimento facial testados no Galaxy S23 na homologação; reconhecimento facial agora é do plano base (campo plan saiu do Portal do Dev, coluna mantida); send-test-push aceita token. Detalhes em docs/mobile/PLANO_IMPLEMENTACAO_MOBILE.md (seções 15 e 16).

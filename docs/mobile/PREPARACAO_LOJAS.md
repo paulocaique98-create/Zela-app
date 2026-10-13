@@ -71,7 +71,26 @@ URL pública: https://zelaedu.com.br/.
 - Exclusão: o usuário pode pedir pela escola ou pelo contato da política. Google exige também uma URL ou instrução de exclusão de conta [CONFIRMAR se o app tem exclusão de conta própria].
 - Público do app: não é voltado a crianças; usuários são adultos. Os dados de crianças são cadastrados por responsáveis e escola. Revisar o enquadramento na política de Famílias do Google.
 
-**Apple, App Privacy** (só quando o iOS existir): mesmos tipos de dado, todos vinculados à identidade, nenhum usado para rastreamento. `NSCameraUsageDescription`: "A câmera é usada para o cadastro facial, o reconhecimento na saída do aluno e a leitura de QR Code."
+**Apple, App Privacy** (rascunho, baseado no código; revisar no App Store Connect):
+| Categoria Apple | Coletado | Vinculado à identidade | Rastreamento | Finalidade |
+|---|---|---|---|---|
+| Informações de contato (nome, e-mail, telefone) | Sim | Sim | Não | Funcionalidade do app, conta |
+| Fotos ou vídeos (foto do rosto) | Sim | Sim | Não | Funcionalidade do app, segurança |
+| Dados biométricos (descritor facial) [CONFIRMAR como a Apple classifica: normalmente "Dados sensíveis"/biometria] | Sim, opcional | Sim | Não | Funcionalidade do app, segurança |
+| Identificadores (token de push) | Sim | Sim | Não | Funcionalidade do app (notificações) |
+| Informações financeiras (pagamento) | Sim, se módulo ativo | Sim | Não | Funcionalidade do app (cobrança via Asaas) |
+- Nenhum SDK de anúncio e nenhum rastreamento entre apps (`NSUserTrackingUsageDescription` não é usado).
+- Criptografia: só HTTPS padrão; `ITSAppUsesNonExemptEncryption` = false já está no `Info.plist`.
+- Texto da câmera (`NSCameraUsageDescription`, já no `Info.plist`): "O Zela Edu usa a câmera para o reconhecimento facial na entrada e na saída dos alunos, para ler QR Codes e para cadastrar a foto do rosto de responsáveis autorizados."
+- Classificação etária: sem conteúdo sensível para menores; app voltado a adultos (responsáveis e equipe). Revisar a categoria "Kids" da Apple: NÃO marcar como app infantil.
+- Categoria: Educação (secundária: Produtividade ou Utilitários) [CONFIRMAR].
+- Exclusão de conta: a Apple EXIGE exclusão de conta dentro do app quando há criação de conta. Existe `AccountDeletionSection.jsx` (usado em `FamilySettings.jsx`) e a Edge Function `delete-user`. Verificado só no código; [CONFIRMAR se o fluxo está acessível no app e funciona com o usuário criado pela escola].
+
+### 3.1 Notas para o revisor da Apple (colar no App Store Connect)
+
+O Zela Edu é um app de escolas já contratantes. Não há cadastro aberto: o acesso é criado pela escola. Para a revisão fornecemos uma conta de demonstração com dados fictícios (escola de teste, sem crianças reais). A biometria facial é opcional e usada só para confirmar quem retira o aluno. Se o revisor não quiser usar a câmera, o PIN e o QR Code fazem a mesma função.
+- Usuário de demonstração: [CONFIRMAR: conta fictícia em homologação ou produção, ver `docs/mobile/CHECKLIST_IOS.md`]
+- Contato: [CONFIRMAR e-mail de suporte institucional]
 
 ## 4. Imagens e arquivos que faltam
 
@@ -80,6 +99,12 @@ URL pública: https://zelaedu.com.br/.
 - Capturas de tela de celular (mínimo 2, ideal 4 a 8): login, Ações rápidas, aviso de saída, biometria. Usar dados fictícios, nunca de escola real.
 - Capturas de tablet 7" e 10" se quiser aparecer em tablets.
 - Vídeo opcional.
+
+### 4.1 Capturas de tela da App Store (iOS)
+
+Tamanhos exigidos hoje (conferir no App Store Connect, pode mudar): iPhone 6,9" (1320x2868) e 6,5" (1242x2688 ou 1284x2778). O iPhone 11 Pro Max tem tela de 6,5". Mínimo 1 e máximo 10 por tamanho. Formato PNG ou JPEG, sem transparência.
+Roteiro (dados fictícios, escola de homologação): 1) login; 2) Ações rápidas; 3) aviso de saída/entrada; 4) pessoas autorizadas; 5) comunicados; 6) cadastro de biometria.
+Salvar em `docs/mobile/loja/ios/` (pasta ainda vazia; as imagens saem do aparelho).
 
 ## 5. Checklist de release Android
 

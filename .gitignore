@@ -30,3 +30,11 @@ scratch/
 # Pastas de trabalho locais
 .scratch/
 .stitch/
+
+# Assinatura e segredos de lojas (nunca no Git; ficam nos secrets do GitHub)
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+AuthKey_*.p8
+ios/App/ExportOptions.local.plist

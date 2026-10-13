@@ -72,6 +72,14 @@ describe('initNative', () => {
     expect(setBackgroundColor).toHaveBeenCalledWith({ color: '#1e5563' });
   });
 
+  it('no iOS aplica só o estilo (cor de fundo não existe lá)', async () => {
+    nativo.plataforma = 'ios';
+    const { initNative } = await import('../lib/nativeInit');
+    await initNative();
+    expect(setStyle).toHaveBeenCalled();
+    expect(setBackgroundColor).not.toHaveBeenCalled();
+  });
+
   it('falha do plugin não propaga', async () => {
     setStyle.mockRejectedValueOnce(new Error('x'));
     const { initNative } = await import('../lib/nativeInit');
@@ -102,6 +110,26 @@ describe('pushNativo', () => {
     expect(await ativarPushNativo()).toBe(true);
     expect(rpc).toHaveBeenCalledWith('registrar_token_push_app', expect.objectContaining({ p_token: TOKEN, p_platform: 'android' }));
     expect(tokenNativo()).toBe(TOKEN);
+  });
+
+  it('no iOS grava o token com platform ios', async () => {
+    nativo.plataforma = 'ios';
+    push.checkPermissions.mockResolvedValue({ receive: 'granted' });
+    const { ativarPushNativo } = await import('../lib/pushNativo');
+    expect(await ativarPushNativo()).toBe(true);
+    expect(rpc).toHaveBeenCalledWith('registrar_token_push_app', expect.objectContaining({ p_token: TOKEN, p_platform: 'ios' }));
+  });
+
+  it('erro de registro (ex.: Firebase ausente no iOS) propaga e não grava', async () => {
+    nativo.plataforma = 'ios';
+    push.checkPermissions.mockResolvedValue({ receive: 'granted' });
+    push.addListener.mockImplementation((ev, cb) => {
+      if (ev === 'registrationError') setTimeout(() => cb({ error: 'Firebase não configurado' }), 0);
+      return Promise.resolve({ remove: vi.fn() });
+    });
+    const { ativarPushNativo } = await import('../lib/pushNativo');
+    await expect(ativarPushNativo()).rejects.toThrow('Firebase não configurado');
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('erro do banco propaga e não lembra o token', async () => {

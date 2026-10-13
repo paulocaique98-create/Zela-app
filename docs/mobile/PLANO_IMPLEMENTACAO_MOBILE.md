@@ -190,3 +190,14 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Resultados (consultas no banco e log do aparelho): token gravado com `platform=android`; `send-test-push` com `success=true` em `push_delivery_attempts`; push exibido na barra com o app em segundo plano; troca de conta A para B e, com logout sem rede (token sobrando), de B para A: mesma linha mudou de dono, sem duplicata nem erro.
 - Achado: com o app em primeiro plano o FCM entrega ao plugin (`pushNotificationReceived`, sem listener) e nada é exibido. Lacuna a tratar (toast/aviso). O app também não cria canais Android; o `channel_id` do servidor caiu no canal padrão sem problema.
 - Pendente: tratar push em primeiro plano; push real de check-in (Teste 4); Android de entrada; iOS; produção.
+
+## 20. iOS preparado sem conta Apple (13/10/2026, branch feature/mobile-ios, NÃO commitado)
+
+- `@capacitor/ios` 8.5.3 (exato), `npx cap add ios` (Swift Package Manager), script `build:mobile:ios`. `capacitor.config.json` ganhou bloco `ios` (`contentInset: automatic`, fundo `#1e5563`). Ícone 1024 sem alpha e splash gerados pelo `@capacitor/assets`.
+- `Info.plist`: texto da câmera em português, `ITSAppUsesNonExemptEncryption=false`, `UIBackgroundModes=remote-notification`, `arm64`. `App.entitlements` com `aps-environment=development` (a Apple troca para production na assinatura).
+- Push iOS via Firebase (decisão de 13/10): `AppDelegate.swift` inicia o Firebase só se existir `GoogleService-Info.plist` e converte o token APNs em token FCM; sem o plist o registro falha com mensagem (não grava token lixo). `project.pbxproj` editado À MÃO: pacote `firebase-ios-sdk` (FirebaseCore, FirebaseMessaging, a partir de 12.0.0), entitlements e um script que copia o plist se existir. **Nunca compilado**: precisa rodar `ios-build.yml` para validar.
+- Banco: nenhuma mudança. `registrar_token_push_app` já aceita `'ios'` e `pushNativo.js` já enviava `Capacitor.getPlatform()`.
+- Workflows (só `workflow_dispatch`, repositório público): `ios-build.yml` (simulador, sem assinatura, homologação) e `ios-release.yml` (arquivar, assinar pela API do App Store Connect e enviar ao TestFlight, ambiente `ios-release` com aprovação, produção). O de release não foi executado e depende dos secrets de `docs/mobile/SECRETS_CI.md`. AAB Android pelo Actions: adiado, junto com o release.
+- Docs: `SECRETS_CI.md`, `CHECKLIST_IOS.md`, seção Apple em `PREPARACAO_LOJAS.md` (App Privacy, notas ao revisor, roteiro de capturas).
+- Testes: `src/test/mobileNative.test.js` 12 passam (4 novos para iOS). Lint dos arquivos JS alterados sem erros. YAML dos workflows validado sintaticamente (js-yaml). Nada de iOS foi compilado nem executado.
+- Aviso de CORS: a homologação só aceita `https://localhost`; para o iOS acrescentar `capacitor://localhost` em `EXTRA_ALLOWED_ORIGINS` (alteração de secret, não feita).
