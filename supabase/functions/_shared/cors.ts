@@ -5,6 +5,9 @@
 // dados sensíveis (criação/exclusão de usuário, push notifications, biometria).
 const ALLOWED_ORIGINS = [
   'https://sensekids.vercel.app',
+  // Domínio oficial: sensekids.vercel.app redireciona para ele (307), então o navegador
+  // passou a chamar as functions a partir daqui.
+  'https://zelaedu.com.br',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:4173',
