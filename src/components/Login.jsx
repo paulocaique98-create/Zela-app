@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
+import ZelaMark from './ZelaMark';
 
 export default function Login({ onLogin }) {
   // Imagem central customizável pelo developer (ConfiguracoesPanel) --
@@ -197,7 +198,7 @@ export default function Login({ onLogin }) {
       <div className="hidden lg:flex lg:w-1/2 relative bg-ink text-white flex-col justify-between p-8 xl:p-12 overflow-hidden">
         <div className="flex items-center gap-3 shrink-0">
           <div className="w-11 h-11 bg-primary rounded-md flex items-center justify-center">
-            <ShieldCheck className="text-white" size={24} aria-hidden="true" />
+            <ZelaMark className="text-white" size={28} />
           </div>
           <div className="flex flex-col gap-1">
             <span className="font-serif text-h2 leading-none">Zela Edu</span>
@@ -212,7 +213,7 @@ export default function Login({ onLogin }) {
             </div>
           ) : (
             <div className="w-full h-full max-w-lg max-h-[48vh] aspect-square rounded-xl overflow-hidden border border-ink-line bg-ink-line/40 flex items-center justify-center">
-              <ShieldCheck className="text-white/20" size={140} strokeWidth={1} aria-hidden="true" />
+              <ZelaMark className="text-white opacity-20" size={140} />
             </div>
           )}
         </div>
@@ -239,7 +240,7 @@ export default function Login({ onLogin }) {
           {/* Branding mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-10">
             <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
-              <ShieldCheck className="text-white" size={20} aria-hidden="true" />
+              <ZelaMark className="text-white" size={24} />
             </div>
             <div className="flex flex-col gap-1">
               <span className="font-serif text-h2 text-on-surface leading-none">Zela Edu</span>
