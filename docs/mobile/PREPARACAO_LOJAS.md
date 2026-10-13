@@ -33,7 +33,7 @@ Supabase (hospedagem, banco de dados e autenticação), Google Firebase Cloud Me
 Os dados de cada escola ficam separados e só são acessados por pessoas autorizadas por ela.
 
 **Retenção e exclusão**
-confirmado Os dados são mantidos enquanto o vínculo com a escola existir. Pedidos de exclusão são atendidos pela escola ou pelo contato abaixo.
+Os dados são mantidos enquanto o vínculo com a escola existir. Dentro do app, em Configurações, o responsável (família) pode solicitar a exclusão da conta e dos dados pessoais; a escola conclui o pedido em até 30 dias. Informações que a escola é obrigada por lei a guardar, como registros financeiros, são mantidas pelo prazo legal. Pedidos também podem ser feitos pelo contato abaixo.
 
 **Seus direitos**
 Acesso, correção, exclusão, portabilidade, revogação de consentimento e informação sobre compartilhamento.
@@ -44,7 +44,8 @@ zela.dev26@gmail.com
 **Atualizações**
 Mudanças relevantes serão comunicadas no app. Última atualização: 11/10/2026.
 
-URL pública: https://zelaedu.com.br/.
+URL pública da política: https://zelaedu.com.br/privacidade.html (arquivo `public/privacidade.html`, já no ar em 13/10).
+URL de suporte: https://zelaedu.com.br/suporte.html (arquivo `public/suporte.html`, criado em 13/10; só fica no ar quando a branch for mesclada na main e o Vercel publicar).
 
 ## 2. Textos da loja
 
@@ -68,7 +69,7 @@ URL pública: https://zelaedu.com.br/.
 | Identificadores do aparelho (token de push) | Sim | Sim, com Google FCM | Notificações | Sim |
 | Informações financeiras | Sim, se módulo ativo | Sim, com Asaas | Cobrança | Sim |
 - Dados criptografados em trânsito: sim (HTTPS).
-- Exclusão: o usuário pode pedir pela escola ou pelo contato da política. Google exige também uma URL ou instrução de exclusão de conta [CONFIRMAR se o app tem exclusão de conta própria].
+- Exclusão: a família pede dentro do app (Configurações, Solicitar exclusão da conta; `AccountDeletionSection.jsx`) e a escola conclui em até 30 dias; também vale o contato da política. Google exige uma URL ou instrução de exclusão: usar a página de suporte.
 - Público do app: não é voltado a crianças; usuários são adultos. Os dados de crianças são cadastrados por responsáveis e escola. Revisar o enquadramento na política de Famílias do Google.
 
 **Apple, App Privacy** (rascunho, baseado no código; revisar no App Store Connect):
@@ -76,21 +77,21 @@ URL pública: https://zelaedu.com.br/.
 |---|---|---|---|---|
 | Informações de contato (nome, e-mail, telefone) | Sim | Sim | Não | Funcionalidade do app, conta |
 | Fotos ou vídeos (foto do rosto) | Sim | Sim | Não | Funcionalidade do app, segurança |
-| Dados biométricos (descritor facial) [CONFIRMAR como a Apple classifica: normalmente "Dados sensíveis"/biometria] | Sim, opcional | Sim | Não | Funcionalidade do app, segurança |
+| Dados biométricos (descritor facial) [declarar também em "Informações sensíveis" (a Apple lista biometria nessa categoria; conferir o nome exato no formulário)] | Sim, opcional | Sim | Não | Funcionalidade do app, segurança |
 | Identificadores (token de push) | Sim | Sim | Não | Funcionalidade do app (notificações) |
 | Informações financeiras (pagamento) | Sim, se módulo ativo | Sim | Não | Funcionalidade do app (cobrança via Asaas) |
 - Nenhum SDK de anúncio e nenhum rastreamento entre apps (`NSUserTrackingUsageDescription` não é usado).
 - Criptografia: só HTTPS padrão; `ITSAppUsesNonExemptEncryption` = false já está no `Info.plist`.
 - Texto da câmera (`NSCameraUsageDescription`, já no `Info.plist`): "O Zela Edu usa a câmera para o reconhecimento facial na entrada e na saída dos alunos, para ler QR Codes e para cadastrar a foto do rosto de responsáveis autorizados."
 - Classificação etária: sem conteúdo sensível para menores; app voltado a adultos (responsáveis e equipe). Revisar a categoria "Kids" da Apple: NÃO marcar como app infantil.
-- Categoria: Educação (secundária: Produtividade ou Utilitários) [CONFIRMAR].
-- Exclusão de conta: a Apple EXIGE exclusão de conta dentro do app quando há criação de conta. Existe `AccountDeletionSection.jsx` (usado em `FamilySettings.jsx`) e a Edge Function `delete-user`. Verificado só no código; [CONFIRMAR se o fluxo está acessível no app e funciona com o usuário criado pela escola].
+- Categoria: Educação (principal). Secundária opcional: Produtividade. Decisão tomada em 13/10; alterável antes do envio.
+- Exclusão de conta: a Apple EXIGE exclusão de conta dentro do app quando há criação de conta. Existe `AccountDeletionSection.jsx` (usado em `FamilySettings.jsx`) e a Edge Function `delete-user`. Verificado só no código, e só existe para a FAMÍLIA; professores e equipe não têm o botão. Testar no aparelho com um usuário criado pela escola (item 13 do plano) e decidir se a Apple aceita o pedido assíncrono de 30 dias (costuma aceitar quando o app inicia a exclusão e informa o prazo).
 
 ### 3.1 Notas para o revisor da Apple (colar no App Store Connect)
 
 O Zela Edu é um app de escolas já contratantes. Não há cadastro aberto: o acesso é criado pela escola. Para a revisão fornecemos uma conta de demonstração com dados fictícios (escola de teste, sem crianças reais). A biometria facial é opcional e usada só para confirmar quem retira o aluno. Se o revisor não quiser usar a câmera, o PIN e o QR Code fazem a mesma função.
-- Usuário de demonstração: [CONFIRMAR: conta fictícia em homologação ou produção, ver `docs/mobile/CHECKLIST_IOS.md`]
-- Contato: [CONFIRMAR e-mail de suporte institucional]
+- Usuário de demonstração: o build enviado à Apple aponta para a PRODUÇÃO, então o login do revisor tem de existir na produção. Opção A (recomendada): escola fictícia isolada na produção, com um usuário família e um recepção, sem dados reais (exige sua aprovação para criar dados lá). Opção B: enviar o build da revisão apontando para a homologação, mas o plano gratuito pausa por inatividade e o revisor veria erro. [AGUARDA DECISÃO]
+- Contato: zela.dev26@gmail.com (suporte e privacidade). Trocar por um e-mail do domínio (ex.: suporte@zelaedu.com.br) quando existir; basta editar `public/privacidade.html`, `public/suporte.html` e o App Store Connect.
 
 ## 4. Imagens e arquivos que faltam
 

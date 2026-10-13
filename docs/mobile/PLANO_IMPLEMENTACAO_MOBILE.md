@@ -201,3 +201,10 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Docs: `SECRETS_CI.md`, `CHECKLIST_IOS.md`, seção Apple em `PREPARACAO_LOJAS.md` (App Privacy, notas ao revisor, roteiro de capturas).
 - Testes: `src/test/mobileNative.test.js` 12 passam (4 novos para iOS). Lint dos arquivos JS alterados sem erros. YAML dos workflows validado sintaticamente (js-yaml). Nada de iOS foi compilado nem executado.
 - Aviso de CORS: a homologação só aceita `https://localhost`; para o iOS acrescentar `capacitor://localhost` em `EXTRA_ALLOWED_ORIGINS` (alteração de secret, não feita).
+
+## 21. Bloco 3, dados do negócio (13/10/2026)
+
+- E-mail de suporte e privacidade: `zela.dev26@gmail.com` (aceito pela Apple; trocar por e-mail do domínio quando existir).
+- Política já no ar em `https://zelaedu.com.br/privacidade.html` (HTTP 200 verificado). Retenção e exclusão agora descrevem o pedido dentro do app e o prazo de até 30 dias (vem do código de `AccountDeletionSection.jsx`). Página de suporte `public/suporte.html` criada; só publica depois do merge na main.
+- Bucket `person-photos`: privado na migration baseline (`public=false`, política por `school_id`). NÃO consultei o banco de produção; ver a consulta de conferência em `PREPARACAO_LOJAS.md` / relatório.
+- Categoria Educação definida. Biometria declarada também como informação sensível. Aguarda decisão: conta de demonstração do revisor (build vai para produção).
