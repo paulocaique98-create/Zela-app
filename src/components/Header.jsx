@@ -141,7 +141,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         <div className="w-full max-w-md relative">
           <button
             onClick={() => setExcluirContaAberto(false)}
-            className="absolute -top-3 -right-3 z-10 p-2 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-white shadow border border-outline-variant text-on-surface-variant hover:text-error"
+            className="absolute -top-3 -right-3 z-10 p-2 min-w-11 min-h-11 flex items-center justify-center rounded-zela-md bg-white shadow border border-outline-variant text-on-surface-variant hover:text-error"
             aria-label="Fechar"
           >
             <X size={18} aria-hidden="true" />
