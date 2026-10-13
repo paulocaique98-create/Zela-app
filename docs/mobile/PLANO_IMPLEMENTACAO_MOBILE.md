@@ -208,3 +208,10 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Política já no ar em `https://zelaedu.com.br/privacidade.html` (HTTP 200 verificado). Retenção e exclusão agora descrevem o pedido dentro do app e o prazo de até 30 dias (vem do código de `AccountDeletionSection.jsx`). Página de suporte `public/suporte.html` criada; só publica depois do merge na main.
 - Bucket `person-photos`: privado na migration baseline (`public=false`, política por `school_id`). NÃO consultei o banco de produção; ver a consulta de conferência em `PREPARACAO_LOJAS.md` / relatório.
 - Categoria Educação definida. Biometria declarada também como informação sensível. Aguarda decisão: conta de demonstração do revisor (build vai para produção).
+
+## 22. CORS de produção e escola de demonstração (13/10/2026)
+
+- Causa do erro "Failed to send a request": `sensekids.vercel.app` passou a redirecionar (307) para `zelaedu.com.br`, origem que as Edge Functions recusavam. Hotfix `0beba8c` (só `_shared/cors.ts`, +`https://zelaedu.com.br`) na main e publicado em 27 funções de produção; as 5 sem CORS (webhook e crons) ficaram intocadas e `verify_jwt=false` foi preservado. CI da main passou.
+- Antes do deploy, as 32 funções de produção foram baixadas e comparadas com a main: idênticas. Descoberto: o secret `EXTRA_ALLOWED_ORIGINS` só existe no código das branches mobile; na produção ele só passa a valer depois do merge e do redeploy no release.
+- Escola "Escola Demonstração Apple" (ZL003, basic) criada na produção com Gestão, Recepção, Família, 1 aluno e 1 autorizado. Financeiro ligado por padrão (a desligar). Falha de e-mail inválido na primeira tentativa de cadastro foi só de digitação.
+- A tela mostra "non-2xx" em vez da mensagem real do servidor; melhoria possível, não feita.
