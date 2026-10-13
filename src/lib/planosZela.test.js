@@ -11,7 +11,7 @@ const PRECOS = [
   { item_id: 'chat', tipo_cobranca: 'por_aluno', valor: 1.5 },
   { item_id: 'liveness', tipo_cobranca: 'por_aluno', valor: 1.5 },
   { item_id: 'qr', tipo_cobranca: 'por_aluno', valor: 1 },
-  { item_id: 'app_marca', tipo_cobranca: 'fixo_mensal', valor: 300 },
+  { item_id: 'fixo_exemplo', tipo_cobranca: 'fixo_mensal', valor: 300 },
 ];
 const COMPLETO = { modalidade: 'pacote', itens: ['pedagogico', 'rotina'], preco_por_aluno: 11.9, minimo_mensal: 790, implantacao_valor: 900 };
 const POR_ALUNO = { modalidade: 'por_aluno', itens: [], preco_por_aluno: 0, minimo_mensal: 0, implantacao_valor: 600 };
@@ -29,8 +29,8 @@ describe('mensalidade', () => {
     expect(mensalidade(POR_ALUNO, 40, PRECOS, ['pedagogico', 'chat'])).toBe(476);
   });
   it('soma os itens de cobrança fixa', () => {
-    expect(valorFixoMensal(['app_marca', 'chat'], PRECOS)).toBe(300);
-    expect(mensalidade(POR_ALUNO, 40, PRECOS, ['app_marca'])).toBe(576);
+    expect(valorFixoMensal(['fixo_exemplo', 'chat'], PRECOS)).toBe(300);
+    expect(mensalidade(POR_ALUNO, 40, PRECOS, ['fixo_exemplo'])).toBe(576);
   });
 });
 

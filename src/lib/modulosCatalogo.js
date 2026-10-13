@@ -122,17 +122,6 @@ export const ITENS = [
     aoDesligar: 'O totem deixa de aceitar QR Code. As carteirinhas impressas param de funcionar.',
   },
   {
-    id: 'app_marca',
-    grupo: 'adicional',
-    nome: 'App com a marca da escola',
-    resumo: 'Disponível depois do lançamento dos apps.',
-    keys: [],
-    emBreve: true,
-    inclui: [],
-    onde: [],
-    aoDesligar: null,
-  },
-  {
     id: 'liveness_bloqueio',
     grupo: 'tecnico',
     nome: 'Bloqueio da prova de vida',

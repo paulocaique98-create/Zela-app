@@ -51,7 +51,7 @@ export function valorPorAluno(itens, precos) {
   }, 0));
 }
 
-// Itens de cobrança fixa mensal (ex.: app com a marca).
+// Itens de cobrança fixa mensal (hoje nenhum item do catálogo usa; o tipo segue válido no banco).
 export function valorFixoMensal(itens, precos) {
   const map = porId(precos);
   return arredondar((itens || []).reduce((s, id) => {
