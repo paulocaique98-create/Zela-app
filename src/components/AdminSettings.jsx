@@ -237,6 +237,34 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
 // no botão errado (o óbvio, de cima), e a imagem voltava pra antiga no
 // próximo carregamento -- sem erro nenhum visível. Corrigido: agora é só
 // mais um campo do mesmo formulário único, com um só "Salvar".
+// O código da escola salvo na tela de login fica fixo no aparelho; só
+// Administração/Gestão logada pode apagá-lo pra cadastrar outro.
+function CodigoEscolaAparelho() {
+  const KEY = 'zela_school_code';
+  const [codigo, setCodigo] = useState(() => {
+    try { return localStorage.getItem(KEY) || ''; } catch { return ''; }
+  });
+  const apagar = () => {
+    if (!window.confirm(`Apagar o código ${codigo} deste aparelho? Será preciso informá-lo de novo no próximo login.`)) return;
+    try { localStorage.removeItem(KEY); } catch { /* melhor esforço */ }
+    setCodigo('');
+  };
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3 text-xs bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md px-3 py-2">
+      {codigo ? (
+        <>
+          <span className="text-on-surface-variant">Código salvo neste aparelho: <strong className="text-on-surface">{codigo}</strong></span>
+          <button type="button" onClick={apagar} className="text-error font-medium hover:underline underline-offset-4 flex items-center gap-1">
+            <Trash2 size={13} /> Apagar
+          </button>
+        </>
+      ) : (
+        <span className="text-on-surface-variant">Nenhum código salvo neste aparelho.</span>
+      )}
+    </div>
+  );
+}
+
 function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = false }) {
   const fileInputRef = useRef(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -283,6 +311,8 @@ function LoginImageSection({ currentUser, imageUrl, onImageChange, noBorder = fa
           Escolha o arquivo e clique em "Salvar" no topo da tela pra confirmar.
         </p>
       </div>
+
+      <CodigoEscolaAparelho />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="w-24 h-24 bg-surface-container-low rounded-zela-lg border border-dashed border-outline-variant flex items-center justify-center shrink-0 overflow-hidden">

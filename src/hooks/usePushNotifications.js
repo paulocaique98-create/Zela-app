@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { getPushGuidance } from '../lib/pushDeviceGuidance';
 import { toast } from '../lib/toast';
+import { ehAppNativo, statusPushNativo, ativarPushNativo, desativarPushNativo, temTokenNativo, tokenNativo, ouvirPushRecebido } from '../lib/pushNativo';
 
 export function usePushNotifications(currentUser, currentSchool) {
   const [permission, setPermission] = useState(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    ehAppNativo() ? 'default' : typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +39,38 @@ export function usePushNotifications(currentUser, currentSchool) {
     checkSubscription();
   }, [currentUser]);
 
+  // App nativo (Android): FCM em vez de service worker.
+  useEffect(() => {
+    if (!ehAppNativo() || !currentUser) return;
+    statusPushNativo()
+      .then((s) => {
+        if (s === 'granted') ouvirPushRecebido().catch(() => {});
+        // Permissão dada mas sem token gravado neste aparelho: ainda falta ativar.
+        const ativo = s === 'granted' && temTokenNativo();
+        setPermission(s === 'denied' ? 'denied' : ativo ? 'granted' : 'default');
+        setIsSubscribed(ativo);
+      })
+      .catch(() => {});
+  }, [currentUser]);
+
   const subscribe = useCallback(async () => {
+    if (ehAppNativo()) {
+      setIsLoading(true);
+      try {
+        const ok = await ativarPushNativo();
+        setPermission(ok ? 'granted' : 'denied');
+        setIsSubscribed(ok);
+        if (ok) supabase.functions.invoke('send-test-push', { body: { token: tokenNativo() } }).catch(() => {});
+        if (!ok) toast.error('Permissão de notificações negada. Ative nas configurações do aparelho.');
+        return ok;
+      } catch (err) {
+        console.error('[Push] Erro ao ativar notificações no app:', err);
+        toast.error('Não foi possível ativar as notificações agora.');
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    }
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       toast.error('Seu navegador não suporta notificações push.');
       return false;
@@ -105,6 +137,11 @@ export function usePushNotifications(currentUser, currentSchool) {
   const unsubscribe = useCallback(async () => {
     setIsLoading(true);
     try {
+      if (ehAppNativo()) {
+        await desativarPushNativo();
+        setIsSubscribed(false);
+        return;
+      }
       const registration = await navigator.serviceWorker.getRegistration('/sw.js');
       if (!registration) return;
       const subscription = await registration.pushManager.getSubscription();

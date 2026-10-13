@@ -5,6 +5,7 @@ import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
+import { desativarPushNativo } from './lib/pushNativo';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
 import { formatPersonName } from './utils/formatName';
@@ -306,6 +307,33 @@ export default function App() {
     window.addEventListener('visibilitychange', handleVisibilityChange);
     return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []); // [] = listener estável, não reregistra a cada render
+
+  // Escola suspensa no Portal do Dev: derruba a sessão (login, aba que volta ao
+  // foco e a cada 5 min, para o totem/tablet que ficam abertos o dia todo).
+  // O bloqueio de dados em si é no banco (get_my_school_id); aqui é o aviso.
+  const userIdLogado = currentUser?.id;
+  useEffect(() => {
+    if (!userIdLogado) return undefined;
+    const checarSuspensao = async () => {
+      const { data, error } = await supabase.rpc('minha_escola_suspensa');
+      if (error || data !== true) return;
+      localStorage.removeItem('zela_user');
+      localStorage.removeItem('zela_school');
+      setCurrentUser(null);
+      setStudents([]);
+      setAuthorized([]);
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+      toast.error('Acesso suspenso. Entre em contato com a Zela.');
+    };
+    checarSuspensao();
+    const aoVoltar = () => { if (document.visibilityState === 'visible') checarSuspensao(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    const timer = setInterval(checarSuspensao, 5 * 60 * 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', aoVoltar);
+      clearInterval(timer);
+    };
+  }, [userIdLogado]);
 
   const fetchGlobalLogo = async () => {
     try {
@@ -698,7 +726,8 @@ export default function App() {
     // sair no computador da recepção (ou o deslogar por inatividade) derrubava
     // o totem, e o aviso de entrada/saída às famílias falhava com "Token
     // inválido ou expirado" (ver src/lib/sessao.js).
-    supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+    // No app, remove antes o token de push deste aparelho (precisa da sessão).
+    desativarPushNativo().finally(() => supabase.auth.signOut({ scope: 'local' }).catch(() => { }));
   };
 
   // Sessão encerrada em outro lugar (ex.: senha trocada, conta removida):

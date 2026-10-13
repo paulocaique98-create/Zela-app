@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:mobile": "vite build --mode mobile && cap sync android",
+    "build:mobile": "vite build --mode mobile && node scripts/mobile-modelos.mjs && cap sync android",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,7 +14,11 @@
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.5.3",
+    "@capacitor/push-notifications": "8.1.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/public-sans": "^5.3.0",
     "@fontsource-variable/source-serif-4": "^5.3.0",
@@ -34,6 +38,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@capacitor/assets": "3.0.5",
     "@capacitor/cli": "8.5.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

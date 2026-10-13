@@ -67,13 +67,6 @@ export default function Login({ onLogin }) {
     }
   };
 
-  const handleTrocarEscola = () => {
-    try { localStorage.removeItem(SCHOOL_CODE_STORAGE_KEY); } catch { /* melhor esforço */ }
-    setSavedSchoolCode(null);
-    setSchoolCode('');
-    setSchoolImageUrl(null);
-  };
-
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -90,7 +83,7 @@ export default function Login({ onLogin }) {
     try {
       // 1. Autenticar com o Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: loginEmail.trim(),
         password: loginPassword,
       });
 
@@ -296,9 +289,7 @@ export default function Login({ onLogin }) {
               {savedSchoolCode ? (
                 <div className="flex items-center justify-between text-small text-on-surface-variant bg-surface-container-lowest border border-outline-variant/60 rounded-zela-md px-4 py-2.5">
                   <span>Escola: <strong className="text-on-surface">{savedSchoolCode}</strong></span>
-                  <button type="button" onClick={handleTrocarEscola} className="text-primary font-medium hover:underline underline-offset-4">
-                    Trocar
-                  </button>
+                  <span className="text-caption text-on-surface-variant/70">Fixo neste aparelho</span>
                 </div>
               ) : (
                 <div className="flex flex-col gap-1.5">
