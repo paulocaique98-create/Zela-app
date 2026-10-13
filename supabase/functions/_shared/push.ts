@@ -91,6 +91,7 @@ async function getFcmAccessToken(account: ServiceAccount): Promise<string> {
 // deno-lint-ignore no-explicit-any
 export async function sendPush(adminClient: any, userIds: string[], payload: PushPayload, options: {
   onlyEndpoint?: string;
+  onlyToken?: string;
   logAttempts?: boolean;
 } = {}): Promise<SendPushResult> {
   const result: SendPushResult = { sent: 0, failed: 0, errors: [] };
@@ -101,7 +102,7 @@ export async function sendPush(adminClient: any, userIds: string[], payload: Pus
   // da mesma pessoa (não vale para o envio de teste de um aparelho só).
   let viaVinculo: Record<string, string> = {};
   const rolePorId: Record<string, string> = {};
-  if (!options.onlyEndpoint) {
+  if (!options.onlyEndpoint && !options.onlyToken) {
     try {
       const { data: meus } = await adminClient.from('contas_vinculadas').select('user_id, grupo').in('user_id', ids);
       const grupos = Array.from(new Set((meus || []).map((v: { grupo: string }) => v.grupo)));
@@ -125,6 +126,7 @@ export async function sendPush(adminClient: any, userIds: string[], payload: Pus
     .select('id, user_id, platform, endpoint, p256dh, auth, token')
     .in('user_id', todos);
   if (options.onlyEndpoint) query = query.eq('endpoint', options.onlyEndpoint);
+  if (options.onlyToken) query = query.eq('token', options.onlyToken);
   const { data: subscriptions, error } = await query;
   // Push é sempre melhor esforço: nunca derruba o aviso dentro do app.
   if (error) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft, Lock, BookOpen, Sun, Wallet, ScanFace, QrCode, Smartphone, ShieldAlert, Cpu, AlertTriangle, History, Loader2,
+  ArrowLeft, Lock, BookOpen, Sun, Wallet, ScanFace, QrCode, ShieldAlert, Cpu, AlertTriangle, History, Loader2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
@@ -18,7 +18,7 @@ import {
 
 const ICONES = {
   base: Lock, pedagogico: BookOpen, rotina: Sun, financeiro: Wallet, liveness: ScanFace, qr: QrCode,
-  app_marca: Smartphone, liveness_bloqueio: ShieldAlert, motor_human: Cpu,
+  liveness_bloqueio: ShieldAlert, motor_human: Cpu,
 };
 
 const ESTADO_LABEL = { on: 'Ligado', off: 'Desligado', parcial: 'Parcial' };

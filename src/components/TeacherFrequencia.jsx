@@ -173,13 +173,13 @@ export default function TeacherFrequencia({ currentUser, currentSchool }) {
       </div>
 
       {error && (
-        <div className="px-5 sm:px-6 pt-4">
+        <div className="px-2.5 sm:px-6 pt-4">
           <div className="bg-error/10 border-l-4 border-error text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         </div>
       )}
 
       {!isLoading && students.length > 0 && (
-        <div className="px-5 sm:px-6 pt-4 shrink-0" role="row">
+        <div className="px-2.5 sm:px-6 pt-4 shrink-0" role="row">
           <div className="flex items-center justify-between pl-3 pr-3 sm:pr-0 pb-2 border-b border-outline-variant text-xs font-semibold text-on-surface-variant">
             <span role="columnheader">Aluno</span>
             <span role="columnheader" className="hidden sm:block sm:w-[16rem] sm:text-center">Situação</span>
@@ -187,7 +187,7 @@ export default function TeacherFrequencia({ currentUser, currentSchool }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 text-primary motion-safe:animate-spin" aria-hidden="true" /></div>
         ) : students.length === 0 ? (

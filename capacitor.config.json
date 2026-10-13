@@ -1,0 +1,15 @@
+{
+  "appId": "br.com.zelaedu.app",
+  "appName": "Zela Edu",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#1e5563"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "backgroundColor": "#13222e"
+    }
+  }
+}

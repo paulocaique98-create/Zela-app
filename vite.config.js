@@ -18,7 +18,7 @@ function versionFilePlugin() {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_BUILD__: JSON.stringify(BUILD_ID),
   },
@@ -26,10 +26,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     versionFilePlugin(),
-    compression({
-      algorithm: 'gzip',
-      ext: '.gz',
-    })
+    // O app Android não usa .gz e o Gradle recusa X.js junto de X.js.gz
+    // ("Duplicate resources"); a compressão fica só no build da Web.
+    ...(mode === 'mobile' ? [] : [compression({ algorithm: 'gzip', ext: '.gz' })])
   ],
   test: {
     environment: 'node',
@@ -54,4 +53,4 @@ export default defineConfig({
     // (saída 127 sem resultado). Mantido 'forks' (padrão), que isola a queda
     // num arquivo só: se aparecer, rodar a suíte de novo antes de concluir.
   },
-})
+}))

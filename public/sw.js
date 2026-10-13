@@ -5,7 +5,7 @@ self.addEventListener('push', function(event) {
   const options = {
     body: data.body,
     icon: '/icon-192.png',
-    badge: '/icon-72.png',
+    badge: '/badge-96.png',
     data: { url: data.url || '/' },
     requireInteraction: false,
     tag: data.tag || 'zela-notification',

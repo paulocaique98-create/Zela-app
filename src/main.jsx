@@ -9,6 +9,7 @@ import App from './App.jsx'
 import Toaster from './components/Toaster.jsx'
 import { logClientError, installGlobalErrorHandlers } from './lib/errorLogger'
 import { initSentry } from './lib/sentry'
+import { initNative } from './lib/nativeInit'
 import { ehErroDeVersaoAntiga, recarregarParaVersaoNova, instalarRecuperacaoDeVersaoAntiga, estaRecarregando } from './lib/versaoAntiga'
 
 initSentry()
@@ -47,7 +48,7 @@ class ErrorBoundary extends Component {
           minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'system-ui, sans-serif', color: '#64748b',
         }}>
-          Atualizando o Zela Escola…
+          Atualizando o Zela Edu…
         </div>
       )
     }
@@ -77,6 +78,8 @@ class ErrorBoundary extends Component {
     return this.props.children
   }
 }
+
+initNative()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

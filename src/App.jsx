@@ -5,6 +5,7 @@ import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
+import { desativarPushNativo } from './lib/pushNativo';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
 import { formatPersonName } from './utils/formatName';
@@ -306,6 +307,33 @@ export default function App() {
     window.addEventListener('visibilitychange', handleVisibilityChange);
     return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []); // [] = listener estável, não reregistra a cada render
+
+  // Escola suspensa no Portal do Dev: derruba a sessão (login, aba que volta ao
+  // foco e a cada 5 min, para o totem/tablet que ficam abertos o dia todo).
+  // O bloqueio de dados em si é no banco (get_my_school_id); aqui é o aviso.
+  const userIdLogado = currentUser?.id;
+  useEffect(() => {
+    if (!userIdLogado) return undefined;
+    const checarSuspensao = async () => {
+      const { data, error } = await supabase.rpc('minha_escola_suspensa');
+      if (error || data !== true) return;
+      localStorage.removeItem('zela_user');
+      localStorage.removeItem('zela_school');
+      setCurrentUser(null);
+      setStudents([]);
+      setAuthorized([]);
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+      toast.error('Acesso suspenso. Entre em contato com a Zela.');
+    };
+    checarSuspensao();
+    const aoVoltar = () => { if (document.visibilityState === 'visible') checarSuspensao(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    const timer = setInterval(checarSuspensao, 5 * 60 * 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', aoVoltar);
+      clearInterval(timer);
+    };
+  }, [userIdLogado]);
 
   const fetchGlobalLogo = async () => {
     try {
@@ -698,7 +726,8 @@ export default function App() {
     // sair no computador da recepção (ou o deslogar por inatividade) derrubava
     // o totem, e o aviso de entrada/saída às famílias falhava com "Token
     // inválido ou expirado" (ver src/lib/sessao.js).
-    supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+    // No app, remove antes o token de push deste aparelho (precisa da sessão).
+    desativarPushNativo().finally(() => supabase.auth.signOut({ scope: 'local' }).catch(() => { }));
   };
 
   // Sessão encerrada em outro lugar (ex.: senha trocada, conta removida):
@@ -1546,7 +1575,7 @@ export default function App() {
           do totem, que já recarrega ao sair). */}
       {updateAvailable && !isKioskFullscreen && (
         <div role="status" className="shrink-0 bg-primary text-white px-4 py-2 flex items-center justify-center gap-3 text-sm">
-          <span className="font-medium">Nova versão do Zela Escola disponível.</span>
+          <span className="font-medium">Nova versão do Zela Edu disponível.</span>
           <button onClick={() => window.location.reload()} className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-zela-md font-bold text-xs">
             Atualizar
           </button>
@@ -1565,7 +1594,7 @@ export default function App() {
           padding (que nos outros 3 é quase invisível, mesma cor clara do
           fundo) aparecia bem visível como uma margem branca em volta do
           conteúdo escuro numa janela de navegador não maximizada. */}
-      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : (currentUser?.role === 'developer' ? 'p-3 sm:p-0' : 'p-3 sm:p-4 md:p-0')}`}>
+      <main className={`flex-1 overflow-hidden flex flex-col ${isKioskFullscreen ? '' : (currentUser?.role === 'developer' ? 'p-3 sm:p-0' : 'px-3 pt-3 pb-0 sm:p-4 md:p-0')}`}>
         <div className="w-full h-full flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex justify-center items-center">

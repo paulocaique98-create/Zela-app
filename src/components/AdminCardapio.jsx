@@ -402,7 +402,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Cardápio" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Crie cardápios mensais, com período de ativação opcional.</p>
         {!showNewForm && !weekGroups && !iaCardapios && (
           <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 sm:justify-end">
@@ -466,7 +466,7 @@ export default function AdminCardapio({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
         {monthImportError && !weekGroups && (
           <div className="bg-brass-50 border border-warning/40 text-warning p-3 rounded-zela-md text-sm font-medium flex gap-2 items-start">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" /> {monthImportError}
@@ -968,7 +968,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-      <div className="p-5 sm:p-6 border-b border-outline-variant shrink-0 space-y-3">
+      <div className="p-2.5 sm:p-6 border-b border-outline-variant shrink-0 space-y-3">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold text-on-surface-variant hover:text-primary transition">
           <ArrowLeft size={14} /> Voltar aos cardápios
         </button>
@@ -1007,7 +1007,7 @@ function CardapioDetail({ cardapio, onBack, onCardapioUpdated }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
         {error && (
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}

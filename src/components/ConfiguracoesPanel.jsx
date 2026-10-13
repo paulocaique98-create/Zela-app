@@ -156,7 +156,7 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
         <div className="bg-dev-primary-container p-2 rounded-zela-md text-dev-primary shrink-0">
           <Settings size={18} />
         </div>
-        <p className="text-small text-dev-text-muted">Parâmetros globais do Zela Escola</p>
+        <p className="text-small text-dev-text-muted">Parâmetros globais do Zela Edu</p>
       </div>
 
       {/* Tabs */}
@@ -188,7 +188,7 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
         {activeTab === 'appearance' && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-w-5xl">
             <CartaoImagem
-              titulo="Logo Global (Zela Escola)"
+              titulo="Logo Global (Zela Edu)"
               descricao="Selecione uma imagem (PNG, JPG) para alterar a logo no cabeçalho do sistema."
               valor={zelaGlobalLogo}
               Icone={ShieldAlert}
@@ -226,7 +226,7 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-dev-text-muted mb-1">Nome do Sistema</label>
-                  <input type="text" disabled value="Zela Escola" className="w-full p-2.5 border border-dev-border bg-dev-bg rounded-zela-md text-dev-text-muted text-sm" />
+                  <input type="text" disabled value="Zela Edu" className="w-full p-2.5 border border-dev-border bg-dev-bg rounded-zela-md text-dev-text-muted text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-dev-text-muted mb-1">E-mail de Suporte</label>

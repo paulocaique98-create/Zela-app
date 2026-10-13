@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx supabase functions deploy send-test-push --project-ref biybjifoxnuxwkaametp)"
     ]
   },
   "skillOverrides": {

@@ -46,6 +46,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const fetchHistory = async () => {
     if (!currentUser) return;
@@ -63,7 +64,7 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
         endDate   = `${todayISO}T23:59:59-03:00`;
       } else if (period === 'custom' && customDate) {
         startDate = `${customDate}T00:00:00-03:00`;
-        endDate   = `${customDate}T23:59:59-03:00`;
+        endDate   = `${customEnd && customEnd >= customDate ? customEnd : customDate}T23:59:59-03:00`;
       } else {
         const days = period === '7days' ? 7 : 30;
         const start = new Date();
@@ -165,14 +166,16 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
     }
   };
 
-  useEffect(() => { fetchHistory(); }, [currentUser, period, customDate]);
+  useEffect(() => { fetchHistory(); }, [currentUser, period, customDate, customEnd]);
 
   // Sem busca por aluno (30/09/2026): a família só vê os próprios filhos.
   const filtered = logs;
 
   const PERIOD_LABELS = { today: 'Hoje', '7days': 'Últimos 7 dias', '30days': 'Últimos 30 dias' };
   const periodLabel = period === 'custom' && customDate
-    ? formatDate(`${customDate}T00:00:00`)
+    ? (customEnd && customEnd > customDate
+      ? `${formatDate(`${customDate}T00:00:00`)} a ${formatDate(`${customEnd}T00:00:00`)}`
+      : formatDate(`${customDate}T00:00:00`))
     : (PERIOD_LABELS[period] || 'Período selecionado');
 
   const handleExport = () => {
@@ -229,13 +232,29 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
               ))}
             </div>
             {period === 'custom' && (
-              <input
-                id="historico-data"
-                type="date"
-                value={customDate}
-                onChange={e => setCustomDate(e.target.value)}
-                className="w-full sm:w-auto sm:self-end px-2 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
-              />
+              <div className="grid grid-cols-2 gap-2 sm:self-end">
+                <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant">
+                  De
+                  <input
+                    id="historico-data"
+                    type="date"
+                    value={customDate}
+                    max={customEnd || undefined}
+                    onChange={e => setCustomDate(e.target.value)}
+                    className="w-full px-2 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant">
+                  Até
+                  <input
+                    type="date"
+                    value={customEnd}
+                    min={customDate || undefined}
+                    onChange={e => setCustomEnd(e.target.value)}
+                    className="w-full px-2 py-1.5 bg-white border border-outline-variant rounded-lg text-xs font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+              </div>
             )}
           </div>
         </div>

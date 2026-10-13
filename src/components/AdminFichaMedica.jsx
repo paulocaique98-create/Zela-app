@@ -100,11 +100,11 @@ export default function AdminFichaMedica({ currentUser, currentSchool, students 
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Ficha Médica" e ícone removidos (o Header do app já mostra
           o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Visualize as fichas médicas preenchidas pelos responsáveis dos alunos.</p>
       </div>
 
-      <div className="px-5 sm:px-6 pt-4 shrink-0">
+      <div className="px-2.5 sm:px-6 pt-4 shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
           <input
@@ -117,7 +117,7 @@ export default function AdminFichaMedica({ currentUser, currentSchool, students 
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-3">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-3">
         {error && (
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}

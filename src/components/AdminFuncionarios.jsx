@@ -295,7 +295,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Funcionários" e ícone removidos (o Header do app já mostra
           o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">
           {funcionarios.length} funcionário{funcionarios.length !== 1 ? 's' : ''} cadastrado{funcionarios.length !== 1 ? 's' : ''}
         </p>
@@ -323,7 +323,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">

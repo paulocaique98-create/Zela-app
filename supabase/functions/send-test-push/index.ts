@@ -30,16 +30,17 @@ serve(async (req) => {
     const { data: { user: caller }, error: callerError } = await adminClient.auth.getUser(token);
     if (callerError || !caller) throw new Error('Token inválido ou expirado');
 
-    const { endpoint } = await req.json();
-    if (!endpoint) throw new Error('Campo obrigatório: endpoint');
+    const { endpoint, token: appToken } = await req.json();
+    if (!endpoint && !appToken) throw new Error('Campo obrigatório: endpoint ou token');
 
     // Só permite mandar teste pra uma inscrição do PRÓPRIO usuário chamando —
     // impede alguém usar isso pra sondar/incomodar a inscrição de outra pessoa.
+    // Web identifica a inscrição pelo endpoint; o app (FCM) pelo token.
     const { data: subscription, error: subError } = await adminClient
       .from('push_subscriptions')
-      .select('endpoint')
+      .select('endpoint, token')
       .eq('user_id', caller.id)
-      .eq('endpoint', endpoint)
+      .eq(endpoint ? 'endpoint' : 'token', endpoint || appToken)
       .single();
     if (subError || !subscription) throw new Error('Inscrição não encontrada para este usuário.');
 
@@ -48,7 +49,7 @@ serve(async (req) => {
       body: 'Pronto! Você vai receber os avisos do Zela mesmo com o aplicativo fechado.',
       url: '/',
       tag: 'push_teste',
-    }, { onlyEndpoint: subscription.endpoint });
+    }, endpoint ? { onlyEndpoint: subscription.endpoint } : { onlyToken: subscription.token });
     return new Response(JSON.stringify(sent > 0 ? { success: true } : { success: false, reason: 'falha_no_envio' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

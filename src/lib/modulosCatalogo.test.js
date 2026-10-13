@@ -32,9 +32,9 @@ describe('catálogo de módulos', () => {
     expect(pacoteAtual({ ...ZL001, materias: false })).toBe('livre');
   });
 
-  it('plano base não desliga; app com a marca ainda não liga', () => {
+  it('plano base não desliga e item desconhecido não liga', () => {
     expect(ligarItem(ZL001, 'base', false)).toBe(ZL001);
-    expect(ligarItem(ZL001, 'app_marca', true)).toBe(ZL001);
+    expect(ligarItem(ZL001, 'item_inexistente', true)).toBe(ZL001);
     expect(normalizarFeatures({ checkin: false }).checkin).toBe(true);
   });
 

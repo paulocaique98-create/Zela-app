@@ -68,7 +68,7 @@ export default function AdminSystemUpdates({ currentUser, onRead }) {
         <div className="bg-primary/10 p-2 rounded-zela-md text-primary shrink-0">
           <PackageCheck size={18} aria-hidden="true" />
         </div>
-        <p className="text-small text-on-surface-variant">Novidades e melhorias do sistema Zela Escola.</p>
+        <p className="text-small text-on-surface-variant">Novidades e melhorias do sistema Zela Edu.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">

@@ -41,7 +41,7 @@ export default function FamilyHome({ familyStudents, markStudentAbsent }) {
         <div className="flex flex-wrap gap-6 pb-4">
           {familyStudents.map(student => (
             <div key={student.id} className="w-full md:w-[calc(50%-12px)] border border-outline-variant rounded-zela-lg bg-surface-container-lowest overflow-hidden flex flex-col">
-              <div className="p-5 md:p-6 border-b border-outline-variant flex-1">
+              <div className="p-3 md:p-6 border-b border-outline-variant flex-1">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-6">
                   <div>
                     <h3 className="font-serif font-semibold text-xl text-on-surface">{student.name}</h3>

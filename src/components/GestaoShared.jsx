@@ -11,9 +11,9 @@ export function PageShell({ description, descriptionClassName = '', infoOnMobile
   const [infoOpen, setInfoOpen] = useState(false);
   const hideDescription = infoOnMobile ? 'hidden sm:block' : descriptionClassName;
   return (
-    <div className="h-full flex flex-col bg-surface overflow-hidden">
+    <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
       {(description || actions) && (
-        <div className={`flex ${infoOnMobile ? 'flex-row items-center -mt-0.5 sm:mt-0' : 'flex-col pt-4 pb-3'} sm:flex-row sm:items-center justify-between gap-3 px-4 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 ${infoOnMobile ? 'sm:border-b' : 'border-b'} border-outline-variant shrink-0`}>
+        <div className={`flex ${infoOnMobile ? 'flex-row items-center -mt-0.5 sm:mt-0' : 'flex-col pt-4 pb-3'} sm:flex-row sm:items-center justify-between gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 ${infoOnMobile ? 'sm:border-b' : 'border-b'} border-outline-variant shrink-0`}>
           {description ? <p className={`text-small text-on-surface-variant ${hideDescription}`}>{description}</p> : <span />}
           {actions && <div className={`flex items-center gap-2 flex-wrap shrink-0 ${infoOnMobile ? 'hidden sm:flex' : ''}`}>{actions}</div>}
           {infoOnMobile && description && (
@@ -34,7 +34,7 @@ export function PageShell({ description, descriptionClassName = '', infoOnMobile
           <p className="text-sm text-on-surface-variant">{description}</p>
         </Modal>
       )}
-      <div className={`flex-1 overflow-y-auto min-h-0 ${infoOnMobile ? 'px-4 pt-3 pb-4' : 'p-4'} md:p-6`}>{afterInfo}{children}</div>
+      <div className={`flex-1 overflow-y-auto min-h-0 ${infoOnMobile ? 'px-2.5 pt-3 pb-4' : 'p-2.5'} md:p-6`}>{afterInfo}{children}</div>
     </div>
   );
 }

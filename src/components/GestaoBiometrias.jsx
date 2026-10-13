@@ -17,10 +17,10 @@ export const ABAS_BIOMETRIAS = [
 export default function GestaoBiometrias({ aba, onTrocarAba, currentUser }) {
   const abas = <Tabs tabs={ABAS_BIOMETRIAS} active={aba} onChange={onTrocarAba} equalOnMobile />;
   return (
-    <div className="h-full flex flex-col bg-surface">
+    <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface">
       {/* Na Qualidade, no celular, as abas descem para dentro da tela (abaixo do
           ícone de explicação); aqui ficam só do sm para cima. */}
-      <div className={`px-4 md:px-6 pt-4 shrink-0 ${aba === 'cadastros-qualidade-biometria' ? 'hidden sm:block' : ''}`}>
+      <div className={`px-2.5 md:px-6 pt-4 shrink-0 ${aba === 'cadastros-qualidade-biometria' ? 'hidden sm:block' : ''}`}>
         {abas}
       </div>
       <div className="flex-1 min-h-0">

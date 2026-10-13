@@ -3,6 +3,8 @@ import { MessageCircle, Loader2, ArrowLeft, Send, Clock, ChevronLeft, ChevronRig
 import { supabase } from '../lib/supabase';
 import { SETORES_CHAT } from '../lib/constants';
 import { notifyChatMessage } from '../lib/notifyChatMessage';
+import ChatCloseButton from './ChatCloseButton';
+import { podeNoSetor, setoresVisiveis } from '../lib/chatAcesso';
 
 // P2.1 (Prompt Mestre de Evolução) — o chat carregava o histórico
 // inteiro de uma conversa sem limit(), degradando com uso prolongado.
@@ -22,11 +24,12 @@ function isBusinessHoursNow() {
   return hour >= 7 && hour < 19;
 }
 
-export default function AdminChat({ currentUser, currentSchool }) {
+export default function AdminChat({ currentUser, currentSchool, onClose }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
-  const allowedSetores = currentUser?.chat_visibilidade_total
-    ? SETORES_ADMIN
-    : SETORES_ADMIN.filter(s => s.value === currentUser?.departamento);
+  // Matriz de acesso por setor, definida pela Gestão da escola (chat_acesso_setor).
+  // Sem linhas, vale o padrão: só o próprio setor (a Gestão vê todos).
+  const [acessoLinhas, setAcessoLinhas] = useState([]);
+  const allowedSetores = setoresVisiveis(currentUser, acessoLinhas);
 
   const [threads, setThreads] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
@@ -76,6 +79,21 @@ export default function AdminChat({ currentUser, currentSchool }) {
   useEffect(() => {
     fetchThreads();
   }, [schoolId]);
+
+  useEffect(() => {
+    if (!schoolId) return;
+    supabase
+      .from('chat_acesso_setor')
+      .select('perfil, setor, pode_ver, pode_responder')
+      .eq('school_id', schoolId)
+      .limit(40)
+      .then(({ data }) => setAcessoLinhas(data || []));
+  }, [schoolId]);
+
+  // Se a Gestão tirou o setor da aba aberta, volta para o primeiro permitido.
+  useEffect(() => {
+    if (!allowedSetores.some(s => s.value === tab)) setTab(allowedSetores[0]?.value || null);
+  }, [allowedSetores.map(s => s.value).join(',')]);
 
   // Realtime na lista de conversas: a trigger touch_chat_thread() atualiza
   // updated_at do thread a cada mensagem nova, então ouvir chat_threads cobre
@@ -162,6 +180,8 @@ export default function AdminChat({ currentUser, currentSchool }) {
   // Suporte Zela é uma conversa própria do admin com o time Zela (não uma
   // lista de famílias) — abre direto, criando a thread se ainda não existir.
   const [isOpeningSupport, setIsOpeningSupport] = useState(false);
+  // Recepção (role admin) e Família não falam com o Suporte Zela; o botão é só dos demais perfis da escola.
+  const mostraSuporte = currentUser?.role !== 'admin';
   const openSupportThread = async () => {
     setIsOpeningSupport(true);
     setError('');
@@ -212,7 +232,9 @@ export default function AdminChat({ currentUser, currentSchool }) {
   }, [messages]);
 
   const isSupportThread = activeThread?.setor === 'suporte_zela';
-  const canSend = isSupportThread || inBusinessHours;
+  // "Responder" é permissão à parte de "ver": a Gestão pode deixar um perfil só lendo.
+  const canReply = isSupportThread || podeNoSetor(currentUser, acessoLinhas, activeThread?.setor, 'responder');
+  const canSend = canReply && (isSupportThread || inBusinessHours);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -242,7 +264,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
     }
   };
 
-  if (!currentUser?.departamento && !currentUser?.chat_visibilidade_total) {
+  if (allowedSetores.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm p-2.5 sm:p-8 text-center gap-4">
         <div>
@@ -252,14 +274,14 @@ export default function AdminChat({ currentUser, currentSchool }) {
             Peça ao admin principal da escola para configurar seu departamento em Gestão de Usuários, para começar a ver as conversas do chat.
           </p>
         </div>
-        <button
+        {mostraSuporte && <button
           onClick={openSupportThread}
           disabled={isOpeningSupport}
           className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm disabled:opacity-60"
         >
           {isOpeningSupport ? <Loader2 size={16} className="animate-spin" /> : <LifeBuoy size={16} />}
           Falar com o Suporte Zela
-        </button>
+        </button>}
       </div>
     );
   }
@@ -267,7 +289,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
   if (activeThread) {
     return (
       <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 sm:p-5 border-b border-outline-variant shrink-0">
           <button onClick={closeThread} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
             <ArrowLeft size={20} />
           </button>
@@ -275,9 +297,15 @@ export default function AdminChat({ currentUser, currentSchool }) {
             <h2 className="text-h3 text-on-surface">{isSupportThread ? 'Suporte Zela' : (activeThread.family?.name || 'Responsável')}</h2>
             <p className="text-xs text-on-surface-variant/70">{isSupportThread ? 'Equipe da plataforma Zela' : SETORES_ADMIN.find(s => s.value === activeThread.setor)?.label}</p>
           </div>
+          <ChatCloseButton onClose={onClose} />
         </div>
 
-        {!isSupportThread && !inBusinessHours && (
+        {!canReply && (
+          <div className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant px-4 sm:px-5 py-2 text-xs font-semibold flex items-center gap-2 shrink-0">
+            Seu perfil pode ler esta conversa, mas não responder. A escola define isso em Configurações.
+          </div>
+        )}
+        {canReply && !isSupportThread && !inBusinessHours && (
           <div className="bg-brass-50 border-b border-warning/30 text-warning px-4 sm:px-5 py-2 text-xs font-semibold flex items-center gap-2 shrink-0">
             <Clock size={14} className="shrink-0" /> Fora do horário comercial (07h-19h): só é possível ler, envio de mensagem está bloqueado.
           </div>
@@ -333,7 +361,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
             type="text"
             value={body}
             onChange={e => setBody(e.target.value)}
-            placeholder={canSend ? 'Digite sua mensagem...' : 'Envio bloqueado fora do horário comercial'}
+            placeholder={canSend ? 'Digite sua mensagem...' : (canReply ? 'Envio bloqueado fora do horário comercial' : 'Sem permissão para responder neste setor')}
             disabled={!canSend}
             className="flex-1 min-w-0 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-sm disabled:opacity-60"
           />
@@ -354,7 +382,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
 
   return (
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:pr-14 border-b border-outline-variant shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="bg-primary/10 p-2.5 rounded-zela-md text-primary shrink-0">
             <MessageCircle size={22} />
@@ -364,15 +392,19 @@ export default function AdminChat({ currentUser, currentSchool }) {
             <p className="text-on-surface-variant text-small hidden sm:block truncate">Converse com as famílias por setor.</p>
           </div>
         </div>
-        <button
-          onClick={openSupportThread}
-          disabled={isOpeningSupport}
-          title="Falar com o Suporte Zela"
-          className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-2 rounded-zela-md font-bold transition-all active:scale-95 text-xs shrink-0 disabled:opacity-60"
-        >
-          {isOpeningSupport ? <Loader2 size={14} className="animate-spin" /> : <LifeBuoy size={14} />}
-          <span className="hidden sm:inline">{SUPORTE_ZELA_LABEL}</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {mostraSuporte && <button
+            onClick={openSupportThread}
+            disabled={isOpeningSupport}
+            title="Falar com o Suporte Zela"
+            aria-label="Falar com o Suporte Zela"
+            className="flex items-center justify-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary max-sm:w-10 max-sm:h-10 sm:px-3 sm:py-2 rounded-zela-md font-bold transition-all active:scale-95 text-xs disabled:opacity-60"
+          >
+            {isOpeningSupport ? <Loader2 size={16} className="animate-spin" /> : <LifeBuoy size={16} />}
+            <span className="hidden sm:inline">{SUPORTE_ZELA_LABEL}</span>
+          </button>}
+          <ChatCloseButton onClose={onClose} />
+        </div>
       </div>
 
       {allowedSetores.length > 1 && (
@@ -401,7 +433,7 @@ export default function AdminChat({ currentUser, currentSchool }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-2">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />

@@ -30,7 +30,7 @@ export default function FamilyContratos({ currentUser, currentSchool, onVoltar }
   const signed = (docs || []).filter(d => d.status === 'assinado');
 
   return (
-    <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 space-y-5">
+    <div className="h-full -m-3 sm:m-0 overflow-y-auto bg-surface p-2.5 sm:p-4 md:p-6 space-y-5">
       {onVoltar && (
         <button onClick={onVoltar} className="flex items-center gap-1 text-sm font-bold text-primary"><ChevronLeft size={16} /> Configurações</button>
       )}
@@ -103,7 +103,7 @@ function ContratoDetalhe({ doc, currentUser, currentSchool, onBack }) {
 
   const current = signedDoc || doc;
   return (
-    <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 space-y-4">
+    <div className="h-full -m-3 sm:m-0 overflow-y-auto bg-surface p-2.5 sm:p-4 md:p-6 space-y-4">
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-bold text-primary"><ChevronLeft size={16} /> Voltar</button>
       <div>
         <h2 className="text-lg font-bold text-on-surface">{current.title}</h2>

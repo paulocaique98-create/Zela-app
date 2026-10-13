@@ -232,7 +232,7 @@ export default function GestaoPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -380,7 +380,7 @@ export default function GestaoPortal({
           {abaAtual === 'cadastros-novo' && <AdminUserRegistration currentUser={currentUser} />}
           {abaAtual === 'cadastros-funcionarios' && <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'cadastros-turmas' && (
-            <div className="h-full overflow-y-auto bg-surface p-4 md:p-6 lg:p-8">
+            <div className="h-full -m-3 sm:m-0 overflow-y-auto bg-surface p-2.5 sm:p-4 md:p-6 lg:p-8">
               <div className="max-w-3xl">
                 <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} noBorder />
               </div>
@@ -447,7 +447,7 @@ export default function GestaoPortal({
                 setIsChatExpanded(false);
                 if (isChatOpen) refreshChatUnread();
               }}
-              className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors"
+              className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 z-50 w-14 h-14 rounded-md bg-primary hover:bg-primary-container text-white shadow-lg flex items-center justify-center transition-colors ${isChatOpen ? 'max-sm:hidden' : ''}`}
               title="Chat"
               aria-label="Chat"
             >
@@ -459,7 +459,7 @@ export default function GestaoPortal({
               )}
             </button>
             {isChatOpen && (
-              <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-3 ${
+              <div className={`fixed z-40 border border-outline-variant shadow-lg overflow-hidden bg-surface-container-lowest animate-in fade-in duration-200 inset-x-3 top-[60px] bottom-[calc(4rem+env(safe-area-inset-bottom))] ${
                 isChatExpanded
                   ? 'sm:inset-6 rounded-zela-xl'
                   : 'sm:inset-auto sm:bottom-24 sm:right-5 sm:w-96 sm:h-[70vh] sm:max-h-[600px] rounded-zela-xl slide-in-from-bottom-4'
@@ -472,7 +472,7 @@ export default function GestaoPortal({
                   {isChatExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                 </button>
                 <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
-                  <AdminChat currentUser={currentUser} currentSchool={currentSchool} />
+                  <AdminChat currentUser={currentUser} currentSchool={currentSchool} onClose={() => { setIsChatOpen(false); setIsChatExpanded(false); refreshChatUnread(); }} />
                 </Suspense>
               </div>
             )}

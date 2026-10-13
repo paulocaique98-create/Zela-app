@@ -17,6 +17,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
   const [desvincular, setDesvincular] = useState(null);
   const caixaRef = useRef(null);
 
+  const [estiloMobile, setEstiloMobile] = useState(undefined);
   const carregar = useCallback(async () => {
     const { data, error } = await supabase.rpc('listar_contas_vinculadas');
     if (!error) setContas(data || []);
@@ -57,7 +58,17 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
     <div className="relative" ref={caixaRef}>
       <button
         type="button"
-        onClick={() => { setAberto(v => !v); if (!aberto) carregar(); }}
+        onClick={() => {
+          if (!aberto) {
+            carregar();
+            // No celular o painel ocupa a tela de um lado ao outro (16px de margem), na mesma altura.
+            const rect = caixaRef.current?.getBoundingClientRect();
+            setEstiloMobile(rect && window.innerWidth < 640
+              ? { left: 16 - rect.left, right: 'auto', width: window.innerWidth - 32 }
+              : undefined);
+          }
+          setAberto(v => !v);
+        }}
         className="relative p-2 min-w-11 min-h-11 rounded-zela-sm transition flex items-center justify-center active:scale-95 text-ink-text hover:text-white hover:bg-ink-2"
         title="Trocar de conta"
         aria-label="Trocar de conta"
@@ -68,7 +79,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
       </button>
 
       {aberto && (
-        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-md z-50 overflow-hidden">
+        <div style={estiloMobile} className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface-container-lowest border border-outline-variant rounded-zela-lg shadow-md z-50 overflow-hidden">
           <p className="px-4 pt-3 pb-2 text-xs font-semibold text-on-surface-variant">Suas contas</p>
           <ul className="pb-1">
             {contas.length === 0 && (
@@ -119,7 +130,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
             <Link2 size={16} /> Vincular outra conta
           </button>
           {outras.length === 0 && (
-            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela Escola, como a de responsável? Vincule para trocar sem digitar a senha.</p>
+            <p className="px-4 pb-3 -mt-1 text-xs text-on-surface-variant">Tem outra conta no Zela Edu, como a de responsável? Vincule para trocar sem digitar a senha.</p>
           )}
         </div>
       )}
@@ -176,7 +187,7 @@ function VincularContaModal({ onClose, onVinculada }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-on-surface">Vincular outra conta</h2>
-            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela Escola. Você só faz isso uma vez.</p>
+            <p className="text-sm text-on-surface-variant mt-1">Use o e-mail e a senha da sua outra conta no Zela Edu. Você só faz isso uma vez.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded-zela-sm text-on-surface-variant hover:bg-surface-container-low" aria-label="Fechar">
             <X size={18} />

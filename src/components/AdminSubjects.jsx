@@ -148,7 +148,7 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "{Matérias}" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block truncate min-w-0">Cadastre e associe {subjectLabel.toLowerCase()}s às {terminology.class.toLowerCase()}s da escola.</p>
         <button
           onClick={openCreate}
@@ -159,12 +159,12 @@ export default function AdminSubjects({ currentUser, currentSchool }) {
       </div>
 
       {error && (
-        <div className="px-5 sm:px-6 pt-4">
+        <div className="px-2.5 sm:px-6 pt-4">
           <div className="bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{error}</div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />

@@ -32,6 +32,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [correctionTarget, setCorrectionTarget] = useState(null); // { student, entryLog, exitLog, dateStr }
   // Período fica escondido atrás desse painel -- mesmo modelo "foco na
   // lista" validado no Relatório de Horas Extras (17/09).
@@ -64,7 +65,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         endDate   = `${todayISO}T23:59:59-03:00`;
       } else if (period === 'custom' && customDate) {
         startDate = `${customDate}T00:00:00-03:00`;
-        endDate   = `${customDate}T23:59:59-03:00`;
+        endDate   = `${customEnd && customEnd >= customDate ? customEnd : customDate}T23:59:59-03:00`;
       } else {
         const days = period === '7days' ? 7 : 30;
         const start = new Date();
@@ -151,7 +152,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
     }
   };
 
-  useEffect(() => { fetchHistory(); }, [currentSchool, period, customDate]);
+  useEffect(() => { fetchHistory(); }, [currentSchool, period, customDate, customEnd]);
 
   const filtered = logs.filter(log => {
     const term = searchTerm.toLowerCase().trim();
@@ -160,7 +161,9 @@ export default function AdminHistory({ currentSchool, currentUser }) {
 
   const PERIOD_LABELS = { today: 'Hoje', '7days': 'Semana', '30days': 'Mês' };
   const periodLabel = period === 'custom' && customDate
-    ? formatDate(`${customDate}T00:00:00`)
+    ? (customEnd && customEnd > customDate
+      ? `${formatDate(`${customDate}T00:00:00`)} a ${formatDate(`${customEnd}T00:00:00`)}`
+      : formatDate(`${customDate}T00:00:00`))
     : (PERIOD_LABELS[period] || 'Período selecionado');
 
   const overCount = filtered.filter(log => !!log.overtime).length;
@@ -211,7 +214,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                   { id: 'today', label: 'Hoje' },
                   { id: '7days', label: 'Semana' },
                   { id: '30days', label: 'Mês' },
-                  { id: 'custom', label: 'Editar' }
+                  { id: 'custom', label: 'De / até' }
                 ].map(p => (
                   <button
                     key={p.id}
@@ -225,12 +228,28 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                 ))}
               </div>
               {period === 'custom' && (
-                <input
-                  type="date"
-                  value={customDate}
-                  onChange={e => setCustomDate(e.target.value)}
-                  className="mt-2 w-full px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                />
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
+                    De
+                    <input
+                      type="date"
+                      value={customDate}
+                      max={customEnd || undefined}
+                      onChange={e => setCustomDate(e.target.value)}
+                      className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
+                    Até
+                    <input
+                      type="date"
+                      value={customEnd}
+                      min={customDate || undefined}
+                      onChange={e => setCustomEnd(e.target.value)}
+                      className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </label>
+                </div>
               )}
             </div>
           )}

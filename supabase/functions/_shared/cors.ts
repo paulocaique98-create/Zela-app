@@ -13,9 +13,19 @@ const ALLOWED_ORIGINS = [
   'http://localhost:4173',
 ];
 
+// Origens extras (ex.: app nativo Capacitor: https://localhost no Android,
+// capacitor://localhost no iOS) vêm do secret EXTRA_ALLOWED_ORIGINS, separadas
+// por vírgula. Assim a produção só as aceita quando o secret for definido lá,
+// na hora do release do app. Nunca '*'.
+const EXTRA_ORIGINS = (Deno.env.get('EXTRA_ALLOWED_ORIGINS') ?? '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter((o) => o && o !== '*');
+
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('Origin') || '';
-  const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = [...ALLOWED_ORIGINS, ...EXTRA_ORIGINS];
+  const allowOrigin = allowed.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

@@ -251,7 +251,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Diário" e ícone removidos (o Header do app já mostra o nome
           da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="flex items-center p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Lance refeições, sono, evacuação e observações do dia.</p>
       </div>
 
@@ -265,7 +265,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
           <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno cadastrado ainda.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Data</label>

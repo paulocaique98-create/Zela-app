@@ -180,3 +180,19 @@ h1, h2, h3 {
   0%, 100% { transform: scale(0.92); opacity: 0.75; }
   50% { transform: scale(1.05); opacity: 1; }
 }
+
+/* Celular: as telas usam -m-3 para encostar nas bordas, mas a margem negativa de baixo
+   nao aumenta a altura e deixava uma faixa de 12px acima da barra inferior. */
+@media (max-width: 639.98px) {
+  .h-full.-m-3 { height: calc(100% + 0.75rem); }
+}
+
+/* Celular: modais centralizados ficam entre o header (60px) e a barra inferior (4rem),
+   sem cobrir nenhum dos dois. A classe e posta no <html> pela MobileBottomNav, so quando
+   a barra existe (no totem ela nao aparece, entao os overlays seguem em tela cheia). */
+@media (max-width: 767.98px) {
+  html.has-mobile-chrome .fixed.inset-0.items-center.justify-center:not(.z-\[9999\]):not(.bg-error\/90) {
+    top: 60px;
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}

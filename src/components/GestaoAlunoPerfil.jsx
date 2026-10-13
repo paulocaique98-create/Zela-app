@@ -416,7 +416,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
 
   return (
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
-      <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-outline-variant shrink-0">
+      <div className="flex items-center gap-3 p-2.5 sm:p-5 border-b border-outline-variant shrink-0">
         <button onClick={onBack} className="p-2 -ml-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container rounded-zela-md transition shrink-0">
           <ArrowLeft size={20} />
         </button>
@@ -441,7 +441,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
         )}
       </div>
 
-      <div className="flex gap-1 overflow-x-auto px-4 sm:px-5 pt-3 shrink-0 border-b border-outline-variant">
+      <div className="flex gap-1 overflow-x-auto px-2.5 sm:px-5 pt-3 shrink-0 border-b border-outline-variant">
         {abas.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
@@ -457,7 +457,7 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
         })}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6">
         {saveError && (
           <div className="max-w-2xl mb-4 bg-error/10 border border-error/30 text-error p-2.5 rounded-zela-md text-xs font-medium">{saveError}</div>
         )}

@@ -49,6 +49,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState('today');
   const [customDate, setCustomDate] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   // Só um card aberto por vez -- abrir outro fecha o anterior automaticamente.
   const [expandedStudentKey, setExpandedStudentKey] = useState(null);
   // Período e status ficam escondidos atrás desse painel — modelo "foco na
@@ -83,7 +84,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         endDate   = `${todayISO}T23:59:59-03:00`;
       } else if (period === 'custom' && customDate) {
         startDate = `${customDate}T00:00:00-03:00`;
-        endDate   = `${customDate}T23:59:59-03:00`;
+        endDate   = `${customEnd && customEnd >= customDate ? customEnd : customDate}T23:59:59-03:00`;
       } else {
         const days = period === '7days' ? 7 : (period === 'this_month' ? new Date().getDate() : 30);
         const start = new Date();
@@ -173,8 +174,8 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
     }
   };
 
-  useEffect(() => { fetchExtras(); }, [currentSchool, period, customDate]);
-  useEffect(() => { setExpandedStudentKey(null); }, [period, customDate]);
+  useEffect(() => { fetchExtras(); }, [currentSchool, period, customDate, customEnd]);
+  useEffect(() => { setExpandedStudentKey(null); }, [period, customDate, customEnd]);
 
   // Mesma regra usada pra pintar a linha de amarelo na tabela: excedeu a
   // tolerância de entrada antecipada, ou de saída tardia com o check-out já
@@ -240,7 +241,9 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
 
   const PERIOD_LABELS = { today: 'Hoje', '7days': 'Semana', this_month: 'M\u00EAs' };
   const periodLabel = period === 'custom' && customDate
-    ? formatDate(`${customDate}T00:00:00`)
+    ? (customEnd && customEnd > customDate
+      ? `${formatDate(`${customDate}T00:00:00`)} a ${formatDate(`${customEnd}T00:00:00`)}`
+      : formatDate(`${customDate}T00:00:00`))
     : (PERIOD_LABELS[period] || 'Per\u00EDodo selecionado');
 
   const handleExport = () => {
@@ -295,7 +298,7 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                       { id: 'today', label: 'Hoje' },
                       { id: '7days', label: 'Semana' },
                       { id: 'this_month', label: 'Mês' },
-                      { id: 'custom', label: 'Editar' }
+                      { id: 'custom', label: 'De / até' }
                     ].map(p => (
                       <button
                         key={p.id}
@@ -309,12 +312,28 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
                     ))}
                   </div>
                   {period === 'custom' && (
-                    <input
-                      type="date"
-                      value={customDate}
-                      onChange={e => { setCustomDate(e.target.value); if (e.target.value) setShowFilters(false); }}
-                      className="mt-2 w-full px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                    />
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
+                        De
+                        <input
+                          type="date"
+                          value={customDate}
+                          max={customEnd || undefined}
+                          onChange={e => setCustomDate(e.target.value)}
+                          className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
+                        Até
+                        <input
+                          type="date"
+                          value={customEnd}
+                          min={customDate || undefined}
+                          onChange={e => { setCustomEnd(e.target.value); if (e.target.value && customDate) setShowFilters(false); }}
+                          className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
             </div>

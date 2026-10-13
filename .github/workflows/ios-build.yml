@@ -1,0 +1,81 @@
+name: iOS build (simulador, sem assinatura)
+
+# Prova que o projeto iOS compila no Xcode. NÃO assina, NÃO envia à Apple e NÃO
+# precisa de conta Apple. Só manual (workflow_dispatch): o repositório é público,
+# então nada aqui roda em PR de fork nem lê secrets fora de uma execução manual.
+# O app é construído apontando para a HOMOLOGAÇÃO (secrets HOMOLOG_*).
+#
+# O push na branch feature/mobile-ios existe porque o botão "Run workflow" só aparece
+# para workflows que já estão na branch padrão (main). Pushes de forks não disparam
+# este workflow neste repositório. Remover o gatilho de push depois do merge na main.
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/mobile-ios]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/ios-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  build-simulador:
+    name: Compilar para o simulador
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Selecionar o Xcode mais novo instalado
+        run: |
+          NOVO=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$NOVO" ]; then sudo xcode-select -s "$NOVO/Contents/Developer"; fi
+          xcodebuild -version
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Variáveis do app (homologação)
+        env:
+          HOMOLOG_URL: ${{ secrets.HOMOLOG_VITE_SUPABASE_URL }}
+          HOMOLOG_KEY: ${{ secrets.HOMOLOG_VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$HOMOLOG_URL" ] || [ -z "$HOMOLOG_KEY" ]; then
+            echo "Faltam os secrets HOMOLOG_VITE_SUPABASE_URL e HOMOLOG_VITE_SUPABASE_ANON_KEY (ver docs/mobile/SECRETS_CI.md)."
+            exit 1
+          fi
+          {
+            echo "VITE_SUPABASE_URL=$HOMOLOG_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$HOMOLOG_KEY"
+          } > .env.mobile.local
+
+      - name: Build web + sincronizar iOS
+        run: npm run build:mobile:ios
+
+      - name: Compilar para o simulador (sem assinatura)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tail -n 60
+          test ${PIPESTATUS[0]} -eq 0
+        shell: bash

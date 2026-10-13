@@ -51,11 +51,18 @@ serve(async (req) => {
     const isFamilyOwner = callerData.role === 'family' && thread.family_id === caller.id;
     const isSuporteZela = thread.setor === 'suporte_zela';
     const isDeveloperOwner = callerData.role === 'developer' && isSuporteZela;
-    const isAdminOwner = callerData.role === 'admin' && !isSuporteZela
-      && thread.school_id === callerData.school_id
-      && (callerData.chat_visibilidade_total || callerData.departamento === thread.setor);
+    // Staff da escola (admin, gestão pedagógica, gestão): decidido pela matriz de
+    // chat_acesso_setor, a mesma das policies. Só responde quem tem "responder".
+    let isStaffOwner = false;
+    if (!isSuporteZela && ['admin', 'gestao_pedagogica', 'gestao'].includes(callerData.role)
+        && thread.school_id === callerData.school_id) {
+      const { data: pode } = await adminClient.rpc('chat_pode_user', {
+        p_user: caller.id, p_school: thread.school_id, p_setor: thread.setor, p_acao: 'responder',
+      });
+      isStaffOwner = pode === true;
+    }
 
-    if (!isFamilyOwner && !isDeveloperOwner && !isAdminOwner) {
+    if (!isFamilyOwner && !isDeveloperOwner && !isStaffOwner) {
       throw new Error('Acesso negado a esta conversa');
     }
 
@@ -87,13 +94,10 @@ serve(async (req) => {
         const { data: devs } = await adminClient.from('users').select('id').eq('role', 'developer');
         recipientIds = (devs || []).map((d: { id: string }) => d.id);
       } else {
-        const { data: staff } = await adminClient
-          .from('users')
-          .select('id')
-          .eq('school_id', thread.school_id)
-          .in('role', ['admin', 'gestao_pedagogica'])
-          .or(`chat_visibilidade_total.eq.true,departamento.eq.${thread.setor}`);
-        recipientIds = (staff || []).map((s: { id: string }) => s.id);
+        const { data: staff } = await adminClient.rpc('chat_destinatarios', {
+          p_school: thread.school_id, p_setor: thread.setor,
+        });
+        recipientIds = (staff || []) as string[];
       }
     } else {
       // Escola/Zela respondeu -> notifica a família (com registro in-app, já que

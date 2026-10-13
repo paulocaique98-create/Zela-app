@@ -27,7 +27,7 @@ export const ITENS = [
     inclui: [
       { nome: 'Cadastros e usuários', desc: 'Famílias, alunos, funcionários e acessos' },
       { nome: 'Matrículas e ficha médica', desc: 'Formulários preenchidos pelas famílias' },
-      { nome: 'Entrada e saída', desc: 'Totem, monitor, presença do dia e histórico' },
+      { nome: 'Entrada e saída', desc: 'Totem com reconhecimento facial, monitor, presença do dia e histórico' },
       { nome: 'Comunicados e calendário', desc: 'Avisos da escola e datas do ano letivo' },
       { nome: 'Contratos e assinatura pelo app', desc: 'Contratos e aditivos assinados pela família' },
       { nome: 'Financeiro', desc: 'Mensalidades, cobranças por boleto e Pix, recebimentos, inadimplência e, no futuro, nota fiscal' },
@@ -120,17 +120,6 @@ export const ITENS = [
     ],
     onde: [{ portal: 'Recepção', menus: 'Check-in/out › Carteirinhas QR · Totem' }],
     aoDesligar: 'O totem deixa de aceitar QR Code. As carteirinhas impressas param de funcionar.',
-  },
-  {
-    id: 'app_marca',
-    grupo: 'adicional',
-    nome: 'App com a marca da escola',
-    resumo: 'Disponível depois do lançamento dos apps.',
-    keys: [],
-    emBreve: true,
-    inclui: [],
-    onde: [],
-    aoDesligar: null,
   },
   {
     id: 'liveness_bloqueio',

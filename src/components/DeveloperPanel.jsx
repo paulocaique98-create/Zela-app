@@ -27,11 +27,6 @@ const nomeDoPacote = (school) => {
 };
 const initials = (name) => (name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-const PlanoSelo = ({ plan }) => (
-  <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-zela-sm border ${plan === 'pro' ? 'bg-warning/15 text-warning border-warning/30' : 'bg-dev-surface-high text-dev-text-muted border-dev-border'}`}>
-    {plan}
-  </span>
-);
 const SwitchAtiva = ({ ativa, onToggle, comRotulo }) => (
   <button
     type="button"
@@ -67,7 +62,6 @@ export default function DeveloperPanel() {
     email: '',
     phone: '',
     ...enderecoDaEscola(null),
-    plan: 'basic',
     is_active: true,
     notes: ''
   });
@@ -127,7 +121,6 @@ export default function DeveloperPanel() {
         email: school.email || '',
         phone: school.phone || '',
         ...enderecoDaEscola(school),
-        plan: school.plan || 'basic',
         is_active: school.is_active,
         notes: school.notes || ''
       });
@@ -137,7 +130,7 @@ export default function DeveloperPanel() {
     } else {
       setEditingSchool(null);
       setFormData({
-        name: '', cnpj: '', razao_social: '', inscricao_municipal: '', email: '', phone: '', ...enderecoDaEscola(null), plan: 'basic', is_active: true, notes: ''
+        name: '', cnpj: '', razao_social: '', inscricao_municipal: '', email: '', phone: '', ...enderecoDaEscola(null), is_active: true, notes: ''
       });
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
@@ -339,7 +332,6 @@ export default function DeveloperPanel() {
               <thead>
                 <tr className="bg-dev-surface-high text-left text-[11px] font-bold text-dev-text-muted">
                   <th className="px-4 py-3">Escola</th>
-                  <th className="px-4 py-3">Plano</th>
                   <th className="px-4 py-3">Pacote</th>
                   <th className="px-4 py-3">Ativa</th>
                   <th className="px-4 py-3 w-10"></th>
@@ -364,9 +356,6 @@ export default function DeveloperPanel() {
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <PlanoSelo plan={school.plan} />
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => setModulosSchool(school)} className="text-xs font-bold text-dev-primary hover:underline">
@@ -434,7 +423,6 @@ export default function DeveloperPanel() {
                         <p className="text-sm font-bold text-dev-text leading-snug line-clamp-2 break-words">{school.name}</p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className="font-mono font-bold text-dev-primary bg-dev-primary-container px-1.5 py-0.5 rounded-zela-sm text-[11px]">{school.school_code}</span>
-                          <PlanoSelo plan={school.plan} />
                         </div>
                       </div>
                     </div>
@@ -547,14 +535,6 @@ export default function DeveloperPanel() {
                 <div>
                   <label className="block text-xs font-bold text-dev-text-muted mb-1">Telefone</label>
                   <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none" />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-dev-text-muted mb-1">Plano Contratado</label>
-                  <select value={formData.plan} onChange={e => setFormData({ ...formData, plan: e.target.value })} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
-                    <option value="basic">Basic (Portaria Simples)</option>
-                    <option value="pro">Pro (Reconhecimento Facial)</option>
-                  </select>
                 </div>
 
                 <div className="md:col-span-2">

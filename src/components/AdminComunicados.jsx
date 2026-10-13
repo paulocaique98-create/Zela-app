@@ -238,7 +238,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Comunicados" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
+      <div className="flex items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Crie e gerencie avisos para as famílias da escola.</p>
         {!showForm && (
           <button
@@ -250,7 +250,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto px-2.5 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">

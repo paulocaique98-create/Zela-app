@@ -1,11 +1,13 @@
-import React from 'react';
-import { ShieldCheck, LogOut, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, LogOut, UserX, X } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import TrocaDeConta from './TrocaDeConta';
+import AccountDeletionSection from './AccountDeletionSection';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 
 export default function Header({ currentUser, currentSchool, globalLogo, screenLabel, screenLabelMobile, flush = false, onLogout, onTrocarConta, onOpenMobileMenu, onNavigateTab }) {
   const [isSidebarExpanded] = useSidebarExpanded();
+  const [excluirContaAberto, setExcluirContaAberto] = useState(false);
   // Usa a logo global carregada do banco ou fallback
   const zelaLogo = globalLogo;
   const schoolLogo = currentSchool?.logo_url || null;
@@ -17,6 +19,9 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
   // Portais claros (Recepção, Família, Professora, Gestão): cabeçalho na mesma
   // tinta escura do menu lateral, formando um bloco só. Dev segue claro.
   const dark = !isDev && flush;
+  // Exclusão de conta dentro do app (exigência da Apple): a Família tem a seção nas
+  // Configurações; Professora e Recepção abrem por aqui. A Gestão só pelo suporte.
+  const podeExcluirConta = ['teacher', 'admin'].includes(currentUser.role);
 
   return (
     <>
@@ -33,20 +38,12 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
 
       {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-        <button
-          onClick={onOpenMobileMenu}
-          className={`md:hidden p-1.5 -ml-1 rounded-zela-sm transition active:scale-95 shrink-0 min-w-11 min-h-11 flex items-center justify-center ${isDev ? 'text-dev-primary hover:bg-dev-surface-high' : (dark ? 'text-white hover:bg-ink-2' : 'text-primary hover:bg-surface-container-low')}`}
-          title="Abrir menu"
-          aria-label="Abrir menu"
-        >
-          <Menu size={24} aria-hidden="true" />
-        </button>
         {/* Logo (36px) centralizada na coluna de ícones do menu lateral
             (24px): centro a 32px da borda com o menu recolhido e a 44px com
             ele aberto. O cabeçalho começa em 24px (md:px-6). */}
         <div className={`hidden md:flex items-center shrink-0 transition-[margin] duration-300 ${isSidebarExpanded ? 'md:ml-0.5' : 'md:-ml-1.5'}`}>
           {zelaLogo ? (
-            <img src={zelaLogo} alt="Zela Escola" className="w-9 h-9 object-contain" />
+            <img src={zelaLogo} alt="Zela Edu" className="w-9 h-9 object-contain" />
           ) : (
             <div className="w-9 h-9 bg-ink-2 border border-brass rounded-zela-sm flex items-center justify-center">
               <ShieldCheck className="text-white w-5 h-5" aria-hidden="true" />
@@ -54,11 +51,11 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
           )}
         </div>
         <div className="flex flex-col min-w-0 flex-1">
-          <h1 className={`font-serif font-semibold text-base sm:text-lg leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
-            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Escola'}</span></span>
+          <h1 className={`font-serif font-semibold text-lg sm:text-xl leading-tight flex items-center gap-1.5 whitespace-nowrap min-w-0 overflow-hidden ${isDev ? 'text-dev-text' : (dark ? 'text-white' : 'text-on-surface')}`}>
+            <span className="shrink-0"><span className="md:hidden">Zela</span><span className="hidden md:inline">{screenLabel ? 'Zela' : 'Zela Edu'}</span></span>
             {/* No mobile sobra pouco espaço (entre o hambúrguer e o sino/sair),
                 então usa a versão abreviada do nome da tela (screenLabelMobile)
-                sem separador -- "Zela Escola Usuários" em vez de "Zela Escola · Gestão de
+                sem separador -- "Zela Edu Usuários" em vez de "Zela Edu · Gestão de
                 Usuários". No desktop, que tem espaço de sobra, mostra o nome
                 completo com o separador. */}
             <span className={`hidden md:inline font-normal truncate min-w-0 ${isDev ? 'text-dev-text-muted' : (dark ? 'text-ink-text' : 'text-on-surface-variant')}`}>{screenLabel}</span>
@@ -118,6 +115,17 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             senha, ao lado do Sair. */}
         {!isDev && onTrocarConta && <TrocaDeConta currentUser={currentUser} onTrocar={onTrocarConta} />}
 
+        {podeExcluirConta && (
+          <button
+            onClick={() => setExcluirContaAberto(true)}
+            className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low'}`}
+            title="Excluir minha conta"
+            aria-label="Excluir minha conta"
+          >
+            <UserX size={20} aria-hidden="true" />
+          </button>
+        )}
+
         <button
           onClick={onLogout}
           className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-error hover:bg-dev-surface-high' : (dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low')}`}
@@ -128,6 +136,20 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         </button>
       </div>
     </nav>
+    {excluirContaAberto && (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Excluir minha conta">
+        <div className="w-full max-w-md relative">
+          <button
+            onClick={() => setExcluirContaAberto(false)}
+            className="absolute -top-3 -right-3 z-10 p-2 min-w-11 min-h-11 flex items-center justify-center rounded-zela-md bg-white shadow border border-outline-variant text-on-surface-variant hover:text-error"
+            aria-label="Fechar"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+          <AccountDeletionSection />
+        </div>
+      </div>
+    )}
     </>
   );
 }

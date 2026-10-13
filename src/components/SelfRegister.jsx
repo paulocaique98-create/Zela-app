@@ -230,7 +230,7 @@ export default function SelfRegister() {
             <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
               <ShieldCheck className="text-white" size={20} />
             </div>
-            <span className="font-serif text-h2 text-on-surface leading-none">Zela Escola</span>
+            <span className="font-serif text-h2 text-on-surface leading-none">Zela Edu</span>
           </div>
 
           {done ? (

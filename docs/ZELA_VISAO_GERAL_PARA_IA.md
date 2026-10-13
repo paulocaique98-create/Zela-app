@@ -1,4 +1,4 @@
-# Zela Escola: visão geral do sistema
+# Zela Edu: visão geral do sistema
 
 Documento de contexto para apresentar o Zela a outra IA e pedir sugestões de evolução. Situação em 05/10/2026.
 

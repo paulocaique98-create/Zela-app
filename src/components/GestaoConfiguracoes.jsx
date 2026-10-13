@@ -3,6 +3,7 @@ import { ShieldAlert, KeyRound, BellRing, Minus, Plus, Check, CheckCircle2 } fro
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading, Notice, Field, inputCls, PrimaryButton, StatCard } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
+import { SETORES_ESCOLA_CHAT, matrizDeAcesso } from '../lib/chatAcesso';
 
 // Configurações, Comunicação: lembrete automático de cobrança antes do
 // vencimento (lido pela rotina send-financial-reminders).
@@ -31,7 +32,7 @@ export function ConfigComunicacao({ currentUser, currentSchool, onUpdate }) {
   const botaoDias = 'w-10 h-10 shrink-0 flex items-center justify-center rounded-zela-md border border-outline-variant bg-surface-container-low text-on-surface hover:bg-primary/10 hover:text-primary transition disabled:opacity-40 disabled:pointer-events-none';
 
   return (
-    <PageShell description="Avisos automáticos que o Zela Escola envia às famílias." infoOnMobile>
+    <PageShell description="Avisos automáticos que o Zela Edu envia às famílias." infoOnMobile>
       <div className="max-w-2xl space-y-4">
         <Notice type={msg.type || 'error'}>{msg.text}</Notice>
         <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
@@ -64,8 +65,80 @@ export function ConfigComunicacao({ currentUser, currentSchool, onUpdate }) {
           <PrimaryButton onClick={save} disabled={isSaving} className="w-full sm:w-auto h-10 justify-center">Salvar</PrimaryButton>
         </section>
         <p className="text-xs text-on-surface-variant">Comunicados, mural e calendário continuam avisando as famílias na hora da publicação.</p>
+        {currentSchool?.features_enabled?.chat === true && <ChatAcessoSetor currentUser={currentUser} />}
       </div>
     </PageShell>
+  );
+}
+
+// Chat: quem vê e quem responde em cada setor. Só a Gestão grava (RLS em
+// chat_acesso_setor). A conta da Gestão sempre vê e responde tudo.
+function ChatAcessoSetor({ currentUser }) {
+  const [linhas, setLinhas] = useState(null);
+  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    supabase.from('chat_acesso_setor').select('perfil, setor, pode_ver, pode_responder')
+      .eq('school_id', currentUser.school_id).limit(40)
+      .then(({ data, error }) => {
+        if (error) setMsg({ type: 'error', text: error.message });
+        setLinhas(matrizDeAcesso(data || []));
+      });
+  }, [currentUser.school_id]);
+
+  const alterar = (perfil, setor, campo, valor) => {
+    setLinhas(prev => prev.map(l => {
+      if (l.perfil !== perfil || l.setor !== setor) return l;
+      if (campo === 'pode_ver') return { ...l, pode_ver: valor, pode_responder: valor ? l.pode_responder : false };
+      return { ...l, pode_responder: valor, pode_ver: valor ? true : l.pode_ver };
+    }));
+  };
+
+  const salvar = async () => {
+    setIsSaving(true);
+    setMsg({ type: '', text: '' });
+    const { error } = await supabase.from('chat_acesso_setor').upsert(
+      linhas.map(l => ({ school_id: currentUser.school_id, ...l, updated_at: new Date().toISOString() })),
+      { onConflict: 'school_id,perfil,setor' },
+    );
+    setIsSaving(false);
+    setMsg(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Acesso ao chat salvo.' });
+  };
+
+  if (!linhas) return <Loading />;
+
+  return (
+    <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
+      <div>
+        <h3 className="font-bold text-sm text-on-surface">Acesso ao chat por setor</h3>
+        <p className="text-xs text-on-surface-variant mt-0.5">
+          Escolha o que cada perfil pode ver e responder. O Administrativo (Gestão) sempre vê e responde todos os setores. Conversas com o Suporte Zela não entram aqui.
+        </p>
+      </div>
+      <Notice type={msg.type || 'error'}>{msg.text}</Notice>
+      {SETORES_ESCOLA_CHAT.map(perfil => (
+        <div key={perfil.value} className="rounded-zela-md border border-outline-variant p-3 space-y-2">
+          <p className="text-sm font-semibold text-on-surface">Quem é {perfil.label}</p>
+          {linhas.filter(l => l.perfil === perfil.value).map(l => (
+            <div key={l.setor} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 truncate text-on-surface-variant">Conversas de {SETORES_ESCOLA_CHAT.find(s => s.value === l.setor)?.label}</span>
+              <span className="flex items-center gap-4 shrink-0">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={l.pode_ver} onChange={e => alterar(l.perfil, l.setor, 'pode_ver', e.target.checked)} />
+                  Ver
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={l.pode_responder} onChange={e => alterar(l.perfil, l.setor, 'pode_responder', e.target.checked)} />
+                  Responder
+                </label>
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+      <PrimaryButton onClick={salvar} disabled={isSaving} className="w-full sm:w-auto h-10 justify-center">Salvar acesso ao chat</PrimaryButton>
+    </section>
   );
 }
 
@@ -140,7 +213,7 @@ export function ConfigSeguranca({ currentUser }) {
             <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><KeyRound size={20} /></span>
             <div className="min-w-0">
               <h3 className="font-bold text-sm text-on-surface">Exigir troca de senha</h3>
-              <p className="text-xs text-on-surface-variant mt-0.5">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela Escola pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">Use depois de uma suspeita de acesso indevido ou ao trocar a equipe. A pessoa entra com a senha atual e o Zela Edu pede uma nova antes de liberar o sistema. A sua conta não é afetada.</p>
             </div>
           </div>
           <div>

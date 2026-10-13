@@ -27,6 +27,7 @@ const PERIOD_OPTIONS = [
   { id: '7days', label: 'Semana' },
   { id: '30days', label: 'Mês' },
   { id: 'all', label: 'Tudo' },
+  { id: 'custom', label: 'De / até' },
 ];
 
 // Fase D do PLANO_LOGGING_ERROS_PORTAL_DEV.md — tela unificada lendo
@@ -101,6 +102,8 @@ export default function DeveloperErrorLogs({ currentUser }) {
   const [schoolId, setSchoolId] = useState('all');
   const [screenFilter, setScreenFilter] = useState('all');
   const [period, setPeriod] = useState('today');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [showResolved, setShowResolved] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('last_seen_at'); // 'occurrences' | 'last_seen_at'
@@ -157,7 +160,10 @@ export default function DeveloperErrorLogs({ currentUser }) {
       if (screenFilter !== 'all') query = query.eq('screen', screenFilter);
       if (!showResolved) query = query.eq('resolved', false);
 
-      if (period !== 'all') {
+      if (period === 'custom') {
+        if (customStart) query = query.gte('last_seen_at', new Date(`${customStart}T00:00:00`).toISOString());
+        if (customEnd) query = query.lte('last_seen_at', new Date(`${customEnd}T23:59:59.999`).toISOString());
+      } else if (period !== 'all') {
         const now = new Date();
         const start = new Date(now);
         if (period === 'today') start.setHours(0, 0, 0, 0);
@@ -182,7 +188,7 @@ export default function DeveloperErrorLogs({ currentUser }) {
   useEffect(() => {
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, severity, schoolId, screenFilter, period, showResolved, sortBy]);
+  }, [source, severity, schoolId, screenFilter, period, customStart, customEnd, showResolved, sortBy]);
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -275,7 +281,12 @@ export default function DeveloperErrorLogs({ currentUser }) {
     setSearchTerm(''); setSortBy('last_seen_at'); setShowResolved(false);
   };
 
-  const periodLabel = PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período';
+  const fmtDia = (d) => d.split('-').reverse().join('/');
+  const periodLabel = period === 'custom' && (customStart || customEnd)
+    ? (customStart && customEnd && customEnd !== customStart
+      ? `${fmtDia(customStart)} a ${fmtDia(customEnd)}`
+      : fmtDia(customStart || customEnd))
+    : (PERIOD_OPTIONS.find(p => p.id === period)?.label || 'Período');
 
   return (
     <div className="h-full flex flex-col bg-dev-surface -m-3 sm:m-0 rounded-none border-0 shadow-none overflow-hidden">
@@ -291,16 +302,30 @@ export default function DeveloperErrorLogs({ currentUser }) {
             </button>
             <p className="hidden sm:block text-[11px] text-dev-text-muted">{filtered.length} {filtered.length === 1 ? 'registro' : 'registros'} no filtro</p>
             {periodMenuOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-40 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-1">
+              <div className="absolute left-0 top-full mt-1.5 w-48 bg-dev-surface border border-dev-border rounded-zela-md shadow-lg z-20 p-1">
                 {PERIOD_OPTIONS.map(p => (
                   <button
                     key={p.id}
-                    onClick={() => { setPeriod(p.id); setPeriodMenuOpen(false); }}
+                    onClick={() => { setPeriod(p.id); if (p.id !== 'custom') setPeriodMenuOpen(false); }}
                     className={`w-full text-left px-3 py-2.5 sm:py-2 rounded-zela-md text-xs font-bold transition ${period === p.id ? 'bg-dev-primary-container text-dev-primary' : 'text-dev-text-muted hover:bg-dev-surface-high'}`}
                   >
                     {p.label}
                   </button>
                 ))}
+                {period === 'custom' && (
+                  <div className="grid gap-2 p-2">
+                    <label className="flex flex-col gap-1 text-[11px] font-bold text-dev-text-muted">
+                      De
+                      <input type="date" value={customStart} max={customEnd || undefined} onChange={e => setCustomStart(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-dev-surface-high border border-dev-border rounded-zela-md text-xs text-dev-text outline-none" />
+                    </label>
+                    <label className="flex flex-col gap-1 text-[11px] font-bold text-dev-text-muted">
+                      Até
+                      <input type="date" value={customEnd} min={customStart || undefined} onChange={e => { setCustomEnd(e.target.value); if (e.target.value && customStart) setPeriodMenuOpen(false); }}
+                        className="w-full px-2 py-1.5 bg-dev-surface-high border border-dev-border rounded-zela-md text-xs text-dev-text outline-none" />
+                    </label>
+                  </div>
+                )}
               </div>
             )}
           </div>

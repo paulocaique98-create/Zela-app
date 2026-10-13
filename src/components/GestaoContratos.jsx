@@ -59,7 +59,7 @@ CLÁUSULA 4 · DA RESCISÃO
 Este contrato pode ser rescindido por qualquer das partes mediante aviso prévio por escrito, respeitadas as parcelas vencidas.
 
 CLÁUSULA 5 · DA ASSINATURA
-As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicativo Zela Escola, nos termos da Lei 14.063/2020.
+As partes reconhecem a validade da assinatura eletrônica realizada pelo aplicativo Zela Edu, nos termos da Lei 14.063/2020.
 
 {{escola_cidade}}, {{data_hoje}}.`;
 

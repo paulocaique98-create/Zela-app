@@ -568,10 +568,10 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Matrículas" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 px-4 py-4 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
+      <div className="flex items-center justify-between gap-3 px-2.5 py-4 sm:p-6 border-b border-outline-variant shrink-0 flex-wrap">
         <p className="text-on-surface-variant text-small hidden sm:block">Visualize e gerencie as matrículas preenchidas pelos responsáveis.</p>
         {/* Importação em massa — pra migrar formulários de anos anteriores
-            (ex: um Google Forms usado antes do Zela Escola existir) sem cada
+            (ex: um Google Forms usado antes do Zela Edu existir) sem cada
             família precisar preencher tudo de novo do zero. */}
         <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto sm:shrink-0 sm:ml-auto flex-wrap justify-start sm:justify-end">
           {/* Link de Matrícula — copia direto pra escola mandar pra uma
@@ -649,7 +649,7 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 sm:p-6 space-y-3">
+      <div className="flex-1 overflow-y-auto px-2.5 py-4 sm:p-6 space-y-3">
         {error && (
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
@@ -694,12 +694,12 @@ export default function AdminMatriculas({ currentUser, currentSchool }) {
             </div>
             <div className="flex items-start gap-2 bg-brass-50 text-warning p-3 rounded-lg text-xs mb-6 border border-warning/50">
               <AlertTriangle size={18} className="shrink-0" aria-hidden="true" />
-              <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela Escola pede para a pessoa criar a própria senha.</p>
+              <p>Senha provisória, gerada só para esta conta e mostrada apenas agora. No primeiro acesso o Zela Edu pede para a pessoa criar a própria senha.</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`Acesso Zela Escola\nE-mail: ${newGuardianCredentials.email}\nSenha: ${newGuardianCredentials.password}`);
+                  navigator.clipboard.writeText(`Acesso Zela Edu\nE-mail: ${newGuardianCredentials.email}\nSenha: ${newGuardianCredentials.password}`);
                 }}
                 className="w-full py-3 bg-primary/10 text-primary font-bold rounded-zela-md hover:bg-primary/20 transition flex items-center justify-center gap-2"
               >
