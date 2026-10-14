@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
 import { StatCard } from './GestaoShared';
-import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularCobrancaDoDia, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { podeAbrirAba, chaveLigada, recursosDoPerfil, rotuloDoPerfil } from '../lib/perfisGestao';
 
 // Início da Gestão: números do dia no topo (cada um leva à tela onde se
@@ -40,8 +40,7 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
       const alunosComExtra = new Set();
       agruparEventosPorDia(data || []).forEach(d => {
         const st = d.studentData || {};
-        const v = calcularHorasExtras(d.exitLog?.event_time || null, st.contracted_exit_time, st.weekly_schedule, cfg, st.isento_hora_extra).valor
-          + calcularEntradaAntecipada(d.entryLog?.event_time || null, st.contracted_entry_time, st.weekly_schedule, cfg, st.isento_hora_extra).valor;
+        const v = calcularCobrancaDoDia({ entryIso: d.entryLog?.event_time || null, exitIso: d.exitLog?.event_time || null, contractedEntryTime: st.contracted_entry_time, contractedExitTime: st.contracted_exit_time, weeklySchedule: st.weekly_schedule, billingConfig: cfg, isentoHoraExtra: st.isento_hora_extra }).valor;
         if (v > 0) { extrasCents += Math.round(v * 100); alunosComExtra.add(d.student_id); }
       });
       setOps({ extrasCents, extrasAlunos: alunosComExtra.size });

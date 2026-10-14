@@ -46,7 +46,17 @@ export const DEFAULT_BILLING_CONFIG = {
   late_checkout_tolerance_min: 15,
   hourly_rate_cents: 3000, // R$ 30,00
   charge_early_checkin: true,
+  // Modo de cobrança: 'individual' (tolerâncias separadas, comportamento de
+  // sempre) ou 'general' (uma faixa única somando entrada antecipada e saída
+  // tardia, com valor fechado). Só um vale por vez.
+  billing_mode: 'individual',
+  general_tolerance_min: 30,
+  // Valor de cada faixa de tempo acima da tolerância (cada faixa dura
+  // GENERAL_BAND_MINUTES). Acima da última faixa vale o valor da última.
+  general_bands_cents: [0, 0, 0, 0],
 };
+
+export const GENERAL_BAND_MINUTES = 30;
 
 export function mergeBillingConfig(schoolBillingConfig) {
   return { ...DEFAULT_BILLING_CONFIG, ...schoolBillingConfig };
@@ -301,5 +311,78 @@ export function calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, wee
     valorFormatado: formatCurrency(valor),
     dentro_tolerancia: false,
     sem_entrada: false
+  };
+}
+
+// Minutos "brutos" (sem tolerância) de entrada antes e saída depois do
+// horário efetivo do dia. Base do modo geral, que soma os dois lados.
+function minutosBrutosDoDia(entryIso, exitIso, contractedEntryTime, contractedExitTime, weeklySchedule, agora = null) {
+  const refIso = entryIso || exitIso;
+  if (!refIso) return { antes: 0, depois: 0 };
+  const dateStr = new Date(refIso).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const { entry, exit } = getEffectiveSchedule(weeklySchedule, getDayKeyFromDateStr(dateStr), contractedEntryTime, contractedExitTime);
+  const antes = entryIso && entry ? Math.floor((instantFromBrasiliaTime(dateStr, entry).getTime() - new Date(entryIso).getTime()) / 60000) : 0;
+  // Sem saída registrada e o dia ainda é hoje: o aluno continua na escola,
+  // então o "agora" faz o papel da saída (parcial). Dias passados sem saída
+  // seguem sem contar -- aí é saída esquecida, não hora extra.
+  const hoje = agora && !exitIso && entryIso && dateStr === agora.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const fimIso = exitIso || (hoje ? agora.toISOString() : null);
+  const depois = fimIso && exit ? Math.floor((new Date(fimIso).getTime() - instantFromBrasiliaTime(dateStr, exit).getTime()) / 60000) : 0;
+  return { antes: Math.max(0, antes), depois: Math.max(0, depois), parcial: Boolean(hoje) };
+}
+
+/**
+ * Cobrança do DIA respeitando o modo da escola (billing_config.billing_mode).
+ * - 'individual' (padrão): soma calcularEntradaAntecipada + calcularHorasExtras,
+ *   cada lado com a sua tolerância e o valor por hora.
+ * - 'general': soma os minutos de entrada antecipada e de saída tardia; se o
+ *   total passar de general_tolerance_min, cobra o valor da faixa de tempo
+ *   (general_bands_cents, faixas de 30 min após a tolerância; uma vez por dia). Ignora charge_early_checkin.
+ *   Hoje, sem saída registrada, o horário atual conta como saída (parcial).
+ * Espelhado em public.attendance_charge_cents (SQL): ajustes aqui precisam
+ * ser refletidos lá.
+ */
+export function calcularCobrancaDoDia({ entryIso, exitIso, contractedEntryTime, contractedExitTime, weeklySchedule = null, billingConfig = null, isentoHoraExtra = false, agora = new Date() }) {
+  const config = mergeBillingConfig(billingConfig);
+
+  if (config.billing_mode !== 'general') {
+    const saida = calcularHorasExtras(exitIso, contractedExitTime, weeklySchedule, config, isentoHoraExtra);
+    const entrada = calcularEntradaAntecipada(entryIso, contractedEntryTime, weeklySchedule, config, isentoHoraExtra);
+    const valor = saida.valor + entrada.valor;
+    return {
+      modo: 'individual',
+      minutosEntrada: entrada.minutos_antecipados, valorEntrada: entrada.valor,
+      minutosSaida: saida.minutos_excedentes, valorSaida: saida.valor,
+      minutos_excedentes: saida.minutos_excedentes + entrada.minutos_antecipados,
+      valor,
+      valorFormatado: formatCurrency(valor),
+      dentro_tolerancia: saida.dentro_tolerancia && entrada.dentro_tolerancia,
+      sem_saida: saida.sem_saida,
+      excessoEntrada: !entrada.dentro_tolerancia,
+      excessoSaida: !saida.dentro_tolerancia,
+    };
+  }
+
+  const { antes, depois, parcial } = isentoHoraExtra
+    ? { antes: 0, depois: 0, parcial: false }
+    : minutosBrutosDoDia(entryIso, exitIso, contractedEntryTime, contractedExitTime, weeklySchedule, agora);
+  const total = antes + depois;
+  const cobra = total > config.general_tolerance_min;
+  const faixas = Array.isArray(config.general_bands_cents) && config.general_bands_cents.length ? config.general_bands_cents : DEFAULT_BILLING_CONFIG.general_bands_cents;
+  const faixa = cobra ? Math.min(Math.ceil((total - config.general_tolerance_min) / GENERAL_BAND_MINUTES), faixas.length) : 0;
+  const valor = cobra ? (Number(faixas[faixa - 1]) || 0) / 100 : 0;
+  return {
+    modo: 'general',
+    minutosEntrada: antes, valorEntrada: 0,
+    minutosSaida: depois, valorSaida: 0,
+    minutos_excedentes: total,
+    valor,
+    valorFormatado: formatCurrency(valor),
+    dentro_tolerancia: !cobra,
+    sem_saida: !exitIso,
+    faixa, // número da faixa de tempo (1 a N); 0 = dentro da tolerância
+    parcial, // saída ainda não registrada: o valor já conta, com base no horário atual
+    excessoEntrada: cobra && antes > 0,
+    excessoSaida: cobra && depois > 0,
   };
 }

@@ -1,15 +1,37 @@
 import { supabase } from './supabase';
-import { calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig } from '../utils/attendanceUtils';
+import { calcularHorasExtras, calcularEntradaAntecipada, calcularCobrancaDoDia, mergeBillingConfig } from '../utils/attendanceUtils';
 import { logAction } from './auditLog';
 
 // Compara o valor cobrado ANTES e DEPOIS do novo horário, usando as MESMAS
 // funções do relatório de horas extras (attendanceUtils.js) — nunca uma
 // lógica de cobrança paralela. Retorna o suficiente pro modal mostrar a
 // prévia e pra RPC decidir se precisa de aprovação de outro admin.
-export function evaluateCorrectionImpact({ eventType, originalIso, newIso, student, billingConfig }) {
+export function evaluateCorrectionImpact({ eventType, originalIso, newIso, otherIso = null, student, billingConfig }) {
   const config = mergeBillingConfig(billingConfig);
   const weeklySchedule = student?.weekly_schedule || null;
   const isentoHoraExtra = student?.isento_hora_extra || false;
+
+  // Modo geral: o valor é do DIA (entrada + saída somadas), então precisa do
+  // outro horário do dia (otherIso) pra comparar antes e depois.
+  if (config.billing_mode === 'general') {
+    const dia = (iso) => calcularCobrancaDoDia({
+      entryIso: eventType === 'entry' ? iso : otherIso,
+      exitIso: eventType === 'exit' ? iso : otherIso,
+      contractedEntryTime: student?.contracted_entry_time,
+      contractedExitTime: student?.contracted_exit_time,
+      weeklySchedule, billingConfig: config, isentoHoraExtra,
+    });
+    const before = dia(originalIso);
+    const after = dia(newIso);
+    return {
+      valorAntes: before.valor,
+      valorDepois: after.valor,
+      minutosAntes: before.minutos_excedentes,
+      minutosDepois: after.minutos_excedentes,
+      minutesDelta: after.minutos_excedentes - before.minutos_excedentes,
+      increasesBilling: after.valor > before.valor,
+    };
+  }
 
   if (eventType === 'exit') {
     const before = calcularHorasExtras(originalIso, student?.contracted_exit_time, weeklySchedule, config, isentoHoraExtra);

@@ -17,6 +17,9 @@ export interface BillingConfig {
   late_checkout_tolerance_min: number;
   hourly_rate_cents: number;
   charge_early_checkin: boolean;
+  billing_mode: 'individual' | 'general';
+  general_tolerance_min: number;
+  general_bands_cents: number[];
 }
 
 export const DEFAULT_BILLING_CONFIG: BillingConfig = {
@@ -24,6 +27,9 @@ export const DEFAULT_BILLING_CONFIG: BillingConfig = {
   late_checkout_tolerance_min: 15,
   hourly_rate_cents: 3000,
   charge_early_checkin: true,
+  billing_mode: 'individual',
+  general_tolerance_min: 30,
+  general_bands_cents: [0, 0, 0, 0],
 }
 
 export function mergeBillingConfig(schoolBillingConfig: Partial<BillingConfig> | null | undefined): BillingConfig {

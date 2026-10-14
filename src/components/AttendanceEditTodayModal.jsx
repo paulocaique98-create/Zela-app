@@ -71,13 +71,13 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
 
   const entryImpact = useMemo(() => {
     if (!entryChanged || !entryIso) return null;
-    return evaluateCorrectionImpact({ eventType: 'entry', originalIso: entryLog?.event_time || null, newIso: entryIso, student, billingConfig });
-  }, [entryChanged, entryIso, entryLog, student, billingConfig]);
+    return evaluateCorrectionImpact({ eventType: 'entry', originalIso: entryLog?.event_time || null, newIso: entryIso, otherIso: exitIso || exitLog?.event_time || null, student, billingConfig });
+  }, [entryChanged, entryIso, exitIso, entryLog, exitLog, student, billingConfig]);
 
   const exitImpact = useMemo(() => {
     if (!exitChanged || !exitIso) return null;
-    return evaluateCorrectionImpact({ eventType: 'exit', originalIso: exitLog?.event_time || null, newIso: exitIso, student, billingConfig });
-  }, [exitChanged, exitIso, exitLog, student, billingConfig]);
+    return evaluateCorrectionImpact({ eventType: 'exit', originalIso: exitLog?.event_time || null, newIso: exitIso, otherIso: entryIso || entryLog?.event_time || null, student, billingConfig });
+  }, [exitChanged, exitIso, entryIso, exitLog, entryLog, student, billingConfig]);
 
   const anyIncreasesBilling = Boolean(entryImpact?.increasesBilling || exitImpact?.increasesBilling);
   const hasAnyChange = (entryChanged && entryIso) || (exitChanged && exitIso);

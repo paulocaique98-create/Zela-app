@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, FileText, Download, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { agruparEventosPorDia, calcularHorasExtras, calcularEntradaAntecipada, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularCobrancaDoDia, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
 
 function formatTime(isoString) {
@@ -68,9 +68,9 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFilters]);
 
-  const fetchExtras = async () => {
+  const fetchExtras = async (silencioso = false) => {
     if (!currentSchool) return;
-    setIsLoading(true);
+    if (!silencioso) setIsLoading(true);
     try {
       const schoolId = currentSchool.school_id || currentSchool.id;
       const todayISO = getBrasiliaDateStr();
@@ -129,12 +129,8 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         // Cobrança considera os dois lados: check-in ANTECIPADO (antes da
         // entrada contratada/efetiva do dia, com margem) e check-out
         // TARDIO (já existia) -- somados no total do dia.
-        const calculoSaida = calcularHorasExtras(exitTimeIso, contractedExitTime, weeklySchedule, billingConfig, isentoHoraExtra);
-        const calculoEntrada = calcularEntradaAntecipada(entryTimeIso, contractedEntryTime, weeklySchedule, billingConfig, isentoHoraExtra);
-
-        const minutos_excedentes = calculoSaida.minutos_excedentes + calculoEntrada.minutos_antecipados;
-        const valor = calculoSaida.valor + calculoEntrada.valor;
-        const dentro_tolerancia = calculoSaida.dentro_tolerancia && calculoEntrada.dentro_tolerancia;
+        const calculo = calcularCobrancaDoDia({ entryIso: entryTimeIso, exitIso: exitTimeIso, contractedEntryTime, contractedExitTime, weeklySchedule, billingConfig, isentoHoraExtra });
+        const { minutos_excedentes, valor, dentro_tolerancia } = calculo;
 
         return {
           key: `${group.student_id}_${group.date}`,
@@ -150,17 +146,18 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
           valor,
           valorFormatado: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor),
           dentro_tolerancia,
-          sem_saida: calculoSaida.sem_saida,
-          excessoEntrada: !calculoEntrada.dentro_tolerancia,
-          excessoSaida: !calculoSaida.dentro_tolerancia,
+          sem_saida: calculo.sem_saida,
+          parcial: Boolean(calculo.parcial),
+          excessoEntrada: calculo.excessoEntrada,
+          excessoSaida: calculo.excessoSaida,
           // Guardados separados (não só o total do dia) pra mostrar, no
           // detalhamento por dia, QUAL dos dois lados gerou a cobrança —
           // entrada antecipada e saída tardia têm minutos/valor
           // independentes, mesmo somando no mesmo dia.
-          minutosEntrada: calculoEntrada.minutos_antecipados,
-          valorEntrada: calculoEntrada.valor,
-          minutosSaida: calculoSaida.minutos_excedentes,
-          valorSaida: calculoSaida.valor,
+          minutosEntrada: calculo.minutosEntrada,
+          valorEntrada: calculo.valorEntrada,
+          minutosSaida: calculo.minutosSaida,
+          valorSaida: calculo.valorSaida,
           rawTime: entryTimeIso ? new Date(entryTimeIso).getTime() : (exitTimeIso ? new Date(exitTimeIso).getTime() : 0),
         };
       });
@@ -175,13 +172,19 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   };
 
   useEffect(() => { fetchExtras(); }, [currentSchool, period, customDate, customEnd]);
+  // Quem ainda está na escola passa da tolerância com o tempo, sem nenhum
+  // evento novo: recalcula a cada minuto, sem piscar a tela.
+  useEffect(() => {
+    const id = setInterval(() => fetchExtras(true), 60000);
+    return () => clearInterval(id);
+  }, [currentSchool, period, customDate, customEnd]);
   useEffect(() => { setExpandedStudentKey(null); }, [period, customDate, customEnd]);
 
   // Mesma regra usada pra pintar a linha de amarelo na tabela: excedeu a
   // tolerância de entrada antecipada, ou de saída tardia com o check-out já
   // registrado (enquanto o aluno ainda está na escola sem saída, não dá pra
   // dizer que "tem" hora extra — ainda pode sair dentro do prazo).
-  const hasExcess = log => log.excessoEntrada || (log.excessoSaida && !log.sem_saida);
+  const hasExcess = log => log.excessoEntrada || (log.excessoSaida && (!log.sem_saida || log.parcial));
 
   const searchFiltered = logs.filter(log => {
     const term = searchTerm.toLowerCase().trim();
