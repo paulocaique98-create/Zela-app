@@ -50,8 +50,8 @@ Data da auditoria: 11/10/2026. Prazo final: 31/01/2027. Somente leitura: nenhum 
 | 3 Capacitor e Android | 21/10 a 01/11 | Fase 2 (appId, branch) | Android feito e rodando no S23 Ultra; iOS compila no simulador via Actions (ios-build.yml, só manual), nunca rodou em aparelho (seção 20); branches mobile mescladas na main e apagadas | Android primeiro; iOS só com Mac. |
 | 4 Nativo e UX mobile | 02 a 15/11 | Fase 3 | Executada (seção 15) | Safe areas, botão voltar, ícones. |
 | 5 Integrações (câmera, push, CORS, privacidade) | 16 a 29/11 | Fase 4, Firebase | Em andamento: push validado na homologação, CORS de produção, política e suporte no ar. Push em primeiro plano feito (toast com app aberto) e teste 4 aprovado no S23: solicitação e confirmação com app em segundo plano, aberto e fechado; usuário sem vínculo não recebeu nada | Inclui mudança de CORS e push nativo, com análise de segurança. |
-| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | Próxima a executar (sem depender de conta). Iniciada: exclusão de conta e push testados no S23. Faltam Android de entrada e iOS em aparelho real | iOS exige Mac e iPhone. |
-| 7 Preparação das lojas | 14 a 20/12 | Fase 6, política de privacidade | Iniciada: textos, categoria, privacidade e checklist iOS prontos. Conta de demonstração do revisor decidida e criada; falta testar o login dela no app | Advogado para LGPD e biometria. |
+| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | Próxima a executar (sem depender de conta). Iniciada: exclusão de conta e push testados no S23. Android de entrada testado em 14/10 (Moto G05, aprovado). Falta iOS em aparelho real | iOS exige Mac e iPhone. |
+| 7 Preparação das lojas | 14 a 20/12 | Fase 6, política de privacidade | Iniciada: textos, categoria, privacidade e checklist iOS prontos. Conta de demonstração do revisor decidida e criada; login de Gestão e Família testado em 14/10 | Advogado para LGPD e biometria. |
 | 8 Teste interno/fechado | 21/12 a 10/01 | Fase 2 (contas de loja) | Não iniciada. Só começa depois de abrir as contas | Pode precisar de 14 dias se a conta for pessoal. |
 | 9 Produção e acompanhamento | 11 a 31/01 | Fase 8 | Não iniciada | Revisão da Apple costuma levar dias; deixar folga para rejeições. |
 
@@ -170,7 +170,8 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - **Push e RLS:** migration `20261011120000_registrar_token_push_app.sql` cria `registrar_token_push_app(p_token, p_platform, p_device_info)` (SECURITY DEFINER, `search_path` fixo, só `authenticated`; `user_id` vem de `auth.uid()` e `school_id` do perfil; apaga a linha do mesmo token de outra conta e grava para a logada). `pushNativo.js` agora chama essa função. **A migration ainda NÃO foi aplicada em nenhum banco.** Aplicar primeiro na homologação (ref `biybjifoxnuxwkaametp`); sem ela o push do app falha. Produção só no release.
 - Pendente: checklist no aparelho, Edge Function pelo app, segredos Asaas/VAPID, Android de entrada, iOS, revisão jurídica.
 - **Checklist no S23 Ultra (12/10):** o responsável informou que todos os itens de `CHECKLIST_TESTES_APARELHO.md` passaram ("aparentemente"), na homologação. Sem evidência automatizada; datas por item não registradas. Não confirmado aqui se a migration `registrar_token_push_app` já estava aplicada na homologação durante o teste de troca de conta.
-- **Ainda aberto na Fase 6:** Android de entrada, segredos Asaas/VAPID, revisão jurídica, iOS; migration em produção só no release.
+- **Android de entrada (14/10):** APK debug de homologação instalado por adb no Moto G05 (Android 15, ~3,8 GB). Responsável informou: login e carregamento bons; cadastro de biometria no totem demorou mais, mas passou; demais itens passaram. Sem evidência automatizada.
+- **Ainda aberto na Fase 6:** segredos Asaas/VAPID, revisão jurídica, iOS; migration em produção só no release.
 
 ## 18. FASE 7 iniciada (12/10/2026)
 
@@ -209,7 +210,7 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - E-mail de suporte e privacidade: `zela.dev26@gmail.com` (aceito pela Apple; trocar por e-mail do domínio quando existir).
 - Política já no ar em `https://zelaedu.com.br/privacidade.html` (HTTP 200 verificado). Retenção e exclusão agora descrevem o pedido dentro do app e o prazo de até 30 dias (vem do código de `AccountDeletionSection.jsx`). Página de suporte `public/suporte.html` criada; só publica depois do merge na main.
 - Bucket `person-photos`: privado na migration baseline (`public=false`, política por `school_id`). NÃO consultei o banco de produção; ver a consulta de conferência em `PREPARACAO_LOJAS.md` / relatório.
-- Categoria Educação definida. Biometria declarada também como informação sensível. Conta de demonstração do revisor DECIDIDA (13/10): escola fictícia isolada na produção (ver seção 22 e `PREPARACAO_LOJAS.md` 3.1). Falta testar o login da Recepção e da Família no app.
+- Categoria Educação definida. Biometria declarada também como informação sensível. Conta de demonstração do revisor DECIDIDA (13/10): escola fictícia isolada na produção (ver seção 22 e `PREPARACAO_LOJAS.md` 3.1). Login testado em 14/10 pelo responsável: Gestão (apple.revisor@zelaedu.com.br, sem caixa de e-mail real) e Família (responsavel.demo@zelaedu.com.br). Recepção não testada.
 
 ## 22. CORS de produção e escola de demonstração (13/10/2026)
 

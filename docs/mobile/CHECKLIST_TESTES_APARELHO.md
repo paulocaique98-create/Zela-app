@@ -33,7 +33,7 @@ Ambiente: `npm run build:mobile`, `assembleDebug`, `adb install -r -t`. Só homo
 - [ ] Girar a tela, teclado sobre campos, barra de status legível
 - [ ] Modo avião e rede lenta: mensagens de erro, sem tela branca
 - [ ] App em segundo plano por 10 min e retorno (sessão e Realtime reconectam)
-- [ ] Android de entrada (pouca RAM): modelos do face-api carregam, sem fechar sozinho
+- [x] Android de entrada (pouca RAM): modelos do face-api carregam, sem fechar sozinho (14/10, Moto G05, Android 15, ~3,8 GB; cadastro de biometria no totem demorou mais, mas concluiu; demais itens do roteiro passaram, informado pelo responsável)
 
 ## Edge Functions
 - [ ] Cadastrar responsável pelo app (CORS com `https://localhost`)
