@@ -232,3 +232,13 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - Causa 1: banco local atrasado (9 migrations pendentes, entre elas `20261014120000_reduz_minimo_mensal_pacotes`). Aplicadas só no Docker com `supabase migration up --local`; homologação e produção intocadas.
 - Causa 2: `portalGestaoModulos.test.js` ainda esperava `contratos.ver` liberado ao admin; a migration `20261010130000` tirou esse padrão de propósito. Teste ajustado (admin `false` por padrão, `true` depois da Gestão liberar).
 - Resultado final: 103 arquivos e 744 testes passaram (612s). Falta na Fase 6: segredos Asaas/VAPID, Android de entrada, iOS em aparelho, revisão jurídica.
+
+## 25. Asaas sandbox e webhook testados na homologação (14/10/2026)
+
+- **Escola de teste da homologação: TST01 Escola Teste Zela Edu** (a ZL002 existe só na produção). Chave Asaas sandbox e token de webhook salvos pela tela do Portal da Gestão (Financeiro, Asaas e cobrança); a tela mostrou "validada e salva". Nada foi gravado na produção.
+- **Ciclo testado (evidência do responsável: tela do app e logs do Asaas):** cobrança avulsa PIX de R$ 10,00 criada, pagamento simulado no sandbox, 2 envios do webhook com 200 para `biybjifoxnuxwkaametp`, cobrança passou a Paga. Não conferido direto no banco (CLI ligada à produção).
+- **Asaas é por escola:** a chave fica no banco por escola (`set_school_gateway_secret`), não em secret global. `ASAAS_API_BASE_URL` fica sem definir (padrão sandbox). Webhook: `https://biybjifoxnuxwkaametp.supabase.co/functions/v1/payment-webhook`, com `authToken` igual ao salvo na tela.
+- **VAPID mantido:** a homologação já tinha `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`; não foram trocados (trocar quebraria as inscrições de push web).
+- **Atenção ao ambiente:** a CLI (`supabase/.temp/project-ref`) está ligada à PRODUÇÃO (`orafqopnomdrvwlvxrkz`); `--linked` escreve lá. Para abrir o app na homologação use `npx vite --mode mobile` (usa `.env.mobile.local`); `.env.homolog.local` só guarda `SUPABASE_DB_PASSWORD`. Confirme sempre o domínio no Network (`biybjifoxnuxwkaametp`).
+- **Pendência de decisão:** a conta sandbox do Asaas tem um segundo webhook ("TESTDE LTDA") apontando para a produção, que também recebeu os eventos (200). Não se sabe o que a produção fez com eles; confirmar se é intencional e, se não for, desativar no painel do Asaas.
+- Conta `gestao@teste.example.com` (homologação, TST01) com senha temporária definida por SQL, por decisão do responsável. Na Fase 6 restam: Android de entrada, iOS em aparelho, revisão jurídica.
