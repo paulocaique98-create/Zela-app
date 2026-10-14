@@ -1,5 +1,5 @@
 ---
-description: Versão enxuta do /finalizar para mudanças pequenas de tela, texto ou estilo: commita, dá push e abre PR com auto-merge, sem atualizar docs
+description: Versão enxuta do /finalizar para mudanças pequenas de tela, texto ou estilo: commita, dá push e abre PR e faz o merge, sem atualizar docs
 ---
 
 Entrega rápida de mudança pequena no Zela. Siga na ordem e pare ao primeiro problema, avisando o motivo.
@@ -16,6 +16,6 @@ Entrega rápida de mudança pequena no Zela. Siga na ordem e pare ao primeiro pr
    - Commit em português no padrão do histórico, com o Co-Authored-By indicado no contexto.
    - `git push -u origin <branch>`.
    - `gh pr create` com título e corpo curtos, com a linha de atribuição do contexto.
-   - `gh pr merge --auto --merge --delete-branch`.
+   - `gh pr merge --merge --delete-branch` (o repositório não tem proteção de branch, então `--auto` falha). Se o merge for negado por permissão, parar e avisar o usuário, sem contornar.
 5. **Sincronizar**: voltar para a `main` e `git pull` (se o merge estiver pendente, dizer).
 6. **Resposta final** (até 5 linhas): resumo, link do PR, validações realmente executadas. Não atualiza `ZELA_STATUS.md`, `CHANGELOG.md` nem memória. Dizer se a tarefa está concluída e se deve dar `/clear`.
