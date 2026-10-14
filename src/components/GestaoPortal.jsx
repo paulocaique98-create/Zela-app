@@ -142,7 +142,18 @@ export default function GestaoPortal({
     setAlunoIntent(intent);
     setSelectedAlunoId(id);
   };
-  const [financeConfigTab, setFinanceConfigTab] = useState('gateway');
+  // Subaba de Configurações, Financeiro: lembrada no sessionStorage pra
+  // sobreviver a recarregar a página e ao Salvar (senão volta pra Asaas).
+  const [financeConfigTab, setFinanceConfigTabState] = useState(() => {
+    try {
+      const salva = sessionStorage.getItem('zela_finance_config_tab');
+      return salva === 'billing' ? 'billing' : 'gateway';
+    } catch { return 'gateway'; }
+  });
+  const setFinanceConfigTab = (id) => {
+    setFinanceConfigTabState(id);
+    try { sessionStorage.setItem('zela_finance_config_tab', id); } catch { /* sem storage, segue */ }
+  };
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentUser?.school_id);
   const go = (tab) => {

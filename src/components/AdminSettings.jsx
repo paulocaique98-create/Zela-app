@@ -3,7 +3,7 @@ import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
 import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, Minus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageCompression';
-import { mergeBillingConfig, mergeAbsenceAlertConfig } from '../utils/attendanceUtils';
+import { mergeBillingConfig, mergeAbsenceAlertConfig, GENERAL_BAND_MINUTES } from '../utils/attendanceUtils';
 import { formatarCnpj, formatarCpf, cnpjValido, cpfValido, somenteDigitos } from '../lib/documentos';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
@@ -376,15 +376,20 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
     <div className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4 max-w-2xl ${noBorder ? '' : 'mt-3'}`}>
       <div className="flex items-start gap-3">
         <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Clock size={20} /></span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-bold text-on-surface">Cobrança de Hora Extra</h3>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold text-on-surface">Cobrança de Hora Extra Individual</h3>
           <p className="text-xs text-on-surface-variant mt-0.5">
             Margens de tolerância e valor da hora usados no cálculo automático de cobrança (check-in antecipado e check-out tardio).
           </p>
         </div>
+        <label className="relative shrink-0 self-center cursor-pointer">
+          <input type="checkbox" aria-label="Ativar cobrança individual" checked={config.billing_mode === 'individual'} onChange={e => set('billing_mode', e.target.checked ? 'individual' : 'general')} className="peer sr-only" />
+          <span className="block w-11 h-6 rounded-full bg-outline-variant peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 transition cursor-pointer" />
+          <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 pointer-events-none" />
+        </label>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${config.billing_mode === 'individual' ? '' : 'opacity-50 pointer-events-none'}`}>
         <div>
           <label htmlFor="hx-in" className={rotulo}>Tolerância de check-in</label>
           <div className="relative">
@@ -419,6 +424,94 @@ function BillingConfigSection({ currentUser, config, onConfigChange, noBorder = 
           <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
         </span>
       </label>
+    </div>
+  );
+}
+
+// Cobrança de hora extra geral: uma faixa única de tolerância que soma a
+// entrada antecipada e o check-out tardio; passou da faixa, cobra um valor
+// fechado definido pela escola. Convive com a cobrança individual acima.
+// Só um modo vale por vez (billing_config.billing_mode), definido ao salvar.
+function BillingGeneralSection({ currentUser, config, onConfigChange, noBorder = false }) {
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
+  if (!canManage) return null;
+
+  const set = (field, value) => onConfigChange({ ...config, [field]: value });
+
+  const campo = 'w-full h-10 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-base font-semibold';
+  const rotulo = 'block text-xs font-semibold text-on-surface-variant mb-1.5';
+
+  return (
+    <div className={`bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4 max-w-2xl ${noBorder ? '' : 'mt-3'}`}>
+      <div className="flex items-start gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Clock size={20} /></span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold text-on-surface">Cobrança de Hora Extra Geral</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Tolerância única somando a entrada antecipada e o check-out tardio. Passando dela, a cobrança segue o valor da faixa de tempo definido abaixo.
+          </p>
+        </div>
+        <label className="relative shrink-0 self-center cursor-pointer">
+          <input type="checkbox" aria-label="Ativar cobrança geral" checked={config.billing_mode === 'general'} onChange={e => set('billing_mode', e.target.checked ? 'general' : 'individual')} className="peer sr-only" />
+          <span className="block w-11 h-6 rounded-full bg-outline-variant peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 transition cursor-pointer" />
+          <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 pointer-events-none" />
+        </label>
+      </div>
+
+      <div className={`grid grid-cols-1 gap-3 ${config.billing_mode === 'general' ? '' : 'opacity-50 pointer-events-none'}`}>
+        <div>
+          <label htmlFor="hxg-tol" className={rotulo}>Tolerância geral (entrada + saída)</label>
+          <div className="relative">
+            <input id="hxg-tol" type="number" min="0" max="240" value={config.general_tolerance_min}
+              onChange={e => set('general_tolerance_min', Number(e.target.value))} className={`${campo} pl-3 pr-11`} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant pointer-events-none">min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Faixas de tempo do modo geral: cada faixa dura GENERAL_BAND_MINUTES a
+// partir do fim da tolerância e tem o seu valor. Acima da última, vale o
+// valor da última faixa.
+function BillingGeneralBandsSection({ currentUser, config, onConfigChange }) {
+  const canManage = ['developer', 'gestao'].includes(currentUser?.role);
+  if (!canManage || config.billing_mode !== 'general') return null;
+
+  const faixas = Array.isArray(config.general_bands_cents) ? config.general_bands_cents : [];
+  const tol = Number(config.general_tolerance_min) || 0;
+  const setFaixa = (i, cents) => onConfigChange({ ...config, general_bands_cents: faixas.map((v, j) => (j === i ? cents : v)) });
+
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Clock size={20} /></span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-on-surface">Faixas de tempo</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Valor cobrado conforme o total de minutos (entrada antecipada + saída tardia) acima da tolerância de {tol} min. Acima da última faixa, vale o valor da última.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        {faixas.map((cents, i) => {
+          const de = tol + i * GENERAL_BAND_MINUTES + 1;
+          const ate = tol + (i + 1) * GENERAL_BAND_MINUTES;
+          return (
+            <div key={i}>
+              <label htmlFor={`hxg-faixa-${i}`} className="block text-xs font-semibold text-on-surface-variant mb-1.5">{de} a {ate} min</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant pointer-events-none">R$</span>
+                <input id={`hxg-faixa-${i}`} type="number" min="0" step="0.01" value={(cents / 100).toFixed(2)}
+                  onChange={e => setFaixa(i, Math.round(Number(e.target.value) * 100))}
+                  className="w-full h-10 bg-surface-container-lowest border border-outline-variant rounded-zela-md focus:ring-2 focus:ring-primary outline-none text-base font-semibold pl-10 pr-3" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -857,7 +950,15 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                 <LoginImageSection currentUser={currentUser} imageUrl={loginImageUrl} onImageChange={setLoginImageUrl} noBorder />
               )}
               {activeConfigTab === 'billing' && (
-                <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} noBorder />
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch [&>div]:h-full [&>div]:max-w-none">
+                  <BillingConfigSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} noBorder />
+                  <BillingGeneralSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} noBorder />
+                  {billingConfig.billing_mode === 'general' && (
+                    <div className="xl:col-span-2">
+                      <BillingGeneralBandsSection currentUser={currentUser} config={billingConfig} onConfigChange={setBillingConfig} />
+                    </div>
+                  )}
+                </div>
               )}
               {activeConfigTab === 'absence_alert' && (
                 <AbsenceAlertSection currentUser={currentUser} config={absenceAlertConfig} onConfigChange={setAbsenceAlertConfig} noBorder />
