@@ -119,7 +119,7 @@ runIf('Planos do Zela (RLS e RPC)', () => {
       const { data: id, error } = await contratar(c.dev.client, { p_desconto_tipo: 'percent', p_desconto: 50, p_motivo: 'Parceria' });
       expect(error).toBeNull();
       const { data: ct } = await adminClient.from('school_contratacoes').select('*').eq('id', id).single();
-      // Completo: 80 x 11,90 = 952 (acima do mínimo 790); anual com 10%: 952 x 12 x 0,9.
+      // Completo: 80 x 11,90 = 952 (acima do mínimo 490); anual com 10%: 952 x 12 x 0,9.
       expect(Number(ct.valor_mensal)).toBe(952);
       expect(Number(ct.valor_ciclo)).toBe(10281.6);
       expect(Number(ct.implantacao_base)).toBe(900);
@@ -137,7 +137,7 @@ runIf('Planos do Zela (RLS e RPC)', () => {
       const { data: id, error } = await contratar(c.dev.client, { p_alunos: 20 });
       expect(error).toBeNull();
       const { data: ct } = await adminClient.from('school_contratacoes').select('valor_mensal').eq('id', id).single();
-      expect(Number(ct.valor_mensal)).toBe(790);
+      expect(Number(ct.valor_mensal)).toBe(490);
     });
 
     it('recusa desconto sem motivo e acima do teto', async () => {
