@@ -38,3 +38,5 @@ scratch/
 *.cer
 AuthKey_*.p8
 ios/App/ExportOptions.local.plist
+google-services.json
+GoogleService-Info.plist
