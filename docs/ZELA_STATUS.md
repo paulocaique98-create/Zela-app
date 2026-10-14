@@ -44,6 +44,7 @@
 - Preços (14/10): mínimos mensais dos pacotes baixados (Essencial 290, Completo 490, Premium 690; por aluno inalterado). Migration `20261014120000_reduz_minimo_mensal_pacotes.sql` NÃO aplicada em nenhum banco (homologação primeiro, produção só com OK). Chip "Livre" removido da tela de Módulos. Planilha ainda cita implantação 800 a 1.500 (banco: 600 a 1.200).
 - Mobile: cronograma em docs/mobile/PLANO_IMPLEMENTACAO_MOBILE.md com situação por fase. Falta testar login da conta de demonstração do revisor (escola ZL003, produção).
 - Hora extra geral (14/10): billing_config ganhou billing_mode (individual/general, só um vale, definido no Salvar), general_tolerance_min e general_bands_cents (4 faixas de 30 min após a tolerância, valor por faixa, por DIA; acima da última vale a última). Migrations `20261014130000`, `130100`, `140000`, `140100` aplicadas na homologação e na produção. Cálculo: calcularCobrancaDoDia (front) e attendance_charge_cents (SQL); hoje sem saída conta pelo horário atual. Pendente: FamilyHistory/AdminHistory sem a config da escola; ramo SQL das faixas sem teste com dados reais; ZL001 está no modo geral com faixas a preencher.
+- Testes (14/10): suíte completa 103 arquivos / 744 testes passando com Supabase local + `functions serve` (seção 24 do plano mobile). Banco local precisa de `supabase migration up --local` quando houver migration nova.
 - Revisar e commitar CLAUDE.md e docs/. Decidir se .scratch/ e .stitch/ (não versionados) entram no .gitignore.
 
 ## Documentos de apoio (ler só se necessário)

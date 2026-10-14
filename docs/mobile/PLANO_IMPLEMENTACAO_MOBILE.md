@@ -43,16 +43,16 @@ Data da auditoria: 11/10/2026. Prazo final: 31/01/2027. Somente leitura: nenhum 
 
 ## 4. Plano revisado das fases e cronograma
 
-| Fase | Janela | Dependências | Situação em 13/10/2026 | Observação |
+| Fase | Janela | Dependências | Situação em 14/10/2026 | Observação |
 |---|---|---|---|---|
 | 1 Auditoria e plano | 11 a 15/10 | none | Concluída (11/10) | Este documento. |
-| 2 Ambiente, contas, homologação | 16 a 20/10, estendida | CNPJ, D-U-N-S, Mac | Parcial: homologação criada (seção 10); contas de loja e Apple seguem pendentes | **Caminho crítico.** Sem CNPJ não há contas empresariais. Começar já o que independe disso. |
-| 3 Capacitor e Android | 21/10 a 01/11 | Fase 2 (appId, branch) | Android feito e rodando no S23 Ultra; iOS preparado e nunca compilado (seção 20) | Android primeiro; iOS só com Mac. |
+| 2 Ambiente, contas, homologação | Homologação feita. Contas de loja por último, data a definir | Verba para as taxas das lojas | Parcial: homologação criada (seção 10). Contas de loja adiadas para o fim (sem verba agora) | Lançamento em pessoa física, migração para CNPJ depois. Abrir primeiro a conta do Google Play (teste fechado de 14 dias), depois a Apple. |
+| 3 Capacitor e Android | 21/10 a 01/11 | Fase 2 (appId, branch) | Android feito e rodando no S23 Ultra; iOS compila no simulador via Actions (ios-build.yml, só manual), nunca rodou em aparelho (seção 20); branches mobile mescladas na main e apagadas | Android primeiro; iOS só com Mac. |
 | 4 Nativo e UX mobile | 02 a 15/11 | Fase 3 | Executada (seção 15) | Safe areas, botão voltar, ícones. |
-| 5 Integrações (câmera, push, CORS, privacidade) | 16 a 29/11 | Fase 4, Firebase | Em andamento: push validado na homologação, CORS de produção, política e suporte no ar. Faltam push em primeiro plano e push real de check-in | Inclui mudança de CORS e push nativo, com análise de segurança. |
-| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | Iniciada: exclusão de conta e push testados no S23. Faltam Android de entrada e iOS | iOS exige Mac e iPhone. |
+| 5 Integrações (câmera, push, CORS, privacidade) | 16 a 29/11 | Fase 4, Firebase | Em andamento: push validado na homologação, CORS de produção, política e suporte no ar. Push em primeiro plano feito (toast com app aberto) e teste 4 aprovado no S23: solicitação e confirmação com app em segundo plano, aberto e fechado; usuário sem vínculo não recebeu nada | Inclui mudança de CORS e push nativo, com análise de segurança. |
+| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | Próxima a executar (sem depender de conta). Iniciada: exclusão de conta e push testados no S23. Faltam Android de entrada e iOS em aparelho real | iOS exige Mac e iPhone. |
 | 7 Preparação das lojas | 14 a 20/12 | Fase 6, política de privacidade | Iniciada: textos, categoria, privacidade e checklist iOS prontos. Conta de demonstração do revisor decidida e criada; falta testar o login dela no app | Advogado para LGPD e biometria. |
-| 8 Teste interno/fechado | 21/12 a 10/01 | Contas liberadas | Não iniciada | Pode precisar de 14 dias se a conta for pessoal. |
+| 8 Teste interno/fechado | 21/12 a 10/01 | Fase 2 (contas de loja) | Não iniciada. Só começa depois de abrir as contas | Pode precisar de 14 dias se a conta for pessoal. |
 | 9 Produção e acompanhamento | 11 a 31/01 | Fase 8 | Não iniciada | Revisão da Apple costuma levar dias; deixar folga para rejeições. |
 
 As janelas acima são as originais. O trabalho está adiantado em relação a elas (fases 3 a 7 já iniciadas em outubro); o limite real passou a ser contas de loja, CNPJ/D-U-N-S, Mac e iPhone.
@@ -225,3 +225,10 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - **Exclusão de conta testada na homologação (13/10):** a Família Teste 2 pediu pelo app, a Gestão (conta `gestao@teste.example.com`, criada só na homologação) concluiu em `localhost:5173`. Conferido no banco: pedido `concluida` com `handled_by`, conta removida do Auth e de `public.users`, sem erros em `error_logs`. O cancelamento também foi exercitado (um pedido ficou `cancelada`). Falta confirmar no S23 que o login dela falha.
 
 - **Login após exclusão confirmado no S23 (13/10):** o responsável informou que o teste passou normalmente (sem evidência automatizada). Fecha a pendência do item anterior. Na Fase 6 restam: Android de entrada e iOS.
+
+## 24. Linha de base de testes refeita com Supabase local e funções servidas (14/10/2026)
+
+- Docker local com `supabase functions serve`: antes 11 arquivos falhando (503 das Edge Functions); depois 2 testes falhando, ambos sem relação com infraestrutura.
+- Causa 1: banco local atrasado (9 migrations pendentes, entre elas `20261014120000_reduz_minimo_mensal_pacotes`). Aplicadas só no Docker com `supabase migration up --local`; homologação e produção intocadas.
+- Causa 2: `portalGestaoModulos.test.js` ainda esperava `contratos.ver` liberado ao admin; a migration `20261010130000` tirou esse padrão de propósito. Teste ajustado (admin `false` por padrão, `true` depois da Gestão liberar).
+- Resultado final: 103 arquivos e 744 testes passaram (612s). Falta na Fase 6: segredos Asaas/VAPID, Android de entrada, iOS em aparelho, revisão jurídica.

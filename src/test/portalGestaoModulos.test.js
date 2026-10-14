@@ -36,8 +36,13 @@ runIf('Portal da Gestão · permissões configuráveis', () => {
       expect(gDesp).toBe(true);
       const { data: aDesp } = await admin.client.rpc('has_permission', { p_permission: 'despesas.gerenciar' });
       expect(aDesp).toBe(false);
+      // contratos.ver não é mais padrão da Recepção (migration 20261010130000): a Gestão libera por escola.
       const { data: aContratos } = await admin.client.rpc('has_permission', { p_permission: 'contratos.ver' });
-      expect(aContratos).toBe(true);
+      expect(aContratos).toBe(false);
+      const { error: liberaContratos } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'contratos.ver', granted: true });
+      expect(liberaContratos).toBeNull();
+      const { data: aContratosLiberado } = await admin.client.rpc('has_permission', { p_permission: 'contratos.ver' });
+      expect(aContratosLiberado).toBe(true);
 
       const { error: selfGrant } = await admin.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'despesas.gerenciar', granted: true });
       expect(selfGrant).not.toBeNull();
