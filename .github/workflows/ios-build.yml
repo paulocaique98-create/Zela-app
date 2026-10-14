@@ -1,6 +1,7 @@
-name: iOS build (simulador, sem assinatura)
+name: iOS build (simulador e aparelho, sem assinatura)
 
-# Prova que o projeto iOS compila no Xcode. NÃO assina, NÃO envia à Apple e NÃO
+# Prova que o projeto iOS compila no Xcode (simulador e aparelho) e gera um .ipa
+# sem assinatura para teste via Sideloadly. NÃO assina, NÃO envia à Apple e NÃO
 # precisa de conta Apple. Só manual (workflow_dispatch): o repositório é público,
 # então nada aqui roda em PR de fork nem lê secrets fora de uma execução manual.
 # O app é construído apontando para a HOMOLOGAÇÃO (secrets HOMOLOG_*).
@@ -69,3 +70,39 @@ jobs:
             build 2>&1 | tail -n 60
           test ${PIPESTATUS[0]} -eq 0
         shell: bash
+
+      # Para teste em iPhone sem Mac: .ipa SEM assinatura, a ser assinado na hora
+      # pelo Sideloadly/AltStore com Apple ID gratuito. Aponta para a homologação.
+      # Repositório público: o artifact é baixável por qualquer usuário logado no
+      # GitHub, por isso retenção de 1 dia e nenhum segredo de serviço no app.
+      - name: Compilar para aparelho (sem assinatura)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/ios-device \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tail -n 60
+          test ${PIPESTATUS[0]} -eq 0
+        shell: bash
+
+      - name: Empacotar .ipa sem assinatura
+        run: |
+          APP=$(find build/ios-device/Build/Products -maxdepth 2 -name 'App.app' -type d | head -n 1)
+          test -n "$APP"
+          rm -rf ipa && mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          (cd ipa && zip -qry Zela-homolog-unsigned.ipa Payload)
+          ls -l ipa/Zela-homolog-unsigned.ipa
+        shell: bash
+
+      - name: Publicar .ipa (retenção de 1 dia)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zela-homolog-unsigned-ipa
+          path: ipa/Zela-homolog-unsigned.ipa
+          retention-days: 1
+          if-no-files-found: error
