@@ -4,19 +4,9 @@ name: iOS build (simulador, sem assinatura)
 # precisa de conta Apple. Só manual (workflow_dispatch): o repositório é público,
 # então nada aqui roda em PR de fork nem lê secrets fora de uma execução manual.
 # O app é construído apontando para a HOMOLOGAÇÃO (secrets HOMOLOG_*).
-#
-# O push na branch feature/mobile-ios existe porque o botão "Run workflow" só aparece
-# para workflows que já estão na branch padrão (main). Pushes de forks não disparam
-# este workflow neste repositório. Remover o gatilho de push depois do merge na main.
+
 on:
   workflow_dispatch:
-  push:
-    branches: [feature/mobile-ios]
-    paths:
-      - 'ios/**'
-      - 'src/**'
-      - 'package.json'
-      - '.github/workflows/ios-build.yml'
 
 permissions:
   contents: read
