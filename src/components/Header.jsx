@@ -21,7 +21,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
   const dark = !isDev && flush;
   // Exclusão de conta dentro do app (exigência da Apple): a Família tem a seção nas
   // Configurações; Professora e Recepção abrem por aqui. A Gestão só pelo suporte.
-  const podeExcluirConta = ['teacher', 'admin'].includes(currentUser.role);
+  // Recepção e Professora desabilitadas (14/10/2026): são contas da escola, sem dado
+  // pessoal próprio, e o botão no cabeçalho ficava fácil demais de acionar por engano.
+  // Para reativar, voltar 'teacher' e/ou 'admin' na lista.
+  const podeExcluirConta = [].includes(currentUser.role);
 
   return (
     <>
