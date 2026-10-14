@@ -1,6 +1,6 @@
 # ZELA — STATUS ATUAL (atualizar em poucas linhas a cada mudança significativa)
 
-Última atualização: 2026-10-13 (mobile: iOS preparado na feature/mobile-ios, não compilado).
+Última atualização: 2026-10-14 (mobile: iOS compila no simulador via Actions; branches mobile mescladas e apagadas).
 
 ## Comandos
 - Dev: npm run dev · Build: npm run build · Lint: npm run lint (oxlint)
@@ -13,7 +13,7 @@
 ## Entregue recentemente (do mais novo para o mais antigo, via git)
 - Docs (13/10): SLA_ATENDIMENTO.md na raiz (valores para operação solo, falta jurídico e WhatsApp); destaque 1024x500 da loja pronto; protótipos de logo apagados (fica o modelo I). Pendente: capturas de tela, Android de entrada, iOS.
 - Mobile (13/10): exclusão de conta testada no S23 (login falha após concluída; informado pelo responsável). Fase 6 resta: Android de entrada e iOS.
-- Mobile iOS (13/10, já na main via PR #1; branches mobile apagadas em 14/10): projeto ios/ (Capacitor SPM), push via Firebase no AppDelegate, workflows ios-build.yml e ios-release.yml (só manuais), docs em docs/mobile (seção 20 do plano). Nada compilado ainda: rodar ios-build.yml. Release depende da conta Apple.
+- Mobile iOS (13/10, já na main via PR #1; branches mobile apagadas em 14/10): projeto ios/ (Capacitor SPM), push via Firebase no AppDelegate, workflows ios-build.yml e ios-release.yml (só manuais), docs em docs/mobile (seção 20 do plano). Compila no simulador (ios-build.yml: 2 execuções com sucesso em 13/10 na feature/mobile-ios; nova execução na main em 14/10, run 38599760137, resultado a confirmar). Nunca rodou em aparelho. Release depende da conta Apple.
 - Mobile (13/10, commit 535ba33 na feature/mobile-capacitor): listener pushNotificationReceived (toast com o app aberto) em src/lib/pushNativo.js. Teste 4 aprovado no S23 (homologação): solicitação e confirmação em segundo plano, app aberto e app fechado; familia2 sem vínculo não recebeu nada. 1º check-in do aluno é silencioso por regra.
 - Escola suspensa (13/10): migration 20261012130000_escola_suspensa_bloqueia_acesso analisada e APLICADA só na homologação; testada (aviso com sessão aberta, sem acesso no login, developer isento, reativar restaura). Produção: só no release, junto com registrar_token_push_app. google-services.json fora do repositório (público).
 - Mobile (11/10, já na main): Fase 5 em parte. Push nativo Android (FCM), câmera e reconhecimento facial testados no Galaxy S23 na homologação; reconhecimento facial agora é do plano base (campo plan saiu do Portal do Dev, coluna mantida); send-test-push aceita token. Detalhes em docs/mobile/PLANO_IMPLEMENTACAO_MOBILE.md (seções 15 e 16).
