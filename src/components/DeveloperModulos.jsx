@@ -149,7 +149,6 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
               {p.nome}
             </button>
           ))}
-          <span className={`flex-1 min-h-[36px] rounded-[9px] text-xs font-bold flex items-center justify-center ${pacote === 'livre' ? 'bg-dev-surface-high text-dev-text' : 'text-dev-text-muted/60'}`}>Livre</span>
         </div>
         <p className="text-[11px] text-dev-text-muted">
           {pacote === 'livre' ? 'Combinação fora dos pacotes.' : `Pacote ${pacotes.find(p => p.id === pacote).nome}: plano base${pacotes.find(p => p.id === pacote).itens.map(id => ` + ${ITEM_POR_ID[id].nome}`).join('')}.`}

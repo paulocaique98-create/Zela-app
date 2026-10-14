@@ -43,17 +43,19 @@ Data da auditoria: 11/10/2026. Prazo final: 31/01/2027. Somente leitura: nenhum 
 
 ## 4. Plano revisado das fases e cronograma
 
-| Fase | Janela | Dependências | Observação |
-|---|---|---|---|
-| 1 Auditoria e plano | 11 a 15/10 | none | Este documento. |
-| 2 Ambiente, contas, homologação | 16 a 20/10, estendida | CNPJ, D-U-N-S, Mac | **Caminho crítico.** Sem CNPJ não há contas empresariais. Começar já o que independe disso. |
-| 3 Capacitor e Android | 21/10 a 01/11 | Fase 2 (appId, branch) | Android primeiro; iOS só com Mac. |
-| 4 Nativo e UX mobile | 02 a 15/11 | Fase 3 | Safe areas, botão voltar, ícones. |
-| 5 Integrações (câmera, push, CORS, privacidade) | 16 a 29/11 | Fase 4, Firebase | Inclui mudança de CORS e push nativo, com análise de segurança. |
-| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | iOS exige Mac e iPhone. |
-| 7 Preparação das lojas | 14 a 20/12 | Fase 6, política de privacidade | Advogado para LGPD e biometria. |
-| 8 Teste interno/fechado | 21/12 a 10/01 | Contas liberadas | Pode precisar de 14 dias se a conta for pessoal. |
-| 9 Produção e acompanhamento | 11 a 31/01 | Fase 8 | Revisão da Apple costuma levar dias; deixar folga para rejeições. |
+| Fase | Janela | Dependências | Situação em 13/10/2026 | Observação |
+|---|---|---|---|---|
+| 1 Auditoria e plano | 11 a 15/10 | none | Concluída (11/10) | Este documento. |
+| 2 Ambiente, contas, homologação | 16 a 20/10, estendida | CNPJ, D-U-N-S, Mac | Parcial: homologação criada (seção 10); contas de loja e Apple seguem pendentes | **Caminho crítico.** Sem CNPJ não há contas empresariais. Começar já o que independe disso. |
+| 3 Capacitor e Android | 21/10 a 01/11 | Fase 2 (appId, branch) | Android feito e rodando no S23 Ultra; iOS preparado e nunca compilado (seção 20) | Android primeiro; iOS só com Mac. |
+| 4 Nativo e UX mobile | 02 a 15/11 | Fase 3 | Executada (seção 15) | Safe areas, botão voltar, ícones. |
+| 5 Integrações (câmera, push, CORS, privacidade) | 16 a 29/11 | Fase 4, Firebase | Em andamento: push validado na homologação, CORS de produção, política e suporte no ar. Faltam push em primeiro plano e push real de check-in | Inclui mudança de CORS e push nativo, com análise de segurança. |
+| 6 Testes e homologação | 30/11 a 13/12 | Fase 5, aparelhos reais | Iniciada: exclusão de conta e push testados no S23. Faltam Android de entrada e iOS | iOS exige Mac e iPhone. |
+| 7 Preparação das lojas | 14 a 20/12 | Fase 6, política de privacidade | Iniciada: textos, categoria, privacidade e checklist iOS prontos. Conta de demonstração do revisor decidida e criada; falta testar o login dela no app | Advogado para LGPD e biometria. |
+| 8 Teste interno/fechado | 21/12 a 10/01 | Contas liberadas | Não iniciada | Pode precisar de 14 dias se a conta for pessoal. |
+| 9 Produção e acompanhamento | 11 a 31/01 | Fase 8 | Não iniciada | Revisão da Apple costuma levar dias; deixar folga para rejeições. |
+
+As janelas acima são as originais. O trabalho está adiantado em relação a elas (fases 3 a 7 já iniciadas em outubro); o limite real passou a ser contas de loja, CNPJ/D-U-N-S, Mac e iPhone.
 
 Paralelismo possível: contas e D-U-N-S, política de privacidade, ícones e textos das lojas, Firebase e CORS correm junto às fases 3 e 4.
 
@@ -207,7 +209,7 @@ Atendidos: estado do Git, pacotes, build, lint e testes registrados; Capacitor 8
 - E-mail de suporte e privacidade: `zela.dev26@gmail.com` (aceito pela Apple; trocar por e-mail do domínio quando existir).
 - Política já no ar em `https://zelaedu.com.br/privacidade.html` (HTTP 200 verificado). Retenção e exclusão agora descrevem o pedido dentro do app e o prazo de até 30 dias (vem do código de `AccountDeletionSection.jsx`). Página de suporte `public/suporte.html` criada; só publica depois do merge na main.
 - Bucket `person-photos`: privado na migration baseline (`public=false`, política por `school_id`). NÃO consultei o banco de produção; ver a consulta de conferência em `PREPARACAO_LOJAS.md` / relatório.
-- Categoria Educação definida. Biometria declarada também como informação sensível. Aguarda decisão: conta de demonstração do revisor (build vai para produção).
+- Categoria Educação definida. Biometria declarada também como informação sensível. Conta de demonstração do revisor DECIDIDA (13/10): escola fictícia isolada na produção (ver seção 22 e `PREPARACAO_LOJAS.md` 3.1). Falta testar o login da Recepção e da Família no app.
 
 ## 22. CORS de produção e escola de demonstração (13/10/2026)
 
