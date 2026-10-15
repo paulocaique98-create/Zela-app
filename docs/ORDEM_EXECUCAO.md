@@ -22,8 +22,7 @@ Contexto detalhado de cada item: docs/ZELA_STATUS.md (seção Pendências conhec
 
 ## Bloco E. Mobile e integrações
 - [x] 10. Asaas (15/10/2026): webhook "TESTDE LTDA" (apontava para a produção) removido pelo usuário no painel do Asaas.
-- [~] 11. Fase 6 (15/10/2026), homologação OK: ASAAS_API_KEY (sandbox) e VAPID presentes; cobrança avulsa gerada pelo app, vista pela Família e paga no sandbox com webhook atualizando para Pago; send-test-push respondeu {"success":true}. Pendente: segredos Asaas/VAPID na produção (com aprovação), confirmar se o push apareceu na tela, iOS em aparelho real. Perfil `financeiro` abre tela em branco (sem rota no app). "Pago em" mostra 14/10 para pagamento de 15/10 (possível UTC).
-
+- [~] 11. Fase 6 (15/10/2026), homologação OK: ASAAS_API_KEY (sandbox) e VAPID presentes; cobrança avulsa gerada pelo app, vista pela Família e paga no sandbox com webhook atualizando para Pago; send-test-push respondeu {"success":true}. Pendente: segredos Asaas/VAPID na produção (com aprovação), confirmar se o push apareceu na tela, iOS em aparelho real. Perfil `financeiro` abre tela em branco (sem rota no app).
 ## Bloco F. Organização e docs
 - [ ] 12. Revisar e commitar CLAUDE.md e docs/; decidir .scratch/ e .stitch/ no .gitignore.
 - [ ] 13. Loja e SLA: capturas de tela; SLA com jurídico e WhatsApp.
