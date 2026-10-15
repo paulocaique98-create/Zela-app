@@ -21,8 +21,8 @@ Contexto detalhado de cada item: docs/ZELA_STATUS.md (seção Pendências conhec
 - [x] 9. Menu Planos do Dev (15/10/2026): já estava commitado (6db00a3, 201fac1) e ligado em DeveloperLayout.jsx:128.
 
 ## Bloco E. Mobile e integrações
-- [ ] 10. Asaas: decidir sobre o webhook "TESTDE LTDA" (aponta para a produção).
-- [ ] 11. Fase 6: testar Edge Function pelo app; configurar segredos Asaas e VAPID.
+- [x] 10. Asaas (15/10/2026): webhook "TESTDE LTDA" (apontava para a produção) removido pelo usuário no painel do Asaas.
+- [~] 11. Fase 6 (15/10/2026), homologação OK: ASAAS_API_KEY (sandbox) e VAPID presentes; cobrança avulsa gerada pelo app, vista pela Família e paga no sandbox com webhook atualizando para Pago; send-test-push respondeu {"success":true}. Pendente: segredos Asaas/VAPID na produção (com aprovação), confirmar se o push apareceu na tela, iOS em aparelho real. Perfil `financeiro` abre tela em branco (sem rota no app). "Pago em" mostra 14/10 para pagamento de 15/10 (possível UTC).
 
 ## Bloco F. Organização e docs
 - [ ] 12. Revisar e commitar CLAUDE.md e docs/; decidir .scratch/ e .stitch/ no .gitignore.
