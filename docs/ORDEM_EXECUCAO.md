@@ -4,11 +4,11 @@ Uma sessão por bloco, /clear entre eles. Marcar [x] ao concluir e anotar a data
 Contexto detalhado de cada item: docs/ZELA_STATUS.md (seção Pendências conhecidas).
 
 ## Bloco A. Hora extra e base de dados
-- [ ] 1. Hora extra (item 5): conferir no navegador o histórico do ZL001 no modo geral (PR #15); preencher as faixas; testar o ramo SQL de attendance_charge_cents com dados reais.
+- [x] 1. Hora extra (item 5, 15/10/2026): faixas preenchidas (30/60/90/120, tolerância 30); histórico do Lucas (ZL001) conferido na Recepção; SQL conferido com dados reais (25 linhas batem). Família sem excedente validada só por código (FamilyHistory.jsx:139-141), sem teste em tela. Ressalva: nenhum dia real passou da tolerância, então as faixas com excesso ainda não foram exercitadas.
 - [x] 2. Migrations (15/10/2026): homologação conferida; 8 registradas por migration repair. Resta sem registro e sem aplicar a 20261012120000 (chat por setor, mexe em RLS, precisa de análise de segurança). Nunca db push.
 
 ## Bloco B. Preços (item 6)
-- [ ] 3. Decidir sobre a produção (mínimos 290/490/690 já estão lá, origem a esclarecer) e definir a planilha de implantação 600 a 1.200 (.xlsx não localizado).
+- [x] 3. Preços (15/10/2026): produção mantida. Mínimos 290/490/690 conferidos (histórico de 14/10 mostra um único usuário, migration 20261014120000 registrada). Implantação 600 a 1.200 vale (banco); TABELA_PRECOS_ZELA.xlsx e SIMULACAO_PRECOS_ZELA.xlsx (Premissas B17/B18) estavam em 800 a 1.500 e foram alinhados. Ressalva: a simulação foi salva sem recalcular, abrir no Excel para atualizar os valores.
 
 ## Bloco C. Biometria e erros
 - [ ] 4. iPhone, câmera preta do cadastro (item 4): publicar e testar no aparelho depois das 19h.
@@ -16,9 +16,9 @@ Contexto detalhado de cada item: docs/ZELA_STATUS.md (seção Pendências conhec
 - [ ] 6. Decidir authorized_persons no tempo real (usar os números do passo 5). Motor Human segue desligado.
 
 ## Bloco D. Produto
-- [ ] 7. Mapa de Habilidades: cadastrar catálogo real e testar logado (Professor, Coordenação, Família). 4ª opção de situação segue adiada.
-- [ ] 8. Idade em anos e meses: conferir se Financeiro, Coordenação e Direção abrem secretaria-alunos.
-- [ ] 9. Menu Planos do Dev: verificar se está commitado; se não, revisar e commitar.
+- [x] 7. Mapa de Habilidades (15/10/2026): validado logado pelo usuário nos 3 perfis (Professora, Coordenação, Família); PRs #17 e #18. Catálogo de exemplo Montessori em docs/mapa_habilidades_montessori.csv (a revisar por professora). 4ª opção de situação segue adiada.
+- [x] 8. Idade em anos e meses (15/10/2026): Coordenação e Direção abrem secretaria-alunos (perfisGestao.js:33); Financeiro entra como gestao (Gestão completa), então também abre. Conferido só por código, sem teste em tela.
+- [x] 9. Menu Planos do Dev (15/10/2026): já estava commitado (6db00a3, 201fac1) e ligado em DeveloperLayout.jsx:128.
 
 ## Bloco E. Mobile e integrações
 - [ ] 10. Asaas: decidir sobre o webhook "TESTDE LTDA" (aponta para a produção).
