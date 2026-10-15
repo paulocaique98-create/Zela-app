@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { agruparEventosPorDia, calcularHorasExtras, getBrasiliaDateStr } from '../utils/attendanceUtils';
+import { agruparEventosPorDia, calcularHorasExtras, calcularCobrancaDoDia, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
 import { quemRegistrouDoLog } from '../lib/quemRegistrou';
 import AttendanceEditTodayModal from './AttendanceEditTodayModal';
@@ -110,7 +110,19 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         // Excedente calculado sobre o HORÁRIO FIXO contratado de saída (não
         // compensa entrada atrasada) — mesma regra e mesma função usadas no
         // Relatório de Horas Extras, pra não ter duas verdades diferentes.
-        const calculo = calcularHorasExtras(group.exitLog?.event_time || null, group.studentData?.contracted_exit_time, null, null, group.studentData?.isento_hora_extra);
+        // Modo geral da escola (billing_mode): entrada antecipada + saída tardia
+        // somadas, com a tolerância geral. Individual segue como sempre foi.
+        const calculo = currentSchool?.billing_config?.billing_mode === 'general'
+          ? calcularCobrancaDoDia({
+              entryIso: group.entryLog?.event_time || null,
+              exitIso: group.exitLog?.event_time || null,
+              contractedEntryTime: group.studentData?.contracted_entry_time,
+              contractedExitTime: group.studentData?.contracted_exit_time,
+              weeklySchedule: group.studentData?.weekly_schedule,
+              billingConfig: currentSchool.billing_config,
+              isentoHoraExtra: group.studentData?.isento_hora_extra,
+            })
+          : calcularHorasExtras(group.exitLog?.event_time || null, group.studentData?.contracted_exit_time, null, null, group.studentData?.isento_hora_extra);
 
         return {
           key: `${group.student_id}_${group.date}`,

@@ -136,7 +136,9 @@ export default function FamilyHistory({ currentUser, familyStudents, currentScho
               exit: exitTime ? formatTime(nextExit.event_time) : null,
               contracted: `${ev.students?.contracted_hours || 0}h`,
               duration: calculo.sem_saida ? null : 'saiu', // só usado como flag "já saiu?" na tela/PDF (=== null)
-              overtime: !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
+              // Modo geral da escola: a família não vê o excedente (soma de
+              // entrada antecipada e saída tardia só faz sentido para a escola).
+              overtime: currentSchool?.billing_config?.billing_mode !== 'general' && !calculo.sem_saida && !calculo.dentro_tolerancia ? formatMinutes(calculo.minutos_excedentes) : null,
               rawTime: entryTime.getTime(),
               entryCorrection: ev.corrected ? ev : null,
               exitCorrection: nextExit?.corrected ? nextExit : null,
