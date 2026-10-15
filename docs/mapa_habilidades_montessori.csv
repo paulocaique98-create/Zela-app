@@ -1,0 +1,75 @@
+area;habilidade;idade_min_meses;idade_max_meses
+Movimento;Sustenta a cabeça e vira o corpo com liberdade;0;6
+Movimento;Senta sem apoio;5;9
+Movimento;Engatinha e se arrasta para alcançar objetos;6;12
+Movimento;Puxa o corpo para ficar de pé e anda com apoio;9;15
+Movimento;Anda sozinho com equilíbrio;10;18
+Movimento;Sobe e desce degraus com cuidado;15;30
+Movimento;Corre, pula e se equilibra com segurança;24;48
+Movimento;Anda sobre a linha mantendo o equilíbrio;30;60
+Movimento;Chuta, arremessa e pega a bola;24;48
+Sensorial;Segue objetos com o olhar e reage a sons;0;6
+Sensorial;Pega e explora objetos com as duas mãos;3;12
+Sensorial;Encaixa peças simples em cilindros e caixas de formas;10;24
+Sensorial;Empilha blocos e monta torres;12;30
+Sensorial;Encaixa os Cilindros de Encaixe sem erro;24;42
+Sensorial;Constrói a Torre Rosa;30;48
+Sensorial;Constrói a Escada Marrom;30;48
+Sensorial;Organiza as Barras Vermelhas por tamanho;30;48
+Sensorial;Combina as Caixas de Cores e gradua tons;30;54
+Sensorial;Combina os Sólidos Geométricos com seus nomes;36;60
+Sensorial;Identifica texturas nas Tábuas Táteis;30;54
+Sensorial;Combina os Cilindros de Som por intensidade;36;60
+Sensorial;Identifica o peso nas Tabuinhas Barícas;36;60
+Sensorial;Identifica formas com os Triângulos Construtores;42;72
+Vida Prática;Segura a colher e leva o alimento à boca;10;24
+Vida Prática;Bebe em copo sem ajuda;12;24
+Vida Prática;Participa dos cuidados com o corpo, como lavar as mãos;18;36
+Vida Prática;Transfere objetos de um recipiente a outro com as mãos;18;36
+Vida Prática;Transfere com colher, concha e pinça;24;42
+Vida Prática;Despeja água de uma jarra no copo sem derramar;24;42
+Vida Prática;Tira e coloca sapato e casaco com pouca ajuda;24;48
+Vida Prática;Usa o banheiro com autonomia;24;48
+Vida Prática;Abotoa, fecha zíper e amarra com os Quadros de Vestir;36;60
+Vida Prática;Lava a louça, varre e limpa a mesa;30;60
+Vida Prática;Prepara o próprio lanche, como cortar frutas;36;60
+Vida Prática;Cuida do ambiente e de plantas;30;72
+Vida Prática;Dobra panos e guardanapos;36;60
+Linguagem;Reage à voz e balbucia;0;9
+Linguagem;Fala as primeiras palavras;9;18
+Linguagem;Nomeia objetos e figuras do ambiente;15;30
+Linguagem;Forma frases curtas;18;36
+Linguagem;Amplia o vocabulário com os Cartões de Nomenclatura;24;48
+Linguagem;Conta uma história ou relata um fato na sequência;30;54
+Linguagem;Reconhece o som inicial das palavras no Jogo dos Sons;36;54
+Linguagem;Relaciona o som às letras de lixa;36;60
+Linguagem;Constrói palavras com o Alfabeto Móvel;42;66
+Linguagem;Traça formas e letras com o Metal Inset ou lápis;36;60
+Linguagem;Escreve as primeiras palavras;48;72
+Linguagem;Lê palavras simples;48;72
+Linguagem;Lê frases curtas e pequenos textos;54;72
+Matemática;Percebe quantidades pequenas, como muito e pouco;18;36
+Matemática;Conta objetos até 10;30;54
+Matemática;Associa quantidade ao numeral com as Barras Numéricas;36;60
+Matemática;Associa os Algarismos de Lixa à quantidade;36;60
+Matemática;Forma pares e ímpares;42;66
+Matemática;Reconhece a hierarquia decimal com o Material Dourado;42;72
+Matemática;Conta do 11 ao 99 com as Tábuas de Seguin;48;72
+Matemática;Realiza adição simples com material concreto;48;72
+Matemática;Realiza subtração simples com material concreto;54;72
+Cultura;Observa a natureza e reconhece animais e plantas;18;42
+Cultura;Nomeia os animais e suas características;24;54
+Cultura;Diferencia seres vivos e não vivos;36;60
+Cultura;Reconhece os continentes no Mapa Mundi;42;72
+Cultura;Reconhece as bandeiras e o mapa do Brasil;48;72
+Cultura;Organiza o tempo em dias, semanas e meses;48;72
+Cultura;Realiza experiências simples de ciências, como o que flutua e o que afunda;36;72
+Cultura;Aprecia música, ritmo e artes plásticas;12;72
+Convivência e Emoções;Estabelece vínculo com o adulto de referência;0;12
+Convivência e Emoções;Brinca ao lado de outras crianças;12;30
+Convivência e Emoções;Espera a sua vez com ajuda do adulto;24;42
+Convivência e Emoções;Expressa o que sente com palavras;24;48
+Convivência e Emoções;Resolve conflitos com diálogo;36;60
+Convivência e Emoções;Respeita o trabalho do colega e o espaço comum;30;60
+Convivência e Emoções;Escolhe o trabalho e conclui o ciclo de atividade;30;60
+Convivência e Emoções;Ajuda os menores e coopera em grupo;42;72

@@ -1,14 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, Sprout } from 'lucide-react';
+import { BookOpen, ChevronDown, Calculator, CircleCheck, CircleDashed, Eye, Footprints, Globe, Hand, Heart, Loader2, Sprout, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
-import { SITUACAO_LABEL, periodoLabel, mapaIndisponivel } from '../lib/mapaHabilidades';
+import { AREAS_PADRAO, SITUACAO_LABEL, periodoLabel, mapaIndisponivel } from '../lib/mapaHabilidades';
 
-const COR = {
-  sem_interesse: 'bg-surface-container text-on-surface border-outline-variant',
-  adquirindo: 'bg-brass-50 text-warning border-outline-variant',
-  adquirido: 'bg-success/10 text-success border-success/30',
+const VISUAL = {
+  adquirido: { Icone: CircleCheck, cor: 'bg-success/10 text-success' },
+  adquirindo: { Icone: TrendingUp, cor: 'bg-warning/15 text-warning' },
+  sem_interesse: { Icone: CircleDashed, cor: 'bg-surface-container text-on-surface-variant' },
 };
+const SITUACOES_VISUAIS = [
+  { chave: 'adquirido', Icone: CircleCheck },
+  { chave: 'adquirindo', Icone: TrendingUp },
+  { chave: 'sem_interesse', Icone: CircleDashed },
+];
+const ICONE_AREA = [
+  ['linguagem', BookOpen], ['matem', Calculator], ['vida pr', Hand], ['sensorial', Eye],
+  ['movimento', Footprints], ['cultura', Globe], ['conviv', Heart],
+];
+function iconeDaArea(area) {
+  const nome = String(area || '').toLowerCase();
+  return (ICONE_AREA.find(([chave]) => nome.includes(chave)) || [null, Sprout])[1];
+}
 
 // A RLS só devolve registros PUBLICADOS dos próprios filhos.
 export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
@@ -20,6 +33,7 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
   const [erro, setErro] = useState('');
   const [alunoSel, setAlunoSel] = useState('');
   const [periodoSel, setPeriodoSel] = useState('');
+  const [abertas, setAbertas] = useState(() => new Set());
 
   useEffect(() => {
     if (!schoolId) return undefined;
@@ -69,6 +83,21 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
     return [...porArea.entries()].sort((x, y) => x[0].localeCompare(y[0], 'pt-BR'));
   }, [registros, habilidades, aluno, periodo]);
 
+  // As áreas padrão sempre aparecem (na ordem fixa); áreas extras do catálogo entram depois.
+  // Dentro de cada uma, só o que foi publicado para a criança.
+  const areasCompletas = (() => {
+    const publicadas = new Map(linhas);
+    const extras = new Set([...publicadas.keys(), ...Object.values(habilidades).map(h => h.area)].filter(a => a && !AREAS_PADRAO.includes(a)));
+    const ordem = [...AREAS_PADRAO, ...[...extras].sort((x, y) => x.localeCompare(y, 'pt-BR'))];
+    return ordem.map(area => [area, publicadas.get(area) || []]);
+  })();
+  const alternar = area => setAbertas(prev => {
+    const novo = new Set(prev);
+    if (novo.has(area)) novo.delete(area); else novo.add(area);
+    return novo;
+  });
+  const todasAbertas = areasCompletas.length > 0 && areasCompletas.every(([area]) => abertas.has(area));
+
   if (carregando) return <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   if (erro) return <div className="p-4 text-sm text-error">{erro}</div>;
   if (registros.length === 0) {
@@ -81,8 +110,44 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
   }
 
   const campo = 'border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-white text-on-surface';
+  const nomeAluno = alunos[aluno]?.name || '';
+  const todos = linhas.flatMap(([, itens]) => itens);
+  const contagem = { adquirido: 0, adquirindo: 0, sem_interesse: 0 };
+  todos.forEach(({ r }) => { if (contagem[r.situacao] !== undefined) contagem[r.situacao] += 1; });
+  const pct = todos.length ? Math.round((contagem.adquirido / todos.length) * 100) : 0;
+  const [anoSel, semSel] = periodo.split('|').map(Number);
+
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4 px-3 sm:px-5">
+      <div className="rounded-zela-xl bg-primary text-white p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="w-11 h-11 rounded-zela-lg bg-white/15 flex items-center justify-center shrink-0"><Sprout size={24} /></span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-white/80">Mapa de Habilidades</p>
+            <h2 className="text-xl sm:text-2xl font-bold font-serif truncate">{nomeAluno}</h2>
+            {periodo && <p className="text-sm text-white/80">{periodoLabel({ ano: anoSel, semestre: semSel })}</p>}
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex items-end justify-between mb-1.5">
+            <span className="text-sm font-semibold">{contagem.adquirido} de {todos.length} {todos.length === 1 ? 'habilidade conquistada' : 'habilidades conquistadas'}</span>
+            <span className="text-2xl font-bold">{pct}%</span>
+          </div>
+          <div className="h-2.5 rounded-sm bg-white/20 overflow-hidden">
+            <div className="h-full rounded-sm bg-white transition-all" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          {SITUACOES_VISUAIS.map(({ chave, Icone }) => (
+            <div key={chave} className="rounded-zela-md bg-white/10 px-2 py-2.5 text-center">
+              <Icone size={18} className="mx-auto mb-1" />
+              <p className="text-lg font-bold leading-none">{contagem[chave]}</p>
+              <p className="text-[11px] text-white/80 mt-1">{SITUACAO_LABEL[chave]}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-2">
         {listaAlunos.length > 1 && (
           <select value={aluno} onChange={e => { setAlunoSel(e.target.value); setPeriodoSel(''); }} className={`${campo} flex-1`} aria-label="Criança">
@@ -93,19 +158,60 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
           {periodos.map(p => { const [a, s] = p.split('|').map(Number); return <option key={p} value={p}>{periodoLabel({ ano: a, semestre: s })}</option>; })}
         </select>
       </div>
-      {linhas.map(([area, itens]) => (
-        <section key={area} className="rounded-zela-lg border border-outline-variant p-4">
-          <h3 className="text-xs font-semibold text-primary mb-2">{area}</h3>
-          <ul className="space-y-2">
-            {itens.map(({ r, h }) => (
-              <li key={r.id} className="flex items-start justify-between gap-3 text-sm">
-                <span className="text-on-surface">{h.descricao}</span>
-                <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-md border ${COR[r.situacao]}`}>{SITUACAO_LABEL[r.situacao]}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-on-surface">Áreas de desenvolvimento</h3>
+        <button type="button" onClick={() => setAbertas(todasAbertas ? new Set() : new Set(areasCompletas.map(([area]) => area)))}
+          className="text-xs font-bold text-primary px-2 py-1.5 rounded-zela-md hover:bg-primary/10">
+          {todasAbertas ? 'Recolher todas' : 'Expandir todas'}
+        </button>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2 items-start">
+        {areasCompletas.map(([area, itens]) => {
+          const AreaIcone = iconeDaArea(area);
+          const conquistadas = itens.filter(({ r }) => r.situacao === 'adquirido').length;
+          const aberta = abertas.has(area);
+          return (
+            <section key={area} className="rounded-zela-lg border border-outline-variant bg-white overflow-hidden">
+              <button type="button" onClick={() => alternar(area)} aria-expanded={aberta}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-surface-container-lowest">
+                <span className="w-8 h-8 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center shrink-0"><AreaIcone size={17} /></span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm text-on-surface truncate">{area}</h3>
+                  <p className="text-xs text-on-surface-variant">
+                    {itens.length === 0 ? 'Nenhuma habilidade registrada ainda' : `${conquistadas} de ${itens.length} conquistadas`}
+                  </p>
+                </div>
+                {itens.length > 0 && (
+                  <div className="w-12 sm:w-16 h-1.5 rounded-sm bg-surface-container overflow-hidden shrink-0">
+                    <div className="h-full rounded-sm bg-success" style={{ width: `${Math.round((conquistadas / itens.length) * 100)}%` }} />
+                  </div>
+                )}
+                <ChevronDown size={18} className={`text-on-surface-variant shrink-0 transition-transform ${aberta ? 'rotate-180' : ''}`} />
+              </button>
+              {aberta && (
+                itens.length === 0 ? (
+                  <p className="px-4 py-3 text-xs text-on-surface-variant border-t border-outline-variant/60">As habilidades desta área aparecem aqui quando a escola publicar.</p>
+                ) : (
+                  <ul className="divide-y divide-outline-variant/60 border-t border-outline-variant">
+                    {itens.map(({ r, h }) => {
+                      const { Icone, cor } = VISUAL[r.situacao] || VISUAL.sem_interesse;
+                      return (
+                        <li key={r.id} className="flex items-center gap-3 px-3 py-2.5">
+                          <span className={`w-7 h-7 rounded-zela-md flex items-center justify-center shrink-0 ${cor}`}><Icone size={15} /></span>
+                          <span className="flex-1 text-sm text-on-surface">{h.descricao}</span>
+                          <span className={`shrink-0 text-[11px] font-semibold px-2 py-1 rounded-sm ${cor}`}>{SITUACAO_LABEL[r.situacao]}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )
+              )}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

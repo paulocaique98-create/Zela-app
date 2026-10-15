@@ -13,6 +13,9 @@ export const SITUACAO_LABEL = Object.fromEntries(SITUACOES.map(s => [s.value, s.
 // Sugestões para o cadastro; a escola pode digitar qualquer outra área.
 export const AREAS_SUGERIDAS = ['Linguagem', 'Matemática', 'Vida Prática', 'Sensorial'];
 
+// Áreas que a Família sempre vê no Mapa, mesmo sem habilidade cadastrada ou publicada.
+export const AREAS_PADRAO = ['Vida Prática', 'Sensorial', 'Linguagem', 'Matemática', 'Cultura', 'Movimento', 'Convivência e Emoções'];
+
 export const TODAS_AREAS = 'todas';
 
 // Semestre do dia do preenchimento: janeiro a junho = 1, julho a dezembro = 2.

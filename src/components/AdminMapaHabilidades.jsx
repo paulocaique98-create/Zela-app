@@ -34,6 +34,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
   const [erro, setErro] = useState('');
   const [processando, setProcessando] = useState(false);
   const [confirmar, setConfirmar] = useState(null);
+  const [selecionados, setSelecionados] = useState(() => new Set());
 
   const carregar = useCallback(async () => {
     if (!schoolId) return;
@@ -73,8 +74,16 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
   }, [registros]);
 
   const idsTurma = alunosDaTurma.map(a => a.id);
-  const rascunhosTurma = registros.filter(r => idsTurma.includes(r.student_id) && r.status === 'RASCUNHO').length;
-  const publicadosTurma = registros.filter(r => idsTurma.includes(r.student_id) && r.status === 'PUBLICADO').length;
+  const idsSelecionados = idsTurma.filter(id => selecionados.has(id));
+  const rascunhosSel = registros.filter(r => selecionados.has(r.student_id) && idsTurma.includes(r.student_id) && r.status === 'RASCUNHO').length;
+  const publicadosSel = registros.filter(r => selecionados.has(r.student_id) && idsTurma.includes(r.student_id) && r.status === 'PUBLICADO').length;
+  const todosSelecionados = idsTurma.length > 0 && idsSelecionados.length === idsTurma.length;
+  const alternarAluno = id => setSelecionados(prev => {
+    const novo = new Set(prev);
+    if (novo.has(id)) novo.delete(id); else novo.add(id);
+    return novo;
+  });
+  const alternarTodos = () => setSelecionados(todosSelecionados ? new Set() : new Set(idsTurma));
 
   const corrigir = async (registro, situacao) => {
     if (!podeEditarRegistros || registro.situacao === situacao) return;
@@ -85,7 +94,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
     setRegistros(prev => prev.map(r => (r.id === data.id ? data : r)));
   };
 
-  // Publica (ou volta para rascunho) todos os registros da turma no semestre.
+  // Publica (ou volta para rascunho) os registros dos alunos selecionados no semestre.
   const mudarStatus = async ({ de, para }) => {
     setProcessando(true);
     setErro('');
@@ -93,13 +102,13 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
       const { data, error } = await supabase.from('mapa_habilidades_registros')
         .update({ status: para })
         .eq('school_id', schoolId).eq('ano', ano).eq('semestre', semestre).eq('status', de)
-        .in('student_id', idsTurma)
+        .in('student_id', idsSelecionados)
         .select('id');
       if (error) throw error;
       await logAction({
         schoolId, actorId: currentUser.id,
         action: para === 'PUBLICADO' ? 'mapa_habilidades_publicar' : 'mapa_habilidades_despublicar',
-        entityType: 'mapa_habilidades', details: { turma, ano, semestre, quantidade: data?.length || 0 },
+        entityType: 'mapa_habilidades', details: { turma, ano, semestre, alunos: idsSelecionados.length, quantidade: data?.length || 0 },
       });
       await carregar();
     } catch (e) {
@@ -133,18 +142,18 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:flex gap-2">
               <div className="relative sm:w-28">
-                <select value={ano} onChange={e => setAno(Number(e.target.value))} className={campoLista} aria-label="Ano">
+                <select value={ano} onChange={e => { setAno(Number(e.target.value)); setSelecionados(new Set()); }} className={campoLista} aria-label="Ano">
                   {anos.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>{seta}
               </div>
               <div className="relative sm:w-40">
-                <select value={semestre} onChange={e => setSemestre(Number(e.target.value))} className={campoLista} aria-label="Semestre">
+                <select value={semestre} onChange={e => { setSemestre(Number(e.target.value)); setSelecionados(new Set()); }} className={campoLista} aria-label="Semestre">
                   <option value={1}>1º Semestre</option>
                   <option value={2}>2º Semestre</option>
                 </select>{seta}
               </div>
               <div className="relative col-span-2 sm:col-span-1 sm:flex-1">
-                <select value={turma} onChange={e => { setTurma(e.target.value); setAberto(null); }} className={campoLista} aria-label="Turma">
+                <select value={turma} onChange={e => { setTurma(e.target.value); setAberto(null); setSelecionados(new Set()); }} className={campoLista} aria-label="Turma">
                   {turmas.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>{seta}
               </div>
@@ -153,15 +162,15 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
             {podeEditarRegistros && turma && (
               <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between rounded-zela-lg border border-outline-variant bg-surface-container-lowest p-3">
                 <p className="text-xs text-on-surface-variant">
-                  {rascunhosTurma} em rascunho e {publicadosTurma} publicados nesta turma. A família só vê o que for publicado.
+                  {idsSelecionados.length} de {idsTurma.length} alunos selecionados ({rascunhosSel} em rascunho e {publicadosSel} publicados). A família só vê o que for publicado.
                 </p>
                 <div className="grid grid-cols-2 sm:flex gap-2 shrink-0">
-                  <button type="button" disabled={rascunhosTurma === 0 || processando}
+                  <button type="button" disabled={rascunhosSel === 0 || processando}
                     onClick={() => setConfirmar({ de: 'RASCUNHO', para: 'PUBLICADO' })}
                     className="flex items-center justify-center gap-2 h-10 bg-primary text-white px-3 sm:px-4 rounded-zela-md font-bold text-sm whitespace-nowrap disabled:bg-outline-variant disabled:text-on-surface-variant">
                     <Send size={15} className="shrink-0" /> <span className="sm:hidden">Publicar</span><span className="hidden sm:inline">Publicar para a família</span>
                   </button>
-                  <button type="button" disabled={publicadosTurma === 0 || processando}
+                  <button type="button" disabled={publicadosSel === 0 || processando}
                     onClick={() => setConfirmar({ de: 'PUBLICADO', para: 'RASCUNHO' })}
                     className="flex items-center justify-center gap-2 h-10 border border-outline-variant px-3 rounded-zela-md font-bold text-sm text-on-surface disabled:opacity-40">
                     <Undo2 size={15} /> Despublicar
@@ -178,6 +187,13 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                 <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno nesta turma.</p>
               </div>
             ) : (
+              <>
+              {podeEditarRegistros && (
+                <label className="flex items-center gap-2 text-sm font-bold text-on-surface w-fit cursor-pointer">
+                  <input type="checkbox" checked={todosSelecionados} onChange={alternarTodos} className="w-4 h-4 accent-primary" />
+                  {todosSelecionados ? 'Desmarcar todos' : 'Selecionar todos'}
+                </label>
+              )}
               <ul className="grid gap-2.5 lg:grid-cols-2 items-start">
                 {alunosDaTurma.map(aluno => {
                   const regs = regsPorAluno.get(aluno.id) || [];
@@ -192,6 +208,10 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                   }
                   return (
                     <li key={aluno.id} className={`rounded-zela-lg border bg-surface-container-lowest transition ${expandido ? 'border-primary/40 shadow-sm' : 'border-outline-variant'}`}>
+                      <div className="flex items-center">
+                      {podeEditarRegistros && (
+                        <input type="checkbox" checked={selecionados.has(aluno.id)} onChange={() => alternarAluno(aluno.id)} aria-label={`Selecionar ${aluno.name}`} className="ml-3 w-4 h-4 accent-primary shrink-0 cursor-pointer" />
+                      )}
                       <button type="button" onClick={() => setAberto(expandido ? null : aluno.id)} className="w-full flex items-center gap-3 p-3 text-left">
                         <span className="hidden sm:flex w-9 h-9 rounded-full bg-primary/10 text-primary font-bold text-sm items-center justify-center shrink-0">{(aluno.name || '?').trim().charAt(0).toUpperCase()}</span>
                         <div className="min-w-0 flex-1">
@@ -205,6 +225,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                         </div>
                         {expandido ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
+                      </div>
                       {expandido && (
                         <div className="border-t border-outline-variant p-3 space-y-3">
                           {regs.length === 0 && <p className="text-xs text-on-surface-variant">A professora ainda não marcou nada neste semestre.</p>}
@@ -236,6 +257,7 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
                   );
                 })}
               </ul>
+              </>
             )}
           </div>
         )}
@@ -245,8 +267,8 @@ export default function AdminMapaHabilidades({ currentUser, currentSchool }) {
         <ConfirmModal
           title={confirmar.para === 'PUBLICADO' ? 'Publicar para a família' : 'Voltar para rascunho'}
           message={confirmar.para === 'PUBLICADO'
-            ? `Publicar o Mapa de Habilidades da turma ${turma} (${semestre}º semestre de ${ano})? As famílias passam a ver as habilidades marcadas.`
-            : `Tirar da vista das famílias o mapa da turma ${turma} (${semestre}º semestre de ${ano})? Os registros voltam a ser rascunho.`}
+            ? `Publicar o Mapa de Habilidades de ${idsSelecionados.length} aluno(s) da turma ${turma} (${semestre}º semestre de ${ano})? As famílias deles passam a ver as habilidades marcadas.`
+            : `Tirar da vista das famílias o mapa de ${idsSelecionados.length} aluno(s) da turma ${turma} (${semestre}º semestre de ${ano})? Os registros voltam a ser rascunho.`}
           confirmLabel={confirmar.para === 'PUBLICADO' ? 'Publicar' : 'Despublicar'}
           danger={false}
           isLoading={processando}
