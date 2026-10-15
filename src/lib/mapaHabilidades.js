@@ -18,6 +18,10 @@ export const AREAS_PADRAO = ['Vida Prática', 'Sensorial', 'Linguagem', 'Matemá
 
 export const TODAS_AREAS = 'todas';
 
+// Idade máxima aceita numa habilidade (20 anos) e, em semestres, o teto do filtro da Família (240 / 6 = 40).
+export const IDADE_MAX_MESES = 240;
+export const SEMESTRES_MAXIMOS = IDADE_MAX_MESES / 6;
+
 // Semestre do dia do preenchimento: janeiro a junho = 1, julho a dezembro = 2.
 export function periodoAtual(hoje = new Date()) {
   return { ano: hoje.getFullYear(), semestre: hoje.getMonth() < 6 ? 1 : 2 };
@@ -231,7 +235,7 @@ export function lerCsvHabilidades(texto) {
     if (!area || area.length > 80) return erros.push({ linha: n, msg: 'Área vazia ou muito longa.' });
     if (!descricao || descricao.length > 400) return erros.push({ linha: n, msg: 'Habilidade vazia ou muito longa.' });
     if (min === null || max === null) return erros.push({ linha: n, msg: 'Idade mínima e máxima precisam ser números.' });
-    if (min < 0 || max > 240 || min > max) return erros.push({ linha: n, msg: 'Faixa de idade inválida (mínima maior que a máxima).' });
+    if (min < 0 || max > IDADE_MAX_MESES || min > max) return erros.push({ linha: n, msg: 'Faixa de idade inválida (mínima maior que a máxima).' });
     const chave = `${semAcento(area)}|${semAcento(descricao)}`;
     if (vistos.has(chave)) return erros.push({ linha: n, msg: 'Habilidade repetida na lista.' });
     vistos.add(chave);
@@ -246,7 +250,7 @@ export function validarHabilidade({ area, descricao, idade_min_meses: min, idade
   if (!String(descricao || '').trim()) return 'Descreva a habilidade.';
   if (String(descricao).trim().length > 400) return 'A descrição passa de 400 caracteres.';
   if (!Number.isInteger(min) || !Number.isInteger(max)) return 'Informe a idade mínima e a máxima.';
-  if (min < 0 || max > 240) return 'Idade fora do limite.';
+  if (min < 0 || max > IDADE_MAX_MESES) return 'Idade fora do limite.';
   if (min > max) return 'A idade mínima não pode ser maior que a máxima.';
   return '';
 }

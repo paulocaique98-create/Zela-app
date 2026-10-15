@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, ChevronDown, Calculator, CircleCheck, CircleDashed, Eye, Footprints, Globe, Hand, Heart, Loader2, Sprout, TrendingUp } from 'lucide-react';
+import { BookOpen, CalendarDays, ChevronDown, Calculator, CircleCheck, CircleDashed, Eye, Footprints, Globe, Hand, Heart, Loader2, Sprout, TrendingUp, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
-import { AREAS_PADRAO, SITUACAO_LABEL, periodoLabel, mapaIndisponivel } from '../lib/mapaHabilidades';
+import { AREAS_PADRAO, SEMESTRES_MAXIMOS, SITUACAO_LABEL, mapaIndisponivel } from '../lib/mapaHabilidades';
+
+const periodoCurto = (ano, semestre) => `${semestre}º Sem. ${String(ano).slice(-2)}`;
 
 const VISUAL = {
   adquirido: { Icone: CircleCheck, cor: 'bg-success/10 text-success' },
@@ -10,9 +12,9 @@ const VISUAL = {
   sem_interesse: { Icone: CircleDashed, cor: 'bg-surface-container text-on-surface-variant' },
 };
 const SITUACOES_VISUAIS = [
-  { chave: 'adquirido', Icone: CircleCheck },
-  { chave: 'adquirindo', Icone: TrendingUp },
   { chave: 'sem_interesse', Icone: CircleDashed },
+  { chave: 'adquirindo', Icone: TrendingUp },
+  { chave: 'adquirido', Icone: CircleCheck },
 ];
 const ICONE_AREA = [
   ['linguagem', BookOpen], ['matem', Calculator], ['vida pr', Hand], ['sensorial', Eye],
@@ -68,7 +70,8 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
   const aluno = alunoSel || listaAlunos[0]?.id || '';
   const periodos = useMemo(() => {
     const chaves = new Set(registros.filter(r => r.student_id === aluno).map(r => `${r.ano}|${r.semestre}`));
-    return [...chaves].sort().reverse();
+    // Só aparecem os semestres que já têm registro publicado, até o teto de 40 (240 meses).
+    return [...chaves].sort().reverse().slice(0, SEMESTRES_MAXIMOS);
   }, [registros, aluno]);
   const periodo = periodoSel && periodos.includes(periodoSel) ? periodoSel : periodos[0] || '';
 
@@ -109,7 +112,8 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
     );
   }
 
-  const campo = 'border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-white text-on-surface';
+  const campo = 'w-full h-11 appearance-none border border-outline-variant rounded-zela-lg pl-10 pr-9 text-sm font-semibold bg-white text-on-surface shadow-sm hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer truncate';
+  const seta = <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />;
   const nomeAluno = alunos[aluno]?.name || '';
   const todos = linhas.flatMap(([, itens]) => itens);
   const contagem = { adquirido: 0, adquirindo: 0, sem_interesse: 0 };
@@ -118,46 +122,67 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
   const [anoSel, semSel] = periodo.split('|').map(Number);
 
   return (
-    <div className="w-full space-y-4 px-3 sm:px-5">
-      <div className="rounded-zela-xl bg-primary text-white p-4 sm:p-5">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden -m-3 sm:m-0">
+      <div className="shrink-0 px-2.5 sm:px-5 pt-2.5 sm:pt-0 pb-3">
+      <div className="rounded-zela-xl bg-primary text-white px-4 py-3 sm:p-5">
         <div className="flex items-start gap-3">
-          <span className="w-11 h-11 rounded-zela-lg bg-white/15 flex items-center justify-center shrink-0"><Sprout size={24} /></span>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-white/80">Mapa de Habilidades</p>
-            <h2 className="text-xl sm:text-2xl font-bold font-serif truncate">{nomeAluno}</h2>
-            {periodo && <p className="text-sm text-white/80">{periodoLabel({ ano: anoSel, semestre: semSel })}</p>}
+          <span className="w-9 h-9 sm:w-11 sm:h-11 rounded-zela-lg bg-white/15 flex items-center justify-center shrink-0"><Sprout size={20} /></span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] min-[360px]:text-xs sm:text-sm font-semibold text-white/80 whitespace-nowrap leading-9 sm:leading-[2.75rem] pr-1">Mapa de Habilidades</p>
           </div>
+          {periodos.length > 1 ? (
+            <div className="relative shrink-0 inline-flex items-center gap-1 h-8 sm:h-9 px-2 sm:px-3 rounded-zela-md bg-white/15 border border-white/30 text-[11px] sm:text-sm font-semibold hover:bg-white/25 focus-within:ring-2 focus-within:ring-white/50">
+              <CalendarDays size={13} className="shrink-0 hidden sm:block" />
+              <span className="whitespace-nowrap">{periodoCurto(anoSel, semSel)}</span>
+              <ChevronDown size={12} className="shrink-0" />
+              <select value={periodo} onChange={e => setPeriodoSel(e.target.value)} aria-label="Semestre" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                {periodos.map(p => { const [a, s] = p.split('|').map(Number); return <option key={p} value={p}>{periodoCurto(a, s)}</option>; })}
+              </select>
+            </div>
+          ) : periodo && (
+            <span className="shrink-0 inline-flex items-center gap-1.5 h-8 sm:h-9 px-2 text-[11px] rounded-zela-md bg-white/15 border border-white/30 text-xs sm:text-sm font-semibold">
+              <CalendarDays size={15} /> {periodoCurto(anoSel, semSel)}
+            </span>
+          )}
         </div>
-        <div className="mt-4">
-          <div className="flex items-end justify-between mb-1.5">
-            <span className="text-sm font-semibold">{contagem.adquirido} de {todos.length} {todos.length === 1 ? 'habilidade conquistada' : 'habilidades conquistadas'}</span>
-            <span className="text-2xl font-bold">{pct}%</span>
+        <h2 className="mt-1.5 text-lg sm:text-2xl font-bold font-serif leading-tight whitespace-nowrap">{nomeAluno}</h2>
+        <div className="mt-2.5 sm:mt-4">
+          <div className="flex items-end justify-between mb-1">
+            <span className="text-xs sm:text-sm font-semibold">{contagem.adquirido} de {todos.length} {todos.length === 1 ? 'habilidade conquistada' : 'habilidades conquistadas'}</span>
+            <span className="text-lg sm:text-2xl font-bold leading-none">{pct}%</span>
           </div>
-          <div className="h-2.5 rounded-sm bg-white/20 overflow-hidden">
+          <div className="h-2 sm:h-2.5 rounded-sm bg-white/20 overflow-hidden">
             <div className="h-full rounded-sm bg-white transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-2 mt-3">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
           {SITUACOES_VISUAIS.map(({ chave, Icone }) => (
-            <div key={chave} className="rounded-zela-md bg-white/10 px-2 py-2.5 text-center">
-              <Icone size={18} className="mx-auto mb-1" />
-              <p className="text-lg font-bold leading-none">{contagem[chave]}</p>
-              <p className="text-[11px] text-white/80 mt-1">{SITUACAO_LABEL[chave]}</p>
+            <div key={chave} className="rounded-zela-md bg-white/10 px-1.5 py-1.5 sm:px-2 sm:py-2.5 text-center">
+              <div className="flex items-center justify-center gap-1.5 sm:block">
+                <Icone size={16} className="sm:mx-auto sm:mb-1" />
+                <p className="text-base sm:text-lg font-bold leading-none">{contagem[chave]}</p>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-white/80 mt-0.5 sm:mt-1 leading-tight">{SITUACAO_LABEL[chave]}</p>
             </div>
           ))}
         </div>
       </div>
 
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto px-2.5 sm:px-5 pb-6 space-y-4">
+      {listaAlunos.length > 1 && (
       <div className="flex flex-col sm:flex-row gap-2">
         {listaAlunos.length > 1 && (
-          <select value={aluno} onChange={e => { setAlunoSel(e.target.value); setPeriodoSel(''); }} className={`${campo} flex-1`} aria-label="Criança">
-            {listaAlunos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
+          <div className="relative flex-1">
+            <User size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+            <select value={aluno} onChange={e => { setAlunoSel(e.target.value); setPeriodoSel(''); }} className={campo} aria-label="Criança">
+              {listaAlunos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>{seta}
+          </div>
         )}
-        <select value={periodo} onChange={e => setPeriodoSel(e.target.value)} className={`${campo} flex-1`} aria-label="Período">
-          {periodos.map(p => { const [a, s] = p.split('|').map(Number); return <option key={p} value={p}>{periodoLabel({ ano: a, semestre: s })}</option>; })}
-        </select>
       </div>
+      )}
 
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-on-surface">Áreas de desenvolvimento</h3>
@@ -211,6 +236,7 @@ export default function FamilyMapaHabilidades({ currentUser, currentSchool }) {
             </section>
           );
         })}
+      </div>
       </div>
     </div>
   );
