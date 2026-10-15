@@ -60,6 +60,7 @@ const ConfigComunicacao = lazy(() => import('./GestaoConfiguracoes').then(m => (
 const ConfigSeguranca = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigSeguranca })));
 // Telas do Admin reaproveitadas (a RLS de cada tabela já aceita gestao).
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
+const AdminHistory = lazy(() => import('./AdminHistory'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
@@ -91,7 +92,7 @@ function groupOf(tab) {
   if (tab.startsWith('secretaria-')) return 'secretaria';
   if (tab.startsWith('contratos-')) return 'contratos';
   if (tab.startsWith('financeiro-')) return 'financeiro';
-  if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras'].includes(tab)) return 'presenca';
+  if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras', 'historico-geral'].includes(tab)) return 'presenca';
   if (tab.startsWith('cadastros-')) return 'cadastros';
   if (tab.startsWith('academico-') || tab === 'calendario') return 'academico';
   if (tab.startsWith('comunicacao-')) return 'comunicacao';
@@ -283,6 +284,7 @@ export default function GestaoPortal({
               {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
               {item('saidas-pendentes', LogOut, 'Saídas Pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
               {item('horas-extras', Clock, 'Horas Extras')}
+              {item('historico-geral', ScrollText, 'Histórico Geral')}
             </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
             {group('cadastros', 'Cadastros', Folders, <>
               {item('cadastros-usuarios', Users, 'Usuários', { badge: pendingUsersCount > 0 ? pendingUsersCount : null })}
@@ -387,6 +389,7 @@ export default function GestaoPortal({
           {abaAtual === 'presenca-dia' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
           {abaAtual === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
+          {abaAtual === 'historico-geral' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
           {abaAtual === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Cadastros */}

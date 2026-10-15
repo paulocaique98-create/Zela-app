@@ -30,7 +30,7 @@ R1. **Limite por aluno**: modalidade "Por aluno" só para escolas com **até 50 
 R2. **Mensalidade** = maior valor entre (alunos × preço por aluno) e o mínimo mensal do plano (regra da aba Simulação).
 R3. **Por aluno** = soma dos preços avulsos dos itens escolhidos (base sempre incluso). Itens de cobrança fixa (ex.: app com a marca) somam valor mensal fixo.
 R4. **Pacote** = preço por aluno do pacote + mínimo mensal. Ciclos: mensal (1), semestral (6), anual (12), bianual (24 meses), cada um com desconto % próprio sobre a mensalidade (0 a 50%). Ciclo pode ser desligado por plano.
-R5. **Implantação**: valor base por plano; opcionalmente sobrescrito por ciclo (ex.: anual com implantação menor). Faixa de referência da planilha: R$ 800 a R$ 1.500.
+R5. **Implantação**: valor base por plano; opcionalmente sobrescrito por ciclo (ex.: anual com implantação menor). Faixa de referência da planilha: R$ 600 a R$ 1.200.
 R6. **Desconto na implantação**: na contratação, em % ou R$, com motivo obrigatório, nunca deixando o valor negativo. Teto de desconto configurável (padrão 100%, ou seja, isenção permitida com motivo).
 R7. **Desativar, nunca excluir**: plano, ciclo ou preço de módulo desativado some das novas contratações, mas as contratações existentes continuam intactas.
 R8. **Snapshot**: a contratação grava cópia dos valores e itens do plano no momento. Editar um plano depois não altera contratos vigentes; só vale para novas contratações ou renovação.
