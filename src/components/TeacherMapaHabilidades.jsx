@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, Lock, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
+import { TURMAS } from '../lib/constants';
 import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
 import {
   SITUACOES, TODAS_AREAS, periodoAtual, montarFila, progressoDaFila, indiceInicial, podeAvancar, formatFaixa, mensagemErroMapa,
@@ -15,6 +16,10 @@ const BOTAO_SITUACAO = {
   adquirindo: 'data-[on=true]:bg-warning data-[on=true]:text-white data-[on=true]:border-warning',
   adquirido: 'data-[on=true]:bg-success data-[on=true]:text-white data-[on=true]:border-success',
 };
+
+// No computador o campo Turma tem largura fixa, do tamanho do maior nome de turma
+// (mais caracteres); 6ch cobrem o espaço interno.
+const LARGURA_TURMA = `${Math.max(...TURMAS.filter(t => t !== 'Todas as Turmas').map(t => t.length)) + 6}ch`;
 
 export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
@@ -33,6 +38,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
   const [ano, setAno] = useState(inicial.ano);
   const [semestre, setSemestre] = useState(inicial.semestre);
   const [area, setArea] = useState(TODAS_AREAS);
+  const [alunoSel, setAlunoSel] = useState('');
   const [indice, setIndice] = useState(0);
   const [pronto, setPronto] = useState(false);
 
@@ -71,9 +77,13 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
 
   const areas = useMemo(() => [...new Set(habilidades.map(h => h.area))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [habilidades]);
 
+  const listaAlunos = useMemo(() => [...alunos].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')), [alunos]);
+  // '' = Geral (todas as crianças da turma, em ordem variada); senão só a criança escolhida.
+  const alunosDaFila = useMemo(() => (alunoSel ? alunos.filter(a => a.id === alunoSel) : alunos), [alunos, alunoSel]);
+
   const fila = useMemo(() => montarFila({
-    habilidades, alunos, registros, periodo, area, semente: currentUser?.id || '', hoje: hojeRef,
-  }), [habilidades, alunos, registros, periodo, area, currentUser?.id, hojeRef]);
+    habilidades, alunos: alunosDaFila, registros, periodo, area, semente: currentUser?.id || '', hoje: hojeRef,
+  }), [habilidades, alunosDaFila, registros, periodo, area, currentUser?.id, hojeRef]);
 
   const progresso = useMemo(() => progressoDaFila(fila), [fila]);
 
@@ -84,7 +94,7 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
     setPronto(true);
     // fila muda a cada clique; só reposiciona quando carrega ou troca filtro
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carregando, area, ano, semestre, habilidades, alunos]);
+  }, [carregando, area, ano, semestre, habilidades, alunos, alunoSel]);
 
   const passo = fila[Math.min(indice, Math.max(fila.length - 1, 0))] || null;
   const indiceAtual = passo ? fila.indexOf(passo) : 0;
@@ -137,6 +147,17 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant overflow-hidden">
       <div className="p-4 sm:p-5 border-b border-outline-variant shrink-0 space-y-3">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+          <label className="sm:flex-none sm:w-[var(--larg-turma)] text-xs font-bold text-on-surface-variant" style={{ '--larg-turma': LARGURA_TURMA }}>
+            Turma
+            <input value={turmas.join(', ')} readOnly disabled aria-readonly="true" className="mt-1 w-full border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-surface-container text-on-surface cursor-not-allowed" />
+          </label>
+          <label className="flex-1 text-xs font-bold text-on-surface-variant">
+            Aluno
+            <select value={alunoSel} onChange={e => setAlunoSel(e.target.value)} className="mt-1 w-full border border-outline-variant rounded-zela-md px-3 py-2 text-sm bg-white text-on-surface">
+              <option value="">Geral (todos, em ordem variada)</option>
+              {listaAlunos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </label>
           <label className="flex-1 text-xs font-bold text-on-surface-variant">
             Período
             <div className="flex gap-2 mt-1">
@@ -182,10 +203,10 @@ export default function TeacherMapaHabilidades({ currentUser, currentSchool }) {
           <div className="text-center py-16">
             <Target className="mx-auto h-10 w-10 text-primary mb-3" aria-hidden="true" />
             <p className="text-sm font-bold text-on-surface">Nada para preencher neste filtro.</p>
-            <p className="text-xs text-on-surface-variant mt-1">Nenhuma criança da sua turma está na faixa de idade das habilidades desta área.</p>
+            <p className="text-xs text-on-surface-variant mt-1">{alunoSel ? 'Esta criança não está na faixa de idade das habilidades desta área.' : 'Nenhuma criança da sua turma está na faixa de idade das habilidades desta área.'}</p>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="w-full space-y-4">
             <div className="rounded-zela-lg border border-outline-variant p-4 bg-surface-container-lowest">
               <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold text-primary">
                 <span>{passo.habilidade.area}</span>
