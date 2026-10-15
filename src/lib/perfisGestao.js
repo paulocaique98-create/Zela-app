@@ -36,6 +36,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   // Presença (consulta e correções que não geram hora extra)
   'presenca-dia',
   'attendance-corrections',
+  'saidas-pendentes',
   // Cadastros
   'cadastros-usuarios',
   'cadastros-novo',
@@ -104,6 +105,7 @@ export const MODULO_DA_ABA_GESTAO = {
   calendario: 'calendario',
   'presenca-dia': 'checkin',
   'attendance-corrections': 'checkin',
+  'saidas-pendentes': 'checkin',
   'horas-extras': 'checkin',
   'financeiro-visao': 'financeiro',
   'financeiro-planos': 'financeiro',
