@@ -111,7 +111,7 @@ Cada escola contrata um **plano base** e pode somar módulos. Todo módulo nasce
 Formas de contratação (em implantação):
 * **Por aluno**, para escolas com até 50 alunos: base R$ 6,90 por aluno/mês, mais módulos avulsos (Pedagógico 3,50; Rotina 2,50; Chat 1,50; Prova de vida 1,50; QR 1,00).
 * **Pacotes**, obrigatórios acima de 50 alunos: Essencial (R$ 6,90/aluno, mínimo R$ 450), Completo (R$ 11,90, mínimo R$ 790), Premium (R$ 15,90, mínimo R$ 990), em ciclos mensal, semestral, anual e bianual com desconto progressivo.
-* **Implantação** cobrada à parte (faixa de referência R$ 800 a R$ 1.500).
+* **Implantação** cobrada à parte (faixa de referência R$ 600 a R$ 1.200).
 
 Valores ainda em validação; a cobrança automática da escola pelo Zela não existe.
 
