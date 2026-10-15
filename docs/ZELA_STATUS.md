@@ -11,6 +11,7 @@
 - Arquivos grandes (não ler inteiros): src/App.jsx, src/components/AdminFaceScanner.jsx, src/components/AdminPortal.jsx.
 
 ## Entregue recentemente (do mais novo para o mais antigo, via git)
+- Saídas Pendentes (15/10, não commitado): tela para alunos com entrada ontem e sem saída (Recepção, Gestão, Coordenação/Direção lançam; Professora só vê a própria turma). Migration 20261015120000_saidas_pendentes.sql (list_saidas_pendentes, lancar_saida_pendente) NÃO APLICADA em nenhum banco. Front: SaidasPendentes.jsx, lib/saidasPendentes.js, hook useSaidasPendentesCount. Testes novos ok (saidasPendentes.test.js); falta testar no navegador e no banco de homologação.
 - Docs (13/10): SLA_ATENDIMENTO.md na raiz (valores para operação solo, falta jurídico e WhatsApp); destaque 1024x500 da loja pronto; protótipos de logo apagados (fica o modelo I). Pendente: capturas de tela, Android de entrada, iOS.
 - Mobile (13/10): exclusão de conta testada no S23 (login falha após concluída; informado pelo responsável). Fase 6 resta: Android de entrada e iOS.
 - Mobile iOS (13/10, já na main via PR #1; branches mobile apagadas em 14/10): projeto ios/ (Capacitor SPM), push via Firebase no AppDelegate, workflows ios-build.yml e ios-release.yml (só manuais), docs em docs/mobile (seção 20 do plano). Compila no simulador (ios-build.yml: 2 execuções com sucesso em 13/10 na feature/mobile-ios; nova execução na main em 14/10 (run 38599760137) também com sucesso; gatilho de push removido, só manual). Nunca rodou em aparelho. Release depende da conta Apple.

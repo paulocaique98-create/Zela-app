@@ -1,5 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, AlertCircle, FileText, ClipboardCheck } from 'lucide-react';
+import { Home, AlertCircle, FileText, ClipboardCheck, LogOut } from 'lucide-react';
+import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
@@ -11,6 +12,7 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
+const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const TeacherMapaHabilidades = lazy(() => import('./TeacherMapaHabilidades'));
 const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
 const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
@@ -52,6 +54,8 @@ export default function TeacherPortal({
   // estar ativo; cada item específico (Relatórios/Frequência) continua
   // com sua própria flag dentro do portal.
   const moduleEnabled = showRelatorios || showFrequencia;
+  const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
+  const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
   if (!moduleEnabled) {
     return (
@@ -102,6 +106,9 @@ export default function TeacherPortal({
             {showFrequencia && (
               <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
             )}
+            {showSaidasPendentes && (
+              <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
+            )}
 
             {showRelatorios && (
               <SidebarGroup
@@ -132,6 +139,7 @@ export default function TeacherPortal({
           {teacherTab === 'frequencia' && (
             <TeacherFrequencia currentUser={currentUser} currentSchool={currentSchool} />
           )}
+          {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
         </Suspense>
@@ -142,6 +150,7 @@ export default function TeacherPortal({
           { key: 'home', label: 'Início', icon: Home, active: teacherTab === 'home', onClick: () => go('home') },
           { key: 'monitor', label: 'Monitor', icon: AlertCircle, active: teacherTab === 'monitor', onClick: () => go('monitor'), badge: monitorCount },
           { key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, active: teacherTab === 'frequencia', onClick: () => go('frequencia'), show: showFrequencia },
+          { key: 'saidas-pendentes', label: 'Saídas', icon: LogOut, active: teacherTab === 'saidas-pendentes', onClick: () => go('saidas-pendentes'), badge: saidasPendentesCount, show: showSaidasPendentes },
         ]}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}

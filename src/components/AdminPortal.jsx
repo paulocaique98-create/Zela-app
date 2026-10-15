@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { createPortal } from 'react-dom';
 import { AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
 import TrilhaConfirmacao from './TrilhaConfirmacao';
@@ -39,6 +40,7 @@ const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
 const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
+const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
@@ -205,6 +207,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
   const showGerenciamento = features.gerenciamento !== false;
   const showCheckin = features.checkin !== false;
+  const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showCheckin);
   const showConfiguracoes = features.configuracoes !== false;
 
   const showFormularios = features.formularios === true;
@@ -313,6 +316,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                   <SidebarItem active={adminTab === 'qr-checkin'} icon={Fingerprint} label="Carteirinhas QR" onClick={() => go('qr-checkin')} />
                 )}
                 <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
+                <SidebarItem active={adminTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
               </SidebarGroup>
             )}
@@ -659,6 +663,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'students' && <AdminStudentList currentUser={currentUser} />}
 
         {/* HISTÓRICO */}
+        {adminTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
 
         {/* CADASTRO */}

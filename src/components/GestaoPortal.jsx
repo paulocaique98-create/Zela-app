@@ -6,8 +6,9 @@ import {
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
-  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags,
+  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut,
 } from 'lucide-react';
+import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -22,6 +23,7 @@ import { recursosDoPerfil, ABAS_GESTAO_PEDAGOGICA, PAPEL_GESTAO_PEDAGOGICA, pode
 
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
+const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const GestaoAlunos = lazy(() => import('./GestaoAlunos'));
 const GestaoAlunoPerfil = lazy(() => import('./GestaoAlunoPerfil'));
 const AdminMatriculas = lazy(() => import('./AdminMatriculas'));
@@ -89,7 +91,7 @@ function groupOf(tab) {
   if (tab.startsWith('secretaria-')) return 'secretaria';
   if (tab.startsWith('contratos-')) return 'contratos';
   if (tab.startsWith('financeiro-')) return 'financeiro';
-  if (['presenca-dia', 'attendance-corrections', 'horas-extras'].includes(tab)) return 'presenca';
+  if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras'].includes(tab)) return 'presenca';
   if (tab.startsWith('cadastros-')) return 'cadastros';
   if (tab.startsWith('academico-') || tab === 'calendario') return 'academico';
   if (tab.startsWith('comunicacao-')) return 'comunicacao';
@@ -191,6 +193,7 @@ export default function GestaoPortal({
   // Badge de correções de presença aguardando aprovação -- mesmo padrão e
   // mesma fonte de dado do badge no AdminPortal.jsx.
   const [pendingCorrectionsCount, setPendingCorrectionsCount] = useState(0);
+  const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showCheckin);
   useEffect(() => {
     if (!currentUser?.school_id) return;
     let cancelled = false;
@@ -278,8 +281,9 @@ export default function GestaoPortal({
             {showCheckin && group('presenca', 'Presença e Horas', Clock, <>
               {item('presenca-dia', UserCheck, 'Presença do Dia')}
               {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
+              {item('saidas-pendentes', LogOut, 'Saídas Pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
               {item('horas-extras', Clock, 'Horas Extras')}
-            </>, correcoesParaMim > 0 ? correcoesParaMim : null)}
+            </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
             {group('cadastros', 'Cadastros', Folders, <>
               {item('cadastros-usuarios', Users, 'Usuários', { badge: pendingUsersCount > 0 ? pendingUsersCount : null })}
               {item('cadastros-novo', UserPlus, 'Novo Cadastro')}
@@ -383,6 +387,7 @@ export default function GestaoPortal({
           {abaAtual === 'presenca-dia' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
           {abaAtual === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
+          {abaAtual === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Cadastros */}
           {abaAtual === 'cadastros-usuarios' && (
