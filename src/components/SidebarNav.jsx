@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
 
 // Item de navegação da sidebar — visual "pílula preenchida quando ativo"
 // (mesmo padrão do protótipo Zela no Stitch). Puramente apresentacional:
@@ -44,6 +44,22 @@ export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
       </span>
       <span className="flex-1 min-w-0 text-left leading-tight break-words md:hidden md:group-data-[expanded=true]/side:inline">{label}</span>
     </button>
+  );
+}
+
+// "Sair" dentro do menu, só no celular (no desktop o botão continua no Header).
+export function SidebarLogoutItem({ onLogout, dev = false }) {
+  if (!onLogout) return null;
+  return (
+    <div className="md:hidden shrink-0 px-4 pt-3 pb-4 mt-2">
+      <button
+        onClick={onLogout}
+        className={`w-full flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-zela-sm border-l-[3px] border-transparent text-sm font-medium transition-colors ${dev ? 'text-dev-text-muted hover:bg-dev-surface hover:text-error' : 'text-ink-text hover:bg-ink-2 hover:text-white'}`}
+      >
+        <LogOut size={SIDEBAR_ICON_SIZE} aria-hidden="true" className="shrink-0" />
+        <span className="flex-1 text-left leading-tight">Sair</span>
+      </button>
+    </div>
   );
 }
 

@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Building2, Receipt, Tags, FileText, LifeBuoy, Settings, ScanFace } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
-import { SidebarToggleButton, SIDEBAR_ICON_SIZE } from './SidebarNav';
+import { SidebarToggleButton, SidebarLogoutItem, SIDEBAR_ICON_SIZE } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 
 // Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
@@ -13,7 +13,7 @@ const DeveloperErrorLogs = lazy(() => import('./DeveloperErrorLogs'));
 const DeveloperQualidadeBiometria = lazy(() => import('./DeveloperQualidadeBiometria'));
 const DeveloperPlanos = lazy(() => import('./DeveloperPlanos'));
 
-export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab }) {
+export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab, onLogout }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
 
@@ -102,6 +102,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
               );
             })}
           </nav>
+          <SidebarLogoutItem onLogout={onLogout} dev />
         </div>
       </aside>
 

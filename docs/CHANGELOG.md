@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Portais e interface** (22/10): Rotina e família no Professor (Diário, Cardápio só leitura, Mural em Acadêmico, limitados às turmas dele); Sair no fim do menu mobile; Autoatendimento sem menu lateral; barras inferiores de Professor, Família e Gestão; submenus recolhem no mobile; login sempre no Início; contadores de alerta em dourado; fundo branco; Planos em cartões. Migration `20261022120000_professor_rotina_e_familia.sql` (não aplicada).
 - **Mínimo mensal dos pacotes reduzido** (14/10): Essencial 450 para 290, Completo 790 para 490, Premium 990 para 690. Migration `20261014120000_reduz_minimo_mensal_pacotes.sql` (não aplicada). Chip "Livre" removido da tela de Módulos do Dev.
 
 ### Adicionado

@@ -668,6 +668,10 @@ export default function App() {
       setCurrentSchool(null);
       localStorage.removeItem('zela_school');
     }
+    // Todo login começa na tela de Início, com o menu mobile fechado (o estado
+    // do portal anterior sobrevive ao logout, pois o App não é remontado).
+    setIsMobileMenuOpen(false);
+    setAdminTab('home'); setFamilyTab('home'); setTeacherTab('home'); setGestaoTab('home'); setDeveloperTab('schools');
     setCurrentUser(user);
     localStorage.setItem('zela_user', JSON.stringify(user));
     setFamilyTab('home');
@@ -709,6 +713,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    setIsMobileMenuOpen(false);
     setCurrentUser(null);
     // currentSchool NÃO é limpo aqui de propósito: se o próximo login for da
     // mesma escola (comum — trocar entre conta admin/família, ou logar de novo),

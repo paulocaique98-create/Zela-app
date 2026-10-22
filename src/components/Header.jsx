@@ -131,7 +131,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
 
         <button
           onClick={onLogout}
-          className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 flex ${isDev ? 'text-dev-text-muted hover:text-error hover:bg-dev-surface-high' : (dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low')}`}
+          className={`p-2 min-w-11 min-h-11 rounded-zela-sm transition items-center justify-center active:scale-95 hidden md:flex ${isDev ? 'text-dev-text-muted hover:text-error hover:bg-dev-surface-high' : (dark ? 'text-ink-text hover:text-white hover:bg-ink-2' : 'text-on-surface-variant hover:text-error hover:bg-surface-container-low')}`}
           title="Sair do sistema"
           aria-label="Sair do sistema"
         >

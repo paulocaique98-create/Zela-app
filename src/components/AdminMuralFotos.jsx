@@ -21,7 +21,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
   const [pendingFiles, setPendingFiles] = useState([]);
   const [caption, setCaption] = useState('');
   const [selectedTurmas, setSelectedTurmas] = useState([]);
-  const [sendToAll, setSendToAll] = useState(true);
+  const [sendToAll, setSendToAll] = useState(currentUser?.role !== 'teacher');
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteFoto, setConfirmDeleteFoto] = useState(null);
@@ -29,7 +29,11 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
-  const { turmas: TURMA_OPTIONS } = useSchoolConfig(schoolId);
+  const { turmas: turmasDaEscola } = useSchoolConfig(schoolId);
+  // Professora só publica e vê as turmas dela.
+  const TURMA_OPTIONS = currentUser?.role === 'teacher'
+    ? turmasDaEscola.filter(t => (currentUser.turmas || []).includes(t))
+    : turmasDaEscola;
   const lightboxFoto = lightboxIndex !== null ? fotos[lightboxIndex] : null;
 
   const showPrev = useCallback(() => {
@@ -265,6 +269,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                 <Users size={12} /> Visível para
               </label>
               <div className="flex flex-wrap gap-2">
+                {currentUser?.role !== 'teacher' && (
                 <button
                   type="button"
                   onClick={() => { setSendToAll(true); setSelectedTurmas([]); }}
@@ -274,6 +279,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                 >
                   Todas as Turmas
                 </button>
+                )}
                 {TURMA_OPTIONS.map(t => {
                   const isSelected = !sendToAll && selectedTurmas.includes(t);
                   return (

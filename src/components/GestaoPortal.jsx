@@ -6,13 +6,14 @@ import {
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
-  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut,
+  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
 } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
-import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 import { supabase } from '../lib/supabase';
 import GestaoInicio from './GestaoInicio';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
@@ -54,6 +55,7 @@ const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
 const GestaoMeuPlano = lazy(() => import('./GestaoMeuPlano'));
+const GestaoPrimeirosPassos = lazy(() => import('./GestaoPrimeirosPassos'));
 const GestaoExclusoesConta = lazy(() => import('./GestaoExclusoesConta'));
 const GestaoBiometrias = lazy(() => import('./GestaoBiometrias'));
 const ConfigComunicacao = lazy(() => import('./GestaoConfiguracoes').then(m => ({ default: m.ConfigComunicacao })));
@@ -95,6 +97,7 @@ function groupOf(tab) {
   if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras', 'historico-geral'].includes(tab)) return 'presenca';
   if (tab.startsWith('cadastros-')) return 'cadastros';
   if (tab.startsWith('academico-') || tab === 'calendario') return 'academico';
+  if (tab === 'comunicacao-mural') return 'academico';
   if (tab.startsWith('comunicacao-')) return 'comunicacao';
   if (tab.startsWith('relatorios-')) return 'relatorios';
   if (tab.startsWith('permissoes-') || tab.startsWith('config-') || tab === 'integracoes') return 'configuracoes';
@@ -134,6 +137,7 @@ export default function GestaoPortal({
   const abaAtual = pode(gestaoTab) ? gestaoTab : 'home';
   const collapsed = isDesktop && !isSidebarExpanded;
   const [openAccordion, setOpenAccordion] = useState(() => groupOf(gestaoTab || ''));
+  useRecolherSubmenusNoMobile(isMobileMenuOpen, isDesktop, setOpenAccordion);
   const toggleAccordion = (name) => setOpenAccordion(openAccordion === name ? null : name);
   // Financeiro e Entrada e saída são do plano base (sempre inclusos).
   const showFinanceiro = chaveLigada(features, 'financeiro');
@@ -258,6 +262,7 @@ export default function GestaoPortal({
               na horizontal. */}
           <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             {item('home', Home, 'Início')}
+            {item('primeiros-passos', Rocket, 'Primeiros passos')}
             {item('pendencias', Inbox, 'Pendências', { badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
             {group('secretaria', 'Secretaria', GraduationCap, <>
               {item('secretaria-alunos', GraduationCap, 'Alunos')}
@@ -308,11 +313,11 @@ export default function GestaoPortal({
               {item('calendario', CalendarDays, 'Calendário')}
               {item('academico-cardapio', UtensilsCrossed, 'Cardápio')}
               {item('academico-diario', Soup, 'Diário')}
+              {item('comunicacao-mural', ImageIcon, 'Mural de Fotos')}
               {item('academico-materias', BookMarked, 'Matérias')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
-              {item('comunicacao-mural', ImageIcon, 'Mural')}
             </>)}
             {group('relatorios', 'Relatórios', BarChart3, <>
               {item('relatorios-gestao', BarChart3, 'Gestão')}
@@ -334,6 +339,7 @@ export default function GestaoPortal({
               {item('integracoes', Plug, 'Integrações')}
             </>)}
           </nav>
+          <SidebarLogoutItem onLogout={onLogout} />
         </div>
       </aside>
 
@@ -341,6 +347,13 @@ export default function GestaoPortal({
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {abaAtual === 'home' && <GestaoInicio currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} clickCounts={clickCounts} />}
           {abaAtual === 'pendencias' && <GestaoPendencias currentUser={currentUser} setGestaoTab={goFromShortcut} />}
+          {abaAtual === 'primeiros-passos' && (
+            <GestaoPrimeirosPassos
+              currentUser={currentUser}
+              currentSchool={currentSchool}
+              onAbrirPasso={(p) => { if (p.subaba) setFinanceConfigTab(p.subaba); goFromShortcut(p.aba); }}
+            />
+          )}
 
           {/* Secretaria */}
           {/* O painel de alunos fica montado (escondido) enquanto o perfil está
@@ -472,7 +485,7 @@ export default function GestaoPortal({
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
               {!isChatOpen && chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-brass text-[#1a1405] text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
                   {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                 </span>
               )}
@@ -504,9 +517,10 @@ export default function GestaoPortal({
         items={[
           { key: 'home', label: 'Início', icon: Home },
           { key: 'pendencias', label: 'Pendências', icon: Inbox, badge: pendenciasBadge },
-          { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap },
+          // Alunos fica só no menu para o perfil Gestão (financeiro); Coordenação e Direção mantêm o atalho.
+          role === PAPEL_GESTAO_PEDAGOGICA && { key: 'secretaria-alunos', label: 'Alunos', icon: GraduationCap },
           { key: 'financeiro-visao', label: 'Financeiro', icon: PieChart },
-        ].map(i => ({ ...i, active: abaAtual === i.key, onClick: () => goFromShortcut(i.key), show: pode(i.key) }))}
+        ].filter(Boolean).map(i => ({ ...i, active: abaAtual === i.key, onClick: () => goFromShortcut(i.key), show: pode(i.key) }))}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />

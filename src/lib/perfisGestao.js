@@ -81,6 +81,7 @@ export const ABAS_SO_GESTAO = new Set([
   'relatorios-gestao', 'relatorios-financeiro',
   'config-meu-plano', 'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca',
   'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
+  'primeiros-passos',
 ]);
 
 export function podeVerAba(role, tab) {
@@ -118,6 +119,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'financeiro-despesas': 'financeiro',
   'relatorios-financeiro': 'financeiro',
   'config-financeiro': 'financeiro',
+  'primeiros-passos': 'assistente_configuracao',
 };
 
 const CHAVES_DO_PLANO_BASE = new Set(ITEM_POR_ID.base.keys);

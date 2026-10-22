@@ -8,9 +8,10 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import FamilyInicio from './FamilyInicio';
 import FamilyBottomNav from './FamilyBottomNav';
-import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 
 // Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
 // — mesmo padrão de code-splitting já usado no AdminPortal.
@@ -43,7 +44,8 @@ const FAMILY_RELATORIOS_SUBMENU = [
 ];
 
 export default function FamilyPortal({ 
-  currentUser, 
+  currentUser,
+  onLogout,
   setCurrentUser,
   students, 
   familyTab, setFamilyTab,
@@ -151,6 +153,7 @@ export default function FamilyPortal({
   // item, mesmo que o mouse ainda esteja em cima do menu.
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
   const isDesktop = useIsDesktop();
+  useRecolherSubmenusNoMobile(isMobileMenuOpen, isDesktop, setOpenAccordion);
   const collapsed = isDesktop && !isSidebarExpanded;
   const go = (tab) => {
     setFamilyTab(tab);
@@ -303,6 +306,7 @@ export default function FamilyPortal({
               <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
             )}
           </nav>
+          <SidebarLogoutItem onLogout={onLogout} />
         </div>
       </aside>
 
@@ -369,10 +373,8 @@ export default function FamilyPortal({
       <FamilyBottomNav
         familyTab={familyTab}
         go={go}
-        showCheckin={showCheckin}
-        showComunicados={showComunicados}
+        showDiario={showDiario}
         showFinanceiro={showFinanceiro}
-        comunicadosUnread={comunicadosUnread}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
@@ -392,7 +394,7 @@ export default function FamilyPortal({
           >
             {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
             {!isChatOpen && chatUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-xs font-bold flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-brass text-[#1a1405] text-xs font-bold flex items-center justify-center border-2 border-white">
                 {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
               </span>
             )}

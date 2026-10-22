@@ -65,7 +65,7 @@ export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts 
             >
               {/* Contador de não lidos */}
               {menu.key === 'comunicados' && unreadNotifications > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-xs font-bold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center motion-safe:animate-pulse">
+                <span className="absolute top-3 right-3 bg-brass text-[#1a1405] text-xs font-bold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center motion-safe:animate-pulse">
                   {unreadNotifications}
                 </span>
               )}

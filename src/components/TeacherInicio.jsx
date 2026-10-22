@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertCircle, ClipboardCheck, FileText } from 'lucide-react';
+import { MonitorCheck, ClipboardCheck, FileText } from 'lucide-react';
 
 // Os 5 submenus de Relatórios viram atalhos próprios — quando um menu tem
 // submenu, é o submenu que aparece nos atalhos, nunca o menu-pai sozinho.
@@ -10,7 +10,7 @@ const RELATORIOS_SUBMENU = [
 
 export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, showFrequencia = false }) {
   const TEACHER_MENUS = [
-    { key: 'monitor', label: 'Monitor', icon: AlertCircle, tab: 'monitor' },
+    { key: 'monitor', label: 'Monitor', icon: MonitorCheck, tab: 'monitor' },
     ...(showFrequencia ? [{ key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, tab: 'frequencia' }] : []),
     ...RELATORIOS_SUBMENU.map(r => ({ key: r.key, label: r.label, icon: FileText, tab: r.key })),
   ];
@@ -42,7 +42,7 @@ export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts 
               className="bg-surface-container-lowest p-4 min-h-[88px] rounded-zela-lg border border-outline-variant hover:border-primary transition-colors flex flex-col items-start gap-3 text-left relative"
             >
               {menu.key === 'monitor' && monitorCount > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-xs font-bold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center motion-safe:animate-pulse">
+                <span className="absolute top-3 right-3 bg-brass text-[#1a1405] text-xs font-bold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center motion-safe:animate-pulse">
                   {monitorCount}
                 </span>
               )}

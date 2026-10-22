@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import {
-  RefreshCw, CheckCircle2, Inbox, ShieldCheck, Wallet, Clock, UserPlus, GraduationCap, FileSignature,
+  CheckCircle2, Inbox, ShieldCheck, Wallet, Clock, UserPlus, GraduationCap, FileSignature,
   UserX, AlertTriangle, Receipt, FileWarning, ScanFace,
 } from 'lucide-react';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { buildPendencias, PRIORIDADES } from '../lib/pendenciasModel';
 import { centsToBRL, todayISO } from '../lib/gestaoUtils';
-import { PageShell, Loading, Notice, SecondaryButton } from './GestaoShared';
+import { PageShell, Loading, Notice } from './GestaoShared';
 import { recursosDoPerfil, AREAS_PENDENCIAS_GESTAO_PEDAGOGICA } from '../lib/perfisGestao';
 
 // Pendências da Gestão, Modelo 4 (aprovado em 28/09/2026): os quatro
@@ -38,7 +38,7 @@ function Kpi({ label, value, hint, valueClass = 'text-on-surface' }) {
 }
 
 export default function GestaoPendencias({ currentUser, setGestaoTab }) {
-  const { isLoading, data, error, refresh } = useGestaoPendencias(currentUser);
+  const { isLoading, data, error } = useGestaoPendencias(currentUser);
   const [area, setArea] = useState('todas');
   const recursos = recursosDoPerfil(currentUser?.role);
   const model = useMemo(() => {
@@ -56,12 +56,7 @@ export default function GestaoPendencias({ currentUser, setGestaoTab }) {
   const areaButtons = [{ key: 'todas', label: 'Todas as áreas', count: model.rows.length, resumo: `${model.rows.length} pendência${model.rows.length === 1 ? '' : 's'}` }, ...model.areas];
 
   return (
-    <PageShell
-      description={recursos.financeiro
-        ? 'Tudo o que depende da Gestão: o resumo, as áreas e a fila por prioridade.'
-        : 'O que depende da Coordenação e da Direção: cadastros, secretaria e presença.'}
-      actions={<SecondaryButton onClick={refresh}><RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} /> Atualizar</SecondaryButton>}
-    >
+    <PageShell>
       <Notice>{error}</Notice>
       {isLoading && !data ? <Loading /> : data && (
         <div className="flex flex-col gap-4 md:gap-5">
