@@ -3,6 +3,8 @@ import { ShieldAlert, KeyRound, BellRing, Minus, Plus, Check, CheckCircle2 } fro
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading, Notice, Field, inputCls, PrimaryButton, StatCard } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
+import SairTodosAparelhos from './SairTodosAparelhos';
+import { ConfigSubmenu, ABA_DISPOSITIVOS } from './ConfigSubmenu';
 import { SETORES_ESCOLA_CHAT, matrizDeAcesso } from '../lib/chatAcesso';
 
 // Configurações, Comunicação: lembrete automático de cobrança antes do
@@ -153,6 +155,7 @@ const ROLE_OPTIONS = [
 export function ConfigSeguranca({ currentUser }) {
   const [stats, setStats] = useState(null);
   const [roles, setRoles] = useState(['admin', 'teacher']);
+  const [abaSeg, setAbaSeg] = useState('senhas');
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -186,7 +189,10 @@ export function ConfigSeguranca({ currentUser }) {
 
   return (
     <PageShell description="Senhas e acesso das contas da escola." infoOnMobile>
-      <div className="max-w-3xl space-y-4">
+      <div className="max-w-3xl">
+      <ConfigSubmenu abas={[{ id: 'senhas', label: 'Senhas' }, ABA_DISPOSITIVOS]} ativa={abaSeg} onChange={setAbaSeg} />
+      {abaSeg === 'dispositivos' && <SairTodosAparelhos />}
+      <div className={abaSeg === 'dispositivos' ? 'hidden' : 'space-y-4'}>
         <Notice type={msg.type || 'error'}>{msg.text}</Notice>
         {stats === null ? <Loading /> : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -233,6 +239,7 @@ export function ConfigSeguranca({ currentUser }) {
           </div>
           <PrimaryButton onClick={() => setConfirming(true)} disabled={isSaving || roles.length === 0} className="w-full sm:w-auto h-10 justify-center"><ShieldAlert size={15} /> Exigir nova senha</PrimaryButton>
         </section>
+      </div>
       </div>
       {confirming && (
         <ConfirmModal

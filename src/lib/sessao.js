@@ -12,6 +12,8 @@
 // em silêncio.
 
 export const EVENTO_SESSAO_ENCERRADA = 'zela:sessao-encerrada';
+// Pedido do usuário (Configurações) para sair em todos os aparelhos.
+export const EVENTO_SAIR_TODOS_APARELHOS = 'zela:sair-todos-aparelhos';
 
 const PADROES_SESSAO = [
   /token inv[áa]lido/i,

@@ -16,7 +16,7 @@ import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { toast } from './lib/toast';
 import { mensagemDaFuncao } from './lib/contasVinculadas';
-import { EVENTO_SESSAO_ENCERRADA } from './lib/sessao';
+import { EVENTO_SESSAO_ENCERRADA, EVENTO_SAIR_TODOS_APARELHOS } from './lib/sessao';
 import { camposMudaram } from './lib/realtimeAutorizados';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { usaPortalGestao } from './lib/perfisGestao';
@@ -198,6 +198,9 @@ export default function App() {
 
   // Ref estável para currentUser — evita closures desatualizadas em listeners de longa duração
   const currentUserRef = useRef(currentUser);
+  // true quando o app mesmo encerra a sessão (Sair, conta removida, escola
+  // suspensa); um SIGNED_OUT sem isso é inesperado e vai para error_logs.
+  const logoutIntencionalRef = useRef(false);
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
@@ -258,7 +261,11 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       // Na troca de conta vinculada a sessão anterior é encerrada de
       // propósito antes de abrir a nova (ver handleTrocarConta).
+      if (event === 'SIGNED_IN') logoutIntencionalRef.current = false;
       if (event === 'SIGNED_OUT' && !trocandoContaRef.current) {
+        if (currentUserRef.current && !logoutIntencionalRef.current) {
+          logAppError('auth_logout_inesperado', new Error('SIGNED_OUT sem ação do usuário'), { severity: 'warning' });
+        }
         localStorage.removeItem('zela_user');
         setCurrentUser(null);
       }
@@ -299,6 +306,7 @@ export default function App() {
       // Só chega aqui se o usuário foi excluído do banco
       // Reload intencional: limpa completamente o estado após exclusão
       // (só deste aparelho; ver src/lib/sessao.js).
+      logoutIntencionalRef.current = true;
       await supabase.auth.signOut({ scope: 'local' });
       localStorage.removeItem('zela_user');
       setCurrentUser(null);
@@ -322,6 +330,7 @@ export default function App() {
       setCurrentUser(null);
       setStudents([]);
       setAuthorized([]);
+      logoutIntencionalRef.current = true;
       await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
       toast.error('Acesso suspenso. Entre em contato com a Zela.');
     };
@@ -713,6 +722,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    logoutIntencionalRef.current = true;
     setIsMobileMenuOpen(false);
     setCurrentUser(null);
     // currentSchool NÃO é limpo aqui de propósito: se o próximo login for da
@@ -749,70 +759,52 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Temporizador de inatividade (30 minutos).
-  //
-  // Antes disso só resetava com mousemove/keypress/etc — eventos que SÓ
-  // disparam com a aba em primeiro plano. Trocar de aba do navegador (ex:
-  // checar e-mail) por mais de alguns minutos deixava a aba do Zela "quieta"
-  // e o timer, que seguia contando em segundo plano, deslogava sozinho —
-  // a pessoa voltava e encontrava a tela de login sem ter feito nada de
-  // errado. O Totem nunca sofria isso só porque é um dispositivo físico
-  // tocado o tempo todo, nunca por proteção explícita.
-  //
-  // Fix: guarda o instante real da última atividade (lastActivityAt) e
-  // reavalia o tempo decorrido de verdade sempre que a aba volta a ficar
-  // visível — não confia apenas no setTimeout disparar no momento exato
-  // (navegadores atrasam/"throttlam" timers de abas em segundo plano).
-  // Autoatendimento/Totem (adminTab === 'kiosk') fica isento por completo:
-  // é tela pública, nunca deve travar no meio de um check-in.
+  // "Sair de todos os aparelhos" (Configurações de cada portal): revoga a
+  // sessão desta conta em todos os aparelhos. Só desloga aqui se o servidor
+  // confirmou; em caso de falha mantém o login e avisa.
   useEffect(() => {
-    const INACTIVITY_MS = 30 * 60 * 1000; // 30 minutos
-    let inactivityTimer;
-    let lastActivityAt = Date.now();
-
-    const isKioskScreen = () => currentUser?.role === 'admin' && adminTabRef.current === 'kiosk';
-
-    const scheduleCheck = () => {
-      clearTimeout(inactivityTimer);
-      if (!currentUser || isKioskScreen()) return;
-
-      const remaining = INACTIVITY_MS - (Date.now() - lastActivityAt);
-      if (remaining <= 0) {
-        handleLogout();
-        // Reload intencional após inatividade — limpa todo o estado do app
-        window.location.reload();
+    const aoSairTodos = async () => {
+      if (!currentUserRef.current) return;
+      logoutIntencionalRef.current = true;
+      await desativarPushNativo().catch(() => { });
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) {
+        logoutIntencionalRef.current = false;
+        toast.error('Não foi possível sair de todos os aparelhos agora. Tente de novo.');
         return;
       }
-      inactivityTimer = setTimeout(scheduleCheck, remaining);
+      handleLogout();
     };
+    window.addEventListener(EVENTO_SAIR_TODOS_APARELHOS, aoSairTodos);
+    return () => window.removeEventListener(EVENTO_SAIR_TODOS_APARELHOS, aoSairTodos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const markActive = () => {
-      lastActivityAt = Date.now();
-      scheduleCheck();
+  // Sem logout por inatividade (22/10/2026): a escola reclamou de cair na
+  // tela de login com o app parado. A sessão só termina em "Sair", conta
+  // removida/senha trocada ou escola suspensa. Aqui só mantém o login vivo:
+  // renova o token quando falta pouco, ao abrir, ao voltar para a aba e em
+  // intervalo (timers de aba em segundo plano são pausados pelo navegador).
+  // Erro de rede é ignorado: tenta de novo na próxima, sem deslogar.
+  useEffect(() => {
+    if (!userIdLogado) return undefined;
+    const manterSessao = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const faltaMs = (session.expires_at || 0) * 1000 - Date.now();
+        if (faltaMs < 10 * 60 * 1000) await supabase.auth.refreshSession();
+      } catch { /* sem rede agora: a próxima tentativa renova */ }
     };
-
-    // Reavalia ao voltar o foco — cobre tanto "só troquei de aba e voltei
-    // rápido" (não desloga) quanto "fiquei ausente mais que o limite"
-    // (desloga imediatamente, sem esperar o setTimeout atrasado disparar).
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') scheduleCheck();
-    };
-
-    // Eventos que indicam atividade do usuário
-    const events = ['mousemove', 'mousedown', 'keypress', 'touchmove', 'scroll'];
-
-    if (currentUser) {
-      events.forEach(event => window.addEventListener(event, markActive));
-      document.addEventListener('visibilitychange', handleVisibility);
-      scheduleCheck(); // Inicia o contador logo de cara
-    }
-
+    manterSessao();
+    const aoVoltar = () => { if (document.visibilityState === 'visible') manterSessao(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    const timer = setInterval(manterSessao, 5 * 60 * 1000);
     return () => {
-      clearTimeout(inactivityTimer);
-      events.forEach(event => window.removeEventListener(event, markActive));
-      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('visibilitychange', aoVoltar);
+      clearInterval(timer);
     };
-  }, [currentUser, currentPath]);
+  }, [userIdLogado]);
 
   const togglePhoto = async (id, photoUrl = null, descriptorArray = null, consentGiven = false, extras = {}) => {
     // Antes de gravar uma biometria nova, garante que esse rosto ainda não
