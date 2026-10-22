@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Settings, ShieldAlert, ImageIcon, Palette, Shield, Zap, Bell, Server } from 'lucide-react';
+import { Settings, ShieldAlert, ImageIcon, Palette, Shield, Zap, Bell, Server, MonitorSmartphone } from 'lucide-react';
+import SairTodosAparelhos from './SairTodosAparelhos';
 
 const CartaoImagem = ({ titulo, descricao, valor, Icone, ajuste, alt, onFile, onRemover, onSalvar, salvando, rotuloSalvar, msg }) => (
   <div className="bg-dev-surface border border-dev-border rounded-zela-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5">
@@ -139,6 +140,7 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
     { id: 'integrations', label: 'Integrações', icon: Zap },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'backup', label: 'Backup e Manutenção', icon: Server },
+    { id: 'dispositivos', label: 'Dispositivos', icon: MonitorSmartphone },
   ];
 
   const PlaceholderBadge = () => (
@@ -294,6 +296,11 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
               <p className="text-small text-dev-text-muted">Notificações internas sobre uso de cotas e erros operacionais críticos.</p>
             </div>
           </div>
+        )}
+
+        {/* ABA: DISPOSITIVOS */}
+        {activeTab === 'dispositivos' && (
+          <div className="max-w-3xl"><SairTodosAparelhos dev /></div>
         )}
 
         {/* ABA: BACKUP */}

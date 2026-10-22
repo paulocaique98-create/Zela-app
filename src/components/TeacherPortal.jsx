@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon } from 'lucide-react';
+import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -21,6 +21,7 @@ const AdminDiario = lazy(() => import('./AdminDiario'));
 // Cardápio: o professor só visualiza (quem cadastra é Gestão/Coordenação/Direção).
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
+const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -153,6 +154,8 @@ export default function TeacherPortal({
                 ))}
               </SidebarGroup>
             )}
+
+            <SidebarItem active={teacherTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>
@@ -176,6 +179,7 @@ export default function TeacherPortal({
           {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mitigacao' &&<TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'settings' && <ConfiguracoesPortal />}
         </Suspense>
       </main>
 

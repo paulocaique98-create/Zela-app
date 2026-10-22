@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AccountDeletionSection from './AccountDeletionSection';
+import SairTodosAparelhos from './SairTodosAparelhos';
+import { ConfigSubmenu, ABA_DISPOSITIVOS } from './ConfigSubmenu';
 import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -188,6 +190,7 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
 // ─── Componente Principal ─────────────────────────────────────────────────────
 export default function FamilySettings({ currentUser, setCurrentUser, pushData, onAbrirContratos }) {
   const [modal, setModal] = useState(null); // null | 'edit' | 'lgpd' | 'image_usage'
+  const [aba, setAba] = useState('geral');
   const [lgpdAccepted, setLgpdAccepted] = useState(!!currentUser.lgpd_accepted);
   const [imageUsageStatus, setImageUsageStatus] = useState(currentUser.image_usage_accepted);
   // Contratos (30/09/2026: saiu do menu lateral e entrou em Documentos).
@@ -231,14 +234,16 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
     <div className="h-full flex flex-col bg-surface-container-lowest -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-zela-xl shadow-none sm:shadow-sm border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Título "Configurações" removido (o Header do app já mostra o nome
           da tela dinamicamente). */}
-      <div className="mb-6 shrink-0">
+      <div className="mb-4 shrink-0">
         <p className="text-on-surface-variant text-small">Gestão de autorizações e informações.</p>
       </div>
+      <ConfigSubmenu abas={[{ id: 'geral', label: 'Geral' }, ABA_DISPOSITIVOS]} ativa={aba} onChange={setAba} />
 
       {/* Quatro seções numa grade 2 por 2, todas da mesma altura
           (30/09/2026): Conta | Notificações e Documentos | Excluir conta. */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 md:auto-rows-fr gap-6">
+        {aba === 'dispositivos' && <div className="max-w-3xl"><SairTodosAparelhos /></div>}
+        <div className={`grid grid-cols-1 md:grid-cols-2 md:auto-rows-fr gap-6 ${aba === 'dispositivos' ? 'hidden' : ''}`}>
 
           {/* Conta da Família */}
           <div className="bg-white p-5 rounded-zela-xl shadow-sm border border-outline-variant h-full flex flex-col">

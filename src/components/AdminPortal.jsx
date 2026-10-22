@@ -44,6 +44,7 @@ const AdminHistory = lazy(() => import('./AdminHistory'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
+const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 // Módulos da Gestão que a Gestão pode liberar pro Administrativo
 // (Gestão · Permissões).
@@ -353,6 +354,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <SidebarItem active={adminTab === 'duplicidade-biometrica'} icon={Fingerprint} label="Duplicidade Facial" onClick={() => go('duplicidade-biometrica')} />
               </SidebarGroup>
             )}
+
+            <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>
@@ -403,6 +406,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
+        {adminTab === 'settings' && <ConfiguracoesPortal />}
 
         {/* MONITOR */}
         {adminTab === 'monitor' && (
