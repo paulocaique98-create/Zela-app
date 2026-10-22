@@ -37,13 +37,13 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
         .order('student_id').order('event_time');
       const cfg = mergeBillingConfig(currentSchool?.billing_config);
       let extrasCents = 0;
-      const alunosComExtra = new Set();
+      let extrasMinutos = 0;
       agruparEventosPorDia(data || []).forEach(d => {
         const st = d.studentData || {};
-        const v = calcularCobrancaDoDia({ entryIso: d.entryLog?.event_time || null, exitIso: d.exitLog?.event_time || null, contractedEntryTime: st.contracted_entry_time, contractedExitTime: st.contracted_exit_time, weeklySchedule: st.weekly_schedule, billingConfig: cfg, isentoHoraExtra: st.isento_hora_extra }).valor;
-        if (v > 0) { extrasCents += Math.round(v * 100); alunosComExtra.add(d.student_id); }
+        const r = calcularCobrancaDoDia({ entryIso: d.entryLog?.event_time || null, exitIso: d.exitLog?.event_time || null, contractedEntryTime: st.contracted_entry_time, contractedExitTime: st.contracted_exit_time, weeklySchedule: st.weekly_schedule, billingConfig: cfg, isentoHoraExtra: st.isento_hora_extra });
+        if (r.valor > 0) { extrasCents += Math.round(r.valor * 100); extrasMinutos += r.minutos_excedentes || 0; }
       });
-      setOps({ extrasCents, extrasAlunos: alunosComExtra.size });
+      setOps({ extrasCents, extrasMinutos });
     })();
   }, [showFinanceiro, showCheckin, currentUser?.school_id, currentSchool?.billing_config]);
 
@@ -96,47 +96,44 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     .slice(0, MAX_ATALHOS);
 
   return (
-    <div className="h-full -m-3 sm:m-0 bg-surface p-2.5 sm:p-4 md:p-6 lg:p-8 overflow-y-auto lg:overflow-hidden flex flex-col">
+    <div className="h-full -m-3 sm:m-0 bg-surface p-2.5 sm:p-4 md:p-5 lg:p-6 overflow-y-auto lg:overflow-hidden flex flex-col">
       <div className="w-full mt-0">
-        <div className="mb-4 shrink-0">
+        <div className="mb-2 shrink-0">
           <h1 className="text-h1-mobile md:text-h1 text-on-surface tracking-tight">Painel da {rotuloDoPerfil(currentUser)}</h1>
         </div>
 
         {showFinanceiro && (
           <>
-            <h2 className="text-sm font-bold text-on-surface-variant mb-2">Financeiro</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-              <StatCard label="Recebido no mês" value={fin ? centsToBRL(fin.recebido) : '·'} tone="good" hint={fin ? `de ${centsToBRL(fin.previsto)} previstos` : ''} onClick={() => setGestaoTab('financeiro-visao')} />
-              <StatCard label="A receber no mês" value={fin ? centsToBRL(Math.max(fin.previsto - fin.recebido, 0)) : '·'} tone="warn" hint="mensalidades em aberto" onClick={() => setGestaoTab('financeiro-cobrancas')} />
-              <StatCard label="Em atraso" value={pend ? centsToBRL(pend.vencidasTotal) : '·'} tone={pend?.vencidasTotal ? 'bad' : 'good'} hint={pend ? `${pend.vencidas.length} cobrança(s)` : ''} onClick={() => setGestaoTab('financeiro-inadimplencia')} />
+            <h2 className="text-sm font-bold text-on-surface-variant mb-1.5">Financeiro</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+              <StatCard compact label="Recebido no mês" value={fin ? centsToBRL(fin.recebido) : '·'} tone="good" hint={fin ? `de ${centsToBRL(fin.previsto)} previstos` : ''} onClick={() => setGestaoTab('financeiro-visao')} />
+              <StatCard compact label="A receber no mês" value={fin ? centsToBRL(Math.max(fin.previsto - fin.recebido, 0)) : '·'} tone="warn" hint="mensalidades em aberto" onClick={() => setGestaoTab('financeiro-cobrancas')} />
+              <StatCard compact label="Em atraso" value={pend ? centsToBRL(pend.vencidasTotal) : '·'} tone={pend?.vencidasTotal ? 'bad' : 'good'} hint={pend ? `${pend.vencidas.length} cobrança(s)` : ''} onClick={() => setGestaoTab('financeiro-inadimplencia')} />
               {showCheckin ? (
-                <StatCard label="A receber de horas extras" value={ops ? centsToBRL(ops.extrasCents) : '·'} tone={ops?.extrasCents ? 'warn' : 'good'} hint={ops ? `${ops.extrasAlunos} aluno(s) no mês` : ''} onClick={() => setGestaoTab('horas-extras')} />
+                <StatCard compact label="A receber de horas extras" value={ops ? centsToBRL(ops.extrasCents) : '·'} tone={ops?.extrasCents ? 'warn' : 'good'} hint={ops ? `${ops.extrasMinutos} minutos no mês` : ''} onClick={() => setGestaoTab('horas-extras')} />
               ) : (
-                <StatCard label="Contas a pagar" value={pend ? pend.despesas.length : '·'} tone={pend?.despesasAtrasadas.length ? 'bad' : 'default'} hint="vencem em até 7 dias" onClick={() => setGestaoTab('financeiro-despesas')} />
+                <StatCard compact label="Contas a pagar" value={pend ? pend.despesas.length : '·'} tone={pend?.despesasAtrasadas.length ? 'bad' : 'default'} hint="vencem em até 7 dias" onClick={() => setGestaoTab('financeiro-despesas')} />
               )}
             </div>
           </>
         )}
 
-        <h2 className="text-sm font-bold text-on-surface-variant mb-2">Operacional</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <h2 className="text-sm font-bold text-on-surface-variant mb-1.5">Operacional</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
           {menus.map(menu => (
             <button
               key={menu.key}
               onClick={() => setGestaoTab(menu.tab)}
-              className="bg-surface-container-lowest px-4 py-3 rounded-zela-lg shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left relative"
+              className={`bg-surface-container-lowest px-3 py-2 rounded-zela-lg shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left ${menu.badge ? 'ring-2 ring-brass' : ''}`}
             >
-              {menu.badge && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-md">
-                  {menu.badge}
-                </span>
-              )}
-              <div className="w-9 h-9 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
+              <div className="w-8 h-8 shrink-0 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center">
                 <menu.icon size={20} />
               </div>
               <div>
                 <span className="text-label text-on-surface block">{menu.label}</span>
-                <span className="text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">Acessar <ArrowRight size={11} /></span>
+                <span className="text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">Acessar <ArrowRight size={11} />{menu.badge && (
+                  <span className="ml-1.5 bg-brass text-[#1a1405] text-[10px] leading-none font-semibold rounded-sm min-w-[16px] h-4 px-1 flex items-center justify-center shrink-0">{menu.badge}</span>
+                )}</span>
               </div>
             </button>
           ))}

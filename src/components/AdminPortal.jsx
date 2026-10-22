@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { createPortal } from 'react-dom';
-import { AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import { MonitorCheck, AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
 import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -19,11 +19,12 @@ import CheckinAlertModal from './CheckinAlertModal';
 import ConfirmExitPassword from './ConfirmExitPassword';
 import ConfirmModal from './ConfirmModal';
 import { logAction } from '../lib/auditLog';
-import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import KioskClock from './KioskClock';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 import { usePermissions } from '../hooks/usePermissions';
 import { PageShell } from './GestaoShared';
 
@@ -169,6 +170,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // desktop, então os grupos com submenu só abrem em flyout quando é
   // desktop E está recolhido.
   const isDesktop = useIsDesktop();
+  useRecolherSubmenusNoMobile(isMobileMenuOpen, isDesktop, setOpenAccordion);
   const collapsed = isDesktop && !isSidebarExpanded;
   const perms = usePermissions(currentUser);
   const canSeeContratos = perms['contratos.ver'] || perms['contratos.gerenciar'];
@@ -253,19 +255,16 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
     <div className="flex flex-col md:flex-row gap-0 w-full h-full animate-in fade-in md:relative">
 
       {/* MENU LATERAL (SIDEBAR) */}
+      {/* No Autoatendimento não há menu lateral: a saída é pela engrenagem. */}
+      {adminTab !== 'kiosk' && (<>
       <div
         className={`md:hidden fixed inset-0 bg-black/50 z-20 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      {/* No Autoatendimento o Header some; esta faixa preenche o topo do menu lateral */}
-      {adminTab === 'kiosk' && (
-        <div aria-hidden="true" className={`hidden md:block fixed top-0 left-0 h-16 bg-ink z-30 ${isSidebarExpanded ? 'w-[248px]' : 'w-[72px]'}`} />
-      )}
-
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 ${adminTab === 'kiosk' ? 'h-[calc(100dvh-60px)]' : 'h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))]'} md:h-[calc(100dvh-4rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -310,7 +309,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 isOpen={openAccordion === 'checkin'}
                 onToggle={() => toggleAccordion('checkin')}
               >
-                <SidebarItem active={adminTab === 'monitor'} icon={ShieldCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => go('monitor')} />
+                <SidebarItem active={adminTab === 'monitor'} icon={MonitorCheck} label="Monitor" badge={monitorStudents.length > 0 ? monitorStudents.length : null} onClick={() => go('monitor')} />
                 <SidebarItem active={adminTab === 'kiosk'} icon={Smartphone} label="Autoatendimento" onClick={() => go('kiosk')} />
                 {showQrCheckin && (
                   <SidebarItem active={adminTab === 'qr-checkin'} icon={Fingerprint} label="Carteirinhas QR" onClick={() => go('qr-checkin')} />
@@ -355,8 +354,10 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
           </nav>
+          <SidebarLogoutItem onLogout={onLogout} />
         </div>
       </aside>
+      </>)}
 
       {/* CONTEÚDO PRINCIPAL */}
       {/* A linha que separava header de sidebar foi removida (ver Header.jsx
@@ -773,7 +774,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             >
               {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
               {!isChatOpen && chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-error text-white text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-sm bg-brass text-[#1a1405] text-[10px] font-semibold flex items-center justify-center border-2 border-surface-container-lowest">
                   {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                 </span>
               )}
@@ -806,7 +807,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           items={[
             { key: 'home', label: 'Início', icon: Home, active: adminTab === 'home', onClick: () => go('home') },
             { key: 'students', label: 'Alunos', icon: Users, active: adminTab === 'students', onClick: () => go('students'), show: showGerenciamento },
-            { key: 'monitor', label: 'Monitor', icon: ShieldCheck, active: adminTab === 'monitor', onClick: () => go('monitor'), badge: monitorStudents.length, show: showCheckin },
+            { key: 'monitor', label: 'Monitor', icon: MonitorCheck, active: adminTab === 'monitor', onClick: () => go('monitor'), badge: monitorStudents.length, show: showCheckin },
             { key: 'presence', label: 'Presença', icon: CalendarDays, active: adminTab === 'presence', onClick: () => go('presence'), show: showCheckin },
           ]}
           isMobileMenuOpen={isMobileMenuOpen}

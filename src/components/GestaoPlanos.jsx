@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Save, Copy, Plus, Loader2, AlertTriangle, TrendingUp, Search } from 'lucide-react';
+import { Save, Copy, Plus, Loader2, AlertTriangle, TrendingUp, Search, Clock, Info, CalendarDays } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLog';
 import { brlToCents, centsToBRL } from '../lib/gestaoUtils';
@@ -73,10 +73,11 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
   const [fonte, setFonte] = useState('');
   const [percentual, setPercentual] = useState('0');
   const [novoAno, setNovoAno] = useState('');
+  const [mostrarNovoAno, setMostrarNovoAno] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
-  const { contagem, semPlano } = useMemo(() => contarAlunosPorPlano(ctx.alunos), [ctx.alunos]);
+  const { semPlano } = useMemo(() => contarAlunosPorPlano(ctx.alunos), [ctx.alunos]);
   const doAno = useMemo(() => ctx.precos.filter(p => p.school_year === ano), [ctx.precos, ano]);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
     setExtras(e => [...e, n]);
     setAno(n);
     setNovoAno('');
+    setMostrarNovoAno(false);
     setErro('');
   };
 
@@ -149,21 +151,33 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label htmlFor="planos-ano" className="block text-[11px] font-bold text-on-surface-variant mb-1">Ano letivo</label>
-          <select id="planos-ano" value={ano} onChange={e => setAno(Number(e.target.value))} className={`${inputCls} w-32`}>
-            {anos.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
+      <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-3.5 sm:p-4">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">Ano letivo</h3>
+          <button type="button" onClick={() => setMostrarNovoAno(v => !v)} className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+            <Plus size={13} /> Outro ano
+          </button>
         </div>
-        <div className="flex items-end gap-2">
-          <div>
-            <label htmlFor="planos-novo-ano" className="block text-[11px] font-bold text-on-surface-variant mb-1">Outro ano</label>
-            <input id="planos-novo-ano" value={novoAno} onChange={e => setNovoAno(e.target.value)} inputMode="numeric" placeholder="2028" className={`${inputCls} w-24`} />
+        <div className="flex flex-wrap gap-2">
+          {anos.map(a => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => setAno(a)}
+              aria-pressed={a === ano}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition ${a === ano ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+        {mostrarNovoAno && (
+          <div className="flex items-center gap-2 mt-3">
+            <input id="planos-novo-ano" aria-label="Outro ano" value={novoAno} onChange={e => setNovoAno(e.target.value)} inputMode="numeric" placeholder="Ex.: 2028" className={`${inputCls} flex-1 sm:flex-none sm:w-32`} />
+            <SecondaryButton onClick={adicionarAno} disabled={!novoAno}><Plus size={15} /> Adicionar</SecondaryButton>
           </div>
-          <SecondaryButton onClick={adicionarAno} disabled={!novoAno}><Plus size={15} /> Adicionar</SecondaryButton>
-        </div>
-      </div>
+        )}
+      </section>
 
       {semPlano > 0 && (
         <div className="p-3 rounded-zela-md bg-warning/10 border border-warning/30 text-sm text-warning flex items-start gap-2">
@@ -175,70 +189,68 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
       <Notice>{erro}</Notice>
       {aviso && <Notice type="success">{aviso}</Notice>}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs font-bold text-on-surface-variant border-b border-outline-variant">
-              <th className="py-2 pr-3">Ciclo</th>
-              {TURNOS.map(t => <th key={t} className="py-2 pr-3">{t}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {CICLOS_DE_HORAS.map(ciclo => (
-              <tr key={ciclo} className="border-b border-outline-variant/50 align-top">
-                <td className="py-3 pr-3 font-bold text-on-surface whitespace-nowrap">{ciclo} horas</td>
-                {TURNOS.map(turno => {
-                  const k = chave(ciclo, turno);
-                  const n = contagem.get(k) || 0;
-                  return (
-                    <td key={turno} className="py-2 pr-3">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">R$</span>
-                        <input
-                          id={`preco-${ciclo}-${turno}`}
-                          aria-label={`Preço mensal de ${ciclo} horas ${turno}`}
-                          value={valores[k] || ''}
-                          onChange={e => setValores(v => ({ ...v, [k]: e.target.value }))}
-                          inputMode="decimal"
-                          placeholder="0,00"
-                          className={`${inputCls} pl-9 w-40 tabular-nums`}
-                        />
-                      </div>
-                      <p className="text-[11px] text-on-surface-variant/70 mt-1">{n} {n === 1 ? 'aluno' : 'alunos'} agora</p>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {CICLOS_DE_HORAS.map(ciclo => (
+          <section key={ciclo} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg overflow-hidden">
+            <header className="flex items-center gap-2.5 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
+              <span className="w-7 h-7 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><Clock size={15} aria-hidden="true" /></span>
+              <h3 className="text-sm font-bold text-on-surface">{ciclo} horas</h3>
+            </header>
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 p-3.5">
+              {TURNOS.map(turno => {
+                const k = chave(ciclo, turno);
+                return (
+                  <div key={turno} className="min-w-0">
+                    <label htmlFor={`preco-${ciclo}-${turno}`} className="block text-[11px] font-bold text-on-surface-variant mb-1">{turno}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">R$</span>
+                      <input
+                        id={`preco-${ciclo}-${turno}`}
+                        aria-label={`Preço mensal de ${ciclo} horas ${turno}`}
+                        value={valores[k] || ''}
+                        onChange={e => setValores(v => ({ ...v, [k]: e.target.value }))}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        className={`${inputCls} pl-9 tabular-nums font-semibold`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
-      <p className="text-xs text-on-surface-variant">
-        Valor mensal por aluno, antes do desconto da família. Deixe em branco o que a escola não oferece. Mudar a tabela não altera mensalidades que já existem.
+
+      <p className="text-xs text-on-surface-variant flex items-start gap-2 px-1">
+        <Info size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+        <span>Valor mensal por aluno, antes do desconto da família. Deixe em branco o que a escola não oferece. Mudar a tabela não altera mensalidades que já existem.</span>
       </p>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <PrimaryButton onClick={salvar} disabled={salvando}>{salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar preços de {ano}</PrimaryButton>
-      </div>
+      <PrimaryButton onClick={salvar} disabled={salvando} className="w-full sm:w-auto justify-center py-2.5">
+        {salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar preços de {ano}
+      </PrimaryButton>
 
       {anosComPreco.length > 0 && (
-        <div className="p-3 rounded-zela-md border border-outline-variant bg-surface-container-low space-y-2">
-          <p className="text-xs font-bold text-on-surface-variant">Começar de outro ano</p>
-          <div className="flex flex-wrap items-end gap-2">
+        <section className="p-3.5 rounded-zela-lg border border-outline-variant bg-surface-container-low space-y-3">
+          <div>
+            <h3 className="text-xs font-bold text-on-surface">Começar de outro ano</h3>
+            <p className="text-[11px] text-on-surface-variant mt-0.5">Os valores aparecem nos campos acima e só valem depois de Salvar preços.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:items-end">
             <div>
-              <label htmlFor="planos-fonte" className="block text-[11px] text-on-surface-variant mb-1">Copiar de</label>
-              <select id="planos-fonte" value={fonte} onChange={e => setFonte(e.target.value)} className={`${inputCls} w-28`}>
+              <label htmlFor="planos-fonte" className="block text-[11px] font-bold text-on-surface-variant mb-1">Copiar de</label>
+              <select id="planos-fonte" value={fonte} onChange={e => setFonte(e.target.value)} className={`${inputCls} sm:w-28`}>
                 {anosComPreco.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
-              <label htmlFor="planos-pct" className="block text-[11px] text-on-surface-variant mb-1">Reajuste (%)</label>
-              <input id="planos-pct" value={percentual} onChange={e => setPercentual(e.target.value)} inputMode="decimal" className={`${inputCls} w-24`} />
+              <label htmlFor="planos-pct" className="block text-[11px] font-bold text-on-surface-variant mb-1">Reajuste (%)</label>
+              <input id="planos-pct" value={percentual} onChange={e => setPercentual(e.target.value)} inputMode="decimal" className={`${inputCls} sm:w-24`} />
             </div>
-            <SecondaryButton onClick={copiar} disabled={!fonte}><Copy size={15} /> Copiar para {ano}</SecondaryButton>
+            <SecondaryButton onClick={copiar} disabled={!fonte} className="col-span-2 justify-center"><Copy size={15} /> Copiar para {ano}</SecondaryButton>
           </div>
-          <p className="text-[11px] text-on-surface-variant/70">Os valores aparecem na tabela acima; só valem depois de Salvar preços.</p>
-        </div>
+        </section>
       )}
     </div>
   );
@@ -296,53 +308,82 @@ function AlunosTab({ currentUser, ctx, recarregar }) {
     }
   };
 
-  const colunas = [
-    { label: 'Aluno', primary: true, render: a => (
-      <div className="min-w-0">
-        <p className="font-semibold text-on-surface truncate">{a.name}</p>
-        {a.turma && <p className="text-xs text-on-surface-variant">{a.turma}</p>}
-      </div>
-    ) },
-    { label: 'Ciclo', render: a => (
-      <select aria-label={`Ciclo de ${a.name}`} value={valorAtual(a).ciclo} onChange={e => setEdicoes(x => ({ ...x, [a.id]: { ...valorAtual(a), ciclo: e.target.value } }))} className={`${inputCls} w-28`}>
-        <option value="">Sem ciclo</option>
-        {CICLOS_DE_HORAS.map(c => <option key={c} value={c}>{c} horas</option>)}
-        {a.contracted_hours && !a.plano.ciclo && <option value={String(a.contracted_hours)} disabled>{a.contracted_hours} (fora do padrão)</option>}
-      </select>
-    ) },
-    { label: 'Turno', render: a => (
-      <select aria-label={`Turno de ${a.name}`} value={valorAtual(a).turno} onChange={e => setEdicoes(x => ({ ...x, [a.id]: { ...valorAtual(a), turno: e.target.value } }))} className={`${inputCls} w-36`}>
-        <option value="">Sem turno</option>
-        {TURNOS.map(t => <option key={t} value={t}>{t}</option>)}
-        {a.turno && !a.plano.turno && <option value={a.turno} disabled>{a.turno} (fora do padrão)</option>}
-      </select>
-    ) },
-    { label: 'Mensalidade', hideOnMobile: false, render: a => (comContrato.has(a.id) ? <span className="text-xs text-on-surface-variant">Já tem mensalidade</span> : <span className="text-xs text-on-surface-variant/70">·</span>) },
-    { label: '', actions: true, align: 'right', render: a => mudou(a) && (
-      <PrimaryButton onClick={() => salvar(a)} disabled={salvandoId === a.id}>
-        {salvandoId === a.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Salvar
-      </PrimaryButton>
-    ) },
-  ];
+  const pendentes = useMemo(() => ctx.alunos.filter(a => planoDoAluno(a).faltando.length > 0).length, [ctx.alunos]);
+  const chipCls = (on) => `px-3.5 py-1.5 rounded-full text-sm font-semibold border transition ${on ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`;
 
   return (
-    <div className="space-y-3">
-      <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
-        <p>O preço da mensalidade segue o ciclo e o turno que estão no cadastro do aluno. Corrija aqui quando precisar; cada troca fica registrada na auditoria.</p>
-        <p>Trocar o ciclo muda também as horas contratadas usadas no cálculo de hora extra. O horário de entrada e saída do aluno não muda por aqui. Mensalidade que já existe não muda de valor.</p>
-      </div>
+    <div className="space-y-4 max-w-4xl">
+      <p className="text-xs text-on-surface-variant flex items-start gap-2 px-1">
+        <Info size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+        <span>O preço da mensalidade segue o ciclo e o turno do cadastro do aluno, e cada troca fica na auditoria. Trocar o ciclo muda também as horas contratadas do cálculo de hora extra. O horário de entrada e saída não muda por aqui, e mensalidade que já existe não muda de valor.</span>
+      </p>
       <Notice>{erro}</Notice>
       {aviso && <Notice type="success">{aviso}</Notice>}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative max-w-xs flex-1 min-w-[200px]">
+
+      <div className="space-y-3">
+        <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
           <input id="planos-busca-aluno" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar aluno pelo nome" aria-label="Buscar aluno pelo nome" className={`${inputCls} pl-9`} />
         </div>
-        <label className="flex items-center gap-2 text-sm text-on-surface">
-          <input type="checkbox" checked={soPendentes} onChange={e => setSoPendentes(e.target.checked)} /> Só sem ciclo ou sem turno
-        </label>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setSoPendentes(false)} aria-pressed={!soPendentes} className={chipCls(!soPendentes)}>Todos</button>
+          <button type="button" onClick={() => setSoPendentes(true)} aria-pressed={soPendentes} className={chipCls(soPendentes)}>
+            Sem ciclo ou turno{pendentes > 0 ? ` (${pendentes})` : ''}
+          </button>
+        </div>
       </div>
-      {linhas.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum aluno encontrado.</p> : <ResponsiveTable columns={colunas} rows={linhas} />}
+
+      {linhas.length === 0 ? (
+        <p className="text-sm text-on-surface-variant text-center py-10">Nenhum aluno encontrado.</p>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {linhas.map(a => {
+            const v = valorAtual(a);
+            const alterado = mudou(a);
+            return (
+              <section key={a.id} className={`bg-surface-container-lowest border rounded-zela-lg overflow-hidden ${alterado ? 'border-primary/50' : 'border-outline-variant'}`}>
+                <header className="flex items-center gap-3 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
+                  <span className="w-8 h-8 shrink-0 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center">{a.name?.charAt(0)?.toUpperCase()}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-on-surface truncate">{a.name}</p>
+                    {a.turma && <p className="text-xs text-on-surface-variant truncate">{a.turma}</p>}
+                  </div>
+                  {a.plano.faltando.length > 0 ? (
+                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning/10 text-warning">Incompleto</span>
+                  ) : comContrato.has(a.id) ? (
+                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success">Com mensalidade</span>
+                  ) : null}
+                </header>
+                <div className="grid grid-cols-2 gap-3 p-3.5">
+                  <div className="min-w-0">
+                    <label htmlFor={`ciclo-${a.id}`} className="block text-[11px] font-bold text-on-surface-variant mb-1">Ciclo</label>
+                    <select id={`ciclo-${a.id}`} aria-label={`Ciclo de ${a.name}`} value={v.ciclo} onChange={e => setEdicoes(x => ({ ...x, [a.id]: { ...valorAtual(a), ciclo: e.target.value } }))} className={inputCls}>
+                      <option value="">Sem ciclo</option>
+                      {CICLOS_DE_HORAS.map(c => <option key={c} value={c}>{c} horas</option>)}
+                      {a.contracted_hours && !a.plano.ciclo && <option value={String(a.contracted_hours)} disabled>{a.contracted_hours} (fora do padrão)</option>}
+                    </select>
+                  </div>
+                  <div className="min-w-0">
+                    <label htmlFor={`turno-${a.id}`} className="block text-[11px] font-bold text-on-surface-variant mb-1">Turno</label>
+                    <select id={`turno-${a.id}`} aria-label={`Turno de ${a.name}`} value={v.turno} onChange={e => setEdicoes(x => ({ ...x, [a.id]: { ...valorAtual(a), turno: e.target.value } }))} className={inputCls}>
+                      <option value="">Sem turno</option>
+                      {TURNOS.map(t => <option key={t} value={t}>{t}</option>)}
+                      {a.turno && !a.plano.turno && <option value={a.turno} disabled>{a.turno} (fora do padrão)</option>}
+                    </select>
+                  </div>
+                </div>
+                {alterado && (
+                  <div className="px-3.5 pb-3.5">
+                    <PrimaryButton onClick={() => salvar(a)} disabled={salvandoId === a.id} className="w-full justify-center">
+                      {salvandoId === a.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Salvar
+                    </PrimaryButton>
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -400,30 +441,47 @@ function ReajusteTab({ ctx }) {
   const quantos = reajustaveis.filter(l => marcados[l.contract_id]).length;
   const feitos = (resultado || []).filter(r => r.ok).length;
   const falhas = (resultado || []).filter(r => !r.ok && !r.pulado);
+  const opcaoCls = 'block space-y-2 p-3 rounded-zela-md border border-outline-variant cursor-pointer transition has-[input[type=radio]:checked]:border-primary has-[input[type=radio]:checked]:bg-primary/5';
 
   return (
     <div className="space-y-4 max-w-4xl">
-      <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
-        <p>Muda o valor das mensalidades ativas. O desconto da família que já estava no contrato é mantido.</p>
-        <p>Vale para as cobranças que o Asaas gerar daqui para frente. As cobranças que já foram emitidas ficam como estão; para uma delas, use Ajustar valor em Financeiro, Cobranças.</p>
-      </div>
+      <p className="text-xs text-on-surface-variant flex items-start gap-2 px-1">
+        <Info size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+        <span>Muda o valor das mensalidades ativas e mantém o desconto da família que já estava no contrato. Vale para as cobranças que o Asaas gerar daqui para frente. As já emitidas ficam como estão; para uma delas, use Ajustar valor em Financeiro, Cobranças.</span>
+      </p>
       <Notice>{erro}</Notice>
 
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm text-on-surface">
-          <input type="radio" name="modo-reajuste" checked={modo === 'table'} onChange={() => setModo('table')} disabled={anos.length === 0} />
-          Pelo preço da tabela de Planos de
-          <select aria-label="Ano da tabela" value={ano} onChange={e => setAno(e.target.value)} disabled={modo !== 'table'} className={`${inputCls} w-24`}>
-            {anos.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-sm text-on-surface">
-          <input type="radio" name="modo-reajuste" checked={modo === 'percent'} onChange={() => setModo('percent')} />
-          Por percentual
-          <input aria-label="Percentual de reajuste" value={percentual} onChange={e => setPercentual(e.target.value)} disabled={modo !== 'percent'} inputMode="decimal" className={`${inputCls} w-20`} /> %
-        </label>
-      </div>
-      <PrimaryButton onClick={verPrevia} disabled={carregando}>{carregando ? <Loader2 size={15} className="animate-spin" /> : <TrendingUp size={15} />} Ver prévia</PrimaryButton>
+      <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg overflow-hidden">
+        <header className="flex items-center gap-2.5 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
+          <span className="w-7 h-7 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><TrendingUp size={15} aria-hidden="true" /></span>
+          <h3 className="text-sm font-bold text-on-surface">Como reajustar</h3>
+        </header>
+        <div className="p-3.5 space-y-3" role="radiogroup" aria-label="Modo de reajuste">
+          <label className={`${opcaoCls} ${anos.length === 0 ? 'opacity-50' : ''}`}>
+            <span className="flex items-center gap-2.5">
+              <input type="radio" name="modo-reajuste" checked={modo === 'table'} onChange={() => setModo('table')} disabled={anos.length === 0} className="accent-primary" />
+              <span className="text-sm font-semibold text-on-surface">Pelo preço da tabela de Planos</span>
+            </span>
+            <span className="flex items-center gap-2 pl-6">
+              <span className="text-xs text-on-surface-variant">Ano</span>
+              <select aria-label="Ano da tabela" value={ano} onChange={e => setAno(e.target.value)} disabled={modo !== 'table'} className={`${inputCls} w-28`}>
+                {anos.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </span>
+          </label>
+          <label className={opcaoCls}>
+            <span className="flex items-center gap-2.5">
+              <input type="radio" name="modo-reajuste" checked={modo === 'percent'} onChange={() => setModo('percent')} className="accent-primary" />
+              <span className="text-sm font-semibold text-on-surface">Por percentual</span>
+            </span>
+            <span className="flex items-center gap-2 pl-6">
+              <input aria-label="Percentual de reajuste" value={percentual} onChange={e => setPercentual(e.target.value)} disabled={modo !== 'percent'} inputMode="decimal" className={`${inputCls} w-24 tabular-nums`} />
+              <span className="text-sm text-on-surface-variant">%</span>
+            </span>
+          </label>
+        </div>
+      </section>
+      <PrimaryButton onClick={verPrevia} disabled={carregando} className="w-full sm:w-auto justify-center py-2.5">{carregando ? <Loader2 size={15} className="animate-spin" /> : <TrendingUp size={15} />} Ver prévia</PrimaryButton>
 
       {previa && (
         previa.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhuma mensalidade ativa para reajustar.</p> : (
@@ -442,7 +500,7 @@ function ReajusteTab({ ctx }) {
                 ) },
               ]}
             />
-            <PrimaryButton onClick={() => setConfirmando(true)} disabled={carregando || quantos === 0}>Aplicar reajuste em {quantos} {quantos === 1 ? 'mensalidade' : 'mensalidades'}</PrimaryButton>
+            <PrimaryButton onClick={() => setConfirmando(true)} disabled={carregando || quantos === 0} className="w-full sm:w-auto justify-center py-2.5">Aplicar reajuste em {quantos} {quantos === 1 ? 'mensalidade' : 'mensalidades'}</PrimaryButton>
           </>
         )
       )}
@@ -506,33 +564,49 @@ function AutomaticoTab({ currentUser }) {
   if (!config) return erro ? <Notice>{erro}</Notice> : <Loading />;
   return (
     <div className="space-y-4 max-w-xl">
-      <div className="p-3 rounded-zela-md bg-surface-container-low border border-outline-variant text-xs text-on-surface-variant space-y-1">
-        <p>Quando ligada, ao aprovar uma matrícula ou rematrícula o Zela Edu já cria a mensalidade do aluno no Asaas, com o preço da tabela de Planos e o desconto da família.</p>
-        <p>Só cria quando tudo estiver pronto: aluno com ciclo e turno, preço cadastrado, responsável financeiro com CPF e família que não seja bolsista. O que ficar de fora aparece em Financeiro, Mensalidades, aguardando.</p>
-      </div>
+      <p className="text-xs text-on-surface-variant flex items-start gap-2 px-1">
+        <Info size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+        <span>Quando ligada, ao aprovar uma matrícula ou rematrícula o Zela Edu já cria a mensalidade do aluno no Asaas, com o preço da tabela de Planos e o desconto da família. Só cria quando tudo estiver pronto: aluno com ciclo e turno, preço cadastrado, responsável financeiro com CPF e família que não seja bolsista. O que ficar de fora aparece em Financeiro, Mensalidades, aguardando.</span>
+      </p>
       <Notice>{erro}</Notice>
       {aviso && <Notice type="success">{aviso}</Notice>}
-      <label className="flex items-center gap-3 text-sm font-bold text-on-surface">
-        <input type="checkbox" checked={config.auto_create_on_approval} onChange={e => setConfig(c => ({ ...c, auto_create_on_approval: e.target.checked }))} />
-        Criar a mensalidade ao aprovar a matrícula
+
+      <label className="flex items-center gap-3 p-3.5 bg-surface-container-lowest border border-outline-variant rounded-zela-lg cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition">
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-bold text-on-surface">Criar a mensalidade ao aprovar a matrícula</span>
+          <span className="block text-xs text-on-surface-variant mt-0.5">{config.auto_create_on_approval ? 'Ligada' : 'Desligada'}</span>
+        </span>
+        <input type="checkbox" role="switch" checked={config.auto_create_on_approval} onChange={e => setConfig(c => ({ ...c, auto_create_on_approval: e.target.checked }))} className="peer sr-only" />
+        <span aria-hidden="true" className="relative shrink-0 w-11 h-6 rounded-full bg-outline-variant peer-checked:bg-primary transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2" />
       </label>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="auto-dia" className="block text-[11px] font-bold text-on-surface-variant mb-1">Dia do vencimento</label>
-          <input id="auto-dia" value={config.default_due_day} onChange={e => setConfig(c => ({ ...c, default_due_day: e.target.value }))} inputMode="numeric" className={inputCls} />
-          <p className="text-[11px] text-on-surface-variant/70 mt-1">O 1º vencimento é o próximo desse dia (de 1 a 28).</p>
+
+      <section className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg overflow-hidden">
+        <header className="flex items-center gap-2.5 px-4 py-2.5 bg-surface-container-low border-b border-outline-variant">
+          <span className="w-7 h-7 rounded-zela-md bg-primary/10 text-primary flex items-center justify-center"><CalendarDays size={15} aria-hidden="true" /></span>
+          <h3 className="text-sm font-bold text-on-surface">Cobrança</h3>
+        </header>
+        <div className="grid gap-3 sm:grid-cols-2 p-3.5">
+          <div>
+            <label htmlFor="auto-dia" className="block text-[11px] font-bold text-on-surface-variant mb-1">Dia do vencimento</label>
+            <input id="auto-dia" value={config.default_due_day} onChange={e => setConfig(c => ({ ...c, default_due_day: e.target.value }))} inputMode="numeric" className={`${inputCls} tabular-nums`} />
+            <p className="text-[11px] text-on-surface-variant/70 mt-1">O 1º vencimento é o próximo desse dia (de 1 a 28).</p>
+          </div>
+          <div>
+            <label htmlFor="auto-forma" className="block text-[11px] font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
+            <select id="auto-forma" value={config.default_billing_type} onChange={e => setConfig(c => ({ ...c, default_billing_type: e.target.value }))} className={inputCls}>
+              <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
+              <option value="PIX">PIX</option>
+              <option value="BOLETO">Boleto</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label htmlFor="auto-forma" className="block text-[11px] font-bold text-on-surface-variant mb-1">Forma de pagamento</label>
-          <select id="auto-forma" value={config.default_billing_type} onChange={e => setConfig(c => ({ ...c, default_billing_type: e.target.value }))} className={inputCls}>
-            <option value="UNDEFINED">Link de pagamento (família escolhe)</option>
-            <option value="PIX">PIX</option>
-            <option value="BOLETO">Boleto</option>
-          </select>
-        </div>
-      </div>
-      <p className="text-xs text-on-surface-variant">A criação automática é sempre mensal. Trimestral, semestral ou anual a Gestão cria em Financeiro, Mensalidades.</p>
-      <PrimaryButton onClick={salvar} disabled={salvando}>{salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar</PrimaryButton>
+      </section>
+
+      <p className="text-xs text-on-surface-variant flex items-start gap-2 px-1">
+        <Info size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+        <span>A criação automática é sempre mensal. Trimestral, semestral ou anual a Gestão cria em Financeiro, Mensalidades.</span>
+      </p>
+      <PrimaryButton onClick={salvar} disabled={salvando} className="w-full sm:w-auto justify-center py-2.5">{salvando ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar</PrimaryButton>
     </div>
   );
 }

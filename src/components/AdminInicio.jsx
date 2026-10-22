@@ -1,12 +1,12 @@
 import React from 'react';
-import { Monitor, CalendarCheck, Users, History, UserCog, ShieldCheck, UserRoundPlus } from 'lucide-react';
+import { MonitorCheck, CalendarCheck, Users, History, UserCog, ShieldCheck, UserRoundPlus } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, unreadNotifications = 0, pendingUsersCount = 0, onGoToPendingUsers = () => {} }) {
   const features = currentSchool?.features_enabled || {};
   
   const ADMIN_MENUS = [
-    { key: 'monitor', label: 'Monitor de solicitações', icon: Monitor, tab: 'monitor', feature: 'checkin', defaultOn: true },
+    { key: 'monitor', label: 'Monitor de solicitações', icon: MonitorCheck, tab: 'monitor', feature: 'checkin', defaultOn: true },
     { key: 'presence', label: 'Presença diária', icon: CalendarCheck, tab: 'presence', feature: 'checkin', defaultOn: true },
     { key: 'students', label: 'Lista de alunos', icon: Users, tab: 'students', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
@@ -75,17 +75,17 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
             >
               {/* Badges Vermelhos */}
               {menu.key === 'monitor' && monitorCount > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-brass text-[#1a1405] text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {monitorCount}
                 </span>
               )}
               {menu.key === 'users' && pendingUsersCount > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-brass text-[#1a1405] text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {pendingUsersCount}
                 </span>
               )}
               {menu.key === 'notificacoes' && unreadNotifications > 0 && (
-                <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                <span className="absolute top-3 right-3 bg-brass text-[#1a1405] text-[10px] font-semibold rounded-sm min-w-[20px] h-5 px-1.5 flex items-center justify-center">
                   {unreadNotifications}
                 </span>
               )}

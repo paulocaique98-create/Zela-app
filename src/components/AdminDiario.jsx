@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Check, Loader2, Minus, Plus, Search, User } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, Loader2, Minus, Plus, Search, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { REFEICOES } from '../lib/constants';
 import { splitCardapioItens, mealAsksComeuTudo, normalizeItemServido } from '../lib/diarioUtils';
@@ -40,7 +40,11 @@ const segCls = (active) =>
 
 export default function AdminDiario({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
-  const { turmas: schoolTurmas } = useSchoolConfig(schoolId);
+  const { turmas: turmasDaEscola } = useSchoolConfig(schoolId);
+  // Professora só vê as turmas dela; o filtro dos alunos também vem do banco (RLS).
+  const schoolTurmas = currentUser?.role === 'teacher'
+    ? turmasDaEscola.filter(t => (currentUser.turmas || []).includes(t))
+    : turmasDaEscola;
 
   // Busca os alunos por conta própria (mesmo padrão de AdminStudentList.jsx)
   // em vez de usar o `students` que o AdminPortal repassa — aquele é uma
@@ -251,7 +255,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Diário" e ícone removidos (o Header do app já mostra o nome
           da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
+      <div className="hidden sm:flex items-center p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">Lance refeições, sono, evacuação e observações do dia.</p>
       </div>
 
@@ -266,43 +270,43 @@ export default function AdminDiario({ currentUser, currentSchool }) {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 p-3.5 sm:p-5 bg-surface-container-low border border-outline-variant rounded-zela-lg">
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Data</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Data</label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
                 max={todayStr()}
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
+                className="w-full min-w-0 px-3 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Turma</label>
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Turma</label>
               <select
                 value={turmaFiltro}
                 onChange={e => { setTurmaFiltro(e.target.value); setBuscaQuery(''); }}
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
+                className="w-full min-w-0 px-3 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
               >
-                <option value="">Todas as turmas</option>
+                <option value="">Todas</option>
                 {schoolTurmas.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <div className="sm:col-span-2 relative">
-              <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
+            <div className="col-span-2 relative">
+              <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><User size={12} /> Aluno</label>
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" size={16} />
                 <input
                   type="text"
-                  value={isAlunoDropdownOpen ? buscaQuery : selectedStudentName}
+                  value={isAlunoDropdownOpen || !selectedStudentId ? buscaQuery : selectedStudentName}
                   onChange={e => setBuscaQuery(e.target.value)}
                   onFocus={abrirDropdownAluno}
                   onBlur={() => setTimeout(() => setIsAlunoDropdownOpen(false), 150)}
-                  placeholder="Digite o nome do aluno..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-bold text-on-surface text-sm"
+                  placeholder="Buscar aluno pelo nome"
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary font-semibold text-on-surface text-sm"
                 />
               </div>
-              {isAlunoDropdownOpen && (
+              {isAlunoDropdownOpen && selectedStudentId && (
                 <div className="absolute z-10 mt-1.5 w-full max-h-64 overflow-y-auto bg-white border border-outline-variant rounded-zela-md shadow-lg">
                   {alunosFiltrados.length === 0 ? (
                     <div className="px-4 py-3 text-sm text-on-surface-variant/70">Nenhum aluno encontrado.</div>
@@ -314,7 +318,7 @@ export default function AdminDiario({ currentUser, currentSchool }) {
                         onMouseDown={() => selecionarAluno(s)}
                         className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary/10 transition ${s.id === selectedStudentId ? 'bg-primary/10 font-bold text-primary' : 'text-on-surface'}`}
                       >
-                        {s.name}{s.turma ? <span className="text-on-surface-variant/70 font-normal"> · {s.turma}</span> : ''}
+                        {s.name}{s.turma && !turmaFiltro ? <span className="text-on-surface-variant/70 font-normal"> · {s.turma}</span> : ''}
                       </button>
                     ))
                   )}
@@ -327,10 +331,38 @@ export default function AdminDiario({ currentUser, currentSchool }) {
           {successMsg && <div className="bg-success/10 border border-success/40 text-success p-3 rounded-zela-md text-sm font-medium">{successMsg}</div>}
 
           {!selectedStudentId ? (
-            <div className="flex flex-col items-center justify-center text-center py-16 text-on-surface-variant/70">
-              <User className="mx-auto h-12 w-12 text-outline-variant mb-3" />
-              <p className="text-sm font-semibold text-on-surface-variant">Selecione um aluno acima para começar o lançamento.</p>
-            </div>
+            alunosFiltrados.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 text-on-surface-variant/70">
+                <User className="mx-auto h-10 w-10 text-outline-variant mb-3" />
+                <p className="text-sm font-semibold text-on-surface-variant">Nenhum aluno encontrado.</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">
+                  Toque no aluno para lançar o dia · {alunosFiltrados.length}
+                </p>
+                <ul className="divide-y divide-outline-variant border border-outline-variant rounded-zela-lg overflow-hidden">
+                  {alunosFiltrados.map(s => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => selecionarAluno(s)}
+                        className="w-full flex items-center gap-3 px-3.5 py-3 text-left bg-white hover:bg-surface-container-low active:bg-primary/10 transition"
+                      >
+                        <span className="w-9 h-9 shrink-0 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center">
+                          {s.name?.charAt(0)?.toUpperCase()}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-on-surface truncate">{s.name}</span>
+                          {s.turma && !turmaFiltro && <span className="block text-xs text-on-surface-variant truncate">{s.turma}</span>}
+                        </span>
+                        <ChevronRight size={16} className="shrink-0 text-on-surface-variant/60" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
           ) : isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />

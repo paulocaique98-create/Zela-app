@@ -1,40 +1,22 @@
-import React, { useState } from 'react';
-import { Loader2, X, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import React from 'react';
+import { Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Peças visuais compartilhadas pelas telas novas do Portal da Gestão.
 // O título da tela já aparece no Header do app (SCREEN_LABELS), então aqui
 // só entra a descrição curta e as ações.
 
-// infoOnMobile: no celular a descrição some e vira um ícone de informação no
-// canto direito, que abre um modal explicando a tela.
+// infoOnMobile: no celular a faixa da descrição (e das ações) não aparece; o
+// conteúdo começa logo abaixo do Header, igual à tela de Pendências.
 export function PageShell({ description, descriptionClassName = '', infoOnMobile = false, afterInfo = null, actions, children }) {
-  const [infoOpen, setInfoOpen] = useState(false);
-  const hideDescription = infoOnMobile ? 'hidden sm:block' : descriptionClassName;
   return (
     <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
       {(description || actions) && (
-        <div className={`flex ${infoOnMobile ? 'flex-row items-center -mt-0.5 sm:mt-0' : 'flex-col pt-4 pb-3'} sm:flex-row sm:items-center justify-between gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 ${infoOnMobile ? 'sm:border-b' : 'border-b'} border-outline-variant shrink-0`}>
-          {description ? <p className={`text-small text-on-surface-variant ${hideDescription}`}>{description}</p> : <span />}
-          {actions && <div className={`flex items-center gap-2 flex-wrap shrink-0 ${infoOnMobile ? 'hidden sm:flex' : ''}`}>{actions}</div>}
-          {infoOnMobile && description && (
-            <button
-              type="button"
-              onClick={() => setInfoOpen(true)}
-              aria-label="Sobre esta tela"
-              title="Sobre esta tela"
-              className="ml-auto sm:hidden p-1 text-on-surface-variant hover:bg-surface-container rounded-zela-md"
-            >
-              <Info size={18} />
-            </button>
-          )}
+        <div className={`${infoOnMobile ? 'hidden sm:flex' : 'flex flex-col pt-4 pb-3 sm:flex'} sm:flex-row sm:items-center justify-between gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 border-b border-outline-variant shrink-0`}>
+          {description ? <p className={`text-small text-on-surface-variant ${descriptionClassName}`}>{description}</p> : <span />}
+          {actions && <div className="flex items-center gap-2 flex-wrap shrink-0">{actions}</div>}
         </div>
       )}
-      {infoOpen && (
-        <Modal title="Sobre esta tela" onClose={() => setInfoOpen(false)}>
-          <p className="text-sm text-on-surface-variant">{description}</p>
-        </Modal>
-      )}
-      <div className={`flex-1 overflow-y-auto min-h-0 ${infoOnMobile ? 'px-2.5 pt-3 pb-4' : 'p-2.5'} md:p-6`}>{afterInfo}{children}</div>
+      <div className="flex-1 overflow-y-auto min-h-0 p-2.5 md:p-6">{afterInfo}{children}</div>
     </div>
   );
 }
@@ -42,7 +24,7 @@ export function PageShell({ description, descriptionClassName = '', infoOnMobile
 // O valor acompanha a largura do card (container query, 16px a 24px) e quebra
 // de linha se ainda assim não couber: nunca vaza para fora do card, mesmo com
 // "R$ 12.345,67" em um card de celular. `min-w-0` deixa o card encolher na grade.
-export function StatCard({ label, value, hint, tone = 'default', onClick, className = '', valueClassName = 'text-[length:clamp(1rem,13cqw,1.5rem)]' }) {
+export function StatCard({ label, value, hint, tone = 'default', onClick, className = '', valueClassName = 'text-[length:clamp(1rem,13cqw,1.5rem)]', compact = false }) {
   const tones = {
     default: 'text-on-surface',
     good: 'text-success',
@@ -53,10 +35,10 @@ export function StatCard({ label, value, hint, tone = 'default', onClick, classN
   return (
     <Tag
       onClick={onClick}
-      className={`@container min-w-0 text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''} ${className}`}
+      className={`@container min-w-0 text-left bg-surface-container-lowest border border-outline-variant rounded-zela-lg ${compact ? 'px-3 py-2' : 'p-4'} ${onClick ? 'hover:border-primary/40 hover:shadow-sm transition' : ''} ${className}`}
     >
       <p className="text-xs font-semibold text-on-surface-variant">{label}</p>
-      <p className={`${valueClassName} font-semibold mt-1 tabular-nums break-words ${tones[tone] || tones.default}`}>{value}</p>
+      <p className={`${valueClassName} font-semibold ${compact ? 'mt-0' : 'mt-1'} tabular-nums break-words ${tones[tone] || tones.default}`}>{value}</p>
       {hint && <p className="text-xs text-on-surface-variant/70 mt-0.5 break-words">{hint}</p>}
     </Tag>
   );

@@ -1,12 +1,13 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, AlertCircle, FileText, ClipboardCheck, LogOut } from 'lucide-react';
+import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
-import { SidebarItem, SidebarGroup, SidebarToggleButton } from './SidebarNav';
+import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
@@ -16,6 +17,10 @@ const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const TeacherMapaHabilidades = lazy(() => import('./TeacherMapaHabilidades'));
 const TeacherMitigacao = lazy(() => import('./TeacherMitigacao'));
 const TeacherFrequencia = lazy(() => import('./TeacherFrequencia'));
+const AdminDiario = lazy(() => import('./AdminDiario'));
+// Cardápio: o professor só visualiza (quem cadastra é Gestão/Coordenação/Direção).
+const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
+const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -29,6 +34,7 @@ export default function TeacherPortal({
   students, authorized,
   teacherTab, setTeacherTab,
   isMobileMenuOpen, setIsMobileMenuOpen,
+  onLogout,
 }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -38,6 +44,7 @@ export default function TeacherPortal({
   // item, mesmo que o mouse ainda esteja em cima do menu.
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
   const isDesktop = useIsDesktop();
+  useRecolherSubmenusNoMobile(isMobileMenuOpen, isDesktop, setOpenAccordion);
   const collapsed = isDesktop && !isSidebarExpanded;
   const go = (tab) => {
     setTeacherTab(tab);
@@ -53,7 +60,11 @@ export default function TeacherPortal({
   // Início/Monitor. Agora basta QUALQUER um dos dois módulos acadêmicos
   // estar ativo; cada item específico (Relatórios/Frequência) continua
   // com sua própria flag dentro do portal.
-  const moduleEnabled = showRelatorios || showFrequencia;
+  // Módulo Rotina e família (chaves diario, mural, cardapio).
+  const showDiario = currentSchool?.features_enabled?.diario === true;
+  const showCardapio = currentSchool?.features_enabled?.cardapio === true;
+  const showMural = currentSchool?.features_enabled?.mural === true;
+  const moduleEnabled = showRelatorios || showFrequencia || showDiario || showCardapio || showMural;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -102,12 +113,31 @@ export default function TeacherPortal({
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={teacherTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
-            <SidebarItem active={teacherTab === 'monitor'} icon={AlertCircle} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
+            <SidebarItem active={teacherTab === 'monitor'} icon={MonitorCheck} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
             {showFrequencia && (
               <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
             )}
             {showSaidasPendentes && (
               <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
+            )}
+            {(showDiario || showCardapio || showMural) && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Acadêmico"
+                icon={BookOpen}
+                isOpen={openAccordion === 'academico'}
+                onToggle={() => toggleAccordion('academico')}
+              >
+                {showDiario && (
+                  <SidebarItem active={teacherTab === 'diario'} icon={Soup} label="Diário" onClick={() => go('diario')} />
+                )}
+                {showCardapio && (
+                  <SidebarItem active={teacherTab === 'cardapio'} icon={UtensilsCrossed} label="Cardápio" onClick={() => go('cardapio')} />
+                )}
+                {showMural && (
+                  <SidebarItem active={teacherTab === 'mural-fotos'} icon={ImageIcon} label="Mural de Fotos" onClick={() => go('mural-fotos')} />
+                )}
+              </SidebarGroup>
             )}
 
             {showRelatorios && (
@@ -124,6 +154,7 @@ export default function TeacherPortal({
               </SidebarGroup>
             )}
           </nav>
+          <SidebarLogoutItem onLogout={onLogout} />
         </div>
       </aside>
 
@@ -140,7 +171,10 @@ export default function TeacherPortal({
             <TeacherFrequencia currentUser={currentUser} currentSchool={currentSchool} />
           )}
           {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
-          {teacherTab === 'rel-mitigacao' && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'rel-mitigacao' &&<TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
         </Suspense>
       </main>
@@ -148,9 +182,8 @@ export default function TeacherPortal({
       <MobileBottomNav
         items={[
           { key: 'home', label: 'Início', icon: Home, active: teacherTab === 'home', onClick: () => go('home') },
-          { key: 'monitor', label: 'Monitor', icon: AlertCircle, active: teacherTab === 'monitor', onClick: () => go('monitor'), badge: monitorCount },
-          { key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, active: teacherTab === 'frequencia', onClick: () => go('frequencia'), show: showFrequencia },
-          { key: 'saidas-pendentes', label: 'Saídas', icon: LogOut, active: teacherTab === 'saidas-pendentes', onClick: () => go('saidas-pendentes'), badge: saidasPendentesCount, show: showSaidasPendentes },
+          { key: 'monitor', label: 'Monitor', icon: MonitorCheck, active: teacherTab === 'monitor', onClick: () => go('monitor'), badge: monitorCount },
+          { key: 'diario', label: 'Diário', icon: Soup, active: teacherTab === 'diario', onClick: () => go('diario'), show: showDiario },
         ]}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}

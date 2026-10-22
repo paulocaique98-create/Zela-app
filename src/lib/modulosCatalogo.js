@@ -148,6 +148,19 @@ export const ITENS = [
     aviso: 'Só ativar depois de validar o modo observador (PLANO_MIGRACAO_BIBLIOTECA_RECONHECIMENTO_FACIAL.md, Fases C e D).',
     aoDesligar: 'Volta ao motor face-api.js.',
   },
+  {
+    id: 'assistente_configuracao',
+    grupo: 'tecnico',
+    nome: 'Primeiros passos (implantação)',
+    resumo: 'Lista do que falta configurar na escola nova, com progresso.',
+    keys: ['assistente_configuracao'],
+    inclui: [
+      { nome: 'Passo a passo', desc: 'Turmas, horários, mensalidades, conta Asaas e equipe' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Primeiros passos' }],
+    aviso: 'Ligar durante a implantação e desligar quando a escola estiver configurada.',
+    aoDesligar: 'O item Primeiros passos some do menu da Gestão. Nada é apagado.',
+  },
 ];
 
 export const ITEM_POR_ID = Object.fromEntries(ITENS.map(i => [i.id, i]));

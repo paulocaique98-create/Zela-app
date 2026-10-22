@@ -105,7 +105,7 @@ export default function TrocaDeConta({ currentUser, onTrocar }) {
                     <p className="text-xs text-on-surface-variant truncate">{conta.atual ? 'Aberta agora' : conta.name}</p>
                   </div>
                   {!conta.atual && conta.nao_lidas > 0 && (
-                    <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-sm bg-error text-white text-[11px] font-bold flex items-center justify-center">{conta.nao_lidas}</span>
+                    <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-sm bg-brass text-[#1a1405] text-[11px] font-bold flex items-center justify-center">{conta.nao_lidas}</span>
                   )}
                 </button>
                 {!conta.atual && (
