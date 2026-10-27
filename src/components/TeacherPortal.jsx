@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings } from 'lucide-react';
+import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -9,7 +9,7 @@ import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 import { useSchoolConfig } from '../lib/schoolConfig';
-import { ocultoNoTradicional } from '../tradicional/menus';
+import { ocultoNoTradicional, ocultoPorFaltaDeMetodo } from '../tradicional/menus';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
@@ -24,6 +24,7 @@ const AdminDiario = lazy(() => import('./AdminDiario'));
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
+const LancamentoNotas = lazy(() => import('../tradicional/LancamentoNotas'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -70,7 +71,10 @@ export default function TeacherPortal({
   const showDiario = currentSchool?.features_enabled?.diario === true;
   const showCardapio = currentSchool?.features_enabled?.cardapio === true;
   const showMural = currentSchool?.features_enabled?.mural === true;
-  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural;
+  // Notas do Método Tradicional: chave própria (=== true) e método explícito.
+  const showNotas = currentSchool?.features_enabled?.avaliacao_tradicional === true
+    && !ocultoPorFaltaDeMetodo(method, 'academico-avaliacao');
+  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -122,6 +126,9 @@ export default function TeacherPortal({
             <SidebarItem active={teacherTab === 'monitor'} icon={MonitorCheck} label="Monitor" badge={monitorCount > 0 ? monitorCount : null} onClick={() => go('monitor')} />
             {showFrequencia && (
               <SidebarItem active={teacherTab === 'frequencia'} icon={ClipboardCheck} label="Frequência" onClick={() => go('frequencia')} />
+            )}
+            {showNotas && (
+              <SidebarItem active={teacherTab === 'notas'} icon={GraduationCap} label="Notas" onClick={() => go('notas')} />
             )}
             {showSaidasPendentes && (
               <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
@@ -178,6 +185,7 @@ export default function TeacherPortal({
           {teacherTab === 'frequencia' && (
             <TeacherFrequencia currentUser={currentUser} currentSchool={currentSchool} />
           )}
+          {teacherTab === 'notas' && showNotas && <LancamentoNotas currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}

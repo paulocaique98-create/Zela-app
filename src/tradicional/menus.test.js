@@ -34,6 +34,14 @@ describe('ocultoPorFaltaDeMetodo', () => {
     }
   });
 
+  it('a aba Avaliação segue a mesma regra da Estrutura acadêmica', () => {
+    expect(ocultoPorFaltaDeMetodo('tradicional', 'academico-avaliacao')).toBe(false);
+    expect(ocultoPorFaltaDeMetodo('personalizado', 'academico-avaliacao')).toBe(false);
+    for (const method of ['montessori', null, undefined]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-avaliacao')).toBe(true);
+    }
+  });
+
   it('nunca esconde as demais abas', () => {
     for (const method of ['montessori', 'tradicional', null]) {
       expect(ocultoPorFaltaDeMetodo(method, 'academico-materias')).toBe(false);
