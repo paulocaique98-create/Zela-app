@@ -96,6 +96,8 @@ Pendente: aplicar a migration `20261031120000_tradicional_fase4b_ata_historico.s
 
 **Fase 5: rematrícula e extras**
 Promoção de série, tarefas, BNCC.
+~~5A: promoção de série~~ ✅ código pronto em 27/10/2026 (sem migration). Aba Promoção de série (só Coordenação e Direção): parte do resultado fechado; aprovado sobe, reprovado repete, em recuperação final fica pendente até fechar como aprovado ou reprovado, última série vira concluinte. Grava só students.turma (RLS já existente), com confirmação; resultados e histórico do ano anterior ficam intactos.
+Pendente: testar no navegador com escola Tradicional (precisa de ano letivo e turmas de destino).
 
 ## 4. Turmas (ponto mais delicado)
 
