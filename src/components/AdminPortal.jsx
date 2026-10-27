@@ -512,7 +512,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                         </p>
                         <h3 className="font-semibold text-lg text-on-surface mb-3 pr-11">{student.name}</h3>
                         {/* Trilha: a solicitação já passou pelo responsável e pelo totem; falta a recepção. */}
-                        <TrilhaConfirmacao atual={2} className="mb-4" />
+                        <TrilhaConfirmacao atual={1} className="mb-4" />
                         <div className="flex flex-col gap-2">
                           {/* Botão APROVAR: confirma o check-in/out e grava no attendance_logs */}
                           <button

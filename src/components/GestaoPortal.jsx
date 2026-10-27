@@ -410,7 +410,11 @@ export default function GestaoPortal({
           {abaAtual === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
           {abaAtual === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
           {abaAtual === 'historico-geral' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
-          {abaAtual === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'saidas-pendentes' && (
+            <div className="h-full min-h-0 overflow-y-auto bg-surface p-3 sm:p-4 md:p-6 lg:p-8">
+              <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />
+            </div>
+          )}
 
           {/* Cadastros */}
           {abaAtual === 'cadastros-usuarios' && (
@@ -440,12 +444,12 @@ export default function GestaoPortal({
           {abaAtual === 'academico-cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-diario' && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-materias' && <AdminSubjects currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-estrutura' && <EstruturaAcademica currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-avaliacao' && <ConfigAvaliacao currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Comunicação */}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
-          {abaAtual === 'academico-estrutura' && <EstruturaAcademica currentUser={currentUser} currentSchool={currentSchool} />}
-          {abaAtual === 'academico-avaliacao' && <ConfigAvaliacao currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Relatórios */}
           {abaAtual === 'relatorios-gestao' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="gestao" />}
