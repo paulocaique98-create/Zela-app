@@ -51,14 +51,15 @@ segmento (parecer no Infantil, nota nos demais).
 
 Cada fase é uma sessão própria (Sonnet), com branch, testes e PR.
 
-**Fase 0: fundação e trava de segurança** (sem tabela nova)
-- Conferir (só leitura) o `pedagogical_method` das escolas em produção.
+~~**Fase 0: fundação e trava de segurança** (sem tabela nova)~~ ✅ concluída em 27/10/2026 (commit f0ae846, PR #25)
+- [ ] Conferir (só leitura) o `pedagogical_method` das escolas em produção.
   Hoje o fallback é `'tradicional'` em `src/lib/schoolConfig.js` (useSchoolConfig)
   e `src/components/DeveloperPanel.jsx` (carregar escola). Escola
   Montessori com campo vazio viraria Tradicional por engano: maior risco.
-- Criar/Editar escola: método obrigatório e explícito.
-- Registro do método Tradicional, entrada no catálogo de módulos, pasta
-  `src/tradicional/`, painel do Dev mostra módulos conforme o método.
+  (Risco tratado no código: o fallback agora é `null`. A consulta em produção não foi registrada, segue pendente.)
+- ~~Criar/Editar escola: método obrigatório e explícito.~~ ✅
+- ~~Registro do método Tradicional, entrada no catálogo de módulos, pasta
+  `src/tradicional/`, painel do Dev mostra módulos conforme o método.~~ ✅
 
 **Fase 1: estrutura acadêmica**
 Segmentos, séries, turmas, disciplinas, grade curricular, atribuição de
@@ -89,4 +90,4 @@ intactos) e a tabela nova guarda série, turno e ano letivo dela.
 1. Segmentos atendidos primeiro (Infantil, Fund. I, Fund. II, Médio)?
 2. Nota 0 a 10 e bimestre fixos, ou configuráveis por escola desde o início?
 3. Autorização para a consulta só de leitura do `pedagogical_method` em produção.
-4. Escola tradicional esconde Mitigação e Mapa de Habilidades? (Não afeta Montessori.)
+~~4. Escola tradicional esconde Mitigação e Mapa de Habilidades? (Não afeta Montessori.)~~ ✅ aplicado na Fase 0
