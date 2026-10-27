@@ -42,6 +42,13 @@ describe('ocultoPorFaltaDeMetodo', () => {
     }
   });
 
+  it('a aba Frequência por disciplina segue a mesma regra', () => {
+    expect(ocultoPorFaltaDeMetodo('tradicional', 'academico-frequencia-turma')).toBe(false);
+    for (const method of ['montessori', null, undefined]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-frequencia-turma')).toBe(true);
+    }
+  });
+
   it('nunca esconde as demais abas', () => {
     for (const method of ['montessori', 'tradicional', null]) {
       expect(ocultoPorFaltaDeMetodo(method, 'academico-materias')).toBe(false);

@@ -14,7 +14,7 @@ export const ocultoNoTradicional = (method, aba) =>
 
 // Abas que só existem para escola Tradicional (ou Personalizada). Sem método
 // definido (carregando ou leitura falhou) ficam escondidas.
-export const ABAS_SO_TRADICIONAL = ['academico-estrutura', 'academico-avaliacao'];
+export const ABAS_SO_TRADICIONAL = ['academico-estrutura', 'academico-avaliacao', 'academico-frequencia-turma'];
 
 export const ocultoPorFaltaDeMetodo = (method, aba) =>
   ABAS_SO_TRADICIONAL.includes(aba) && method !== 'tradicional' && method !== 'personalizado';
