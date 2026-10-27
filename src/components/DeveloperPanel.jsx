@@ -125,7 +125,7 @@ export default function DeveloperPanel() {
         notes: school.notes || ''
       });
       setLimits({ ...defaultLimits, ...school.limits });
-      setPedagogicalMethod(school.pedagogical_method || 'tradicional');
+      setPedagogicalMethod(school.pedagogical_method || '');
       setCustomClassLabel(school.custom_config?.terminology?.class || '');
     } else {
       setEditingSchool(null);
@@ -134,7 +134,7 @@ export default function DeveloperPanel() {
       });
       setLimits(defaultLimits);
       setAdminData({ name: '', email: '', password: '' });
-      setPedagogicalMethod('tradicional');
+      setPedagogicalMethod('');
       setCustomClassLabel('');
       setSaveError('');
       setSuccessMsg('');
@@ -631,7 +631,8 @@ export default function DeveloperPanel() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-dev-text-muted mb-1">Método</label>
-                    <select value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
+                    <select required value={pedagogicalMethod} onChange={e => setPedagogicalMethod(e.target.value)} className="w-full p-2.5 bg-dev-bg border border-dev-border rounded-zela-md focus:ring-2 focus:ring-dev-primary outline-none">
+                      <option value="" disabled>Selecione o método</option>
                       <option value="tradicional">Tradicional</option>
                       <option value="montessori">Montessori</option>
                       <option value="personalizado">Personalizado</option>

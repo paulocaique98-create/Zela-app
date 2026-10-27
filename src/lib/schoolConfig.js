@@ -31,7 +31,7 @@ const FALLBACK_TURMAS = TURMAS.filter(t => t !== 'Todas as Turmas');
 // { method, terminology, turmas, loading } — `turmas` já resolvido (dado
 // real da escola, ou fallback global se ainda não configurado).
 export function useSchoolConfig(schoolId) {
-  const [state, setState] = useState({ method: 'tradicional', terminology: PEDAGOGICAL_METHOD_DEFAULTS.tradicional.terminology, turmas: FALLBACK_TURMAS, loading: true });
+  const [state, setState] = useState({ method: null, terminology: PEDAGOGICAL_METHOD_DEFAULTS.tradicional.terminology, turmas: FALLBACK_TURMAS, loading: true });
 
   useEffect(() => {
     let active = true;

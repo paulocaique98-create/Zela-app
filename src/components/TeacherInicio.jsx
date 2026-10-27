@@ -8,16 +8,16 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
 ];
 
-export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, showFrequencia = false }) {
+export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, showFrequencia = false, showRelatorios = true }) {
   const TEACHER_MENUS = [
     { key: 'monitor', label: 'Monitor', icon: MonitorCheck, tab: 'monitor' },
     ...(showFrequencia ? [{ key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, tab: 'frequencia' }] : []),
-    ...RELATORIOS_SUBMENU.map(r => ({ key: r.key, label: r.label, icon: FileText, tab: r.key })),
+    ...(showRelatorios ? RELATORIOS_SUBMENU.map(r => ({ key: r.key, label: r.label, icon: FileText, tab: r.key })) : []),
   ];
 
   const topMenus = useMemo(() => {
     return [...TEACHER_MENUS].sort((a, b) => (clickCounts[b.key] || 0) - (clickCounts[a.key] || 0));
-  }, [clickCounts, showFrequencia]);
+  }, [clickCounts, showFrequencia, showRelatorios]);
 
   const handleCardClick = (menu) => {
     registerClick(menu.key);

@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft, Lock, BookOpen, Sun, Wallet, ScanFace, QrCode, ShieldAlert, Cpu, AlertTriangle, History, Loader2,
+  ArrowLeft, Lock, BookOpen, Sun, Wallet, ScanFace, QrCode, ShieldAlert, Cpu, AlertTriangle, History, Loader2, GraduationCap,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import ConfirmModal from './ConfirmModal';
 import {
-  GRUPOS, ITENS, ITEM_POR_ID, PACOTES, estadoDoItem, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, historicoDoItem,
+  GRUPOS, ITENS, ITEM_POR_ID, PACOTES, estadoDoItem, itemVisivelNoMetodo, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, historicoDoItem,
 } from '../lib/modulosCatalogo';
 
 // Portal do Dev · Módulos contratados · Modelo 3 (Lista e detalhe, aprovado
@@ -17,7 +17,7 @@ import {
 // src/lib/modulosCatalogo.js; os preços dos pacotes ainda não existem.
 
 const ICONES = {
-  base: Lock, pedagogico: BookOpen, rotina: Sun, financeiro: Wallet, liveness: ScanFace, qr: QrCode,
+  base: Lock, pedagogico: BookOpen, pedagogico_tradicional: GraduationCap, rotina: Sun, financeiro: Wallet, liveness: ScanFace, qr: QrCode,
   liveness_bloqueio: ShieldAlert, motor_human: Cpu,
 };
 
@@ -63,7 +63,9 @@ function formatarQuando(iso) {
 export default function DeveloperModulos({ school, onBack, onSaved }) {
   const original = useMemo(() => school.features_enabled || {}, [school]);
   const [draft, setDraft] = useState(() => normalizarFeatures(original));
-  const [selectedId, setSelectedId] = useState('pedagogico');
+  const [selectedId, setSelectedId] = useState(() => (
+    itemVisivelNoMetodo(ITEM_POR_ID.pedagogico, school.pedagogical_method, normalizarFeatures(school.features_enabled || {})) ? 'pedagogico' : 'pedagogico_tradicional'
+  ));
   const [mobileDetail, setMobileDetail] = useState(false);
   const [changes, setChanges] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -158,7 +160,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
       {GRUPOS.map(g => (
         <div key={g.key} className="flex flex-col gap-0.5">
           <p className="px-3 pb-1 text-[11px] font-bold text-dev-text-muted">{g.label}</p>
-          {ITENS.filter(i => i.grupo === g.key).map(i => {
+          {ITENS.filter(i => i.grupo === g.key && itemVisivelNoMetodo(i, school.pedagogical_method, draft)).map(i => {
             const st = statusDoItem(draft, i);
             const ativo = i.id === selectedId;
             return (
@@ -217,7 +219,7 @@ export default function DeveloperModulos({ school, onBack, onSaved }) {
       )}
 
       {item.emBreve ? (
-        <Secao titulo="Em breve"><p className="text-sm text-dev-text">Este adicional chega junto com os apps. Por enquanto não há nada para ligar.</p></Secao>
+        <Secao titulo="Em breve"><p className="text-sm text-dev-text">{item.emBreveTexto || 'Este adicional chega junto com os apps. Por enquanto não há nada para ligar.'}</p></Secao>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           <Secao titulo="O que inclui">

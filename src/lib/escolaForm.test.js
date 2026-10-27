@@ -23,6 +23,12 @@ describe('Editar/Nova Escola (Portal do Dev) · o que é salvo', () => {
     expect(pacoteAtual(dados.features_enabled)).toBe('essencial');
   });
 
+  it('sem método escolhido, não monta os dados (evita escola nascer Tradicional por padrão)', () => {
+    for (const pedagogicalMethod of ['', null, undefined, 'outro']) {
+      expect(() => montarDadosEscola({ ...base, pedagogicalMethod, isNew: true })).toThrow('método pedagógico');
+    }
+  });
+
   it('nome personalizado para "Turma" continua sendo salvo', () => {
     const dados = montarDadosEscola({ ...base, pedagogicalMethod: 'personalizado', customClassLabel: '  Agrupamento ', isNew: false });
     expect(dados.custom_config).toEqual({ terminology: { class: 'Agrupamento' } });

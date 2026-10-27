@@ -8,7 +8,14 @@ import { featuresIniciais } from './modulosCatalogo';
 // levar os alunos junto; o campo saiu do formulário em 28/09/2026.
 // Também não mexe nos módulos ao editar (tela Módulos); escola nova nasce só
 // com o plano base (regra: tudo que se ativa começa desativado).
+export const METODOS_PEDAGOGICOS = ['tradicional', 'montessori', 'personalizado'];
+
+// O método é escolhido explicitamente: o banco tem DEFAULT 'tradicional', então
+// uma escola Montessori sem escolha viraria Tradicional sem ninguém notar.
 export function montarDadosEscola({ formData, limits, pedagogicalMethod, customClassLabel, isNew }) {
+  if (!METODOS_PEDAGOGICOS.includes(pedagogicalMethod)) {
+    throw new Error('Selecione o método pedagógico da escola.');
+  }
   const custom_config = customClassLabel.trim()
     ? { terminology: { class: customClassLabel.trim() } }
     : {};
