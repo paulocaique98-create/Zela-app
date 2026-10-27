@@ -47,6 +47,7 @@ export const ITENS = [
     nome: 'Pedagógico',
     resumo: 'Registros e relatórios de desenvolvimento das crianças.',
     keys: ['relatorios_pedagogicos', 'frequencia', 'materias'],
+    metodos: ['montessori', 'personalizado'],
     inclui: [
       { nome: 'Relatórios de desenvolvimento', desc: 'Mitigação e Mapa de Habilidades, preenchidos pelas professoras' },
       { nome: 'Frequência', desc: 'Chamada por turma e por dia' },
@@ -59,6 +60,23 @@ export const ITENS = [
       { portal: 'Família', menus: 'Relatórios' },
     ],
     aoDesligar: 'As professoras deixam de ver Frequência e Relatórios, e a família deixa de ver os Relatórios. O que já foi registrado fica guardado.',
+  },
+  {
+    // Sistema pedagógico próprio da escola Tradicional (PLANO_METODO_TRADICIONAL.md).
+    // Sem chaves até a Fase 1: com keys vazio o item é "Em breve" e não liga
+    // nada. Cada fase cria as chaves dela (sempre lidas como `=== true`) e
+    // tira o emBreve. Não mexe no 'pedagogico' acima, que é do Montessori.
+    id: 'pedagogico_tradicional',
+    grupo: 'modulo',
+    nome: 'Pedagógico Tradicional',
+    resumo: 'Notas, diário de classe, boletim e resultado final para a escola de método tradicional.',
+    keys: [],
+    metodos: ['tradicional', 'personalizado'],
+    emBreve: true,
+    emBreveTexto: 'Este módulo está em desenvolvimento. Por enquanto não há nada para ligar.',
+    inclui: [],
+    onde: [],
+    aoDesligar: null,
   },
   {
     id: 'rotina',
@@ -174,6 +192,14 @@ export const PACOTES = [
   { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr'] },
 ];
 const VENDAVEIS = ITENS.filter(i => (i.grupo === 'modulo' || i.grupo === 'adicional') && i.keys.length);
+
+// O que a tela de Módulos do Dev mostra para a escola: item com `metodos` só
+// aparece nesses métodos. Nunca esconde o que já está ligado (ou parcial) nem
+// quando o método é desconhecido. Só afeta a exibição; não muda nenhuma chave.
+export function itemVisivelNoMetodo(item, method, features) {
+  if (!item.metodos || !method || item.metodos.includes(method)) return true;
+  return estadoDoItem(features, item) !== 'off';
+}
 
 // 'on' | 'off' | 'parcial' (escola antiga com só parte das chaves ligadas).
 export function estadoDoItem(features, item) {

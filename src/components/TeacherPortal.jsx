@@ -8,6 +8,8 @@ import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
+import { useSchoolConfig } from '../lib/schoolConfig';
+import { ocultoNoTradicional } from '../tradicional/menus';
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
@@ -53,7 +55,10 @@ export default function TeacherPortal({
     setIsMobileMenuOpen(false);
   };
   const isBlocked = currentUser?.teacher_status && currentUser.teacher_status !== 'ativo';
-  const showRelatorios = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
+  const { method } = useSchoolConfig(currentSchool?.id);
+  const relatoriosAtivos = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
+  // Escola Tradicional não tem Mitigação nem Mapa de Habilidades.
+  const showRelatorios = relatoriosAtivos && !ocultoNoTradicional(method, 'rel-mitigacao');
   const showFrequencia = currentSchool?.features_enabled?.frequencia === true;
   // O portal do professor só existia atrás da flag do Módulo Pedagógico
   // inteiro -- uma escola que só contratou Frequência (ex: Montessori sem
@@ -65,7 +70,7 @@ export default function TeacherPortal({
   const showDiario = currentSchool?.features_enabled?.diario === true;
   const showCardapio = currentSchool?.features_enabled?.cardapio === true;
   const showMural = currentSchool?.features_enabled?.mural === true;
-  const moduleEnabled = showRelatorios || showFrequencia || showDiario || showCardapio || showMural;
+  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -165,7 +170,7 @@ export default function TeacherPortal({
       <main className="flex-1 min-w-0 h-full flex flex-col border-t border-outline-variant/60 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><LoadingLogo logoUrl={currentSchool?.logo_url} size={72} /></div>}>
           {teacherTab === 'home' && (
-            <TeacherInicio currentUser={currentUser} setTeacherTab={setTeacherTab} clickCounts={clickCounts} registerClick={registerClick} monitorCount={monitorCount} showFrequencia={showFrequencia} />
+            <TeacherInicio currentUser={currentUser} setTeacherTab={setTeacherTab} clickCounts={clickCounts} registerClick={registerClick} monitorCount={monitorCount} showFrequencia={showFrequencia} showRelatorios={showRelatorios} />
           )}
           {teacherTab === 'monitor' && (
             <TeacherMonitor students={students || []} authorized={authorized} />
@@ -177,8 +182,8 @@ export default function TeacherPortal({
           {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
-          {teacherTab === 'rel-mitigacao' &&<TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
-          {teacherTab === 'rel-mapa-habilidades' && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'rel-mitigacao' && !ocultoNoTradicional(method, teacherTab) && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, teacherTab) && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'settings' && <ConfiguracoesPortal />}
         </Suspense>
       </main>

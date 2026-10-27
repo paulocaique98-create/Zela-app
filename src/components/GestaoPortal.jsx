@@ -12,6 +12,8 @@ import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
+import { useSchoolConfig } from '../lib/schoolConfig';
+import { ocultoNoTradicional } from '../tradicional/menus';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 import { supabase } from '../lib/supabase';
@@ -131,7 +133,8 @@ export default function GestaoPortal({
   const recursos = recursosDoPerfil(role);
   // Perfil + plano da escola (01/10/2026: a Gestão passou a seguir o plano).
   const features = currentSchool?.features_enabled || {};
-  const pode = (tab) => podeAbrirAba(role, tab, features);
+  const { method } = useSchoolConfig(currentUser?.school_id);
+  const pode = (tab) => podeAbrirAba(role, tab, features) && !ocultoNoTradicional(method, tab);
   // Link direto, atalho, notificação ou aba guardada que aponte para uma aba
   // que este perfil não vê: mostra o Início (nunca desenha a tela proibida).
   const abaAtual = pode(gestaoTab) ? gestaoTab : 'home';

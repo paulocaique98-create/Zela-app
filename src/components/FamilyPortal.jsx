@@ -2,6 +2,8 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useSchoolConfig } from '../lib/schoolConfig';
+import { ocultoNoTradicional } from '../tradicional/menus';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -102,6 +104,7 @@ export default function FamilyPortal({
   // comunicados acima, mas contra mitigacao_report_reads (marcado como lido ao
   // abrir o relatório em FamilyMitigacao).
   const [mitigacaoUnread, setMitigacaoUnread] = useState(0);
+  const { method } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
   useEffect(() => {
     const schoolId = currentSchool?.id || currentUser?.school_id;
     if (!schoolId || !currentUser?.id || familyTab !== 'home') return;
@@ -177,7 +180,8 @@ export default function FamilyPortal({
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
   const showDiario = features.diario === true;
-  const showRelatorios = features.relatorios_pedagogicos === true;
+  // Escola Tradicional não tem Mitigação nem Mapa de Habilidades.
+  const showRelatorios = features.relatorios_pedagogicos === true && !ocultoNoTradicional(method, 'rel-mitigacao');
   const showChat = features.chat === true;
   // Financeiro é do plano base desde 01/10/2026 (sempre incluso).
   const showFinanceiro = features.financeiro !== false && isFinancialGuardian;
@@ -351,8 +355,8 @@ export default function FamilyPortal({
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
-          {familyTab === 'rel-mitigacao' && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
-          {familyTab === 'rel-mapa-habilidades' && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'rel-mitigacao' && !ocultoNoTradicional(method, familyTab) && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, familyTab) && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
           {familyTab === 'settings' && (

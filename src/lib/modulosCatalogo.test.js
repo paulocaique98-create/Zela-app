@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  ITENS, estadoDoItem, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, aplicarItens, featuresIniciais, historicoDoItem, ITEM_POR_ID,
+  ITENS, estadoDoItem, ligarItem, normalizarFeatures, pacoteAtual, aplicarPacote, aplicarItens, featuresIniciais, historicoDoItem, ITEM_POR_ID, itemVisivelNoMetodo,
 } from './modulosCatalogo';
 
 // Como a ZL001 está hoje em produção (28/09/2026).
@@ -10,6 +10,29 @@ const ZL001 = {
   materias: true, mural: true, relatorios_pedagogicos: true,
   face_engine_human: false, liveness_detection_enforce: false, qr_checkin: false,
 };
+
+describe('módulos por método pedagógico (tela do Dev)', () => {
+  const off = featuresIniciais();
+  const ped = ITEM_POR_ID.pedagogico;
+  const trad = ITEM_POR_ID.pedagogico_tradicional;
+  const vis = (item, method, f = off) => itemVisivelNoMetodo(item, method, f);
+
+  it('Montessori vê só o Pedagógico; Tradicional vê só o Pedagógico Tradicional; Personalizado vê os dois', () => {
+    expect([vis(ped, 'montessori'), vis(trad, 'montessori')]).toEqual([true, false]);
+    expect([vis(ped, 'tradicional'), vis(trad, 'tradicional')]).toEqual([false, true]);
+    expect([vis(ped, 'personalizado'), vis(trad, 'personalizado')]).toEqual([true, true]);
+  });
+
+  it('método desconhecido mostra tudo e item já ligado nunca some', () => {
+    expect([vis(ped, null), vis(trad, undefined)]).toEqual([true, true]);
+    expect(vis(ped, 'tradicional', { ...off, relatorios_pedagogicos: true, frequencia: true, materias: true })).toBe(true);
+    expect(vis(ped, 'tradicional', { ...off, frequencia: true })).toBe(true);
+  });
+
+  it('itens sem restrição de método aparecem para todos', () => {
+    for (const id of ['rotina', 'chat', 'qr']) expect(vis(ITEM_POR_ID[id], 'tradicional')).toBe(true);
+  });
+});
 
 describe('catálogo de módulos', () => {
   it('cada chave de features_enabled pertence a um item só', () => {
