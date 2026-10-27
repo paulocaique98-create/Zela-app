@@ -81,6 +81,7 @@ const EstruturaAcademica = lazy(() => import('../tradicional/EstruturaAcademica'
 const ConfigAvaliacao = lazy(() => import('../tradicional/ConfigAvaliacao'));
 const AlertasFrequencia = lazy(() => import('../tradicional/AlertasFrequencia'));
 const ConselhoClasse = lazy(() => import('../tradicional/ConselhoClasse'));
+const AtaConselho = lazy(() => import('../tradicional/AtaConselho'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -326,6 +327,7 @@ export default function GestaoPortal({
               {item('academico-avaliacao', ClipboardList, 'Avaliação')}
               {item('academico-frequencia-turma', UserCheck, 'Frequência por disciplina')}
               {item('academico-resultado', Gavel, 'Boletim e resultado')}
+              {item('academico-ata', ClipboardList, 'Ata do conselho')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
@@ -452,6 +454,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-avaliacao' && <ConfigAvaliacao currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-frequencia-turma' && <AlertasFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-resultado' && <ConselhoClasse currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-ata' && <AtaConselho currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Comunicação */}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}

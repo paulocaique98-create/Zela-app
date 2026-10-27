@@ -65,3 +65,13 @@ describe('aba Boletim e resultado (Fase 4A)', () => {
     }
   });
 });
+
+describe('aba Ata do conselho (Fase 4B)', () => {
+  it('só aparece com método tradicional ou personalizado', () => {
+    expect(ocultoPorFaltaDeMetodo('tradicional', 'academico-ata')).toBe(false);
+    expect(ocultoPorFaltaDeMetodo('personalizado', 'academico-ata')).toBe(false);
+    for (const method of ['montessori', null, undefined]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-ata')).toBe(true);
+    }
+  });
+});

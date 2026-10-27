@@ -78,7 +78,7 @@ export const ITENS = [
       { nome: 'Boletim e resultado final', desc: 'Regra de aprovação personalizável pela escola, fechamento do resultado pela Coordenação e Direção e boletim para a família' },
     ],
     onde: [
-      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação, Frequência por disciplina, Boletim e resultado (só Coordenação e Direção)' },
+      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação, Frequência por disciplina, Boletim e resultado, Ata do conselho (só Coordenação e Direção)' },
       { portal: 'Professor', menus: 'Notas, Diário de classe' },
     ],
     aoDesligar: 'Estrutura acadêmica, Avaliação, Frequência por disciplina, Notas e Diário de classe somem dos menus. O que já foi cadastrado e lançado fica guardado.',
