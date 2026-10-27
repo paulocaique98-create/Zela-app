@@ -61,9 +61,11 @@ Cada fase é uma sessão própria (Sonnet), com branch, testes e PR.
 - ~~Registro do método Tradicional, entrada no catálogo de módulos, pasta
   `src/tradicional/`, painel do Dev mostra módulos conforme o método.~~ ✅
 
-**Fase 1: estrutura acadêmica**
-Segmentos, séries, turmas, disciplinas, grade curricular, atribuição de
-professores, quadro de horários.
+~~**Fase 1: estrutura acadêmica**~~ ✅ código pronto em 27/10/2026 (branch feat/metodo-tradicional-fase-1)
+~~Segmentos, séries, turmas, disciplinas, grade curricular, atribuição de
+professores, quadro de horários.~~ ✅ Primeiro segmento: Fundamental I.
+Pendente: aplicar a migration `20261027120000_tradicional_fase1_estrutura.sql`
+em homologação (depois produção) e testar com escola Tradicional.
 
 **Fase 2: avaliação**
 Configuração de período, média e pesos; lançamento de notas pelo
@@ -87,7 +89,7 @@ intactos) e a tabela nova guarda série, turno e ano letivo dela.
 
 ## 5. Decisões pendentes (responder antes da Fase 0)
 
-1. Segmentos atendidos primeiro (Infantil, Fund. I, Fund. II, Médio)?
-2. Nota 0 a 10 e bimestre fixos, ou configuráveis por escola desde o início?
+~~1. Segmentos atendidos primeiro?~~ ✅ Fundamental I
+~~2. Nota e bimestre fixos ou configuráveis?~~ ✅ Configuráveis por escola (Fase 2)
 3. Autorização para a consulta só de leitura do `pedagogical_method` em produção.
 ~~4. Escola tradicional esconde Mitigação e Mapa de Habilidades? (Não afeta Montessori.)~~ ✅ aplicado na Fase 0

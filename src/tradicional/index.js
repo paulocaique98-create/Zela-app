@@ -6,4 +6,4 @@ export const MODULO_TRADICIONAL_ID = 'pedagogico_tradicional';
 
 export const ehTradicional = (method) => method === METODO_TRADICIONAL;
 
-export { ABAS_SO_MONTESSORI, ocultoNoTradicional } from './menus';
+export { ABAS_SO_MONTESSORI, ocultoNoTradicional, ABAS_SO_TRADICIONAL, ocultoPorFaltaDeMetodo } from './menus';

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ocultoNoTradicional, ABAS_SO_MONTESSORI } from './menus';
+import { ocultoNoTradicional, ocultoPorFaltaDeMetodo, ABAS_SO_MONTESSORI } from './menus';
 
 describe('ocultoNoTradicional', () => {
   it('esconde as abas do Montessori só na escola tradicional', () => {
@@ -19,5 +19,24 @@ describe('ocultoNoTradicional', () => {
   it('não esconde outras abas', () => {
     expect(ocultoNoTradicional('tradicional', 'frequencia')).toBe(false);
     expect(ocultoNoTradicional('tradicional', 'home')).toBe(false);
+  });
+});
+
+describe('ocultoPorFaltaDeMetodo', () => {
+  it('mostra a Estrutura acadêmica só no Tradicional e no Personalizado', () => {
+    expect(ocultoPorFaltaDeMetodo('tradicional', 'academico-estrutura')).toBe(false);
+    expect(ocultoPorFaltaDeMetodo('personalizado', 'academico-estrutura')).toBe(false);
+  });
+
+  it('esconde no Montessori e sem método definido', () => {
+    for (const method of ['montessori', null, undefined]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-estrutura')).toBe(true);
+    }
+  });
+
+  it('nunca esconde as demais abas', () => {
+    for (const method of ['montessori', 'tradicional', null]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-materias')).toBe(false);
+    }
   });
 });

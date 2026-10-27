@@ -63,20 +63,21 @@ export const ITENS = [
   },
   {
     // Sistema pedagógico próprio da escola Tradicional (PLANO_METODO_TRADICIONAL.md).
-    // Sem chaves até a Fase 1: com keys vazio o item é "Em breve" e não liga
-    // nada. Cada fase cria as chaves dela (sempre lidas como `=== true`) e
-    // tira o emBreve. Não mexe no 'pedagogico' acima, que é do Montessori.
+    // Cada fase cria as chaves dela (sempre lidas como `=== true`, nascem
+    // desligadas). Não mexe no 'pedagogico' acima, que é do Montessori.
     id: 'pedagogico_tradicional',
     grupo: 'modulo',
     nome: 'Pedagógico Tradicional',
     resumo: 'Notas, diário de classe, boletim e resultado final para a escola de método tradicional.',
-    keys: [],
+    keys: ['estrutura_academica_tradicional'],
     metodos: ['tradicional', 'personalizado'],
-    emBreve: true,
-    emBreveTexto: 'Este módulo está em desenvolvimento. Por enquanto não há nada para ligar.',
-    inclui: [],
-    onde: [],
-    aoDesligar: null,
+    inclui: [
+      { nome: 'Estrutura acadêmica', desc: 'Séries, turmas, disciplinas, grade curricular, professores por turma e quadro de horários' },
+    ],
+    onde: [
+      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica' },
+    ],
+    aoDesligar: 'A Estrutura acadêmica some do menu. O que já foi cadastrado fica guardado.',
   },
   {
     id: 'rotina',

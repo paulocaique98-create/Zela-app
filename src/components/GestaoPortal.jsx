@@ -13,7 +13,7 @@ import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } fro
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useSchoolConfig } from '../lib/schoolConfig';
-import { ocultoNoTradicional } from '../tradicional/menus';
+import { ocultoNoTradicional, ocultoPorFaltaDeMetodo } from '../tradicional/menus';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
 import { supabase } from '../lib/supabase';
@@ -77,6 +77,7 @@ const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
 const AdminCardapio = lazy(() => import('./AdminCardapio'));
 const AdminDiario = lazy(() => import('./AdminDiario'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
+const EstruturaAcademica = lazy(() => import('../tradicional/EstruturaAcademica'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -134,7 +135,7 @@ export default function GestaoPortal({
   // Perfil + plano da escola (01/10/2026: a Gestão passou a seguir o plano).
   const features = currentSchool?.features_enabled || {};
   const { method } = useSchoolConfig(currentUser?.school_id);
-  const pode = (tab) => podeAbrirAba(role, tab, features) && !ocultoNoTradicional(method, tab);
+  const pode = (tab) => podeAbrirAba(role, tab, features) && !ocultoNoTradicional(method, tab) && !ocultoPorFaltaDeMetodo(method, tab);
   // Link direto, atalho, notificação ou aba guardada que aponte para uma aba
   // que este perfil não vê: mostra o Início (nunca desenha a tela proibida).
   const abaAtual = pode(gestaoTab) ? gestaoTab : 'home';
@@ -318,6 +319,7 @@ export default function GestaoPortal({
               {item('academico-diario', Soup, 'Diário')}
               {item('comunicacao-mural', ImageIcon, 'Mural de Fotos')}
               {item('academico-materias', BookMarked, 'Matérias')}
+              {item('academico-estrutura', GraduationCap, 'Estrutura acadêmica')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
@@ -440,6 +442,7 @@ export default function GestaoPortal({
           {/* Comunicação */}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-estrutura' && <EstruturaAcademica currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Relatórios */}
           {abaAtual === 'relatorios-gestao' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="gestao" />}
