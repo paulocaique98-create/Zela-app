@@ -75,9 +75,10 @@ export const ITENS = [
       { nome: 'Estrutura acadêmica', desc: 'Séries, turmas, disciplinas, grade curricular, professores por turma e quadro de horários' },
       { nome: 'Avaliação', desc: 'Período e média mínima da escola, provas e trabalhos com peso, lançamento de notas pelo professor e recuperação' },
       { nome: 'Diário de classe', desc: 'Aula dada com conteúdo, chamada por disciplina e alerta de frequência abaixo de 75% (LDB art. 24)' },
+      { nome: 'Boletim e resultado final', desc: 'Regra de aprovação personalizável pela escola, fechamento do resultado pela Coordenação e Direção e boletim para a família' },
     ],
     onde: [
-      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação, Frequência por disciplina' },
+      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação, Frequência por disciplina, Boletim e resultado (só Coordenação e Direção)' },
       { portal: 'Professor', menus: 'Notas, Diário de classe' },
     ],
     aoDesligar: 'Estrutura acadêmica, Avaliação, Frequência por disciplina, Notas e Diário de classe somem dos menus. O que já foi cadastrado e lançado fica guardado.',

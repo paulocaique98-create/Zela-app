@@ -86,6 +86,12 @@ Fora desta fase: leitura da frequência pela família (vem com o boletim, Fase 4
 
 **Fase 4: documentos**
 Boletim, conselho de classe, resultado final, ata, histórico.
+~~4A: boletim e resultado final~~ ✅ código pronto em 30/10/2026. Regra de situação
+final personalizável por escola (frequência mínima, média mínima, recuperação final
+opcional); só Coordenação e Direção fecham; a família lê o resultado fechado.
+Pendente: aplicar a migration `20261030120000_tradicional_fase4a_resultado.sql`
+(depois da Fase 3) em homologação e produção e testar com escola Tradicional.
+4B (próxima sessão): ata do conselho e histórico escolar.
 
 **Fase 5: rematrícula e extras**
 Promoção de série, tarefas, BNCC.

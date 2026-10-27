@@ -55,3 +55,13 @@ describe('ocultoPorFaltaDeMetodo', () => {
     }
   });
 });
+
+describe('aba Boletim e resultado (Fase 4A)', () => {
+  it('só aparece com método tradicional ou personalizado', () => {
+    expect(ocultoPorFaltaDeMetodo('tradicional', 'academico-resultado')).toBe(false);
+    expect(ocultoPorFaltaDeMetodo('personalizado', 'academico-resultado')).toBe(false);
+    for (const method of ['montessori', null, undefined]) {
+      expect(ocultoPorFaltaDeMetodo(method, 'academico-resultado')).toBe(true);
+    }
+  });
+});

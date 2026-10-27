@@ -24,6 +24,7 @@ const FamilyComunicados = lazy(() => import('./FamilyComunicados'));
 const FamilyMuralFotos = lazy(() => import('./FamilyMuralFotos'));
 const FamilyCardapio = lazy(() => import('./FamilyCardapio'));
 const FamilyDiario = lazy(() => import('./FamilyDiario'));
+const FamilyBoletim = lazy(() => import('../tradicional/FamilyBoletim'));
 const FamilyChat = lazy(() => import('./FamilyChat'));
 const FamilyHome = lazy(() => import('./FamilyHome'));
 const FamilyHistory = lazy(() => import('./FamilyHistory'));
@@ -180,6 +181,8 @@ export default function FamilyPortal({
   const showMural = features.mural === true;
   const showCardapio = features.cardapio === true;
   const showDiario = features.diario === true;
+  // Boletim do Método Tradicional: só com método explícito e o módulo ligado.
+  const showBoletim = features.avaliacao_tradicional === true && method === 'tradicional';
   // Escola Tradicional não tem Mitigação nem Mapa de Habilidades.
   const showRelatorios = features.relatorios_pedagogicos === true && !ocultoNoTradicional(method, 'rel-mitigacao');
   const showChat = features.chat === true;
@@ -271,7 +274,7 @@ export default function FamilyPortal({
             )}
 
             {/* ACADÊMICO */}
-            {(showCalendario || showComunicados || showMural || showCardapio || showDiario) && (
+            {(showCalendario || showComunicados || showMural || showCardapio || showDiario || showBoletim) && (
               <SidebarGroup
                 collapsed={collapsed}
                 label="Acadêmico"
@@ -293,6 +296,9 @@ export default function FamilyPortal({
                 )}
                 {showDiario && (
                   <SidebarItem active={familyTab === 'diario'} icon={BookOpen} label="Diário" onClick={() => go('diario')} />
+                )}
+                {showBoletim && (
+                  <SidebarItem active={familyTab === 'boletim'} icon={FileText} label="Boletim" onClick={() => go('boletim')} />
                 )}
               </SidebarGroup>
             )}
@@ -354,6 +360,7 @@ export default function FamilyPortal({
           {familyTab === 'comunicados' && <FamilyComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'mural-fotos' && <FamilyMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'boletim' && showBoletim && <FamilyBoletim currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && !ocultoNoTradicional(method, familyTab) && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, familyTab) && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}

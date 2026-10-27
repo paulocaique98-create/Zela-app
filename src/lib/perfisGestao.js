@@ -54,6 +54,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'academico-estrutura',
   'academico-avaliacao',
   'academico-frequencia-turma',
+  'academico-resultado',
   // Comunicação
   'comunicacao-comunicados',
   'comunicacao-mural',
@@ -70,6 +71,7 @@ export const ABAS_SO_GESTAO_PEDAGOGICA = new Set([
   'academico-cardapio',
   'academico-diario',
   'academico-materias',
+  'academico-resultado',
 ]);
 
 // Abas exclusivas da Gestão (listadas de propósito: o teste exige que toda
@@ -106,6 +108,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'academico-estrutura': 'estrutura_academica_tradicional',
   'academico-avaliacao': 'avaliacao_tradicional',
   'academico-frequencia-turma': 'diario_classe_tradicional',
+  'academico-resultado': 'avaliacao_tradicional',
   'academico-cardapio': 'cardapio',
   'academico-diario': 'diario',
   'comunicacao-mural': 'mural',
