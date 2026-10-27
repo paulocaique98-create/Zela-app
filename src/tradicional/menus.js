@@ -11,3 +11,10 @@ export const ABAS_SO_MONTESSORI = [
 
 export const ocultoNoTradicional = (method, aba) =>
   method === 'tradicional' && ABAS_SO_MONTESSORI.includes(aba);
+
+// Abas que só existem para escola Tradicional (ou Personalizada). Sem método
+// definido (carregando ou leitura falhou) ficam escondidas.
+export const ABAS_SO_TRADICIONAL = ['academico-estrutura'];
+
+export const ocultoPorFaltaDeMetodo = (method, aba) =>
+  ABAS_SO_TRADICIONAL.includes(aba) && method !== 'tradicional' && method !== 'personalizado';
