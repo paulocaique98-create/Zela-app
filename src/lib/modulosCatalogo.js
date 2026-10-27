@@ -69,17 +69,18 @@ export const ITENS = [
     grupo: 'modulo',
     nome: 'Pedagógico Tradicional',
     resumo: 'Notas, diário de classe, boletim e resultado final para a escola de método tradicional.',
-    keys: ['estrutura_academica_tradicional', 'avaliacao_tradicional'],
+    keys: ['estrutura_academica_tradicional', 'avaliacao_tradicional', 'diario_classe_tradicional'],
     metodos: ['tradicional', 'personalizado'],
     inclui: [
       { nome: 'Estrutura acadêmica', desc: 'Séries, turmas, disciplinas, grade curricular, professores por turma e quadro de horários' },
       { nome: 'Avaliação', desc: 'Período e média mínima da escola, provas e trabalhos com peso, lançamento de notas pelo professor e recuperação' },
+      { nome: 'Diário de classe', desc: 'Aula dada com conteúdo, chamada por disciplina e alerta de frequência abaixo de 75% (LDB art. 24)' },
     ],
     onde: [
-      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação' },
-      { portal: 'Professor', menus: 'Notas' },
+      { portal: 'Gestão', menus: 'Acadêmico › Estrutura acadêmica, Avaliação, Frequência por disciplina' },
+      { portal: 'Professor', menus: 'Notas, Diário de classe' },
     ],
-    aoDesligar: 'Estrutura acadêmica, Avaliação e Notas somem dos menus. O que já foi cadastrado e lançado fica guardado.',
+    aoDesligar: 'Estrutura acadêmica, Avaliação, Frequência por disciplina, Notas e Diário de classe somem dos menus. O que já foi cadastrado e lançado fica guardado.',
   },
   {
     id: 'rotina',

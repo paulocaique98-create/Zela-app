@@ -53,6 +53,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'academico-materias',
   'academico-estrutura',
   'academico-avaliacao',
+  'academico-frequencia-turma',
   // Comunicação
   'comunicacao-comunicados',
   'comunicacao-mural',
@@ -104,6 +105,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'academico-materias': 'materias',
   'academico-estrutura': 'estrutura_academica_tradicional',
   'academico-avaliacao': 'avaliacao_tradicional',
+  'academico-frequencia-turma': 'diario_classe_tradicional',
   'academico-cardapio': 'cardapio',
   'academico-diario': 'diario',
   'comunicacao-mural': 'mural',

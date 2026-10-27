@@ -76,8 +76,13 @@ Pendente: aplicar a migration `20261028120000_tradicional_fase2_avaliacao.sql`
 Fora desta fase: modo parecer do Infantil (só Fundamental I por ora) e leitura
 da nota pela família (vem com o boletim, Fase 4).
 
-**Fase 3: diário de classe**
-Aulas dadas, frequência por disciplina, alertas de frequência.
+~~**Fase 3: diário de classe**~~ ✅ código pronto em 29/10/2026 (branch feat/metodo-tradicional-fase-3)
+~~Aulas dadas, frequência por disciplina, alertas de frequência.~~ ✅ Uma aula por
+atribuição e data, com quantidade de aulas do dia; falta justificada conta como
+ausência no percentual; alerta abaixo de 75% e atenção abaixo de 80%.
+Pendente: aplicar a migration `20261029120000_tradicional_fase3_diario.sql`
+(depois das Fases 1 e 2) em homologação e produção e testar com escola Tradicional.
+Fora desta fase: leitura da frequência pela família (vem com o boletim, Fase 4).
 
 **Fase 4: documentos**
 Boletim, conselho de classe, resultado final, ata, histórico.
