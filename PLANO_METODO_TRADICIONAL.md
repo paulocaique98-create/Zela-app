@@ -67,9 +67,14 @@ professores, quadro de horários.~~ ✅ Primeiro segmento: Fundamental I.
 Pendente: aplicar a migration `20261027120000_tradicional_fase1_estrutura.sql`
 em homologação (depois produção) e testar com escola Tradicional.
 
-**Fase 2: avaliação**
-Configuração de período, média e pesos; lançamento de notas pelo
-professor; cálculo de médias.
+~~**Fase 2: avaliação**~~ ✅ código pronto em 28/10/2026 (branch feat/metodo-tradicional-fase-2)
+~~Configuração de período, média e pesos; lançamento de notas pelo
+professor; cálculo de médias.~~ ✅ Bimestre (ou trimestre), média mínima 7,0
+configurável, recuperação substitui a nota do período.
+Pendente: aplicar a migration `20261028120000_tradicional_fase2_avaliacao.sql`
+(depois da Fase 1) em homologação e produção e testar com escola Tradicional.
+Fora desta fase: modo parecer do Infantil (só Fundamental I por ora) e leitura
+da nota pela família (vem com o boletim, Fase 4).
 
 **Fase 3: diário de classe**
 Aulas dadas, frequência por disciplina, alertas de frequência.

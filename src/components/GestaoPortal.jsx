@@ -78,6 +78,7 @@ const AdminCardapio = lazy(() => import('./AdminCardapio'));
 const AdminDiario = lazy(() => import('./AdminDiario'));
 const AdminSubjects = lazy(() => import('./AdminSubjects'));
 const EstruturaAcademica = lazy(() => import('../tradicional/EstruturaAcademica'));
+const ConfigAvaliacao = lazy(() => import('../tradicional/ConfigAvaliacao'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -320,6 +321,7 @@ export default function GestaoPortal({
               {item('comunicacao-mural', ImageIcon, 'Mural de Fotos')}
               {item('academico-materias', BookMarked, 'Matérias')}
               {item('academico-estrutura', GraduationCap, 'Estrutura acadêmica')}
+              {item('academico-avaliacao', ClipboardList, 'Avaliação')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
@@ -443,6 +445,7 @@ export default function GestaoPortal({
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-estrutura' && <EstruturaAcademica currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-avaliacao' && <ConfigAvaliacao currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Relatórios */}
           {abaAtual === 'relatorios-gestao' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="gestao" />}
