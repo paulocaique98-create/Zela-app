@@ -1,19 +1,18 @@
 import React from 'react';
 
-// Trilha de confirmação (assinatura visual do Zela): responsável, totem,
-// recepção, concluído. Só apresentação: quem usa informa em que etapa está.
+// Trilha de confirmação (assinatura visual do Zela): solicitado, aguardando,
+// concluído. Só apresentação: quem usa informa em que etapa está.
 // `etapas`: [{ rotulo, detalhe? }]. `atual`: índice da etapa em andamento;
 // as anteriores aparecem como feitas. Use atual >= etapas.length para tudo feito.
 export const ETAPAS_CHECKIN = [
-  { rotulo: 'Responsável' },
-  { rotulo: 'Totem' },
-  { rotulo: 'Recepção' },
+  { rotulo: 'Solicitado' },
+  { rotulo: 'Aguardando' },
   { rotulo: 'Concluído' },
 ];
 
 export default function TrilhaConfirmacao({ etapas = ETAPAS_CHECKIN, atual = 0, className = '' }) {
   return (
-    <ol aria-label="Etapas da confirmação" className={`grid grid-cols-4 list-none p-0 m-0 ${className}`}>
+    <ol aria-label="Etapas da confirmação" className={`grid grid-cols-3 list-none p-0 m-0 ${className}`}>
       {etapas.map((etapa, i) => {
         const feito = i < atual;
         const emCurso = i === atual;

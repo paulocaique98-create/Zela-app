@@ -108,7 +108,7 @@ export default function CheckinAlertModal({ alert, onDismiss, onGoToMonitor }) {
         </div>
 
         <div className="px-6 pb-4">
-          <TrilhaConfirmacao atual={2} />
+          <TrilhaConfirmacao atual={1} />
         </div>
 
         <p className="text-xs text-on-surface-variant px-6 pb-4">
