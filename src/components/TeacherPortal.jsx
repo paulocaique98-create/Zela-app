@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked } from 'lucide-react';
+import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -26,6 +26,7 @@ const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
 const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 const LancamentoNotas = lazy(() => import('../tradicional/LancamentoNotas'));
 const DiarioClasse = lazy(() => import('../tradicional/DiarioClasse'));
+const Tarefas = lazy(() => import('../tradicional/Tarefas'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -77,7 +78,9 @@ export default function TeacherPortal({
     && !ocultoPorFaltaDeMetodo(method, 'academico-avaliacao');
   const showDiarioClasse = currentSchool?.features_enabled?.diario_classe_tradicional === true
     && !ocultoPorFaltaDeMetodo(method, 'academico-frequencia-turma');
-  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse;
+  const showTarefas = currentSchool?.features_enabled?.tarefas_tradicional === true
+    && !ocultoPorFaltaDeMetodo(method, 'academico-tarefas');
+  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse || showTarefas;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -136,6 +139,9 @@ export default function TeacherPortal({
             {showDiarioClasse && (
               <SidebarItem active={teacherTab === 'diario-classe'} icon={BookMarked} label="Diário de classe" onClick={() => go('diario-classe')} />
             )}
+            {showTarefas && (
+              <SidebarItem active={teacherTab === 'tarefas'} icon={ClipboardList} label="Tarefas" onClick={() => go('tarefas')} />
+            )}
             {showSaidasPendentes && (
               <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
             )}
@@ -193,6 +199,7 @@ export default function TeacherPortal({
           )}
           {teacherTab === 'notas' && showNotas && <LancamentoNotas currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'diario-classe' && showDiarioClasse && <DiarioClasse currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'tarefas' && showTarefas && <Tarefas currentUser={currentUser} currentSchool={currentSchool} modo="professor" />}
           {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
