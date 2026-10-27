@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Método Tradicional, Fase 4B** (31/10): ata do conselho de classe (campos fixos, uma por turma e período, só Coordenação e Direção) e histórico escolar na aba Boletim da família, com impressão. Migration `20261031120000_tradicional_fase4b_ata_historico.sql`. As migrations 20261022 e 20261027 a 20261031 foram aplicadas na produção em 27/10.
 - **Método Tradicional, Fase 4A** (30/10): boletim e resultado final com regra de aprovação personalizável por escola; só Coordenação e Direção fecham; família lê o resultado fechado. Migration `20261030120000_tradicional_fase4a_resultado.sql` (não aplicada).
 - **Sessão permanente** (22/10): removido o logout automático por 30 minutos de inatividade; o login só termina em Sair, conta removida, troca de senha ou escola suspensa. Novo menu Configurações, aba Dispositivos, com "Sair de todos os aparelhos" em todos os portais (Recepção e Professor ganham o item Configurações).
 - **Portais e interface** (22/10): Rotina e família no Professor (Diário, Cardápio só leitura, Mural em Acadêmico, limitados às turmas dele); Sair no fim do menu mobile; Autoatendimento sem menu lateral; barras inferiores de Professor, Família e Gestão; submenus recolhem no mobile; login sempre no Início; contadores de alerta em dourado; fundo branco; Planos em cartões. Migration `20261022120000_professor_rotina_e_familia.sql` (não aplicada).

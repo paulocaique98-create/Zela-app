@@ -91,7 +91,8 @@ final personalizável por escola (frequência mínima, média mínima, recupera�
 opcional); só Coordenação e Direção fecham; a família lê o resultado fechado.
 Pendente: aplicar a migration `20261030120000_tradicional_fase4a_resultado.sql`
 (depois da Fase 3) em homologação e produção e testar com escola Tradicional.
-4B (próxima sessão): ata do conselho e histórico escolar.
+~~4B: ata do conselho e histórico escolar~~ ✅ código pronto em 31/10/2026 (branch feat/metodo-tradicional-fase-4b). Ata com campos fixos (pauta, deliberações, encaminhamentos), uma por turma e período, só Coordenação e Direção. Histórico escolar sai dos resultados fechados (ano e turma gravados no fechamento); a família o vê na aba Boletim, com impressão.
+Pendente: aplicar a migration `20261031120000_tradicional_fase4b_ata_historico.sql` (depois da 4A) em homologação e produção. Resultados fechados antes dela usam o ano de fechamento.
 
 **Fase 5: rematrícula e extras**
 Promoção de série, tarefas, BNCC.

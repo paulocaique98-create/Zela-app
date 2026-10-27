@@ -69,7 +69,7 @@ export function situacaoFinal({ linhas, frequencia, incompleto, config = CONFIG_
 export const fotografiaDoBoletim = (linhas) =>
   linhas.map(l => ({ disciplina: l.disciplina, medias: l.medias, media_anual: l.media_anual, situacao: l.situacao }));
 
-const COLUNAS_RESULTADO = 'id, student_id, turma_id, situacao, situacao_calculada, frequencia, boletim, observacao, fechado_em';
+const COLUNAS_RESULTADO = 'id, student_id, turma_id, situacao, situacao_calculada, frequencia, boletim, observacao, fechado_em, ano_letivo, turma_nome';
 
 export async function listarResultados(schoolId, turmaId) {
   if (!schoolId || !turmaId) return [];
@@ -90,12 +90,13 @@ export async function listarResultadosDaFamilia(schoolId, studentIds) {
   return data || [];
 }
 
-export async function fecharResultado(schoolId, { studentId, turmaId, situacao, situacaoCalculada, frequencia, linhas, observacao, userId }) {
+export async function fecharResultado(schoolId, { studentId, turmaId, situacao, situacaoCalculada, frequencia, linhas, observacao, userId, anoLetivo = null, turmaNome = null }) {
   const { error } = await supabase.from('trad_resultados').upsert({
     school_id: schoolId, student_id: studentId, turma_id: turmaId,
     situacao, situacao_calculada: situacaoCalculada,
     frequencia: Number.isFinite(frequencia) ? frequencia : null,
     boletim: fotografiaDoBoletim(linhas), observacao: (observacao || '').trim(),
+    ano_letivo: anoLetivo, turma_nome: turmaNome,
     fechado_por: userId, fechado_em: new Date().toISOString(),
   }, { onConflict: 'school_id,student_id,turma_id' });
   if (error) throw error;

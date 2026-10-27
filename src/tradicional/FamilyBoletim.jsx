@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, Printer } from 'lucide-react';
 import { listarResultadosDaFamilia, rotuloSituacao } from './lib/boletim';
 import { mensagemDeErro } from './lib/estrutura';
+import { anoDoResultado } from './lib/historico';
 
 const formatar = (n) => (n === null || n === undefined ? '·' : String(n).replace('.', ','));
 const corSituacao = (s) => (s === 'aprovado' ? 'text-primary' : 'text-brass');
@@ -31,15 +32,25 @@ export default function FamilyBoletim({ currentUser, currentSchool, familyStuden
     <div className="space-y-4 p-4">
       <div className="flex items-center gap-2">
         <FileText size={22} className="text-primary" />
-        <h2 className="text-xl font-bold text-on-surface">Boletim</h2>
+        <h2 className="text-xl font-bold text-on-surface flex-1">Boletim e histórico escolar</h2>
+        {resultados.length > 0 && (
+          <button onClick={() => window.print()} className="print:hidden flex items-center gap-1.5 border border-outline-variant text-on-surface px-3 py-1.5 rounded-zela-md text-sm font-bold">
+            <Printer size={16} /> Imprimir
+          </button>
+        )}
       </div>
       {erro && <p className="text-sm text-error bg-error/10 rounded-zela-md p-3">{erro}</p>}
       {resultados.length === 0 ? (
         <p className="text-sm text-on-surface-variant">O boletim aparece aqui quando a escola fechar o resultado.</p>
-      ) : resultados.map(r => (
+      ) : [...resultados]
+        .sort((a, b) => anoDoResultado(b).localeCompare(anoDoResultado(a), 'pt-BR', { numeric: true }))
+        .map(r => (
         <section key={r.id} className="bg-surface-container-low rounded-zela-md p-4 space-y-3">
           <div className="flex flex-wrap items-center gap-x-3">
-            <h3 className="font-bold text-on-surface flex-1">{students.find(s => s.id === r.student_id)?.name || 'Aluno'}</h3>
+            <h3 className="font-bold text-on-surface flex-1">
+              {students.find(s => s.id === r.student_id)?.name || 'Aluno'}
+              <span className="font-normal text-on-surface-variant text-sm"> · {anoDoResultado(r)}{r.turma_nome ? `, ${r.turma_nome}` : ''}</span>
+            </h3>
             <span className={`font-bold ${corSituacao(r.situacao)}`}>{rotuloSituacao(r.situacao)}</span>
           </div>
           <div className="overflow-x-auto">

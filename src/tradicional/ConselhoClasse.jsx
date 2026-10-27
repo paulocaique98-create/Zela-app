@@ -21,6 +21,7 @@ export default function ConselhoClasse({ currentUser, currentSchool }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const [config, setConfig] = useState({ ...CONFIG_PADRAO });
   const [turmas, setTurmas] = useState([]);
+  const [anos, setAnos] = useState([]);
   const [disciplinas, setDisciplinas] = useState([]);
   const [atribuicoes, setAtribuicoes] = useState([]);
   const [turmaId, setTurmaId] = useState('');
@@ -40,14 +41,15 @@ export default function ConselhoClasse({ currentUser, currentSchool }) {
     let ativo = true;
     (async () => {
       try {
-        const [cfg, ts, ds, ats] = await Promise.all([
+        const [cfg, ts, ds, ats, { data: anosData }] = await Promise.all([
           carregarConfig(schoolId),
           listar('trad_turmas', schoolId, { ordenarPor: 'nome' }),
           listar('trad_disciplinas', schoolId, { ordenarPor: 'nome' }),
           listar('trad_atribuicoes', schoolId),
+          supabase.from('school_years').select('id, name').eq('school_id', schoolId).limit(50),
         ]);
         if (!ativo) return;
-        setConfig(cfg); setTurmas(ts); setDisciplinas(ds); setAtribuicoes(ats);
+        setConfig(cfg); setTurmas(ts); setDisciplinas(ds); setAtribuicoes(ats); setAnos(anosData || []);
         setTurmaId(ts[0]?.id || '');
       } catch (e) {
         if (ativo) setErro(mensagemDeErro(e));
@@ -117,6 +119,7 @@ export default function ConselhoClasse({ currentUser, currentSchool }) {
       await fecharResultado(schoolId, {
         studentId: aluno.id, turmaId, situacao: form.situacao, situacaoCalculada: b.situacao,
         frequencia: b.frequencia, linhas: b.linhas, observacao: form.observacao, userId: currentUser?.id,
+        anoLetivo: anos.find(a => a.id === turma?.school_year_id)?.name || null, turmaNome: turma?.nome || null,
       });
       setResultados(await listarResultados(schoolId, turmaId));
       setErro(''); setAberto('');
