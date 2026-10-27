@@ -13,7 +13,12 @@ export const TIPOS_AVALIACAO = [
   { value: 'recuperacao', label: 'Recuperação' },
 ];
 
-export const CONFIG_PADRAO = { periodo_tipo: 'bimestre', media_minima: MEDIA_MINIMA_PADRAO };
+// Regra de situação final (Fase 4A), personalizável pela escola: frequência
+// mínima, média mínima, média de recuperação final (null = sem recuperação final).
+export const CONFIG_PADRAO = {
+  periodo_tipo: 'bimestre', media_minima: MEDIA_MINIMA_PADRAO,
+  freq_minima: 75, media_recuperacao: 5, recuperacao_final: true,
+};
 
 export function periodosDaConfig(periodoTipo) {
   const tipo = TIPOS_PERIODO.find(t => t.value === periodoTipo) || TIPOS_PERIODO[0];
@@ -72,7 +77,7 @@ export function calcularPeriodo({ avaliacoes, notas, periodo, mediaMinima }) {
 }
 
 const COLUNAS = {
-  trad_config_avaliacao: 'school_id, periodo_tipo, media_minima',
+  trad_config_avaliacao: 'school_id, periodo_tipo, media_minima, freq_minima, media_recuperacao, recuperacao_final',
   trad_avaliacoes: 'id, atribuicao_id, periodo, nome, tipo, peso',
   trad_notas: 'id, avaliacao_id, student_id, nota',
 };
@@ -83,12 +88,19 @@ export async function carregarConfig(schoolId) {
     .from('trad_config_avaliacao').select(COLUNAS.trad_config_avaliacao)
     .eq('school_id', schoolId).maybeSingle();
   if (error) throw error;
-  return data ? { periodo_tipo: data.periodo_tipo, media_minima: Number(data.media_minima) } : { ...CONFIG_PADRAO };
+  if (!data) return { ...CONFIG_PADRAO };
+  return {
+    periodo_tipo: data.periodo_tipo,
+    media_minima: Number(data.media_minima),
+    freq_minima: Number(data.freq_minima),
+    media_recuperacao: data.media_recuperacao === null ? null : Number(data.media_recuperacao),
+    recuperacao_final: data.recuperacao_final !== false,
+  };
 }
 
-export async function salvarConfig(schoolId, { periodo_tipo, media_minima }) {
+export async function salvarConfig(schoolId, { periodo_tipo, media_minima, freq_minima, media_recuperacao, recuperacao_final }) {
   const { error } = await supabase.from('trad_config_avaliacao')
-    .upsert({ school_id: schoolId, periodo_tipo, media_minima, updated_at: new Date().toISOString() }, { onConflict: 'school_id' });
+    .upsert({ school_id: schoolId, periodo_tipo, media_minima, freq_minima, media_recuperacao, recuperacao_final, updated_at: new Date().toISOString() }, { onConflict: 'school_id' });
   if (error) throw error;
 }
 

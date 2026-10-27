@@ -9,7 +9,9 @@ import {
 
 describe('avaliação tradicional', () => {
   it('padrão: bimestre e média 7,0', () => {
-    expect(CONFIG_PADRAO).toEqual({ periodo_tipo: 'bimestre', media_minima: 7 });
+    expect(CONFIG_PADRAO).toEqual({
+      periodo_tipo: 'bimestre', media_minima: 7, freq_minima: 75, media_recuperacao: 5, recuperacao_final: true,
+    });
     expect(periodosDaConfig('bimestre')).toHaveLength(4);
     expect(periodosDaConfig('trimestre').map(p => p.label)).toEqual(['1º Trimestre', '2º Trimestre', '3º Trimestre']);
   });

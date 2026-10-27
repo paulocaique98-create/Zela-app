@@ -5,7 +5,7 @@ import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
-  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, UserCheck, UserX, ScanFace,
+  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
 } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
@@ -80,6 +80,7 @@ const AdminSubjects = lazy(() => import('./AdminSubjects'));
 const EstruturaAcademica = lazy(() => import('../tradicional/EstruturaAcademica'));
 const ConfigAvaliacao = lazy(() => import('../tradicional/ConfigAvaliacao'));
 const AlertasFrequencia = lazy(() => import('../tradicional/AlertasFrequencia'));
+const ConselhoClasse = lazy(() => import('../tradicional/ConselhoClasse'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -324,6 +325,7 @@ export default function GestaoPortal({
               {item('academico-estrutura', GraduationCap, 'Estrutura acadêmica')}
               {item('academico-avaliacao', ClipboardList, 'Avaliação')}
               {item('academico-frequencia-turma', UserCheck, 'Frequência por disciplina')}
+              {item('academico-resultado', Gavel, 'Boletim e resultado')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
@@ -449,6 +451,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-estrutura' && <EstruturaAcademica currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-avaliacao' && <ConfigAvaliacao currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-frequencia-turma' && <AlertasFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'academico-resultado' && <ConselhoClasse currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Comunicação */}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}

@@ -1,6 +1,6 @@
 # ZELA — STATUS ATUAL (atualizar em poucas linhas a cada mudança significativa)
 
-Última atualização: 2026-10-29 (Método Tradicional, Fase 3 feita; mobile: iOS compila no simulador via Actions).
+Última atualização: 2026-10-30 (Método Tradicional, Fase 4A feita; mobile: iOS compila no simulador via Actions).
 
 ## Comandos
 - Dev: npm run dev · Build: npm run build · Lint: npm run lint (oxlint)
@@ -11,6 +11,7 @@
 - Arquivos grandes (não ler inteiros): src/App.jsx, src/components/AdminFaceScanner.jsx, src/components/AdminPortal.jsx.
 
 ## Entregue recentemente (do mais novo para o mais antigo, via git)
+- Método Tradicional, Fase 4A (30/10, boletim e resultado final): migration 20261030120000_tradicional_fase4a_resultado.sql (NÃO aplicada; roda depois das Fases 1 a 3): regra de situação final por escola em trad_config_avaliacao e tabela trad_resultados (só gestao_pedagogica escreve; família lê o fechado do próprio filho). Telas ConselhoClasse.jsx (aba academico-resultado) e FamilyBoletim.jsx. Vitest 311 ok, build ok; falta testar no navegador e no banco. Próxima: 4B (ata e histórico).
 - Método Tradicional, Fase 0 (27/10, PLANO_METODO_TRADICIONAL.md, sem migration/RLS): produção tem 1 Montessori (real) e 4 tradicionais de teste. Método obrigatório e vazio por padrão ao criar/editar escola (escolaForm.js, DeveloperPanel); useSchoolConfig começa com method null; Mitigação e Mapa de Habilidades somem só com method === 'tradicional' (src/tradicional/menus.js; Gestão, Professor, Família); módulo "Pedagógico Tradicional" no catálogo como Em breve, sem chaves; Dev mostra Pedagógico só em montessori/personalizado e o Tradicional só em tradicional/personalizado. Testes ok (vitest filtrado). Falta conferir os menus no navegador. Próxima: Fase 1 (estrutura acadêmica, 1ª com migration, plano e análise de RLS antes). Ideia adiada: reordenar menu da Gestão (Cadastros x Gerenciamento).
 - Rotina e família no Professor e ajustes de interface (22/10): Diário, Cardápio (só leitura) e Mural dentro de Acadêmico no portal do Professor; Sair no fim do menu mobile; Autoatendimento sem menu lateral; barras inferiores; alertas em dourado (brass); Planos (Preços, Alunos, Reajuste, Criação automática) em cartões. Migration 20261022120000_professor_rotina_e_familia.sql (RLS do professor, NÃO aplicada): sem ela Diário/Mural/Cardápio abrem vazios para o professor. Testes de integração (src/test) não rodam sem Supabase local.
 - Valorização Fase 1.1 (16/10, PLANO_VALORIZACAO_ZELA.md, não commitado): Gestão › Primeiros passos (GestaoPrimeirosPassos.jsx + lib onboardingChecklist.js com teste). Só leitura, sem migration/RLS; chave técnica `assistente_configuracao` desligada (só o Dev liga). Suíte completa 105/754 ok com Supabase local e functions serve. Falta conferir no navegador. Próximo: 1.2 (migração assistida, precisa de RPC em transação) e 1.3 (demo, análise de segurança).
