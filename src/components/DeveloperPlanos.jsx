@@ -194,11 +194,11 @@ function AbaPlanos({ dados, nomeItem }) {
   return (
     <div className="space-y-4">
       <div className="flex sm:justify-end"><button type="button" className={`${btnPrimario} w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0`} onClick={abrirNovo}><Plus size={14} /> Novo plano</button></div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 md:grid-flow-col md:[grid-template-rows:repeat(var(--linhas),1fr)] gap-4" style={{ '--linhas': Math.max(Math.ceil(dados.planos.length / 2), 1) }}>
         {dados.planos.map(p => {
           const ciclosAtivos = dados.ciclos.filter(c => c.plano_id === p.id && c.ativo);
           return (
-            <div key={p.id} className={`${card} ${p.ativo ? '' : 'opacity-60'}`}>
+            <div key={p.id} className={`${card} flex flex-col ${p.ativo ? '' : 'opacity-60'}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-bold text-base leading-snug break-words">{p.nome}</p>
@@ -214,7 +214,7 @@ function AbaPlanos({ dados, nomeItem }) {
                 <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Implantação</dt><dd>{brl(p.implantacao_valor)}</dd></div>
                 <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Ciclos</dt><dd>{ciclosAtivos.map(c => `${CICLOS.find(x => x.id === c.ciclo)?.label} ${c.desconto_percent}%`).join(' · ') || 'Nenhum'}</dd></div>
               </dl>
-              <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="grid grid-cols-3 gap-2 mt-auto pt-4">
                 <button type="button" className={`${btnNeutro} justify-center`} onClick={() => abrir(p)}><Pencil size={14} /> Editar</button>
                 <button type="button" className={`${btnNeutro} justify-center`} onClick={() => abrir(p, true)}><Copy size={14} /> Duplicar</button>
                 <button type="button" className={`${btnNeutro} justify-center`} onClick={() => alternarAtivo(p)}><Power size={14} /> {p.ativo ? 'Desativar' : 'Reativar'}</button>
