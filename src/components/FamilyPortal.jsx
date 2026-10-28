@@ -213,34 +213,6 @@ export default function FamilyPortal({
           <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             <SidebarItem active={familyTab === 'home'} icon={Home} label="Início" onClick={() => go('home')} />
 
-            {/* FORMULÁRIOS */}
-            {showFormularios && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Formulários"
-                icon={FileText}
-                isOpen={openAccordion === 'formularios'}
-                onToggle={() => toggleAccordion('formularios')}
-              >
-                <SidebarItem active={familyTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => go('matriculas')} />
-                <SidebarItem active={familyTab === 'ficha-medica'} icon={HeartPulse} label="Ficha Médica" onClick={() => go('ficha-medica')} />
-              </SidebarGroup>
-            )}
-
-            {/* GERENCIAMENTO */}
-            {showGerenciamento && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Gerenciamento"
-                icon={Folders}
-                isOpen={openAccordion === 'gerenciamento'}
-                onToggle={() => toggleAccordion('gerenciamento')}
-              >
-                <SidebarItem active={familyTab === 'gerenciar-responsaveis'} icon={Users} label="Responsáveis" onClick={() => go('gerenciar-responsaveis')} />
-                <SidebarItem active={familyTab === 'registration'} icon={ClipboardList} label="Dados Cadastrais" onClick={() => go('registration')} />
-              </SidebarGroup>
-            )}
-
             {/* CHECK-IN/OUT */}
             {showCheckin && (
               <SidebarGroup
@@ -253,29 +225,6 @@ export default function FamilyPortal({
                 <SidebarItem active={familyTab === 'acompanhamento'} icon={ShieldCheck} label="Acompanhamento" onClick={() => go('acompanhamento')} />
                 <SidebarItem active={familyTab === 'authorized'} icon={QrCode} label="Autorizados" onClick={() => go('authorized')} />
                 <SidebarItem active={familyTab === 'history'} icon={ClipboardList} label="Histórico Geral" onClick={() => go('history')} />
-              </SidebarGroup>
-            )}
-
-            {/* RELATÓRIOS */}
-            {showRelatorios && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Relatórios"
-                icon={FileText}
-                badge={mitigacaoUnread > 0 ? mitigacaoUnread : null}
-                isOpen={openAccordion === 'relatorios'}
-                onToggle={() => toggleAccordion('relatorios')}
-              >
-                {FAMILY_RELATORIOS_SUBMENU.map(r => (
-                  <SidebarItem
-                    key={r.key}
-                    active={familyTab === r.key}
-                    icon={FileText}
-                    label={r.label}
-                    badge={r.key === 'rel-mitigacao' && mitigacaoUnread > 0 ? mitigacaoUnread : null}
-                    onClick={() => go(r.key)}
-                  />
-                ))}
               </SidebarGroup>
             )}
 
@@ -309,6 +258,57 @@ export default function FamilyPortal({
                 {showTarefas && (
                   <SidebarItem active={familyTab === 'tarefas'} icon={ClipboardList} label="Tarefas" onClick={() => go('tarefas')} />
                 )}
+              </SidebarGroup>
+            )}
+
+            {/* RELATÓRIOS */}
+            {showRelatorios && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Relatórios"
+                icon={FileText}
+                badge={mitigacaoUnread > 0 ? mitigacaoUnread : null}
+                isOpen={openAccordion === 'relatorios'}
+                onToggle={() => toggleAccordion('relatorios')}
+              >
+                {FAMILY_RELATORIOS_SUBMENU.map(r => (
+                  <SidebarItem
+                    key={r.key}
+                    active={familyTab === r.key}
+                    icon={FileText}
+                    label={r.label}
+                    badge={r.key === 'rel-mitigacao' && mitigacaoUnread > 0 ? mitigacaoUnread : null}
+                    onClick={() => go(r.key)}
+                  />
+                ))}
+              </SidebarGroup>
+            )}
+
+            {/* FORMULÁRIOS */}
+            {showFormularios && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Formulários"
+                icon={FileText}
+                isOpen={openAccordion === 'formularios'}
+                onToggle={() => toggleAccordion('formularios')}
+              >
+                <SidebarItem active={familyTab === 'matriculas'} icon={FileText} label="Matrículas" onClick={() => go('matriculas')} />
+                <SidebarItem active={familyTab === 'ficha-medica'} icon={HeartPulse} label="Ficha Médica" onClick={() => go('ficha-medica')} />
+              </SidebarGroup>
+            )}
+
+            {/* GERENCIAMENTO */}
+            {showGerenciamento && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Gerenciamento"
+                icon={Folders}
+                isOpen={openAccordion === 'gerenciamento'}
+                onToggle={() => toggleAccordion('gerenciamento')}
+              >
+                <SidebarItem active={familyTab === 'gerenciar-responsaveis'} icon={Users} label="Responsáveis" onClick={() => go('gerenciar-responsaveis')} />
+                <SidebarItem active={familyTab === 'registration'} icon={ClipboardList} label="Dados Cadastrais" onClick={() => go('registration')} />
               </SidebarGroup>
             )}
 

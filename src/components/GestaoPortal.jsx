@@ -287,31 +287,6 @@ export default function GestaoPortal({
             {item('home', Home, 'Início')}
             {item('primeiros-passos', Rocket, 'Primeiros passos')}
             {item('pendencias', Inbox, 'Pendências', { badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
-            {group('secretaria', 'Secretaria', GraduationCap, <>
-              {item('secretaria-documentos', FileWarning, 'Doc. Pendentes')}
-            </>)}
-            {group('contratos', 'Contratos', FileSignature, <>
-              {item('contratos-lista', FileSignature, 'Contratos')}
-              {item('contratos-modelos', LayoutTemplate, 'Modelos')}
-              {item('contratos-assinaturas', PenLine, 'Assinaturas')}
-              {item('contratos-aditivos', FilePlus2, 'Aditivos')}
-            </>)}
-            {group('financeiro', 'Financeiro', Wallet, <>
-              {item('financeiro-visao', PieChart, 'Visão Financeira')}
-              {showFinanceiro && item('financeiro-planos', Tag, 'Planos')}
-              {showFinanceiro && item('financeiro-mensalidades', ReceiptText, 'Mensalidades')}
-              {showFinanceiro && item('financeiro-cobrancas', Wallet, 'Cobranças')}
-              {showFinanceiro && item('financeiro-inadimplencia', AlertOctagon, 'Inadimplência')}
-              {showFinanceiro && item('financeiro-recebimentos', HandCoins, 'Recebimentos')}
-              {item('financeiro-despesas', Receipt, 'Despesas')}
-            </>)}
-            {showCheckin && group('presenca', 'Presença e Horas', Clock, <>
-              {item('presenca-dia', UserCheck, 'Presença do Dia')}
-              {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
-              {item('saidas-pendentes', LogOut, 'Saídas Pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
-              {item('horas-extras', Clock, 'Horas Extras')}
-              {item('historico-geral', ScrollText, 'Histórico Geral')}
-            </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
             {group('cadastros', 'Cadastros', UserPlus, <>
               {item('cadastros-novo', UserPlus, 'Novo Cadastro')}
               {item('cadastros-funcionario-novo', Users, 'Novo Funcionário')}
@@ -332,6 +307,31 @@ export default function GestaoPortal({
                 <SidebarItem active={ABAS_BIOMETRIAS.some(a => a.id === abaAtual)} icon={ScanFace} label="Biometrias" onClick={() => go('cadastros-qualidade-biometria')} />
               ) : null}
             </>, pendingUsersCount > 0 ? pendingUsersCount : null)}
+            {group('secretaria', 'Secretaria', GraduationCap, <>
+              {item('secretaria-documentos', FileWarning, 'Doc. Pendentes')}
+            </>)}
+            {group('contratos', 'Contratos', FileSignature, <>
+              {item('contratos-lista', FileSignature, 'Contratos')}
+              {item('contratos-modelos', LayoutTemplate, 'Modelos')}
+              {item('contratos-assinaturas', PenLine, 'Assinaturas')}
+              {item('contratos-aditivos', FilePlus2, 'Aditivos')}
+            </>)}
+            {group('financeiro', 'Financeiro', Wallet, <>
+              {item('financeiro-visao', PieChart, 'Visão Financeira')}
+              {showFinanceiro && item('financeiro-planos', Tag, 'Planos')}
+              {showFinanceiro && item('financeiro-mensalidades', ReceiptText, 'Mensalidades')}
+              {showFinanceiro && item('financeiro-cobrancas', Wallet, 'Cobranças')}
+              {showFinanceiro && item('financeiro-inadimplencia', AlertOctagon, 'Inadimplência')}
+              {showFinanceiro && item('financeiro-recebimentos', HandCoins, 'Recebimentos')}
+              {item('financeiro-despesas', Receipt, 'Despesas')}
+            </>)}
+            {showCheckin && group('presenca', 'Check-in/out', Clock, <>
+              {item('presenca-dia', UserCheck, 'Presença do Dia')}
+              {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
+              {item('saidas-pendentes', LogOut, 'Saídas Pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
+              {item('horas-extras', Clock, 'Horas Extras')}
+              {item('historico-geral', ScrollText, 'Histórico Geral')}
+            </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
             {group('academico', 'Acadêmico', BookOpen, <>
               {item('academico-ano-letivo', CalendarRange, 'Ano Letivo')}
               {item('academico-frequencia', ClipboardList, 'Frequência')}

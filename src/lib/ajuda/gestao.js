@@ -42,7 +42,7 @@ export const AJUDA_GESTAO = [
   },
   {
     id: 'presenca',
-    titulo: 'Presença e Horas',
+    titulo: 'Check-in/out',
     itens: [
       { id: 'pres-dia', titulo: 'Presença do Dia', serve: 'Quem está na escola hoje, com horários de entrada e saída.', faz: ['Consulte a lista do dia e filtre por turma.'] },
       { id: 'pres-correcoes', titulo: 'Correções', serve: 'Pedidos para corrigir um registro de presença. Quando a correção gera cobrança de hora extra, só a Gestão aprova.', faz: ['Abra o pedido, confira o motivo e aprove ou recuse.'], dica: 'O número no menu mostra quantas correções aguardam você.' },

@@ -34,9 +34,9 @@ export const ITENS = [
       { nome: 'Configurações', desc: 'Dados da escola e preferências do portal' },
     ],
     onde: [
-      { portal: 'Recepção', menus: 'Cadastros · Gerenciamento · Formulários · Check-in/out · Calendário · Comunicados · Configurações' },
-      { portal: 'Gestão', menus: 'Secretaria · Contratos · Financeiro · Presença e Horas · Cadastros · Calendário · Comunicados · Configurações' },
-      { portal: 'Família', menus: 'Formulários · Gerenciamento · Check-in/out · Calendário · Comunicados · Financeiro · Configurações › Contratos' },
+      { portal: 'Recepção', menus: 'Gerenciamento · Check-in/out · Formulários · Calendário · Comunicados · Configurações' },
+      { portal: 'Gestão', menus: 'Cadastros · Secretaria · Contratos · Financeiro · Check-in/out · Calendário · Comunicados · Configurações' },
+      { portal: 'Família', menus: 'Check-in/out · Acadêmico · Relatórios · Formulários · Gerenciamento · Financeiro · Configurações › Contratos' },
     ],
     aviso: 'Para emitir cobranças, a escola conecta a conta de pagamento em Gestão › Configurações › Financeiro.',
     aoDesligar: null,
