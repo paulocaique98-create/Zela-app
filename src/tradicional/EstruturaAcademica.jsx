@@ -132,9 +132,9 @@ function CabecalhoColunas({ colunas }) {
 }
 
 // Uma linha de dados alinhada às colunas do cabeçalho. `celulas` segue a ordem de `colunas`.
-function LinhaColunas({ colunas, celulas, onApagar }) {
+function LinhaColunas({ colunas, celulas, onApagar, borda = '' }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 sm:grid sm:gap-2 bg-surface-container-low rounded-zela-md px-3 py-2 text-sm text-on-surface sm:[grid-template-columns:var(--cols)]"
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-0.5 sm:grid sm:gap-2 bg-surface-container-low rounded-zela-md ${borda ? `border-l-4 ${borda}` : ''} px-3 py-2 text-sm text-on-surface sm:[grid-template-columns:var(--cols)]`}
       style={{ '--cols': modeloColunas(colunas) }}>
       {celulas.map((valor, i) => (
         <span key={colunas[i].rotulo} className="min-w-0 truncate">
@@ -161,7 +161,11 @@ function Campo({ rotulo, dica, className = '', children }) {
 const formCartao = 'flex flex-wrap items-end gap-3 rounded-zela-md border border-outline-variant bg-surface p-4 mt-2';
 const tituloForm = 'w-full text-sm font-bold text-on-surface';
 
-const COLUNAS_SERIES = [{ rotulo: 'Série' }];
+const COLUNAS_SERIES = [
+  { rotulo: 'Série' },
+  { rotulo: 'Turmas', dica: 'Quantas turmas existem nesta série', largura: '6rem' },
+  { rotulo: 'Disciplinas na grade', dica: 'Disciplinas já definidas na grade desta série', largura: '11rem' },
+];
 const COLUNAS_TURMAS = [{ rotulo: 'Turma', dica: 'Nome da turma' }, { rotulo: 'Série' }, { rotulo: 'Turno', dica: 'Período em que a turma estuda' }];
 const COLUNAS_DISCIPLINAS = [{ rotulo: 'Disciplina' }, { rotulo: 'Sigla', dica: 'Abreviação usada nos quadros', largura: '6rem' }];
 const COLUNAS_GRADE = [{ rotulo: 'Disciplina' }, { rotulo: 'Aulas por semana', dica: 'Quantas aulas a série tem dessa disciplina por semana', largura: '10rem' }];
@@ -209,16 +213,30 @@ function AbaSeries({ schoolId, dados, salvando, executar, setApagar }) {
           <button type="submit" disabled={salvando} className={botao}><Plus size={16} /> Adicionar</button>
         </form>
       )}
-      {dados.segmentos.map(seg => (
-        <div key={seg.id} className="space-y-1.5">
-          <p className="text-xs font-bold uppercase text-on-surface-variant">Segmento: {seg.nome}</p>
-          <CabecalhoColunas colunas={COLUNAS_SERIES} />
-          {dados.series.filter(s => s.segmento_id === seg.id).map(s => (
-            <LinhaColunas key={s.id} colunas={COLUNAS_SERIES} celulas={[s.nome]}
-              onApagar={() => setApagar({ tabela: 'trad_series', id: s.id, texto: `Excluir a série "${s.nome}"?` })} />
-          ))}
-        </div>
-      ))}
+      {dados.segmentos.map(seg => {
+        const series = dados.series.filter(s => s.segmento_id === seg.id);
+        const semGrade = series.filter(s => !dados.grade.some(g => g.serie_id === s.id)).length;
+        return (
+          <div key={seg.id} className="space-y-1.5">
+            <p className="text-xs font-bold uppercase text-on-surface-variant">Segmento: {seg.nome}</p>
+            {series.length > 0 && (
+              <p className={`text-xs font-bold ${semGrade === 0 ? 'text-success' : 'text-brass'}`}>
+                {semGrade === 0 ? 'Todas as séries têm grade' : `${series.length - semGrade} de ${series.length} séries com grade`}
+              </p>
+            )}
+            <CabecalhoColunas colunas={COLUNAS_SERIES} />
+            {series.map(s => {
+              const turmas = dados.turmas.filter(t => t.serie_id === s.id).length;
+              const disciplinas = dados.grade.filter(g => g.serie_id === s.id).length;
+              return (
+                <LinhaColunas key={s.id} colunas={COLUNAS_SERIES} borda={disciplinas ? 'border-primary' : 'border-brass'}
+                  celulas={[<b key="n">{s.nome}</b>, turmas, disciplinas]}
+                  onApagar={() => setApagar({ tabela: 'trad_series', id: s.id, texto: `Excluir a série "${s.nome}"?` })} />
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
