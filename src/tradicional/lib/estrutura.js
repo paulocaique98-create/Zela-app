@@ -86,3 +86,26 @@ export function professorOcupado({ horarios, atribuicoes, professorId, dia, orde
   const doProfessor = new Set(atribuicoes.filter(a => a.professor_id === professorId).map(a => a.id));
   return horarios.some(h => h.id !== ignorarHorarioId && h.dia_semana === dia && h.ordem === ordem && doProfessor.has(h.atribuicao_id));
 }
+
+const hhmm = (t) => String(t || '').slice(0, 5);
+
+// Outro horário da mesma turma e dia que cruza o intervalo [inicio, fim). Aulas coladas
+// (uma termina quando a outra começa) não contam como choque. Compara "HH:MM" como texto.
+export function horarioSobreposto({ horarios, turmaId, dia, inicio, fim, ignorarHorarioId = null }) {
+  const ini = hhmm(inicio); const f = hhmm(fim);
+  return horarios.find(h => h.id !== ignorarHorarioId && h.turma_id === turmaId && h.dia_semana === dia
+    && hhmm(h.inicio) < f && ini < hhmm(h.fim)) || null;
+}
+
+// A turma já tem aula com esse número no dia (o banco só aceita um por turma, dia e número).
+export function ordemRepetida({ horarios, turmaId, dia, ordem, ignorarHorarioId = null }) {
+  return horarios.some(h => h.id !== ignorarHorarioId && h.turma_id === turmaId && h.dia_semana === dia && h.ordem === ordem);
+}
+
+// O intervalo não usa "Nº da aula": ocupa o maior número livre do dia, para não entrar
+// na contagem das aulas (1ª, 2ª, 3ª...).
+export function ordemLivreParaIntervalo({ horarios, turmaId, dia, ignorarHorarioId = null }) {
+  const usadas = new Set(horarios.filter(h => h.id !== ignorarHorarioId && h.turma_id === turmaId && h.dia_semana === dia).map(h => h.ordem));
+  for (let o = 12; o >= 1; o--) if (!usadas.has(o)) return o;
+  return 12;
+}

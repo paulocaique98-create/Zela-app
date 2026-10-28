@@ -432,7 +432,23 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
 // Componente principal
 // ──────────────────────────────────────────────────────────
 export default function AdminUserRegistration({ currentUser, editingUser, initialData, forceModal, onClose, onSaved }) {
-  const { turmas: schoolTurmas, terminology } = useSchoolConfig(currentUser?.school_id);
+  const { turmas: turmasConfig, method: metodoEscola, terminology } = useSchoolConfig(currentUser?.school_id);
+  // Escola Tradicional: as turmas vêm da Estrutura acadêmica (ano letivo aberto), não da lista padrão da escola.
+  const [turmasTradicional, setTurmasTradicional] = useState(null);
+  useEffect(() => {
+    const schoolId = currentUser?.school_id;
+    if (metodoEscola !== 'tradicional' || !schoolId) return undefined;
+    let ativo = true;
+    (async () => {
+      const { data: anos, error: errAnos } = await supabase.from('school_years').select('id').eq('school_id', schoolId).eq('status', 'aberto').limit(5);
+      if (errAnos || !anos?.length) { if (ativo) setTurmasTradicional(null); return; }
+      const { data, error } = await supabase.from('trad_turmas').select('nome').eq('school_id', schoolId)
+        .in('school_year_id', anos.map(a => a.id)).order('nome').limit(200);
+      if (ativo && !error) setTurmasTradicional([...new Set((data || []).map(t => t.nome))]);
+    })();
+    return () => { ativo = false; };
+  }, [metodoEscola, currentUser?.school_id]);
+  const schoolTurmas = metodoEscola === 'tradicional' && turmasTradicional ? turmasTradicional : turmasConfig;
   const [guardianType, setGuardianType] = useState('Responsável'); // 'Responsável' | 'Responsável Financeiro'
   const [resetSent, setResetSent] = useState(false);
 
@@ -1258,6 +1274,9 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
                 );
               })}
             </div>
+            {metodoEscola === 'tradicional' && turmasTradicional && turmasTradicional.length === 0 && (
+              <p className="text-[11px] text-warning font-semibold mt-1.5">Nenhuma turma cadastrada ainda. Cadastre as turmas em Acadêmico › Estrutura acadêmica.</p>
+            )}
             {formData.turmas.length === 0 && (
               <p className="text-[11px] text-warning font-semibold mt-1.5">Selecione ao menos uma turma.</p>
             )}
