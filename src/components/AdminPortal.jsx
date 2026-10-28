@@ -293,19 +293,6 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
-            {/* FORMULÁRIOS */}
-            {showFormularios && (
-              <SidebarGroup
-                collapsed={collapsed}
-                label="Formulários"
-                icon={FileText}
-                isOpen={openAccordion === 'formularios'}
-                onToggle={() => toggleAccordion('formularios')}
-              >
-                <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => go('ficha-medica')} />
-              </SidebarGroup>
-            )}
-
             {/* CHECK-IN/OUT */}
             {showCheckin && (
               <SidebarGroup
@@ -324,6 +311,19 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
                 <SidebarItem active={adminTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
+              </SidebarGroup>
+            )}
+
+            {/* FORMULÁRIOS */}
+            {showFormularios && (
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Formulários"
+                icon={FileText}
+                isOpen={openAccordion === 'formularios'}
+                onToggle={() => toggleAccordion('formularios')}
+              >
+                <SidebarItem active={adminTab === 'ficha-medica'} icon={FileText} label="Ficha Médica" onClick={() => go('ficha-medica')} />
               </SidebarGroup>
             )}
 
