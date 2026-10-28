@@ -120,6 +120,19 @@ export const ITENS = [
     aoDesligar: 'O chat some para a escola e para a família. As conversas ficam guardadas.',
   },
   {
+    id: 'bi_dashboards',
+    grupo: 'adicional',
+    nome: 'Painel de indicadores',
+    resumo: 'Gráficos interativos de financeiro e frequência, com filtros, detalhe e exportação.',
+    keys: ['bi_dashboards'],
+    inclui: [
+      { nome: 'Visão geral', desc: 'Alunos, recebido, inadimplência e frequência por turma' },
+      { nome: 'Financeiro', desc: 'Previsto x recebido, atraso por faixa, despesas e resultado (só Gestão)' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Relatórios › Painel de indicadores (a Coordenação vê sem valores em R$)' }],
+    aoDesligar: 'O item Painel de indicadores some do menu. Nada é apagado.',
+  },
+  {
     id: 'liveness',
     grupo: 'adicional',
     nome: 'Prova de vida no reconhecimento',
@@ -195,7 +208,7 @@ const TODAS_AS_CHAVES = ITENS.flatMap(i => i.keys);
 export const PACOTES = [
   { id: 'essencial', nome: 'Essencial', itens: [] },
   { id: 'completo', nome: 'Completo', itens: ['pedagogico', 'rotina'] },
-  { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr'] },
+  { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr', 'bi_dashboards'] },
 ];
 const VENDAVEIS = ITENS.filter(i => (i.grupo === 'modulo' || i.grupo === 'adicional') && i.keys.length);
 

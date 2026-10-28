@@ -41,3 +41,16 @@ describe('calcularVariacao', () => {
     expect(calcularVariacao(5, 10).texto).not.toContain('-');
   });
 });
+
+import { rotuloMes } from './formatos';
+
+describe('rotuloMes', () => {
+  it('abrevia mês e ano sem deslizar de fuso', () => {
+    expect(rotuloMes('2026-09-01')).toBe('set/26');
+    expect(rotuloMes('2026-01-31')).toBe('jan/26');
+  });
+  it('devolve ponto para entrada inválida', () => {
+    expect(rotuloMes(null)).toBe('·');
+    expect(rotuloMes('x')).toBe('·');
+  });
+});
