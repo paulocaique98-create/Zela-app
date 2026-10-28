@@ -29,6 +29,7 @@ export function ehGestaoPedagogica(role) {
 export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'home',
   'pendencias',
+  'ajuda',
   // Secretaria
   'secretaria-alunos',
   'secretaria-matriculas',

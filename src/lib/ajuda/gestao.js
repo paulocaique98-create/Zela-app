@@ -1,0 +1,168 @@
+// Conteúdo da Central de Ajuda: perfil Gestão (inclui financeiro).
+// A Gestão Pedagógica vê o mesmo conteúdo, mas só as telas que o perfil dela abre.
+export const AJUDA_GESTAO = [
+  {
+    id: 'inicio',
+    titulo: 'Início',
+    itens: [
+      { id: 'inicio-home', titulo: 'Início', serve: 'Tela de abertura com os atalhos dos menus que você mais usa.', faz: ['Toque em um card para abrir o menu. Os mais usados sobem para o começo.'] },
+      { id: 'primeiros-passos', titulo: 'Primeiros passos', serve: 'O que falta para a escola começar a usar o Zela Edu.', faz: ['Siga a lista na ordem e abra cada passo pelo botão ao lado.', 'Conclua os passos para a escola ficar pronta.'] },
+      { id: 'pendencias', titulo: 'Pendências', serve: 'Reúne o que espera uma decisão da Gestão: cadastros para aprovar e correções de presença.', faz: ['Abra cada pendência e aprove ou recuse.'], dica: 'O número no menu soma tudo o que está aguardando você.' },
+    ],
+  },
+  {
+    id: 'secretaria',
+    titulo: 'Secretaria',
+    itens: [
+      { id: 'sec-alunos', titulo: 'Alunos', serve: 'Painel dos alunos da escola. Ao abrir um aluno você vê o perfil completo, com abas de dados, responsáveis, financeiro e histórico.', faz: ['Busque por nome ou filtre por turma.', 'Abra o aluno para ver o perfil e, se precisar, mudá-lo de turma.'], dica: 'Ao voltar do perfil, a lista continua com a turma e a busca que você tinha.' },
+      { id: 'sec-matriculas', titulo: 'Matrículas', serve: 'Acompanha as matrículas e rematrículas feitas pelas famílias.', faz: ['Abra a matrícula, confira os dados e aprove.'] },
+      { id: 'sec-documentos', titulo: 'Doc. Pendentes', serve: 'Mostra os documentos que ainda faltam em cada cadastro.', faz: ['Veja quem tem documento pendente e cobre a família.'] },
+    ],
+  },
+  {
+    id: 'contratos',
+    titulo: 'Contratos',
+    itens: [
+      { id: 'contratos-lista', titulo: 'Contratos', serve: 'Lista os contratos de cada aluno e a situação de cada um.', faz: ['Busque o contrato e abra para consultar.'] },
+      { id: 'contratos-modelos', titulo: 'Modelos', serve: 'Textos base dos contratos e aditivos. Os campos entre chaves são preenchidos com os dados do aluno.', faz: ['Crie ou edite o modelo.', 'Use os campos entre chaves para o Zela preencher nome, turma e valores sozinho.'] },
+      { id: 'contratos-assinaturas', titulo: 'Assinaturas', serve: 'Acompanha quem já assinou e quem ainda não.', faz: ['Consulte as assinaturas pendentes e lembre as famílias.'] },
+      { id: 'contratos-aditivos', titulo: 'Aditivos', serve: 'Alterações feitas em contratos que já existem.', faz: ['Crie o aditivo a partir de um modelo e envie para assinatura.'] },
+    ],
+  },
+  {
+    id: 'financeiro',
+    titulo: 'Financeiro',
+    itens: [
+      { id: 'fin-visao', titulo: 'Visão Financeira', serve: 'O mês em números e a evolução dos últimos 6 meses.', faz: ['Acompanhe o que entrou, o que está em aberto e a tendência.'] },
+      { id: 'fin-planos', titulo: 'Planos', serve: 'Preço mensal por ciclo e turno. Trimestral, semestral e anual são calculados na hora de criar a mensalidade, com o desconto da família.', faz: ['Cadastre o preço de cada plano.', 'Revise os valores antes de gerar mensalidades novas.'] },
+      { id: 'fin-mensalidades', titulo: 'Mensalidades', serve: 'Mensalidades geradas para cada aluno.', faz: ['Consulte e gere mensalidades.'] },
+      { id: 'fin-cobrancas', titulo: 'Cobranças', serve: 'Cobranças enviadas às famílias e a situação de cada uma.', faz: ['Acompanhe o que foi enviado, pago e vencido.'] },
+      { id: 'fin-inadimplencia', titulo: 'Inadimplência', serve: 'Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', faz: ['Filtre quem está em atraso.', 'Dê baixa manual no que foi pago fora do sistema.'] },
+      { id: 'fin-recebimentos', titulo: 'Recebimentos', serve: 'Pagamentos recebidos e conferência com o extrato do banco.', faz: ['Compare os recebimentos com o extrato.'] },
+      { id: 'fin-despesas', titulo: 'Despesas', serve: 'Contas a pagar da escola.', faz: ['Cadastre a despesa com fornecedor, valor e vencimento.', 'Marque como paga quando quitar.'] },
+    ],
+  },
+  {
+    id: 'presenca',
+    titulo: 'Presença e Horas',
+    itens: [
+      { id: 'pres-dia', titulo: 'Presença do Dia', serve: 'Quem está na escola hoje, com horários de entrada e saída.', faz: ['Consulte a lista do dia e filtre por turma.'] },
+      { id: 'pres-correcoes', titulo: 'Correções', serve: 'Pedidos para corrigir um registro de presença. Quando a correção gera cobrança de hora extra, só a Gestão aprova.', faz: ['Abra o pedido, confira o motivo e aprove ou recuse.'], dica: 'O número no menu mostra quantas correções aguardam você.' },
+      { id: 'pres-saidas', titulo: 'Saídas Pendentes', serve: 'Saídas que ainda não foram concluídas.', faz: ['Acompanhe cada saída até a conclusão.'] },
+      { id: 'pres-horas', titulo: 'Horas Extras', serve: 'Horas que o aluno ficou além do horário contratado e o valor delas.', faz: ['Consulte as horas do período e confira os valores.'] },
+      { id: 'pres-historico', titulo: 'Histórico Geral', serve: 'Registro de todas as entradas e saídas, para rastreabilidade.', faz: ['Filtre por aluno ou data.'] },
+    ],
+  },
+  {
+    id: 'cadastros',
+    titulo: 'Cadastros',
+    itens: [
+      { id: 'cad-usuarios', titulo: 'Usuários', serve: 'Contas da escola e cadastros aguardando aprovação.', faz: ['Aprove ou recuse os cadastros pendentes.', 'Consulte as contas ativas.'] },
+      { id: 'cad-novo', titulo: 'Novo Cadastro', serve: 'Cria um cadastro novo diretamente pela Gestão.', faz: ['Escolha o tipo de cadastro e preencha os dados.'] },
+      { id: 'cad-funcionarios', titulo: 'Funcionários', serve: 'Equipe da escola e o perfil de cada pessoa.', faz: ['Cadastre e consulte os funcionários.'] },
+      { id: 'cad-turmas', titulo: 'Turmas', serve: 'Turmas da escola, com alunos e professoras.', faz: ['Crie a turma e defina a professora responsável.'] },
+      { id: 'cad-fornecedores', titulo: 'Fornecedores', serve: 'Empresas e pessoas de quem a escola compra ou contrata serviços.', faz: ['Cadastre o fornecedor para vincular às despesas.'] },
+      { id: 'cad-exclusoes', titulo: 'Pedidos de exclusão', serve: 'Pedidos de exclusão de conta feitos pelas próprias pessoas. O prazo para responder é de até 30 dias.', faz: ['Abra o pedido e atenda dentro do prazo.'], dica: 'Respeitar esse prazo faz parte da lei de proteção de dados.' },
+      { id: 'cad-biometrias', titulo: 'Biometrias', serve: 'Reúne três ferramentas em abas: Qualidade, Limpeza e Unificar responsáveis.', faz: [
+        'Qualidade: mede as fotos de rosto já cadastradas e mostra quem se beneficia de cadastrar o rosto de novo. Só números são guardados, nenhuma foto sai da escola.',
+        'Limpeza: foto e biometria de pessoas autorizadas de famílias sem aluno ativo. Pela LGPD, dados que não são mais necessários devem ser apagados.',
+        'Unificar responsáveis: pais e mães que também estão cadastrados como autorizados. Unificar deixa um cadastro só, com a biometria da própria pessoa.',
+      ] },
+    ],
+  },
+  {
+    id: 'academico',
+    titulo: 'Acadêmico',
+    itens: [
+      { id: 'aca-ano', titulo: 'Ano Letivo', serve: 'Anos letivos da escola e as matrículas de cada ano.', faz: ['Abra o ano letivo para consultar as matrículas.'] },
+      { id: 'aca-frequencia', titulo: 'Frequência', serve: 'Presença dos alunos nas aulas.', faz: ['Consulte por turma e por período.'] },
+      { id: 'aca-pedagogico', metodos: ['montessori', 'personalizado'], titulo: 'Pedagógico', serve: 'Relatórios pedagógicos dos alunos. As professoras preenchem, a coordenação e a direção apenas editam.', faz: ['Escolha o aluno e o relatório.', 'Edite quando precisar corrigir.'] },
+      { id: 'aca-mapa', metodos: ['montessori', 'personalizado'], titulo: 'Mapa de Habilidades', serve: 'Visão das habilidades desenvolvidas por cada aluno.', faz: ['Escolha o aluno ou a turma para ver o mapa.'] },
+      { id: 'aca-ocorrencias', titulo: 'Ocorrências', serve: 'Observações pedagógicas, do diário e faltas em aula registradas pela equipe.', faz: ['Filtre por aluno e consulte o histórico.'] },
+      { id: 'aca-calendario', titulo: 'Calendário', serve: 'Datas importantes que as famílias veem no app.', faz: ['Cadastre feriados, reuniões e eventos.'] },
+      { id: 'aca-cardapio', titulo: 'Cardápio', serve: 'Cardápio publicado para as famílias.', faz: ['Cadastre as refeições da semana.'] },
+      { id: 'aca-diario', titulo: 'Diário', serve: 'Registros do dia a dia das crianças feitos pelas professoras.', faz: ['Consulte os registros por turma.'] },
+      { id: 'aca-mural', titulo: 'Mural de Fotos', serve: 'Fotos das atividades compartilhadas com as famílias.', faz: ['Consulte e modere as fotos publicadas.'] },
+      { id: 'aca-materias', titulo: 'Matérias', serve: 'Disciplinas da escola (método tradicional).', faz: ['Cadastre as matérias e use nas turmas.'] },
+      { id: 'aca-estrutura', metodos: ['tradicional', 'personalizado'], titulo: 'Estrutura acadêmica', serve: 'Séries, turmas e professores por disciplina (método tradicional).', faz: ['Monte a estrutura antes de lançar avaliações.'] },
+      { id: 'aca-avaliacao', metodos: ['tradicional', 'personalizado'], titulo: 'Avaliação', serve: 'Regras e lançamentos de avaliação (método tradicional).', faz: ['Defina as avaliações do período.'] },
+      { id: 'aca-freq-turma', metodos: ['tradicional', 'personalizado'], titulo: 'Frequência por disciplina', serve: 'Presença por disciplina, vinda do diário de classe (método tradicional).', faz: ['Consulte por turma e disciplina.'] },
+      { id: 'aca-resultado', metodos: ['tradicional', 'personalizado'], titulo: 'Boletim e resultado', serve: 'Notas e resultado final de cada aluno (método tradicional).', faz: ['Confira o boletim e o resultado.'] },
+      { id: 'aca-ata', metodos: ['tradicional', 'personalizado'], titulo: 'Ata do conselho', serve: 'Registro das decisões do conselho de classe (método tradicional).', faz: ['Registre e consulte a ata.'] },
+      { id: 'aca-promocao', metodos: ['tradicional', 'personalizado'], titulo: 'Promoção de série', serve: 'Passagem dos alunos para a série seguinte (método tradicional).', faz: ['Revise os resultados e confirme a promoção.'] },
+      { id: 'aca-tarefas', metodos: ['tradicional', 'personalizado'], titulo: 'Tarefas', serve: 'Tarefas de casa lançadas pelas professoras (método tradicional).', faz: ['Consulte as tarefas por turma.'] },
+    ],
+  },
+  {
+    id: 'guia-tradicional',
+    titulo: 'Configurar o método Tradicional',
+    metodos: ['tradicional', 'personalizado'],
+    itens: [
+      {
+        id: 'guia-trad-sequencia',
+        titulo: 'Sequência sugerida de configuração',
+        serve: 'Mostra a ordem dos menus do método Tradicional para deixar a escola pronta antes de lançar notas e frequência por disciplina.',
+        faz: [
+          'Matérias: cadastre as disciplinas da escola.',
+          'Estrutura acadêmica: monte séries, turmas e professores por disciplina.',
+          'Ano Letivo: abra o ano e confira as matrículas.',
+          'Avaliação: defina as avaliações do período.',
+          'Peça às professoras para lançar Notas e o Diário de classe.',
+          'Ao fim do período, confira Boletim e resultado, registre a Ata do conselho e faça a Promoção de série.',
+        ],
+        dica: 'Se um desses menus não aparece, o módulo pode não estar no plano da escola. Veja em Configurações, Meu plano.',
+      },
+    ],
+  },
+  {
+    id: 'guia-montessori',
+    titulo: 'Configurar o método Montessori',
+    metodos: ['montessori', 'personalizado'],
+    itens: [
+      {
+        id: 'guia-mont-relatorios',
+        titulo: 'Relatórios e Mapa de Habilidades',
+        serve: 'O método Montessori acompanha cada criança por relatórios e pelo Mapa de Habilidades, em vez de notas e boletim.',
+        faz: [
+          'As professoras preenchem os relatórios de cada aluno, como a Mitigação.',
+          'A coordenação e a direção apenas editam, para corrigir ou complementar.',
+          'Em Acadêmico, abra Pedagógico e Mapa de Habilidades para acompanhar a evolução de cada criança.',
+          'A família vê só o Semestral e a Mitigação.',
+        ],
+        dica: 'Defina em Perfis e Permissões quem edita os relatórios antes de as professoras começarem a preencher.',
+      },
+    ],
+  },
+  {
+    id: 'comunicacao',
+    titulo: 'Comunicação',
+    itens: [
+      { id: 'com-comunicados', titulo: 'Comunicados', serve: 'Avisos enviados para as famílias.', faz: ['Escreva o comunicado, escolha quem recebe e envie.'] },
+    ],
+  },
+  {
+    id: 'relatorios',
+    titulo: 'Relatórios',
+    itens: [
+      { id: 'rel-gestao', titulo: 'Gestão', serve: 'Relatórios gerais da escola.', faz: ['Escolha o relatório e o período.'] },
+      { id: 'rel-financeiro', titulo: 'Financeiro', serve: 'Relatórios de receitas, despesas e inadimplência.', faz: ['Escolha o período para ver os números.'] },
+      { id: 'rel-academico', titulo: 'Acadêmico', serve: 'Relatórios de notas, frequência e desempenho.', faz: ['Escolha a turma e o período.'] },
+      { id: 'rel-operacional', titulo: 'Operacional', serve: 'Relatórios de presença, horas e movimentação da escola.', faz: ['Escolha o período para consultar.'] },
+    ],
+  },
+  {
+    id: 'configuracoes',
+    titulo: 'Configurações',
+    itens: [
+      { id: 'cfg-plano', titulo: 'Meu plano', serve: 'O plano contratado pela escola com o Zela Edu.', faz: ['Consulte os módulos incluídos no plano.'] },
+      { id: 'cfg-escola', titulo: 'Escola', serve: 'Dados da escola, como nome, logo e contatos.', faz: ['Atualize os dados que aparecem para as famílias.'] },
+      { id: 'cfg-academico', titulo: 'Acadêmico', serve: 'Ajustes do método pedagógico e do calendário letivo.', faz: ['Revise antes de abrir um ano letivo novo.'] },
+      { id: 'cfg-financeiro', titulo: 'Financeiro', serve: 'Ajustes de cobrança e pagamento da escola.', faz: ['Revise as regras antes de gerar mensalidades.'] },
+      { id: 'cfg-comunicacao', titulo: 'Comunicação', serve: 'Avisos automáticos que o Zela Edu envia às famílias.', faz: ['Ative ou desative cada aviso automático.'] },
+      { id: 'cfg-seguranca', titulo: 'Segurança', serve: 'Senhas e acesso das contas da escola.', faz: ['Revise quem tem acesso e redefina senhas quando preciso.'] },
+      { id: 'cfg-perfis', titulo: 'Perfis e Permissões', serve: 'O que cada perfil da equipe pode fazer nos módulos de gestão. A Gestão sempre tem acesso a tudo.', faz: ['Escolha o perfil e marque o que ele pode fazer.', 'Libere para a Recepção só o que ela precisa.'], dica: 'Libere o mínimo necessário. É mais fácil liberar depois do que desfazer um acesso.' },
+      { id: 'cfg-auditoria', titulo: 'Auditoria', serve: 'Ações sensíveis registradas por administradores da escola.', faz: ['Consulte quem fez o quê e quando.'] },
+      { id: 'cfg-integracoes', titulo: 'Integrações', serve: 'Conexões do Zela Edu com serviços externos.', faz: ['Consulte as conexões ativas.'] },
+    ],
+  },
+];
