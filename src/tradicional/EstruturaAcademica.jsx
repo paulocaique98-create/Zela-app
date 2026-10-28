@@ -374,6 +374,7 @@ function AbaProfessores({ schoolId, dados, professores, salvando, executar, nome
 
   const grade = dados.grade.filter(g => g.serie_id === turmaAtual.serie_id);
   const atribuicoes = dados.atribuicoes.filter(a => a.turma_id === turmaAtual.id);
+  const definidas = grade.filter(g => atribuicoes.some(a => a.disciplina_id === g.disciplina_id)).length;
 
   const definir = (disciplinaId, professorId) => executar(async () => {
     const atual = atribuicoes.find(a => a.disciplina_id === disciplinaId);
@@ -391,21 +392,26 @@ function AbaProfessores({ schoolId, dados, professores, salvando, executar, nome
       </Campo>
       {grade.length === 0 && <p className="text-sm text-on-surface-variant">A série dessa turma ainda não tem disciplinas na grade.</p>}
       {grade.length > 0 && (
-        <div className="hidden sm:flex gap-2 px-3 text-[11px] font-bold uppercase text-on-surface-variant">
-          <span className="flex-1">{COLUNAS_PROFESSORES[0].rotulo}</span>
-          <span className="w-64" title={COLUNAS_PROFESSORES[1].dica}>{COLUNAS_PROFESSORES[1].rotulo}</span>
-        </div>
+        <>
+          <p className={`text-xs font-bold ${definidas === grade.length ? 'text-success' : 'text-brass'}`}>
+            {definidas} de {grade.length} disciplinas com professor
+          </p>
+          <CabecalhoColunas colunas={COLUNAS_PROFESSORES} />
+        </>
       )}
       {grade.map(g => {
         const atual = atribuicoes.find(a => a.disciplina_id === g.disciplina_id);
         return (
-          <div key={g.id} className="flex flex-wrap items-center gap-2 bg-surface-container-low rounded-zela-md px-3 py-2">
-            <span className="flex-1 min-w-32 text-sm">{nomeDisc(g.disciplina_id)}</span>
-            <select disabled={salvando} aria-label="Professor responsável" value={atual?.professor_id || ''} onChange={e => definir(g.disciplina_id, e.target.value)} className={`${campo} sm:w-64`}>
+          <div key={g.id}
+            className={`flex flex-wrap items-center gap-x-3 gap-y-1 sm:grid sm:gap-2 rounded-zela-md px-3 py-2 text-sm text-on-surface sm:[grid-template-columns:var(--cols)] border-l-4 ${atual ? 'bg-surface-container-low border-primary' : 'bg-surface-container-low border-brass'}`}
+            style={{ '--cols': modeloColunas(COLUNAS_PROFESSORES) }}>
+            <span className="min-w-32 font-semibold truncate">{nomeDisc(g.disciplina_id)}</span>
+            <select disabled={salvando} aria-label="Professor responsável" value={atual?.professor_id || ''} onChange={e => definir(g.disciplina_id, e.target.value)} className={`${campo} w-full sm:w-auto`}>
               <option value="">Sem professor</option>
               {professores.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               {atual && !professores.some(p => p.id === atual.professor_id) && <option value={atual.professor_id}>{nomeProf(atual.professor_id)}</option>}
             </select>
+            <span />
           </div>
         );
       })}
