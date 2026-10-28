@@ -64,15 +64,13 @@ Cada fase é uma sessão própria (Sonnet), com branch, testes e PR.
 ~~**Fase 1: estrutura acadêmica**~~ ✅ código pronto em 27/10/2026 (branch feat/metodo-tradicional-fase-1)
 ~~Segmentos, séries, turmas, disciplinas, grade curricular, atribuição de
 professores, quadro de horários.~~ ✅ Primeiro segmento: Fundamental I.
-Pendente: aplicar a migration `20261027120000_tradicional_fase1_estrutura.sql`
-em homologação (depois produção) e testar com escola Tradicional.
+Migration aplicada em produção em 27/10/2026. Falta testar com escola Tradicional.
 
 ~~**Fase 2: avaliação**~~ ✅ código pronto em 28/10/2026 (branch feat/metodo-tradicional-fase-2)
 ~~Configuração de período, média e pesos; lançamento de notas pelo
 professor; cálculo de médias.~~ ✅ Bimestre (ou trimestre), média mínima 7,0
 configurável, recuperação substitui a nota do período.
-Pendente: aplicar a migration `20261028120000_tradicional_fase2_avaliacao.sql`
-(depois da Fase 1) em homologação e produção e testar com escola Tradicional.
+Migration aplicada em produção em 27/10/2026. Falta testar com escola Tradicional.
 Fora desta fase: modo parecer do Infantil (só Fundamental I por ora) e leitura
 da nota pela família (vem com o boletim, Fase 4).
 
@@ -80,8 +78,7 @@ da nota pela família (vem com o boletim, Fase 4).
 ~~Aulas dadas, frequência por disciplina, alertas de frequência.~~ ✅ Uma aula por
 atribuição e data, com quantidade de aulas do dia; falta justificada conta como
 ausência no percentual; alerta abaixo de 75% e atenção abaixo de 80%.
-Pendente: aplicar a migration `20261029120000_tradicional_fase3_diario.sql`
-(depois das Fases 1 e 2) em homologação e produção e testar com escola Tradicional.
+Migration aplicada em produção em 27/10/2026. Falta testar com escola Tradicional.
 Fora desta fase: leitura da frequência pela família (vem com o boletim, Fase 4).
 
 **Fase 4: documentos**
@@ -89,19 +86,18 @@ Boletim, conselho de classe, resultado final, ata, histórico.
 ~~4A: boletim e resultado final~~ ✅ código pronto em 30/10/2026. Regra de situação
 final personalizável por escola (frequência mínima, média mínima, recuperação final
 opcional); só Coordenação e Direção fecham; a família lê o resultado fechado.
-Pendente: aplicar a migration `20261030120000_tradicional_fase4a_resultado.sql`
-(depois da Fase 3) em homologação e produção e testar com escola Tradicional.
+Migration aplicada em produção em 27/10/2026. Falta testar com escola Tradicional.
 ~~4B: ata do conselho e histórico escolar~~ ✅ código pronto em 31/10/2026 (branch feat/metodo-tradicional-fase-4b). Ata com campos fixos (pauta, deliberações, encaminhamentos), uma por turma e período, só Coordenação e Direção. Histórico escolar sai dos resultados fechados (ano e turma gravados no fechamento); a família o vê na aba Boletim, com impressão.
-Pendente: aplicar a migration `20261031120000_tradicional_fase4b_ata_historico.sql` (depois da 4A) em homologação e produção. Resultados fechados antes dela usam o ano de fechamento.
+Migration aplicada em produção em 27/10/2026. Resultados fechados antes dela usam o ano de fechamento.
 
 **Fase 5: rematrícula e extras**
 Promoção de série, tarefas, BNCC.
 ~~5A: promoção de série~~ ✅ código pronto em 27/10/2026 (sem migration). Aba Promoção de série (só Coordenação e Direção): parte do resultado fechado; aprovado sobe, reprovado repete, em recuperação final fica pendente até fechar como aprovado ou reprovado, última série vira concluinte. Grava só students.turma (RLS já existente), com confirmação; resultados e histórico do ano anterior ficam intactos.
 Pendente: testar no navegador com escola Tradicional (precisa de ano letivo e turmas de destino).
 ~~5B: tarefas~~ ✅ código pronto em 01/11/2026. Professor publica tarefa (título, orientações, data de entrega) por turma e disciplina das próprias atribuições; Coordenação e Direção veem e corrigem as da escola (aba Tarefas); a família lê as da turma do filho. Sem anexos e sem resposta do aluno. Chave `tarefas_tradicional` (desligada por padrão). Nome da disciplina e da turma copiados por trigger, sem abrir a RLS de trad_atribuicoes/trad_disciplinas.
-Pendente: aplicar a migration `20261101120000_tradicional_fase5b_tarefas.sql` (depois da Fase 1) e testar no navegador com escola Tradicional.
+Migration aplicada em produção em 27/10/2026. Falta testar com escola Tradicional.
 ~~5C: BNCC por disciplina~~ ✅ código pronto em 02/11/2026. Catálogo global somente leitura (`bncc_habilidades`, recorte inicial do Fundamental I) e vínculo tarefa x habilidade (`trad_tarefa_habilidades`, RLS herdada de trad_tarefas). O professor marca até 10 habilidades ao publicar tarefa (filtro por ano da série e componente); a família vê os códigos. Herda a chave `tarefas_tradicional`. Diário fica fora por decisão.
-Pendente: REVISAR a carga de habilidades contra a BNCC oficial, aplicar a migration `20261102120000_tradicional_fase5c_bncc.sql` (depois da 5B) e testar no navegador.
+Migration aplicada em produção em 27/10/2026. Pendente: REVISAR a carga de habilidades contra a BNCC oficial (antes de ligar `tarefas_tradicional`) e testar no navegador.
 
 ## 4. Turmas (ponto mais delicado)
 
