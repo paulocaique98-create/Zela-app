@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validarTarefa, ordenarTarefas, estaVencida } from './tarefas';
+import { validarTarefa, ordenarTarefas, estaVencida, anoDaSerie, componenteDaDisciplina, filtrarHabilidades } from './tarefas';
 
 const ok = { titulo: 'Lista 3', descricao: '', data_entrega: '2026-11-10' };
 
@@ -26,5 +26,28 @@ describe('ordenarTarefas', () => {
   it('entrega hoje não está vencida', () => {
     expect(estaVencida({ data_entrega: '2026-11-05' }, '2026-11-05')).toBe(false);
     expect(estaVencida({ data_entrega: '2026-11-04' }, '2026-11-05')).toBe(true);
+  });
+});
+
+describe('BNCC', () => {
+  it('extrai o ano da série só de 1 a 5', () => {
+    expect(anoDaSerie('3º ano')).toBe(3);
+    expect(anoDaSerie('6º ano')).toBeNull();
+    expect(anoDaSerie('Infantil')).toBeNull();
+  });
+  it('sugere o componente pelo nome da disciplina', () => {
+    expect(componenteDaDisciplina('Língua Portuguesa')).toBe('Língua Portuguesa');
+    expect(componenteDaDisciplina('Matemática')).toBe('Matemática');
+    expect(componenteDaDisciplina('Ciencias')).toBe('Ciências');
+    expect(componenteDaDisciplina('Artes')).toBe('');
+  });
+  it('filtra por ano e componente', () => {
+    const cat = [
+      { codigo: 'A', ano: 1, componente: 'Matemática' },
+      { codigo: 'B', ano: 2, componente: 'Matemática' },
+      { codigo: 'C', ano: 1, componente: 'História' },
+    ];
+    expect(filtrarHabilidades(cat, { ano: 1, componente: 'Matemática' }).map(h => h.codigo)).toEqual(['A']);
+    expect(filtrarHabilidades(cat, { ano: 1, componente: '' }).map(h => h.codigo)).toEqual(['A', 'C']);
   });
 });

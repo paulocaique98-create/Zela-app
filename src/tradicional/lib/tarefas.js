@@ -58,6 +58,72 @@ export async function removerTarefa(schoolId, id) {
   if (error) throw error;
 }
 
+// BNCC (Fase 5C). Catálogo global somente leitura; vínculo por tarefa.
+export const COMPONENTES_BNCC = ['Língua Portuguesa', 'Matemática', 'Ciências', 'História', 'Geografia'];
+export const LIMITE_HABILIDADES = 10;
+
+const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// "3º ano" -> 3; fora de 1 a 5 (ex.: "Infantil", "6º ano") -> null.
+export function anoDaSerie(nome) {
+  const m = String(nome || '').match(/\d+/);
+  const ano = m ? Number(m[0]) : null;
+  return ano >= 1 && ano <= 5 ? ano : null;
+}
+
+// Palpite do componente a partir do nome da disciplina cadastrada pela escola.
+export function componenteDaDisciplina(nome) {
+  const n = semAcento(nome);
+  if (/portugu|leitura|redac|escrita/.test(n)) return 'Língua Portuguesa';
+  if (/matem/.test(n)) return 'Matemática';
+  if (/cienc/.test(n)) return 'Ciências';
+  if (/histor/.test(n)) return 'História';
+  if (/geograf/.test(n)) return 'Geografia';
+  return '';
+}
+
+export function filtrarHabilidades(catalogo, { ano, componente }) {
+  return (catalogo || []).filter(h => (!ano || h.ano === ano) && (!componente || h.componente === componente));
+}
+
+export async function listarHabilidades() {
+  const { data, error } = await supabase
+    .from('bncc_habilidades').select('codigo, componente, ano, descricao')
+    .order('codigo').limit(1000);
+  if (error) throw error;
+  return data || [];
+}
+
+// Devolve { [tarefa_id]: [codigo, ...] }.
+export async function listarHabilidadesDasTarefas(schoolId, tarefaIds) {
+  if (!schoolId || !tarefaIds?.length) return {};
+  const { data, error } = await supabase
+    .from('trad_tarefa_habilidades').select('tarefa_id, codigo')
+    .eq('school_id', schoolId).in('tarefa_id', tarefaIds).limit(5000);
+  if (error) throw error;
+  const mapa = {};
+  for (const r of data || []) (mapa[r.tarefa_id] ||= []).push(r.codigo);
+  return mapa;
+}
+
+// Troca o conjunto de habilidades da tarefa: remove só o que saiu, insere só o que entrou.
+export async function salvarHabilidadesDaTarefa(schoolId, tarefaId, codigos, anteriores = []) {
+  const novos = [...new Set(codigos || [])].slice(0, LIMITE_HABILIDADES);
+  const remover = anteriores.filter(c => !novos.includes(c));
+  const inserir = novos.filter(c => !anteriores.includes(c));
+  if (remover.length) {
+    const { error } = await supabase.from('trad_tarefa_habilidades').delete()
+      .eq('school_id', schoolId).eq('tarefa_id', tarefaId).in('codigo', remover);
+    if (error) throw error;
+  }
+  if (inserir.length) {
+    const { error } = await supabase.from('trad_tarefa_habilidades')
+      .insert(inserir.map(codigo => ({ school_id: schoolId, tarefa_id: tarefaId, codigo })));
+    if (error) throw error;
+  }
+  return novos;
+}
+
 // Família: a RLS entrega só as tarefas da turma do próprio filho.
 export async function listarTarefasDaFamilia(schoolId) {
   if (!schoolId) return [];

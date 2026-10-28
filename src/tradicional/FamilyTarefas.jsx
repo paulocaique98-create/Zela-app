@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ClipboardList, Loader2 } from 'lucide-react';
-import { listarTarefasDaFamilia, ordenarTarefas, estaVencida } from './lib/tarefas';
+import { listarTarefasDaFamilia, listarHabilidadesDasTarefas, ordenarTarefas, estaVencida } from './lib/tarefas';
 import { mensagemDeErro } from './lib/estrutura';
 
 const hoje = () => new Date().toLocaleDateString('en-CA');
@@ -12,13 +12,17 @@ const formatarData = (iso) => iso.split('-').reverse().join('/');
 export default function FamilyTarefas({ currentUser, currentSchool, familyStudents }) {
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const [tarefas, setTarefas] = useState([]);
+  const [habs, setHabs] = useState({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
     let ativo = true;
     listarTarefasDaFamilia(schoolId)
-      .then(t => { if (ativo) setTarefas(t); })
+      .then(async t => {
+        const h = await listarHabilidadesDasTarefas(schoolId, t.map(x => x.id)).catch(() => ({}));
+        if (ativo) { setTarefas(t); setHabs(h); }
+      })
       .catch(e => { if (ativo) setErro(mensagemDeErro(e)); })
       .finally(() => { if (ativo) setCarregando(false); });
     return () => { ativo = false; };
@@ -57,6 +61,11 @@ export default function FamilyTarefas({ currentUser, currentSchool, familyStuden
                   </span>
                 </div>
                 {t.descricao && <p className="text-sm text-on-surface whitespace-pre-wrap break-words">{t.descricao}</p>}
+                {(habs[t.id] || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {habs[t.id].map(c => <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">{c}</span>)}
+                  </div>
+                )}
               </article>
             ))}
           </section>

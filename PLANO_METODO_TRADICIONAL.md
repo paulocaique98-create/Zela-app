@@ -100,6 +100,8 @@ Promoção de série, tarefas, BNCC.
 Pendente: testar no navegador com escola Tradicional (precisa de ano letivo e turmas de destino).
 ~~5B: tarefas~~ ✅ código pronto em 01/11/2026. Professor publica tarefa (título, orientações, data de entrega) por turma e disciplina das próprias atribuições; Coordenação e Direção veem e corrigem as da escola (aba Tarefas); a família lê as da turma do filho. Sem anexos e sem resposta do aluno. Chave `tarefas_tradicional` (desligada por padrão). Nome da disciplina e da turma copiados por trigger, sem abrir a RLS de trad_atribuicoes/trad_disciplinas.
 Pendente: aplicar a migration `20261101120000_tradicional_fase5b_tarefas.sql` (depois da Fase 1) e testar no navegador com escola Tradicional.
+~~5C: BNCC por disciplina~~ ✅ código pronto em 02/11/2026. Catálogo global somente leitura (`bncc_habilidades`, recorte inicial do Fundamental I) e vínculo tarefa x habilidade (`trad_tarefa_habilidades`, RLS herdada de trad_tarefas). O professor marca até 10 habilidades ao publicar tarefa (filtro por ano da série e componente); a família vê os códigos. Herda a chave `tarefas_tradicional`. Diário fica fora por decisão.
+Pendente: REVISAR a carga de habilidades contra a BNCC oficial, aplicar a migration `20261102120000_tradicional_fase5c_bncc.sql` (depois da 5B) e testar no navegador.
 
 ## 4. Turmas (ponto mais delicado)
 
