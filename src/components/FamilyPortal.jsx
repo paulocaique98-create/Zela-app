@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
+import { CircleHelp, Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { ocultoNoTradicional } from '../tradicional/menus';
@@ -17,6 +17,7 @@ import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobil
 
 // Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
 // — mesmo padrão de code-splitting já usado no AdminPortal.
+const CentralAjuda = lazy(() => import('./CentralAjuda'));
 const FamilyMatriculas = lazy(() => import('./FamilyMatriculas'));
 const FamilyFichaMedica = lazy(() => import('./FamilyFichaMedica'));
 const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
@@ -317,6 +318,8 @@ export default function FamilyPortal({
                 Documentos. A tela continua existindo (aviso de contrato novo
                 leva direto para ela, /?tab=contratos). */}
 
+            <SidebarItem active={familyTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
+
             {showConfiguracoes && (
               <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
             )}
@@ -370,6 +373,7 @@ export default function FamilyPortal({
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && !ocultoNoTradicional(method, familyTab) && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, familyTab) && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {familyTab === 'ajuda' && <CentralAjuda perfil="familia" method={method} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
           {familyTab === 'settings' && (

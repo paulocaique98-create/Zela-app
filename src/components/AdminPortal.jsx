@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { createPortal } from 'react-dom';
-import { MonitorCheck, AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import { CircleHelp, MonitorCheck, AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
 import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
@@ -46,6 +47,7 @@ const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
 const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
+const CentralAjuda = lazy(() => import('./CentralAjuda'));
 // Módulos da Gestão que a Gestão pode liberar pro Administrativo
 // (Gestão · Permissões).
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
@@ -57,6 +59,7 @@ const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default
 
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus, updateAvailable = false }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
+  const { method } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const { hasUnread: hasUnreadSystemUpdates, refresh: refreshUnreadSystemUpdates } = useUnreadSystemUpdates(currentUser);
   const pushData = usePushNotifications(currentUser, currentSchool);
@@ -355,6 +358,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               </SidebarGroup>
             )}
 
+            <SidebarItem active={adminTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
+
             <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
@@ -406,6 +411,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
+        {adminTab === 'ajuda' && <CentralAjuda perfil="admin" method={method} />}
         {adminTab === 'settings' && <ConfiguracoesPortal />}
 
         {/* MONITOR */}

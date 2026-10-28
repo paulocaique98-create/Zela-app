@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList } from 'lucide-react';
+import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -13,6 +13,7 @@ import { ocultoNoTradicional, ocultoPorFaltaDeMetodo } from '../tradicional/menu
 
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
+const CentralAjuda = lazy(() => import('./CentralAjuda'));
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
@@ -179,6 +180,7 @@ export default function TeacherPortal({
               </SidebarGroup>
             )}
 
+            <SidebarItem active={teacherTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
             <SidebarItem active={teacherTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
@@ -206,6 +208,7 @@ export default function TeacherPortal({
           {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mitigacao' && !ocultoNoTradicional(method, teacherTab) && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, teacherTab) && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'ajuda' && <CentralAjuda perfil="professor" method={method} />}
           {teacherTab === 'settings' && <ConfiguracoesPortal />}
         </Suspense>
       </main>

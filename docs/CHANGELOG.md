@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Central de Ajuda** (28/10): menu nos portais da Recepção, Gestão, Professor e Família, com para que serve cada menu e o que fazer. O conteúdo muda conforme o método pedagógico da escola (Tradicional ou Montessori). Sem migration.
 - **Estrutura acadêmica Tradicional** (28/10): Horários em 5 colunas por dia sem rolagem no desktop, editar aula, intervalo (migration 20261103130000, a aplicar), avisos de choque e de Nº repetido; abas numeradas; formulários acima das listas; faixa de descrição do PageShell removida; turmas do cadastro de professor vêm da Estrutura acadêmica em escola Tradicional.
 - **Método Tradicional, Fase 4B** (31/10): ata do conselho de classe (campos fixos, uma por turma e período, só Coordenação e Direção) e histórico escolar na aba Boletim da família, com impressão. Migration `20261031120000_tradicional_fase4b_ata_historico.sql`. As migrations 20261022 e 20261027 a 20261031 foram aplicadas na produção em 27/10.
 - **Método Tradicional, Fase 4A** (30/10): boletim e resultado final com regra de aprovação personalizável por escola; só Coordenação e Direção fecham; família lê o resultado fechado. Migration `20261030120000_tradicional_fase4a_resultado.sql` (não aplicada).

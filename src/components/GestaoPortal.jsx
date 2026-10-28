@@ -8,6 +8,7 @@ import {
   Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
 } from 'lucide-react';
+import { CircleHelp } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -24,6 +25,7 @@ import { PageShell, Tabs } from './GestaoShared';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { recursosDoPerfil, ABAS_GESTAO_PEDAGOGICA, PAPEL_GESTAO_PEDAGOGICA, podeAbrirAba, chaveLigada } from '../lib/perfisGestao';
 
+const CentralAjuda = lazy(() => import('./CentralAjuda'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
@@ -355,6 +357,7 @@ export default function GestaoPortal({
               {item('permissoes-auditoria', ScrollText, 'Auditoria')}
               {item('integracoes', Plug, 'Integrações')}
             </>)}
+            {item('ajuda', CircleHelp, 'Central de Ajuda')}
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>
@@ -495,6 +498,7 @@ export default function GestaoPortal({
           {abaAtual === 'config-seguranca' && <ConfigSeguranca currentUser={currentUser} />}
 
           {abaAtual === 'config-meu-plano' && <GestaoMeuPlano />}
+          {abaAtual === 'ajuda' && <CentralAjuda perfil="gestao" method={method} />}
           {abaAtual === 'integracoes' && <GestaoIntegracoes currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} />}
         </Suspense>
 
