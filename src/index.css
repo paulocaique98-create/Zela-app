@@ -29,6 +29,19 @@
   --color-brass: #a9843b;
   --color-brass-50: #f5eedc;
 
+  /* Painel de indicadores (BI): paleta categórica validada em 28/10/2026 e
+     escala sequencial de uma cor (primary, claro para escuro). */
+  --color-chart-1: #0b84a8;
+  --color-chart-2: #b5821c;
+  --color-chart-3: #6b5fc7;
+  --color-chart-4: #c2558a;
+  --color-chart-5: #5e8f2e;
+  --color-seq-1: #e8f0f2;
+  --color-seq-2: #a9c6cf;
+  --color-seq-3: #5f97a7;
+  --color-seq-4: #2b6b7c;
+  --color-seq-5: #174450;
+
   /* Portal do Desenvolvedor: variação clara na mesma família de cores. */
   --color-dev-bg: #f2f4f6;
   --color-dev-surface: #ffffff;
