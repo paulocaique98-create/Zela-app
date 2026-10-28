@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Painel de indicadores (BI), Fase 1.2** (28/10): RPCs `bi_visao_geral`, `bi_financeiro` e `bi_detalhe` (migration `20261105120000`, só leitura, security invoker; só Gestão e Coordenação/Direção, Coordenação sem valores em R$, período máximo de 24 meses), a aplicar em produção só com pedido explícito; teste `src/test/biPainel.test.js`
 - **Ordem dos menus laterais** (28/10): Cadastros e Gerenciamento no topo da Gestão, grupo "Presença e Horas" renomeado para "Check-in/out" e reordenado nos portais da Gestão, Recepção e Família. Sem migration.
 - **Cadastros x Gerenciamento e Recepção somente consulta** (28/10): na Gestão, Cadastros só cria (usuário, funcionário, turma, fornecedor, matrícula) e Gerenciamento só lista e edita; Recepção só consulta. Migration `20261104130000` (RLS: admin sem criar/apagar aluno, sem escrever em usuários de terceiros, funcionários e trad_turmas só leitura, students só colunas do check-in por trigger) e `update-user-email` sem admin. Aplicadas em produção em 28/10.
 - **Tour guiado** (28/10): abre no primeiro acesso de cada perfil e pode ser refeito na Central de Ajuda; o "já viu" fica na tabela `tour_visto` (migration `20261104120000`, RLS por usuário e escola).
