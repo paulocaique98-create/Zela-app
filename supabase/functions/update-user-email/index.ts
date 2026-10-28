@@ -42,7 +42,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
+    // Recepção (admin) só consulta cadastros: quem altera e-mail de acesso é
+    // Gestão, Coordenação/Direção ou o suporte (decisão do produto, 28/10/2026).
+    if (!callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
       throw new Error('Permissão negada');
     }
 

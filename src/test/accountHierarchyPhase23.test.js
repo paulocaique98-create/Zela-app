@@ -99,8 +99,11 @@ runIf('Hierarquia · Fase 3: poderes da Gestão, não do admin', () => {
     const other = await createTestUser({ role: 'admin', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
-      const { error: primaryErr } = await primary.client.from('users').update({ chat_visibilidade_total: true }).eq('id', other.id);
-      expect(primaryErr).not.toBeNull();
+      // A Recepção nem enxerga a linha para editar (RLS): erro ou 0 linhas, e o valor não muda.
+      const { data: primaryRows } = await primary.client.from('users').update({ chat_visibilidade_total: true }).eq('id', other.id).select('id');
+      expect(primaryRows ?? []).toHaveLength(0);
+      const { data: depois } = await adminClient.from('users').select('chat_visibilidade_total').eq('id', other.id).single();
+      expect(depois.chat_visibilidade_total).not.toBe(true);
       const { error: gestaoErr } = await gestao.client.from('users').update({ chat_visibilidade_total: true }).eq('id', other.id);
       expect(gestaoErr).toBeNull();
     } finally {

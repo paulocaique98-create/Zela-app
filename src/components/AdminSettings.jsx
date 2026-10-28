@@ -14,9 +14,11 @@ const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB, pós-compressão
 // uma turma nova. A RPC update_school_turmas valida uso antes de permitir
 // remover: bloqueia se a turma ainda estiver associada a algum aluno,
 // professor, mural, comunicado, matéria ou frequência.
-export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false }) {
+// modo: 'completo' (Configurações) | 'cadastro' (só adicionar) | 'gerenciar' (só listar, renomear, remover).
+export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder = false, modo = 'completo', onVerLista = null }) {
   const [turmas, setTurmas] = useState(currentSchool?.turmas || []);
   const [newTurma, setNewTurma] = useState('');
+  const [adicionada, setAdicionada] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [removingTurma, setRemovingTurma] = useState(null);
   const [error, setError] = useState('');
@@ -53,7 +55,7 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
     setIsSaving(true);
     const ok = await saveTurmas([...turmas, trimmed]);
     setIsSaving(false);
-    if (ok) setNewTurma('');
+    if (ok) { setNewTurma(''); setAdicionada(trimmed); }
   };
 
   const handleRemoveTurma = async (turma) => {
@@ -102,15 +104,16 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
     <div className={noBorder ? '' : 'pt-4 border-t border-outline-variant'}>
       <div className="mb-3">
         <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5">
-          <School size={15} className="text-primary" /> Turmas
-          <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-sm px-2 py-0.5">{turmas.length}</span>
+          <School size={15} className="text-primary" /> {modo === 'cadastro' ? 'Nova turma' : 'Turmas'}
+          {modo !== 'cadastro' && <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant rounded-sm px-2 py-0.5">{turmas.length}</span>}
         </h3>
         <p className="text-xs text-on-surface-variant mt-1">
           As turmas aparecem na matrícula de alunos, no vínculo de professores e nos filtros de mural, comunicados e frequência.
-          <span className="hidden sm:inline"> Use o lápis para corrigir o nome de uma turma (atualiza todos os registros vinculados automaticamente) ou o X para remover uma turma que não está mais em uso.</span>
+          {modo !== 'cadastro' && <span className="hidden sm:inline"> Use o lápis para corrigir o nome de uma turma (atualiza todos os registros vinculados automaticamente) ou o X para remover uma turma que não está mais em uso.</span>}
         </p>
       </div>
 
+      {modo !== 'gerenciar' && (
       <div className="flex gap-2 mb-4 sm:max-w-md">
         <input
           type="text"
@@ -131,7 +134,15 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
           {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
         </button>
       </div>
+      )}
 
+      {modo === 'cadastro' && adicionada && (
+        <p className="mb-3 text-xs font-semibold text-success" role="status">
+          Turma "{adicionada}" cadastrada.{onVerLista && <> <button type="button" onClick={onVerLista} className="underline text-brass">Ver em Gerenciamento</button></>}
+        </p>
+      )}
+
+      {modo !== 'cadastro' && (
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         {turmas.map(turma => (
           <li key={turma} className="flex items-center justify-between gap-2 pl-3.5 pr-1.5 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-zela-md hover:border-primary/30 transition">
@@ -161,7 +172,8 @@ export function TurmasSection({ currentUser, currentSchool, onUpdate, noBorder =
           </li>
         ))}
       </ul>
-      {turmas.length === 0 && (
+      )}
+      {modo !== 'cadastro' && turmas.length === 0 && (
         <p className="text-xs text-on-surface-variant italic">Nenhuma turma cadastrada ainda.</p>
       )}
 

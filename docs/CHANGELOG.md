@@ -3,6 +3,8 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Cadastros x Gerenciamento e Recepção somente consulta** (28/10): na Gestão, Cadastros só cria (usuário, funcionário, turma, fornecedor, matrícula) e Gerenciamento só lista e edita; Recepção só consulta. Migration `20261104130000` (RLS: admin sem criar/apagar aluno, sem escrever em usuários de terceiros, funcionários e trad_turmas só leitura, students só colunas do check-in por trigger) e `update-user-email` sem admin. Aplicadas em produção em 28/10.
+- **Tour guiado** (28/10): abre no primeiro acesso de cada perfil e pode ser refeito na Central de Ajuda; o "já viu" fica na tabela `tour_visto` (migration `20261104120000`, RLS por usuário e escola).
 - **Central de Ajuda** (28/10): menu nos portais da Recepção, Gestão, Professor e Família, com para que serve cada menu e o que fazer. O conteúdo muda conforme o método pedagógico da escola (Tradicional ou Montessori). Sem migration.
 - **Estrutura acadêmica Tradicional** (28/10): Horários em 5 colunas por dia sem rolagem no desktop, editar aula, intervalo (migration 20261103130000, a aplicar), avisos de choque e de Nº repetido; abas numeradas; formulários acima das listas; faixa de descrição do PageShell removida; turmas do cadastro de professor vêm da Estrutura acadêmica em escola Tradicional.
 - **Método Tradicional, Fase 4B** (31/10): ata do conselho de classe (campos fixos, uma por turma e período, só Coordenação e Direção) e histórico escolar na aba Boletim da família, com impressão. Migration `20261031120000_tradicional_fase4b_ata_historico.sql`. As migrations 20261022 e 20261027 a 20261031 foram aplicadas na produção em 27/10.

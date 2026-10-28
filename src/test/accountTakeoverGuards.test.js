@@ -62,14 +62,18 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
     }
   }, 30000);
 
-  it('fluxo normal continua: admin corrige e-mail de família; a Gestão corrige e-mail de admin', async () => {
+  it('fluxo normal continua: a Gestão corrige e-mail de família e de admin; a Recepção (admin) não corrige nenhum', async () => {
     const schoolId = await createTestSchool();
     const admin = await createTestUser({ role: 'admin', schoolId });
     const primary = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
       const familyEmail = newEmail();
-      const r1 = await callFn('update-user-email', admin.token, { user_id: family.id, new_email: familyEmail });
+      const negado = await callFn('update-user-email', admin.token, { user_id: family.id, new_email: familyEmail });
+      expect(negado.status).not.toBe(200);
+      expect(await authEmail(family.id)).not.toBe(familyEmail);
+
+      const r1 = await callFn('update-user-email', primary.token, { user_id: family.id, new_email: familyEmail });
       expect(r1.status).toBe(200);
       expect(await authEmail(family.id)).toBe(familyEmail);
 
@@ -90,7 +94,7 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
     const admin = await createTestUser({ role: 'admin', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
-      const { status } = await callFn('update-user-email', admin.token, { user_id: gestao.id, new_email: gestao.email });
+      const { status } = await callFn('update-user-email', gestao.token, { user_id: gestao.id, new_email: gestao.email });
       expect(status).toBe(200);
     } finally {
       await deleteTestUser(admin.id);

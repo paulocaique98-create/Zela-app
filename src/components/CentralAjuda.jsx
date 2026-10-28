@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Search, ChevronLeft, Lightbulb } from 'lucide-react';
-import { AJUDA_POR_PERFIL, TITULO_DO_PERFIL, NOME_DO_METODO, filtrarAjuda, secoesDoMetodo } from '../lib/ajuda';
+import { AJUDA_POR_PERFIL, filtrarAjuda, secoesDoMetodo } from '../lib/ajuda';
 
 // Central de Ajuda: para que serve cada menu e como usar. O conteúdo vem de
 // src/lib/ajuda/<perfil>.js, então editar o texto não exige mexer aqui.
@@ -15,8 +15,8 @@ export default function CentralAjuda({ perfil, method = null, onRefazerTour = nu
   if (aberto) {
     const { secao, item } = aberto;
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6">
-        <div className="max-w-3xl">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2.5 md:p-6">
+        <div className="w-full">
           <button
             type="button"
             onClick={() => setAberto(null)}
@@ -67,15 +67,20 @@ export default function CentralAjuda({ perfil, method = null, onRefazerTour = nu
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6">
-      <div className="max-w-5xl">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="font-serif text-2xl font-bold text-on-surface">Central de Ajuda</h1>
-            <p className="text-sm text-on-surface-variant mt-1">
-              Para que serve cada menu e como usar, no perfil {TITULO_DO_PERFIL[perfil] || ''}{NOME_DO_METODO[method] ? `, método ${NOME_DO_METODO[method]}` : ''}.
-            </p>
-          </div>
+    <div className="flex-1 min-h-0 overflow-y-auto p-2.5 md:p-6">
+      <div className="w-full">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label htmlFor="ajuda-busca" className="flex-1 min-w-[240px] flex items-center gap-2 max-w-xl bg-surface-container-lowest border border-outline-variant rounded-xl px-3 min-h-[44px] focus-within:border-brass">
+            <Search size={16} className="text-on-surface-variant shrink-0" aria-hidden="true" />
+            <input
+              id="ajuda-busca"
+              type="search"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Buscar, por exemplo: saída, biometria, mensalidade"
+              className="flex-1 bg-transparent outline-none text-sm text-on-surface"
+            />
+          </label>
           {onRefazerTour && (
             <button
               type="button"
@@ -86,18 +91,6 @@ export default function CentralAjuda({ perfil, method = null, onRefazerTour = nu
             </button>
           )}
         </div>
-
-        <label htmlFor="ajuda-busca" className="mt-5 flex items-center gap-2 max-w-xl bg-surface-container-lowest border border-outline-variant rounded-xl px-3 min-h-[44px] focus-within:border-brass">
-          <Search size={16} className="text-on-surface-variant shrink-0" aria-hidden="true" />
-          <input
-            id="ajuda-busca"
-            type="search"
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Buscar, por exemplo: saída, biometria, mensalidade"
-            className="flex-1 bg-transparent outline-none text-sm text-on-surface"
-          />
-        </label>
 
         <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filtrar por menu">
           {[{ id: 'todas', titulo: 'Tudo' }, ...secoes].map((s) => (

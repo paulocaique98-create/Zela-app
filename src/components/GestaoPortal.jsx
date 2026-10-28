@@ -14,6 +14,7 @@ import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } fro
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { useTourGuiado } from '../hooks/useTourGuiado';
 import { ocultoNoTradicional, ocultoPorFaltaDeMetodo } from '../tradicional/menus';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
@@ -26,6 +27,7 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { recursosDoPerfil, ABAS_GESTAO_PEDAGOGICA, PAPEL_GESTAO_PEDAGOGICA, podeAbrirAba, chaveLigada } from '../lib/perfisGestao';
 
 const CentralAjuda = lazy(() => import('./CentralAjuda'));
+const TourGuiado = lazy(() => import('./TourGuiado'));
 const AdminRelatorioHorasExtras = lazy(() => import('./AdminRelatorioHorasExtras'));
 const AdminAttendanceCorrections = lazy(() => import('./AdminAttendanceCorrections'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
@@ -100,8 +102,16 @@ const LEGACY_TABS = {
   presence: 'presenca-dia',
 };
 
+// Cadastros só cria; Gerenciamento só lista, busca e edita (decisão do produto,
+// 28/10/2026). Os ids antigos cadastros-* das listas foram mantidos de propósito
+// (permissões, atalhos e pendências apontam para eles); quem manda no grupo é esta lista.
+const GRUPO_CADASTROS = ['cadastros-novo', 'cadastros-funcionario-novo', 'cadastros-turma-nova', 'cadastros-fornecedor-novo', 'secretaria-matriculas'];
+const GRUPO_GERENCIAMENTO = ['cadastros-usuarios', 'secretaria-alunos', 'cadastros-funcionarios', 'cadastros-turmas', 'cadastros-fornecedores', 'cadastros-exclusoes'];
+
 // Grupo do menu de cada aba: abre o grupo certo ao navegar por atalho.
 function groupOf(tab) {
+  if (GRUPO_CADASTROS.includes(tab)) return 'cadastros';
+  if (GRUPO_GERENCIAMENTO.includes(tab) || ABAS_BIOMETRIAS.some(a => a.id === tab)) return 'gerenciamento';
   if (tab.startsWith('secretaria-')) return 'secretaria';
   if (tab.startsWith('contratos-')) return 'contratos';
   if (tab.startsWith('financeiro-')) return 'financeiro';
@@ -143,6 +153,7 @@ export default function GestaoPortal({
   // Perfil + plano da escola (01/10/2026: a Gestão passou a seguir o plano).
   const features = currentSchool?.features_enabled || {};
   const { method } = useSchoolConfig(currentUser?.school_id);
+  const tour = useTourGuiado(currentUser?.id, currentUser?.school_id, 'gestao');
   const pode = (tab) => podeAbrirAba(role, tab, features) && !ocultoNoTradicional(method, tab) && !ocultoPorFaltaDeMetodo(method, tab);
   // Link direto, atalho, notificação ou aba guardada que aponte para uma aba
   // que este perfil não vê: mostra o Início (nunca desenha a tela proibida).
@@ -192,7 +203,7 @@ export default function GestaoPortal({
     setAlunoIntent(null);
     setSelectedAlunoId(id);
     setGestaoTab('secretaria-alunos');
-    setOpenAccordion('secretaria');
+    setOpenAccordion('gerenciamento');
   };
 
   useEffect(() => {
@@ -277,8 +288,6 @@ export default function GestaoPortal({
             {item('primeiros-passos', Rocket, 'Primeiros passos')}
             {item('pendencias', Inbox, 'Pendências', { badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
             {group('secretaria', 'Secretaria', GraduationCap, <>
-              {item('secretaria-alunos', GraduationCap, 'Alunos')}
-              {item('secretaria-matriculas', FileText, 'Matrículas')}
               {item('secretaria-documentos', FileWarning, 'Doc. Pendentes')}
             </>)}
             {group('contratos', 'Contratos', FileSignature, <>
@@ -303,9 +312,16 @@ export default function GestaoPortal({
               {item('horas-extras', Clock, 'Horas Extras')}
               {item('historico-geral', ScrollText, 'Histórico Geral')}
             </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
-            {group('cadastros', 'Cadastros', Folders, <>
-              {item('cadastros-usuarios', Users, 'Usuários', { badge: pendingUsersCount > 0 ? pendingUsersCount : null })}
+            {group('cadastros', 'Cadastros', UserPlus, <>
               {item('cadastros-novo', UserPlus, 'Novo Cadastro')}
+              {item('cadastros-funcionario-novo', Users, 'Novo Funcionário')}
+              {item('cadastros-turma-nova', School, 'Nova Turma')}
+              {item('cadastros-fornecedor-novo', Truck, 'Novo Fornecedor')}
+              {item('secretaria-matriculas', FileText, 'Matrículas')}
+            </>)}
+            {group('gerenciamento', 'Gerenciamento', Folders, <>
+              {item('cadastros-usuarios', Users, 'Usuários', { badge: pendingUsersCount > 0 ? pendingUsersCount : null })}
+              {item('secretaria-alunos', GraduationCap, 'Alunos')}
               {item('cadastros-funcionarios', Users, 'Funcionários')}
               {item('cadastros-turmas', School, 'Turmas')}
               {item('cadastros-fornecedores', Truck, 'Fornecedores')}
@@ -434,15 +450,25 @@ export default function GestaoPortal({
             <AdminUserManagement currentUser={currentUser} initialTab={pendingUsersCount > 0 ? 'pending' : 'active'} />
           )}
           {abaAtual === 'cadastros-novo' && <AdminUserRegistration currentUser={currentUser} />}
-          {abaAtual === 'cadastros-funcionarios' && <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} />}
-          {abaAtual === 'cadastros-turmas' && (
+          {abaAtual === 'cadastros-funcionario-novo' && <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} modo="cadastro" onVerLista={() => goFromShortcut('cadastros-funcionarios')} />}
+          {abaAtual === 'cadastros-funcionarios' && <AdminFuncionarios currentUser={currentUser} currentSchool={currentSchool} modo="gerenciar" />}
+          {(abaAtual === 'cadastros-turma-nova' || abaAtual === 'cadastros-turmas') && (
             <div className="h-full -m-3 sm:m-0 overflow-y-auto bg-surface p-2.5 sm:p-4 md:p-6 lg:p-8">
               <div className="max-w-3xl">
-                <TurmasSection currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} noBorder />
+                <TurmasSection
+                  key={abaAtual}
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
+                  onUpdate={onUpdateSchool}
+                  noBorder
+                  modo={abaAtual === 'cadastros-turma-nova' ? 'cadastro' : 'gerenciar'}
+                  onVerLista={() => goFromShortcut('cadastros-turmas')}
+                />
               </div>
             </div>
           )}
-          {abaAtual === 'cadastros-fornecedores' && <GestaoFornecedores currentUser={currentUser} />}
+          {abaAtual === 'cadastros-fornecedor-novo' && <GestaoFornecedores currentUser={currentUser} modo="cadastro" onVerLista={() => goFromShortcut('cadastros-fornecedores')} />}
+          {abaAtual === 'cadastros-fornecedores' && <GestaoFornecedores currentUser={currentUser} modo="gerenciar" />}
           {abaAtual === 'cadastros-exclusoes' && <GestaoExclusoesConta currentUser={currentUser} />}
           {ABAS_BIOMETRIAS.some(a => a.id === abaAtual) && <GestaoBiometrias aba={abaAtual} onTrocarAba={go} currentUser={currentUser} />}
 
@@ -498,7 +524,8 @@ export default function GestaoPortal({
           {abaAtual === 'config-seguranca' && <ConfigSeguranca currentUser={currentUser} />}
 
           {abaAtual === 'config-meu-plano' && <GestaoMeuPlano />}
-          {abaAtual === 'ajuda' && <CentralAjuda perfil="gestao" method={method} />}
+          {abaAtual === 'ajuda' && <CentralAjuda perfil="gestao" method={method} onRefazerTour={tour.refazer} />}
+          {tour.aberto && <TourGuiado perfil="gestao" method={method} onFechar={tour.fechar} />}
           {abaAtual === 'integracoes' && <GestaoIntegracoes currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} />}
         </Suspense>
 

@@ -12,8 +12,10 @@ const empty = { name: '', document: '', category: '', phone: '', email: '', note
 
 // Cadastros, Fornecedores (base das Despesas). Permissão:
 // fornecedores.gerenciar (Gestão sempre; admin se liberado em Permissões).
-export default function GestaoFornecedores({ currentUser }) {
+// modo: 'completo' | 'cadastro' (só o formulário) | 'gerenciar' (lista e edição, sem criar).
+export default function GestaoFornecedores({ currentUser, modo = 'completo', onVerLista = null }) {
   const [rows, setRows] = useState(null);
+  const [cadastro, setCadastro] = useState({ chave: 0, ultimo: '' });
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
@@ -24,7 +26,29 @@ export default function GestaoFornecedores({ currentUser }) {
     setRows(data || []);
   }, [currentUser.school_id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (modo !== 'cadastro') load(); }, [load, modo]);
+
+  if (modo === 'cadastro') {
+    return (
+      <PageShell>
+        {cadastro.ultimo && (
+          <p className="mb-3 text-sm font-semibold text-success" role="status">
+            Fornecedor "{cadastro.ultimo}" cadastrado.{onVerLista && <> <button type="button" onClick={onVerLista} className="underline text-brass">Ver em Gerenciamento</button></>}
+          </p>
+        )}
+        <div className="max-w-3xl">
+          <FornecedorModal
+            key={cadastro.chave}
+            inline
+            currentUser={currentUser}
+            initial={{ ...empty }}
+            onClose={() => setCadastro(c => ({ ...c, chave: c.chave + 1 }))}
+            onSaved={(nome) => setCadastro(c => ({ chave: c.chave + 1, ultimo: nome }))}
+          />
+        </div>
+      </PageShell>
+    );
+  }
 
   const filtered = (rows || []).filter(r => !search || `${r.name} ${r.document || ''} ${r.category || ''}`.toLowerCase().includes(search.toLowerCase()));
 
@@ -34,10 +58,10 @@ export default function GestaoFornecedores({ currentUser }) {
     <PageShell
       description="Empresas e pessoas de quem a escola compra ou contrata serviços."
       infoOnMobile
-      actions={<PrimaryButton onClick={novo}><Plus size={16} /> Novo fornecedor</PrimaryButton>}
+      actions={modo === 'gerenciar' ? null : <PrimaryButton onClick={novo}><Plus size={16} /> Novo fornecedor</PrimaryButton>}
     >
       <Notice>{error}</Notice>
-      <PrimaryButton className="w-full justify-center h-10 mb-3 sm:hidden" onClick={novo}><Plus size={16} /> Novo fornecedor</PrimaryButton>
+      {modo !== 'gerenciar' && <PrimaryButton className="w-full justify-center h-10 mb-3 sm:hidden" onClick={novo}><Plus size={16} /> Novo fornecedor</PrimaryButton>}
       <div className="relative mb-4 sm:max-w-sm">
         <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input
@@ -85,7 +109,7 @@ export default function GestaoFornecedores({ currentUser }) {
   );
 }
 
-function FornecedorModal({ currentUser, initial, onClose, onSaved }) {
+function FornecedorModal({ currentUser, initial, onClose, onSaved, inline = false }) {
   const [form, setForm] = useState(initial);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -105,12 +129,12 @@ function FornecedorModal({ currentUser, initial, onClose, onSaved }) {
       : await supabase.from('suppliers').insert({ ...payload, school_id: currentUser.school_id, created_by: currentUser.id });
     setIsSaving(false);
     if (e) { setError(e.message); return; }
-    onSaved();
+    onSaved(payload.name);
   };
 
-  return (
-    <Modal title={form.id ? 'Editar fornecedor' : 'Novo fornecedor'} onClose={onClose}
-      footer={<><SecondaryButton onClick={onClose}>Cancelar</SecondaryButton><PrimaryButton onClick={save} disabled={isSaving}>Salvar</PrimaryButton></>}>
+  const rodape = <><SecondaryButton onClick={onClose}>{inline ? 'Limpar' : 'Cancelar'}</SecondaryButton><PrimaryButton onClick={save} disabled={isSaving}>{inline ? 'Cadastrar' : 'Salvar'}</PrimaryButton></>;
+  const corpo = (
+    <>
       <Notice>{error}</Notice>
       <Field label="Nome ou razão social" id="sup-name"><input id="sup-name" value={form.name} onChange={set('name')} className={inputCls} /></Field>
       <div className="grid grid-cols-2 gap-3">
@@ -130,6 +154,16 @@ function FornecedorModal({ currentUser, initial, onClose, onSaved }) {
           <input id="sup-active" type="checkbox" checked={form.active !== false} onChange={set('active')} /> Fornecedor ativo
         </label>
       )}
-    </Modal>
+    </>
   );
+
+  if (inline) {
+    return (
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+        {corpo}
+        <div className="flex justify-end gap-2 pt-2">{rodape}</div>
+      </div>
+    );
+  }
+  return <Modal title={form.id ? 'Editar fornecedor' : 'Novo fornecedor'} onClose={onClose} footer={rodape}>{corpo}</Modal>;
 }

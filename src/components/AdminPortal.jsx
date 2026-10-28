@@ -6,6 +6,7 @@ import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { useTourGuiado } from '../hooks/useTourGuiado';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePendingUsersCount } from '../hooks/usePendingUsersCount';
 import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
@@ -48,6 +49,7 @@ const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics')
 const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 const AdminFaceEnrollment = lazy(() => import('./AdminFaceEnrollment'));
 const CentralAjuda = lazy(() => import('./CentralAjuda'));
+const TourGuiado = lazy(() => import('./TourGuiado'));
 // Módulos da Gestão que a Gestão pode liberar pro Administrativo
 // (Gestão · Permissões).
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
@@ -60,6 +62,7 @@ const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default
 export default function AdminPortal({ currentUser, currentSchool, students, adminTab, setAdminTab, updateStudentStatus, rejectStudentStatus, requestKioskAccess, authorized, togglePhoto, onUpdateSchool, isMobileMenuOpen, setIsMobileMenuOpen, pendingAlert, onDismissAlert, onGoToMonitor, onLogout, connectionStatus, updateAvailable = false }) {
   const { clickCounts, registerClick } = useMenuClicks(currentUser?.id, currentSchool?.id);
   const { method } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
+  const tour = useTourGuiado(currentUser?.id, currentSchool?.id || currentUser?.school_id, 'admin');
   const { count: pendingUsersCount } = usePendingUsersCount(currentUser);
   const { hasUnread: hasUnreadSystemUpdates, refresh: refreshUnreadSystemUpdates } = useUnreadSystemUpdates(currentUser);
   const pushData = usePushNotifications(currentUser, currentSchool);
@@ -411,7 +414,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
         {adminTab === 'system-updates' && <AdminSystemUpdates currentUser={currentUser} onRead={refreshUnreadSystemUpdates} />}
         {adminTab === 'duplicidade-biometrica' && <AdminDuplicateBiometrics currentUser={currentUser} />}
-        {adminTab === 'ajuda' && <CentralAjuda perfil="admin" method={method} />}
+        {adminTab === 'ajuda' && <CentralAjuda perfil="admin" method={method} onRefazerTour={tour.refazer} />}
+        {tour.aberto && <TourGuiado perfil="admin" method={method} onFechar={tour.fechar} />}
         {adminTab === 'settings' && <ConfiguracoesPortal />}
 
         {/* MONITOR */}

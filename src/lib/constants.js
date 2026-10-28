@@ -99,13 +99,14 @@ export const SCREEN_LABELS = {
   materias: 'Matérias/Disciplinas', frequencia: 'Frequência', 'cadastro-comunicados': 'Comunicados',
   financeiro: 'Financeiro', auditoria: 'Auditoria', 'system-updates': 'Atualizações', 'duplicidade-biometrica': 'Duplicidade Facial',
   'rel-mapa-habilidades': 'Mapa de Habilidades', 'rel-mitigacao': 'Mitigação',
-  settings: 'Configurações',
+  settings: 'Configurações', ajuda: 'Central de Ajuda',
   // Family (alguns ids coincidem com o Admin acima, mesmo rótulo serve)
   acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
   registration: 'Dados Cadastrais', comunicados: 'Comunicados',
   // Gestão (ids próprios do GestaoPortal.jsx)
   'secretaria-alunos': 'Alunos', 'secretaria-matriculas': 'Matrículas',
   'cadastros-usuarios': 'Usuários', 'cadastros-novo': 'Novo Cadastro',
+  'cadastros-funcionario-novo': 'Novo Funcionário', 'cadastros-turma-nova': 'Nova Turma', 'cadastros-fornecedor-novo': 'Novo Fornecedor',
   'cadastros-funcionarios': 'Funcionários', 'cadastros-turmas': 'Turmas', configuracoes: 'Configurações',
   pendencias: 'Pendências', 'secretaria-documentos': 'Documentos Pendentes',
   'contratos-lista': 'Contratos', 'contratos-modelos': 'Modelos de Contrato', 'contratos-assinaturas': 'Assinaturas',

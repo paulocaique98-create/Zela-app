@@ -14,8 +14,6 @@ export const AJUDA_GESTAO = [
     id: 'secretaria',
     titulo: 'Secretaria',
     itens: [
-      { id: 'sec-alunos', titulo: 'Alunos', serve: 'Painel dos alunos da escola. Ao abrir um aluno você vê o perfil completo, com abas de dados, responsáveis, financeiro e histórico.', faz: ['Busque por nome ou filtre por turma.', 'Abra o aluno para ver o perfil e, se precisar, mudá-lo de turma.'], dica: 'Ao voltar do perfil, a lista continua com a turma e a busca que você tinha.' },
-      { id: 'sec-matriculas', titulo: 'Matrículas', serve: 'Acompanha as matrículas e rematrículas feitas pelas famílias.', faz: ['Abra a matrícula, confira os dados e aprove.'] },
       { id: 'sec-documentos', titulo: 'Doc. Pendentes', serve: 'Mostra os documentos que ainda faltam em cada cadastro.', faz: ['Veja quem tem documento pendente e cobre a família.'] },
     ],
   },
@@ -57,11 +55,22 @@ export const AJUDA_GESTAO = [
     id: 'cadastros',
     titulo: 'Cadastros',
     itens: [
-      { id: 'cad-usuarios', titulo: 'Usuários', serve: 'Contas da escola e cadastros aguardando aprovação.', faz: ['Aprove ou recuse os cadastros pendentes.', 'Consulte as contas ativas.'] },
-      { id: 'cad-novo', titulo: 'Novo Cadastro', serve: 'Cria um cadastro novo diretamente pela Gestão.', faz: ['Escolha o tipo de cadastro e preencha os dados.'] },
-      { id: 'cad-funcionarios', titulo: 'Funcionários', serve: 'Equipe da escola e o perfil de cada pessoa.', faz: ['Cadastre e consulte os funcionários.'] },
-      { id: 'cad-turmas', titulo: 'Turmas', serve: 'Turmas da escola, com alunos e professoras.', faz: ['Crie a turma e defina a professora responsável.'] },
-      { id: 'cad-fornecedores', titulo: 'Fornecedores', serve: 'Empresas e pessoas de quem a escola compra ou contrata serviços.', faz: ['Cadastre o fornecedor para vincular às despesas.'] },
+      { id: 'cad-novo', titulo: 'Novo Cadastro', serve: 'Cria um cadastro novo diretamente pela Gestão.', faz: ['Escolha o tipo de cadastro e preencha os dados.'], dica: 'Cadastros só cria. Para ver ou editar o que já existe, use Gerenciamento.' },
+      { id: 'cad-novo-funcionario', titulo: 'Novo Funcionário', serve: 'Cadastra uma pessoa da equipe da escola.', faz: ['Preencha nome, cargo e contatos e toque em Cadastrar.'] },
+      { id: 'cad-nova-turma', titulo: 'Nova Turma', serve: 'Cria uma turma da escola.', faz: ['Digite o nome da turma e toque em Adicionar.'] },
+      { id: 'cad-novo-fornecedor', titulo: 'Novo Fornecedor', serve: 'Cadastra empresas e pessoas de quem a escola compra ou contrata serviços.', faz: ['Preencha os dados e toque em Cadastrar, para vincular às despesas.'] },
+      { id: 'cad-matriculas', titulo: 'Matrículas', serve: 'Acompanha as matrículas e rematrículas feitas pelas famílias e permite abrir uma nova.', faz: ['Abra a matrícula, confira os dados e aprove.'] },
+    ],
+  },
+  {
+    id: 'gerenciamento',
+    titulo: 'Gerenciamento',
+    itens: [
+      { id: 'ger-usuarios', titulo: 'Usuários', serve: 'Contas da escola e cadastros aguardando aprovação.', faz: ['Aprove ou recuse os cadastros pendentes.', 'Consulte e edite as contas ativas.'], dica: 'O número no menu mostra quantos cadastros esperam por você.' },
+      { id: 'ger-alunos', titulo: 'Alunos', serve: 'Painel dos alunos da escola. Ao abrir um aluno você vê o perfil completo, com abas de dados, responsáveis, financeiro e histórico.', faz: ['Busque por nome ou filtre por turma.', 'Abra o aluno para ver o perfil e, se precisar, mudá-lo de turma.'], dica: 'Ao voltar do perfil, a lista continua com a turma e a busca que você tinha.' },
+      { id: 'ger-funcionarios', titulo: 'Funcionários', serve: 'Equipe da escola e o perfil de cada pessoa.', faz: ['Consulte, edite ou exclua funcionários.', 'Crie o acesso de login de quem precisa entrar no sistema.'] },
+      { id: 'ger-turmas', titulo: 'Turmas', serve: 'Turmas da escola.', faz: ['Renomeie uma turma, e todos os registros ligados a ela são atualizados.', 'Remova uma turma que não está mais em uso.'] },
+      { id: 'ger-fornecedores', titulo: 'Fornecedores', serve: 'Fornecedores já cadastrados.', faz: ['Consulte, edite ou desative um fornecedor.'] },
       { id: 'cad-exclusoes', titulo: 'Pedidos de exclusão', serve: 'Pedidos de exclusão de conta feitos pelas próprias pessoas. O prazo para responder é de até 30 dias.', faz: ['Abra o pedido e atenda dentro do prazo.'], dica: 'Respeitar esse prazo faz parte da lei de proteção de dados.' },
       { id: 'cad-biometrias', titulo: 'Biometrias', serve: 'Reúne três ferramentas em abas: Qualidade, Limpeza e Unificar responsáveis.', faz: [
         'Qualidade: mede as fotos de rosto já cadastradas e mostra quem se beneficia de cadastrar o rosto de novo. Só números são guardados, nenhuma foto sai da escola.',
@@ -95,7 +104,7 @@ export const AJUDA_GESTAO = [
   },
   {
     id: 'guia-tradicional',
-    titulo: 'Configurar o método Tradicional',
+    titulo: 'Método Tradicional',
     metodos: ['tradicional', 'personalizado'],
     itens: [
       {

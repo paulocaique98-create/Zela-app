@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { CircleHelp, Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
+import { useTourGuiado } from '../hooks/useTourGuiado';
 import { ocultoNoTradicional } from '../tradicional/menus';
 import { useMenuClicks } from '../hooks/useMenuClicks';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
@@ -18,6 +19,7 @@ import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobil
 // Lazy: cada tela só entra no bundle quando a família realmente abre aquela aba
 // — mesmo padrão de code-splitting já usado no AdminPortal.
 const CentralAjuda = lazy(() => import('./CentralAjuda'));
+const TourGuiado = lazy(() => import('./TourGuiado'));
 const FamilyMatriculas = lazy(() => import('./FamilyMatriculas'));
 const FamilyFichaMedica = lazy(() => import('./FamilyFichaMedica'));
 const FamilyCalendario = lazy(() => import('./FamilyCalendario'));
@@ -108,6 +110,7 @@ export default function FamilyPortal({
   // abrir o relatório em FamilyMitigacao).
   const [mitigacaoUnread, setMitigacaoUnread] = useState(0);
   const { method } = useSchoolConfig(currentSchool?.id || currentUser?.school_id);
+  const tour = useTourGuiado(currentUser?.id, currentSchool?.id || currentUser?.school_id, 'familia');
   useEffect(() => {
     const schoolId = currentSchool?.id || currentUser?.school_id;
     if (!schoolId || !currentUser?.id || familyTab !== 'home') return;
@@ -373,7 +376,8 @@ export default function FamilyPortal({
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'rel-mitigacao' && !ocultoNoTradicional(method, familyTab) && <FamilyMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, familyTab) && <FamilyMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-          {familyTab === 'ajuda' && <CentralAjuda perfil="familia" method={method} />}
+          {familyTab === 'ajuda' && <CentralAjuda perfil="familia" method={method} onRefazerTour={tour.refazer} />}
+          {tour.aberto && <TourGuiado perfil="familia" method={method} onFechar={tour.fechar} />}
           {familyTab === 'financeiro' && <FamilyFinanceiro currentUser={currentUser} />}
           {familyTab === 'contratos' && <FamilyContratos currentUser={currentUser} currentSchool={currentSchool} onVoltar={() => go('settings')} />}
           {familyTab === 'settings' && (

@@ -70,7 +70,7 @@ describe('conteúdo por método pedagógico', () => {
     const comum = ids(secoesDoMetodo(AJUDA_POR_PERFIL.gestao, null));
     expect(comum).not.toContain('aca-avaliacao');
     expect(comum).not.toContain('aca-mapa');
-    expect(comum).toContain('sec-alunos');
+    expect(comum).toContain('ger-alunos');
   });
 
   it('filtrarAjuda respeita o método na busca', () => {

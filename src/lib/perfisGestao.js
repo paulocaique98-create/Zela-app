@@ -41,6 +41,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   // Cadastros
   'cadastros-usuarios',
   'cadastros-novo',
+  'cadastros-turma-nova',
   'cadastros-turmas',
   // Acadêmico
   'academico-ano-letivo',
@@ -89,6 +90,7 @@ export const ABAS_SO_GESTAO = new Set([
   'financeiro-recebimentos', 'financeiro-despesas',
   'horas-extras',
   'historico-geral',
+  'cadastros-funcionario-novo', 'cadastros-fornecedor-novo',
   'cadastros-funcionarios', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-qualidade-biometria', 'cadastros-unificar',
   'relatorios-gestao', 'relatorios-financeiro',
   'config-meu-plano', 'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca',
