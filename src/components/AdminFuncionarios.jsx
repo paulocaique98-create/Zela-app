@@ -34,7 +34,8 @@ const ACCESS_ROLE_STYLE = {
   gestao: 'bg-primary/10 text-primary border-primary/20',
 };
 
-export default function AdminFuncionarios({ currentUser, currentSchool }) {
+// modo: 'completo' | 'cadastro' (só o formulário de novo funcionário) | 'gerenciar' (lista e edição, sem criar).
+export default function AdminFuncionarios({ currentUser, currentSchool, modo = 'completo', onVerLista = null }) {
   // Hierarquia (27/09/2026): admin (Coordenação, Direção, Recepção...) só é
   // criado pela Gestão; professor pode ser criado pelo admin (nasce
   // pendente) ou pela Gestão. Excluir e aprovar acesso é só da Gestão.
@@ -82,7 +83,8 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(modo === 'cadastro');
+  const [cadastrado, setCadastrado] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
@@ -207,7 +209,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
   });
 
   const resetForm = () => {
-    setShowForm(false);
+    setShowForm(modo === 'cadastro');
     setEditingId(null);
     setForm(emptyForm);
   };
@@ -256,6 +258,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
           .from('funcionarios')
           .insert({ ...payload, school_id: schoolId, created_by: currentUser.id });
         if (insertError) throw insertError;
+        setCadastrado(payload.name);
       }
       resetForm();
       await fetchFuncionarios();
@@ -295,6 +298,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Funcionários" e ícone removidos (o Header do app já mostra
           o nome da tela dinamicamente); só a descrição, direto. */}
+      {modo !== 'cadastro' && (
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-2.5 sm:p-6 border-b border-outline-variant shrink-0">
         <p className="text-on-surface-variant text-small hidden sm:block">
           {funcionarios.length} funcionário{funcionarios.length !== 1 ? 's' : ''} cadastrado{funcionarios.length !== 1 ? 's' : ''}
@@ -312,7 +316,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
               />
             </div>
           )}
-          {!showForm && (
+          {!showForm && modo !== 'gerenciar' && (
             <button
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm shrink-0"
@@ -322,15 +326,23 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
           )}
         </div>
       </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 space-y-4">
+        {modo === 'cadastro' && cadastrado && (
+          <p className="text-sm font-semibold text-success" role="status">
+            {cadastrado} cadastrado(a).{onVerLista && <> <button type="button" onClick={onVerLista} className="underline text-brass">Ver em Gerenciamento</button></>}
+          </p>
+        )}
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingId ? 'Editar funcionário' : 'Novo funcionário'}</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
-                <X size={18} />
-              </button>
+              {modo !== 'cadastro' && (
+                <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
+                  <X size={18} />
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
@@ -425,7 +437,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
-        {isLoading ? (
+        {modo === 'cadastro' ? null : isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
@@ -488,6 +500,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
         )}
 
         {/* ── CONTAS DE ACESSO AO SISTEMA (Admin/Professor) ── */}
+        {modo !== 'cadastro' && (
         <div className="pt-6 mt-2 border-t border-outline-variant">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
@@ -628,6 +641,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool }) {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {confirmDeleteId && (

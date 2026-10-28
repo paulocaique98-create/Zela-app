@@ -7,6 +7,8 @@ import { formatIdade, idadeEmMeses } from '../lib/sugestaoTurma';
 const PAGE_SIZE = 30;
 
 export default function AdminStudentList({ currentUser }) {
+  // Recepção (admin) só consulta; transferir de turma é da Gestão, Coordenação e Direção.
+  const canEdit = ['gestao', 'gestao_pedagogica', 'developer'].includes(currentUser?.role);
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
   const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
 
@@ -248,9 +250,9 @@ export default function AdminStudentList({ currentUser }) {
                       </p>
                     </div>
                     <div className="flex items-center shrink-0 -mr-1 -mt-1">
-                      <button onClick={() => openTransfer(student)} title="Transferir de turma" aria-label="Transferir de turma" className="p-2.5 text-on-surface-variant/70 active:text-primary active:bg-primary/10 rounded-lg transition">
+                      {canEdit && <button onClick={() => openTransfer(student)} title="Transferir de turma" aria-label="Transferir de turma" className="p-2.5 text-on-surface-variant/70 active:text-primary active:bg-primary/10 rounded-lg transition">
                         <ArrowRightLeft size={17} />
-                      </button>
+                      </button>}
                       <button onClick={() => openHistory(student)} title="Histórico de transferências" aria-label="Histórico de transferências" className="p-2.5 text-on-surface-variant/70 active:text-primary active:bg-primary/10 rounded-lg transition">
                         <History size={17} />
                       </button>
@@ -352,9 +354,9 @@ export default function AdminStudentList({ currentUser }) {
                     {/* Ações */}
                     <td className="py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openTransfer(student)} title="Transferir de turma" className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition">
+                        {canEdit && <button onClick={() => openTransfer(student)} title="Transferir de turma" className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition">
                           <ArrowRightLeft size={15} />
-                        </button>
+                        </button>}
                         <button onClick={() => openHistory(student)} title="Histórico de transferências" className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition">
                           <History size={15} />
                         </button>

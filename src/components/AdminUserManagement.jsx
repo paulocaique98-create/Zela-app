@@ -40,6 +40,8 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
   // excluir: só a Gestão (29/09/2026).
   const canApprove = ['gestao', 'gestao_pedagogica', 'developer'].includes(currentUser?.role);
   const canDelete = ['gestao', 'developer'].includes(currentUser?.role);
+  // Recepção (admin) só consulta: editar e importar é da Gestão, Coordenação e Direção.
+  const canEdit = canApprove;
   const [confirmRejectUserId, setConfirmRejectUserId] = useState(null);
   const [allStudents, setAllStudents] = useState([]);
   const [duplicateWarning, setDuplicateWarning] = useState(null); // { userId, matches }
@@ -402,6 +404,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
               </div>
             )}
           </div>
+          {canEdit && (
           <button
             onClick={() => setShowImportModal(true)}
             className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-primary text-white hover:bg-primary-container rounded-md transition font-semibold text-sm whitespace-nowrap min-h-[44px]"
@@ -409,6 +412,7 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
             <FileSpreadsheet size={18} />
             <span className="hidden md:inline">Importar</span>
           </button>
+          )}
         </div>
       </div>
 
@@ -457,13 +461,13 @@ export default function AdminUserManagement({ currentUser, initialTab = 'active'
                       >
                         {/* Botões de ação — sempre visíveis no mobile, hover no desktop (mesmo comportamento de antes) */}
                         <div className="absolute top-0 right-0 flex gap-1 opacity-100 md:opacity-0 md:group-hover/g:opacity-100 transition-opacity">
-                          <button
+                          {canEdit && <button
                             onClick={() => setEditingUser(guardian)}
                             className="p-1.5 text-on-surface-variant/70 hover:text-primary hover:bg-primary/10 rounded-lg transition"
                             title="Editar usuário"
                           >
                             <Edit size={15} />
-                          </button>
+                          </button>}
                           {canDelete && <button
                             onClick={() => guardian.status === 'pending' ? handleRejectUser(guardian.id) : handleDeleteUser(guardian.id)}
                             className="p-1.5 text-on-surface-variant/70 hover:text-error hover:bg-error/10 rounded-lg transition"

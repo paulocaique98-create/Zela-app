@@ -7,7 +7,7 @@ export const PASSOS_ONBOARDING = [
     id: 'turmas',
     titulo: 'Cadastrar as turmas',
     desc: 'As turmas organizam alunos, chamada, mural e relatórios.',
-    aba: 'cadastros-turmas',
+    aba: 'cadastros-turma-nova',
   },
   {
     id: 'horarios',

@@ -230,9 +230,9 @@ runIf('Segurança · item 2: fim da senha padrão 123456 e troca obrigatória', 
     }
   }, 25000);
 
-  it('admin da escola consegue exigir troca de senha de uma família (marcar o flag)', async () => {
+  it('a Gestão da escola consegue exigir troca de senha de uma família (marcar o flag)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
       const { error } = await admin.client.from('users').update({ must_change_password: true }).eq('id', family.id);
@@ -274,10 +274,10 @@ runIf('Segurança · item 2: fim da senha padrão 123456 e troca obrigatória', 
 });
 
 runIf('Segurança · item 4: professor não amplia o próprio acesso', () => {
-  it('professor NÃO altera as próprias turmas nem o próprio status; admin altera normalmente', async () => {
+  it('professor NÃO altera as próprias turmas nem o próprio status; a Gestão altera normalmente', async () => {
     const schoolId = await createTestSchool();
     const teacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'inativo', turmas: ['Nido'] } });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'gestao', schoolId });
     try {
       await teacher.client.from('users').update({ turmas: ['Nido', 'Kids I', 'Kids II'] }).eq('id', teacher.id);
       await teacher.client.from('users').update({ teacher_status: 'ativo' }).eq('id', teacher.id);
@@ -410,9 +410,9 @@ runIf('Segurança · item 5: família não mexe em cobrança nem apaga aluno', (
     }
   }, 25000);
 
-  it('admin e gestão continuam editando horário contratado e isenção', async () => {
+  it('a Gestão continua editando horário contratado e isenção', async () => {
     const s = await setupFamilyStudent();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'gestao', schoolId: s.schoolId });
     try {
       const { error } = await admin.client.from('students').update({ contracted_exit_time: '15:00', isento_hora_extra: true }).eq('id', s.studentId);
       expect(error).toBeNull();
@@ -435,8 +435,8 @@ runIf('Segurança · item 11: cadastro pendente não tem acesso até a escola ap
       expect(pendingRole).toBeNull();
 
       // Hierarquia (Fase 3): o admin não aprova; só a Gestão.
-      const { error: adminApproveErr } = await admin.client.from('users').update({ status: 'active' }).eq('id', family.id);
-      expect(adminApproveErr).not.toBeNull();
+      const { data: adminApproveRows } = await admin.client.from('users').update({ status: 'active' }).eq('id', family.id).select('id');
+      expect(adminApproveRows ?? []).toHaveLength(0);
       const gestao = await createTestUser({ role: 'gestao', schoolId });
       const { error: approveErr } = await gestao.client.from('users').update({ status: 'active' }).eq('id', family.id);
       await deleteTestUser(gestao.id);

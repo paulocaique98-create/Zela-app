@@ -16,14 +16,14 @@ async function setupStudent(schoolId, extra = {}) {
 }
 
 runIf('Secretaria — Alunos (students.enrollment_status / UPDATE em paralelo)', () => {
-  it('admin E gestao conseguem editar o cadastro do aluno (paralelo por decisão da Fase 9)', async () => {
+  it('a Gestão edita o cadastro do aluno; a Recepção (admin) não (somente consulta, 28/10/2026)', async () => {
     const schoolId = await createTestSchool();
     const admin = await createTestUser({ role: 'admin', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const studentId = await setupStudent(schoolId);
     try {
       const { error: adminErr } = await admin.client.from('students').update({ enrollment_status: 'inativo' }).eq('id', studentId);
-      expect(adminErr).toBeNull();
+      expect(adminErr).not.toBeNull();
 
       const { error: gestaoErr } = await gestao.client.from('students').update({ enrollment_status: 'ativo' }).eq('id', studentId);
       expect(gestaoErr).toBeNull();

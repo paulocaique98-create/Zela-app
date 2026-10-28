@@ -3,6 +3,7 @@ import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookO
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
+import { useTourGuiado } from '../hooks/useTourGuiado';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -14,6 +15,7 @@ import { ocultoNoTradicional, ocultoPorFaltaDeMetodo } from '../tradicional/menu
 // Lazy: mesmo padrão de code-splitting já usado no AdminPortal/FamilyPortal —
 // cada tela só entra no bundle quando o professor realmente abre aquela aba.
 const CentralAjuda = lazy(() => import('./CentralAjuda'));
+const TourGuiado = lazy(() => import('./TourGuiado'));
 const TeacherInicio = lazy(() => import('./TeacherInicio'));
 const TeacherMonitor = lazy(() => import('./TeacherMonitor'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
@@ -60,6 +62,7 @@ export default function TeacherPortal({
   };
   const isBlocked = currentUser?.teacher_status && currentUser.teacher_status !== 'ativo';
   const { method } = useSchoolConfig(currentSchool?.id);
+  const tour = useTourGuiado(currentUser?.id, currentSchool?.id, 'professor');
   const relatoriosAtivos = currentSchool?.features_enabled?.relatorios_pedagogicos === true;
   // Escola Tradicional não tem Mitigação nem Mapa de Habilidades.
   const showRelatorios = relatoriosAtivos && !ocultoNoTradicional(method, 'rel-mitigacao');
@@ -208,7 +211,8 @@ export default function TeacherPortal({
           {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mitigacao' && !ocultoNoTradicional(method, teacherTab) && <TeacherMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'rel-mapa-habilidades' && !ocultoNoTradicional(method, teacherTab) && <TeacherMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-          {teacherTab === 'ajuda' && <CentralAjuda perfil="professor" method={method} />}
+          {teacherTab === 'ajuda' && <CentralAjuda perfil="professor" method={method} onRefazerTour={tour.refazer} />}
+          {tour.aberto && <TourGuiado perfil="professor" method={method} onFechar={tour.fechar} />}
           {teacherTab === 'settings' && <ConfiguracoesPortal />}
         </Suspense>
       </main>

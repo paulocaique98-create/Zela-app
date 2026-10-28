@@ -24,13 +24,12 @@ export const AJUDA_ADMIN = [
       {
         id: 'usuarios',
         titulo: 'Usuários',
-        serve: 'Lista as contas da escola e os cadastros que aguardam aprovação. Aqui você libera o acesso de quem acabou de se cadastrar.',
+        serve: 'Consulta das contas da escola e dos cadastros que aguardam aprovação. A Recepção só consulta: a aprovação e a edição são da Gestão, da Coordenação e da Direção.',
         faz: [
           'Abra a aba Pendentes para ver quem aguarda aprovação.',
-          'Confira os dados da pessoa e aprove ou recuse o cadastro.',
           'Use a aba Ativos para consultar quem já tem acesso.',
         ],
-        dica: 'O número no menu mostra quantos cadastros esperam por você.',
+        dica: 'Se um cadastro precisa de correção, avise a Gestão.',
       },
       {
         id: 'alunos',
