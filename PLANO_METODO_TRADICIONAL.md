@@ -52,7 +52,7 @@ segmento (parecer no Infantil, nota nos demais).
 Cada fase é uma sessão própria (Sonnet), com branch, testes e PR.
 
 ~~**Fase 0: fundação e trava de segurança** (sem tabela nova)~~ ✅ concluída em 27/10/2026 (commit f0ae846, PR #25)
-- [ ] Conferir (só leitura) o `pedagogical_method` das escolas em produção.
+- ~~Conferir (só leitura) o `pedagogical_method` das escolas em produção.~~ ✅ feito em 28/10/2026: 4 escolas "tradicional", 1 "montessori", nenhuma com o campo vazio.
   Hoje o fallback é `'tradicional'` em `src/lib/schoolConfig.js` (useSchoolConfig)
   e `src/components/DeveloperPanel.jsx` (carregar escola). Escola
   Montessori com campo vazio viraria Tradicional por engano: maior risco.
@@ -110,5 +110,5 @@ intactos) e a tabela nova guarda série, turno e ano letivo dela.
 
 ~~1. Segmentos atendidos primeiro?~~ ✅ Fundamental I
 ~~2. Nota e bimestre fixos ou configuráveis?~~ ✅ Configuráveis por escola (Fase 2)
-3. Autorização para a consulta só de leitura do `pedagogical_method` em produção.
+~~3. Autorização para a consulta só de leitura do `pedagogical_method` em produção.~~ ✅ autorizada e executada em 28/10/2026
 ~~4. Escola tradicional esconde Mitigação e Mapa de Habilidades? (Não afeta Montessori.)~~ ✅ aplicado na Fase 0

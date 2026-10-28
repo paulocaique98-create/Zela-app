@@ -3,17 +3,18 @@ import { Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Peças visuais compartilhadas pelas telas novas do Portal da Gestão.
 // O título da tela já aparece no Header do app (SCREEN_LABELS), então aqui
-// só entra a descrição curta e as ações.
+// só entram as ações. `description` e `descriptionClassName` ainda são aceitos
+// pelas telas, mas não são mais exibidos.
 
-// infoOnMobile: no celular a faixa da descrição (e das ações) não aparece; o
+// infoOnMobile: no celular a faixa das ações não aparece; o
 // conteúdo começa logo abaixo do Header, igual à tela de Pendências.
-export function PageShell({ description, descriptionClassName = '', infoOnMobile = false, afterInfo = null, actions, children }) {
+export function PageShell({ infoOnMobile = false, afterInfo = null, actions, children }) {
   return (
     <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
-      {(description || actions) && (
-        <div className={`${infoOnMobile ? 'hidden sm:flex' : 'flex flex-col pt-4 pb-3 sm:flex'} sm:flex-row sm:items-center justify-between gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 border-b border-outline-variant shrink-0`}>
-          {description ? <p className={`text-small text-on-surface-variant ${descriptionClassName}`}>{description}</p> : <span />}
-          {actions && <div className="flex items-center gap-2 flex-wrap shrink-0">{actions}</div>}
+      {/* A faixa de descrição foi removida por decisão do produto (28/10/2026): só as ações ficam. */}
+      {actions && (
+        <div className={`${infoOnMobile ? 'hidden sm:flex' : 'flex flex-col pt-4 pb-3 sm:flex'} sm:flex-row sm:items-center justify-end gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 border-b border-outline-variant shrink-0`}>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">{actions}</div>
         </div>
       )}
       <div className="flex-1 overflow-y-auto min-h-0 p-2.5 md:p-6">{afterInfo}{children}</div>
