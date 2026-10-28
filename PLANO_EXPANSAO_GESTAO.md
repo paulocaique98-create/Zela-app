@@ -292,7 +292,7 @@ src/lib/bi/
 | 1.0 Inventário | Conferir colunas reais usadas por cada indicador (forma de pagamento em `financial_charges`, capacidade da turma, horário de confirmação no monitor, categoria de despesa). Lista do que não existe vira "fora do painel" | Lista no ZELA_STATUS |
 | ~~1.1 Fundação~~ ✅ | ~~tokens de cor no `@theme`; `periodos.js`, `coresEntidade.js`, `formatos.js` + testes; decisão D1 aplicada; `BiCartaoGrafico`, `BiKpi`, `BiFiltros`~~ | ~~Vitest dos libs; tela vazia com filtros em 360/768/1280px~~ (conferido pelo usuário em 28/10) |
 | ~~1.2 Banco~~ ✅ (parcial) | ~~migration das RPCs + índices + teste RLS~~ Feito: `bi_visao_geral`, `bi_financeiro`, `bi_detalhe` (20261105120000, só no banco local, 4 testes ok). Faltam `bi_matriculas`, `bi_frequencia`, `bi_academico`, `bi_operacao` nas fases 1.4 e 1.5; "matrículas novas" vem de `enrollments` | teste de segurança; migration informada, não aplicada |
-| 1.3 Visão geral + Financeiro | abas, filtro cruzado, drill, exportação | teste manual com escola de dados reais em leitura |
+| ~~1.3 Visão geral + Financeiro~~ ✅ | abas, filtro cruzado, drill, exportação | teste manual com escola de dados reais em leitura |
 | 1.4 Matrículas + Frequência | | idem |
 | 1.5 Acadêmico + Operação | blocos por método | idem |
 | 1.6 Acabamento | menu, rótulos, perfis, catálogo `bi_dashboards`, ajuda, tour, atalho, impressão | `perfisGestao.test.js`, `modulosCatalogo.test.js` |

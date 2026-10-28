@@ -95,3 +95,14 @@ describe('Gestão segue o plano da escola (01/10/2026)', () => {
     expect(podeAbrirAba('gestao_pedagogica', 'academico-diario', { diario: true })).toBe(true);
   });
 });
+
+describe('Painel de indicadores (BI)', () => {
+  it('Gestão e Coordenação veem a aba, mas só com o módulo bi_dashboards ligado', async () => {
+    const { podeAbrirAba } = await import('./perfisGestao.js');
+    for (const role of ['gestao', 'gestao_pedagogica']) {
+      expect(podeAbrirAba(role, 'relatorios-painel', { bi_dashboards: true })).toBe(true);
+      expect(podeAbrirAba(role, 'relatorios-painel', {})).toBe(false);
+      expect(podeAbrirAba(role, 'relatorios-painel', { bi_dashboards: 'true' })).toBe(false);
+    }
+  });
+});

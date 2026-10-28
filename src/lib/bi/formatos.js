@@ -37,3 +37,11 @@ export function calcularVariacao(atual, anterior, { maisEhMelhor = true } = {}) 
     texto: `${nf(1).format(Math.abs(pct))}% ${pct > 0 ? 'acima' : 'abaixo'}`,
   };
 }
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+// '2026-09-01' vira 'set/26'. Sem conversão de fuso: lê só o texto da data.
+export function rotuloMes(iso) {
+  const m = /^(\d{4})-(\d{2})/.exec(iso || '');
+  return m ? `${MESES[+m[2] - 1]}/${m[1].slice(2)}` : '·';
+}

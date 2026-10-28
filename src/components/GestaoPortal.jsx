@@ -5,7 +5,7 @@ import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
   Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
-  Image as ImageIcon, BarChart3, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
+  Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
 } from 'lucide-react';
 import { CircleHelp } from 'lucide-react';
@@ -58,6 +58,7 @@ const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
 const GestaoOcorrencias = lazy(() => import('./GestaoOcorrencias'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
+const GestaoPainelBI = lazy(() => import('./bi/GestaoPainelBI'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
 const GestaoMeuPlano = lazy(() => import('./GestaoMeuPlano'));
@@ -136,7 +137,7 @@ function groupOf(tab) {
 const COM_INFO_NO_CELULAR = [
   'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas',
   'financeiro-inadimplencia', 'financeiro-recebimentos', 'financeiro-despesas', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-qualidade-biometria', 'academico-ano-letivo', 'academico-ocorrencias',
-  'relatorios-gestao', 'relatorios-financeiro', 'relatorios-academico', 'relatorios-operacional', 'config-financeiro', 'config-comunicacao', 'config-seguranca', 'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
+  'relatorios-painel', 'relatorios-gestao', 'relatorios-financeiro', 'relatorios-academico', 'relatorios-operacional', 'config-financeiro', 'config-comunicacao', 'config-seguranca', 'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
 ];
 
 export default function GestaoPortal({
@@ -355,6 +356,7 @@ export default function GestaoPortal({
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
             </>)}
             {group('relatorios', 'Relatórios', BarChart3, <>
+              {item('relatorios-painel', LayoutDashboard, 'Painel de indicadores')}
               {item('relatorios-gestao', BarChart3, 'Gestão')}
               {item('relatorios-financeiro', Wallet, 'Financeiro')}
               {item('relatorios-academico', BookOpen, 'Acadêmico')}
@@ -496,6 +498,7 @@ export default function GestaoPortal({
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Relatórios */}
+          {abaAtual === 'relatorios-painel' && <GestaoPainelBI currentUser={currentUser} setGestaoTab={goFromShortcut} />}
           {abaAtual === 'relatorios-gestao' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="gestao" />}
           {abaAtual === 'relatorios-financeiro' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
           {abaAtual === 'relatorios-academico' && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="academico" />}

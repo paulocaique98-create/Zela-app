@@ -64,6 +64,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'comunicacao-comunicados',
   'comunicacao-mural',
   // Relatórios sem valores
+  'relatorios-painel',
   'relatorios-academico',
   'relatorios-operacional',
   // Configurações · alerta de faltas
@@ -139,6 +140,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'financeiro-recebimentos': 'financeiro',
   'financeiro-despesas': 'financeiro',
   'relatorios-financeiro': 'financeiro',
+  'relatorios-painel': 'bi_dashboards',
   'config-financeiro': 'financeiro',
   'primeiros-passos': 'assistente_configuracao',
 };
