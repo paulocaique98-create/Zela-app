@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle, Loader2, Receipt, ExternalLink, Copy, Check, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import FamilyBolsas from './FamilyBolsas';
 
 const CYCLE_LABELS = { MONTHLY: 'Mensal', QUARTERLY: 'Trimestral', SEMIANNUALLY: 'Semestral', YEARLY: 'Anual' };
 
@@ -22,7 +23,7 @@ function centsToBRL(cents) {
 // Só o responsável FINANCEIRO de verdade (is_financial_guardian(), checado
 // antes de montar este menu no FamilyPortal) chega até aqui — leitura
 // apenas, RLS já garante que só vê as próprias cobranças (Fase 6).
-export default function FamilyFinanceiro() {
+export default function FamilyFinanceiro({ currentUser }) {
   const [contracts, setContracts] = useState([]);
   const [charges, setCharges] = useState([]);
   const [acordos, setAcordos] = useState([]);
@@ -106,6 +107,9 @@ export default function FamilyFinanceiro() {
                 ))}
               </div>
             )}
+
+            {/* Bolsas (item 13): some sozinha se o módulo estiver desligado */}
+            <FamilyBolsas schoolId={currentUser?.school_id} />
 
             {/* Acordos de dívida */}
             {acordos.map(a => (

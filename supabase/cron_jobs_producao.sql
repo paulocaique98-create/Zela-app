@@ -49,3 +49,14 @@ SELECT cron.schedule('notify-biblioteca-prazos-job', '0 11 * * *', '
 SELECT cron.schedule('leads-anonimizar-perdidos-job', '0 6 * * *', '
     SELECT public.leads_anonimizar_perdidos();
   ');
+
+-- Bolsas (LGPD, D11): apaga documentos de renda 12 meses depois do fim da bolsa, todo dia às 6h30 UTC.
+SELECT cron.schedule('purge-scholarship-documents-job', '30 6 * * *', '
+    SELECT net.http_post(
+      url:=''https://orafqopnomdrvwlvxrkz.supabase.co/functions/v1/purge-scholarship-documents'',
+      headers:=jsonb_build_object(
+        ''Content-Type'', ''application/json'',
+        ''Authorization'', ''Bearer '' || public.get_cron_secret(''financial_reminders_auth_key'')
+      )
+    );
+  ');

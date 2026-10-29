@@ -202,6 +202,25 @@ export const ITENS = [
     aoDesligar: 'Os itens DRE e Fluxo de caixa somem do menu. Nada é apagado.',
   },
   {
+    id: 'bolsas',
+    grupo: 'adicional',
+    nome: 'Gestão de bolsas',
+    resumo: 'Tipos de bolsa, pedido da família com documentos, análise da Gestão e desconto automático na mensalidade.',
+    keys: ['bolsas'],
+    inclui: [
+      { nome: 'Tipos', desc: 'Percentual ou valor, vagas, vigência, critérios e limite de desconto total da escola' },
+      { nome: 'Pedidos', desc: 'Fila de pedidos com renda e documentos, parecer e decisão' },
+      { nome: 'Concedidas', desc: 'Bolsas vigentes, aviso 30 dias antes do fim e encerramento' },
+      { nome: 'Vagas', desc: 'Vagas ocupadas e livres de cada tipo' },
+      { nome: 'Pedir bolsa', desc: 'A família envia o pedido e acompanha pelo Financeiro' },
+    ],
+    onde: [
+      { portal: 'Gestão', menus: 'Financeiro › Bolsas (só a Gestão)' },
+      { portal: 'Família', menus: 'Financeiro › Bolsas (responsável financeiro)' },
+    ],
+    aoDesligar: 'O menu Bolsas some e a família não consegue mais pedir. Pedidos, bolsas e histórico ficam guardados, e os documentos continuam sendo apagados 12 meses depois do fim da bolsa.',
+  },
+  {
     id: 'biblioteca',
     grupo: 'adicional',
     nome: 'Biblioteca',

@@ -56,6 +56,7 @@ const GestaoRecebimentos = lazy(() => import('./GestaoRecebimentos'));
 const GestaoPlanos = lazy(() => import('./GestaoPlanos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoDre = lazy(() => import('./GestaoDre'));
+const GestaoBolsas = lazy(() => import('./GestaoBolsas'));
 const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
@@ -335,6 +336,7 @@ export default function GestaoPortal({
               {item('financeiro-despesas', Receipt, 'Despesas')}
               {chaveLigada(features, 'financeiro_avancado') && item('financeiro-dre', Scale, 'DRE')}
               {chaveLigada(features, 'financeiro_avancado') && item('financeiro-fluxo', TrendingUp, 'Fluxo de caixa')}
+              {chaveLigada(features, 'bolsas') && item('financeiro-bolsas', GraduationCap, 'Bolsas')}
             </>)}
             {showCheckin && group('presenca', 'Check-in/out', Clock, <>
               {item('presenca-dia', UserCheck, 'Presença do Dia')}
@@ -466,6 +468,7 @@ export default function GestaoPortal({
           {abaAtual === 'financeiro-despesas' && <GestaoDespesas currentUser={currentUser} />}
           {abaAtual === 'financeiro-dre' && <GestaoDre currentUser={currentUser} />}
           {abaAtual === 'financeiro-fluxo' && <GestaoFluxoCaixa currentUser={currentUser} />}
+          {abaAtual === 'financeiro-bolsas' && <GestaoBolsas currentUser={currentUser} />}
 
           {/* Presença e Horas */}
           {abaAtual === 'presenca-dia' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}

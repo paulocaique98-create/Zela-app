@@ -16,7 +16,7 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 3. ~~Item 1 · Dashboards BI interativo~~ ✅ (detalhado)
 4. Prioridade Baixa: ~~2 Plano de aula~~ ✅ · ~~3 DRE e fluxo de caixa~~ ✅ · ~~4 Biblioteca~~ ✅ · ~~5 Transporte~~ (removido) · ~~6 Estoque~~ ✅
 5. Prioridade Média: ~~7 Ocorrências~~ ✅ · ~~8 Avaliação institucional~~ ✅ · ~~9 Conciliação completa~~ ✅ · ~~10 Negociação de dívida~~ ✅ · ~~11 Captação (CRM)~~ ✅
-6. Prioridade Alta: 12 Histórico escolar · 13 Bolsas · 14 Régua de cobrança · 15 NFS-e
+6. Prioridade Alta: 12 Histórico escolar · ~~13 Bolsas~~ ✅ · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
 8. Checklist padrão de entrega de cada fase
 
@@ -426,7 +426,7 @@ src/lib/bi/
 - **Perfis:** `gestao` e `gestao_pedagogica` emitem; Recepção só com permissão.
 - **Montessori:** sem notas; documento vira "Ficha de acompanhamento" com séries cursadas e frequência (D10).
 
-### Item 13 · Gestão de bolsas
+### ~~Item 13 · Gestão de bolsas~~ ✅
 
 **Para que serve:** cadastrar tipos de bolsa/convênio, receber o pedido da família com documentos, analisar, conceder e aplicar o desconto automaticamente nas mensalidades.
 

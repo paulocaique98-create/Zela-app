@@ -113,7 +113,7 @@ export const SCREEN_LABELS = {
   'contratos-aditivos': 'Aditivos', contratos: 'Contratos',
   'financeiro-visao': 'Visão Financeira', 'financeiro-planos': 'Planos', 'financeiro-mensalidades': 'Mensalidades', 'financeiro-cobrancas': 'Cobranças',
   'financeiro-inadimplencia': 'Inadimplência', 'financeiro-recebimentos': 'Recebimentos', 'financeiro-despesas': 'Despesas',
-  'financeiro-dre': 'DRE', 'financeiro-fluxo': 'Fluxo de caixa',
+  'financeiro-dre': 'DRE', 'financeiro-fluxo': 'Fluxo de caixa', 'financeiro-bolsas': 'Bolsas',
   'biblioteca-acervo': 'Acervo', 'biblioteca-emprestimos': 'Empréstimos', 'biblioteca-atrasados': 'Atrasados', biblioteca: 'Biblioteca', ocorrencias: 'Ocorrências',
   'estoque-itens': 'Itens', 'estoque-movimentacoes': 'Movimentações', 'estoque-minimo': 'Abaixo do mínimo', estoque: 'Estoque',
   'captacao-quadro': 'Quadro', 'captacao-visitas': 'Visitas', 'captacao-espera': 'Lista de espera', 'captacao-funil': 'Funil', captacao: 'Captação',

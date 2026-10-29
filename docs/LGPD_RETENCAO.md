@@ -39,6 +39,7 @@ III): manter só pelo tempo necessário à finalidade.
 | Logs operacionais (`client_error_logs`, `edge_function_logs`, `cron_job_logs`) | 90 dias | Idade do registro |
 | Documentos de matrícula de solicitação rejeitada | 180 dias após rejeição | `status='rejected'` + `updated_at` |
 | Lead da Captação marcado como perdido (`leads`) | 12 meses após a perda (decisão D9 do plano de expansão) | `etapa='perdido'` + `perdido_em`. Anonimizado, não apagado: `leads_anonimizar_perdidos()` zera nome, contato, criança e texto das interações; etapa, origem e datas ficam para o funil. Cron `leads-anonimizar-perdidos-job` (diário). Pedido do titular: a Gestão exclui o lead de vez (cascata em interações, visitas e fila). |
+| Documentos e renda do pedido de bolsa (`scholarship_documents`, bucket `scholarships`) | 12 meses após o fim da bolsa (decisão D11); pedido negado ou cancelado, 12 meses após a decisão | Maior `fim` das concessões do pedido. A Edge Function `purge-scholarship-documents` (cron diário `purge-scholarship-documents-job`) remove os arquivos do bucket, apaga as linhas de documento e zera `renda_mensal_cents`. Só a Gestão (módulo `bolsas`) lê renda e documento. |
 
 ## 3. Achado concreto — tabelas legadas com dado morto
 
