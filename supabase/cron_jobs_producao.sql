@@ -33,8 +33,7 @@ SELECT cron.schedule('check-attendance-delays-job', '*/5 * * * *', '
     );
   ');
 
--- Biblioteca: aviso diário às 11h UTC (8h em Brasília), só depois de publicar a
--- função notify-biblioteca-prazos. Ainda NÃO agendado em produção.
+-- Biblioteca: aviso diário às 11h UTC (8h em Brasília). Agendado em produção em 29/10/2026.
 SELECT cron.schedule('notify-biblioteca-prazos-job', '0 11 * * *', '
     SELECT net.http_post(
       url:=''https://orafqopnomdrvwlvxrkz.supabase.co/functions/v1/notify-biblioteca-prazos'',
