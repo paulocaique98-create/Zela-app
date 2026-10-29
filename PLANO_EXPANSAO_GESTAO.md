@@ -15,7 +15,7 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 2. Ordem de execução e dependências
 3. ~~Item 1 · Dashboards BI interativo~~ ✅ (detalhado)
 4. Prioridade Baixa: ~~2 Plano de aula~~ ✅ · ~~3 DRE e fluxo de caixa~~ ✅ · ~~4 Biblioteca~~ ✅ · ~~5 Transporte~~ (removido) · ~~6 Estoque~~ ✅
-5. Prioridade Média: ~~7 Ocorrências~~ ✅ · ~~8 Avaliação institucional~~ ✅ · ~~9 Conciliação completa~~ ✅ · 10 Negociação de dívida · 11 Captação (CRM)
+5. Prioridade Média: ~~7 Ocorrências~~ ✅ · ~~8 Avaliação institucional~~ ✅ · ~~9 Conciliação completa~~ ✅ · ~~10 Negociação de dívida~~ ✅ · 11 Captação (CRM)
 6. Prioridade Alta: 12 Histórico escolar · 13 Bolsas · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
 8. Checklist padrão de entrega de cada fase
@@ -378,7 +378,7 @@ src/lib/bi/
 - **Telas:** Gestão › Comunicação › "Pesquisas" (criar, publicar, acompanhar taxa de resposta, resultados com o kit do BI, exportar). Família e Professor › cartão "Pesquisa aberta" na Início + push.
 - **Testes:** resposta anônima não liga ao usuário; ninguém responde duas vezes; outra escola não vê.
 
-### ~~Item 9 · Conciliação bancária completa~~ ✅ (código pronto, 29/10; migration 20261118120000 só no banco local, falta aplicar em produção e testar no navegador)
+### ~~Item 9 · Conciliação bancária completa~~ ✅ (código pronto, 29/10; migration 20261118120000 aplicada em produção; falta testar no navegador)
 
 **Para que serve:** bater todo o extrato com o sistema, entradas e saídas, para saber que o saldo é real.
 
@@ -388,7 +388,7 @@ src/lib/bi/
 - **Telas:** Financeiro › Recebimentos ganha aba "Extrato" com a lista de linhas, filtros por status e ações em lote; saldo conciliado alimenta `school_cash_balances` (item 3).
 - **Segurança:** dar baixa continua passando pela Edge Function existente (Asaas avisado).
 
-### Item 10 · Negociação de dívida
+### ~~Item 10 · Negociação de dívida~~ ✅ (código pronto, 29/10; migration 20261119120000 e funções create, activate e break-debt-agreement em produção; falta testar com o Asaas e no navegador)
 
 **Para que serve:** fazer acordo com a família inadimplente (desconto de juros/multa, parcelamento), gerar as novas cobranças e o termo assinado.
 

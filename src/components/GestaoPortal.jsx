@@ -43,6 +43,7 @@ const AdminFuncionarios = lazy(() => import('./AdminFuncionarios'));
 const AdminSettings = lazy(() => import('./AdminSettings'));
 const TurmasSection = lazy(() => import('./AdminSettings').then(m => ({ default: m.TurmasSection })));
 // Financeiro: abas do AdminFinanceiro viram itens de menu próprios.
+const InadimplenciaGestao = lazy(() => import('./GestaoInadimplencia'));
 const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.CobrancasTab })));
 const MensalidadesTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.ContratosTab })));
 const GatewayConfigTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.ConfigTab })));
@@ -452,7 +453,7 @@ export default function GestaoPortal({
           {abaAtual === 'financeiro-planos' && <GestaoPlanos currentUser={currentUser} />}
           {abaAtual === 'financeiro-mensalidades' && shell('Mensalidade de cada aluno, cobrada automaticamente pelo Asaas. O preço vem de Financeiro, Planos.', <MensalidadesTab currentUser={currentUser} />)}
           {abaAtual === 'financeiro-cobrancas' && shell('Todas as cobranças geradas, com situação e forma de pagamento.', <CobrancasTab key="all" currentUser={currentUser} canRegisterPayment />)}
-          {abaAtual === 'financeiro-inadimplencia' && shell('Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', <CobrancasTab key="overdue" currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment />)}
+          {abaAtual === 'financeiro-inadimplencia' && shell('Cobranças vencidas e não pagas. Registre o que foi pago por fora ou negocie um acordo com a família.', <InadimplenciaGestao currentUser={currentUser} />)}
           {abaAtual === 'financeiro-recebimentos' && <GestaoRecebimentos currentUser={currentUser} />}
           {abaAtual === 'financeiro-despesas' && <GestaoDespesas currentUser={currentUser} />}
           {abaAtual === 'financeiro-dre' && <GestaoDre currentUser={currentUser} />}

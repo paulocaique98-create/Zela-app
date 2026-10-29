@@ -3,6 +3,7 @@ import { FileSignature, Printer, ShieldCheck, Loader2, ChevronLeft } from 'lucid
 import { supabase } from '../lib/supabase';
 import { sha256Hex } from '../lib/gestaoUtils';
 import { printContract } from '../lib/printContract';
+import { chamarFuncaoFinanceira } from '../lib/funcoesFinanceiras';
 
 // Contratos e aditivos enviados pela escola: a família lê e assina pelo app
 // (assinatura eletrônica simples: nome digitado + confirmação, com registro
@@ -94,6 +95,10 @@ function ContratoDetalhe({ doc, currentUser, currentSchool, onBack }) {
       if (e) throw e;
       const { data } = await supabase.from('contract_documents').select('*, students:student_id(name)').eq('id', doc.id).single();
       setSignedDoc(data || { ...doc, status: 'assinado', signer_name: name.trim(), signed_at: new Date().toISOString() });
+      // Termo de acordo de dívida: a assinatura ativa o acordo. Se falhar, a Gestão ativa pela tela de Acordos.
+      supabase.from('debt_agreements').select('id').eq('contract_id', doc.id).eq('status', 'aguardando_assinatura').maybeSingle()
+        .then(({ data: acordo }) => (acordo ? chamarFuncaoFinanceira('activate-debt-agreement', { agreement_id: acordo.id }) : null))
+        .catch((err) => console.error('Ativação do acordo:', err));
     } catch (err) {
       setError(err.message || 'Não foi possível assinar.');
     } finally {

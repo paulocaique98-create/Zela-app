@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ResponsiveTable } from './GestaoShared';
-import { ListFilter, ChevronDown, Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins } from 'lucide-react';
+import { ListFilter, ChevronDown, Plus, X, AlertCircle, Loader2, RefreshCw, KeyRound, Percent, FileText, Receipt, Settings2, CheckCircle2, ExternalLink, HandCoins, Handshake } from 'lucide-react';
+import { NegociarModal } from './GestaoAcordos';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from './ConfirmModal';
 import { uploadFile, buildSafeFileName } from '../lib/storage';
@@ -556,8 +557,9 @@ function AguardandoMensalidade({ currentUser, versao, onCriou }) {
 // initialStatus: abre já filtrada (Inadimplência = OVERDUE).
 // canRegisterPayment: mostra "Registrar pagamento" (baixa manual; permissão
 // financeiro.baixa_manual, conferida de novo no servidor).
-export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPayment = false }) {
+export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPayment = false, canNegotiate = false }) {
   const [charges, setCharges] = useState([]);
+  const [negotiatingCharge, setNegotiatingCharge] = useState(null);
   const [payingCharge, setPayingCharge] = useState(null);
   const [adjustingCharge, setAdjustingCharge] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -574,7 +576,7 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
     try {
       let query = supabase
         .from('financial_charges')
-        .select('id, due_date, amount_cents, original_amount_cents, status, payment_method, payment_link, boleto_url, pix_copy_paste, paid_at, students:student_id(name)')
+        .select('id, due_date, amount_cents, original_amount_cents, status, payment_method, payment_link, boleto_url, pix_copy_paste, paid_at, student_id, family_id, students:student_id(name)')
         .eq('school_id', currentUser.school_id)
         .order('due_date', { ascending: false })
         .limit(200);
@@ -715,6 +717,11 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
               label: '', actions: true, align: 'right',
               render: c => ['PENDING', 'AWAITING_PAYMENT', 'OVERDUE'].includes(c.status) && (
                 <span className="inline-flex items-center gap-3">
+                  {canNegotiate && c.status === 'OVERDUE' && (
+                    <button onClick={() => setNegotiatingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
+                      <Handshake size={13} /> Negociar
+                    </button>
+                  )}
                   <button onClick={() => setAdjustingCharge(c)} className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
                     <Percent size={13} /> Ajustar valor
                   </button>
@@ -734,6 +741,15 @@ export function CobrancasTab({ currentUser, initialStatus = 'all', canRegisterPa
           charge={payingCharge}
           onClose={() => setPayingCharge(null)}
           onDone={() => { setPayingCharge(null); setSuccessMsg('Pagamento registrado.'); fetchCharges(); }}
+        />
+      )}
+
+      {negotiatingCharge && (
+        <NegociarModal
+          charge={negotiatingCharge}
+          currentUser={currentUser}
+          onClose={() => setNegotiatingCharge(null)}
+          onDone={() => { setNegotiatingCharge(null); setSuccessMsg('Proposta enviada para a família assinar. Acompanhe em Acordos.'); fetchCharges(); }}
         />
       )}
 

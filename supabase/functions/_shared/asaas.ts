@@ -135,6 +135,18 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}`, { method: 'PUT', body: JSON.stringify(input) });
     },
 
+    // Cancela uma cobrança (DELETE) e a restaura (POST /restore). Usadas pelo acordo de dívida:
+    // as originais saem quando o acordo ativa e voltam se ele rompe ou se a ativação falha.
+    // deno-lint-ignore no-explicit-any
+    cancelPayment(paymentId: string): Promise<any> {
+      return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}`, { method: 'DELETE' });
+    },
+
+    // deno-lint-ignore no-explicit-any
+    restorePayment(paymentId: string): Promise<any> {
+      return asaasFetch(`/v3/payments/${encodeURIComponent(paymentId)}/restore`, { method: 'POST' });
+    },
+
     // Reajuste da assinatura: vale para as cobranças que o Asaas gerar daqui
     // pra frente. updatePendingPayments=false deixa as já emitidas como estão.
     updateSubscription(subscriptionId: string, input: { value?: number; updatePendingPayments?: boolean; nextDueDate?: string; description?: string }): Promise<AsaasSubscription> {

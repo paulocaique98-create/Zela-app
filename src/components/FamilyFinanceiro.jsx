@@ -25,6 +25,7 @@ function centsToBRL(cents) {
 export default function FamilyFinanceiro() {
   const [contracts, setContracts] = useState([]);
   const [charges, setCharges] = useState([]);
+  const [acordos, setAcordos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [copiedId, setCopiedId] = useState(null);
@@ -33,7 +34,7 @@ export default function FamilyFinanceiro() {
     setIsLoading(true);
     setErrorMsg('');
     try {
-      const [contractsRes, chargesRes] = await Promise.all([
+      const [contractsRes, chargesRes, acordosRes] = await Promise.all([
         supabase
           .from('financial_contracts')
           .select('id, billing_cycle, amount_cents, status, students:student_id(name)')
@@ -42,11 +43,19 @@ export default function FamilyFinanceiro() {
           .from('financial_charges')
           .select('id, due_date, amount_cents, status, payment_method, payment_link, boleto_url, pix_copy_paste, paid_at, students:student_id(name)')
           .order('due_date', { ascending: false }),
+        supabase
+          .from('debt_agreements')
+          .select('id, status, valor_acordado_cents, parcelas, students:student_id(name), debt_agreement_installments(id, numero, amount_cents, due_date, financial_charges(status))')
+          .in('status', ['ativo', 'quitado', 'rompido'])
+          .order('created_at', { ascending: false })
+          .limit(5),
       ]);
       if (contractsRes.error) throw contractsRes.error;
       if (chargesRes.error) throw chargesRes.error;
       setContracts(contractsRes.data || []);
       setCharges(chargesRes.data || []);
+      // Acordo é complemento: se falhar, o resto da tela continua.
+      setAcordos(acordosRes.error ? [] : (acordosRes.data || []));
     } catch (err) {
       console.error('Erro ao buscar dados financeiros:', err);
       setErrorMsg('Erro ao carregar seus dados financeiros: ' + err.message);
@@ -97,6 +106,26 @@ export default function FamilyFinanceiro() {
                 ))}
               </div>
             )}
+
+            {/* Acordos de dívida */}
+            {acordos.map(a => (
+              <div key={a.id} className="space-y-2 p-3 bg-surface-container-low border border-outline-variant rounded-zela-md">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs font-bold text-on-surface-variant">Acordo de dívida, {a.students?.name || 'aluno'}</h3>
+                  <span className="text-xs font-bold text-primary">{{ ativo: 'Ativo', quitado: 'Quitado', rompido: 'Rompido' }[a.status]}</span>
+                </div>
+                <p className="text-sm text-on-surface">{a.parcelas}x, total <strong>{centsToBRL(a.valor_acordado_cents)}</strong></p>
+                <ul className="text-xs text-on-surface-variant space-y-0.5">
+                  {[...(a.debt_agreement_installments || [])].sort((x, y) => x.numero - y.numero).map(p => (
+                    <li key={p.id} className="flex justify-between gap-2">
+                      <span>Parcela {p.numero}, vence em {new Date(p.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                      <span>{centsToBRL(p.amount_cents)}{p.financial_charges?.status === 'PAID' ? ', paga' : ''}</span>
+                    </li>
+                  ))}
+                </ul>
+                {a.status === 'ativo' && <p className="text-xs text-on-surface-variant">Pague cada parcela pelo link na lista de cobranças abaixo.</p>}
+              </div>
+            ))}
 
             {/* Cobranças */}
             <div className="space-y-2">
