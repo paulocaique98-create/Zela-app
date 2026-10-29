@@ -119,14 +119,14 @@ describe('planos de 01/10/2026', () => {
     expect(ITEM_POR_ID.financeiro).toBeUndefined();
   });
 
-  it('Chat é adicional separado: fora do Completo, dentro do Premium', () => {
+  it('Chat é adicional separado: fora do Completo, dentro do Completo Volume', () => {
     expect(ITEM_POR_ID.chat.grupo).toBe('adicional');
     expect(ITEM_POR_ID.rotina.keys).not.toContain('chat');
     expect(aplicarPacote({}, 'completo').chat).toBe(false);
     expect(aplicarPacote({}, 'premium').chat).toBe(true);
   });
 
-  it('Essencial = só o plano base; Completo = + Pedagógico e Rotina; Premium = + Chat, Prova de vida e QR', () => {
+  it('Essencial = só o plano base; Completo = + Pedagógico e Rotina; Completo Volume = + Chat, Prova de vida e QR', () => {
     const essencial = aplicarPacote({}, 'essencial');
     const completo = aplicarPacote({}, 'completo');
     const premium = aplicarPacote({}, 'premium');

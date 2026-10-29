@@ -208,7 +208,7 @@ const TODAS_AS_CHAVES = ITENS.flatMap(i => i.keys);
 export const PACOTES = [
   { id: 'essencial', nome: 'Essencial', itens: [] },
   { id: 'completo', nome: 'Completo', itens: ['pedagogico', 'rotina'] },
-  { id: 'premium', nome: 'Premium', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr', 'bi_dashboards'] },
+  { id: 'premium', nome: 'Completo Volume', itens: ['pedagogico', 'rotina', 'chat', 'liveness', 'qr', 'bi_dashboards'] },
 ];
 const VENDAVEIS = ITENS.filter(i => (i.grupo === 'modulo' || i.grupo === 'adicional') && i.keys.length);
 
