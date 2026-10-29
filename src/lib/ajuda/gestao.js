@@ -46,6 +46,15 @@ export const AJUDA_GESTAO = [
     ],
   },
   {
+    id: 'estoque',
+    titulo: 'Estoque',
+    itens: [
+      { id: 'est-itens', titulo: 'Itens', serve: 'Material da escola, com unidade e saldo atual.', faz: ['Cadastre o item com a unidade e o estoque mínimo.', 'Use Movimentar para registrar entrada, saída ou ajuste.', 'Item que não é mais usado fica inativo. O histórico é guardado.'], dica: 'Módulo adicional Estoque. O saldo vem da soma dos movimentos e nunca fica abaixo de zero.' },
+      { id: 'est-movimentacoes', titulo: 'Movimentações', serve: 'Histórico de entradas, saídas e ajustes, com quem registrou.', faz: ['Filtre por tipo.', 'Para corrigir um erro, registre um ajuste com o motivo.'], dica: 'Um movimento registrado não pode ser editado nem apagado.' },
+      { id: 'est-minimo', titulo: 'Abaixo do mínimo', serve: 'Itens com saldo menor que o mínimo definido, os mais críticos primeiro.', faz: ['Consulte o que falta repor.'], dica: 'Itens com mínimo zero não entram nesta lista.' },
+    ],
+  },
+  {
     id: 'presenca',
     titulo: 'Check-in/out',
     itens: [

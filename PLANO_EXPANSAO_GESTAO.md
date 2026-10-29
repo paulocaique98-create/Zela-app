@@ -14,7 +14,7 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 1. Padrões obrigatórios (visual, layout, dados, segurança, testes)
 2. Ordem de execução e dependências
 3. Item 1 · Dashboards BI interativo (detalhado)
-4. Prioridade Baixa: 2 Plano de aula · 3 DRE e fluxo de caixa · 4 Biblioteca · 5 Transporte · 6 Estoque
+4. Prioridade Baixa: 2 Plano de aula · 3 DRE e fluxo de caixa · 4 Biblioteca · ~~5 Transporte~~ (removido) · 6 Estoque
 5. Prioridade Média: 7 Ocorrências · 8 Avaliação institucional · 9 Conciliação completa · 10 Negociação de dívida · 11 Captação (CRM)
 6. Prioridade Alta: 12 Histórico escolar · 13 Bolsas · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
@@ -125,7 +125,7 @@ Para cada tela nova, **todos** os pontos abaixo (senão a tela fica órfã ou va
 | 2 | Plano de aula | Baixa | M | — | `plano_aula` |
 | 3 | DRE e fluxo de caixa projetado | Baixa | M | 1 (kit de gráficos), 9 ajuda mas não bloqueia | `financeiro_avancado` |
 | 4 | Biblioteca | Baixa | M | — | `biblioteca` |
-| 5 | Transporte escolar | Baixa | G | análise de segurança do check-out | `transporte` |
+| ~~5~~ | ~~Transporte escolar~~ (removido do plano) | | | | |
 | 6 | Estoque | Baixa | M | — | `estoque` |
 | 7 | Ocorrências completas | Média | M | — | `ocorrencias` |
 | 8 | Avaliação institucional | Média | M | 1 (gráficos de resultado) | `avaliacao_institucional` |
@@ -338,18 +338,10 @@ src/lib/bi/
 - **Automação:** cron diário avisa a família 1 dia antes e no atraso (push).
 - **Importação:** planilha XLSX do acervo (padrão `matriculaImportTemplate.js`).
 
-### Item 5 · Transporte escolar
+### ~~Item 5 · Transporte escolar~~ (removido do plano em 29/10, por decisão do usuário)
 
-**Para que serve:** organizar rotas, veículos e quais alunos usam transporte, registrar embarque/desembarque e avisar a família.
 
-- ⚠️ **Toca o fluxo de check-in/out e a segurança da criança:** análise de segurança obrigatória antes (quem pode retirar a criança; o motorista vira um tipo de autorizado com vínculo à rota).
-- **Módulo:** `transporte`.
-- **Banco:** `transport_vehicles` (placa, capacidade, motorista `user_id`, monitor), `transport_routes` (nome, turno, veículo, horários), `transport_route_students` (`route_id`, `student_id`, ponto, ida/volta, vigência), `transport_events` (`student_id`, `route_id`, `tipo` `embarque|desembarque_escola|embarque_escola|desembarque_casa`, `event_time`, `registrado_por`, geolocalização opcional D6).
-- **Integração com check-in/out:** desembarque na escola gera a entrada do aluno pelo mesmo caminho seguro do Monitor (nunca um atalho que pule a confirmação da Recepção); saída para o transporte exige que o motorista esteja autorizado para aquele aluno.
-- **Telas:** Gestão › Transporte (Rotas, Veículos, Alunos por rota, Ocorrências do dia). Perfil novo de motorista **ou** uso pelo portal da Recepção (D6). Família vê rota e eventos do dia (push no embarque/desembarque).
-- **Testes:** RLS por papel, aluno sem autorização não sai com o transporte.
-
-### Item 6 · Estoque
+### ~~Item 6 · Estoque~~ ✅ (v1 só controle, código pronto, 29/10; migration 20261112120000 aplicada em produção em 29/10; sem integração com despesas e cobranças, sem permissões estoque.ver e estoque.gerenciar, sem preço definido; falta navegador)
 
 **Para que serve:** saber o que a escola tem de material (pedagógico, limpeza, cozinha, uniforme), registrar entrada/saída e avisar quando acaba.
 
@@ -474,7 +466,7 @@ src/lib/bi/
 | D3 | 1 | Depois do BI, os 4 relatórios atuais viram abas do BI ou ficam? | Manter até o BI cobrir 100% deles; só então decidir |
 | D4 | 2 | Plano de aula com habilidades BNCC já na primeira versão? | Campo opcional de texto agora; catálogo BNCC depois |
 | D5 | 3 | Taxas do Asaas: o `net_value` do webhook é gravado hoje? | Conferir na Fase 1.0 do item 1 |
-| D6 | 5 | Motorista tem login próprio (perfil novo) ou o registro é feito pela Recepção? Geolocalização? | Recepção registra na v1; sem GPS |
+| ~~D6~~ | ~~5~~ | ~~Motorista tem login próprio (perfil novo) ou o registro é feito pela Recepção? Geolocalização?~~ | ~~Recepção registra na v1; sem GPS~~ (item removido) |
 | D7 | 7 | Ocorrência pode ser editada ou só complementada? | Só complemento (histórico íntegro) |
 | D8 | 10 | Parcelamento: parcelamento nativo do Asaas ou avulsas? Regra de rompimento (quantos dias de atraso)? | Avulsas ligadas ao acordo; rompe com 30 dias de atraso de uma parcela |
 | D9 | 11 | Retenção de lead perdido? | 12 meses |

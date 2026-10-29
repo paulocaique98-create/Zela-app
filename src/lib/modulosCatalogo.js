@@ -182,6 +182,20 @@ export const ITENS = [
     aoDesligar: 'O menu Biblioteca some para a escola e para a família. Acervo e histórico ficam guardados.',
   },
   {
+    id: 'estoque',
+    grupo: 'adicional',
+    nome: 'Estoque',
+    resumo: 'Controle de material da escola, com entradas, saídas e aviso de estoque baixo.',
+    keys: ['estoque'],
+    inclui: [
+      { nome: 'Itens', desc: 'Material pedagógico, de limpeza, cozinha e uniforme, com unidade e mínimo' },
+      { nome: 'Movimentações', desc: 'Entradas, saídas e ajustes com histórico que não se apaga' },
+      { nome: 'Abaixo do mínimo', desc: 'Lista dos itens que precisam de reposição' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Estoque › Itens, Movimentações e Abaixo do mínimo (Coordenação e Direção também)' }],
+    aoDesligar: 'O menu Estoque some. Itens e histórico ficam guardados.',
+  },
+  {
     id: 'liveness',
     grupo: 'adicional',
     nome: 'Prova de vida no reconhecimento',
