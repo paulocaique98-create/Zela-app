@@ -55,6 +55,16 @@ export const AJUDA_GESTAO = [
     ],
   },
   {
+    id: 'captacao',
+    titulo: 'Captação',
+    itens: [
+      { id: 'cap-quadro', titulo: 'Quadro', serve: 'Interessados em matrícula, por etapa, do primeiro contato até a matrícula.', faz: ['Cadastre um interessado ou divulgue o link do formulário.', 'Arraste o cartão ou use a lista de etapas para avançar.', 'Abra o cartão para registrar contatos, agendar visita ou entrar na fila.', 'Use Converter em matrícula para abrir o cadastro já preenchido.'], dica: 'Módulo adicional Captação. Ao marcar como perdido, informe o motivo. O dado pessoal é anonimizado 12 meses depois.' },
+      { id: 'cap-visitas', titulo: 'Visitas', serve: 'Agenda das visitas à escola.', faz: ['Agende pela ficha do interessado ou pelo botão Agendar visita.', 'Depois da visita, marque Realizada ou Não veio.'], dica: 'Agendar ou realizar uma visita avança a etapa do interessado sozinho.' },
+      { id: 'cap-espera', titulo: 'Lista de espera', serve: 'Fila por turma, para interessados e alunos que esperam vaga.', faz: ['Adicione à fila escolhendo a turma.', 'Use Chamar quando abrir a vaga e depois Matriculada ou Desistiu.'], dica: 'O lugar na fila é definido pelo sistema, na ordem de chegada.' },
+      { id: 'cap-funil', titulo: 'Funil', serve: 'Quantos interessados chegaram, avançaram e se matricularam, por etapa e por origem.', faz: ['Escolha o período e compare as origens.'], dica: 'O mesmo funil aparece no painel de indicadores, na aba Matrículas.' },
+    ],
+  },
+  {
     id: 'presenca',
     titulo: 'Check-in/out',
     itens: [

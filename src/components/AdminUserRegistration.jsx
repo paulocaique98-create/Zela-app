@@ -431,7 +431,7 @@ function StudentCard({ student, index, onChange, onRemove, canRemove, turmas, ca
 // ──────────────────────────────────────────────────────────
 // Componente principal
 // ──────────────────────────────────────────────────────────
-export default function AdminUserRegistration({ currentUser, editingUser, initialData, forceModal, onClose, onSaved }) {
+export default function AdminUserRegistration({ currentUser, editingUser, initialData, initialStudent, forceModal, onClose, onSaved, onCreated }) {
   const { turmas: turmasConfig, method: metodoEscola, terminology } = useSchoolConfig(currentUser?.school_id);
   // Escola Tradicional: as turmas vêm da Estrutura acadêmica (ano letivo aberto), não da lista padrão da escola.
   const [turmasTradicional, setTurmasTradicional] = useState(null);
@@ -479,7 +479,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
     ...initialData,
   });
 
-  const [students, setStudents] = useState([emptyStudent()]);
+  // initialStudent pré-preenche a primeira criança (Captação › Converter em matrícula).
+  const [students, setStudents] = useState([{ ...emptyStudent(), ...initialStudent }]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -1169,6 +1170,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         setFormData({ name: '', email: '', password: '', phone1: '', phone2: '', doc_type: 'CPF', doc_number: '', profession: '', civil_status: '', role: 'family' });
         setStudents([emptyStudent()]);
         setGuardianType('Responsável');
+        if (onCreated) onCreated();
       }
     } catch (err) {
       console.error(err);

@@ -20,14 +20,16 @@ export async function notifyAdmins(adminClient: any, params: {
   pushTitle: string;
   pushBody: string;
   pushTag: string;
+  // Padrão: Recepção, Gestão e Coordenação/Direção. Passe uma lista para restringir.
+  roles?: string[];
 }) {
-  const { schoolId, type, message, url, pushTitle, pushBody, pushTag } = params;
+  const { schoolId, type, message, url, pushTitle, pushBody, pushTag, roles = ['admin', 'gestao', 'gestao_pedagogica'] } = params;
 
   const { data: admins, error: adminsError } = await adminClient
     .from('users')
     .select('id')
     .eq('school_id', schoolId)
-    .in('role', ['admin', 'gestao', 'gestao_pedagogica'])
+    .in('role', roles)
     .eq('status', 'active');
   if (adminsError) throw adminsError;
   if (!admins || admins.length === 0) return;

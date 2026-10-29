@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Notice } from '../../GestaoShared';
 import BiKpi from '../BiKpi';
 import BiCartaoGrafico from '../BiCartaoGrafico';
+import FunilCaptacao from '../FunilCaptacao';
 import Colunas from '../charts/Colunas';
 import BarrasH from '../charts/BarrasH';
 import { useBiQuery } from '../../../hooks/useBiQuery';
@@ -86,6 +87,8 @@ export default function Matriculas({ periodo, turmas, chaveCache, mapaCores, exp
         {grafico('Alunos por turno', porTurno, 'Turno', 'Alunos ativos hoje.', 'Barras de alunos ativos por turno')}
         {grafico('Alunos por faixa etária', porFaixa, 'Faixa etária', 'Alunos ativos hoje, pela idade em anos completos.', 'Barras de alunos ativos por faixa etária')}
       </div>
+
+      <FunilCaptacao periodo={periodo} chaveCache={chaveCache} atualizacao={atualizacao} />
     </div>
   );
 }

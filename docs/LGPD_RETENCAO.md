@@ -38,6 +38,7 @@ III): manter só pelo tempo necessário à finalidade.
 | Ficha médica (`fichas_medicas`) | Mesmo ciclo de vida do aluno — apagada junto automaticamente (confirmado: FK `student_id` com `ON DELETE CASCADE`) | — |
 | Logs operacionais (`client_error_logs`, `edge_function_logs`, `cron_job_logs`) | 90 dias | Idade do registro |
 | Documentos de matrícula de solicitação rejeitada | 180 dias após rejeição | `status='rejected'` + `updated_at` |
+| Lead da Captação marcado como perdido (`leads`) | 12 meses após a perda (decisão D9 do plano de expansão) | `etapa='perdido'` + `perdido_em`. Anonimizado, não apagado: `leads_anonimizar_perdidos()` zera nome, contato, criança e texto das interações; etapa, origem e datas ficam para o funil. Cron `leads-anonimizar-perdidos-job` (diário). Pedido do titular: a Gestão exclui o lead de vez (cascata em interações, visitas e fila). |
 
 ## 3. Achado concreto — tabelas legadas com dado morto
 

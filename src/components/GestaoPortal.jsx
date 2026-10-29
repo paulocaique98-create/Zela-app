@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket, Scale, TrendingUp,
 } from 'lucide-react';
-import { ClipboardPen, CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus } from 'lucide-react';
+import { ClipboardPen, CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus, Kanban, CalendarClock, Users as UsersIcon, Filter } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -96,6 +96,7 @@ const Tarefas = lazy(() => import('../tradicional/Tarefas'));
 const GestaoPlanosAula = lazy(() => import('./GestaoPlanosAula'));
 const GestaoBiblioteca = lazy(() => import('./GestaoBiblioteca'));
 const GestaoEstoque = lazy(() => import('./GestaoEstoque'));
+const GestaoCaptacao = lazy(() => import('./GestaoCaptacao'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -130,6 +131,7 @@ function groupOf(tab) {
   if (tab.startsWith('relatorios-')) return 'relatorios';
   if (tab.startsWith('biblioteca-')) return 'biblioteca';
   if (tab.startsWith('estoque-')) return 'estoque';
+  if (tab.startsWith('captacao-')) return 'captacao';
   if (tab.startsWith('permissoes-') || tab.startsWith('config-') || tab === 'integracoes') return 'configuracoes';
   return null;
 }
@@ -375,6 +377,12 @@ export default function GestaoPortal({
               {item('estoque-movimentacoes', ArrowLeftRight, 'Movimentações')}
               {item('estoque-minimo', PackageMinus, 'Abaixo do mínimo')}
             </>)}
+            {group('captacao', 'Captação', Kanban, <>
+              {item('captacao-quadro', Kanban, 'Quadro')}
+              {item('captacao-visitas', CalendarClock, 'Visitas')}
+              {item('captacao-espera', UsersIcon, 'Lista de espera')}
+              {item('captacao-funil', Filter, 'Funil')}
+            </>)}
             {group('relatorios', 'Relatórios', BarChart3, <>
               {item('relatorios-painel', LayoutDashboard, 'Dashboard')}
               {item('relatorios-gestao', BarChart3, 'Gestão')}
@@ -520,6 +528,7 @@ export default function GestaoPortal({
           {/* Comunicação */}
           {abaAtual.startsWith('biblioteca-') && <GestaoBiblioteca currentUser={currentUser} aba={abaAtual} />}
           {abaAtual.startsWith('estoque-') && <GestaoEstoque currentUser={currentUser} aba={abaAtual} />}
+          {abaAtual.startsWith('captacao-') && <GestaoCaptacao currentUser={currentUser} currentSchool={currentSchool} aba={abaAtual} />}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'comunicacao-pesquisas' && <GestaoPesquisas currentUser={currentUser} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
