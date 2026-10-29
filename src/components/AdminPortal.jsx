@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { createPortal } from 'react-dom';
-import { CircleHelp, MonitorCheck, AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3 } from 'lucide-react';
+import { CircleHelp, MonitorCheck, AlertCircle, UserRound, Clock, Bell, ShieldCheck, KeyRound, Users, CalendarDays, Settings, Camera, Smartphone, Home, Folders, FileText, MessageCircle, X, Maximize2, Minimize2, ScrollText, CheckCheck, Loader2, LogOut, Fingerprint, RefreshCw, Briefcase, FileSignature, LayoutTemplate, Receipt, Truck, AlertOctagon, BarChart3, Library } from 'lucide-react';
 import TrilhaConfirmacao from './TrilhaConfirmacao';
 import { supabase } from '../lib/supabase';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -54,6 +54,7 @@ const TourGuiado = lazy(() => import('./TourGuiado'));
 // (Gestão · Permissões).
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
+const GestaoBiblioteca = lazy(() => import('./GestaoBiblioteca'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.CobrancasTab })));
@@ -182,7 +183,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const perms = usePermissions(currentUser);
   const canSeeContratos = perms['contratos.ver'] || perms['contratos.gerenciar'];
   const canSeeDespesas = perms['despesas.ver'] || perms['despesas.gerenciar'];
-  const hasGestaoModules = canSeeContratos || canSeeDespesas || perms['fornecedores.gerenciar'] || perms['financeiro.baixa_manual'] || perms['relatorios.financeiro.ver'];
+  // Biblioteca: módulo ligado (=== true) e permissão liberada pela Gestão.
+  const canSeeBiblioteca = currentSchool?.features_enabled?.biblioteca === true && Boolean(perms['biblioteca.gerenciar']);
+  const hasGestaoModules = canSeeContratos || canSeeDespesas || canSeeBiblioteca || perms['fornecedores.gerenciar'] || perms['financeiro.baixa_manual'] || perms['relatorios.financeiro.ver'];
   // A senha só é exigida pra SAIR do Autoatendimento pra qualquer outro menu
   // (a tela fica exposta pra qualquer pessoa durante o check-in) — não mais
   // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
@@ -341,6 +344,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {perms['financeiro.baixa_manual'] && <SidebarItem active={adminTab === 'gestao-inadimplencia'} icon={AlertOctagon} label="Inadimplência" onClick={() => go('gestao-inadimplencia')} />}
                 {canSeeDespesas && <SidebarItem active={adminTab === 'gestao-despesas'} icon={Receipt} label="Despesas" onClick={() => go('gestao-despesas')} />}
                 {perms['fornecedores.gerenciar'] && <SidebarItem active={adminTab === 'gestao-fornecedores'} icon={Truck} label="Fornecedores" onClick={() => go('gestao-fornecedores')} />}
+                {canSeeBiblioteca && <SidebarItem active={adminTab === 'gestao-biblioteca'} icon={Library} label="Biblioteca" onClick={() => go('gestao-biblioteca')} />}
                 {perms['relatorios.financeiro.ver'] && <SidebarItem active={adminTab === 'gestao-relatorio-financeiro'} icon={BarChart3} label="Relatório Financeiro" onClick={() => go('gestao-relatorio-financeiro')} />}
               </SidebarGroup>
             )}
@@ -409,6 +413,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {adminTab === 'gestao-inadimplencia' && perms['financeiro.baixa_manual'] && (
           <PageShell infoOnMobile description="Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora."><CobrancasTab currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment /></PageShell>
         )}
+        {adminTab === 'gestao-biblioteca' && canSeeBiblioteca && <GestaoBiblioteca currentUser={currentUser} />}
         {adminTab === 'gestao-despesas' && canSeeDespesas && <GestaoDespesas currentUser={currentUser} canManage={Boolean(perms['despesas.gerenciar'])} />}
         {adminTab === 'gestao-fornecedores' && perms['fornecedores.gerenciar'] && <GestaoFornecedores currentUser={currentUser} />}
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}
