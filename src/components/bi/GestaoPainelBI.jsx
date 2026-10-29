@@ -10,6 +10,8 @@ import { atualizarMapaCores } from '../../lib/bi/coresEntidade';
 // Recharts só é baixado quando o painel abre: as abas são lazy.
 const VisaoGeral = lazy(() => import('./abas/VisaoGeral'));
 const Financeiro = lazy(() => import('./abas/Financeiro'));
+const Matriculas = lazy(() => import('./abas/Matriculas'));
+const Frequencia = lazy(() => import('./abas/Frequencia'));
 
 const FILTROS_INICIAIS = { preset: 'este-mes', comparacao: 'nenhuma', inicio: '', fim: '', ...FILTROS_VAZIOS };
 const TELA_DO_DETALHE = {
@@ -27,7 +29,7 @@ function lerFiltros(chave) {
   }
 }
 
-// Painel de indicadores da Gestão (Fase 1.3: Visão geral e Financeiro).
+// Painel de indicadores da Gestão (Fases 1.3 e 1.4: Visão geral, Financeiro, Matrículas e Frequência).
 // A Coordenação (gestao_pedagogica) não vê a aba Financeiro; o banco também barra.
 export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
   const userId = currentUser?.id;
@@ -75,7 +77,12 @@ export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
     setFiltros(f => ({ ...f, turmas: f.turmas.includes(nome) ? f.turmas.filter(t => t !== nome) : [...f.turmas, nome] }));
   }, []);
 
-  const abas = [{ id: 'visao', label: 'Visão geral' }, ...(ehGestao ? [{ id: 'financeiro', label: 'Financeiro' }] : [])];
+  const abas = [
+    { id: 'visao', label: 'Visão geral' },
+    ...(ehGestao ? [{ id: 'financeiro', label: 'Financeiro' }] : []),
+    { id: 'matriculas', label: 'Matrículas' },
+    { id: 'frequencia', label: 'Frequência' },
+  ];
   const abaAtual = abas.some(a => a.id === aba) ? aba : 'visao';
   const hora = atualizadoEm ? new Date(atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : null;
 
@@ -108,6 +115,8 @@ export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
           <Suspense fallback={<Loading />}>
             {abaAtual === 'visao' && <VisaoGeral {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}
             {abaAtual === 'financeiro' && ehGestao && <Financeiro {...propsAba} />}
+            {abaAtual === 'matriculas' && <Matriculas {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}
+            {abaAtual === 'frequencia' && <Frequencia {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}
           </Suspense>
         )}
       </div>

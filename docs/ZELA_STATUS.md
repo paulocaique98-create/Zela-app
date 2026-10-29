@@ -78,3 +78,4 @@
 
 ## Documentos de apoio (ler só se necessário)
 DOCUMENTATION.md, CHANGELOG.md, LGPD_RETENCAO.md, OBSERVABILIDADE.md, METODO_PEDAGOGICO.md, PLANO_*.md.
+- Painel BI Fase 1.4 (28/10, não commitado): abas Matrículas e Frequência (bi_matriculas, bi_frequencia, drill novo) na migration 20261106120000; as migrations 20261105120000 e 20261106120000 foram aplicadas na produção em 29/10 (db push). Testes de RLS/isolamento com rollback ok; vitest src/lib/bi 36/36 e build ok. Fora do painel: funil de matrícula, vagas por turma, datas de saída. Falta conferir no navegador. Próximo: 1.5 (Acadêmico + Operação).
