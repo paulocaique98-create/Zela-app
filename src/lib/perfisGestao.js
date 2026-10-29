@@ -73,6 +73,11 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'estoque-itens',
   'estoque-movimentacoes',
   'estoque-minimo',
+  // Captação
+  'captacao-quadro',
+  'captacao-visitas',
+  'captacao-espera',
+  'captacao-funil',
   // Relatórios sem valores
   'relatorios-painel',
   'relatorios-academico',
@@ -142,6 +147,10 @@ export const MODULO_DA_ABA_GESTAO = {
   'estoque-itens': 'estoque',
   'estoque-movimentacoes': 'estoque',
   'estoque-minimo': 'estoque',
+  'captacao-quadro': 'captacao',
+  'captacao-visitas': 'captacao',
+  'captacao-espera': 'captacao',
+  'captacao-funil': 'captacao',
   'comunicacao-comunicados': 'comunicados',
   'comunicacao-pesquisas': 'avaliacao_institucional',
   calendario: 'calendario',

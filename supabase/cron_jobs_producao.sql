@@ -43,3 +43,9 @@ SELECT cron.schedule('notify-biblioteca-prazos-job', '0 11 * * *', '
       )
     );
   ');
+
+-- Captação (LGPD): anonimiza lead perdido há mais de 12 meses, todo dia às 6h UTC (3h em Brasília).
+-- Chama a função SQL direto (sem HTTP). Mantém etapa, origem e datas para o funil.
+SELECT cron.schedule('leads-anonimizar-perdidos-job', '0 6 * * *', '
+    SELECT public.leads_anonimizar_perdidos();
+  ');

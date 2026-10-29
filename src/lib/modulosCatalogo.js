@@ -234,6 +234,22 @@ export const ITENS = [
     aoDesligar: 'O menu Estoque some. Itens e histórico ficam guardados.',
   },
   {
+    id: 'captacao',
+    grupo: 'adicional',
+    nome: 'Captação de alunos',
+    resumo: 'Funil de interessados, visitas e lista de espera, com formulário público para a escola divulgar.',
+    keys: ['captacao'],
+    inclui: [
+      { nome: 'Quadro', desc: 'Interessados por etapa, do primeiro contato à matrícula, com motivo da perda' },
+      { nome: 'Visitas', desc: 'Agenda de visitas da escola, com presença e falta' },
+      { nome: 'Lista de espera', desc: 'Fila por turma, para interessados e alunos atuais' },
+      { nome: 'Formulário público', desc: 'Link "Quero conhecer a escola", com autorização de contato e proteção contra robôs' },
+      { nome: 'Funil', desc: 'Relatório por etapa e origem, também na aba Matrículas do painel de indicadores' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Captação › Quadro, Visitas, Lista de espera e Funil (Coordenação e Direção também)' }],
+    aoDesligar: 'O menu Captação some e o formulário público para de aceitar pedidos. Interessados e histórico ficam guardados; quem foi perdido há mais de 12 meses continua sendo anonimizado.',
+  },
+  {
     id: 'liveness',
     grupo: 'adicional',
     nome: 'Prova de vida no reconhecimento',

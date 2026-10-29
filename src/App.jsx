@@ -32,6 +32,7 @@ const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const ForcePasswordChange = lazy(() => import('./components/ForcePasswordChange'));
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
 const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
+const PublicLead = lazy(() => import('./components/PublicLead'));
 
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
@@ -1477,6 +1478,11 @@ export default function App() {
   // AdminMatriculas.jsx) — não fica anunciada em lugar nenhum do login.
   if (currentPath === '/matricula-publica') {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><PublicMatricula /></Suspense>;
+  }
+
+  // Formulário público da Captação (item 11): link divulgado pela escola.
+  if (currentPath === '/quero-conhecer') {
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><PublicLead /></Suspense>;
   }
 
   if (!currentUser) {
