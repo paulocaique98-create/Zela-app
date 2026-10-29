@@ -161,6 +161,7 @@ export const AJUDA_GESTAO = [
     id: 'comunicacao',
     titulo: 'Comunicação',
     itens: [
+      { id: 'com-pesquisas', titulo: 'Pesquisas', serve: 'Pesquisas de satisfação para as famílias ou para a equipe, com resultado em gráfico.', faz: ['Crie a pesquisa, escolha quem responde e se é anônima, e publique.', 'Acompanhe a taxa de resposta e os resultados. Pesquisa publicada não se edita: use Duplicar.', 'Em pesquisa anônima, o resultado só aparece com 5 ou mais respostas.'] },
       { id: 'com-comunicados', titulo: 'Comunicados', serve: 'Avisos enviados para as famílias.', faz: ['Escreva o comunicado, escolha quem recebe e envie.'] },
     ],
   },

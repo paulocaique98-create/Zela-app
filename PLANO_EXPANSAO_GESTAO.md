@@ -15,7 +15,7 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 2. Ordem de execução e dependências
 3. ~~Item 1 · Dashboards BI interativo~~ ✅ (detalhado)
 4. Prioridade Baixa: ~~2 Plano de aula~~ ✅ · ~~3 DRE e fluxo de caixa~~ ✅ · ~~4 Biblioteca~~ ✅ · ~~5 Transporte~~ (removido) · ~~6 Estoque~~ ✅
-5. Prioridade Média: 7 Ocorrências · 8 Avaliação institucional · 9 Conciliação completa · 10 Negociação de dívida · 11 Captação (CRM)
+5. Prioridade Média: ~~7 Ocorrências~~ ✅ · ~~8 Avaliação institucional~~ ✅ · 9 Conciliação completa · 10 Negociação de dívida · 11 Captação (CRM)
 6. Prioridade Alta: 12 Histórico escolar · 13 Bolsas · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
 8. Checklist padrão de entrega de cada fase
@@ -128,7 +128,7 @@ Para cada tela nova, **todos** os pontos abaixo (senão a tela fica órfã ou va
 | ~~5~~ | ~~Transporte escolar~~ (removido do plano) | | | | |
 | ~~6~~ ✅ | ~~Estoque~~ | Baixa | M | — | `estoque` |
 | 7 | Ocorrências completas | Média | M | — | `ocorrencias` |
-| 8 | Avaliação institucional | Média | M | 1 (gráficos de resultado) | `avaliacao_institucional` |
+| ~~8~~ ✅ | ~~Avaliação institucional~~ | Média | M | 1 (gráficos de resultado) | `avaliacao_institucional` |
 | 9 | Conciliação bancária completa | Média | M | — | base (financeiro) |
 | 10 | Negociação de dívida | Média | G | 14 pausa a régua durante acordo | base (financeiro) |
 | 11 | Captação de alunos (CRM) | Média | G | 1 (funil) | `captacao` |
@@ -366,7 +366,9 @@ src/lib/bi/
 - **Saúde/acidente:** ligar à ficha médica (mostrar alergias ao registrar).
 - **Testes:** família não lê ocorrência interna; ciência só pelo responsável do aluno.
 
-### Item 8 · Avaliação institucional
+### ~~Item 8 · Avaliação institucional~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261117120000 em produção, implantar a função notify-pesquisa e testar no navegador)
+
+**Feito:** `PesquisaForm`, `GestaoPesquisas`, `PesquisaResultados` (kit do BI), `PesquisaResponder` (Família e Professor), cartão "Pesquisa aberta" na Início, push `notify-pesquisa`. Tudo grava por RPC (`pesquisa_salvar`, `_publicar`, `_encerrar`, `_excluir`, `_responder`); as tabelas de resposta não têm policy. Coordenação e Direção também criam e veem resultados. Em pesquisa anônima abaixo de 5 respostas o conteúdo fica escondido. `survey_participation` guarda só a data e as respostas não têm horário, para nada ligar uma à outra. Fora da v1: público "equipe" é só professora ativa; sem permissões `pesquisas.*`; sem auditoria; família com filhos em turmas diferentes entra no segmento da primeira turma por nome.
 
 **Para que serve:** pesquisas de satisfação para famílias e equipe (NPS, escala, múltipla escolha, texto), com resultado em gráfico.
 

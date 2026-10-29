@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket, Scale, TrendingUp,
 } from 'lucide-react';
-import { CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus } from 'lucide-react';
+import { ClipboardPen, CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -59,6 +59,7 @@ const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
 const GestaoOcorrencias = lazy(() => import('./GestaoOcorrencias'));
+const GestaoPesquisas = lazy(() => import('./GestaoPesquisas'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPainelBI = lazy(() => import('./bi/GestaoPainelBI'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
@@ -361,6 +362,7 @@ export default function GestaoPortal({
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
+              {item('comunicacao-pesquisas', ClipboardPen, 'Pesquisas')}
             </>)}
             {group('biblioteca', 'Biblioteca', Library, <>
               {item('biblioteca-acervo', BookOpen, 'Acervo')}
@@ -518,6 +520,7 @@ export default function GestaoPortal({
           {abaAtual.startsWith('biblioteca-') && <GestaoBiblioteca currentUser={currentUser} aba={abaAtual} />}
           {abaAtual.startsWith('estoque-') && <GestaoEstoque currentUser={currentUser} aba={abaAtual} />}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
+          {abaAtual === 'comunicacao-pesquisas' && <GestaoPesquisas currentUser={currentUser} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Relatórios */}

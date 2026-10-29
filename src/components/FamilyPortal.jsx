@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { CircleHelp, Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet, Library, NotebookPen } from 'lucide-react';
+import { CircleHelp, Home, CalendarDays, Settings, QrCode, Users, HeartPulse, ClipboardList, Folders, FileText, Bell, Image as ImageIcon, UtensilsCrossed, ShieldCheck, X, MessageCircle, Maximize2, Minimize2, BookOpen, Wallet, Library, NotebookPen, ClipboardPen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { useTourGuiado } from '../hooks/useTourGuiado';
@@ -10,6 +10,7 @@ import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import FamilyInicio from './FamilyInicio';
+import { usePesquisasPendentes } from '../hooks/usePesquisasPendentes';
 import FamilyBottomNav from './FamilyBottomNav';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -31,6 +32,7 @@ const FamilyBoletim = lazy(() => import('../tradicional/FamilyBoletim'));
 const FamilyTarefas = lazy(() => import('../tradicional/FamilyTarefas'));
 const FamilyBiblioteca = lazy(() => import('./FamilyBiblioteca'));
 const FamilyOcorrencias = lazy(() => import('./FamilyOcorrencias'));
+const PesquisaResponder = lazy(() => import('./PesquisaResponder'));
 const FamilyChat = lazy(() => import('./FamilyChat'));
 const FamilyHome = lazy(() => import('./FamilyHome'));
 const FamilyHistory = lazy(() => import('./FamilyHistory'));
@@ -193,6 +195,8 @@ export default function FamilyPortal({
   const showTarefas = features.tarefas_tradicional === true && method === 'tradicional';
   const showBiblioteca = features.biblioteca === true;
   const showOcorrencias = features.ocorrencias === true;
+  const showPesquisas = features.avaliacao_institucional === true;
+  const { pendentes: pesquisasPendentes, recarregar: recarregarPesquisas } = usePesquisasPendentes(showPesquisas);
   // Escola Tradicional não tem Mitigação nem Mapa de Habilidades.
   const showRelatorios = features.relatorios_pedagogicos === true && !ocultoNoTradicional(method, 'rel-mitigacao');
   const showChat = features.chat === true;
@@ -233,7 +237,7 @@ export default function FamilyPortal({
             )}
 
             {/* ACADÊMICO */}
-            {(showCalendario || showComunicados || showMural || showCardapio || showDiario || showBoletim || showTarefas || showBiblioteca || showOcorrencias) && (
+            {(showCalendario || showComunicados || showMural || showCardapio || showDiario || showBoletim || showTarefas || showBiblioteca || showOcorrencias || showPesquisas) && (
               <SidebarGroup
                 collapsed={collapsed}
                 label="Acadêmico"
@@ -264,6 +268,9 @@ export default function FamilyPortal({
                 )}
                 {showOcorrencias && (
                   <SidebarItem active={familyTab === 'ocorrencias'} icon={NotebookPen} label="Ocorrências" onClick={() => go('ocorrencias')} />
+                )}
+                {showPesquisas && (
+                  <SidebarItem active={familyTab === 'pesquisas'} icon={ClipboardPen} label="Pesquisas" badge={pesquisasPendentes > 0 ? pesquisasPendentes : null} onClick={() => go('pesquisas')} />
                 )}
                 {showBiblioteca && (
                   <SidebarItem active={familyTab === 'biblioteca'} icon={Library} label="Biblioteca" onClick={() => go('biblioteca')} />
@@ -364,7 +371,7 @@ export default function FamilyPortal({
 
         <PushGuidanceModal guidance={pushData.guidance} onClose={pushData.dismissGuidance} />
 
-        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} />}
+        {familyTab === 'home' && <FamilyInicio currentUser={currentUser} currentSchool={currentSchool} setFamilyTab={setFamilyTab} registerClick={registerClick} clickCounts={clickCounts} unreadNotifications={comunicadosUnread} pesquisasPendentes={pesquisasPendentes} />}
 
         <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>}>
           {/* REUTILIZANDO COMPONENTES EXISTENTES */}
@@ -383,6 +390,7 @@ export default function FamilyPortal({
           {familyTab === 'cardapio' && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {familyTab === 'biblioteca' && showBiblioteca && <FamilyBiblioteca />}
           {familyTab === 'ocorrencias' && showOcorrencias && <FamilyOcorrencias />}
+          {familyTab === 'pesquisas' && showPesquisas && <PesquisaResponder onMudou={recarregarPesquisas} />}
           {familyTab === 'tarefas' && showTarefas &&<FamilyTarefas currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'boletim' && showBoletim && <FamilyBoletim currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}
           {familyTab === 'diario' && <FamilyDiario currentUser={currentUser} currentSchool={currentSchool} familyStudents={familyStudents} />}

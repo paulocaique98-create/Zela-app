@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, UserCheck, History, Bell, UtensilsCrossed, FileText, Image, Heart, Settings, CalendarDays } from 'lucide-react';
+import { Home, UserCheck, History, Bell, UtensilsCrossed, FileText, Image, Heart, Settings, CalendarDays, ClipboardPen } from 'lucide-react';
 import { useMemo } from 'react';
 
-export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0 }) {
+export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts = {}, registerClick = () => {}, unreadNotifications = 0, pesquisasPendentes = 0 }) {
   const features = currentSchool?.features_enabled || {};
 
   const FAMILY_MENUS = [
@@ -55,6 +55,20 @@ export default function FamilyInicio({ currentSchool, setFamilyTab, clickCounts 
           <h1 className="font-serif text-h1-mobile md:text-h1 text-on-surface">Ações rápidas</h1>
           <p className="text-small text-on-surface-variant mt-1">O que você deseja acessar hoje?</p>
         </div>
+
+        {pesquisasPendentes > 0 && (
+          <button
+            type="button"
+            onClick={() => setFamilyTab('pesquisas')}
+            className="w-full mb-6 flex items-center gap-3 p-4 rounded-zela-lg border border-brass bg-brass-50 text-left hover:border-primary transition-colors"
+          >
+            <ClipboardPen size={20} className="text-brass shrink-0" aria-hidden="true" />
+            <span className="text-label text-on-surface">
+              Pesquisa aberta{pesquisasPendentes > 1 ? ` (${pesquisasPendentes})` : ''}
+              <span className="block text-small text-on-surface-variant font-normal">Conte sua opinião para a escola.</span>
+            </span>
+          </button>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {topMenus.map((menu, index) => (

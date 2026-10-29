@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MonitorCheck, ClipboardCheck, FileText } from 'lucide-react';
+import { MonitorCheck, ClipboardCheck, FileText, ClipboardPen } from 'lucide-react';
 
 // Os 5 submenus de Relatórios viram atalhos próprios — quando um menu tem
 // submenu, é o submenu que aparece nos atalhos, nunca o menu-pai sozinho.
@@ -8,7 +8,7 @@ const RELATORIOS_SUBMENU = [
   { key: 'rel-mapa-habilidades', label: 'Mapa de Habilidades' },
 ];
 
-export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, showFrequencia = false, showRelatorios = true }) {
+export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts = {}, registerClick = () => {}, monitorCount = 0, showFrequencia = false, showRelatorios = true, pesquisasPendentes = 0 }) {
   const TEACHER_MENUS = [
     { key: 'monitor', label: 'Monitor', icon: MonitorCheck, tab: 'monitor' },
     ...(showFrequencia ? [{ key: 'frequencia', label: 'Frequência', icon: ClipboardCheck, tab: 'frequencia' }] : []),
@@ -33,6 +33,20 @@ export default function TeacherInicio({ currentUser, setTeacherTab, clickCounts 
           </h1>
           <p className="text-small text-on-surface-variant mt-1">O que você deseja acessar hoje?</p>
         </div>
+
+        {pesquisasPendentes > 0 && (
+          <button
+            type="button"
+            onClick={() => setTeacherTab('pesquisas')}
+            className="w-full mb-6 flex items-center gap-3 p-4 rounded-zela-lg border border-brass bg-brass-50 text-left hover:border-primary transition-colors"
+          >
+            <ClipboardPen size={20} className="text-brass shrink-0" aria-hidden="true" />
+            <span className="text-label text-on-surface">
+              Pesquisa aberta{pesquisasPendentes > 1 ? ` (${pesquisasPendentes})` : ''}
+              <span className="block text-small text-on-surface-variant font-normal">Conte sua opinião para a escola.</span>
+            </span>
+          </button>
+        )}
 
         <div className="grid grid-cols-2 sm:landscape:grid-cols-3 xl:landscape:grid-cols-4 gap-4">
           {topMenus.map((menu) => (

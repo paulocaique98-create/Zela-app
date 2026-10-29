@@ -63,6 +63,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'academico-plano-aula',
   // Comunicação
   'comunicacao-comunicados',
+  'comunicacao-pesquisas',
   'comunicacao-mural',
   // Biblioteca
   'biblioteca-acervo',
@@ -142,6 +143,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'estoque-movimentacoes': 'estoque',
   'estoque-minimo': 'estoque',
   'comunicacao-comunicados': 'comunicados',
+  'comunicacao-pesquisas': 'avaliacao_institucional',
   calendario: 'calendario',
   'presenca-dia': 'checkin',
   'attendance-corrections': 'checkin',
