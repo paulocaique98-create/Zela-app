@@ -94,6 +94,7 @@ export const AJUDA_GESTAO = [
       { id: 'aca-ata', metodos: ['tradicional', 'personalizado'], titulo: 'Ata do conselho', serve: 'Registro das decisões do conselho de classe (método tradicional).', faz: ['Registre e consulte a ata.'] },
       { id: 'aca-promocao', metodos: ['tradicional', 'personalizado'], titulo: 'Promoção de série', serve: 'Passagem dos alunos para a série seguinte (método tradicional).', faz: ['Revise os resultados e confirme a promoção.'] },
       { id: 'aca-tarefas', metodos: ['tradicional', 'personalizado'], titulo: 'Tarefas', serve: 'Tarefas de casa lançadas pelas professoras (método tradicional).', faz: ['Consulte as tarefas por turma.'] },
+      { id: 'aca-plano-aula', titulo: 'Planos de aula', serve: 'Planos de aula enviados pelas professoras, para a Coordenação e a Direção revisarem.', faz: ['Abra a fila Para revisar e leia o plano.', 'Aprove ou devolva com um comentário para a professora.', 'Filtre por turma, professora ou semana.'] },
     ],
   },
   {

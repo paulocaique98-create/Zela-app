@@ -305,7 +305,7 @@ src/lib/bi/
 
 ## 4. Prioridade Baixa
 
-### Item 2 · Plano de aula
+### ~~Item 2 · Plano de aula~~ ✅ (código 2.0 a 2.5 pronto, 29/10; falta deploy da função notify-plano-aula e teste no navegador)
 
 **Para que serve:** a professora planeja as aulas da semana/quinzena; a Coordenação acompanha, aprova ou devolve com comentário.
 

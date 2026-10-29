@@ -85,6 +85,24 @@ export const ITENS = [
     aoDesligar: 'Estrutura acadêmica, Avaliação, Frequência por disciplina, Notas e Diário de classe somem dos menus. O que já foi cadastrado e lançado fica guardado.',
   },
   {
+    // Vale para todos os métodos (Montessori e Tradicional). Nasce desligado e
+    // fora dos pacotes: a escola liga pelo Portal do Dev.
+    id: 'plano_aula',
+    grupo: 'modulo',
+    nome: 'Plano de aula',
+    resumo: 'A professora planeja as aulas do período e a Coordenação aprova ou devolve com comentário.',
+    keys: ['plano_aula'],
+    inclui: [
+      { nome: 'Plano do período', desc: 'Objetivos, conteúdo, metodologia, recursos e avaliação, com anexos' },
+      { nome: 'Revisão', desc: 'Fila Para revisar da Coordenação e Direção, com aprovar ou devolver com comentário' },
+    ],
+    onde: [
+      { portal: 'Professor', menus: 'Acadêmico › Planos de aula' },
+      { portal: 'Gestão', menus: 'Acadêmico › Planos de aula (Coordenação e Direção)' },
+    ],
+    aoDesligar: 'Planos de aula somem dos menus. Os planos já escritos ficam guardados.',
+  },
+  {
     id: 'rotina',
     grupo: 'modulo',
     nome: 'Rotina e família',

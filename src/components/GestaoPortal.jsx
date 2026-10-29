@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
 } from 'lucide-react';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, BookOpenCheck } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -89,6 +89,7 @@ const ConselhoClasse = lazy(() => import('../tradicional/ConselhoClasse'));
 const AtaConselho = lazy(() => import('../tradicional/AtaConselho'));
 const PromocaoSerie = lazy(() => import('../tradicional/PromocaoSerie'));
 const Tarefas = lazy(() => import('../tradicional/Tarefas'));
+const GestaoPlanosAula = lazy(() => import('./GestaoPlanosAula'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -348,6 +349,7 @@ export default function GestaoPortal({
               {item('academico-ata', ClipboardList, 'Ata do conselho')}
               {item('academico-promocao', ArrowUpCircle, 'Promoção de série')}
               {item('academico-tarefas', ClipboardList, 'Tarefas')}
+              {item('academico-plano-aula', BookOpenCheck, 'Planos de aula')}
             </>)}
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
@@ -488,6 +490,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-resultado' && <ConselhoClasse currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-ata' && <AtaConselho currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-tarefas' && <Tarefas currentUser={currentUser} currentSchool={currentSchool} modo="gestao" />}
+          {abaAtual === 'academico-plano-aula' && <GestaoPlanosAula currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-promocao' && <PromocaoSerie currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Comunicação */}

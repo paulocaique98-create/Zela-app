@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Peças visuais compartilhadas pelas telas novas do Portal da Gestão.
@@ -70,8 +71,10 @@ export function Notice({ type = 'error', children }) {
   );
 }
 
+// Renderizado no body para escapar do contexto de empilhamento do portal
+// (senão o Header, z-40, fica por cima do topo do modal).
 export function Modal({ title, onClose, children, footer, wide = false }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink/60" onClick={onClose}>
       <div
         className={`bg-surface-container-lowest rounded-zela-xl border border-outline-variant shadow-lg w-full ${wide ? 'max-w-3xl' : 'max-w-lg'} max-h-[90vh] flex flex-col`}
@@ -84,7 +87,8 @@ export function Modal({ title, onClose, children, footer, wide = false }) {
         <div className="flex-1 overflow-y-auto p-5 space-y-3">{children}</div>
         {footer && <div className="px-5 py-3 border-t border-outline-variant flex justify-end gap-2 shrink-0">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

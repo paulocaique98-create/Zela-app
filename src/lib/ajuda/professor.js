@@ -51,6 +51,12 @@ export const AJUDA_PROFESSOR = [
         faz: ['Crie a tarefa com título, descrição e prazo.', 'Escolha a turma que vai recebê-la.'],
       },
       {
+        id: 'planos-aula',
+        titulo: 'Planos de aula',
+        serve: 'Planejamento semanal das suas turmas, enviado para a Coordenação aprovar ou devolver com comentário.',
+        faz: ['Crie o plano da semana e salve como rascunho.', 'Anexe arquivos, se precisar.', 'Envie para revisão. Se voltar devolvido, ajuste e envie de novo.'],
+      },
+      {
         id: 'saidas-pendentes',
         titulo: 'Saídas Pendentes',
         serve: 'Saídas que ainda não foram concluídas, para acompanhar.',
