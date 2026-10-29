@@ -1,5 +1,7 @@
 import { calcularValorDoCiclo, planoDoAluno, procurarPreco, anoDoPreco, mensagemSemPreco, CICLO_MESES } from './planPricing.ts';
 import type { PeriodicidadeDeCobranca } from './planPricing.ts';
+import { bolsaVigenteEm, descontoComBolsas } from './scholarshipDiscount.ts';
+import type { BolsaVigente } from './scholarshipDiscount.ts';
 
 // Criação de uma mensalidade (contrato financeiro + assinatura no Asaas),
 // usada pela criação avulsa (create-financial-contract) e em lote
@@ -157,7 +159,33 @@ export async function criarMensalidade(
     .eq('guardian_id', guardian.id)
     .eq('billing_cycle', billing_cycle)
     .maybeSingle();
-  const discountPercent = Number(discountRow?.discount_percent ?? 0);
+  const descontoFamilia = Number(discountRow?.discount_percent ?? 0);
+
+  // Bolsas vigentes do aluno somam ao desconto da família, respeitando o limite da escola
+  // (item 13). O total fica gravado em discount_percent_applied, então o reajuste em massa
+  // (readjust-contracts) já mantém a bolsa sem mudança.
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [{ data: bolsasRows, error: bolsasError }, { data: escola }] = await Promise.all([
+    adminClient
+      .from('scholarship_grants')
+      .select('percentual, valor_cents, inicio, fim, encerrada_em, scholarship_types(cumulativa)')
+      .eq('school_id', schoolId)
+      .eq('student_id', student_id)
+      .is('encerrada_em', null),
+    adminClient.from('schools').select('scholarship_max_discount_percent').eq('id', schoolId).maybeSingle(),
+  ]);
+  if (bolsasError) throw bolsasError;
+  const bolsas: BolsaVigente[] = (bolsasRows || [])
+    .filter((g: { inicio: string; fim: string | null; encerrada_em: string | null }) => bolsaVigenteEm(g, hoje))
+    .map((g: { percentual: number | null; valor_cents: number | null; scholarship_types: { cumulativa: boolean } | { cumulativa: boolean }[] | null }) => {
+      const tipo = Array.isArray(g.scholarship_types) ? g.scholarship_types[0] : g.scholarship_types;
+      return { percentual: g.percentual, valor_cents: g.valor_cents, cumulativa: tipo?.cumulativa !== false };
+    });
+  const desconto = descontoComBolsas(baseMensal, descontoFamilia, bolsas, Number(escola?.scholarship_max_discount_percent ?? 100));
+  const discountPercent = desconto.total;
+  if (discountPercent >= 100) {
+    throw new MensalidadeError('bolsista', `${student.name} tem bolsa de 100%: não gera cobrança.`);
+  }
   const amountCents = calcularValorDoCiclo(baseMensal, billing_cycle as PeriodicidadeDeCobranca, discountPercent);
   if (!(amountCents > 0)) throw new MensalidadeError('dados_invalidos', 'O valor final da mensalidade ficou zerado.');
 

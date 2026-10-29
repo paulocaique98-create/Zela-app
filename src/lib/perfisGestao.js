@@ -103,7 +103,7 @@ export const ABAS_SO_GESTAO_PEDAGOGICA = new Set([
 export const ABAS_SO_GESTAO = new Set([
   'contratos-lista', 'contratos-modelos', 'contratos-assinaturas', 'contratos-aditivos',
   'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia',
-  'financeiro-recebimentos', 'financeiro-despesas', 'financeiro-dre', 'financeiro-fluxo',
+  'financeiro-recebimentos', 'financeiro-despesas', 'financeiro-dre', 'financeiro-fluxo', 'financeiro-bolsas',
   'horas-extras',
   'historico-geral',
   'cadastros-funcionario-novo', 'cadastros-fornecedor-novo',
@@ -168,6 +168,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'financeiro-despesas': 'financeiro',
   'financeiro-dre': 'financeiro_avancado',
   'financeiro-fluxo': 'financeiro_avancado',
+  'financeiro-bolsas': 'bolsas',
   'relatorios-financeiro': 'financeiro',
   'relatorios-painel': 'bi_dashboards',
   'config-financeiro': 'financeiro',
