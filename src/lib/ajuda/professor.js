@@ -63,6 +63,12 @@ export const AJUDA_PROFESSOR = [
         faz: ['Escolha a turma e o aluno, o tipo e a gravidade.', 'Descreva o que aconteceu e as providências.', 'Marque se a família vê e se precisa dar ciência. Depois de salvar, só a Coordenação edita.'],
       },
       {
+        id: 'pesquisas',
+        titulo: 'Pesquisas',
+        serve: 'Pesquisas de satisfação da escola para a equipe.',
+        faz: ['Quando houver uma pesquisa aberta, ela aparece na Início.', 'Responda uma vez. Se for anônima, a escola não vê quem respondeu.'],
+      },
+      {
         id: 'saidas-pendentes',
         titulo: 'Saídas Pendentes',
         serve: 'Saídas que ainda não foram concluídas, para acompanhar.',

@@ -118,6 +118,12 @@ export const AJUDA_FAMILIA = [
         faz: ['Escolha o aluno e a data para ler o registro.'],
       },
       {
+        id: 'pesquisas',
+        titulo: 'Pesquisas',
+        serve: 'Pesquisas de satisfação da escola, para você dar sua opinião.',
+        faz: ['Quando houver uma pesquisa aberta, ela aparece na Início.', 'Responda uma vez. Se for anônima, a escola não vê quem respondeu.'],
+      },
+      {
         id: 'ocorrencias',
         titulo: 'Ocorrências',
         serve: 'Registros da escola sobre o seu filho que a escola decidiu compartilhar.',

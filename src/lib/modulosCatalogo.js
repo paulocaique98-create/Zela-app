@@ -122,6 +122,25 @@ export const ITENS = [
     aoDesligar: 'Os menus somem e a família deixa de ver. Ocorrências e anexos ficam guardados.',
   },
   {
+    // Nasce desligado e fora dos pacotes: a escola liga pelo Portal do Dev.
+    id: 'avaliacao_institucional',
+    grupo: 'modulo',
+    nome: 'Avaliação institucional',
+    resumo: 'Pesquisas de satisfação para as famílias e para a equipe, com resultado em gráfico.',
+    keys: ['avaliacao_institucional'],
+    inclui: [
+      { nome: 'Pesquisas', desc: 'NPS, escala de 1 a 5, múltipla escolha e texto livre, para todas as famílias, turmas escolhidas ou a equipe' },
+      { nome: 'Resposta anônima', desc: 'O Zela não guarda quem deu cada resposta; resultado por turma só com 5 ou mais respostas' },
+      { nome: 'Resultados', desc: 'Taxa de resposta, gráfico por pergunta, comentários e exportação' },
+    ],
+    onde: [
+      { portal: 'Gestão', menus: 'Comunicação › Pesquisas (Coordenação e Direção)' },
+      { portal: 'Professor', menus: 'Acadêmico › Pesquisas e aviso na Início' },
+      { portal: 'Família', menus: 'Acadêmico › Pesquisas e aviso na Início' },
+    ],
+    aoDesligar: 'Os menus somem e ninguém mais responde. Pesquisas e respostas ficam guardadas.',
+  },
+  {
     id: 'rotina',
     grupo: 'modulo',
     nome: 'Rotina e família',

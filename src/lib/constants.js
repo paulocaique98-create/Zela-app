@@ -119,7 +119,7 @@ export const SCREEN_LABELS = {
   'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Exclusão', 'cadastros-biometria': 'Biometrias', 'cadastros-qualidade-biometria': 'Biometrias', 'cadastros-unificar': 'Biometrias',
   'academico-ano-letivo': 'Ano Letivo', 'academico-frequencia': 'Frequência', 'academico-relatorios': 'Pedagógico', 'academico-mapa-habilidades': 'Mapa de Habilidades',
   'academico-cardapio': 'Cardápio', 'academico-diario': 'Diário', 'academico-materias': 'Matérias/Disciplinas', 'config-meu-plano': 'Meu Plano',
-  'academico-ocorrencias': 'Ocorrências', 'comunicacao-comunicados': 'Comunicados', 'comunicacao-mural': 'Mural de Fotos',
+  'academico-ocorrencias': 'Ocorrências', 'comunicacao-comunicados': 'Comunicados', 'comunicacao-pesquisas': 'Pesquisas', pesquisas: 'Pesquisas', 'comunicacao-mural': 'Mural de Fotos',
   'relatorios-painel': 'Dashboard', 'relatorios-gestao': 'Relatório de Gestão', 'relatorios-financeiro': 'Relatório Financeiro',
   'relatorios-academico': 'Relatório Acadêmico', 'relatorios-operacional': 'Relatório Operacional',
   'permissoes-perfis': 'Perfis e Permissões', 'permissoes-auditoria': 'Auditoria',
