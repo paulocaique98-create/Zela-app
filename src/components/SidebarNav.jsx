@@ -114,6 +114,27 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
     };
   }, [flyoutPos]);
 
+  // Clique fora do menu lateral fecha o grupo aberto (acordeão no menu expandido
+  // ou flyout no recolhido). Clicar em outro item/grupo dentro do menu não conta
+  // como "fora": aí valem os comportamentos de sempre.
+  const onToggleRef = useRef(onToggle);
+  useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
+  const acordeaoAberto = isOpen && !collapsed;
+  useEffect(() => {
+    if (!acordeaoAberto && !flyoutPos) return undefined;
+    const aoClicarFora = (e) => {
+      const alvo = e.target;
+      if (flyoutPos) {
+        if (!panelRef.current?.contains(alvo) && !buttonRef.current?.contains(alvo)) setFlyoutPos(null);
+        return;
+      }
+      const menu = buttonRef.current?.closest('aside');
+      if (menu && !menu.contains(alvo)) onToggleRef.current?.();
+    };
+    document.addEventListener('pointerdown', aoClicarFora);
+    return () => document.removeEventListener('pointerdown', aoClicarFora);
+  }, [acordeaoAberto, flyoutPos]);
+
   const handleClick = () => {
     if (collapsed) {
       if (flyoutPos) {
