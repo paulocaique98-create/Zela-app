@@ -13,7 +13,21 @@ const TITULOS = {
   financeiro_recebido: 'Cobranças recebidas no período',
   financeiro_atraso: 'Cobranças em atraso no período',
   alunos_ativos: 'Alunos ativos',
+  matriculas_novas: 'Matrículas novas no período',
+  frequencia_faltas: 'Alunos com faltas no período',
+  frequencia_abaixo_75: 'Alunos com frequência abaixo de 75%',
 };
+const COLUNAS_FREQUENCIA = [
+  { label: 'Aluno', primary: true, render: r => r.aluno },
+  { label: 'Turma', render: r => r.turma || '·' },
+  { label: 'Faltas', align: 'right', render: r => r.faltas },
+  { label: 'Atrasos', align: 'right', hideOnMobile: true, render: r => r.atrasos },
+  { label: 'Frequência', align: 'right', render: r => `${String(r.frequencia_pct ?? '·').replace('.', ',')}%` },
+];
+const CSV_FREQUENCIA = [
+  { label: 'Aluno', value: 'aluno' }, { label: 'Turma', value: 'turma' }, { label: 'Faltas', value: 'faltas' },
+  { label: 'Atrasos', value: 'atrasos' }, { label: 'Frequência (%)', value: 'frequencia_pct' },
+];
 
 // Lista que forma o número de um KPI. A RPC bi_detalhe devolve no máximo 500 linhas
 // e barra o financeiro para quem não é Gestão.
@@ -27,7 +41,17 @@ export default function BiDrillModal({ aberto, periodo, turmas, chaveCache, onFe
   const financeiro = aberto.indicador.startsWith('financeiro_');
   const linhas = dados?.linhas || [];
 
-  const colunas = financeiro
+  const frequencia = aberto.indicador.startsWith('frequencia_');
+  const novas = aberto.indicador === 'matriculas_novas';
+
+  const colunas = frequencia ? COLUNAS_FREQUENCIA : novas
+    ? [
+      { label: 'Aluno', primary: true, render: r => r.aluno },
+      { label: 'Turma', render: r => r.turma || '·' },
+      { label: 'Turno', render: r => r.turno || '·' },
+      { label: 'Matrícula em', render: r => dataBR(r.entrada) },
+    ]
+    : financeiro
     ? [
       { label: 'Aluno', primary: true, render: r => r.aluno },
       { label: 'Turma', render: r => r.turma || '·' },
@@ -41,7 +65,9 @@ export default function BiDrillModal({ aberto, periodo, turmas, chaveCache, onFe
       { label: 'Turma', render: r => r.turma || '·' },
       { label: 'Turno', render: r => r.turno || '·' },
     ];
-  const colunasCsv = financeiro
+  const colunasCsv = frequencia ? CSV_FREQUENCIA : novas
+    ? [{ label: 'Aluno', value: 'aluno' }, { label: 'Turma', value: 'turma' }, { label: 'Turno', value: 'turno' }, { label: 'Matrícula em', value: r => dataBR(r.entrada) }]
+    : financeiro
     ? [
       { label: 'Aluno', value: 'aluno' }, { label: 'Turma', value: 'turma' }, { label: 'Vencimento', value: r => dataBR(r.due_date) },
       { label: 'Valor (R$)', value: r => (r.amount_cents / 100).toFixed(2).replace('.', ',') },
