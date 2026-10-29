@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket, Scale, TrendingUp,
 } from 'lucide-react';
-import { CircleHelp, BookOpenCheck } from 'lucide-react';
+import { CircleHelp, BookOpenCheck, Library } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -92,6 +92,7 @@ const AtaConselho = lazy(() => import('../tradicional/AtaConselho'));
 const PromocaoSerie = lazy(() => import('../tradicional/PromocaoSerie'));
 const Tarefas = lazy(() => import('../tradicional/Tarefas'));
 const GestaoPlanosAula = lazy(() => import('./GestaoPlanosAula'));
+const GestaoBiblioteca = lazy(() => import('./GestaoBiblioteca'));
 const AdminChat = lazy(() => import('./AdminChat'));
 
 // Abas antigas (guardadas no sessionStorage de quem já usava o portal).
@@ -124,6 +125,7 @@ function groupOf(tab) {
   if (tab === 'comunicacao-mural') return 'academico';
   if (tab.startsWith('comunicacao-')) return 'comunicacao';
   if (tab.startsWith('relatorios-')) return 'relatorios';
+  if (tab.startsWith('biblioteca-')) return 'biblioteca';
   if (tab.startsWith('permissoes-') || tab.startsWith('config-') || tab === 'integracoes') return 'configuracoes';
   return null;
 }
@@ -358,6 +360,11 @@ export default function GestaoPortal({
             {group('comunicacao', 'Comunicação', Megaphone, <>
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
             </>)}
+            {group('biblioteca', 'Biblioteca', Library, <>
+              {item('biblioteca-acervo', BookOpen, 'Acervo')}
+              {item('biblioteca-emprestimos', BookMarked, 'Empréstimos')}
+              {item('biblioteca-atrasados', Clock, 'Atrasados')}
+            </>)}
             {group('relatorios', 'Relatórios', BarChart3, <>
               {item('relatorios-painel', LayoutDashboard, 'Dashboard')}
               {item('relatorios-gestao', BarChart3, 'Gestão')}
@@ -500,6 +507,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-promocao' && <PromocaoSerie currentUser={currentUser} currentSchool={currentSchool} />}
 
           {/* Comunicação */}
+          {abaAtual.startsWith('biblioteca-') && <GestaoBiblioteca currentUser={currentUser} aba={abaAtual} />}
           {abaAtual === 'comunicacao-comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'comunicacao-mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
 

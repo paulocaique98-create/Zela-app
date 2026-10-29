@@ -100,6 +100,12 @@ export const AJUDA_FAMILIA = [
         faz: ['Abra o mural e veja as fotos mais recentes.'],
       },
       {
+        id: 'biblioteca',
+        titulo: 'Biblioteca',
+        serve: 'Livros da biblioteca que seu filho levou e a data de devolução.',
+        faz: ['Veja o que está com seu filho e até quando devolver.', 'Você recebe um aviso um dia antes do prazo e outro se atrasar.'],
+      },
+      {
         id: 'cardapio',
         titulo: 'Cardápio',
         serve: 'O que será servido na escola durante a semana.',

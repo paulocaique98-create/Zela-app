@@ -32,3 +32,15 @@ SELECT cron.schedule('check-attendance-delays-job', '*/5 * * * *', '
       )
     );
   ');
+
+-- Biblioteca: aviso diário às 11h UTC (8h em Brasília), só depois de publicar a
+-- função notify-biblioteca-prazos. Ainda NÃO agendado em produção.
+SELECT cron.schedule('notify-biblioteca-prazos-job', '0 11 * * *', '
+    SELECT net.http_post(
+      url:=''https://orafqopnomdrvwlvxrkz.supabase.co/functions/v1/notify-biblioteca-prazos'',
+      headers:=jsonb_build_object(
+        ''Content-Type'', ''application/json'',
+        ''Authorization'', ''Bearer '' || public.get_cron_secret(''financial_reminders_auth_key'')
+      )
+    );
+  ');
