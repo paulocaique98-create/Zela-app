@@ -176,6 +176,7 @@ export const ITENS = [
     ],
     onde: [
       { portal: 'Gestão', menus: 'Biblioteca › Acervo, Empréstimos e Atrasados (Coordenação e Direção também)' },
+      { portal: 'Recepção', menus: 'Gestão › Biblioteca (acesso completo; a Gestão pode retirar)' },
       { portal: 'Família', menus: 'Biblioteca' },
     ],
     aoDesligar: 'O menu Biblioteca some para a escola e para a família. Acervo e histórico ficam guardados.',

@@ -129,6 +129,18 @@ export const AJUDA_ADMIN = [
         ],
         dica: 'Não está vendo um item? Peça à Gestão para liberar em Perfis e Permissões.',
       },
+      {
+        id: 'biblioteca',
+        titulo: 'Biblioteca',
+        serve: 'Acervo da biblioteca, empréstimos e devoluções. A Recepção tem acesso completo quando a escola contrata o módulo Biblioteca.',
+        faz: [
+          'Acervo: cadastre livros e exemplares (cada um com seu tombo) ou importe a planilha do acervo.',
+          'Empréstimos: digite o tombo, use o leitor de código ou a câmera, escolha o aluno ou funcionário e a data de devolução.',
+          'Devolução: informe o tombo e toque em Devolver este exemplar.',
+          'Atrasados: veja quem está com o livro além do prazo.',
+        ],
+        dica: 'A família recebe um aviso um dia antes do prazo e outro quando atrasa. A Gestão pode retirar este acesso em Perfis e Permissões.',
+      },
     ],
   },
   {
