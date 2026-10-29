@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Upload, Download, HandCoins, Landmark } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Download, HandCoins } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { centsToBRL, formatDateBR, monthRange, parseOFXCredits, downloadCSV } from '../lib/gestaoUtils';
+import { centsToBRL, formatDateBR, monthRange, downloadCSV } from '../lib/gestaoUtils';
+import GestaoExtrato from './GestaoExtrato';
 import { PageShell, Tabs, Loading, EmptyState, Notice, SecondaryButton, ResponsiveTable } from './GestaoShared';
-import { RegistrarPagamentoModal } from './AdminFinanceiro';
 
 const METHOD_LABELS = { pix: 'PIX', boleto: 'Boleto', credit_card: 'Cartão', link: 'Link', cash: 'Dinheiro', transfer: 'Transferência', other: 'Outro' };
 const MANUAL = ['cash', 'transfer', 'other'];
@@ -15,8 +15,8 @@ export default function GestaoRecebimentos({ currentUser }) {
   const [tab, setTab] = useState('recebidos');
   return (
     <PageShell infoOnMobile description="Pagamentos recebidos e conferência com o extrato do banco.">
-      <Tabs tabs={[{ id: 'recebidos', label: 'Recebidos no mês' }, { id: 'conciliar', label: 'Conciliar extrato' }]} active={tab} onChange={setTab} equalOnMobile />
-      {tab === 'recebidos' ? <Recebidos currentUser={currentUser} /> : <Conciliar currentUser={currentUser} />}
+      <Tabs tabs={[{ id: 'recebidos', label: 'Recebidos no mês' }, { id: 'extrato', label: 'Extrato' }]} active={tab} onChange={setTab} equalOnMobile />
+      {tab === 'recebidos' ? <Recebidos currentUser={currentUser} /> : <GestaoExtrato currentUser={currentUser} />}
     </PageShell>
   );
 }
@@ -78,88 +78,6 @@ function Recebidos({ currentUser }) {
             ) },
             { label: 'Valor', align: 'right', className: 'font-bold', render: r => centsToBRL(r.amount_cents) },
           ]}
-        />
-      )}
-    </div>
-  );
-}
-
-function Conciliar({ currentUser }) {
-  const [credits, setCredits] = useState(null);
-  const [openCharges, setOpenCharges] = useState([]);
-  const [paying, setPaying] = useState(null);
-  const [done, setDone] = useState(new Set());
-  const [msg, setMsg] = useState('');
-
-  const loadOpen = useCallback(async () => {
-    const { data } = await supabase.from('financial_charges')
-      .select('id, amount_cents, due_date, status, students:student_id(name)')
-      .eq('school_id', currentUser.school_id).in('status', ['PENDING', 'AWAITING_PAYMENT', 'OVERDUE']);
-    setOpenCharges(data || []);
-  }, [currentUser.school_id]);
-
-  useEffect(() => { loadOpen(); }, [loadOpen]);
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    setMsg('');
-    const parsed = parseOFXCredits(await file.text());
-    setCredits(parsed);
-    if (parsed.length === 0) setMsg('Nenhuma entrada (crédito) encontrada neste extrato.');
-  };
-
-  const candidatesFor = (credit) => openCharges
-    .filter(c => c.amount_cents === credit.amount_cents)
-    .filter(c => !credit.date || Math.abs(new Date(c.due_date) - new Date(credit.date)) <= 20 * 86400000)
-    .sort((a, b) => Math.abs(new Date(a.due_date) - new Date(credit.date)) - Math.abs(new Date(b.due_date) - new Date(credit.date)));
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-on-surface-variant">
-        Envie o extrato do banco no formato OFX (exportado pelo internet banking). Para cada entrada, o Zela Edu sugere a cobrança em aberto de mesmo valor com vencimento próximo; ao confirmar, a baixa é feita e o Asaas é avisado.
-      </p>
-      <label htmlFor="ofx-file" className="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white font-bold rounded-zela-md text-sm cursor-pointer hover:bg-primary-container">
-        <Upload size={15} /> Enviar extrato OFX
-        <input id="ofx-file" type="file" accept=".ofx,.OFX,text/plain" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
-      </label>
-      <Notice type="success">{msg && msg.startsWith('Baixa') ? msg : ''}</Notice>
-      {msg && !msg.startsWith('Baixa') && <p className="text-sm text-on-surface-variant">{msg}</p>}
-      {credits && credits.length > 0 && (
-        <ResponsiveTable
-          rows={credits}
-          columns={[
-            { label: 'Valor', primary: true, render: cr => `${centsToBRL(cr.amount_cents)}, ${formatDateBR(cr.date)}` },
-            { label: 'Descrição no extrato', className: 'text-on-surface-variant', render: cr => cr.memo || '·' },
-            { label: 'Cobrança sugerida', render: cr => {
-              const cands = candidatesFor(cr);
-              if (done.has(cr.id)) return <span className="text-xs font-bold text-success">Baixa feita</span>;
-              if (cands.length === 0) return <span className="text-xs text-on-surface-variant inline-flex items-center gap-1"><Landmark size={12} /> Sem cobrança correspondente</span>;
-              return (
-                <div className="space-y-1">
-                  {cands.slice(0, 3).map(c => (
-                    <button key={c.id} onClick={() => setPaying({ charge: c, credit: cr })} className="block text-left text-xs font-bold text-primary hover:underline">
-                      {c.students?.name || 'Aluno'}, vence {formatDateBR(c.due_date)}
-                    </button>
-                  ))}
-                </div>
-              );
-            } },
-          ]}
-        />
-      )}
-      {paying && (
-        <RegistrarPagamentoModal
-          currentUser={currentUser}
-          charge={paying.charge}
-          presetDate={paying.credit.date}
-          presetAmountCents={paying.credit.amount_cents}
-          onClose={() => setPaying(null)}
-          onDone={() => {
-            setDone(prev => new Set(prev).add(paying.credit.id));
-            setPaying(null);
-            setMsg('Baixa registrada.');
-            loadOpen();
-          }}
         />
       )}
     </div>

@@ -74,6 +74,30 @@ export async function sha256Hex(text) {
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Extrato bancário OFX completo: entradas (valor positivo) e saídas (negativo),
+// período e saldo final (LEDGERBAL), quando o banco informa.
+export function parseOFXStatement(text) {
+  const src = String(text || '');
+  const toDate = (dt) => (dt && dt.length >= 8 ? `${dt.slice(0, 4)}-${dt.slice(4, 6)}-${dt.slice(6, 8)}` : '');
+  const tagIn = (block, name) => {
+    const m = block.match(new RegExp(`<${name}>([^<\\r\\n]*)`, 'i'));
+    return m ? m[1].trim() : '';
+  };
+  const lines = [];
+  for (const block of src.split(/<STMTTRN>/i).slice(1)) {
+    const amount = Number(tagIn(block, 'TRNAMT').replace(',', '.'));
+    if (!Number.isFinite(amount) || amount === 0) continue;
+    const date = toDate(tagIn(block, 'DTPOSTED'));
+    const cents = Math.round(amount * 100);
+    lines.push({ id: tagIn(block, 'FITID') || `${date}-${cents}-${lines.length}`, date, amount_cents: cents, memo: tagIn(block, 'MEMO') || tagIn(block, 'NAME') });
+  }
+  const ledger = src.match(/<LEDGERBAL>([\s\S]*?)(<\/LEDGERBAL>|$)/i);
+  const balAmount = ledger ? Number(tagIn(ledger[1], 'BALAMT').replace(',', '.')) : NaN;
+  const balance = Number.isFinite(balAmount) ? { cents: Math.round(balAmount * 100), date: toDate(tagIn(ledger[1], 'DTASOF')) } : null;
+  const dates = lines.map(l => l.date).filter(Boolean).sort();
+  return { lines, balance, start: dates[0] || toDate(tagIn(src, 'DTSTART')) || null, end: dates[dates.length - 1] || toDate(tagIn(src, 'DTEND')) || null };
+}
+
 // Extrato bancário OFX: só os lançamentos de CRÉDITO (entradas).
 export function parseOFXCredits(text) {
   const out = [];
