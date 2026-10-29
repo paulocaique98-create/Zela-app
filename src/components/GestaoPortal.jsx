@@ -420,6 +420,7 @@ export default function GestaoPortal({
                   key={selectedAlunoId}
                   currentUser={currentUser}
                   studentId={selectedAlunoId}
+                  ocorrenciasAtivas={features.ocorrencias === true}
                   initialTab={alunoIntent?.tab}
                   initialMoveTo={alunoIntent?.moveTo}
                   onBack={() => { setSelectedAlunoId(null); setAlunoIntent(null); }}
@@ -498,7 +499,7 @@ export default function GestaoPortal({
           {abaAtual === 'academico-frequencia' && <AdminFrequencia currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-relatorios' && <AdminMitigacao currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-mapa-habilidades' && <AdminMapaHabilidades currentUser={currentUser} currentSchool={currentSchool} />}
-          {abaAtual === 'academico-ocorrencias' && <GestaoOcorrencias currentUser={currentUser} />}
+          {abaAtual === 'academico-ocorrencias' && <GestaoOcorrencias currentUser={currentUser} ocorrenciasAtivas={features.ocorrencias === true} />}
 
           {abaAtual === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'academico-cardapio' && <AdminCardapio currentUser={currentUser} currentSchool={currentSchool} />}

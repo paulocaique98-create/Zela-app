@@ -77,6 +77,8 @@
 - Método Tradicional Fase 1 (27/10, branch feat/metodo-tradicional-fase-1): migration 20261027120000 (tabelas trad_* com RLS e FKs compostas por school_id) (aplicada na produção em 27/10/2026); tela Gestão › Acadêmico › Estrutura acadêmica (src/tradicional/EstruturaAcademica.jsx), chave estrutura_academica_tradicional. Testes, lint e build ok; RLS e triggers testados no banco local (2 escolas, admin e professores, rollback). Falta testar no navegador com escola Tradicional.
 - Revisar e commitar CLAUDE.md e docs/. Decidir se .scratch/ e .stitch/ (não versionados) entram no .gitignore.
 
+- Expansão da Gestão, item 7 Ocorrências completas (29/10, código pronto): módulo `ocorrencias` (desligado em todas as escolas). Migration 20261115120000_ocorrencias.sql (student_incidents, student_incident_versions, RPCs ocorrencias_minhas, registrar_ciencia_ocorrencia, ocorrencias_alertas_saude, bucket privado incident-files) APLICADA em produção em 29/10 e função notify-ocorrencia implantada. Preço provisório R$ 1,50 por aluno na migration 20261116120000_ocorrencias_preco.sql (aplicada só no local; produção pendente; o usuário ajusta depois). Testes: src/test/ocorrencias.test.js 13/13 no Supabase local, lib e suíte filtrada 384 ok, build ok. Telas: TeacherOcorrencias, FamilyOcorrencias, GestaoOcorrencias, aba no perfil do aluno. Falta só o teste no navegador com o módulo ligado numa escola de teste.
+
 ## Ordem de execução
 - Blocos A a F e lista de passos em docs/ORDEM_EXECUCAO.md (15/10). Início de sessão: ler esse arquivo, pegar o próximo bloco não marcado.
 

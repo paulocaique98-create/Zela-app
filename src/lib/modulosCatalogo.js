@@ -103,6 +103,25 @@ export const ITENS = [
     aoDesligar: 'Planos de aula somem dos menus. Os planos já escritos ficam guardados.',
   },
   {
+    // Nasce desligado e fora dos pacotes: a escola liga pelo Portal do Dev.
+    id: 'ocorrencias',
+    grupo: 'modulo',
+    nome: 'Ocorrências completas',
+    resumo: 'Registro de ocorrências do aluno, com gravidade, providências e ciência da família.',
+    keys: ['ocorrencias'],
+    inclui: [
+      { nome: 'Registro pela professora', desc: 'Comportamento, saúde, acidente, disciplinar, elogio, com anexos e alerta da ficha médica' },
+      { nome: 'Linha do tempo da Gestão', desc: 'Filtros por tipo, gravidade e turma, edição com histórico de versões e medida disciplinar' },
+      { nome: 'Ciência da família', desc: 'Push e confirmação pelo responsável; ocorrência interna nunca aparece para a família' },
+    ],
+    onde: [
+      { portal: 'Professor', menus: 'Acadêmico › Ocorrências' },
+      { portal: 'Gestão', menus: 'Acadêmico › Ocorrências e aba Ocorrências no perfil do aluno (Coordenação e Direção)' },
+      { portal: 'Família', menus: 'Acadêmico › Ocorrências' },
+    ],
+    aoDesligar: 'Os menus somem e a família deixa de ver. Ocorrências e anexos ficam guardados.',
+  },
+  {
     id: 'rotina',
     grupo: 'modulo',
     nome: 'Rotina e família',

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, Pencil, Check, X, LogOut, Upload, Download, Trash2, ArrowRightLeft, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Users, ShieldCheck, FileText, Wallet, FolderOpen, History, NotebookPen, Plus, Pencil, Check, X, LogOut, Upload, Download, Trash2, ArrowRightLeft, Lightbulb } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
 import { logAction } from '../lib/auditLog';
 import { perfilDasTurmas, sugerirTurma, formatIdade, idadeEmMeses, MOTIVOS_MUDANCA_TURMA } from '../lib/sugestaoTurma';
-import { recursosDoPerfil } from '../lib/perfisGestao';
+import { recursosDoPerfil, usaPortalGestao } from '../lib/perfisGestao';
+import OcorrenciaForm from './OcorrenciaForm';
+import OcorrenciaCard from './OcorrenciaCard';
+import { listarOcorrencias } from '../lib/ocorrencias';
 import CondicaoFinanceiraFamilia from './CondicaoFinanceiraFamilia';
 import { CICLOS_DE_HORAS, TURNOS, normalizarTurno, normalizarCiclo } from '../../supabase/functions/_shared/planPricing.ts';
 
@@ -16,6 +19,7 @@ const TABS = [
   { key: 'matricula', label: 'Matrícula', icon: FileText },
   { key: 'financeiro', label: 'Financeiro', icon: Wallet },
   { key: 'documentos', label: 'Documentos', icon: FolderOpen },
+  { key: 'ocorrencias', label: 'Ocorrências', icon: NotebookPen },
   { key: 'historico', label: 'Histórico', icon: History },
 ];
 
@@ -64,11 +68,22 @@ const CHARGE_STATUS_LABELS = { PENDING: 'Pendente', PAID: 'Pago', OVERDUE: 'Em a
 // 20260927b_secretaria_gestao_escreve_alunos.sql.
 // initialTab/initialMoveTo: vindo do cartão "Hora de mudar de turma?" do
 // painel de Alunos, abre direto na Matrícula com a mudança já preenchida.
-export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, initialTab = 'pessoais', initialMoveTo = null }) {
+export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, initialTab = 'pessoais', initialMoveTo = null, ocorrenciasAtivas = false }) {
   // Coordenação e Direção (29/09/2026): sem a aba Financeiro e sem escolher
   // quem paga (veem quem é o responsável financeiro, só leitura).
   const recursos = recursosDoPerfil(currentUser?.role);
-  const abas = TABS.filter(t => t.key !== 'financeiro' || recursos.financeiro);
+  // Ocorrências: módulo ligado e perfil da Gestão (a Recepção não vê; o banco também barra).
+  const verOcorrencias = ocorrenciasAtivas && usaPortalGestao(currentUser?.role);
+  const abas = TABS.filter(t => (t.key !== 'financeiro' || recursos.financeiro) && (t.key !== 'ocorrencias' || verOcorrencias));
+  const [ocorrencias, setOcorrencias] = useState(null);
+  const [formOcorrencia, setFormOcorrencia] = useState(null);
+  const [recargaOcorrencias, setRecargaOcorrencias] = useState(0);
+  useEffect(() => {
+    if (!verOcorrencias || activeTab !== 'ocorrencias') return;
+    let ativo = true;
+    listarOcorrencias(currentUser.school_id, { studentId }).then(l => { if (ativo) setOcorrencias(l); }).catch(() => { if (ativo) setOcorrencias([]); });
+    return () => { ativo = false; };
+  }, [verOcorrencias, activeTab, studentId, currentUser?.school_id, recargaOcorrencias]);
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isLoading, setIsLoading] = useState(true);
@@ -771,6 +786,34 @@ export default function GestaoAlunoPerfil({ currentUser, studentId, onBack, init
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'ocorrencias' && verOcorrencias && (
+          <div className="max-w-2xl space-y-3">
+            <button onClick={() => setFormOcorrencia({ inicial: null })} className="flex items-center gap-1.5 text-sm font-bold text-white bg-primary hover:bg-primary-container px-3.5 py-2 rounded-zela-md">
+              <Plus size={15} /> Nova ocorrência
+            </button>
+            {ocorrencias === null ? <Loader2 className="animate-spin text-primary" size={20} /> : ocorrencias.length === 0 ? (
+              <EmptyState text="Nenhuma ocorrência registrada para este aluno." />
+            ) : (
+              <ul className="space-y-2">
+                {ocorrencias.map(o => (
+                  <OcorrenciaCard key={o.id} o={o} schoolId={currentUser.school_id} mostrarAluno={false} comAnexos comVersoes onEditar={(x) => setFormOcorrencia({ inicial: x })} />
+                ))}
+              </ul>
+            )}
+            {formOcorrencia && (
+              <OcorrenciaForm
+                currentUser={currentUser}
+                schoolId={currentUser.school_id}
+                alunoFixo={{ id: student.id, name: student.name, turma: student.turma }}
+                podeMedida
+                inicial={formOcorrencia.inicial}
+                onClose={() => setFormOcorrencia(null)}
+                onSaved={() => { setFormOcorrencia(null); setRecargaOcorrencias(n => n + 1); }}
+              />
+            )}
           </div>
         )}
 
