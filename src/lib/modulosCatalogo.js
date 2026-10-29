@@ -164,6 +164,23 @@ export const ITENS = [
     aoDesligar: 'Os itens DRE e Fluxo de caixa somem do menu. Nada é apagado.',
   },
   {
+    id: 'biblioteca',
+    grupo: 'adicional',
+    nome: 'Biblioteca',
+    resumo: 'Acervo, empréstimos e atrasos de livros para alunos e equipe.',
+    keys: ['biblioteca'],
+    inclui: [
+      { nome: 'Acervo', desc: 'Livros e exemplares com tombo, importação por planilha e leitura de código' },
+      { nome: 'Empréstimos', desc: 'Empréstimo e devolução para aluno ou funcionário, com prazo e atrasados' },
+      { nome: 'Aviso à família', desc: 'Push um dia antes do prazo e no atraso' },
+    ],
+    onde: [
+      { portal: 'Gestão', menus: 'Biblioteca › Acervo, Empréstimos e Atrasados (Coordenação e Direção também)' },
+      { portal: 'Família', menus: 'Biblioteca' },
+    ],
+    aoDesligar: 'O menu Biblioteca some para a escola e para a família. Acervo e histórico ficam guardados.',
+  },
+  {
     id: 'liveness',
     grupo: 'adicional',
     nome: 'Prova de vida no reconhecimento',

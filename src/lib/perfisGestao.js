@@ -64,6 +64,10 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   // Comunicação
   'comunicacao-comunicados',
   'comunicacao-mural',
+  // Biblioteca
+  'biblioteca-acervo',
+  'biblioteca-emprestimos',
+  'biblioteca-atrasados',
   // Relatórios sem valores
   'relatorios-painel',
   'relatorios-academico',
@@ -127,6 +131,9 @@ export const MODULO_DA_ABA_GESTAO = {
   'academico-cardapio': 'cardapio',
   'academico-diario': 'diario',
   'comunicacao-mural': 'mural',
+  'biblioteca-acervo': 'biblioteca',
+  'biblioteca-emprestimos': 'biblioteca',
+  'biblioteca-atrasados': 'biblioteca',
   'comunicacao-comunicados': 'comunicados',
   calendario: 'calendario',
   'presenca-dia': 'checkin',

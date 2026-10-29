@@ -37,6 +37,15 @@ export const AJUDA_GESTAO = [
     ],
   },
   {
+    id: 'biblioteca',
+    titulo: 'Biblioteca',
+    itens: [
+      { id: 'bib-acervo', titulo: 'Acervo', serve: 'Livros da escola e os exemplares de cada um, com tombo único.', faz: ['Cadastre o livro e depois os exemplares, cada um com seu tombo.', 'Para muitos livros de uma vez, baixe o modelo da planilha, preencha uma linha por exemplar e importe.', 'Dê baixa em exemplar perdido ou danificado. O histórico fica guardado.'], dica: 'Módulo adicional Biblioteca. A capa fica em armazenamento privado.' },
+      { id: 'bib-emprestimos', titulo: 'Empréstimos', serve: 'Registra quem levou cada livro e até quando.', faz: ['Digite o tombo, use o leitor de código ou a câmera.', 'Escolha o aluno ou o funcionário e a data de devolução.', 'Na devolução, informe o mesmo tombo e toque em Devolver este exemplar.'], dica: 'A família recebe um aviso um dia antes do prazo e outro quando atrasa.' },
+      { id: 'bib-atrasados', titulo: 'Atrasados', serve: 'Livros que passaram do prazo, do mais antigo para o mais recente.', faz: ['Consulte quem está com o livro e há quantos dias.', 'Registre a devolução assim que o livro voltar.'] },
+    ],
+  },
+  {
     id: 'presenca',
     titulo: 'Check-in/out',
     itens: [
