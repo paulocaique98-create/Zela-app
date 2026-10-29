@@ -37,7 +37,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
         em vez de uma separação de verdade (essa separação existe, só que
         recriada como borda no topo do CONTEÚDO de cada portal, não da
         sidebar -- ver AdminPortal/FamilyPortal/TeacherPortal/DeveloperLayout). */}
-    <nav className={`${isDev ? 'bg-dev-bg' : (flush ? 'bg-ink text-ink-text' : 'bg-surface')} border-b sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center h-[60px] md:h-16 ${isDev ? 'border-transparent' : (flush ? 'border-transparent' : 'border-outline-variant')}`}>
+    <nav className={`${isDev ? 'bg-dev-bg' : (flush ? 'bg-ink text-ink-text' : 'bg-surface')} border-b sticky top-0 z-40 px-4 md:px-6 flex justify-between items-center h-[60px] md:h-14 ${isDev ? 'border-transparent' : (flush ? 'border-transparent' : 'border-outline-variant')}`}>
 
       {/* ESQUERDA: MENU HAMBURGUER (mobile/tablet) + ZELA PORTAL */}
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">

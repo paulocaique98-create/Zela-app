@@ -271,7 +271,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-14 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-3.5rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -568,7 +568,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             {/* Faixa superior: nome da escola + engrenagem de configurações
                 (cadastrar foto de responsáveis, e agora também Sair — o
                 botão de sair do Header não existe mais nesta tela) */}
-            <div className="flex items-center justify-between px-5 sm:px-8 h-[60px] md:h-16 bg-ink text-ink-text shrink-0">
+            <div className="flex items-center justify-between px-5 sm:px-8 h-[60px] md:h-14 bg-ink text-ink-text shrink-0">
               <span className="text-sm sm:text-base font-semibold text-white truncate pr-3">
                 Zela Edu
               </span>

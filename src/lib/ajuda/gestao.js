@@ -8,13 +8,7 @@ export const AJUDA_GESTAO = [
       { id: 'inicio-home', titulo: 'Início', serve: 'Tela de abertura com os atalhos dos menus que você mais usa.', faz: ['Toque em um card para abrir o menu. Os mais usados sobem para o começo.'] },
       { id: 'primeiros-passos', titulo: 'Primeiros passos', serve: 'O que falta para a escola começar a usar o Zela Edu.', faz: ['Siga a lista na ordem e abra cada passo pelo botão ao lado.', 'Conclua os passos para a escola ficar pronta.'] },
       { id: 'pendencias', titulo: 'Pendências', serve: 'Reúne o que espera uma decisão da Gestão: cadastros para aprovar e correções de presença.', faz: ['Abra cada pendência e aprove ou recuse.'], dica: 'O número no menu soma tudo o que está aguardando você.' },
-    ],
-  },
-  {
-    id: 'secretaria',
-    titulo: 'Secretaria',
-    itens: [
-      { id: 'sec-documentos', titulo: 'Doc. Pendentes', serve: 'Mostra os documentos que ainda faltam em cada cadastro.', faz: ['Veja quem tem documento pendente e cobre a família.'] },
+      { id: 'sec-documentos', titulo: 'Documentos pendentes', serve: 'Mostra os documentos que ainda faltam em cada cadastro. Abre pelo botão Ver lista, na seção Acompanhar das Pendências.', faz: ['Veja quem tem documento pendente e cobre a família.', 'Use Voltar às pendências para retornar.'] },
     ],
   },
   {
@@ -125,7 +119,7 @@ export const AJUDA_GESTAO = [
   },
   {
     id: 'guia-montessori',
-    titulo: 'Configurar o método Montessori',
+    titulo: 'Configurar método',
     metodos: ['montessori', 'personalizado'],
     itens: [
       {
@@ -153,6 +147,7 @@ export const AJUDA_GESTAO = [
     id: 'relatorios',
     titulo: 'Relatórios',
     itens: [
+      { id: 'rel-painel', titulo: 'Dashboard', serve: 'Gráficos interativos da escola em abas: Visão geral, Financeiro, Matrículas, Frequência, Acadêmico e Operação. A Coordenação vê tudo, menos os valores em reais.', faz: ['Escolha o período e os filtros no topo.', 'Toque em um gráfico para ver os alunos ou lançamentos por trás do número.', 'Use Exportar planilha ou Imprimir para levar os dados.'], dica: 'Módulo adicional, incluso no pacote Completo Volume.' },
       { id: 'rel-gestao', titulo: 'Gestão', serve: 'Relatórios gerais da escola.', faz: ['Escolha o relatório e o período.'] },
       { id: 'rel-financeiro', titulo: 'Financeiro', serve: 'Relatórios de receitas, despesas e inadimplência.', faz: ['Escolha o período para ver os números.'] },
       { id: 'rel-academico', titulo: 'Acadêmico', serve: 'Relatórios de notas, frequência e desempenho.', faz: ['Escolha a turma e o período.'] },

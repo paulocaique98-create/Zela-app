@@ -8,13 +8,13 @@ import { Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // infoOnMobile: no celular a faixa das ações não aparece; o
 // conteúdo começa logo abaixo do Header, igual à tela de Pendências.
-export function PageShell({ infoOnMobile = false, afterInfo = null, actions, children }) {
+export function PageShell({ infoOnMobile = false, afterInfo = null, actions, actionsFull = false, children }) {
   return (
     <div className="h-full -m-3 sm:m-0 flex flex-col bg-surface overflow-hidden">
       {/* A faixa de descrição foi removida por decisão do produto (28/10/2026): só as ações ficam. */}
       {actions && (
         <div className={`${infoOnMobile ? 'hidden sm:flex' : 'flex flex-col pt-4 pb-3 sm:flex'} sm:flex-row sm:items-center justify-end gap-3 px-2.5 md:px-6 sm:pt-4 md:pt-5 sm:pb-3 border-b border-outline-variant shrink-0`}>
-          <div className="flex items-center gap-2 flex-wrap shrink-0">{actions}</div>
+          <div className={`flex items-center gap-2 flex-wrap ${actionsFull ? 'w-full' : 'shrink-0'}`}>{actions}</div>
         </div>
       )}
       <div className="flex-1 overflow-y-auto min-h-0 p-2.5 md:p-6">{afterInfo}{children}</div>
@@ -188,14 +188,15 @@ export function ResponsiveTable({ columns, rows, rowKey = (r) => r.id, rowClassN
 
 // equalOnMobile: no celular as abas dividem a linha em colunas de mesma largura
 // (use com poucas abas).
-export function Tabs({ tabs, active, onChange, equalOnMobile = false }) {
+// `distribuir`: no desktop as abas dividem a largura toda, com o mesmo espaçamento.
+export function Tabs({ tabs, active, onChange, equalOnMobile = false, distribuir = false }) {
   return (
     <div className={`${equalOnMobile ? 'grid sm:flex' : 'flex'} ${equalOnMobile ? 'grid-flow-col auto-cols-fr' : ''} gap-1.5 overflow-x-auto pb-1 mb-4`}>
       {tabs.map(t => (
         <button
           key={t.id}
           onClick={() => onChange(t.id)}
-          className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-semibold transition shrink-0 ${active === t.id ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}
+          className={`whitespace-nowrap px-3.5 py-2 rounded-zela-md text-xs font-semibold transition shrink-0 ${distribuir ? 'md:flex-1' : ''} ${active === t.id ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}
         >
           {t.shortLabel ? <><span className="sm:hidden">{t.shortLabel}</span><span className="hidden sm:inline">{t.label}</span></> : t.label}{t.badge ? ` (${t.badge})` : ''}
         </button>

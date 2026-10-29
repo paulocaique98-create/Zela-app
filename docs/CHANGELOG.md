@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Dashboard (ex Painel de indicadores), Fase 1.6** (29/10): renomeado para Dashboard; ajuda, atalho na Início e impressão limpa; filtros e botões na mesma linha, abas distribuídas no desktop, lista de turmas fecha ao clicar fora. **Documentos pendentes** virou subtela de Pendências (grupo Secretaria removido do menu). Cabeçalho do desktop de 64 para 56 px (menus laterais ajustados). Só frontend, sem banco.
 - **Menu lateral fecha o grupo ao clicar fora** (29/10): no `SidebarGroup` (Gestão, Recepção, Família e Professor), clicar fora do menu fecha o grupo aberto (acordeão ou flyout do menu recolhido). Sem migration.
 - **Painel de indicadores (BI), Fase 1.5** (29/10): abas Acadêmico (bloco do método da escola: média ponderada, recuperação substitui a nota do período) e Operação (entradas e saídas por hora, correções de horário). RPCs `bi_academico` e `bi_operacao` (migration `20261107120000`, só leitura, security invoker, sem valores em R$; aplicada na produção em 29/10). Fora: forma de identificação, tempo até a confirmação, horas extras.
 - **Painel de indicadores (BI), Fase 1.3** (28/10): abas Visão geral e Financeiro (Recharts lazy, filtro cruzado por turma, detalhe via `bi_detalhe`, CSV por gráfico, XLSX da aba), hook `useBiQuery` com cache de 5 min por usuário e escola, item Relatórios › Painel de indicadores e módulo `bi_dashboards` (adicional no Premium, desligado por padrão). Sem migration nova.
