@@ -113,6 +113,7 @@ export const SCREEN_LABELS = {
   'contratos-aditivos': 'Aditivos', contratos: 'Contratos',
   'financeiro-visao': 'Visão Financeira', 'financeiro-planos': 'Planos', 'financeiro-mensalidades': 'Mensalidades', 'financeiro-cobrancas': 'Cobranças',
   'financeiro-inadimplencia': 'Inadimplência', 'financeiro-recebimentos': 'Recebimentos', 'financeiro-despesas': 'Despesas',
+  'financeiro-dre': 'DRE', 'financeiro-fluxo': 'Fluxo de caixa',
   'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Exclusão', 'cadastros-biometria': 'Biometrias', 'cadastros-qualidade-biometria': 'Biometrias', 'cadastros-unificar': 'Biometrias',
   'academico-ano-letivo': 'Ano Letivo', 'academico-frequencia': 'Frequência', 'academico-relatorios': 'Pedagógico', 'academico-mapa-habilidades': 'Mapa de Habilidades',
   'academico-cardapio': 'Cardápio', 'academico-diario': 'Diário', 'academico-materias': 'Matérias/Disciplinas', 'config-meu-plano': 'Meu Plano',

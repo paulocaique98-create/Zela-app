@@ -151,6 +151,19 @@ export const ITENS = [
     aoDesligar: 'O item Dashboard some do menu. Nada é apagado.',
   },
   {
+    id: 'financeiro_avancado',
+    grupo: 'adicional',
+    nome: 'Financeiro avançado',
+    resumo: 'DRE e fluxo de caixa projetado para a Gestão.',
+    keys: ['financeiro_avancado'],
+    inclui: [
+      { nome: 'DRE', desc: 'Receitas, despesas por grupo e resultado por mês, em regime de caixa ou competência' },
+      { nome: 'Fluxo de caixa', desc: 'Saldo projetado por semana para 30, 60 ou 90 dias, com faixa otimista e pessimista' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Financeiro › DRE e Fluxo de caixa (só a Gestão)' }],
+    aoDesligar: 'Os itens DRE e Fluxo de caixa somem do menu. Nada é apagado.',
+  },
+  {
     id: 'liveness',
     grupo: 'adicional',
     nome: 'Prova de vida no reconhecimento',
