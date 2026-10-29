@@ -6,7 +6,7 @@ import {
   Inbox, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
-  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
+  Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket, Scale, TrendingUp,
 } from 'lucide-react';
 import { CircleHelp, BookOpenCheck } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
@@ -54,6 +54,8 @@ const GestaoVisaoFinanceira = lazy(() => import('./GestaoVisaoFinanceira'));
 const GestaoRecebimentos = lazy(() => import('./GestaoRecebimentos'));
 const GestaoPlanos = lazy(() => import('./GestaoPlanos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
+const GestaoDre = lazy(() => import('./GestaoDre'));
+const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
 const GestaoOcorrencias = lazy(() => import('./GestaoOcorrencias'));
@@ -323,6 +325,8 @@ export default function GestaoPortal({
               {showFinanceiro && item('financeiro-inadimplencia', AlertOctagon, 'Inadimplência')}
               {showFinanceiro && item('financeiro-recebimentos', HandCoins, 'Recebimentos')}
               {item('financeiro-despesas', Receipt, 'Despesas')}
+              {chaveLigada(features, 'financeiro_avancado') && item('financeiro-dre', Scale, 'DRE')}
+              {chaveLigada(features, 'financeiro_avancado') && item('financeiro-fluxo', TrendingUp, 'Fluxo de caixa')}
             </>)}
             {showCheckin && group('presenca', 'Check-in/out', Clock, <>
               {item('presenca-dia', UserCheck, 'Presença do Dia')}
@@ -434,6 +438,8 @@ export default function GestaoPortal({
           {abaAtual === 'financeiro-inadimplencia' && shell('Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', <CobrancasTab key="overdue" currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment />)}
           {abaAtual === 'financeiro-recebimentos' && <GestaoRecebimentos currentUser={currentUser} />}
           {abaAtual === 'financeiro-despesas' && <GestaoDespesas currentUser={currentUser} />}
+          {abaAtual === 'financeiro-dre' && <GestaoDre currentUser={currentUser} />}
+          {abaAtual === 'financeiro-fluxo' && <GestaoFluxoCaixa currentUser={currentUser} />}
 
           {/* Presença e Horas */}
           {abaAtual === 'presenca-dia' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}

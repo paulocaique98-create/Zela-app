@@ -32,6 +32,8 @@ export const AJUDA_GESTAO = [
       { id: 'fin-inadimplencia', titulo: 'Inadimplência', serve: 'Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora.', faz: ['Filtre quem está em atraso.', 'Dê baixa manual no que foi pago fora do sistema.'] },
       { id: 'fin-recebimentos', titulo: 'Recebimentos', serve: 'Pagamentos recebidos e conferência com o extrato do banco.', faz: ['Compare os recebimentos com o extrato.'] },
       { id: 'fin-despesas', titulo: 'Despesas', serve: 'Contas a pagar da escola.', faz: ['Cadastre a despesa com fornecedor, valor e vencimento.', 'Marque como paga quando quitar.'] },
+      { id: 'fin-dre', titulo: 'DRE', serve: 'Mostra se a escola teve lucro no período e para onde foi o dinheiro, mês a mês.', faz: ['Escolha o período e o regime: Caixa conta o que foi pago, Competência conta o que venceu.', 'Em Grupos das despesas, defina em qual linha cada categoria entra.', 'Baixe a planilha para levar ao contador.'], dica: 'Ainda não entram taxas do gateway nem descontos e bolsas. Módulo adicional Financeiro avançado.' },
+      { id: 'fin-fluxo', titulo: 'Fluxo de caixa', serve: 'Projeta o saldo da escola semana a semana nos próximos 30, 60 ou 90 dias.', faz: ['Informe o saldo atual em caixa e salve.', 'Veja as faixas esperada, otimista e pessimista.', 'O aviso em dourado aparece quando o saldo esperado fica negativo.'], dica: 'A projeção usa a taxa de recebimento dos últimos 6 meses. Módulo adicional Financeiro avançado.' },
     ],
   },
   {
