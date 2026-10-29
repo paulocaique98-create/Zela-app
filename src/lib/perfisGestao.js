@@ -68,6 +68,10 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'biblioteca-acervo',
   'biblioteca-emprestimos',
   'biblioteca-atrasados',
+  // Estoque
+  'estoque-itens',
+  'estoque-movimentacoes',
+  'estoque-minimo',
   // Relatórios sem valores
   'relatorios-painel',
   'relatorios-academico',
@@ -134,6 +138,9 @@ export const MODULO_DA_ABA_GESTAO = {
   'biblioteca-acervo': 'biblioteca',
   'biblioteca-emprestimos': 'biblioteca',
   'biblioteca-atrasados': 'biblioteca',
+  'estoque-itens': 'estoque',
+  'estoque-movimentacoes': 'estoque',
+  'estoque-minimo': 'estoque',
   'comunicacao-comunicados': 'comunicados',
   calendario: 'calendario',
   'presenca-dia': 'checkin',
