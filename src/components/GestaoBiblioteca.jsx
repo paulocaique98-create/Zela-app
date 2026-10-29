@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, Camera, Download, Plus, ScanLine, Upload } from 'lucide-react';
 import jsQR from 'jsqr';
 import { supabase } from '../lib/supabase';
-import { PageShell, Loading, Notice, EmptyState, Modal, Field, PrimaryButton, SecondaryButton, ResponsiveTable, StatCard, inputCls } from './GestaoShared';
+import { PageShell, Loading, Notice, EmptyState, Modal, Field, PrimaryButton, SecondaryButton, ResponsiveTable, StatCard, Tabs, inputCls } from './GestaoShared';
 import {
   ESTADOS_EXEMPLAR, PRAZO_PADRAO_DIAS, ROTULO_SITUACAO, baixarModeloAcervo, dataBR, hojeISO, isbnValido, lerAcervo,
   normalizarCodigo, normalizarIsbn, situacaoEmprestimo, somarDias, textoBusca,
@@ -11,9 +11,19 @@ import {
 const LIMITE_IMPORTACAO = 500;
 const TOM_SITUACAO = { atrasado: 'text-warning font-semibold', vence_hoje: 'text-warning', em_dia: 'text-on-surface-variant', devolvido: 'text-success' };
 
-// Biblioteca (módulo `biblioteca`). Gestão, Coordenação e Direção. O banco barra
-// o resto (RLS por escola e RPCs library_emprestar e library_devolver).
-export default function GestaoBiblioteca({ currentUser, aba }) {
+const ABAS_INTERNAS = [
+  { id: 'biblioteca-acervo', label: 'Acervo' },
+  { id: 'biblioteca-emprestimos', label: 'Empréstimos' },
+  { id: 'biblioteca-atrasados', label: 'Atrasados' },
+];
+
+// Biblioteca (módulo `biblioteca`). Gestão, Coordenação e Direção (cada aba é um item
+// do menu) e também Recepção e Professora com a permissão biblioteca.gerenciar (sem
+// `aba`, a tela mostra as três abas por dentro). O banco barra o resto (RLS por escola
+// e RPCs library_emprestar e library_devolver).
+export default function GestaoBiblioteca({ currentUser, aba: abaFixa }) {
+  const [abaInterna, setAbaInterna] = useState('biblioteca-acervo');
+  const aba = abaFixa || abaInterna;
   const [itens, setItens] = useState(null);
   const [exemplares, setExemplares] = useState([]);
   const [emprestimos, setEmprestimos] = useState([]);
@@ -35,6 +45,7 @@ export default function GestaoBiblioteca({ currentUser, aba }) {
   }, [schoolId]);
 
   useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { setAviso(''); }, [aba]);
 
   useEffect(() => {
     if (aba === 'biblioteca-acervo') return;
@@ -51,6 +62,7 @@ export default function GestaoBiblioteca({ currentUser, aba }) {
   return (
     <PageShell>
       <div className="space-y-3">
+        {!abaFixa && <Tabs tabs={ABAS_INTERNAS} active={aba} onChange={setAbaInterna} />}
         <Notice type="error">{erro}</Notice>
         <Notice type="success">{aviso}</Notice>
         {itens === null ? <Loading /> : (
