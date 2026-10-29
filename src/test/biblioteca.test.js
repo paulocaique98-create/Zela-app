@@ -52,29 +52,49 @@ const emprestar = (client, copy, aluno, ate) => client.rpc('library_emprestar', 
 });
 
 runIf('Biblioteca · RLS e RPCs', () => {
-  it('Gestão e Coordenação gerenciam; Recepção e Professora só com a permissão; Família nunca', async () => {
+  it('Gestão, Coordenação e Recepção gerenciam por padrão; Professora só com a permissão; Família nunca', async () => {
     const c = await montaCenario();
     try {
-      for (const u of [c.gestao, c.coord]) {
+      for (const u of [c.gestao, c.coord, c.recepcao]) {
         const { data, error } = await u.client.from('library_items').select('id');
         expect(error).toBeNull();
         expect(data.length).toBe(1);
       }
-      for (const u of [c.recepcao, c.prof, c.familia]) {
+      for (const u of [c.prof, c.familia]) {
         const { data } = await u.client.from('library_items').select('id');
         expect(data).toEqual([]);
       }
-      const { error: semPerm } = await emprestar(c.recepcao.client, c.ex1.id, c.aluno.id, c.amanha);
-      expect(semPerm).not.toBeNull();
+      // Recepção cadastra livro, empresta e recebe a devolução sem ajuste da Gestão.
+      const { error: novoLivro } = await c.recepcao.client.from('library_items')
+        .insert({ school_id: c.schoolA, titulo: 'Vitest Livro da Recepcao' });
+      expect(novoLivro).toBeNull();
+      const { data: loanId, error: emp } = await emprestar(c.recepcao.client, c.ex1.id, c.aluno.id, c.amanha);
+      expect(emp).toBeNull();
+      const { error: dev } = await c.recepcao.client.rpc('library_devolver', { p_loan_id: loanId });
+      expect(dev).toBeNull();
 
-      await adminClient.from('school_role_permissions').insert([
-        { school_id: c.schoolA, role: 'admin', permission: 'biblioteca.gerenciar', granted: true },
-        { school_id: c.schoolA, role: 'teacher', permission: 'biblioteca.gerenciar', granted: true },
-      ]);
-      const { data: itensRecepcao } = await c.recepcao.client.from('library_items').select('id');
-      expect(itensRecepcao.length).toBe(1);
+      const { error: semPerm } = await emprestar(c.prof.client, c.ex1.id, c.aluno.id, c.amanha);
+      expect(semPerm).not.toBeNull();
+      await adminClient.from('school_role_permissions').insert({
+        school_id: c.schoolA, role: 'teacher', permission: 'biblioteca.gerenciar', granted: true,
+      });
       const { error: comPerm } = await emprestar(c.prof.client, c.ex1.id, c.aluno.id, c.amanha);
       expect(comPerm).toBeNull();
+    } finally {
+      await c.limpar();
+    }
+  });
+
+  it('a Gestão pode retirar o acesso da Recepção', async () => {
+    const c = await montaCenario();
+    try {
+      await adminClient.from('school_role_permissions').insert({
+        school_id: c.schoolA, role: 'admin', permission: 'biblioteca.gerenciar', granted: false,
+      });
+      const { data } = await c.recepcao.client.from('library_items').select('id');
+      expect(data).toEqual([]);
+      const { error } = await emprestar(c.recepcao.client, c.ex1.id, c.aluno.id, c.amanha);
+      expect(error).not.toBeNull();
     } finally {
       await c.limpar();
     }
