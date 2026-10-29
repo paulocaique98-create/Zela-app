@@ -317,7 +317,7 @@ src/lib/bi/
 - **Testes:** RLS (professora A não vê plano da B), transição de status.
 - **D:** BNCC entra agora ou depois (D4).
 
-### ~~Item 3 · DRE e fluxo de caixa projetado~~ ✅ (código pronto, 29/10; migration 20261109120000 não aplicada em produção; falta navegador)
+### ~~Item 3 · DRE e fluxo de caixa projetado~~ ✅ (código pronto, 29/10; migration 20261109120000 aplicada em produção em 29/10; falta navegador)
 
 **Para que serve:** DRE mostra se a escola teve lucro e onde o dinheiro foi; fluxo de caixa projetado mostra quanto vai ter em caixa nas próximas semanas.
 
