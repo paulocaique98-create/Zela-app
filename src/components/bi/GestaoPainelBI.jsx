@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useStat
 import { RefreshCw, FileSpreadsheet, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageShell, Tabs, Loading, SecondaryButton } from '../GestaoShared';
-import BiFiltros, { FILTROS_VAZIOS } from './BiFiltros';
+import BiFiltros, { BiFiltrosResumo, FILTROS_VAZIOS } from './BiFiltros';
 import BiDrillModal from './BiDrillModal';
 import { resolverPeriodo, periodoDeComparacao, validarPeriodo } from '../../lib/bi/periodos';
 import { atualizarMapaCores } from '../../lib/bi/coresEntidade';
@@ -33,6 +33,18 @@ function lerFiltros(chave) {
 
 // Painel de indicadores da Gestão (Fases 1.3 a 1.5: Visão geral, Financeiro, Matrículas, Frequência, Acadêmico e Operação).
 // A Coordenação (gestao_pedagogica) não vê a aba Financeiro; o banco também barra.
+// Marca o body durante a impressão para o CSS (index.css) esconder o menu e
+// liberar a altura só do painel.
+function imprimir() {
+  const limpar = () => {
+    document.body.classList.remove('imprimindo-bi');
+    window.removeEventListener('afterprint', limpar);
+  };
+  document.body.classList.add('imprimindo-bi');
+  window.addEventListener('afterprint', limpar);
+  window.print();
+}
+
 export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
   const userId = currentUser?.id;
   const schoolId = currentUser?.school_id;
@@ -98,23 +110,25 @@ export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
 
   return (
     <PageShell
+      actionsFull
       actions={(
-        <>
-          {hora && <span className="text-xs text-on-surface-variant">Atualizado às {hora}</span>}
-          <SecondaryButton type="button" onClick={() => setAtualizacao(n => n + 1)}><RefreshCw size={14} /> Atualizar</SecondaryButton>
-          <SecondaryButton type="button" onClick={() => exportRef.current?.()}><FileSpreadsheet size={14} /> Exportar planilha</SecondaryButton>
-          <SecondaryButton type="button" onClick={() => window.print()}><Printer size={14} /> Imprimir</SecondaryButton>
-        </>
+        <div className="w-full flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+          <BiFiltros valor={filtros} opcoes={{ turmas: turmasEscola }} onChange={setFiltros} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <SecondaryButton type="button" onClick={() => setAtualizacao(n => n + 1)}><RefreshCw size={14} /> Atualizar</SecondaryButton>
+            <SecondaryButton type="button" onClick={() => exportRef.current?.()}><FileSpreadsheet size={14} /> Exportar</SecondaryButton>
+            <SecondaryButton type="button" onClick={imprimir}><Printer size={14} /> Imprimir</SecondaryButton>
+          </div>
+        </div>
       )}
     >
-      <div className="space-y-4">
-        <BiFiltros
+      <div className="space-y-4 bi-area-impressao">
+        <BiFiltrosResumo
           valor={filtros}
-          opcoes={{ turmas: turmasEscola }}
           onChange={setFiltros}
           onLimpar={() => setFiltros(f => ({ ...f, ...FILTROS_VAZIOS }))}
         />
-        {abas.length > 1 && <Tabs tabs={abas} active={abaAtual} onChange={setAba} />}
+        {abas.length > 1 && <Tabs tabs={abas} active={abaAtual} onChange={setAba} distribuir />}
         {!erroPeriodo && (
           <Suspense fallback={<Loading />}>
             {abaAtual === 'visao' && <VisaoGeral {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}

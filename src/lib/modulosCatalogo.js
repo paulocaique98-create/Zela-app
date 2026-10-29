@@ -122,15 +122,15 @@ export const ITENS = [
   {
     id: 'bi_dashboards',
     grupo: 'adicional',
-    nome: 'Painel de indicadores',
+    nome: 'Dashboard',
     resumo: 'Gráficos interativos de financeiro e frequência, com filtros, detalhe e exportação.',
     keys: ['bi_dashboards'],
     inclui: [
       { nome: 'Visão geral', desc: 'Alunos, recebido, inadimplência e frequência por turma' },
       { nome: 'Financeiro', desc: 'Previsto x recebido, atraso por faixa, despesas e resultado (só Gestão)' },
     ],
-    onde: [{ portal: 'Gestão', menus: 'Relatórios › Painel de indicadores (a Coordenação vê sem valores em R$)' }],
-    aoDesligar: 'O item Painel de indicadores some do menu. Nada é apagado.',
+    onde: [{ portal: 'Gestão', menus: 'Relatórios › Dashboard (a Coordenação vê sem valores em R$)' }],
+    aoDesligar: 'O item Dashboard some do menu. Nada é apagado.',
   },
   {
     id: 'liveness',

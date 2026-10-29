@@ -3,7 +3,7 @@ import { ABAS_BIOMETRIAS } from './GestaoBiometrias';
 import { createPortal } from 'react-dom';
 import {
   Home, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, UserPlus, Folders, School, Settings,
-  Inbox, FileWarning, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
+  Inbox, FileSignature, FilePlus2, PenLine, LayoutTemplate, PieChart, ReceiptText, AlertOctagon,
   HandCoins, Tag, Receipt, Truck, CalendarDays, BookOpen, CalendarRange, ClipboardList, NotebookPen, Megaphone,
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket,
@@ -113,7 +113,6 @@ const GRUPO_GERENCIAMENTO = ['cadastros-usuarios', 'secretaria-alunos', 'cadastr
 function groupOf(tab) {
   if (GRUPO_CADASTROS.includes(tab)) return 'cadastros';
   if (GRUPO_GERENCIAMENTO.includes(tab) || ABAS_BIOMETRIAS.some(a => a.id === tab)) return 'gerenciamento';
-  if (tab.startsWith('secretaria-')) return 'secretaria';
   if (tab.startsWith('contratos-')) return 'contratos';
   if (tab.startsWith('financeiro-')) return 'financeiro';
   if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras', 'historico-geral'].includes(tab)) return 'presenca';
@@ -248,8 +247,9 @@ export default function GestaoPortal({
     };
   }, [currentUser?.school_id]);
 
-  const item = (tab, icon, label, extra = {}) => (pode(tab) ? (
-    <SidebarItem active={abaAtual === tab} icon={icon} label={label} onClick={() => go(tab)} {...extra} />
+  // `ativo` marca o item também quando a tela aberta é uma subtela dele.
+  const item = (tab, icon, label, { ativo = false, ...extra } = {}) => (pode(tab) ? (
+    <SidebarItem active={abaAtual === tab || ativo} icon={icon} label={label} onClick={() => go(tab)} {...extra} />
   ) : null);
   // Grupo some quando o perfil não vê nenhuma aba dele, ou quando o plano da
   // escola não tem nenhum item do grupo.
@@ -275,7 +275,7 @@ export default function GestaoPortal({
 
       <aside
         data-expanded={isSidebarExpanded}
-        className={`group/side fixed md:sticky top-[60px] md:top-16 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-4rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
+        className={`group/side fixed md:sticky top-[60px] md:top-14 left-0 h-[calc(100dvh-60px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-3.5rem)] w-full md:w-72 shrink-0 z-20 md:z-30 bg-ink border-r border-ink-line transform transition-all duration-300 ease-in-out md:translate-x-0 md:translate-y-0 ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'} ${isSidebarExpanded ? 'md:w-[248px]' : 'md:w-[72px]'}`}
       >
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
@@ -287,7 +287,7 @@ export default function GestaoPortal({
           <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
             {item('home', Home, 'Início')}
             {item('primeiros-passos', Rocket, 'Primeiros passos')}
-            {item('pendencias', Inbox, 'Pendências', { badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
+            {item('pendencias', Inbox, 'Pendências', { ativo: abaAtual === 'secretaria-documentos', badge: pendenciasBadge > 0 ? pendenciasBadge : null })}
             {group('cadastros', 'Cadastros', UserPlus, <>
               {item('cadastros-novo', UserPlus, 'Novo Cadastro')}
               {item('cadastros-funcionario-novo', Users, 'Novo Funcionário')}
@@ -308,9 +308,6 @@ export default function GestaoPortal({
                 <SidebarItem active={ABAS_BIOMETRIAS.some(a => a.id === abaAtual)} icon={ScanFace} label="Biometrias" onClick={() => go('cadastros-qualidade-biometria')} />
               ) : null}
             </>, pendingUsersCount > 0 ? pendingUsersCount : null)}
-            {group('secretaria', 'Secretaria', GraduationCap, <>
-              {item('secretaria-documentos', FileWarning, 'Doc. Pendentes')}
-            </>)}
             {group('contratos', 'Contratos', FileSignature, <>
               {item('contratos-lista', FileSignature, 'Contratos')}
               {item('contratos-modelos', LayoutTemplate, 'Modelos')}
@@ -356,7 +353,7 @@ export default function GestaoPortal({
               {item('comunicacao-comunicados', Megaphone, 'Comunicados')}
             </>)}
             {group('relatorios', 'Relatórios', BarChart3, <>
-              {item('relatorios-painel', LayoutDashboard, 'Painel de indicadores')}
+              {item('relatorios-painel', LayoutDashboard, 'Dashboard')}
               {item('relatorios-gestao', BarChart3, 'Gestão')}
               {item('relatorios-financeiro', Wallet, 'Financeiro')}
               {item('relatorios-academico', BookOpen, 'Acadêmico')}
@@ -419,7 +416,7 @@ export default function GestaoPortal({
             </>
           )}
           {abaAtual === 'secretaria-matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
-          {abaAtual === 'secretaria-documentos' && <GestaoDocumentosPendentes currentUser={currentUser} onOpenAluno={openAluno} />}
+          {abaAtual === 'secretaria-documentos' && <GestaoDocumentosPendentes currentUser={currentUser} onOpenAluno={openAluno} onVoltar={() => go('pendencias')} />}
 
           {/* Contratos */}
           {abaAtual === 'contratos-lista' && <GestaoContratos currentUser={currentUser} currentSchool={currentSchool} view="lista" />}

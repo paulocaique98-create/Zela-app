@@ -209,3 +209,17 @@ h1, h2, h3 {
     bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Impressao do painel de indicadores: so o conteudo do painel, sem menu, e sem
+   as alturas fixas dos ancestrais (que cortariam a pagina em uma folha). */
+@media print {
+  body.imprimindo-bi * { visibility: hidden; }
+  body.imprimindo-bi .bi-area-impressao,
+  body.imprimindo-bi .bi-area-impressao * { visibility: visible; }
+  body.imprimindo-bi .bi-area-impressao { position: absolute; left: 0; top: 0; width: 100%; }
+  body.imprimindo-bi *:has(.bi-area-impressao) {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
