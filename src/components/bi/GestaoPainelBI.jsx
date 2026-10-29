@@ -12,6 +12,8 @@ const VisaoGeral = lazy(() => import('./abas/VisaoGeral'));
 const Financeiro = lazy(() => import('./abas/Financeiro'));
 const Matriculas = lazy(() => import('./abas/Matriculas'));
 const Frequencia = lazy(() => import('./abas/Frequencia'));
+const Academico = lazy(() => import('./abas/Academico'));
+const Operacao = lazy(() => import('./abas/Operacao'));
 
 const FILTROS_INICIAIS = { preset: 'este-mes', comparacao: 'nenhuma', inicio: '', fim: '', ...FILTROS_VAZIOS };
 const TELA_DO_DETALHE = {
@@ -29,7 +31,7 @@ function lerFiltros(chave) {
   }
 }
 
-// Painel de indicadores da Gestão (Fases 1.3 e 1.4: Visão geral, Financeiro, Matrículas e Frequência).
+// Painel de indicadores da Gestão (Fases 1.3 a 1.5: Visão geral, Financeiro, Matrículas, Frequência, Acadêmico e Operação).
 // A Coordenação (gestao_pedagogica) não vê a aba Financeiro; o banco também barra.
 export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
   const userId = currentUser?.id;
@@ -82,6 +84,8 @@ export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
     ...(ehGestao ? [{ id: 'financeiro', label: 'Financeiro' }] : []),
     { id: 'matriculas', label: 'Matrículas' },
     { id: 'frequencia', label: 'Frequência' },
+    { id: 'academico', label: 'Acadêmico' },
+    { id: 'operacao', label: 'Operação' },
   ];
   const abaAtual = abas.some(a => a.id === aba) ? aba : 'visao';
   const hora = atualizadoEm ? new Date(atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : null;
@@ -117,6 +121,8 @@ export default function GestaoPainelBI({ currentUser, setGestaoTab }) {
             {abaAtual === 'financeiro' && ehGestao && <Financeiro {...propsAba} />}
             {abaAtual === 'matriculas' && <Matriculas {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}
             {abaAtual === 'frequencia' && <Frequencia {...propsAba} mapaCores={mapaCores} onFiltrarTurma={alternarTurma} />}
+            {abaAtual === 'academico' && <Academico {...propsAba} mapaCores={mapaCores} />}
+            {abaAtual === 'operacao' && <Operacao {...propsAba} />}
           </Suspense>
         )}
       </div>

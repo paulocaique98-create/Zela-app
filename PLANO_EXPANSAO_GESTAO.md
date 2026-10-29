@@ -294,7 +294,7 @@ src/lib/bi/
 | ~~1.2 Banco~~ ✅ (parcial) | ~~migration das RPCs + índices + teste RLS~~ Feito: `bi_visao_geral`, `bi_financeiro`, `bi_detalhe` (20261105120000, só no banco local, 4 testes ok). Faltam `bi_matriculas`, `bi_frequencia`, `bi_academico`, `bi_operacao` nas fases 1.4 e 1.5; "matrículas novas" vem de `enrollments` | teste de segurança; migration informada, não aplicada |
 | ~~1.3 Visão geral + Financeiro~~ ✅ | abas, filtro cruzado, drill, exportação | teste manual com escola de dados reais em leitura |
 | 1.4 Matrículas + Frequência ✅ | ~~abas, `bi_matriculas`, `bi_frequencia`, drill novo, mapa de calor~~ (20261106120000, aplicada na produção em 29/10, testada com rollback). Fora do painel por falta de dado: solicitações/aprovações de matrícula (funil), vagas por turma (ocupação, vagas livres), datas de saída. Atrasos = registros `atrasado` | idem; falta conferir no navegador |
-| 1.5 Acadêmico + Operação | blocos por método | idem |
+| ~~1.5 Acadêmico + Operação~~ ✅ | ~~blocos por método~~ (20261107120000, aplicada na produção em 29/10, testada no banco local). Fora do painel por falta de dado: forma de identificação (facial, QR, PIN), tempo até a confirmação no monitor, horas extras. Drill dessas abas não feito | idem; conferido no navegador |
 | 1.6 Acabamento | menu, rótulos, perfis, catálogo `bi_dashboards`, ajuda, tour, atalho, impressão | `perfisGestao.test.js`, `modulosCatalogo.test.js` |
 
 **Critérios de aceite:** cada número do painel bate com a tela operacional correspondente no mesmo período; nenhuma requisição sem `school_id`; Coordenação não recebe nenhum valor em R$ (conferido na aba Rede do navegador); primeira aba carrega em menos de 2 s com 12 meses; nada vaza para fora do cartão em 360px.
