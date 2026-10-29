@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList } from 'lucide-react';
+import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList, BookOpenCheck } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import LoadingLogo from './LoadingLogo';
 import { useMenuClicks } from '../hooks/useMenuClicks';
@@ -30,6 +30,7 @@ const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu'));
 const LancamentoNotas = lazy(() => import('../tradicional/LancamentoNotas'));
 const DiarioClasse = lazy(() => import('../tradicional/DiarioClasse'));
 const Tarefas = lazy(() => import('../tradicional/Tarefas'));
+const TeacherPlanosAula = lazy(() => import('./TeacherPlanosAula'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -84,7 +85,9 @@ export default function TeacherPortal({
     && !ocultoPorFaltaDeMetodo(method, 'academico-frequencia-turma');
   const showTarefas = currentSchool?.features_enabled?.tarefas_tradicional === true
     && !ocultoPorFaltaDeMetodo(method, 'academico-tarefas');
-  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse || showTarefas;
+  // Plano de aula vale para os dois métodos; chave própria (=== true).
+  const showPlanoAula = currentSchool?.features_enabled?.plano_aula === true;
+  const moduleEnabled = relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse || showTarefas || showPlanoAula;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -149,7 +152,7 @@ export default function TeacherPortal({
             {showSaidasPendentes && (
               <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
             )}
-            {(showDiario || showCardapio || showMural) && (
+            {(showDiario || showCardapio || showMural || showPlanoAula) && (
               <SidebarGroup
                 collapsed={collapsed}
                 label="Acadêmico"
@@ -157,6 +160,9 @@ export default function TeacherPortal({
                 isOpen={openAccordion === 'academico'}
                 onToggle={() => toggleAccordion('academico')}
               >
+                {showPlanoAula && (
+                  <SidebarItem active={teacherTab === 'planos-aula'} icon={BookOpenCheck} label="Planos de aula" onClick={() => go('planos-aula')} />
+                )}
                 {showDiario && (
                   <SidebarItem active={teacherTab === 'diario'} icon={Soup} label="Diário" onClick={() => go('diario')} />
                 )}
@@ -206,6 +212,7 @@ export default function TeacherPortal({
           {teacherTab === 'diario-classe' && showDiarioClasse && <DiarioClasse currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'tarefas' && showTarefas && <Tarefas currentUser={currentUser} currentSchool={currentSchool} modo="professor" />}
           {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
+          {teacherTab === 'planos-aula' && showPlanoAula && <TeacherPlanosAula currentUser={currentUser} currentSchool={currentSchool} method={method} />}
           {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'mural-fotos' && showMural && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
