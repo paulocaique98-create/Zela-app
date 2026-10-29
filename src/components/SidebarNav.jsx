@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
 
@@ -74,8 +74,17 @@ export function SidebarLogoutItem({ onLogout, dev = false }) {
 // num novo escopo de grupo nomeado (`group/side` + `data-expanded="true"`)
 // pra que os SidebarItem filhos mostrem o rótulo normalmente ali dentro,
 // mesmo com a sidebar de verdade recolhida.
+// Só um flyout aberto por vez: abrir outro (passando o mouse em outro grupo)
+// fecha o anterior na hora, sem esperar o atraso de saída.
+let fecharFlyoutAtivo = null;
+// Folga entre a borda do menu lateral e o painel de submenus.
+const FLYOUT_GAP = 2;
+// Atraso para fechar ao tirar o mouse, para dar tempo de atravessar a folga.
+const FLYOUT_CLOSE_DELAY_MS = 150;
+
 export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, collapsed, children }) {
   const buttonRef = useRef(null);
+  const closeTimerRef = useRef(null);
   const panelRef = useRef(null);
   const [flyoutPos, setFlyoutPos] = useState(null);
   // Posição final só é calculada depois do 1º render do painel (precisa da
@@ -87,6 +96,22 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
   useEffect(() => {
     if (!collapsed) setFlyoutPos(null);
   }, [collapsed]);
+
+  // Funções estáveis (useCallback) porque fecharFlyoutAtivo compara por identidade.
+  const cancelarFechamento = useCallback(() => {
+    clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  }, []);
+  const fecharEste = useCallback(() => {
+    clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+    setFlyoutPos(null);
+    if (fecharFlyoutAtivo === fecharEste) fecharFlyoutAtivo = null;
+  }, []);
+  useEffect(() => () => {
+    clearTimeout(closeTimerRef.current);
+    if (fecharFlyoutAtivo === fecharEste) fecharFlyoutAtivo = null;
+  }, [fecharEste]);
 
   useLayoutEffect(() => {
     if (!flyoutPos || !panelRef.current) {
@@ -135,14 +160,30 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
     return () => document.removeEventListener('pointerdown', aoClicarFora);
   }, [acordeaoAberto, flyoutPos]);
 
+  // Menu recolhido: abre o painel ao lado do menu lateral (borda direita do
+  // <aside> mais a folga), alinhado ao topo do ícone.
+  const abrirFlyout = () => {
+    cancelarFechamento();
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    if (fecharFlyoutAtivo && fecharFlyoutAtivo !== fecharEste) fecharFlyoutAtivo();
+    fecharFlyoutAtivo = fecharEste;
+    const aside = buttonRef.current.closest('aside');
+    const borda = aside ? aside.getBoundingClientRect().right : rect.right;
+    setFlyoutPos({ top: rect.top, left: borda + FLYOUT_GAP });
+  };
+  const agendarFechamento = () => {
+    cancelarFechamento();
+    closeTimerRef.current = setTimeout(fecharEste, FLYOUT_CLOSE_DELAY_MS);
+  };
+  // Hover só em mouse (em toque não existe); o clique continua abrindo.
+  const aoEntrar = () => {
+    if (collapsed && window.matchMedia?.('(hover: hover)').matches) abrirFlyout();
+  };
+
   const handleClick = () => {
     if (collapsed) {
-      if (flyoutPos) {
-        setFlyoutPos(null);
-        return;
-      }
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (rect) setFlyoutPos({ top: rect.top, left: rect.right + 8 });
+      abrirFlyout();
       return;
     }
     onToggle();
@@ -153,6 +194,8 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
       <button
         ref={buttonRef}
         onClick={handleClick}
+        onMouseEnter={aoEntrar}
+        onMouseLeave={() => { if (collapsed) agendarFechamento(); }}
         className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] border-transparent text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isOpen || flyoutPos ? 'text-white bg-ink-2' : 'text-ink-text hover:bg-ink-2 hover:text-white'}`}
       >
         <span className="relative shrink-0">
@@ -175,9 +218,10 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
       </div>
       {collapsed && flyoutPos ? createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setFlyoutPos(null)} />
           <div
             ref={panelRef}
+            onMouseEnter={cancelarFechamento}
+            onMouseLeave={agendarFechamento}
             className="group/side fixed z-50 min-w-[200px] bg-ink-2 border border-ink-line rounded-zela-md shadow-md py-2 overflow-y-auto"
             data-expanded="true"
             style={{
@@ -188,7 +232,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
             }}
           >
             <p className="px-4 pb-1 text-xs font-semibold text-ink-text">{label}</p>
-            <div className="flex flex-col gap-0.5 px-1" onClick={() => setFlyoutPos(null)}>
+            <div className="flex flex-col gap-0.5 px-1" onClick={fecharEste}>
               {children}
             </div>
           </div>
