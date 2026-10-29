@@ -355,7 +355,7 @@ src/lib/bi/
 
 ## 5. Prioridade Média
 
-### Item 7 · Ocorrências completas
+### ~~Item 7 · Ocorrências completas~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261115120000, implantar a função notify-ocorrencia, rodar os testes de integração e testar no navegador)
 
 **Para que serve:** registrar ocorrências do aluno (comportamento, saúde, acidente, elogio), com gravidade, providências, ciência da família e histórico pesquisável. Hoje `GestaoOcorrencias.jsx` só consulta `pedagogical_records`, `diario_entries` e `class_attendance`.
 

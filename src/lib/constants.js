@@ -114,7 +114,7 @@ export const SCREEN_LABELS = {
   'financeiro-visao': 'Visão Financeira', 'financeiro-planos': 'Planos', 'financeiro-mensalidades': 'Mensalidades', 'financeiro-cobrancas': 'Cobranças',
   'financeiro-inadimplencia': 'Inadimplência', 'financeiro-recebimentos': 'Recebimentos', 'financeiro-despesas': 'Despesas',
   'financeiro-dre': 'DRE', 'financeiro-fluxo': 'Fluxo de caixa',
-  'biblioteca-acervo': 'Acervo', 'biblioteca-emprestimos': 'Empréstimos', 'biblioteca-atrasados': 'Atrasados', biblioteca: 'Biblioteca',
+  'biblioteca-acervo': 'Acervo', 'biblioteca-emprestimos': 'Empréstimos', 'biblioteca-atrasados': 'Atrasados', biblioteca: 'Biblioteca', ocorrencias: 'Ocorrências',
   'estoque-itens': 'Itens', 'estoque-movimentacoes': 'Movimentações', 'estoque-minimo': 'Abaixo do mínimo', estoque: 'Estoque',
   'presenca-dia': 'Presença do Dia', 'cadastros-fornecedores': 'Fornecedores', 'cadastros-exclusoes': 'Exclusão', 'cadastros-biometria': 'Biometrias', 'cadastros-qualidade-biometria': 'Biometrias', 'cadastros-unificar': 'Biometrias',
   'academico-ano-letivo': 'Ano Letivo', 'academico-frequencia': 'Frequência', 'academico-relatorios': 'Pedagógico', 'academico-mapa-habilidades': 'Mapa de Habilidades',

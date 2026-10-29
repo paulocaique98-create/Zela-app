@@ -101,7 +101,7 @@ export const AJUDA_GESTAO = [
       { id: 'aca-frequencia', titulo: 'Frequência', serve: 'Presença dos alunos nas aulas.', faz: ['Consulte por turma e por período.'] },
       { id: 'aca-pedagogico', metodos: ['montessori', 'personalizado'], titulo: 'Pedagógico', serve: 'Relatórios pedagógicos dos alunos. As professoras preenchem, a coordenação e a direção apenas editam.', faz: ['Escolha o aluno e o relatório.', 'Edite quando precisar corrigir.'] },
       { id: 'aca-mapa', metodos: ['montessori', 'personalizado'], titulo: 'Mapa de Habilidades', serve: 'Visão das habilidades desenvolvidas por cada aluno.', faz: ['Escolha o aluno ou a turma para ver o mapa.'] },
-      { id: 'aca-ocorrencias', titulo: 'Ocorrências', serve: 'Observações pedagógicas, do diário e faltas em aula registradas pela equipe.', faz: ['Filtre por aluno e consulte o histórico.'] },
+      { id: 'aca-ocorrencias', titulo: 'Ocorrências', serve: 'Observações pedagógicas, do diário e faltas em aula registradas pela equipe.', faz: ['Filtre por aluno, tipo, gravidade e turma.', 'Com o módulo Ocorrências ligado, registre e edite ocorrências; cada edição guarda a versão anterior.'] },
       { id: 'aca-calendario', titulo: 'Calendário', serve: 'Datas importantes que as famílias veem no app.', faz: ['Cadastre feriados, reuniões e eventos.'] },
       { id: 'aca-cardapio', titulo: 'Cardápio', serve: 'Cardápio publicado para as famílias.', faz: ['Cadastre as refeições da semana.'] },
       { id: 'aca-diario', titulo: 'Diário', serve: 'Registros do dia a dia das crianças feitos pelas professoras.', faz: ['Consulte os registros por turma.'] },

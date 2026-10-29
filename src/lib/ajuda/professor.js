@@ -57,6 +57,12 @@ export const AJUDA_PROFESSOR = [
         faz: ['Crie o plano da semana e salve como rascunho.', 'Anexe arquivos, se precisar.', 'Envie para revisão. Se voltar devolvido, ajuste e envie de novo.'],
       },
       {
+        id: 'ocorrencias',
+        titulo: 'Ocorrências',
+        serve: 'Registro de ocorrências dos alunos das suas turmas: comportamento, saúde, acidente, elogio.',
+        faz: ['Escolha a turma e o aluno, o tipo e a gravidade.', 'Descreva o que aconteceu e as providências.', 'Marque se a família vê e se precisa dar ciência. Depois de salvar, só a Coordenação edita.'],
+      },
+      {
         id: 'saidas-pendentes',
         titulo: 'Saídas Pendentes',
         serve: 'Saídas que ainda não foram concluídas, para acompanhar.',

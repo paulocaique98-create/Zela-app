@@ -118,6 +118,12 @@ export const AJUDA_FAMILIA = [
         faz: ['Escolha o aluno e a data para ler o registro.'],
       },
       {
+        id: 'ocorrencias',
+        titulo: 'Ocorrências',
+        serve: 'Registros da escola sobre o seu filho que a escola decidiu compartilhar.',
+        faz: ['Leia a ocorrência.', 'Quando pedir ciência, toque em Li e estou ciente.'],
+      },
+      {
         id: 'boletim',
         metodos: ['tradicional'],
         titulo: 'Boletim',

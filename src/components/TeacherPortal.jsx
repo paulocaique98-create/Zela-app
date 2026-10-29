@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList, BookOpenCheck, Library } from 'lucide-react';
+import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList, BookOpenCheck, Library, NotebookPen } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { usePermissions } from '../hooks/usePermissions';
 import LoadingLogo from './LoadingLogo';
@@ -33,6 +33,7 @@ const LancamentoNotas = lazy(() => import('../tradicional/LancamentoNotas'));
 const DiarioClasse = lazy(() => import('../tradicional/DiarioClasse'));
 const Tarefas = lazy(() => import('../tradicional/Tarefas'));
 const TeacherPlanosAula = lazy(() => import('./TeacherPlanosAula'));
+const TeacherOcorrencias = lazy(() => import('./TeacherOcorrencias'));
 
 // Mesmos submenus, mesmas chaves de aba e mesma ordem do menu Relatórios do
 // AdminPortal — pedido explícito pra ficar "exatamente igual".
@@ -89,10 +90,11 @@ export default function TeacherPortal({
     && !ocultoPorFaltaDeMetodo(method, 'academico-tarefas');
   // Plano de aula vale para os dois métodos; chave própria (=== true).
   const showPlanoAula = currentSchool?.features_enabled?.plano_aula === true;
+  const showOcorrencias = currentSchool?.features_enabled?.ocorrencias === true;
   // Biblioteca: módulo ligado (=== true) e permissão liberada pela Gestão.
   const perms = usePermissions(currentUser, ['biblioteca.gerenciar']);
   const showBiblioteca = currentSchool?.features_enabled?.biblioteca === true && Boolean(perms['biblioteca.gerenciar']);
-  const moduleEnabled = showBiblioteca || relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse || showTarefas || showPlanoAula;
+  const moduleEnabled = showBiblioteca || relatoriosAtivos || showFrequencia || showDiario || showCardapio || showMural || showNotas || showDiarioClasse || showTarefas || showPlanoAula || showOcorrencias;
   const showSaidasPendentes = currentSchool?.features_enabled?.checkin !== false;
   const saidasPendentesCount = useSaidasPendentesCount(currentUser?.school_id, showSaidasPendentes && !isBlocked && moduleEnabled);
 
@@ -157,7 +159,7 @@ export default function TeacherPortal({
             {showSaidasPendentes && (
               <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
             )}
-            {(showDiario || showCardapio || showMural || showPlanoAula || showBiblioteca) && (
+            {(showDiario || showCardapio || showMural || showPlanoAula || showOcorrencias || showBiblioteca) && (
               <SidebarGroup
                 collapsed={collapsed}
                 label="Acadêmico"
@@ -167,6 +169,9 @@ export default function TeacherPortal({
               >
                 {showPlanoAula && (
                   <SidebarItem active={teacherTab === 'planos-aula'} icon={BookOpenCheck} label="Planos de aula" onClick={() => go('planos-aula')} />
+                )}
+                {showOcorrencias && (
+                  <SidebarItem active={teacherTab === 'ocorrencias'} icon={NotebookPen} label="Ocorrências" onClick={() => go('ocorrencias')} />
                 )}
                 {showDiario && (
                   <SidebarItem active={teacherTab === 'diario'} icon={Soup} label="Diário" onClick={() => go('diario')} />
@@ -221,6 +226,7 @@ export default function TeacherPortal({
           {teacherTab === 'tarefas' && showTarefas && <Tarefas currentUser={currentUser} currentSchool={currentSchool} modo="professor" />}
           {teacherTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'planos-aula' && showPlanoAula && <TeacherPlanosAula currentUser={currentUser} currentSchool={currentSchool} method={method} />}
+          {teacherTab === 'ocorrencias' && showOcorrencias && <TeacherOcorrencias currentUser={currentUser} currentSchool={currentSchool} method={method} />}
           {teacherTab === 'diario' && showDiario && <AdminDiario currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'cardapio' && showCardapio && <FamilyCardapio currentUser={currentUser} currentSchool={currentSchool} />}
           {teacherTab === 'biblioteca' && showBiblioteca && <GestaoBiblioteca currentUser={currentUser} />}
