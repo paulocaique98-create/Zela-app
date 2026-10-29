@@ -13,8 +13,8 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 0. Como executar este plano
 1. Padrões obrigatórios (visual, layout, dados, segurança, testes)
 2. Ordem de execução e dependências
-3. Item 1 · Dashboards BI interativo (detalhado)
-4. Prioridade Baixa: 2 Plano de aula · 3 DRE e fluxo de caixa · 4 Biblioteca · ~~5 Transporte~~ (removido) · 6 Estoque
+3. ~~Item 1 · Dashboards BI interativo~~ ✅ (detalhado)
+4. Prioridade Baixa: ~~2 Plano de aula~~ ✅ · ~~3 DRE e fluxo de caixa~~ ✅ · ~~4 Biblioteca~~ ✅ · ~~5 Transporte~~ (removido) · ~~6 Estoque~~ ✅
 5. Prioridade Média: 7 Ocorrências · 8 Avaliação institucional · 9 Conciliação completa · 10 Negociação de dívida · 11 Captação (CRM)
 6. Prioridade Alta: 12 Histórico escolar · 13 Bolsas · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
@@ -121,12 +121,12 @@ Para cada tela nova, **todos** os pontos abaixo (senão a tela fica órfã ou va
 
 | # | Item | Prioridade | Tamanho | Depende de | Módulo/chave (nasce desligada) |
 |---|---|---|---|---|---|
-| 1 | Dashboards BI interativo | Média (antecipado) | G | — | `bi_dashboards` |
-| 2 | Plano de aula | Baixa | M | — | `plano_aula` |
-| 3 | DRE e fluxo de caixa projetado | Baixa | M | 1 (kit de gráficos), 9 ajuda mas não bloqueia | `financeiro_avancado` |
-| 4 | Biblioteca | Baixa | M | — | `biblioteca` |
+| ~~1~~ ✅ | ~~Dashboards BI interativo~~ | Média (antecipado) | G | — | `bi_dashboards` |
+| ~~2~~ ✅ | ~~Plano de aula~~ | Baixa | M | — | `plano_aula` |
+| ~~3~~ ✅ | ~~DRE e fluxo de caixa projetado~~ | Baixa | M | 1 (kit de gráficos), 9 ajuda mas não bloqueia | `financeiro_avancado` |
+| ~~4~~ ✅ | ~~Biblioteca~~ | Baixa | M | — | `biblioteca` |
 | ~~5~~ | ~~Transporte escolar~~ (removido do plano) | | | | |
-| 6 | Estoque | Baixa | M | — | `estoque` |
+| ~~6~~ ✅ | ~~Estoque~~ | Baixa | M | — | `estoque` |
 | 7 | Ocorrências completas | Média | M | — | `ocorrencias` |
 | 8 | Avaliação institucional | Média | M | 1 (gráficos de resultado) | `avaliacao_institucional` |
 | 9 | Conciliação bancária completa | Média | M | — | base (financeiro) |
@@ -141,7 +141,7 @@ Tamanho: P até 1 sessão, M 2 a 3 sessões, G 4 ou mais sessões.
 
 ---
 
-## 3. Item 1 · Dashboards BI interativo
+## 3. ~~Item 1 · Dashboards BI interativo~~ ✅
 
 ### 3.1 Objetivo
 Um painel único, rápido e interativo, onde a Gestão (e a Coordenação, sem valores) cruza Financeiro, Matrículas, Frequência, Acadêmico e Operação por período, turma, turno e série, clica em qualquer gráfico para filtrar os demais e desce até a lista de alunos/cobranças que formam o número.
@@ -293,7 +293,7 @@ src/lib/bi/
 | ~~1.1 Fundação~~ ✅ | ~~tokens de cor no `@theme`; `periodos.js`, `coresEntidade.js`, `formatos.js` + testes; decisão D1 aplicada; `BiCartaoGrafico`, `BiKpi`, `BiFiltros`~~ | ~~Vitest dos libs; tela vazia com filtros em 360/768/1280px~~ (conferido pelo usuário em 28/10) |
 | ~~1.2 Banco~~ ✅ (parcial) | ~~migration das RPCs + índices + teste RLS~~ Feito: `bi_visao_geral`, `bi_financeiro`, `bi_detalhe` (20261105120000, só no banco local, 4 testes ok). Faltam `bi_matriculas`, `bi_frequencia`, `bi_academico`, `bi_operacao` nas fases 1.4 e 1.5; "matrículas novas" vem de `enrollments` | teste de segurança; migration informada, não aplicada |
 | ~~1.3 Visão geral + Financeiro~~ ✅ | abas, filtro cruzado, drill, exportação | teste manual com escola de dados reais em leitura |
-| 1.4 Matrículas + Frequência ✅ | ~~abas, `bi_matriculas`, `bi_frequencia`, drill novo, mapa de calor~~ (20261106120000, aplicada na produção em 29/10, testada com rollback). Fora do painel por falta de dado: solicitações/aprovações de matrícula (funil), vagas por turma (ocupação, vagas livres), datas de saída. Atrasos = registros `atrasado` | idem; falta conferir no navegador |
+| ~~1.4 Matrículas + Frequência~~ ✅ | ~~abas, `bi_matriculas`, `bi_frequencia`, drill novo, mapa de calor~~ (20261106120000, aplicada na produção em 29/10, testada com rollback). Fora do painel por falta de dado: solicitações/aprovações de matrícula (funil), vagas por turma (ocupação, vagas livres), datas de saída. Atrasos = registros `atrasado` | idem; falta conferir no navegador |
 | ~~1.5 Acadêmico + Operação~~ ✅ | ~~blocos por método~~ (20261107120000, aplicada na produção em 29/10, testada no banco local). Fora do painel por falta de dado: forma de identificação (facial, QR, PIN), tempo até a confirmação no monitor, horas extras. Drill dessas abas não feito | idem; conferido no navegador |
 | ~~1.6 Acabamento~~ ✅ | ~~menu, rótulos, perfis, catálogo `bi_dashboards`~~ (já existiam da 1.1 à 1.5); ~~ajuda (`rel-painel`, o tour herda), atalho "Indicadores" na Início, CSS de impressão~~ (29/10, falta conferir a impressão no navegador) | `perfisGestao.test.js`, `modulosCatalogo.test.js` |
 
@@ -327,7 +327,7 @@ src/lib/bi/
 - **Telas:** Financeiro › "DRE" (tabela em cascata com subtotais em negrito, colunas por mês, comparação, exportar XLSX) e "Fluxo de caixa" (linha do saldo projetado com faixa otimista/pessimista, tabela de entradas/saídas por semana, alerta brass quando o saldo projetado fica negativo). Reusa o kit do BI.
 - **Testes:** cálculo com dados sintéticos (regime caixa x competência), RLS.
 
-### Item 4 · Biblioteca
+### ~~Item 4 · Biblioteca~~ ✅ (código pronto; migrations 20261110120000 e 20261111120000 e função notify-biblioteca-prazos em produção em 29/10, módulo desligado em todas as escolas; falta câmera em aparelho e teste numa escola de teste antes de ligar)
 
 **Para que serve:** controlar acervo e empréstimos de livros para alunos e equipe, com devolução e atraso.
 
