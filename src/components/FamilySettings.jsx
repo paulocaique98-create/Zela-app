@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AccountDeletionSection from './AccountDeletionSection';
 import SairTodosAparelhos from './SairTodosAparelhos';
+import FamilyPreferenciasCobranca from './FamilyPreferenciasCobranca';
 import { ConfigSubmenu, ABA_DISPOSITIVOS } from './ConfigSubmenu';
 import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -267,6 +268,8 @@ export default function FamilySettings({ currentUser, setCurrentUser, pushData, 
               </button>
             </div>
           </div>
+
+          <FamilyPreferenciasCobranca currentUser={currentUser} />
 
           {/* Notificações Push */}
           {pushData && (
