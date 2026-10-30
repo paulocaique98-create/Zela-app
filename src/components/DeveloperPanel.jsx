@@ -6,6 +6,7 @@ import ConfirmModal from './ConfirmModal';
 import { toast } from '../lib/toast';
 import DeveloperModulos from './DeveloperModulos';
 import { ContratarPlanoDaEscola } from './DeveloperPlanosContratacao';
+import { nomeDoPacoteComAdicional, PACOTES, ITEM_POR_ID } from '../lib/modulosCatalogo';
 import { montarDadosEscola } from '../lib/escolaForm';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
 import { formatarCnpj } from '../lib/documentos';
@@ -40,8 +41,8 @@ const SwitchAtiva = ({ ativa, onToggle, comRotulo }) => (
 
 export default function DeveloperPanel() {
   const [schools, setSchools] = useState([]);
-  const [pacotePorEscola, setPacotePorEscola] = useState({});
-  const nomeDoPacote = (school) => pacotePorEscola[school.id] || 'Sem plano';
+  const [pacotes, setPacotes] = useState(PACOTES);
+  const nomeDoPacote = (school) => nomeDoPacoteComAdicional(school.features_enabled || {}, pacotes);
   const [confirmDeleteSchool, setConfirmDeleteSchool] = useState(null); // { id, name, code }
   const [isDeletingSchool, setIsDeletingSchool] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,20 +101,10 @@ export default function DeveloperPanel() {
 
       if (error) throw error;
       setSchools(data || []);
-      const [{ data: cts }, { data: planos }] = await Promise.all([
-        supabase.from('school_contratacoes').select('school_id, plano_id, itens').eq('status', 'ativa').limit(2000),
-        supabase.from('zela_planos').select('id, nome, modalidade, itens').limit(200),
-      ]);
-      const planoPor = Object.fromEntries((planos || []).map(p => [p.id, p]));
-      const mapa = {};
-      for (const ct of cts || []) {
-        const plano = planoPor[ct.plano_id];
-        if (!plano) continue;
-        const doPlano = new Set(['base', ...(plano.itens || [])]);
-        const temAdicional = plano.modalidade === 'pacote' && (ct.itens || []).some(id => !doPlano.has(id));
-        mapa[ct.school_id] = temAdicional ? `${plano.nome} + Adicional` : plano.nome;
-      }
-      setPacotePorEscola(mapa);
+      // Mesmos pacotes da tela de Módulos (menu Planos, só modalidade pacote).
+      const { data: planos } = await supabase.from('zela_planos').select('id, nome, itens').eq('modalidade', 'pacote').eq('ativo', true).order('ordem').limit(50);
+      const validos = (planos || []).map(p => ({ id: p.id, nome: p.nome, itens: (p.itens || []).filter(i => ITEM_POR_ID[i]) }));
+      if (validos.length) setPacotes(validos);
     } catch (err) {
       console.error('Erro ao buscar escolas:', err);
     } finally {

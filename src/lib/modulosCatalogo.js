@@ -440,6 +440,16 @@ export function pacoteAtual(features, pacotes = PACOTES) {
   return pacote ? pacote.id : 'livre';
 }
 
+// Nome para exibir na lista de escolas: o maior pacote cujos itens estão todos
+// ligados; se sobrar item ligado fora dele, "Pacote + Adicional". Parcial conta como ligado.
+export function nomeDoPacoteComAdicional(features, pacotes = PACOTES) {
+  const ligados = new Set(VENDAVEIS.filter(i => estadoDoItem(features, i) !== 'off').map(i => i.id));
+  const candidatos = pacotes.filter(p => p.itens.every(id => ligados.has(id)));
+  if (!candidatos.length) return 'Sem plano';
+  const melhor = candidatos.reduce((a, b) => (b.itens.length > a.itens.length ? b : a));
+  return ligados.size > melhor.itens.length ? `${melhor.nome} + Adicional` : melhor.nome;
+}
+
 export function aplicarPacote(features, pacoteId, pacotes = PACOTES) {
   const pacote = pacotes.find(p => p.id === pacoteId);
   if (!pacote) return features;
