@@ -131,12 +131,11 @@ export default function DeveloperPlanosPacotes({ dados }) {
   }
   if (pacotes.length === 0) return <p className="text-sm text-dev-text-muted">Nenhum plano pacote cadastrado.</p>;
 
-  const margens = linhas.map(l => l.margem);
   return (
     <div className="space-y-4">
       <div className={`${card} space-y-4`}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div role="tablist" className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+          <div role="tablist" className="flex flex-wrap gap-2 sm:col-span-2">
             {pacotes.map(p => (
               <button key={p.id} type="button" role="tab" aria-selected={plano?.id === p.id} onClick={() => setPlanoId(p.id)}
                 className={`px-4 py-2 rounded-zela-md text-sm font-medium border ${plano?.id === p.id ? 'border-dev-primary text-dev-primary bg-dev-primary-container' : 'border-dev-border text-dev-text-muted hover:text-dev-text'}`}>
@@ -144,8 +143,8 @@ export default function DeveloperPlanosPacotes({ dados }) {
               </button>
             ))}
           </div>
-          <div className="flex items-end gap-2">
-            <div className="w-32">
+          <div className="flex flex-wrap items-end gap-2 w-full">
+            <div className="flex-1 min-w-0">
               <label className={rotulo} htmlFor="pac-ipca">Reajuste IPCA (%)</label>
               <input id="pac-ipca" type="number" inputMode="decimal" step="0.01" placeholder="Ex.: 4" className={campo} value={ipcaTxt} onChange={e => setIpcaTxt(e.target.value)} />
             </div>
@@ -154,7 +153,7 @@ export default function DeveloperPlanosPacotes({ dados }) {
               Aplicar
             </button>
             {paraRestaurar.length > 0 && (
-              <button type="button" className={btnPrimario} disabled={sujo || salvando} onClick={restaurarCusto}
+              <button type="button" className={`${btnPrimario} w-full justify-center`} disabled={sujo || salvando} onClick={restaurarCusto}
                 title="Volta o custo por aluno de todos os pacotes ao custo original da escada.">
                 Restaurar custo original
               </button>
@@ -181,17 +180,6 @@ export default function DeveloperPlanosPacotes({ dados }) {
             {salvando && <Loader2 size={14} className="animate-spin" />} Salvar
           </button>
         </div>
-        {custoRef > 0 && (
-          <p className="text-xs text-dev-text-muted">
-            Valor final e média por aluno acompanham o custo: a escada foi calculada com custo de {brl(custoRef)} por aluno e escala na mesma proporção, terminando em 9.
-          </p>
-        )}
-        {margens.length > 0 && (
-          <p className="text-xs text-dev-text-muted">
-            Margem líquida de {pct(margens[0])} em Até {linhas[0].faixa} a {pct(margens[margens.length - 1])} em Até {linhas[linhas.length - 1].faixa}.
-            {Math.min(...margens) < MARGEM_PISO && <span className="text-warning"> Há faixa abaixo de {MARGEM_PISO}%.</span>}
-          </p>
-        )}
       </div>
 
       {linhas.length === 0 ? (
