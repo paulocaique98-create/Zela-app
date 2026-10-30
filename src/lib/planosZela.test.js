@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, descontoMensalidade,
   modalidadesPermitidas, itensValidos, extrasDoPacote, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
+  situacaoContrato, mensalVigente,
 } from './planosZela';
 
 const PRECOS = [
@@ -126,5 +127,21 @@ describe('vencimento', () => {
     expect(diasParaVencer('2026-10-15', hoje)).toBe(10);
     expect(diasParaVencer('2026-10-01', hoje)).toBe(-4);
     expect(diasParaVencer(null, hoje)).toBeNull();
+  });
+});
+
+describe('painel de contratos', () => {
+  const hoje = new Date(2026, 9, 5);
+  it('situação', () => {
+    expect(situacaoContrato({ status: 'ativa', fim: '2026-12-01' }, true, hoje)).toBe('Ativo');
+    expect(situacaoContrato({ status: 'ativa', fim: '2026-10-01' }, true, hoje)).toBe('Vencido');
+    expect(situacaoContrato({ status: 'ativa', fim: '2026-12-01' }, false, hoje)).toBe('Inativo');
+    expect(situacaoContrato(null, true, hoje)).toBe('Inativo');
+  });
+  it('mensal vigente com desconto por período', () => {
+    const ct = { valor_mensal: 100, valor_mensal_com_desconto: 90, mensal_desconto: 10, mensal_desconto_recorrente: false, mensal_desconto_meses: 3, inicio: '2026-09-01' };
+    expect(mensalVigente(ct, hoje)).toBe(90);
+    expect(mensalVigente({ ...ct, inicio: '2026-05-01' }, hoje)).toBe(100);
+    expect(mensalVigente({ ...ct, mensal_desconto_recorrente: true, inicio: '2026-01-01' }, hoje)).toBe(90);
   });
 });

@@ -29,6 +29,7 @@
     "@tailwindcss/vite": "^4.3.2",
     "@vladmandic/human": "^3.3.6",
     "face-api.js": "^0.22.2",
+    "jspdf": "^4.2.1",
     "jsqr": "^1.4.0",
     "lucide-react": "^1.23.0",
     "pdfjs-dist": "^6.2.108",
