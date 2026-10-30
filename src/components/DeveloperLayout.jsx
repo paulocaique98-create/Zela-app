@@ -14,6 +14,7 @@ const DeveloperQualidadeBiometria = lazy(() => import('./DeveloperQualidadeBiome
 const DeveloperPlanos = lazy(() => import('./DeveloperPlanos'));
 const DeveloperPropostas = lazy(() => import('./DeveloperPropostas'));
 const DeveloperPainelContratos = lazy(() => import('./DeveloperPainelContratos'));
+const DeveloperFaturamento = lazy(() => import('./DeveloperFaturamento'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab, onLogout }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
@@ -24,7 +25,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
     { id: 'planos', label: 'Planos', icon: Tags, enabled: true },
     { id: 'propostas', label: 'Propostas', icon: FileDown, enabled: true },
     { id: 'contratos', label: 'Painel de contratos', icon: ClipboardList, enabled: true },
-    { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: false },
+    { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: true },
     { id: 'logs', label: 'Logs', icon: FileText, enabled: true },
     { id: 'biometria', label: 'Biometria', icon: ScanFace, enabled: true },
     { id: 'support', label: 'Suporte', icon: LifeBuoy, enabled: true },
@@ -133,6 +134,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           {activeTab === 'planos' && <DeveloperPlanos />}
           {activeTab === 'propostas' && <DeveloperPropostas />}
           {activeTab === 'contratos' && <DeveloperPainelContratos />}
+          {activeTab === 'billing' && <DeveloperFaturamento />}
         </Suspense>
       </main>
 

@@ -1,17 +1,18 @@
 import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, X, Check, AlertTriangle, FileSignature } from 'lucide-react';
+import { Loader2, X, Check, AlertTriangle, FileSignature, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITENS, ITEM_POR_ID, estadoDoItem } from '../lib/modulosCatalogo';
 import {
   CICLOS, brl, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, modalidadesPermitidas, passouDoLimite,
-  diasParaVencer, formatarData, arredondar, extrasDoPacote, descontoMensalidade, faixaDoPlano, passouDaFaixa,
+  diasParaVencer, formatarData, arredondar, extrasDoPacote, faixaDoPlano, passouDaFaixa, previaCobrancas,
 } from '../lib/planosZela';
+import { gerarMensagemCobranca } from '../lib/mensagemCobrancaZela';
 
 // Simulador, Contratações e o modal Contratar (também aberto pela Gestão de
-// Escolas). A RPC contratar_plano_escola recalcula tudo no servidor; o que
+// Escolas). A RPC contratar_plano_com_condicao recalcula tudo no servidor; o que
 // aparece aqui é só prévia.
 
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4';
@@ -21,6 +22,13 @@ const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm 
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
 const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high`;
 
+const somarDias = (iso, dias) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + dias); return d.toISOString().slice(0, 10); };
+const rotuloCondicao = (c) => {
+  const d = Number(c.desconto_percent) > 0 ? ` (${Number(c.desconto_percent)}% off)` : '';
+  if (c.pagamento === 'mes_a_mes') return 'Mensal';
+  if (c.pagamento === 'a_vista') return `Anual à vista${d}`;
+  return `Anual em ${c.parcelas}x${d}`;
+};
 const ciclosDoPlano = (dados, planoId) => dados.ciclos.filter(c => c.plano_id === planoId && c.ativo);
 const itensDoPlano = (plano, escolhidos) => (plano.modalidade === 'pacote' ? plano.itens : escolhidos);
 const custoPorAluno = (itens, precos) => arredondar(['base', ...itens].reduce((s, id) => s + Number(precos.find(p => p.item_id === id)?.custo_estimado || 0), 0));
@@ -100,7 +108,7 @@ export function DeveloperPlanosContratacoes({ dados }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-[11px] text-dev-text-muted bg-dev-surface">
-              <th className="p-3">Escola</th><th className="p-3">Plano</th><th className="p-3">Ciclo</th><th className="p-3">Alunos</th><th className="p-3">Mensal</th><th className="p-3">Vencimento</th><th className="p-3" />
+              <th className="p-3">Escola</th><th className="p-3">Plano</th><th className="p-3">Ciclo</th><th className="p-3">Alunos</th><th className="p-3">Mensal</th><th className="p-3">Vencimento</th><th className="p-3">Cobranças</th><th className="p-3" />
             </tr>
           </thead>
           <tbody>
@@ -125,6 +133,11 @@ export function DeveloperPlanosContratacoes({ dados }) {
                     {ct && Number(ct.mensal_desconto) > 0 && <span className="block text-xs text-dev-text-muted">desconto {brl(ct.mensal_desconto)} por mês, {ct.mensal_desconto_recorrente ? 'recorrente' : `por ${ct.mensal_desconto_meses} mês(es)`}</span>}
                   </td>
                   <td className={`p-3 ${dias !== null && dias < 0 ? 'text-error' : dias !== null && dias <= 30 ? 'text-warning' : ''}`}>{ct ? `${formatarData(ct.fim)}${dias !== null && dias < 0 ? ' · vencida' : dias !== null && dias <= 30 ? ` · ${dias} dia(s)` : ''}` : ''}</td>
+                  <td className="p-3 text-xs">
+                    {dados.faturamento?.[escola.id]
+                      ? <span className={dados.faturamento[escola.id].atraso > 0 ? 'text-warning' : 'text-dev-text-muted'}>{dados.faturamento[escola.id].abertas} em aberto ({brl(dados.faturamento[escola.id].valor)}){dados.faturamento[escola.id].atraso > 0 ? `, ${dados.faturamento[escola.id].atraso} em atraso` : ''}</span>
+                      : <span className="text-dev-text-muted">Em dia</span>}
+                  </td>
                   <td className="p-3 text-right"><button type="button" className={btnNeutro} onClick={() => setContratando(escola.id)}><FileSignature size={14} /> {ct ? 'Trocar plano' : 'Contratar'}</button></td>
                 </tr>
               );
@@ -145,18 +158,16 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const [alunos, setAlunos] = useState(Math.max(ativos, 1));
   const [modalidade, setModalidade] = useState('pacote');
   const [planoId, setPlanoId] = useState('');
-  const [ciclo, setCiclo] = useState('');
+  const [condicaoChave, setCondicaoChave] = useState('');
   const [escolhidos, setEscolhidos] = useState([]);
   const [extras, setExtras] = useState([]);
   const [descTipo, setDescTipo] = useState('percent');
   const [desc, setDesc] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [mDescTipo, setMDescTipo] = useState('percent');
-  const [mDesc, setMDesc] = useState('');
-  const [mRecorrente, setMRecorrente] = useState(true);
-  const [mMeses, setMMeses] = useState('');
-  const [mMotivo, setMMotivo] = useState('');
-  const [inicio, setInicio] = useState(new Date().toISOString().slice(0, 10));
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [inicio, setInicio] = useState(hoje);
+  const [venc, setVenc] = useState(somarDias(hoje, 3));
+  const [criada, setCriada] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
@@ -172,7 +183,10 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const planos = dados.planos.filter(p => p.ativo && p.modalidade === modalidadeOk);
   const plano = planos.find(p => p.id === planoId) || null;
   const ciclos = plano ? ciclosDoPlano(dados, plano.id) : [];
-  const cicloSel = ciclos.find(c => c.ciclo === ciclo) || null;
+  // Condição de pagamento = período + forma de pagar; só vale se o plano tem o período ativo.
+  const condicoes = dados.condicoes.filter(c => ciclos.some(x => x.ciclo === c.ciclo));
+  const condicao = condicoes.find(c => c.chave === condicaoChave) || null;
+  const cicloSel = condicao ? ciclos.find(c => c.ciclo === condicao.ciclo) : null;
   const vendaveis = dados.precos.filter(p => p.item_id !== 'base' && p.ativo && ITEM_POR_ID[p.item_id]);
 
   const extrasOk = plano?.modalidade === 'pacote' ? extrasDoPacote(plano, extras, dados.precos) : [];
@@ -181,19 +195,15 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const porFaixa = !!plano?.faixas;
   const faixa = porFaixa ? faixaDoPlano(plano, Math.max(n, ativos)) : null;
   const mensal = plano ? mensalidade(plano, porFaixa ? Math.max(n, ativos) : n, dados.precos, escolhidos, extrasOk) : 0;
-  const valorCicloCheio = plano && cicloSel ? valorDoCiclo(mensal, cicloSel) : 0;
-  const dm = plano && cicloSel
-    ? descontoMensalidade(mensal, cicloSel, { tipo: mDescTipo, valor: mDesc, recorrente: mRecorrente, meses: mMeses, tetoPercent: dados.config.desconto_mensalidade_max_percent })
-    : { desconto: 0, mensalComDesconto: null, valorCiclo: 0, mesesDesconto: 0, erro: null };
-  const valorCiclo = dm.valorCiclo;
   const base = plano && cicloSel ? implantacaoBase(plano, cicloSel) : 0;
   const impl = implantacaoFinal(base, descTipo, desc, dados.config.desconto_implantacao_max_percent);
   const motivoFalta = Number(desc) > 0 && motivo.trim().length < 3;
-  const mMotivoFalta = Number(mDesc) > 0 && mMotivo.trim().length < 3;
-  const pronto = !!plano && !!cicloSel && n >= 1 && (!porFaixa || !!faixa) && !impl.erro && !dm.erro && !motivoFalta && !mMotivoFalta && features;
-  const textoDescontoMensal = dm.desconto > 0
-    ? `${brl(dm.desconto)} por mês, ${mRecorrente ? 'recorrente (todo o ciclo)' : `por ${dm.mesesDesconto} mês(es)`}`
-    : '';
+  const vencOk = !!venc && venc >= hoje;
+  const semCadastro = !escola?.cnpj || !escola?.email;
+  const previa = plano && cicloSel && condicao && vencOk && !impl.erro
+    ? previaCobrancas({ mensal, condicao, meses: cicloSel.meses ?? 1, implantacao: impl.final, inicio: inicio || hoje, primeiroVencimento: venc })
+    : null;
+  const pronto = !!previa && n >= 1 && (!porFaixa || !!faixa) && !motivoFalta && !semCadastro && features;
 
   // O que muda nos módulos da escola: itens vendáveis ligados hoje x depois.
   const mudancas = useMemo(() => {
@@ -208,24 +218,28 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
 
   const contratar = async () => {
     setSalvando(true);
-    const { error } = await supabase.rpc('contratar_plano_escola', {
-      p_school_id: schoolId, p_plano_id: plano.id, p_ciclo: cicloSel.ciclo, p_alunos: porFaixa ? faixa : n,
+    const { data: id, error } = await supabase.rpc('contratar_plano_com_condicao', {
+      p_school_id: schoolId, p_plano_id: plano.id, p_condicao: condicao.chave, p_alunos: porFaixa ? faixa : n,
       p_itens: plano.modalidade === 'por_aluno' ? escolhidos : null,
       p_extras: extrasOk.length ? extrasOk : null,
       p_desconto_tipo: Number(desc) > 0 ? descTipo : null,
       p_desconto: Number(desc) > 0 ? Number(desc) : 0,
       p_motivo: Number(desc) > 0 ? motivo.trim() : null,
       p_inicio: inicio || null,
-      p_mensal_desconto_tipo: dm.desconto > 0 ? mDescTipo : null,
-      p_mensal_desconto: dm.desconto > 0 ? Number(mDesc) : 0,
-      p_mensal_recorrente: mRecorrente,
-      p_mensal_desconto_meses: dm.desconto > 0 && !mRecorrente ? Number(mMeses) : null,
-      p_mensal_motivo: dm.desconto > 0 ? mMotivo.trim() : null,
+      p_primeiro_vencimento: venc,
     });
+    if (error) { setSalvando(false); setConfirmando(false); return toast.error(error.message || 'Não foi possível contratar o plano.'); }
+    const { data: cobs } = await supabase.from('zela_cobrancas')
+      .select('id, tipo, numero, vencimento, valor, invoice_url').eq('contratacao_id', id).order('numero').limit(20);
     setSalvando(false);
-    if (error) { setConfirmando(false); return toast.error(error.message || 'Não foi possível contratar o plano.'); }
-    toast.success('Plano contratado e módulos atualizados.');
-    onDone();
+    toast.success('Contratação registrada. Ela fica aguardando o pagamento da 1ª parcela.');
+    setCriada({ id, cobrancas: cobs || [] });
+  };
+
+  const copiarMensagem = async () => {
+    const r = gerarMensagemCobranca({ escola, cobranca: criada?.cobrancas?.[0], aVista: condicao?.pagamento === 'a_vista' });
+    if (!r.ok) return toast.error(r.erro);
+    try { await navigator.clipboard.writeText(r.mensagem); toast.success('Mensagem copiada.'); } catch { toast.error('Não foi possível copiar.'); }
   };
 
   return createPortal(
@@ -243,14 +257,24 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-none">
-        {confirmando ? (
+        {criada ? (
           <div className="space-y-3">
-            <p className="text-sm">Confirme a contratação de <b>{plano.nome}</b> ({cicloSel.ciclo.toLowerCase()}) para {escola?.name}.</p>
+            <p className="text-sm">Contratação registrada para <b>{escola?.name}</b>, aguardando o pagamento da 1ª parcela.</p>
+            <div className={card}><TabelaParcelas parcelas={criada.cobrancas.map(c => ({ numero: c.numero, vencimento: c.vencimento, valor: Number(c.valor) }))} mensal={condicao?.pagamento === 'mes_a_mes'} /></div>
+            {!criada.cobrancas[0]?.invoice_url && <p className="text-xs text-dev-text-muted">O link de pagamento ainda não foi gerado. A geração pelo Asaas entra na próxima etapa; até lá a mensagem não pode ser copiada.</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" className={btnNeutro} onClick={copiarMensagem} disabled={!criada.cobrancas[0]?.invoice_url}><Copy size={14} /> Copiar mensagem</button>
+              <button type="button" className={btnPrimario} onClick={onDone}><Check size={14} /> Concluir</button>
+            </div>
+          </div>
+        ) : confirmando ? (
+          <div className="space-y-3">
+            <p className="text-sm">Confirme a contratação de <b>{plano.nome}</b> ({rotuloCondicao(condicao)}) para {escola?.name}.</p>
             <div className={card}>
               <p className="text-sm">Vai ligar: <b>{mudancas.ligar.join(', ') || 'nada'}</b></p>
               <p className="text-sm mt-1">Vai desligar: <b>{mudancas.desligar.join(', ') || 'nada'}</b></p>
-              {dm.desconto > 0 && <p className="text-sm mt-1">Desconto na mensalidade: <b>{textoDescontoMensal}</b>. Total do ciclo: <b>{brl(valorCiclo)}</b></p>}
-              <p className="text-xs text-dev-text-muted mt-2">A contratação anterior desta escola é encerrada. O histórico de módulos registra a mudança.</p>
+              <p className="text-sm mt-1">Total a cobrar: <b>{brl(previa.totalGeral)}</b> em {previa.parcelas.length} parcela(s), a 1ª vence em <b>{formatarData(venc)}</b>.</p>
+              <p className="text-xs text-dev-text-muted mt-2">A contratação fica aguardando pagamento. Só quando a 1ª parcela for paga ela vira ativa, os módulos mudam e a contratação anterior é encerrada.</p>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" className={btnNeutro} onClick={() => setConfirmando(false)} disabled={salvando}>Voltar</button>
@@ -264,26 +288,28 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
               <div><label className={rotulo} htmlFor="ct-ini">Início</label><input id="ct-ini" type="date" className={campo} value={inicio} onChange={e => setInicio(e.target.value)} /></div>
               <div>
                 <label className={rotulo} htmlFor="ct-mod">Modalidade</label>
-                <select id="ct-mod" className={campo} value={modalidadeOk} onChange={e => { setModalidade(e.target.value); setPlanoId(''); setCiclo(''); }}>
+                <select id="ct-mod" className={campo} value={modalidadeOk} onChange={e => { setModalidade(e.target.value); setPlanoId(''); setCondicaoChave(''); }}>
                   <option value="pacote">Pacote</option>
                   {permitidas.includes('por_aluno') && <option value="por_aluno">Por aluno</option>}
                 </select>
               </div>
               <div>
                 <label className={rotulo} htmlFor="ct-plano">Plano</label>
-                <select id="ct-plano" className={campo} value={planoId} onChange={e => { setPlanoId(e.target.value); setCiclo(''); }}>
+                <select id="ct-plano" className={campo} value={planoId} onChange={e => { setPlanoId(e.target.value); setCondicaoChave(''); }}>
                   <option value="">Escolha</option>
                   {planos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </div>
               <div>
-                <label className={rotulo} htmlFor="ct-ciclo">Ciclo</label>
-                <select id="ct-ciclo" className={campo} value={ciclo} onChange={e => setCiclo(e.target.value)} disabled={!plano}>
+                <label className={rotulo} htmlFor="ct-cond">Condição de pagamento</label>
+                <select id="ct-cond" className={campo} value={condicaoChave} onChange={e => setCondicaoChave(e.target.value)} disabled={!plano}>
                   <option value="">Escolha</option>
-                  {ciclos.map(c => <option key={c.id} value={c.ciclo}>{CICLOS.find(x => x.id === c.ciclo)?.label}{c.desconto_percent > 0 ? ` (${c.desconto_percent}% off)` : ''}</option>)}
+                  {condicoes.map(c => <option key={c.chave} value={c.chave}>{rotuloCondicao(c)}</option>)}
                 </select>
               </div>
+              <div><label className={rotulo} htmlFor="ct-venc">Vencimento da 1ª parcela</label><input id="ct-venc" type="date" min={hoje} className={campo} value={venc} onChange={e => setVenc(e.target.value)} /></div>
             </div>
+            {semCadastro && <p className="text-xs text-error">A escola precisa de CNPJ e e-mail cadastrados antes de contratar.</p>}
             {!permitidas.includes('por_aluno') && <p className="text-xs text-warning">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
             {porFaixa && (faixa
               ? <p className="text-xs text-dev-text-muted">Faixa do plano: até {faixa} alunos (a maior entre os contratados e os {ativos} ativos).</p>
@@ -326,14 +352,14 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
               </div>
             )}
 
-            {plano && cicloSel && (
+            {plano && cicloSel && condicao && (
               <div className={card}>
                 <dl className="text-sm space-y-1">
-                  <div className="flex justify-between"><dt className="text-dev-text-muted">Mensalidade</dt><dd className="font-medium">{brl(mensal)}</dd></div>
-                  {dm.desconto > 0 && <div className="flex justify-between"><dt className="text-dev-text-muted">Mensalidade com desconto</dt><dd className="font-medium">{brl(dm.mensalComDesconto)}</dd></div>}
-                  <div className="flex justify-between"><dt className="text-dev-text-muted">Valor do ciclo{dm.desconto > 0 ? ` (sem o desconto na mensalidade: ${brl(valorCicloCheio)})` : ''}</dt><dd className="font-medium">{brl(valorCiclo)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-dev-text-muted">Mensalidade cheia</dt><dd className="font-medium">{brl(mensal)}</dd></div>
+                  {previa && <div className="flex justify-between"><dt className="text-dev-text-muted">Sistema no período{previa.descontoPercent > 0 ? ` (${previa.descontoPercent}% off)` : ''}</dt><dd className="font-medium">{brl(previa.totalSistema)}</dd></div>}
                   <div className="flex justify-between"><dt className="text-dev-text-muted">Implantação</dt><dd>{brl(base)}</dd></div>
                   <div className="flex justify-between"><dt className="text-dev-text-muted">Implantação com desconto</dt><dd className="font-medium">{brl(impl.final)}</dd></div>
+                  {previa && <div className="flex justify-between border-t border-dev-border pt-1"><dt className="text-dev-text-muted">Total a cobrar</dt><dd className="font-bold">{brl(previa.totalGeral)}</dd></div>}
                 </dl>
                 <div className="grid grid-cols-[1fr_1fr] gap-2 mt-3">
                   <div>
@@ -347,36 +373,8 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
                 </div>
                 {impl.erro && <p className="text-xs text-error mt-2">{impl.erro}</p>}
                 {motivoFalta && <p className="text-xs text-error mt-2">Informe o motivo do desconto.</p>}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                  <div>
-                    <label className={rotulo} htmlFor="ct-mdt">Desconto na mensalidade (máximo {dados.config.desconto_mensalidade_max_percent}%)</label>
-                    <div className="flex gap-2">
-                      <select id="ct-mdt" className={`${campo} w-24`} value={mDescTipo} onChange={e => setMDescTipo(e.target.value)}><option value="percent">%</option><option value="valor">R$</option></select>
-                      <input type="number" min="0" step="0.01" className={campo} value={mDesc} onChange={e => setMDesc(e.target.value)} aria-label="Valor do desconto na mensalidade" />
-                    </div>
-                  </div>
-                  <div><label className={rotulo} htmlFor="ct-mmot">Motivo (obrigatório com desconto)</label><input id="ct-mmot" className={campo} value={mMotivo} maxLength={300} onChange={e => setMMotivo(e.target.value)} /></div>
-                  {Number(mDesc) > 0 && (
-                    <>
-                      <div>
-                        <label className={rotulo} htmlFor="ct-mrec">Duração do desconto</label>
-                        <select id="ct-mrec" className={campo} value={mRecorrente ? 'recorrente' : 'periodo'} onChange={e => setMRecorrente(e.target.value === 'recorrente')}>
-                          <option value="recorrente">Recorrente (todos os meses do ciclo)</option>
-                          <option value="periodo">Por um período</option>
-                        </select>
-                      </div>
-                      {!mRecorrente && (
-                        <div>
-                          <label className={rotulo} htmlFor="ct-mmeses">Meses com desconto (1 a {cicloSel.meses ?? 1})</label>
-                          <input id="ct-mmeses" type="number" min="1" max={cicloSel.meses ?? 1} step="1" className={campo} value={mMeses} onChange={e => setMMeses(e.target.value)} />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                {dm.erro && <p className="text-xs text-error mt-2">{dm.erro}</p>}
-                {mMotivoFalta && <p className="text-xs text-error mt-2">Informe o motivo do desconto na mensalidade.</p>}
+                {!vencOk && <p className="text-xs text-error mt-2">O vencimento da 1ª parcela não pode ser no passado.</p>}
+                {previa && <TabelaParcelas parcelas={previa.parcelas} mensal={condicao.pagamento === 'mes_a_mes'} />}
               </div>
             )}
 
@@ -390,6 +388,22 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
       </div>
     </div>,
     document.body
+  );
+}
+
+function TabelaParcelas({ parcelas, mensal }) {
+  return (
+    <div className="mt-3">
+      <p className={rotulo}>{mensal ? 'Primeira cobrança (as seguintes são geradas todo mês)' : 'Parcelas'}</p>
+      <ul className="text-sm divide-y divide-dev-border">
+        {parcelas.map(p => (
+          <li key={p.numero} className="flex justify-between py-1">
+            <span className="text-dev-text-muted">{p.numero}ª, vence em {formatarData(p.vencimento)}</span>
+            <span className="font-medium">{brl(p.valor)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

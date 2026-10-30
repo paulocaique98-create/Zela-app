@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Faturamento do Zela Edu, etapa B** (30/10): modal Contratar por condição de pagamento (mensal, anual à vista, 6x, 12x) com prévia das parcelas; tela Faturamento no Portal do Dev (filtros, baixa manual, novo vencimento, cancelar, suspender e reativar); RPCs só developer na migration 20261209160000. Asaas na etapa C.
 - **Pacotes por faixa de alunos** (30/10): Planos > Pacotes no Portal do Dev com escada de 50 a 1000 alunos (Básico, Padrão e Avançado), reajuste IPCA e botão Restaurar custo original; Contratar e Proposta usam o preço da faixa.
 
 ### Corrigido
