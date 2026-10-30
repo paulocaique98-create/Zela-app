@@ -58,6 +58,7 @@ const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoDre = lazy(() => import('./GestaoDre'));
 const GestaoBolsas = lazy(() => import('./GestaoBolsas'));
 const GestaoReguaCobranca = lazy(() => import('./GestaoReguaCobranca'));
+const GestaoNfse = lazy(() => import('./GestaoNfse'));
 const GestaoHistoricoEscolar = lazy(() => import('./GestaoHistoricoEscolar'));
 const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
@@ -557,12 +558,14 @@ export default function GestaoPortal({
           {abaAtual === 'config-financeiro' && (
             <div className="h-full flex flex-col min-h-0">
               <div className="px-4 md:px-6 pt-4 shrink-0">
-                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }, ...(chaveLigada(features, 'regua_cobranca') ? [{ id: 'regua', label: 'Régua de cobrança' }] : [])]} active={financeConfigTab} onChange={setFinanceConfigTab} equalOnMobile />
+                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }, ...(chaveLigada(features, 'regua_cobranca') ? [{ id: 'regua', label: 'Régua de cobrança' }] : []), ...(chaveLigada(features, 'nfse') ? [{ id: 'nfse', label: 'Nota fiscal' }] : [])]} active={financeConfigTab} onChange={setFinanceConfigTab} equalOnMobile />
               </div>
               <div className="flex-1 min-h-0">
                 {financeConfigTab === 'regua' && chaveLigada(features, 'regua_cobranca')
                   ? <GestaoReguaCobranca currentUser={currentUser} />
-                  : financeConfigTab === 'gateway' || financeConfigTab === 'regua'
+                  : financeConfigTab === 'nfse' && chaveLigada(features, 'nfse')
+                  ? <GestaoNfse currentUser={currentUser} />
+                  : financeConfigTab === 'gateway' || financeConfigTab === 'regua' || financeConfigTab === 'nfse'
                   ? shell('Chave do Asaas, multa, juros e desconto das cobranças.', <GatewayConfigTab currentUser={currentUser} currentSchool={currentSchool} />)
                   : <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} only={['billing']} showSchoolData={false} />}
               </div>

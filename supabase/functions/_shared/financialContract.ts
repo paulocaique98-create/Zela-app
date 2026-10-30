@@ -2,6 +2,7 @@ import { calcularValorDoCiclo, planoDoAluno, procurarPreco, anoDoPreco, mensagem
 import type { PeriodicidadeDeCobranca } from './planPricing.ts';
 import { bolsaVigenteEm, descontoComBolsas } from './scholarshipDiscount.ts';
 import type { BolsaVigente } from './scholarshipDiscount.ts';
+import { configurarNotaDoContrato } from './nfseContrato.ts';
 
 // Criação de uma mensalidade (contrato financeiro + assinatura no Asaas),
 // usada pela criação avulsa (create-financial-contract) e em lote
@@ -107,7 +108,7 @@ export async function criarMensalidade(
 
   const { data: guardian, error: guardianError } = await adminClient
     .from('users')
-    .select('id, name, email, doc_number, doc_type')
+    .select('id, name, email, doc_number, doc_type, zip_code, street, number, complement, neighborhood')
     .eq('id', guardianLink.guardian_id)
     .single();
   if (guardianError || !guardian) throw new Error('Responsável financeiro não encontrado.');
@@ -220,10 +221,20 @@ export async function criarMensalidade(
   const contractId: string = contract.id;
 
   try {
+    // Endereço do responsável (tomador da nota), quando já cadastrado; sem ele o Asaas segue como antes.
+    const cep = String(guardian.zip_code ?? '').replace(/\D/g, '');
+    const temEndereco = cep.length === 8 && guardian.street && guardian.number;
     const customer = await asaas.createCustomer({
       name: guardian.name,
       cpfCnpj: guardian.doc_number,
       email: guardian.email || undefined,
+      ...(temEndereco ? {
+        postalCode: cep,
+        address: guardian.street,
+        addressNumber: guardian.number,
+        complement: guardian.complement || undefined,
+        province: guardian.neighborhood || undefined,
+      } : {}),
     });
     const subscription = await asaas.createSubscription({
       customer: customer.id,
@@ -239,6 +250,8 @@ export async function criarMensalidade(
       .update({ gateway_customer_id: customer.id, gateway_subscription_id: subscription.id, updated_at: new Date().toISOString() })
       .eq('id', contractId);
     if (updateError) throw updateError;
+    // Nota fiscal automática (módulo nfse): nunca derruba a mensalidade; o resultado fica no contrato.
+    await configurarNotaDoContrato(adminClient, asaas, schoolId, contractId, subscription.id as string);
     return {
       contract_id: contractId,
       gateway_customer_id: customer.id as string,

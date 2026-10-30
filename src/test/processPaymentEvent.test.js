@@ -14,6 +14,8 @@ vi.mock('../../supabase/functions/_shared/sendFamilyNotification.ts', () => ({
   centsToBRL: (cents) => `R$ ${(cents / 100).toFixed(2)}`,
 }));
 
+vi.mock('../../supabase/functions/_shared/notifyAdmins.ts', () => ({ notifyAdmins: vi.fn().mockResolvedValue(undefined) }));
+
 // Item 14 da auditoria (27/09/2026): processPaymentEvent consulta o
 // pagamento no Asaas antes de gravar. Aqui o "Asaas" é simulado: por padrão
 // responde exatamente o que está no evento (evento verdadeiro); um teste
