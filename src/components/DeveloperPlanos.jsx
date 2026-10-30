@@ -233,7 +233,7 @@ function AbaPlanos({ dados, nomeItem, pedidoNovo }) {
                 {p.modalidade === 'pacote' && <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Por aluno</dt><dd>{brl(p.preco_por_aluno)}</dd></div>}
                 <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Mínimo mensal</dt><dd>{brl(p.minimo_mensal)}</dd></div>
                 <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Implantação</dt><dd>{brl(p.implantacao_valor)}</dd></div>
-                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Ciclos</dt><dd>{ciclosAtivos.map(c => `${CICLOS.find(x => x.id === c.ciclo)?.label} ${c.desconto_percent}%`).join(' · ') || 'Nenhum'}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-dev-text-muted shrink-0">Ciclos</dt><dd>{ciclosAtivos.map(c => CICLOS.find(x => x.id === c.ciclo)?.label).join(' · ') || 'Nenhum'}</dd></div>
               </dl>
               <div className="grid grid-cols-3 gap-2 mt-auto pt-4">
                 <button type="button" className={`${btnNeutro} justify-center`} onClick={() => abrir(p)}><Pencil size={14} /> Editar</button>
@@ -273,7 +273,6 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
     if (ehPacote && !(Number(plano.preco_por_aluno) > 0)) return toast.error('Informe o preço por aluno do pacote.');
     if (!ciclos.some(c => c.ativo)) return toast.error('Deixe pelo menos um ciclo ativo.');
     for (const c of ciclos) {
-      if (Number(c.desconto_percent) < 0 || Number(c.desconto_percent) > 50) return toast.error('O desconto do ciclo vai de 0 a 50 por cento.');
       if (c.implantacao_valor !== '' && !(Number(c.implantacao_valor) >= config.implantacao_min && Number(c.implantacao_valor) <= config.implantacao_max)) {
         return toast.error(`A implantação do ciclo deve ficar entre ${brl(config.implantacao_min)} e ${brl(config.implantacao_max)}.`);
       }
@@ -365,16 +364,15 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
             {ciclos.map(c => {
               const bloqueado = plano.modalidade === 'por_aluno' && c.ciclo !== 'MENSAL';
               return (
-                <div key={c.ciclo} className={`grid grid-cols-[auto_1fr_1fr_1fr] gap-2 items-center bg-dev-surface border border-dev-border rounded-zela-md px-3 py-2 ${bloqueado ? 'opacity-40' : ''}`}>
+                <div key={c.ciclo} className={`grid grid-cols-[auto_1fr_1fr] gap-2 items-center bg-dev-surface border border-dev-border rounded-zela-md px-3 py-2 ${bloqueado ? 'opacity-40' : ''}`}>
                   <input type="checkbox" checked={!!c.ativo && !bloqueado} disabled={bloqueado} onChange={e => mudarCiclo(c.ciclo, 'ativo', e.target.checked)} aria-label={`Ativar ciclo ${c.ciclo}`} />
                   <span className="text-sm font-medium">{CICLOS.find(x => x.id === c.ciclo).label}</span>
-                  <input type="number" min="0" max="50" step="0.5" className={campo} disabled={bloqueado} value={c.desconto_percent} onChange={e => mudarCiclo(c.ciclo, 'desconto_percent', e.target.value)} aria-label={`Desconto do ciclo ${c.ciclo} em porcentagem`} placeholder="Desconto %" />
                   <input type="number" min="0" step="0.01" className={campo} disabled={bloqueado} value={c.implantacao_valor} onChange={e => mudarCiclo(c.ciclo, 'implantacao_valor', e.target.value)} aria-label={`Implantação do ciclo ${c.ciclo}`} placeholder="Implantação própria" />
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-dev-text-muted mt-1">Colunas: ativar, desconto em porcentagem (0 a 50) e implantação própria do ciclo (vazio usa a do plano).</p>
+          <p className="text-xs text-dev-text-muted mt-1">Colunas: ativar e implantação própria do ciclo (vazio usa a do plano). O desconto agora vem da condição de pagamento, escolhida ao contratar.</p>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
