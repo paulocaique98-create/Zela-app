@@ -95,6 +95,7 @@ export default function GestaoReguaCobranca({ currentUser }) {
 
       {aba === 'passos' && (
         <div className="space-y-3">
+          <CartaoWhatsApp setErro={setErro} setAviso={setAviso} />
           {passos.map((p, i) => (
             <div key={i} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 flex flex-wrap items-end gap-4">
               <Field label="Dias (negativo é antes)" id={`passo-dias-${i}`} hint={rotuloDoPasso(p.dias)}>
@@ -117,7 +118,6 @@ export default function GestaoReguaCobranca({ currentUser }) {
             <Field label="Até as" id="regua-fim" hint="Horário de Brasília."><input id="regua-fim" type="number" min="1" max="24" value={fim} onChange={e => setFim(Number(e.target.value))} className={`${inputCls} w-24`} /></Field>
             <PrimaryButton onClick={() => salvarRegra()} disabled={salvando}>Salvar passos</PrimaryButton>
           </div>
-          <p className="text-xs text-on-surface-variant">WhatsApp ainda não faz parte da régua. Por enquanto, as notificações nativas do Asaas podem cobrir esse canal.</p>
         </div>
       )}
 
@@ -201,6 +201,59 @@ function Modelos({ passos, modelos, schoolId, onSaved, setErro, setAviso }) {
         <SecondaryButton onClick={testar} disabled={ocupado || !texto.trim()}>Enviar teste para mim</SecondaryButton>
         {salvo && <SecondaryButton onClick={restaurar} disabled={ocupado}>Restaurar padrão</SecondaryButton>}
       </div>
+    </div>
+  );
+}
+
+// WhatsApp pelas notificações nativas do Asaas (D12, opção a). O Asaas envia e cobra na conta da escola.
+function CartaoWhatsApp({ setErro, setAviso }) {
+  const [estado, setEstado] = useState(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  const chamar = useCallback(async (acao) => {
+    const r = await chamarFuncaoFinanceira('sync-asaas-whatsapp', { acao });
+    if (acao === 'estado') return r;
+    // Sincroniza em lotes até acabar (a função faz até 40 clientes por chamada).
+    let atual = r; let rodadas = 0;
+    while (atual.pendentes > 0 && rodadas < 25) { atual = await chamarFuncaoFinanceira('sync-asaas-whatsapp', { acao: 'sincronizar' }); rodadas++; }
+    return atual;
+  }, []);
+
+  useEffect(() => { chamar('estado').then(setEstado).catch(() => setEstado({ erro: true })); }, [chamar]);
+
+  const executa = async (acao, ok) => {
+    setErro(''); setAviso(''); setOcupado(true);
+    try { await chamar(acao); setEstado(await chamar('estado')); setAviso(ok); }
+    catch (e) { setErro(e.message || 'Não foi possível falar com o Asaas.'); }
+    setOcupado(false);
+  };
+
+  if (!estado) return null;
+  if (estado.erro) return null;
+
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold text-on-surface">WhatsApp pelo Asaas {estado.ligado ? '(ligado)' : '(desligado)'}</p>
+          <p className="text-xs text-on-surface-variant">
+            Liga o WhatsApp nas notificações de cobrança criada, véspera e atraso do Asaas, para o celular do responsável financeiro.
+            O texto e os dias seguem o padrão do Asaas, não os passos acima, e cada mensagem é cobrada pelo Asaas na conta da escola.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {estado.ligado && <SecondaryButton onClick={() => executa('sincronizar', 'Sincronização concluída.')} disabled={ocupado}>Sincronizar agora</SecondaryButton>}
+          <PrimaryButton onClick={() => executa(estado.ligado ? 'desativar' : 'ativar', estado.ligado ? 'WhatsApp desligado no Asaas.' : 'WhatsApp ligado no Asaas.')} disabled={ocupado}>
+            {ocupado ? 'Aguarde' : estado.ligado ? 'Desligar' : 'Ligar WhatsApp'}
+          </PrimaryButton>
+        </div>
+      </div>
+      {estado.ligado && (
+        <p className="text-xs text-on-surface-variant">
+          {estado.aplicados} cliente(s) com WhatsApp ligado{estado.com_erro > 0 ? `, ${estado.com_erro} com aviso (celular inválido ou erro do Asaas; confira o telefone do responsável)` : ''}.
+          Só celular com DDD recebe. Quem desligar o WhatsApp em Configurações deixa de receber.
+        </p>
+      )}
     </div>
   );
 }

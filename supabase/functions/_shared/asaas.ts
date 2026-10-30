@@ -82,6 +82,23 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch('/v3/customers', { method: 'POST', body: JSON.stringify(input) });
     },
 
+    // Telefone do cliente (o WhatsApp do Asaas sai para o mobilePhone).
+    // deno-lint-ignore no-explicit-any
+    updateCustomer(customerId: string, input: { mobilePhone?: string }): Promise<any> {
+      return asaasFetch(`/v3/customers/${encodeURIComponent(customerId)}`, { method: 'PUT', body: JSON.stringify(input) });
+    },
+
+    // Notificações nativas do cliente (a API só altera as que já existem; não cria nem apaga).
+    // deno-lint-ignore no-explicit-any
+    listCustomerNotifications(customerId: string): Promise<{ data: any[] }> {
+      return asaasFetch(`/v3/customers/${encodeURIComponent(customerId)}/notifications`, { method: 'GET' });
+    },
+
+    // deno-lint-ignore no-explicit-any
+    updateNotificationsBatch(customerId: string, notifications: Array<{ id: string; whatsappEnabledForCustomer: boolean }>): Promise<any> {
+      return asaasFetch('/v3/notifications/batch', { method: 'PUT', body: JSON.stringify({ customer: customerId, notifications }) });
+    },
+
     createPayment(input: {
       customer: string;
       billingType: 'PIX' | 'BOLETO' | 'CREDIT_CARD' | 'UNDEFINED';

@@ -122,4 +122,32 @@ runIf('Régua de cobrança · RLS e regras', () => {
       expect(eEscola).not.toBeNull();
     } finally { await c.limpar(); }
   });
+
+  it('WhatsApp pelo Asaas: família grava o opt out; só a Gestão liga o interruptor e lê a sincronia', async () => {
+    const c = await montaCenario();
+    try {
+      const { error } = await c.familia.client.from('billing_channel_prefs')
+        .upsert({ user_id: c.familia.id, school_id: c.schoolA, canal: 'whatsapp', optou_sair: true }, { onConflict: 'user_id,canal' });
+      expect(error).toBeNull();
+      const { error: eRuim } = await c.familia.client.from('billing_channel_prefs')
+        .upsert({ user_id: c.familia.id, school_id: c.schoolA, canal: 'sms', optou_sair: true }, { onConflict: 'user_id,canal' });
+      expect(eRuim).not.toBeNull();
+      await c.gestao.client.from('billing_rules').insert(regra(c, { ativa: false, passos: [], whatsapp_asaas: true }));
+      const { data: r } = await c.gestao.client.from('billing_rules').select('whatsapp_asaas');
+      expect(r).toEqual([{ whatsapp_asaas: true }]);
+      await adminClient.from('asaas_whatsapp_sync').insert({ school_id: c.schoolA, customer_id: 'cus_teste123', aplicado: true });
+      const { data: g } = await c.gestao.client.from('asaas_whatsapp_sync').select('customer_id');
+      expect(g).toHaveLength(1);
+      for (const u of [c.familia, c.recepcao, c.coordenacao, c.gestaoB]) {
+        const { data } = await u.client.from('asaas_whatsapp_sync').select('customer_id');
+        expect(data || []).toHaveLength(0);
+      }
+      expect((await c.gestao.client.from('asaas_whatsapp_sync').delete().eq('school_id', c.schoolA)).error).toBeNull();
+      const { data: ainda } = await adminClient.from('asaas_whatsapp_sync').select('customer_id').eq('school_id', c.schoolA);
+      expect(ainda).toHaveLength(1);
+    } finally {
+      await adminClient.from('asaas_whatsapp_sync').delete().eq('school_id', c.schoolA);
+      await c.limpar();
+    }
+  });
 });

@@ -7,6 +7,7 @@ import { logEdgeError } from '../_shared/logEdgeError.ts';
 import {
   agoraBrasilia, dataBR, escaparHtml, modeloPadrao, passosValidos, preencher, somaDias, textoParaHtml,
 } from '../_shared/billingRules.ts';
+import { sincronizarEscola } from '../_shared/asaasWhatsapp.ts';
 import type { CanalRegua } from '../_shared/billingRules.ts';
 
 // Régua de cobrança (item 14). Roda de hora em hora pelo pg_cron. Para cada escola com o módulo
@@ -42,6 +43,21 @@ serve(async (req) => {
   const resumo = { escolas: 0, enviados: 0, falhas: 0, ignorados: 0 };
 
   try {
+    // WhatsApp pelo Asaas: pega clientes novos e mudanças de telefone das escolas com o interruptor ligado.
+    try {
+      const { data: comWhats } = await adminClient.from('billing_rules').select('school_id').eq('whatsapp_asaas', true);
+      const idsW = (comWhats || []).map((r) => r.school_id);
+      const { data: escW } = idsW.length
+        ? await adminClient.from('schools').select('id, features_enabled').in('id', idsW)
+        : { data: [] as Array<{ id: string; features_enabled: Record<string, unknown> | null }> };
+      for (const e of escW || []) {
+        if (e.features_enabled?.regua_cobranca !== true) continue;
+        try { await sincronizarEscola(adminClient, e.id, { limite: 20 }); } catch (err) {
+          await logEdgeError(adminClient, 'run-billing-rules', `whatsapp asaas ${e.id}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    } catch (_) { /* a sincronia do WhatsApp não pode impedir a régua */ }
+
     const { data: regras, error: regrasErr } = await adminClient
       .from('billing_rules').select('school_id, passos, hora_inicio, hora_fim').eq('ativa', true);
     if (regrasErr) throw regrasErr;
