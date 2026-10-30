@@ -3,6 +3,7 @@ import {
   valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, descontoMensalidade,
   modalidadesPermitidas, itensValidos, extrasDoPacote, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
   situacaoContrato, mensalVigente, faixaDoPlano, passouDaFaixa,
+  CONDICOES_PADRAO, somarMeses, dividirEmParcelas, previaCobrancas,
 } from './planosZela';
 
 const PRECOS = [
@@ -172,5 +173,57 @@ describe('pacote por faixa', () => {
     expect(passouDaFaixa(ct, FAIXADO, 51)).toBe(true);
     expect(passouDaFaixa(ct, FAIXADO, 50)).toBe(false);
     expect(passouDaFaixa(ct, { modalidade: 'pacote' }, 500)).toBe(false);
+  });
+});
+
+describe('condições de pagamento', () => {
+  const cond = (chave) => CONDICOES_PADRAO.find(c => c.chave === chave);
+  const soma = (v) => Math.round(v.reduce((a, b) => a + b, 0) * 100) / 100;
+
+  it('soma meses a partir da data original, com último dia do mês curto', () => {
+    expect(somarMeses('2026-01-31', 1)).toBe('2026-02-28');
+    expect(somarMeses('2026-01-31', 2)).toBe('2026-03-31');
+    expect(somarMeses('2028-01-30', 1)).toBe('2028-02-29');
+    expect(somarMeses('2026-11-15', 2)).toBe('2027-01-15');
+  });
+
+  it('a soma das parcelas bate exatamente com o total', () => {
+    expect(dividirEmParcelas(100, 3)).toEqual([33.33, 33.33, 33.34]);
+  });
+
+  it('Mensal: 1 cobrança, sem desconto, implantação inteira no 1º mês', () => {
+    const r = previaCobrancas({ mensal: 500, condicao: cond('mensal'), meses: 1, implantacao: 900, inicio: '2026-11-01', primeiroVencimento: '2026-11-04' });
+    expect(r.parcelas).toHaveLength(1);
+    expect(r.parcelas[0].valorSistema).toBe(500);
+    expect(r.parcelas[0].valorImplantacao).toBe(900);
+    expect(r.parcelas[0].valor).toBe(1400);
+  });
+
+  it('Anual à vista: 15% de desconto e implantação no link único', () => {
+    const r = previaCobrancas({ mensal: 500, condicao: cond('anual_vista'), meses: 12, implantacao: 600, inicio: '2026-11-01', primeiroVencimento: '2026-11-04' });
+    expect(r.totalSistema).toBe(5100);
+    expect(r.parcelas).toHaveLength(1);
+    expect(r.parcelas[0].valor).toBe(5700);
+  });
+
+  it('Anual 6x: 10%, vencimentos a cada 2 meses e implantação dividida em 6', () => {
+    const r = previaCobrancas({ mensal: 500, condicao: cond('anual_6x'), meses: 12, implantacao: 600, inicio: '2026-11-01', primeiroVencimento: '2026-11-30' });
+    expect(r.totalSistema).toBe(5400);
+    expect(r.parcelas.map(p => p.vencimento)).toEqual(['2026-11-30', '2027-01-30', '2027-03-30', '2027-05-30', '2027-07-30', '2027-09-30']);
+    expect(r.parcelas.every(p => p.valorImplantacao === 100)).toBe(true);
+    expect(soma(r.parcelas.map(p => p.valor))).toBe(6000);
+  });
+
+  it('Anual 12x: 5%, 12 cobranças, último dia do mês curto e soma exata', () => {
+    const r = previaCobrancas({ mensal: 333.33, condicao: cond('anual_12x'), meses: 12, implantacao: 700, inicio: '2026-11-01', primeiroVencimento: '2026-01-31' });
+    expect(r.parcelas).toHaveLength(12);
+    expect(r.parcelas[1].vencimento).toBe('2026-02-28');
+    expect(r.parcelas[2].vencimento).toBe('2026-03-31');
+    expect(soma(r.parcelas.map(p => p.valor))).toBe(r.totalGeral);
+  });
+
+  it('implantação isenta não cria valor de implantação', () => {
+    const r = previaCobrancas({ mensal: 500, condicao: cond('anual_12x'), meses: 12, implantacao: 0, inicio: '2026-11-01', primeiroVencimento: '2026-11-04' });
+    expect(r.parcelas.every(p => p.valorImplantacao === 0)).toBe(true);
   });
 });

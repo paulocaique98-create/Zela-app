@@ -184,6 +184,51 @@ export function sugestaoDePacote(itens, precoPorAluno, precos) {
   return { soma, desconto };
 }
 
+// Condições de pagamento (período + pagamento). Valores iniciais; o servidor lê zela_condicoes_pagamento e
+// contratar_plano_com_condicao recalcula tudo. Mensal gera só a 1ª cobrança (as seguintes vêm da função agendada).
+export const CONDICOES_PADRAO = [
+  { chave: 'mensal', ciclo: 'MENSAL', pagamento: 'mes_a_mes', parcelas: 1, intervalo_meses: 1, desconto_percent: 0 },
+  { chave: 'anual_vista', ciclo: 'ANUAL', pagamento: 'a_vista', parcelas: 1, intervalo_meses: 12, desconto_percent: 15 },
+  { chave: 'anual_6x', ciclo: 'ANUAL', pagamento: 'parcelado', parcelas: 6, intervalo_meses: 2, desconto_percent: 10 },
+  { chave: 'anual_12x', ciclo: 'ANUAL', pagamento: 'parcelado', parcelas: 12, intervalo_meses: 1, desconto_percent: 5 },
+];
+
+// Soma meses a uma data ISO (aaaa-mm-dd) sempre a partir da data original; dia 29, 30 ou 31 vale o último
+// dia do mês curto. Retorna ISO.
+export function somarMeses(iso, meses) {
+  const [a, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+  const alvo = m - 1 + meses;
+  const ano = a + Math.floor(alvo / 12);
+  const mes = ((alvo % 12) + 12) % 12;
+  const ultimo = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+  return `${ano}-${String(mes + 1).padStart(2, '0')}-${String(Math.min(d, ultimo)).padStart(2, '0')}`;
+}
+
+// Divide em n partes de centavos; o que sobra vai para a última, então a soma bate exatamente.
+export function dividirEmParcelas(total, n) {
+  const base = arredondar(Number(total) / n);
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? arredondar(Number(total) - base * (n - 1)) : base));
+}
+
+// Prévia das cobranças de uma contratação. Desconto só da condição (o do ciclo é ignorado).
+// mensal = preço cheio por mês; meses = meses do período (1 ou 12); implantacao = valor final da implantação.
+export function previaCobrancas({ mensal, condicao, meses, implantacao = 0, inicio, primeiroVencimento }) {
+  const desc = Number(condicao.desconto_percent || 0);
+  const totalSistema = arredondar(Number(mensal) * (1 - desc / 100) * meses);
+  const n = condicao.parcelas;
+  const sis = dividirEmParcelas(totalSistema, n);
+  const impl = dividirEmParcelas(implantacao, n);
+  const parcelas = sis.map((valorSistema, i) => ({
+    numero: i + 1,
+    competencia: `${somarMeses(inicio, i * condicao.intervalo_meses).slice(0, 7)}-01`,
+    vencimento: somarMeses(primeiroVencimento, i * condicao.intervalo_meses),
+    valorSistema,
+    valorImplantacao: impl[i],
+    valor: arredondar(valorSistema + impl[i]),
+  }));
+  return { descontoPercent: desc, totalSistema, totalGeral: arredondar(totalSistema + Number(implantacao)), parcelas };
+}
+
 // Vencimento: dias até o fim da contratação (negativo = vencida).
 export function diasParaVencer(fim, hoje = new Date()) {
   if (!fim) return null;
