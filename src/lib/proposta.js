@@ -57,7 +57,6 @@ export function montarProposta({
   vantagens.push('Plano base sempre incluso: cadastros, entrada e saída com reconhecimento facial, comunicados, calendário, contratos e financeiro.');
 
   const wa = linkWhatsapp(contatos.whatsapp);
-  const assunto = `Proposta Zela para ${cliente.nome.trim()}`;
   return {
     erro: null,
     cliente: { nome: cliente.nome.trim(), contato: cliente.contato?.trim() || '' },
@@ -83,10 +82,8 @@ export function montarProposta({
     },
     links: {
       aceitar: wa ? `${wa}?text=${encodeURIComponent(`Olá! Quero aceitar a proposta do Zela para ${cliente.nome.trim()}.`)}` : null,
-      duvida: contatos.email?.trim()
-        ? `mailto:${contatos.email.trim()}?subject=${encodeURIComponent(`Dúvida sobre a ${assunto}`)}&body=${encodeURIComponent(`Olá! Tenho uma dúvida sobre a proposta do Zela para ${cliente.nome.trim()}.`)}`
-        : null,
+      duvida: wa ? `${wa}?text=${encodeURIComponent(`Olá! Tenho uma dúvida sobre a proposta do Zela para ${cliente.nome.trim()}.`)}` : null,
     },
-    contatos: { whatsapp: semHifen(contatos.whatsapp), email: contatos.email?.trim() || '' },
+    contatos: { whatsapp: semHifen(contatos.whatsapp) },
   };
 }
