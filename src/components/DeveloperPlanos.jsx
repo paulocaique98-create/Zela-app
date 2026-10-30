@@ -1,12 +1,13 @@
 import { createPortal } from 'react-dom';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Plus, Pencil, Copy, Power, X, Check, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITEM_POR_ID } from '../lib/modulosCatalogo';
-import { CICLOS, brl, sugestaoDePacote, passouDoLimite } from '../lib/planosZela';
+import { CICLOS, brl, sugestaoDePacote, passouDoLimite, passouDaFaixa } from '../lib/planosZela';
 import { DeveloperPlanosSimulador, DeveloperPlanosContratacoes } from './DeveloperPlanosContratacao';
+import DeveloperPlanosPacotes from './DeveloperPlanosPacotes';
 
 // Portal do Dev · Planos (PLANO_MENU_PLANOS_DEV.md). Formas de contratação da
 // ESCOLA com o Zela (não é a mensalidade da família). O menu escolhe itens do
@@ -14,6 +15,7 @@ import { DeveloperPlanosSimulador, DeveloperPlanosContratacoes } from './Develop
 
 const ABAS = [
   { id: 'planos', label: 'Planos' },
+  { id: 'pacotes', label: 'Pacotes' },
   { id: 'precos', label: 'Preços dos módulos' },
   { id: 'simulador', label: 'Simulador' },
   { id: 'contratacoes', label: 'Contratações' },
@@ -29,12 +31,16 @@ const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:tex
 export default function DeveloperPlanos({ initialTab = 'planos' }) {
   const dados = usePlanosZela();
   const [aba, setAba] = useState(initialTab);
+  const [pedidoNovo, setPedidoNovo] = useState(0);
 
   const nomeItem = (id) => ITEM_POR_ID[id]?.nome || id;
   const alertas = useMemo(() => dados.contratacoes.filter(ct => {
     const plano = dados.planos.find(p => p.id === ct.plano_id);
     return passouDoLimite({ modalidade: plano?.modalidade }, dados.alunosAtivos[ct.school_id] || 0, dados.config.limite_alunos_por_aluno);
   }).length, [dados.contratacoes, dados.planos, dados.alunosAtivos, dados.config]);
+  const alertasFaixa = useMemo(() => dados.contratacoes.filter(ct => (
+    passouDaFaixa(ct, dados.planos.find(p => p.id === ct.plano_id), dados.alunosAtivos[ct.school_id] || 0)
+  )).length, [dados.contratacoes, dados.planos, dados.alunosAtivos]);
 
   if (dados.loading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-dev-text-muted" /></div>;
 
@@ -47,16 +53,30 @@ export default function DeveloperPlanos({ initialTab = 'planos' }) {
           {alertas === 1 ? '1 escola por aluno passou do limite de alunos.' : `${alertas} escolas por aluno passaram do limite de alunos.`} Migre para um pacote.
         </button>
       )}
-      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-dev-border -mx-4 px-4 md:mx-0 md:px-0" role="tablist">
-        {ABAS.map(a => (
-          <button key={a.id} type="button" role="tab" aria-selected={aba === a.id} onClick={() => setAba(a.id)}
-            className={`px-4 py-3 md:py-2.5 text-sm font-medium whitespace-nowrap shrink-0 border-b-2 -mb-px ${aba === a.id ? 'border-dev-primary text-dev-primary' : 'border-transparent text-dev-text-muted hover:text-dev-text'}`}>
-            {a.label}
+      {alertasFaixa > 0 && (
+        <button type="button" onClick={() => setAba('contratacoes')} className="w-full flex items-center gap-2 text-left text-sm px-4 py-3 rounded-zela-lg bg-warning/10 border border-warning/40 text-warning">
+          <AlertTriangle size={16} className="shrink-0" />
+          {alertasFaixa === 1 ? '1 escola passou da faixa de alunos contratada.' : `${alertasFaixa} escolas passaram da faixa de alunos contratada.`} Troque para uma faixa maior.
+        </button>
+      )}
+      <div className="flex items-center gap-2 border-b border-dev-border -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex flex-1 min-w-0 gap-1 overflow-x-auto scrollbar-none" role="tablist">
+          {ABAS.map(a => (
+            <button key={a.id} type="button" role="tab" aria-selected={aba === a.id} onClick={() => setAba(a.id)}
+              className={`px-4 py-3 md:py-2.5 text-sm font-medium whitespace-nowrap shrink-0 border-b-2 -mb-px ${aba === a.id ? 'border-dev-primary text-dev-primary' : 'border-transparent text-dev-text-muted hover:text-dev-text'}`}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+        {aba === 'planos' && (
+          <button type="button" aria-label="Novo plano" className={`${btnPrimario} shrink-0 justify-center min-h-[44px] md:min-h-0 my-1`} onClick={() => setPedidoNovo(n => n + 1)}>
+            <Plus size={14} /> <span className="hidden sm:inline">Novo plano</span>
           </button>
-        ))}
+        )}
       </div>
 
-      {aba === 'planos' && <AbaPlanos dados={dados} nomeItem={nomeItem} />}
+      {aba === 'planos' && <AbaPlanos dados={dados} nomeItem={nomeItem} pedidoNovo={pedidoNovo} />}
+      {aba === 'pacotes' && <DeveloperPlanosPacotes dados={dados} />}
       {aba === 'precos' && <AbaPrecos dados={dados} />}
       {aba === 'simulador' && <DeveloperPlanosSimulador dados={dados} />}
       {aba === 'contratacoes' && <DeveloperPlanosContratacoes dados={dados} />}
@@ -164,7 +184,7 @@ function AbaPrecos({ dados }) {
 // ═══ Planos ═══
 const VAZIO = { nome: '', modalidade: 'pacote', itens: [], preco_por_aluno: '', minimo_mensal: '', implantacao_valor: '', descricao: '', alunos_min: '', alunos_max: '' };
 
-function AbaPlanos({ dados, nomeItem }) {
+function AbaPlanos({ dados, nomeItem, pedidoNovo }) {
   const [editando, setEditando] = useState(null); // { plano, ciclos }
   const usos = useMemo(() => {
     const m = {};
@@ -173,6 +193,8 @@ function AbaPlanos({ dados, nomeItem }) {
   }, [dados.contratacoes]);
 
   const abrirNovo = () => setEditando({ plano: { ...VAZIO }, ciclos: CICLOS.map(c => ({ ciclo: c.id, meses: c.meses, desconto_percent: 0, implantacao_valor: '', ativo: c.id === 'MENSAL' })) });
+  // O botão "Novo plano" fica na barra de abas (componente pai); cada clique incrementa o pedido.
+  useEffect(() => { if (pedidoNovo > 0) abrirNovo(); }, [pedidoNovo]); // eslint-disable-line react-hooks/exhaustive-deps
   const abrir = (p, duplicar = false) => {
     const existentes = dados.ciclos.filter(c => c.plano_id === p.id);
     const ciclos = CICLOS.map(c => {
@@ -193,7 +215,6 @@ function AbaPlanos({ dados, nomeItem }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex sm:justify-end"><button type="button" className={`${btnPrimario} w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0`} onClick={abrirNovo}><Plus size={14} /> Novo plano</button></div>
       <div className="grid grid-cols-1 md:grid-cols-2 md:grid-flow-col md:[grid-template-rows:repeat(var(--linhas),1fr)] gap-4" style={{ '--linhas': Math.max(Math.ceil(dados.planos.length / 2), 1) }}>
         {dados.planos.map(p => {
           const ciclosAtivos = dados.ciclos.filter(c => c.plano_id === p.id && c.ativo);
@@ -233,7 +254,9 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
   const [ciclos, setCiclos] = useState(estado.ciclos);
   const [salvando, setSalvando] = useState(false);
   const { config } = dados;
-  const vendaveis = dados.precos.filter(p => p.item_id !== 'base' && ITEM_POR_ID[p.item_id] && (p.ativo || plano.itens.includes(p.item_id)));
+  const vendaveis = dados.precos
+    .filter(p => p.item_id !== 'base' && ITEM_POR_ID[p.item_id] && (p.ativo || plano.itens.includes(p.item_id)))
+    .sort((a, b) => ITEM_POR_ID[a.item_id].nome.localeCompare(ITEM_POR_ID[b.item_id].nome, 'pt-BR'));
   const ehPacote = plano.modalidade === 'pacote';
   const sugestao = ehPacote ? sugestaoDePacote(plano.itens, plano.preco_por_aluno, dados.precos) : null;
 
@@ -315,7 +338,7 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
         {ehPacote && (
           <div>
             <p className={rotulo}>Itens além do plano base (sempre incluso)</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-col sm:[grid-template-rows:repeat(var(--linhas),auto)] gap-2" style={{ '--linhas': Math.max(Math.ceil(vendaveis.length / 2), 1) }}>
               {vendaveis.map(p => (
                 <label key={p.item_id} className="flex items-center gap-2 text-sm bg-dev-surface border border-dev-border rounded-zela-md px-3 py-2">
                   <input type="checkbox" checked={plano.itens.includes(p.item_id)} onChange={() => alternarItem(p.item_id)} />

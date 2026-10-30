@@ -4,6 +4,7 @@
 import { ITEM_POR_ID } from './modulosCatalogo';
 import {
   CICLO_POR_ID, itensValidos, extrasDoPacote, mensalidade, valorDoCiclo, descontoMensalidade, implantacaoBase, implantacaoFinal, CONFIG_PADRAO,
+  faixaDoPlano,
 } from './planosZela';
 import { linkWhatsapp } from './captacao';
 
@@ -23,10 +24,14 @@ export function montarProposta({
   cliente, plano, ciclo, alunos, escolhidos = [], extras = [], precos, config = CONFIG_PADRAO,
   descontoMensal = {}, descontoImplantacao = {}, validadeDias = 15, emitidaEm = new Date(), contatos = {},
 }) {
-  const n = Math.max(Number(alunos) || 0, 0);
+  const informados = Math.max(Number(alunos) || 0, 0);
   if (!cliente?.nome?.trim()) return { erro: 'Informe a escola.' };
   if (!plano || !ciclo) return { erro: 'Escolha o plano e o ciclo.' };
-  if (n < 1) return { erro: 'Informe a quantidade de alunos.' };
+  if (informados < 1) return { erro: 'Informe a quantidade de alunos.' };
+  // Plano com faixas: a proposta é para a menor faixa que comporta os alunos ("Até N alunos").
+  const faixa = faixaDoPlano(plano, informados);
+  if (plano.faixas && !faixa) return { erro: `Acima de ${Math.max(...Object.keys(plano.faixas).map(Number))} alunos não há faixa neste plano.` };
+  const n = faixa ?? informados;
 
   const ehPacote = plano.modalidade === 'pacote';
   const extrasOk = ehPacote ? extrasDoPacote(plano, extras, precos) : [];
@@ -63,6 +68,7 @@ export function montarProposta({
     plano: { nome: plano.nome, modalidade: plano.modalidade },
     ciclo: { id: ciclo.ciclo, label: CICLO_POR_ID[ciclo.ciclo]?.label || ciclo.ciclo, meses, descontoPercent: cicloPercent },
     alunos: n,
+    porFaixa: !!faixa,
     emitidaEm: dataBr(emitidaEm),
     validadeAte: dataBr(validade),
     sobre: SOBRE_ZELA,

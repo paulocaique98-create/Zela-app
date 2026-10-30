@@ -107,7 +107,11 @@ export default function DeveloperPropostas() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={rotulo} htmlFor="prop-alunos">Alunos</label><input id="prop-alunos" type="number" min="1" className={campo} value={alunos} onChange={e => setAlunos(e.target.value)} /></div>
+            <div>
+              <label className={rotulo} htmlFor="prop-alunos">Alunos</label>
+              <input id="prop-alunos" type="number" min="1" className={campo} value={alunos} onChange={e => setAlunos(e.target.value)} />
+              {proposta.porFaixa && <p className="text-[11px] text-dev-text-muted mt-1">Faixa do plano: até {proposta.alunos} alunos.</p>}
+            </div>
             <div><label className={rotulo} htmlFor="prop-validade">Validade (dias)</label><input id="prop-validade" type="number" min="1" className={campo} value={validade} onChange={e => setValidade(e.target.value)} /></div>
           </div>
         </section>

@@ -75,11 +75,33 @@ const valorExtrasPorAluno = (extras, precos) => {
   return arredondar(extras.reduce((s, id) => s + (map[id]?.tipo_cobranca === 'por_aluno' ? Number(map[id].valor) : 0), 0));
 };
 
+// Pacote por faixa de alunos (plano.faixas = { 50: 299, 60: 349, ... }, já com o custo aplicado pelo
+// hook usePlanosZela): a escola paga a menor faixa que comporta os alunos. null se o plano não tem
+// faixas ou se passou da maior.
+export function faixaDoPlano(plano, alunos) {
+  if (!plano?.faixas) return null;
+  const n = Number(alunos || 0);
+  const faixa = Object.keys(plano.faixas).map(Number).sort((a, b) => a - b).find(f => f >= n);
+  return faixa ?? null;
+}
+
+// Escola com contratação por faixa que passou dos alunos da faixa contratada.
+export function passouDaFaixa(contratacao, plano, alunosAtivos) {
+  return !!plano?.faixas && !!contratacao && Number(alunosAtivos) > Number(contratacao.alunos_contratados);
+}
+
 // R2, R3: maior valor entre alunos x preço e o mínimo mensal, mais os fixos.
 // Pacote usa o preço por aluno do plano; por aluno soma os avulsos.
 // Extras avulsos de pacote ficam fora do mínimo: alunos x preço do extra, somado por cima.
+// Pacote com faixas: preço da faixa no lugar de alunos x preço; os extras avulsos contam a faixa inteira.
 export function mensalidade(plano, alunos, precos, itensEscolhidos, extras) {
   const n = Number(alunos || 0);
+  const faixa = plano.modalidade === 'pacote' ? faixaDoPlano(plano, n) : null;
+  if (plano.modalidade === 'pacote' && plano.faixas) {
+    if (!faixa) return 0;
+    const ex = extrasDoPacote(plano, extras, precos);
+    return arredondar(plano.faixas[faixa] + faixa * valorExtrasPorAluno(ex, precos) + valorFixoMensal([...(plano.itens || []), ...ex], precos));
+  }
   if (plano.modalidade === 'pacote') {
     const ex = extrasDoPacote(plano, extras, precos);
     const base = Math.max(n * Number(plano.preco_por_aluno), Number(plano.minimo_mensal || 0));
