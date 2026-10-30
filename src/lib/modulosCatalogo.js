@@ -221,6 +221,21 @@ export const ITENS = [
     aoDesligar: 'O menu Bolsas some e a família não consegue mais pedir. Pedidos, bolsas e histórico ficam guardados, e os documentos continuam sendo apagados 12 meses depois do fim da bolsa.',
   },
   {
+    id: 'historico_escolar',
+    grupo: 'adicional',
+    nome: 'Histórico escolar',
+    resumo: 'Histórico escolar, ficha de acompanhamento e declarações com número e verificação pública.',
+    keys: ['historico_escolar'],
+    inclui: [
+      { nome: 'Anos cursados fora', desc: 'Escola de origem, série, disciplinas, notas, carga horária, frequência e resultado' },
+      { nome: 'Emissão', desc: 'Histórico, ficha de acompanhamento e declarações de matrícula e escolaridade, com avisos de dados faltando' },
+      { nome: 'Verificação pública', desc: 'Código impresso no documento; a página mostra só escola, tipo, data e se vale, sem dados do aluno' },
+      { nome: 'Cancelamento', desc: 'Documento cancelado continua na lista e deixa de valer na verificação' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Gerenciamento › Histórico escolar (Gestão, Coordenação e Direção; Recepção só com permissão)' }],
+    aoDesligar: 'O menu Histórico escolar some. Documentos emitidos e anos lançados ficam guardados e a verificação pública continua funcionando.',
+  },
+  {
     id: 'biblioteca',
     grupo: 'adicional',
     nome: 'Biblioteca',

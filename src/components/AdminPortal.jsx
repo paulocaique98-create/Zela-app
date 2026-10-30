@@ -55,6 +55,7 @@ const TourGuiado = lazy(() => import('./TourGuiado'));
 const GestaoContratos = lazy(() => import('./GestaoContratos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoBiblioteca = lazy(() => import('./GestaoBiblioteca'));
+const GestaoHistoricoEscolar = lazy(() => import('./GestaoHistoricoEscolar'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const CobrancasTab = lazy(() => import('./AdminFinanceiro').then(m => ({ default: m.CobrancasTab })));
@@ -185,7 +186,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   const canSeeDespesas = perms['despesas.ver'] || perms['despesas.gerenciar'];
   // Biblioteca: módulo ligado (=== true) e permissão liberada pela Gestão.
   const canSeeBiblioteca = currentSchool?.features_enabled?.biblioteca === true && Boolean(perms['biblioteca.gerenciar']);
-  const hasGestaoModules = canSeeContratos || canSeeDespesas || canSeeBiblioteca || perms['fornecedores.gerenciar'] || perms['financeiro.baixa_manual'] || perms['relatorios.financeiro.ver'];
+  const canSeeHistorico = currentSchool?.features_enabled?.historico_escolar === true && Boolean(perms['historico.emitir']);
+  const hasGestaoModules = canSeeContratos || canSeeDespesas || canSeeBiblioteca || canSeeHistorico || perms['fornecedores.gerenciar'] || perms['financeiro.baixa_manual'] || perms['relatorios.financeiro.ver'];
   // A senha só é exigida pra SAIR do Autoatendimento pra qualquer outro menu
   // (a tela fica exposta pra qualquer pessoa durante o check-in) — não mais
   // pra fechar a tela de biometria/PIN em si, que agora fecha direto no X
@@ -345,6 +347,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {canSeeDespesas && <SidebarItem active={adminTab === 'gestao-despesas'} icon={Receipt} label="Despesas" onClick={() => go('gestao-despesas')} />}
                 {perms['fornecedores.gerenciar'] && <SidebarItem active={adminTab === 'gestao-fornecedores'} icon={Truck} label="Fornecedores" onClick={() => go('gestao-fornecedores')} />}
                 {canSeeBiblioteca && <SidebarItem active={adminTab === 'gestao-biblioteca'} icon={Library} label="Biblioteca" onClick={() => go('gestao-biblioteca')} />}
+                {canSeeHistorico && <SidebarItem active={adminTab === 'gestao-historico'} icon={ScrollText} label="Histórico escolar" onClick={() => go('gestao-historico')} />}
                 {perms['relatorios.financeiro.ver'] && <SidebarItem active={adminTab === 'gestao-relatorio-financeiro'} icon={BarChart3} label="Relatório Financeiro" onClick={() => go('gestao-relatorio-financeiro')} />}
               </SidebarGroup>
             )}
@@ -414,6 +417,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
           <PageShell infoOnMobile description="Cobranças vencidas e não pagas. Registre aqui o que foi pago por fora."><CobrancasTab currentUser={currentUser} initialStatus="OVERDUE" canRegisterPayment /></PageShell>
         )}
         {adminTab === 'gestao-biblioteca' && canSeeBiblioteca && <GestaoBiblioteca currentUser={currentUser} />}
+        {adminTab === 'gestao-historico' && canSeeHistorico && <GestaoHistoricoEscolar currentUser={currentUser} />}
         {adminTab === 'gestao-despesas' && canSeeDespesas && <GestaoDespesas currentUser={currentUser} canManage={Boolean(perms['despesas.gerenciar'])} />}
         {adminTab === 'gestao-fornecedores' && perms['fornecedores.gerenciar'] && <GestaoFornecedores currentUser={currentUser} />}
         {adminTab === 'gestao-relatorio-financeiro' && perms['relatorios.financeiro.ver'] && <GestaoRelatorios currentUser={currentUser} currentSchool={currentSchool} view="financeiro" />}

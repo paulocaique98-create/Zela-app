@@ -104,7 +104,7 @@ export const SCREEN_LABELS = {
   acompanhamento: 'Acompanhamento', authorized: 'Autorizados', 'gerenciar-responsaveis': 'Responsáveis',
   registration: 'Dados Cadastrais', comunicados: 'Comunicados',
   // Gestão (ids próprios do GestaoPortal.jsx)
-  'secretaria-alunos': 'Alunos', 'secretaria-matriculas': 'Matrículas',
+  'secretaria-alunos': 'Alunos', 'secretaria-historico': 'Histórico escolar', 'secretaria-matriculas': 'Matrículas',
   'cadastros-usuarios': 'Usuários', 'cadastros-novo': 'Novo Cadastro',
   'cadastros-funcionario-novo': 'Novo Funcionário', 'cadastros-turma-nova': 'Nova Turma', 'cadastros-fornecedor-novo': 'Novo Fornecedor',
   'cadastros-funcionarios': 'Funcionários', 'cadastros-turmas': 'Turmas', configuracoes: 'Configurações',
@@ -129,7 +129,7 @@ export const SCREEN_LABELS = {
   'config-seguranca': 'Segurança', integracoes: 'Integrações',
   // Admin · módulos liberados pela Gestão (Permissões)
   'gestao-contratos': 'Contratos', 'gestao-modelos': 'Modelos de Contrato', 'gestao-inadimplencia': 'Inadimplência',
-  'gestao-despesas': 'Despesas', 'gestao-biblioteca': 'Biblioteca', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
+  'gestao-despesas': 'Despesas', 'gestao-biblioteca': 'Biblioteca', 'gestao-historico': 'Histórico escolar', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
   // Developer (prefixo 'dev-' -- estado isolado do DeveloperLayout.jsx)
   'dev-schools': 'Gestão de Escolas', 'dev-logs': 'Logs de Erro', 'dev-support': 'Suporte',
   'dev-settings': 'Configurações (Dev)', 'dev-billing': 'Faturamento', 'dev-planos': 'Planos', 'dev-biometria': 'Qualidade da Biometria',

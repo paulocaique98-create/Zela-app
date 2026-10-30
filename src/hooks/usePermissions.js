@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 // Só controla o que aparece na tela; quem barra de verdade é a RLS.
 export const GESTAO_MODULE_PERMISSIONS = [
   'despesas.ver', 'despesas.gerenciar', 'fornecedores.gerenciar', 'financeiro.baixa_manual',
-  'contratos.ver', 'contratos.gerenciar', 'relatorios.financeiro.ver', 'biblioteca.gerenciar',
+  'contratos.ver', 'contratos.gerenciar', 'relatorios.financeiro.ver', 'biblioteca.gerenciar', 'historico.emitir',
 ];
 
 export function usePermissions(currentUser, permissions = GESTAO_MODULE_PERMISSIONS) {
