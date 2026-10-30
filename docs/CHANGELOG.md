@@ -2,6 +2,9 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
+### Corrigido
+- **Horas extras cortadas em 1000 linhas** (30/10): Relatório de horas extras, Histórico, card de horas extras da Gestão e Relatório Operacional paginam attendance_logs (buscarTodos); alunos do fim da lista sumiam e o total caía.
+
 ### Alterado
 - **Menu Propostas e Painel de contratos no Portal do Dev** (30/10): Propostas monta e baixa o PDF comercial (resumo do Zela, módulos, vantagens, valores, botões de aceite e dúvida), sem gravar no banco. Painel de contratos lista e detalha as contratações, somente leitura. Dependência nova: jspdf.
 - **Desconto na mensalidade na contratação** (30/10): no modal Contratar, desconto em % ou R$ (teto 10%), recorrente ou por período dentro do ciclo, em cascata com o desconto do ciclo; teto da implantação passa a 100%. Colunas novas em school_contratacoes, RPC contratar_plano_escola e meu_plano_escola atualizadas. Migration 20261203120000, NÃO aplicada em produção

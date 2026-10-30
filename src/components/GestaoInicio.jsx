@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Wallet, Clock, ClipboardCheck, GraduationCap, FileText, Users, School, Bell, Receipt, FileSignature, BarChart3, LayoutDashboard, CalendarDays, Megaphone, UserCheck, AlertOctagon, Banknote, BookOpen, UtensilsCrossed, Soup } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { buscarTodos } from '../lib/buscarTodos';
 import { useGestaoPendencias } from '../hooks/useGestaoPendencias';
 import { centsToBRL, monthRange } from '../lib/gestaoUtils';
 import { StatCard } from './GestaoShared';
@@ -29,12 +30,19 @@ export default function GestaoInicio({ currentUser, currentSchool, setGestaoTab,
     const schoolId = currentUser?.school_id;
     if (!schoolId || !showFinanceiro || !showCheckin) return;
     (async () => {
-      const { data } = await supabase.from('attendance_logs')
-        .select('id, event_type, event_time, student_id, students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra)')
-        .eq('school_id', schoolId)
-        .gte('event_time', `${monthRange(0).start}T00:00:00-03:00`)
-        .lte('event_time', `${getBrasiliaDateStr()}T23:59:59-03:00`)
-        .order('student_id').order('event_time');
+      let data;
+      try {
+        // Pagina: o servidor corta em 1000 linhas e o total do mês ficava menor.
+        data = await buscarTodos(() => supabase.from('attendance_logs')
+          .select('id, event_type, event_time, student_id, students:student_id (name, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra)')
+          .eq('school_id', schoolId)
+          .gte('event_time', `${monthRange(0).start}T00:00:00-03:00`)
+          .lte('event_time', `${getBrasiliaDateStr()}T23:59:59-03:00`)
+          .order('student_id').order('event_time').order('id'));
+      } catch (err) {
+        console.error('Erro ao buscar horas extras do mês:', err);
+        return;
+      }
       const cfg = mergeBillingConfig(currentSchool?.billing_config);
       let extrasCents = 0;
       let extrasMinutos = 0;

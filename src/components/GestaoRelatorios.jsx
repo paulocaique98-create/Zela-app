@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, Printer, BarChart3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { buscarTodos } from '../lib/buscarTodos';
 import { centsToBRL, monthRange, downloadCSV } from '../lib/gestaoUtils';
 import { PageShell, Loading, Notice, SecondaryButton, StatCard, EmptyState, ResponsiveTable } from './GestaoShared';
 
@@ -220,7 +221,8 @@ async function loadAcademico(schoolId, _school, range) {
 
 async function loadOperacional(schoolId, _school, range) {
   const [logs, corrections] = await Promise.all([
-    supabase.from('attendance_logs').select('event_type, event_time').eq('school_id', schoolId).gte('event_time', `${range.start}T00:00:00-03:00`).lte('event_time', `${range.end}T23:59:59-03:00`),
+    // Paginado: o servidor corta em 1000 linhas e a contagem de entradas ficava menor.
+    buscarTodos(() => supabase.from('attendance_logs').select('event_type, event_time').eq('school_id', schoolId).gte('event_time', `${range.start}T00:00:00-03:00`).lte('event_time', `${range.end}T23:59:59-03:00`).order('event_time').order('id')).then(data => ({ data, error: null })),
     supabase.from('attendance_corrections').select('status, increases_billing').eq('school_id', schoolId).gte('requested_at', `${range.start}T00:00:00-03:00`).lte('requested_at', `${range.end}T23:59:59-03:00`),
   ]);
   check(logs, corrections);

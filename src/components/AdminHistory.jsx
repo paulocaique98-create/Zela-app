@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { buscarTodos } from '../lib/buscarTodos';
 import { agruparEventosPorDia, calcularHorasExtras, calcularCobrancaDoDia, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
 import { quemRegistrouDoLog } from '../lib/quemRegistrou';
@@ -74,7 +75,9 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         endDate   = `${todayISO}T23:59:59-03:00`;
       }
 
-      const { data: rawLogs, error } = await supabase
+      // buscarTodos junta as páginas de 1000 (teto do servidor): o par
+      // entrada/saída de cada aluno vem completo, sem alunos cortados no fim.
+      const rawLogs = await buscarTodos(() => supabase
         .from('attendance_logs')
         .select(`
           id,
@@ -90,15 +93,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         .lte('event_time', endDate)
         .order('student_id')
         .order('event_time')
-        // Sem paginação de verdade aqui de propósito: agruparEventosPorDia
-        // precisa do par entrada/saída completo de cada aluno no período pra
-        // combinar certo — uma página "no meio" cortaria um evento da sua
-        // dupla. Já é limitado pelo período (hoje/7/30 dias); esse teto é só
-        // uma rede de segurança pra uma escola muito grande em 30 dias não
-        // travar o navegador com um payload gigante.
-        .limit(20000);
-
-      if (error) throw error;
+        .order('id'));
 
       // Utiliza a função extraída para agrupar 1 registro (primeiro entry, último exit) por dia por aluno
       const groupedLogs = agruparEventosPorDia(rawLogs);
