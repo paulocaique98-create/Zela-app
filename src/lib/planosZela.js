@@ -176,3 +176,24 @@ export function formatarData(iso) {
   const [a, m, d] = String(iso).slice(0, 10).split('-');
   return `${d}/${m}/${a}`;
 }
+
+// Situação da contratação no Painel de contratos: Ativo, Vencido ou Inativo
+// (escola desativada ou sem contratação vigente).
+export function situacaoContrato(ct, escolaAtiva = true, hoje = new Date()) {
+  if (!ct || ct.status !== 'ativa' || escolaAtiva === false) return 'Inativo';
+  const dias = diasParaVencer(ct.fim, hoje);
+  return dias !== null && dias < 0 ? 'Vencido' : 'Ativo';
+}
+
+// Mensalidade que vale hoje: com desconto recorrente sempre; com desconto por
+// período, só nos primeiros N meses desde o início. Só leitura, para exibição.
+export function mensalVigente(ct, hoje = new Date()) {
+  if (!ct) return 0;
+  const cheio = Number(ct.valor_mensal) || 0;
+  const comDesc = ct.valor_mensal_com_desconto == null ? cheio : Number(ct.valor_mensal_com_desconto);
+  if (!(Number(ct.mensal_desconto) > 0)) return cheio;
+  if (ct.mensal_desconto_recorrente) return comDesc;
+  const [a, m] = String(ct.inicio).slice(0, 10).split('-').map(Number);
+  const decorridos = (hoje.getFullYear() - a) * 12 + (hoje.getMonth() + 1 - m);
+  return decorridos >= 0 && decorridos < Number(ct.mensal_desconto_meses || 0) ? comDesc : cheio;
+}

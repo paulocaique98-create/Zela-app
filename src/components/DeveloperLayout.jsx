@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { Building2, Receipt, Tags, FileText, LifeBuoy, Settings, ScanFace } from 'lucide-react';
+import { Building2, Receipt, Tags, ClipboardList, FileDown, FileText, LifeBuoy, Settings, ScanFace } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { SidebarToggleButton, SidebarLogoutItem, SIDEBAR_ICON_SIZE } from './SidebarNav';
@@ -12,6 +12,8 @@ const DeveloperChatSupport = lazy(() => import('./DeveloperChatSupport'));
 const DeveloperErrorLogs = lazy(() => import('./DeveloperErrorLogs'));
 const DeveloperQualidadeBiometria = lazy(() => import('./DeveloperQualidadeBiometria'));
 const DeveloperPlanos = lazy(() => import('./DeveloperPlanos'));
+const DeveloperPropostas = lazy(() => import('./DeveloperPropostas'));
+const DeveloperPainelContratos = lazy(() => import('./DeveloperPainelContratos'));
 
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab, onLogout }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
@@ -20,6 +22,8 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
   const navItems = [
     { id: 'schools', label: 'Gestão de Escolas', icon: Building2, enabled: true },
     { id: 'planos', label: 'Planos', icon: Tags, enabled: true },
+    { id: 'propostas', label: 'Propostas', icon: FileDown, enabled: true },
+    { id: 'contratos', label: 'Painel de contratos', icon: ClipboardList, enabled: true },
     { id: 'billing', label: 'Faturamento', icon: Receipt, enabled: false },
     { id: 'logs', label: 'Logs', icon: FileText, enabled: true },
     { id: 'biometria', label: 'Biometria', icon: ScanFace, enabled: true },
@@ -127,6 +131,8 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           )}
           {activeTab === 'biometria' && <DeveloperQualidadeBiometria />}
           {activeTab === 'planos' && <DeveloperPlanos />}
+          {activeTab === 'propostas' && <DeveloperPropostas />}
+          {activeTab === 'contratos' && <DeveloperPainelContratos />}
         </Suspense>
       </main>
 
