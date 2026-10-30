@@ -7,8 +7,8 @@ import { CONFIG_PADRAO } from '../lib/planosZela';
 const COLS_PRECOS = 'item_id, tipo_cobranca, valor, custo_estimado, chaves, ativo';
 const COLS_PLANOS = 'id, nome, modalidade, itens, preco_por_aluno, minimo_mensal, alunos_min, alunos_max, implantacao_valor, ordem, ativo, descricao';
 const COLS_CICLOS = 'id, plano_id, ciclo, meses, desconto_percent, implantacao_valor, ativo';
-const COLS_CONFIG = 'limite_alunos_por_aluno, desconto_implantacao_max_percent, implantacao_min, implantacao_max';
-const COLS_CONTRATACOES = 'id, school_id, plano_id, ciclo, meses, alunos_contratados, itens, valor_mensal, valor_ciclo, implantacao_base, implantacao_desconto_tipo, implantacao_desconto, implantacao_final, desconto_motivo, inicio, fim, status, created_at';
+const COLS_CONFIG = 'limite_alunos_por_aluno, desconto_implantacao_max_percent, desconto_mensalidade_max_percent, implantacao_min, implantacao_max';
+const COLS_CONTRATACOES = 'id, school_id, plano_id, ciclo, meses, alunos_contratados, itens, valor_mensal, valor_ciclo, implantacao_base, implantacao_desconto_tipo, implantacao_desconto, implantacao_final, desconto_motivo, mensal_desconto_tipo, mensal_desconto, mensal_desconto_recorrente, mensal_desconto_meses, valor_mensal_com_desconto, inicio, fim, status, created_at';
 
 export function usePlanosZela() {
   const [state, setState] = useState({

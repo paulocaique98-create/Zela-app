@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal,
+  valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, descontoMensalidade,
   modalidadesPermitidas, itensValidos, extrasDoPacote, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
 } from './planosZela';
 
@@ -40,6 +40,29 @@ describe('mensalidade', () => {
     const precos = [...PRECOS, { item_id: 'bolsas', tipo_cobranca: 'por_aluno', valor: 0 }];
     expect(extrasDoPacote(COMPLETO, ['pedagogico', 'chat', 'chat', 'bolsas', 'base'], precos)).toEqual(['chat']);
     expect(mensalidade(COMPLETO, 20, precos, null, ['pedagogico', 'bolsas'])).toBe(790);
+  });
+});
+
+describe('desconto na mensalidade', () => {
+  const ANUAL = { ciclo: 'ANUAL', meses: 12, desconto_percent: 10 };
+  it('recorrente vale todos os meses do ciclo, em cascata com o desconto do ciclo', () => {
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: 10 })).toEqual({ desconto: 90, mensalComDesconto: 810, valorCiclo: 9720, mesesDesconto: 12, erro: null });
+  });
+  it('por período vale só os meses definidos', () => {
+    const r = descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: 10, recorrente: false, meses: 3 });
+    expect(r.valorCiclo).toBe(10530);
+    expect(r.mesesDesconto).toBe(3);
+  });
+  it('em reais respeita o teto e o valor do ciclo cheio sem desconto', () => {
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'valor', valor: 90 }).erro).toBeNull();
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'valor', valor: 100 }).erro).not.toBeNull();
+    expect(descontoMensalidade(1000, ANUAL, {}).valorCiclo).toBe(10800);
+  });
+  it('recusa acima do teto, período fora do ciclo e valor negativo', () => {
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: 11 }).erro).not.toBeNull();
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: 5, recorrente: false, meses: 13 }).erro).not.toBeNull();
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: 5, recorrente: false }).erro).not.toBeNull();
+    expect(descontoMensalidade(1000, ANUAL, { tipo: 'percent', valor: -5 }).erro).not.toBeNull();
   });
 });
 
