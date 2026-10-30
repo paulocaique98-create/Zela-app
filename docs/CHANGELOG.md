@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Desconto na mensalidade na contratação** (30/10): no modal Contratar, desconto em % ou R$ (teto 10%), recorrente ou por período dentro do ciclo, em cascata com o desconto do ciclo; teto da implantação passa a 100%. Colunas novas em school_contratacoes, RPC contratar_plano_escola e meu_plano_escola atualizadas. Migration 20261203120000, NÃO aplicada em produção
 - **Módulos e adicionais avulsos na contratação de pacote** (30/10): no modal Contratar, o plano pacote aceita extras somados por cima do mínimo (alunos x preço do extra). RPC contratar_plano_escola ganha p_extras e o snapshot guarda `extras`. Migration 20261202120000, NÃO aplicada em produção
 - **Planos Básico, Padrão e Avançado** (29/10): os planos Essencial, Completo e Premium foram renomeados (ids, preços e itens mantidos) e o plano Por aluno foi desativado. Migration 20261127120000.
 - **Nota fiscal de serviço, NFS-e (módulo `nfse`, adicional)** (30/10): Configurações › Financeiro › Nota fiscal (serviço escolhido na lista do município, alíquotas confirmadas com a contabilidade, notas e contratos); emissão automática pelo Asaas depois do pagamento nas mensalidades e, se a escola quiser, nas cobranças avulsas; erro da nota avisa a Gestão. Vale para qualquer município. Migration 20261126120000 e funções enable-contract-nfse e list-municipal-services.

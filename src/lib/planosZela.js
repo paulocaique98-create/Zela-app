@@ -13,7 +13,8 @@ export const CICLO_POR_ID = Object.fromEntries(CICLOS.map(c => [c.id, c]));
 
 export const CONFIG_PADRAO = {
   limite_alunos_por_aluno: 50,
-  desconto_implantacao_max_percent: 50,
+  desconto_implantacao_max_percent: 100,
+  desconto_mensalidade_max_percent: 10,
   implantacao_min: 600,
   implantacao_max: 1200,
 };
@@ -93,6 +94,36 @@ export function mensalidade(plano, alunos, precos, itensEscolhidos, extras) {
 export function valorDoCiclo(mensal, ciclo) {
   const meses = ciclo.meses ?? CICLO_POR_ID[ciclo.ciclo]?.meses ?? 1;
   return arredondar(Number(mensal) * meses * (1 - Number(ciclo.desconto_percent || 0) / 100));
+}
+
+// Desconto na mensalidade, em cascata sobre o valor já com o desconto do ciclo. Recorrente vale todos
+// os meses do ciclo; por período vale de 1 até os meses do ciclo. Mesma regra da RPC.
+// Retorna { desconto (R$ por mês), mensalComDesconto, valorCiclo, mesesDesconto, erro }.
+export function descontoMensalidade(mensal, ciclo, { tipo, valor, recorrente = true, meses, tetoPercent = CONFIG_PADRAO.desconto_mensalidade_max_percent } = {}) {
+  const m = Number(mensal || 0);
+  const n = ciclo?.meses ?? CICLO_POR_ID[ciclo?.ciclo]?.meses ?? 1;
+  const mensalCiclo = m * (1 - Number(ciclo?.desconto_percent || 0) / 100);
+  const cheio = arredondar(mensalCiclo * n);
+  const sem = (erro = null) => ({ desconto: 0, mensalComDesconto: null, valorCiclo: cheio, mesesDesconto: 0, erro });
+  const d = Number(valor || 0);
+  if (!d) return sem();
+  if (d < 0) return sem('Desconto inválido.');
+  if (mensalCiclo <= 0) return sem('Não há mensalidade para aplicar desconto.');
+  const pct = tipo === 'percent' ? d : (d * 100) / mensalCiclo;
+  if (pct > tetoPercent) return sem(`O desconto máximo na mensalidade é de ${tetoPercent} por cento.`);
+  let mesesDesconto = n;
+  if (!recorrente) {
+    mesesDesconto = Number(meses);
+    if (!Number.isInteger(mesesDesconto) || mesesDesconto < 1 || mesesDesconto > n) return sem(`O período do desconto deve ser de 1 a ${n} mês(es), dentro do ciclo.`);
+  }
+  const desconto = Math.min(tipo === 'percent' ? arredondar(mensalCiclo * d / 100) : arredondar(d), arredondar(mensalCiclo));
+  return {
+    desconto,
+    mensalComDesconto: arredondar(mensalCiclo - desconto),
+    valorCiclo: arredondar(Math.max(mensalCiclo * n - desconto * mesesDesconto, 0)),
+    mesesDesconto,
+    erro: null,
+  };
 }
 
 export function implantacaoBase(plano, ciclo) {

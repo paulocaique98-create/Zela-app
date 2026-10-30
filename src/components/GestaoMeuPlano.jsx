@@ -49,6 +49,7 @@ export default function GestaoMeuPlano() {
           <dl>
             {linha('Alunos contratados', plano.alunos_contratados)}
             {linha('Mensalidade', brl(plano.valor_mensal))}
+            {Number(plano.desconto_mensal) > 0 && linha('Desconto na mensalidade', `${brl(plano.desconto_mensal)} por mês, ${plano.desconto_recorrente ? 'recorrente' : `por ${plano.desconto_meses} mês(es)`}`)}
             {linha(`Valor do ciclo ${ciclo.toLowerCase()}`, brl(plano.valor_ciclo))}
             {linha('Implantação', brl(plano.implantacao_final))}
             {linha('Início', formatarData(plano.inicio))}

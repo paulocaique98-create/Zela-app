@@ -7,7 +7,7 @@ import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITENS, ITEM_POR_ID, estadoDoItem } from '../lib/modulosCatalogo';
 import {
   CICLOS, brl, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, modalidadesPermitidas, passouDoLimite,
-  diasParaVencer, formatarData, arredondar, extrasDoPacote,
+  diasParaVencer, formatarData, arredondar, extrasDoPacote, descontoMensalidade,
 } from '../lib/planosZela';
 
 // Simulador, Contratações e o modal Contratar (também aberto pela Gestão de
@@ -117,7 +117,10 @@ export function DeveloperPlanosContratacoes({ dados }) {
                     <span className="text-dev-text-muted text-xs">({ativos} ativos)</span>
                     {alerta && <span className="ml-2 inline-flex items-center gap-1 text-warning text-xs"><AlertTriangle size={12} /> passou do limite, migre para pacote</span>}
                   </td>
-                  <td className="p-3">{ct ? brl(ct.valor_mensal) : ''}</td>
+                  <td className="p-3">
+                    {ct ? brl(ct.valor_mensal) : ''}
+                    {ct && Number(ct.mensal_desconto) > 0 && <span className="block text-xs text-dev-text-muted">desconto {brl(ct.mensal_desconto)} por mês, {ct.mensal_desconto_recorrente ? 'recorrente' : `por ${ct.mensal_desconto_meses} mês(es)`}</span>}
+                  </td>
                   <td className={`p-3 ${dias !== null && dias < 0 ? 'text-error' : dias !== null && dias <= 30 ? 'text-warning' : ''}`}>{ct ? `${formatarData(ct.fim)}${dias !== null && dias < 0 ? ' · vencida' : dias !== null && dias <= 30 ? ` · ${dias} dia(s)` : ''}` : ''}</td>
                   <td className="p-3 text-right"><button type="button" className={btnNeutro} onClick={() => setContratando(escola.id)}><FileSignature size={14} /> {ct ? 'Trocar plano' : 'Contratar'}</button></td>
                 </tr>
@@ -145,6 +148,11 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const [descTipo, setDescTipo] = useState('percent');
   const [desc, setDesc] = useState('');
   const [motivo, setMotivo] = useState('');
+  const [mDescTipo, setMDescTipo] = useState('percent');
+  const [mDesc, setMDesc] = useState('');
+  const [mRecorrente, setMRecorrente] = useState(true);
+  const [mMeses, setMMeses] = useState('');
+  const [mMotivo, setMMotivo] = useState('');
   const [inicio, setInicio] = useState(new Date().toISOString().slice(0, 10));
   const [confirmando, setConfirmando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -167,11 +175,19 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const extrasOk = plano?.modalidade === 'pacote' ? extrasDoPacote(plano, extras, dados.precos) : [];
   const itens = plano ? [...itensDoPlano(plano, escolhidos), ...extrasOk] : [];
   const mensal = plano ? mensalidade(plano, n, dados.precos, escolhidos, extrasOk) : 0;
-  const valorCiclo = plano && cicloSel ? valorDoCiclo(mensal, cicloSel) : 0;
+  const valorCicloCheio = plano && cicloSel ? valorDoCiclo(mensal, cicloSel) : 0;
+  const dm = plano && cicloSel
+    ? descontoMensalidade(mensal, cicloSel, { tipo: mDescTipo, valor: mDesc, recorrente: mRecorrente, meses: mMeses, tetoPercent: dados.config.desconto_mensalidade_max_percent })
+    : { desconto: 0, mensalComDesconto: null, valorCiclo: 0, mesesDesconto: 0, erro: null };
+  const valorCiclo = dm.valorCiclo;
   const base = plano && cicloSel ? implantacaoBase(plano, cicloSel) : 0;
   const impl = implantacaoFinal(base, descTipo, desc, dados.config.desconto_implantacao_max_percent);
   const motivoFalta = Number(desc) > 0 && motivo.trim().length < 3;
-  const pronto = !!plano && !!cicloSel && n >= 1 && !impl.erro && !motivoFalta && features;
+  const mMotivoFalta = Number(mDesc) > 0 && mMotivo.trim().length < 3;
+  const pronto = !!plano && !!cicloSel && n >= 1 && !impl.erro && !dm.erro && !motivoFalta && !mMotivoFalta && features;
+  const textoDescontoMensal = dm.desconto > 0
+    ? `${brl(dm.desconto)} por mês, ${mRecorrente ? 'recorrente (todo o ciclo)' : `por ${dm.mesesDesconto} mês(es)`}`
+    : '';
 
   // O que muda nos módulos da escola: itens vendáveis ligados hoje x depois.
   const mudancas = useMemo(() => {
@@ -194,6 +210,11 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
       p_desconto: Number(desc) > 0 ? Number(desc) : 0,
       p_motivo: Number(desc) > 0 ? motivo.trim() : null,
       p_inicio: inicio || null,
+      p_mensal_desconto_tipo: dm.desconto > 0 ? mDescTipo : null,
+      p_mensal_desconto: dm.desconto > 0 ? Number(mDesc) : 0,
+      p_mensal_recorrente: mRecorrente,
+      p_mensal_desconto_meses: dm.desconto > 0 && !mRecorrente ? Number(mMeses) : null,
+      p_mensal_motivo: dm.desconto > 0 ? mMotivo.trim() : null,
     });
     setSalvando(false);
     if (error) { setConfirmando(false); return toast.error(error.message || 'Não foi possível contratar o plano.'); }
@@ -222,6 +243,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
             <div className={card}>
               <p className="text-sm">Vai ligar: <b>{mudancas.ligar.join(', ') || 'nada'}</b></p>
               <p className="text-sm mt-1">Vai desligar: <b>{mudancas.desligar.join(', ') || 'nada'}</b></p>
+              {dm.desconto > 0 && <p className="text-sm mt-1">Desconto na mensalidade: <b>{textoDescontoMensal}</b>. Total do ciclo: <b>{brl(valorCiclo)}</b></p>}
               <p className="text-xs text-dev-text-muted mt-2">A contratação anterior desta escola é encerrada. O histórico de módulos registra a mudança.</p>
             </div>
             <div className="flex justify-end gap-2">
@@ -299,7 +321,8 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
               <div className={card}>
                 <dl className="text-sm space-y-1">
                   <div className="flex justify-between"><dt className="text-dev-text-muted">Mensalidade</dt><dd className="font-medium">{brl(mensal)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-dev-text-muted">Valor do ciclo</dt><dd className="font-medium">{brl(valorCiclo)}</dd></div>
+                  {dm.desconto > 0 && <div className="flex justify-between"><dt className="text-dev-text-muted">Mensalidade com desconto</dt><dd className="font-medium">{brl(dm.mensalComDesconto)}</dd></div>}
+                  <div className="flex justify-between"><dt className="text-dev-text-muted">Valor do ciclo{dm.desconto > 0 ? ` (sem o desconto na mensalidade: ${brl(valorCicloCheio)})` : ''}</dt><dd className="font-medium">{brl(valorCiclo)}</dd></div>
                   <div className="flex justify-between"><dt className="text-dev-text-muted">Implantação</dt><dd>{brl(base)}</dd></div>
                   <div className="flex justify-between"><dt className="text-dev-text-muted">Implantação com desconto</dt><dd className="font-medium">{brl(impl.final)}</dd></div>
                 </dl>
@@ -315,6 +338,36 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
                 </div>
                 {impl.erro && <p className="text-xs text-error mt-2">{impl.erro}</p>}
                 {motivoFalta && <p className="text-xs text-error mt-2">Informe o motivo do desconto.</p>}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+                  <div>
+                    <label className={rotulo} htmlFor="ct-mdt">Desconto na mensalidade (máximo {dados.config.desconto_mensalidade_max_percent}%)</label>
+                    <div className="flex gap-2">
+                      <select id="ct-mdt" className={`${campo} w-24`} value={mDescTipo} onChange={e => setMDescTipo(e.target.value)}><option value="percent">%</option><option value="valor">R$</option></select>
+                      <input type="number" min="0" step="0.01" className={campo} value={mDesc} onChange={e => setMDesc(e.target.value)} aria-label="Valor do desconto na mensalidade" />
+                    </div>
+                  </div>
+                  <div><label className={rotulo} htmlFor="ct-mmot">Motivo (obrigatório com desconto)</label><input id="ct-mmot" className={campo} value={mMotivo} maxLength={300} onChange={e => setMMotivo(e.target.value)} /></div>
+                  {Number(mDesc) > 0 && (
+                    <>
+                      <div>
+                        <label className={rotulo} htmlFor="ct-mrec">Duração do desconto</label>
+                        <select id="ct-mrec" className={campo} value={mRecorrente ? 'recorrente' : 'periodo'} onChange={e => setMRecorrente(e.target.value === 'recorrente')}>
+                          <option value="recorrente">Recorrente (todos os meses do ciclo)</option>
+                          <option value="periodo">Por um período</option>
+                        </select>
+                      </div>
+                      {!mRecorrente && (
+                        <div>
+                          <label className={rotulo} htmlFor="ct-mmeses">Meses com desconto (1 a {cicloSel.meses ?? 1})</label>
+                          <input id="ct-mmeses" type="number" min="1" max={cicloSel.meses ?? 1} step="1" className={campo} value={mMeses} onChange={e => setMMeses(e.target.value)} />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                {dm.erro && <p className="text-xs text-error mt-2">{dm.erro}</p>}
+                {mMotivoFalta && <p className="text-xs text-error mt-2">Informe o motivo do desconto na mensalidade.</p>}
               </div>
             )}
 
