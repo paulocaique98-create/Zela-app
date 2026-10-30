@@ -60,12 +60,32 @@ export function valorFixoMensal(itens, precos) {
   }, 0));
 }
 
+// Extras avulsos de um pacote: vendáveis, fora dos itens do plano e com preço acima de zero.
+export function extrasDoPacote(plano, extras, precos) {
+  const doPlano = new Set(plano.itens || []);
+  const map = porId(precos);
+  return itensValidos([...(plano.itens || []), ...(extras || [])])
+    .filter(id => !doPlano.has(id) && map[id] && Number(map[id].valor) > 0);
+}
+
+// Soma dos preços por aluno dos extras, sem o base.
+const valorExtrasPorAluno = (extras, precos) => {
+  const map = porId(precos);
+  return arredondar(extras.reduce((s, id) => s + (map[id]?.tipo_cobranca === 'por_aluno' ? Number(map[id].valor) : 0), 0));
+};
+
 // R2, R3: maior valor entre alunos x preço e o mínimo mensal, mais os fixos.
 // Pacote usa o preço por aluno do plano; por aluno soma os avulsos.
-export function mensalidade(plano, alunos, precos, itensEscolhidos) {
-  const itens = plano.modalidade === 'pacote' ? (plano.itens || []) : (itensEscolhidos || []);
-  const precoAluno = plano.modalidade === 'pacote' ? Number(plano.preco_por_aluno) : valorPorAluno(itens, precos);
-  const base = Math.max(Number(alunos || 0) * precoAluno, Number(plano.minimo_mensal || 0));
+// Extras avulsos de pacote ficam fora do mínimo: alunos x preço do extra, somado por cima.
+export function mensalidade(plano, alunos, precos, itensEscolhidos, extras) {
+  const n = Number(alunos || 0);
+  if (plano.modalidade === 'pacote') {
+    const ex = extrasDoPacote(plano, extras, precos);
+    const base = Math.max(n * Number(plano.preco_por_aluno), Number(plano.minimo_mensal || 0));
+    return arredondar(base + n * valorExtrasPorAluno(ex, precos) + valorFixoMensal([...(plano.itens || []), ...ex], precos));
+  }
+  const itens = itensEscolhidos || [];
+  const base = Math.max(n * valorPorAluno(itens, precos), Number(plano.minimo_mensal || 0));
   return arredondar(base + valorFixoMensal(itens, precos));
 }
 

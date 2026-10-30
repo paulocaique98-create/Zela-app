@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal,
-  modalidadesPermitidas, itensValidos, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
+  modalidadesPermitidas, itensValidos, extrasDoPacote, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
 } from './planosZela';
 
 const PRECOS = [
@@ -31,6 +31,15 @@ describe('mensalidade', () => {
   it('soma os itens de cobrança fixa', () => {
     expect(valorFixoMensal(['fixo_exemplo', 'chat'], PRECOS)).toBe(300);
     expect(mensalidade(POR_ALUNO, 40, PRECOS, ['fixo_exemplo'])).toBe(576);
+  });
+  it('extra avulso de pacote soma por cima do mínimo', () => {
+    expect(mensalidade(COMPLETO, 20, PRECOS, null, ['chat'])).toBe(820);
+    expect(mensalidade(COMPLETO, 80, PRECOS, null, ['chat', 'qr'])).toBe(1152);
+  });
+  it('extra de pacote ignora item do plano, preço zero e item repetido', () => {
+    const precos = [...PRECOS, { item_id: 'bolsas', tipo_cobranca: 'por_aluno', valor: 0 }];
+    expect(extrasDoPacote(COMPLETO, ['pedagogico', 'chat', 'chat', 'bolsas', 'base'], precos)).toEqual(['chat']);
+    expect(mensalidade(COMPLETO, 20, precos, null, ['pedagogico', 'bolsas'])).toBe(790);
   });
 });
 

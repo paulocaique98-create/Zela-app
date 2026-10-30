@@ -7,7 +7,7 @@ import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITENS, ITEM_POR_ID, estadoDoItem } from '../lib/modulosCatalogo';
 import {
   CICLOS, brl, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, modalidadesPermitidas, passouDoLimite,
-  diasParaVencer, formatarData, arredondar,
+  diasParaVencer, formatarData, arredondar, extrasDoPacote,
 } from '../lib/planosZela';
 
 // Simulador, Contratações e o modal Contratar (também aberto pela Gestão de
@@ -141,6 +141,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const [planoId, setPlanoId] = useState('');
   const [ciclo, setCiclo] = useState('');
   const [escolhidos, setEscolhidos] = useState([]);
+  const [extras, setExtras] = useState([]);
   const [descTipo, setDescTipo] = useState('percent');
   const [desc, setDesc] = useState('');
   const [motivo, setMotivo] = useState('');
@@ -163,8 +164,9 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const cicloSel = ciclos.find(c => c.ciclo === ciclo) || null;
   const vendaveis = dados.precos.filter(p => p.item_id !== 'base' && p.ativo && ITEM_POR_ID[p.item_id]);
 
-  const itens = plano ? itensDoPlano(plano, escolhidos) : [];
-  const mensal = plano ? mensalidade(plano, n, dados.precos, escolhidos) : 0;
+  const extrasOk = plano?.modalidade === 'pacote' ? extrasDoPacote(plano, extras, dados.precos) : [];
+  const itens = plano ? [...itensDoPlano(plano, escolhidos), ...extrasOk] : [];
+  const mensal = plano ? mensalidade(plano, n, dados.precos, escolhidos, extrasOk) : 0;
   const valorCiclo = plano && cicloSel ? valorDoCiclo(mensal, cicloSel) : 0;
   const base = plano && cicloSel ? implantacaoBase(plano, cicloSel) : 0;
   const impl = implantacaoFinal(base, descTipo, desc, dados.config.desconto_implantacao_max_percent);
@@ -187,6 +189,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
     const { error } = await supabase.rpc('contratar_plano_escola', {
       p_school_id: schoolId, p_plano_id: plano.id, p_ciclo: cicloSel.ciclo, p_alunos: n,
       p_itens: plano.modalidade === 'por_aluno' ? escolhidos : null,
+      p_extras: extrasOk.length ? extrasOk : null,
       p_desconto_tipo: Number(desc) > 0 ? descTipo : null,
       p_desconto: Number(desc) > 0 ? Number(desc) : 0,
       p_motivo: Number(desc) > 0 ? motivo.trim() : null,
@@ -265,6 +268,29 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
                       {ITEM_POR_ID[p.item_id].nome}
                     </label>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {plano?.modalidade === 'pacote' && (
+              <div>
+                <p className={rotulo}>Módulos e adicionais avulsos (somados à mensalidade do pacote)</p>
+                <div className="flex flex-wrap gap-2">
+                  {vendaveis.filter(p => (plano.itens || []).includes(p.item_id) || Number(p.valor) > 0).map(p => {
+                    const incluso = (plano.itens || []).includes(p.item_id);
+                    const requer = ITEM_POR_ID[p.item_id].requer;
+                    const semRequisito = !incluso && !!requer && !(plano.itens || []).includes(requer) && !extrasOk.includes(requer);
+                    return (
+                      <label key={p.item_id} className={`flex items-center gap-2 text-sm bg-dev-surface border border-dev-border rounded-zela-md px-3 py-1.5 ${incluso || semRequisito ? 'opacity-60' : ''}`}>
+                        <input type="checkbox" checked={incluso || extrasOk.includes(p.item_id)} disabled={incluso || semRequisito}
+                          onChange={() => setExtras(e => e.includes(p.item_id) ? e.filter(i => i !== p.item_id) : [...e, p.item_id])} />
+                        {ITEM_POR_ID[p.item_id].nome}
+                        <span className="text-xs text-dev-text-muted">
+                          {incluso ? 'incluso no plano' : semRequisito ? `requer ${ITEM_POR_ID[requer]?.nome || requer}` : `${brl(p.valor)}${p.tipo_cobranca === 'por_aluno' ? ' por aluno' : ' por mês'}`}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}

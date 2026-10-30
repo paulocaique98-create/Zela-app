@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Alterado
+- **Módulos e adicionais avulsos na contratação de pacote** (30/10): no modal Contratar, o plano pacote aceita extras somados por cima do mínimo (alunos x preço do extra). RPC contratar_plano_escola ganha p_extras e o snapshot guarda `extras`. Migration 20261202120000, NÃO aplicada em produção
 - **Planos Básico, Padrão e Avançado** (29/10): os planos Essencial, Completo e Premium foram renomeados (ids, preços e itens mantidos) e o plano Por aluno foi desativado. Migration 20261127120000.
 - **Nota fiscal de serviço, NFS-e (módulo `nfse`, adicional)** (30/10): Configurações › Financeiro › Nota fiscal (serviço escolhido na lista do município, alíquotas confirmadas com a contabilidade, notas e contratos); emissão automática pelo Asaas depois do pagamento nas mensalidades e, se a escola quiser, nas cobranças avulsas; erro da nota avisa a Gestão. Vale para qualquer município. Migration 20261126120000 e funções enable-contract-nfse e list-municipal-services.
 - **WhatsApp pelo Asaas na régua de cobrança** (30/10): interruptor por escola liga o WhatsApp nas notificações nativas do Asaas (cobrança criada, véspera e atraso) e grava o celular do responsável; a família pode desligar em Configurações. Custo por mensagem é do Asaas. Migration 20261125120000 e funções ainda a publicar em produção.
