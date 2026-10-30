@@ -60,3 +60,14 @@ SELECT cron.schedule('purge-scholarship-documents-job', '30 6 * * *', '
       )
     );
   ');
+
+-- Régua de cobrança (item 14): de hora em hora; a função confere o horário permitido de cada escola (Brasília).
+SELECT cron.schedule('run-billing-rules-job', '0 * * * *', '
+    SELECT net.http_post(
+      url:=''https://orafqopnomdrvwlvxrkz.supabase.co/functions/v1/run-billing-rules'',
+      headers:=jsonb_build_object(
+        ''Content-Type'', ''application/json'',
+        ''Authorization'', ''Bearer '' || public.get_cron_secret(''financial_reminders_auth_key'')
+      )
+    );
+  ');

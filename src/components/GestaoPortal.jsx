@@ -57,6 +57,7 @@ const GestaoPlanos = lazy(() => import('./GestaoPlanos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoDre = lazy(() => import('./GestaoDre'));
 const GestaoBolsas = lazy(() => import('./GestaoBolsas'));
+const GestaoReguaCobranca = lazy(() => import('./GestaoReguaCobranca'));
 const GestaoHistoricoEscolar = lazy(() => import('./GestaoHistoricoEscolar'));
 const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
@@ -190,7 +191,7 @@ export default function GestaoPortal({
   const [financeConfigTab, setFinanceConfigTabState] = useState(() => {
     try {
       const salva = sessionStorage.getItem('zela_finance_config_tab');
-      return salva === 'billing' ? 'billing' : 'gateway';
+      return salva === 'billing' || salva === 'regua' ? salva : 'gateway';
     } catch { return 'gateway'; }
   });
   const setFinanceConfigTab = (id) => {
@@ -556,10 +557,12 @@ export default function GestaoPortal({
           {abaAtual === 'config-financeiro' && (
             <div className="h-full flex flex-col min-h-0">
               <div className="px-4 md:px-6 pt-4 shrink-0">
-                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }]} active={financeConfigTab} onChange={setFinanceConfigTab} equalOnMobile />
+                <Tabs tabs={[{ id: 'gateway', label: 'Asaas e cobrança' }, { id: 'billing', label: 'Hora extra' }, ...(chaveLigada(features, 'regua_cobranca') ? [{ id: 'regua', label: 'Régua de cobrança' }] : [])]} active={financeConfigTab} onChange={setFinanceConfigTab} equalOnMobile />
               </div>
               <div className="flex-1 min-h-0">
-                {financeConfigTab === 'gateway'
+                {financeConfigTab === 'regua' && chaveLigada(features, 'regua_cobranca')
+                  ? <GestaoReguaCobranca currentUser={currentUser} />
+                  : financeConfigTab === 'gateway' || financeConfigTab === 'regua'
                   ? shell('Chave do Asaas, multa, juros e desconto das cobranças.', <GatewayConfigTab currentUser={currentUser} currentSchool={currentSchool} />)
                   : <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} only={['billing']} showSchoolData={false} />}
               </div>

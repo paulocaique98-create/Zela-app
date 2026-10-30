@@ -221,6 +221,24 @@ export const ITENS = [
     aoDesligar: 'O menu Bolsas some e a família não consegue mais pedir. Pedidos, bolsas e histórico ficam guardados, e os documentos continuam sendo apagados 12 meses depois do fim da bolsa.',
   },
   {
+    id: 'regua_cobranca',
+    grupo: 'adicional',
+    nome: 'Régua de cobrança',
+    resumo: 'Lembretes automáticos antes e depois do vencimento, por notificação e e-mail.',
+    keys: ['regua_cobranca'],
+    inclui: [
+      { nome: 'Passos', desc: 'Quantos dias antes e depois do vencimento avisar, em quais canais, dentro do horário permitido' },
+      { nome: 'Textos', desc: 'Modelos com prévia e envio de teste para o próprio usuário' },
+      { nome: 'Envios', desc: 'Histórico do que foi enviado, sem repetir mensagem' },
+      { nome: 'Preferência da família', desc: 'O responsável pode desligar notificação ou e-mail' },
+    ],
+    onde: [
+      { portal: 'Gestão', menus: 'Configurações › Financeiro › Régua de cobrança (só a Gestão)' },
+      { portal: 'Família', menus: 'Configurações › Lembretes de cobrança' },
+    ],
+    aoDesligar: 'A régua para de enviar e o lembrete simples de 2 dias antes volta a valer. Textos e histórico ficam guardados.',
+  },
+  {
     id: 'historico_escolar',
     grupo: 'adicional',
     nome: 'Histórico escolar',

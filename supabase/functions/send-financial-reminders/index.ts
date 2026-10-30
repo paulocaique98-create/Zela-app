@@ -42,10 +42,15 @@ serve(async (req) => {
     // ligado, 2 dias -- o comportamento fixo de antes.
     const { data: schoolsCfg, error: schoolsError } = await adminClient
       .from('schools')
-      .select('id, communication_config');
+      .select('id, communication_config, features_enabled');
     if (schoolsError) throw schoolsError;
+    // Escola com a régua de cobrança (run-billing-rules) ligada não recebe este lembrete,
+    // para a família não ser avisada duas vezes.
+    const { data: reguasAtivas } = await adminClient.from('billing_rules').select('school_id').eq('ativa', true);
+    const comRegua = new Set((reguasAtivas || []).map((r: { school_id: string }) => r.school_id));
     const schoolsByDays = new Map<number, string[]>();
     for (const s of schoolsCfg || []) {
+      if (comRegua.has(s.id) && (s.features_enabled as Record<string, unknown> | null)?.regua_cobranca === true) continue;
       const cfg = (s.communication_config || {}) as { financial_reminders_enabled?: boolean; reminder_days_before?: number };
       if (cfg.financial_reminders_enabled === false) continue;
       const days = Math.min(10, Math.max(1, Number(cfg.reminder_days_before) || 2));

@@ -438,7 +438,7 @@ src/lib/bi/
 - **Telas:** Gestão › Financeiro › "Bolsas" (Tipos, Pedidos com fila e contador brass, Concedidas, Vagas). Família › Financeiro › "Pedir bolsa" (formulário + upload + acompanhamento).
 - **Testes:** cálculo com bolsa + desconto + limite; família só vê o próprio pedido; Coordenação não lê.
 
-### Item 14 · Régua de cobrança multicanal
+### ~~Item 14 · Régua de cobrança multicanal~~ ✅ (v1 push e e-mail; WhatsApp fica com o Asaas, D12)
 
 **Para que serve:** enviar lembretes automáticos antes e depois do vencimento por push, e-mail e WhatsApp, para reduzir inadimplência.
 
