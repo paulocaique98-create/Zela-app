@@ -44,3 +44,26 @@ describe('montarProposta', () => {
 describe('semHifen', () => {
   it('tira hífens de texto', () => expect(semHifen('(11) 99999-0000')).toBe('(11) 99999 0000'));
 });
+
+describe('proposta por faixa', () => {
+  const FAIXADO = { ...PLANO, itens: [], faixas: { 50: 299, 60: 349 } };
+
+  it('cobra a menor faixa que comporta os alunos e marca porFaixa', () => {
+    const p = montarProposta({ ...base, plano: FAIXADO, alunos: 55 });
+    expect(p.erro).toBeNull();
+    expect(p.alunos).toBe(60);
+    expect(p.porFaixa).toBe(true);
+    expect(p.valores.mensalCheia).toBe(349);
+  });
+
+  it('acima da maior faixa devolve erro', () => {
+    const p = montarProposta({ ...base, plano: FAIXADO, alunos: 61 });
+    expect(p.erro).toMatch(/Acima de 60/);
+  });
+
+  it('plano sem faixas não muda', () => {
+    const p = montarProposta(base);
+    expect(p.porFaixa).toBe(false);
+    expect(p.alunos).toBe(100);
+  });
+});

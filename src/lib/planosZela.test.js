@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   valorPorAluno, valorFixoMensal, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, descontoMensalidade,
   modalidadesPermitidas, itensValidos, extrasDoPacote, passouDoLimite, sugestaoDePacote, diasParaVencer, CICLO_POR_ID,
-  situacaoContrato, mensalVigente,
+  situacaoContrato, mensalVigente, faixaDoPlano, passouDaFaixa,
 } from './planosZela';
 
 const PRECOS = [
@@ -143,5 +143,34 @@ describe('painel de contratos', () => {
     expect(mensalVigente(ct, hoje)).toBe(90);
     expect(mensalVigente({ ...ct, inicio: '2026-05-01' }, hoje)).toBe(100);
     expect(mensalVigente({ ...ct, mensal_desconto_recorrente: true, inicio: '2026-01-01' }, hoje)).toBe(90);
+  });
+});
+
+describe('pacote por faixa', () => {
+  const FAIXADO = { modalidade: 'pacote', itens: [], preco_por_aluno: 0, minimo_mensal: 0, faixas: { 50: 299, 60: 349, 70: 399 } };
+
+  it('faixaDoPlano escolhe a menor faixa que comporta os alunos', () => {
+    expect(faixaDoPlano(FAIXADO, 10)).toBe(50);
+    expect(faixaDoPlano(FAIXADO, 50)).toBe(50);
+    expect(faixaDoPlano(FAIXADO, 51)).toBe(60);
+    expect(faixaDoPlano(FAIXADO, 71)).toBeNull();
+    expect(faixaDoPlano({ modalidade: 'pacote' }, 10)).toBeNull();
+  });
+
+  it('mensalidade usa o preço da faixa, não alunos x preço', () => {
+    expect(mensalidade(FAIXADO, 20, PRECOS, [], [])).toBe(299);
+    expect(mensalidade(FAIXADO, 55, PRECOS, [], [])).toBe(349);
+    expect(mensalidade(FAIXADO, 71, PRECOS, [], [])).toBe(0);
+  });
+
+  it('extra avulso conta a faixa inteira', () => {
+    expect(mensalidade(FAIXADO, 50, PRECOS, [], ['chat'])).toBe(299 + 50 * 1.5);
+  });
+
+  it('passouDaFaixa só vale para plano com faixas', () => {
+    const ct = { alunos_contratados: 50 };
+    expect(passouDaFaixa(ct, FAIXADO, 51)).toBe(true);
+    expect(passouDaFaixa(ct, FAIXADO, 50)).toBe(false);
+    expect(passouDaFaixa(ct, { modalidade: 'pacote' }, 500)).toBe(false);
   });
 });

@@ -40,7 +40,7 @@ export async function gerarPropostaPdf(p) {
   y = 54;
   texto(`Proposta para ${p.cliente.nome}`, { tam: 16, negrito: true });
   if (p.cliente.contato) texto(`A/C ${p.cliente.contato}`, { c: COR.suave });
-  texto(`Plano ${p.plano.nome}, ciclo ${p.ciclo.label.toLowerCase()}, para ${p.alunos} aluno(s).`, { c: COR.suave });
+  texto(`Plano ${p.plano.nome}, ciclo ${p.ciclo.label.toLowerCase()}, ${p.porFaixa ? `para até ${p.alunos} alunos` : `para ${p.alunos} aluno(s)`}.`, { c: COR.suave });
 
   titulo('Sobre o Zela');
   texto(p.sobre);

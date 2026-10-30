@@ -7,7 +7,7 @@ import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITENS, ITEM_POR_ID, estadoDoItem } from '../lib/modulosCatalogo';
 import {
   CICLOS, brl, mensalidade, valorDoCiclo, implantacaoBase, implantacaoFinal, modalidadesPermitidas, passouDoLimite,
-  diasParaVencer, formatarData, arredondar, extrasDoPacote, descontoMensalidade,
+  diasParaVencer, formatarData, arredondar, extrasDoPacote, descontoMensalidade, faixaDoPlano, passouDaFaixa,
 } from '../lib/planosZela';
 
 // Simulador, Contratações e o modal Contratar (também aberto pela Gestão de
@@ -64,6 +64,7 @@ export function DeveloperPlanosSimulador({ dados }) {
             <div key={p.id} className={card}>
               <p className="font-bold">{p.nome}</p>
               <p className="text-2xl font-black mt-1">{brl(mensal)}<span className="text-xs font-medium text-dev-text-muted"> por mês</span></p>
+              {p.faixas && <p className="text-xs text-dev-text-muted">{faixaDoPlano(p, n) ? `Faixa até ${faixaDoPlano(p, n)} alunos` : 'Acima da maior faixa do plano'}</p>}
               <p className="text-xs text-dev-text-muted">Custo estimado {brl(custo)} · margem {brl(margem)} ({mensal > 0 ? Math.round((margem / mensal) * 100) : 0}%)</p>
               <table className="w-full text-sm mt-3">
                 <tbody>
@@ -106,6 +107,7 @@ export function DeveloperPlanosContratacoes({ dados }) {
             {linhas.map(({ escola, ct, ativos }) => {
               const plano = ct ? planoPor[ct.plano_id] : null;
               const alerta = ct && passouDoLimite({ modalidade: plano?.modalidade }, ativos, dados.config.limite_alunos_por_aluno);
+              const alertaFaixa = ct && passouDaFaixa(ct, plano, ativos);
               const dias = ct ? diasParaVencer(ct.fim) : null;
               return (
                 <tr key={escola.id} className="border-t border-dev-border">
@@ -113,8 +115,9 @@ export function DeveloperPlanosContratacoes({ dados }) {
                   <td className="p-3">{plano?.nome || <span className="text-dev-text-muted">Sem contratação</span>}</td>
                   <td className="p-3">{ct ? CICLOS.find(c => c.id === ct.ciclo)?.label : ''}</td>
                   <td className="p-3">
-                    {ct ? ct.alunos_contratados : ''}{' '}
+                    {ct ? (plano?.faixas ? `Até ${ct.alunos_contratados}` : ct.alunos_contratados) : ''}{' '}
                     <span className="text-dev-text-muted text-xs">({ativos} ativos)</span>
+                    {alertaFaixa && <span className="ml-2 inline-flex items-center gap-1 text-warning text-xs"><AlertTriangle size={12} /> passou da faixa, troque para uma faixa maior</span>}
                     {alerta && <span className="ml-2 inline-flex items-center gap-1 text-warning text-xs"><AlertTriangle size={12} /> passou do limite, migre para pacote</span>}
                   </td>
                   <td className="p-3">
@@ -174,7 +177,10 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
 
   const extrasOk = plano?.modalidade === 'pacote' ? extrasDoPacote(plano, extras, dados.precos) : [];
   const itens = plano ? [...itensDoPlano(plano, escolhidos), ...extrasOk] : [];
-  const mensal = plano ? mensalidade(plano, n, dados.precos, escolhidos, extrasOk) : 0;
+  // Plano com faixas: a escola paga a menor faixa que comporta os alunos contratados e os ativos.
+  const porFaixa = !!plano?.faixas;
+  const faixa = porFaixa ? faixaDoPlano(plano, Math.max(n, ativos)) : null;
+  const mensal = plano ? mensalidade(plano, porFaixa ? Math.max(n, ativos) : n, dados.precos, escolhidos, extrasOk) : 0;
   const valorCicloCheio = plano && cicloSel ? valorDoCiclo(mensal, cicloSel) : 0;
   const dm = plano && cicloSel
     ? descontoMensalidade(mensal, cicloSel, { tipo: mDescTipo, valor: mDesc, recorrente: mRecorrente, meses: mMeses, tetoPercent: dados.config.desconto_mensalidade_max_percent })
@@ -184,7 +190,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const impl = implantacaoFinal(base, descTipo, desc, dados.config.desconto_implantacao_max_percent);
   const motivoFalta = Number(desc) > 0 && motivo.trim().length < 3;
   const mMotivoFalta = Number(mDesc) > 0 && mMotivo.trim().length < 3;
-  const pronto = !!plano && !!cicloSel && n >= 1 && !impl.erro && !dm.erro && !motivoFalta && !mMotivoFalta && features;
+  const pronto = !!plano && !!cicloSel && n >= 1 && (!porFaixa || !!faixa) && !impl.erro && !dm.erro && !motivoFalta && !mMotivoFalta && features;
   const textoDescontoMensal = dm.desconto > 0
     ? `${brl(dm.desconto)} por mês, ${mRecorrente ? 'recorrente (todo o ciclo)' : `por ${dm.mesesDesconto} mês(es)`}`
     : '';
@@ -203,7 +209,7 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   const contratar = async () => {
     setSalvando(true);
     const { error } = await supabase.rpc('contratar_plano_escola', {
-      p_school_id: schoolId, p_plano_id: plano.id, p_ciclo: cicloSel.ciclo, p_alunos: n,
+      p_school_id: schoolId, p_plano_id: plano.id, p_ciclo: cicloSel.ciclo, p_alunos: porFaixa ? faixa : n,
       p_itens: plano.modalidade === 'por_aluno' ? escolhidos : null,
       p_extras: extrasOk.length ? extrasOk : null,
       p_desconto_tipo: Number(desc) > 0 ? descTipo : null,
@@ -279,6 +285,9 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
               </div>
             </div>
             {!permitidas.includes('por_aluno') && <p className="text-xs text-warning">Acima de {dados.config.limite_alunos_por_aluno} alunos só vale o pacote.</p>}
+            {porFaixa && (faixa
+              ? <p className="text-xs text-dev-text-muted">Faixa do plano: até {faixa} alunos (a maior entre os contratados e os {ativos} ativos).</p>
+              : <p className="text-xs text-warning">Acima da maior faixa deste plano. Escolha outro plano.</p>)}
 
             {plano?.modalidade === 'por_aluno' && (
               <div>

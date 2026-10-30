@@ -2,6 +2,9 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
+### Adicionado
+- **Pacotes por faixa de alunos** (30/10): Planos > Pacotes no Portal do Dev com escada de 50 a 1000 alunos (Básico, Padrão e Avançado), reajuste IPCA e botão Restaurar custo original; Contratar e Proposta usam o preço da faixa.
+
 ### Corrigido
 - **Horas extras cortadas em 1000 linhas** (30/10): Relatório de horas extras, Histórico, card de horas extras da Gestão e Relatório Operacional paginam attendance_logs (buscarTodos); alunos do fim da lista sumiam e o total caía.
 
