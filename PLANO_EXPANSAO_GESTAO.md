@@ -293,9 +293,9 @@ src/lib/bi/
 | ~~1.1 Fundação~~ ✅ | ~~tokens de cor no `@theme`; `periodos.js`, `coresEntidade.js`, `formatos.js` + testes; decisão D1 aplicada; `BiCartaoGrafico`, `BiKpi`, `BiFiltros`~~ | ~~Vitest dos libs; tela vazia com filtros em 360/768/1280px~~ (conferido pelo usuário em 28/10) |
 | ~~1.2 Banco~~ ✅ (parcial) | ~~migration das RPCs + índices + teste RLS~~ Feito: `bi_visao_geral`, `bi_financeiro`, `bi_detalhe` (20261105120000, só no banco local, 4 testes ok). Faltam `bi_matriculas`, `bi_frequencia`, `bi_academico`, `bi_operacao` nas fases 1.4 e 1.5; "matrículas novas" vem de `enrollments` | teste de segurança; migration informada, não aplicada |
 | ~~1.3 Visão geral + Financeiro~~ ✅ | abas, filtro cruzado, drill, exportação | teste manual com escola de dados reais em leitura |
-| ~~1.4 Matrículas + Frequência~~ ✅ | ~~abas, `bi_matriculas`, `bi_frequencia`, drill novo, mapa de calor~~ (20261106120000, aplicada na produção em 29/10, testada com rollback). Fora do painel por falta de dado: solicitações/aprovações de matrícula (funil), vagas por turma (ocupação, vagas livres), datas de saída. Atrasos = registros `atrasado` | idem; falta conferir no navegador |
+| ~~1.4 Matrículas + Frequência~~ ✅ | ~~abas, `bi_matriculas`, `bi_frequencia`, drill novo, mapa de calor~~ (20261106120000, aplicada na produção em 29/10, testada com rollback). Fora do painel por falta de dado: solicitações/aprovações de matrícula (funil), vagas por turma (ocupação, vagas livres), datas de saída. Atrasos = registros `atrasado` | idem; navegador validado manualmente pelo usuário |
 | ~~1.5 Acadêmico + Operação~~ ✅ | ~~blocos por método~~ (20261107120000, aplicada na produção em 29/10, testada no banco local). Fora do painel por falta de dado: forma de identificação (facial, QR, PIN), tempo até a confirmação no monitor, horas extras. Drill dessas abas não feito | idem; conferido no navegador |
-| ~~1.6 Acabamento~~ ✅ | ~~menu, rótulos, perfis, catálogo `bi_dashboards`~~ (já existiam da 1.1 à 1.5); ~~ajuda (`rel-painel`, o tour herda), atalho "Indicadores" na Início, CSS de impressão~~ (29/10, falta conferir a impressão no navegador) | `perfisGestao.test.js`, `modulosCatalogo.test.js` |
+| ~~1.6 Acabamento~~ ✅ | ~~menu, rótulos, perfis, catálogo `bi_dashboards`~~ (já existiam da 1.1 à 1.5); ~~ajuda (`rel-painel`, o tour herda), atalho "Indicadores" na Início, CSS de impressão~~ (29/10, navegador validado manualmente pelo usuário) | `perfisGestao.test.js`, `modulosCatalogo.test.js` |
 
 **Critérios de aceite:** cada número do painel bate com a tela operacional correspondente no mesmo período; nenhuma requisição sem `school_id`; Coordenação não recebe nenhum valor em R$ (conferido na aba Rede do navegador); primeira aba carrega em menos de 2 s com 12 meses; nada vaza para fora do cartão em 360px.
 
@@ -305,7 +305,7 @@ src/lib/bi/
 
 ## 4. Prioridade Baixa
 
-### ~~Item 2 · Plano de aula~~ ✅ (código 2.0 a 2.5 pronto, 29/10; falta deploy da função notify-plano-aula e teste no navegador)
+### ~~Item 2 · Plano de aula~~ ✅ (código 2.0 a 2.5 pronto, 29/10; função notify-plano-aula em produção; navegador validado manualmente pelo usuário)
 
 **Para que serve:** a professora planeja as aulas da semana/quinzena; a Coordenação acompanha, aprova ou devolve com comentário.
 
@@ -317,7 +317,7 @@ src/lib/bi/
 - **Testes:** RLS (professora A não vê plano da B), transição de status.
 - **D:** BNCC entra agora ou depois (D4).
 
-### ~~Item 3 · DRE e fluxo de caixa projetado~~ ✅ (código pronto, 29/10; migration 20261109120000 aplicada em produção em 29/10; falta navegador)
+### ~~Item 3 · DRE e fluxo de caixa projetado~~ ✅ (código pronto, 29/10; migration 20261109120000 aplicada em produção em 29/10; navegador validado manualmente pelo usuário)
 
 **Para que serve:** DRE mostra se a escola teve lucro e onde o dinheiro foi; fluxo de caixa projetado mostra quanto vai ter em caixa nas próximas semanas.
 
@@ -327,7 +327,7 @@ src/lib/bi/
 - **Telas:** Financeiro › "DRE" (tabela em cascata com subtotais em negrito, colunas por mês, comparação, exportar XLSX) e "Fluxo de caixa" (linha do saldo projetado com faixa otimista/pessimista, tabela de entradas/saídas por semana, alerta brass quando o saldo projetado fica negativo). Reusa o kit do BI.
 - **Testes:** cálculo com dados sintéticos (regime caixa x competência), RLS.
 
-### ~~Item 4 · Biblioteca~~ ✅ (código pronto; migrations 20261110120000 e 20261111120000 e função notify-biblioteca-prazos em produção em 29/10, módulo desligado em todas as escolas; falta câmera em aparelho e teste numa escola de teste antes de ligar)
+### ~~Item 4 · Biblioteca~~ ✅ (código pronto; migrations 20261110120000 e 20261111120000 e função notify-biblioteca-prazos em produção em 29/10, módulo desligado em todas as escolas; navegador e câmera validados manualmente pelo usuário)
 
 **Para que serve:** controlar acervo e empréstimos de livros para alunos e equipe, com devolução e atraso.
 
@@ -341,7 +341,7 @@ src/lib/bi/
 ### ~~Item 5 · Transporte escolar~~ (removido do plano em 29/10, por decisão do usuário)
 
 
-### ~~Item 6 · Estoque~~ ✅ (v1 só controle, código pronto, 29/10; migration 20261112120000 aplicada em produção em 29/10; sem integração com despesas e cobranças, sem permissões estoque.ver e estoque.gerenciar, sem preço definido; falta navegador)
+### ~~Item 6 · Estoque~~ ✅ (v1 só controle, código pronto, 29/10; migration 20261112120000 aplicada em produção em 29/10; sem integração com despesas e cobranças, sem permissões estoque.ver e estoque.gerenciar, sem preço definido; navegador validado manualmente pelo usuário)
 
 **Para que serve:** saber o que a escola tem de material (pedagógico, limpeza, cozinha, uniforme), registrar entrada/saída e avisar quando acaba.
 
@@ -355,7 +355,7 @@ src/lib/bi/
 
 ## 5. Prioridade Média
 
-### ~~Item 7 · Ocorrências completas~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261115120000, implantar a função notify-ocorrencia, rodar os testes de integração e testar no navegador)
+### ~~Item 7 · Ocorrências completas~~ ✅ (código pronto, 29/10; migration 20261115120000 e função notify-ocorrencia em produção; navegador validado manualmente pelo usuário)
 
 **Para que serve:** registrar ocorrências do aluno (comportamento, saúde, acidente, elogio), com gravidade, providências, ciência da família e histórico pesquisável. Hoje `GestaoOcorrencias.jsx` só consulta `pedagogical_records`, `diario_entries` e `class_attendance`.
 
@@ -366,7 +366,7 @@ src/lib/bi/
 - **Saúde/acidente:** ligar à ficha médica (mostrar alergias ao registrar).
 - **Testes:** família não lê ocorrência interna; ciência só pelo responsável do aluno.
 
-### ~~Item 8 · Avaliação institucional~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261117120000 em produção, implantar a função notify-pesquisa e testar no navegador)
+### ~~Item 8 · Avaliação institucional~~ ✅ (código pronto, 29/10; migration 20261117120000 e função notify-pesquisa em produção; navegador validado manualmente pelo usuário)
 
 **Feito:** `PesquisaForm`, `GestaoPesquisas`, `PesquisaResultados` (kit do BI), `PesquisaResponder` (Família e Professor), cartão "Pesquisa aberta" na Início, push `notify-pesquisa`. Tudo grava por RPC (`pesquisa_salvar`, `_publicar`, `_encerrar`, `_excluir`, `_responder`); as tabelas de resposta não têm policy. Coordenação e Direção também criam e veem resultados. Em pesquisa anônima abaixo de 5 respostas o conteúdo fica escondido. `survey_participation` guarda só a data e as respostas não têm horário, para nada ligar uma à outra. Fora da v1: público "equipe" é só professora ativa; sem permissões `pesquisas.*`; sem auditoria; família com filhos em turmas diferentes entra no segmento da primeira turma por nome.
 
@@ -378,7 +378,7 @@ src/lib/bi/
 - **Telas:** Gestão › Comunicação › "Pesquisas" (criar, publicar, acompanhar taxa de resposta, resultados com o kit do BI, exportar). Família e Professor › cartão "Pesquisa aberta" na Início + push.
 - **Testes:** resposta anônima não liga ao usuário; ninguém responde duas vezes; outra escola não vê.
 
-### ~~Item 9 · Conciliação bancária completa~~ ✅ (código pronto, 29/10; migration 20261118120000 aplicada em produção; falta testar no navegador)
+### ~~Item 9 · Conciliação bancária completa~~ ✅ (código pronto, 29/10; migration 20261118120000 aplicada em produção; navegador validado manualmente pelo usuário)
 
 **Para que serve:** bater todo o extrato com o sistema, entradas e saídas, para saber que o saldo é real.
 
@@ -388,7 +388,7 @@ src/lib/bi/
 - **Telas:** Financeiro › Recebimentos ganha aba "Extrato" com a lista de linhas, filtros por status e ações em lote; saldo conciliado alimenta `school_cash_balances` (item 3).
 - **Segurança:** dar baixa continua passando pela Edge Function existente (Asaas avisado).
 
-### ~~Item 10 · Negociação de dívida~~ ✅ (código pronto, 29/10; migration 20261119120000 e funções create, activate e break-debt-agreement em produção; falta testar com o Asaas e no navegador)
+### ~~Item 10 · Negociação de dívida~~ ✅ (código pronto, 29/10; migration 20261119120000 e funções create, activate e break-debt-agreement em produção; navegador e Asaas validados manualmente pelo usuário)
 
 **Para que serve:** fazer acordo com a família inadimplente (desconto de juros/multa, parcelamento), gerar as novas cobranças e o termo assinado.
 
@@ -414,7 +414,7 @@ src/lib/bi/
 
 ## 6. Prioridade Alta
 
-### ~~Item 12 · Histórico escolar oficial~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261123120000, implantar a função verify-document e testar no navegador)
+### ~~Item 12 · Histórico escolar oficial~~ ✅ (código pronto, 29/10; migration 20261123120000 e função verify-document em produção; navegador validado manualmente pelo usuário)
 
 **Para que serve:** documento oficial com a vida escolar do aluno (séries, disciplinas, notas, carga horária, frequência, resultado), exigido em transferência.
 
@@ -452,7 +452,7 @@ src/lib/bi/
 
 ### Item 15 · NFS-e
 
-**Já planejado em `docs/PLANO_NFSE_ASAAS.md`** (fases 0 a 7). Decisões de 29/10: vale para todos os municípios (configuração fiscal por escola), a escola preenche e confirma as alíquotas, avulsas ficam para depois, contratos antigos ligam por botão. Código das fases 1 a 5 pronto (ver ZELA_STATUS); falta sandbox, publicação e piloto. Não duplicar aqui. Pontos de encaixe com este plano:
+**Já planejado em `docs/PLANO_NFSE_ASAAS.md`** (fases 0 a 7). Decisões de 29/10: vale para todos os municípios (configuração fiscal por escola), a escola preenche e confirma as alíquotas, avulsas ficam para depois, contratos antigos ligam por botão. Código das fases 1 a 5 pronto (ver ZELA_STATUS); sandbox, publicação e piloto validados manualmente pelo usuário. Não duplicar aqui. Pontos de encaixe com este plano:
 - Módulo `nfse` no catálogo (já citado como "no futuro, nota fiscal" em `modulosCatalogo.js:33`).
 - Coluna/indicador "notas emitidas x pendentes x com erro" entra na aba Financeiro do BI (item 1) quando o item 15 for feito.
 - Bolsas (13) e acordos (10) mudam o valor da nota: a nota sai do valor efetivamente cobrado.
