@@ -3,6 +3,7 @@ import { Search, X, FileText, Download, SlidersHorizontal, ChevronDown } from 'l
 import { supabase } from '../lib/supabase';
 import { agruparEventosPorDia, calcularCobrancaDoDia, mergeBillingConfig, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHorasExtrasReport } from '../lib/printHorasExtras';
+import { buscarTodos } from '../lib/buscarTodos';
 
 function formatTime(isoString) {
   if (!isoString) return '—';
@@ -93,7 +94,10 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         endDate   = `${todayISO}T23:59:59-03:00`;
       }
 
-      const { data: rawLogs, error } = await supabase
+      // O Supabase corta em 1000 linhas: sem paginar, os alunos do fim da
+      // ordenação sumiam da lista conforme o mês acumulava registros.
+      // O desempate por id mantém as páginas estáveis.
+      const rawLogs = await buscarTodos(() => supabase
         .from('attendance_logs')
         .select(`
           id,
@@ -108,9 +112,8 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
         .gte('event_time', startDate)
         .lte('event_time', endDate)
         .order('student_id')
-        .order('event_time');
-
-      if (error) throw error;
+        .order('event_time')
+        .order('id'));
 
       const groupedLogs = agruparEventosPorDia(rawLogs);
       const billingConfig = mergeBillingConfig(currentSchool?.billing_config);
