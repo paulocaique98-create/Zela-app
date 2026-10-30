@@ -5,6 +5,7 @@ import { toast } from '../lib/toast';
 import { ITEM_POR_ID } from '../lib/modulosCatalogo';
 import { CICLO_POR_ID, brl, modalidadesPermitidas } from '../lib/planosZela';
 import { montarProposta } from '../lib/proposta';
+import { linkWhatsapp } from '../lib/captacao';
 
 // Menu Propostas (Portal do Dev): escolhe a escola, o plano e os módulos e gera o
 // PDF no navegador. Nada é gravado; só os contatos do Zela ficam neste aparelho.
@@ -64,7 +65,7 @@ export default function DeveloperPropostas() {
     validadeDias: validade, contatos,
   }), [escola, prospect, plano, cicloSel, nAlunos, escolhidos, extras, dados.precos, dados.config, mTipo, mValor, mRecorrente, mMeses, iTipo, iValor, validade, contatos]);
 
-  const semContato = !contatos.whatsapp?.trim() || !contatos.email?.trim();
+  const semContato = !linkWhatsapp(contatos.whatsapp);
   const podeGerar = !proposta.erro && !semContato && !gerando;
 
   const gerar = async () => {
@@ -111,16 +112,12 @@ export default function DeveloperPropostas() {
         </section>
 
         <section className={card}>
-          <h3 className="text-sm font-bold text-dev-text">Contatos dos botões do PDF</h3>
+          <h3 className="text-sm font-bold text-dev-text">Contato dos botões do PDF</h3>
           <div>
-            <label className={rotulo} htmlFor="prop-wa">WhatsApp do Zela (Aceitar Proposta)</label>
+            <label className={rotulo} htmlFor="prop-wa">WhatsApp do Zela (Aceitar Proposta e Tirar Dúvida)</label>
             <input id="prop-wa" inputMode="tel" placeholder="(11) 99999 0000" className={campo} value={contatos.whatsapp || ''} onChange={e => salvarContato('whatsapp', e.target.value)} />
           </div>
-          <div>
-            <label className={rotulo} htmlFor="prop-email">E-mail do Zela (Tirar Dúvida)</label>
-            <input id="prop-email" type="email" className={campo} value={contatos.email || ''} onChange={e => salvarContato('email', e.target.value)} />
-          </div>
-          <p className="text-xs text-dev-text-muted">Ficam salvos só neste aparelho.</p>
+          <p className="text-xs text-dev-text-muted">Fica salvo só neste aparelho.</p>
         </section>
 
         <section className={`${card} lg:col-span-2`}>
@@ -203,7 +200,7 @@ export default function DeveloperPropostas() {
             <p className="text-dev-text-muted">{proposta.itens.length} módulo(s) ou adicional(is) além do plano base. Válida até {proposta.validadeAte}.</p>
           </div>
         )}
-        {semContato && <p className="text-xs text-warning">Preencha o WhatsApp e o e-mail do Zela para os botões do PDF funcionarem.</p>}
+        {semContato && <p className="text-xs text-warning">Preencha um WhatsApp válido do Zela (com DDD) para os botões do PDF funcionarem.</p>}
         <button type="button" className={btnPrimario} disabled={!podeGerar} onClick={gerar}>
           {gerando ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Gerar PDF
         </button>

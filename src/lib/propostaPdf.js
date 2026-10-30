@@ -1,7 +1,7 @@
 import { brl } from './planosZela';
 
 // Desenha o PDF da proposta (montarProposta) com jsPDF, carregado só na hora de gerar.
-// Os botões são retângulos com link clicável (WhatsApp e e-mail).
+// Os botões são retângulos com link clicável (os dois abrem o WhatsApp).
 const COR = { texto: [30, 30, 30], suave: [110, 110, 110], marca: [150, 110, 40], faixa: [28, 28, 32], linha: [220, 220, 220] };
 const M = 16; // margem
 const LARG = 210;
@@ -87,7 +87,7 @@ export async function gerarPropostaPdf(p) {
   botao('Aceitar Proposta', p.links.aceitar, M, [40, 130, 70]);
   botao('Tirar Dúvida', p.links.duvida, M + (util - 6) / 2 + 6, COR.marca);
   y += 20;
-  const contatos = [p.contatos.whatsapp && `WhatsApp ${p.contatos.whatsapp}`, p.contatos.email].filter(Boolean).join('   ·   ');
+  const contatos = p.contatos.whatsapp && `WhatsApp ${p.contatos.whatsapp}`;
   if (contatos) texto(contatos, { tam: 9, c: COR.suave });
 
   // Rodapé com página

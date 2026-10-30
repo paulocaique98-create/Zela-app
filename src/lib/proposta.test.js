@@ -9,7 +9,7 @@ const PRECOS = [
 ];
 const PLANO = { nome: 'Completo', modalidade: 'pacote', itens: ['pedagogico', 'rotina'], preco_por_aluno: 11.9, minimo_mensal: 790, implantacao_valor: 900, descricao: '' };
 const CICLO = { ciclo: 'ANUAL', meses: 12, desconto_percent: 10, implantacao_valor: null };
-const base = { cliente: { nome: 'Escola Teste' }, plano: PLANO, ciclo: CICLO, alunos: 100, precos: PRECOS, emitidaEm: new Date(2026, 9, 30), contatos: { whatsapp: '(11) 99999-0000', email: 'a@zela.com' } };
+const base = { cliente: { nome: 'Escola Teste' }, plano: PLANO, ciclo: CICLO, alunos: 100, precos: PRECOS, emitidaEm: new Date(2026, 9, 30), contatos: { whatsapp: '(11) 99999-0000' } };
 
 describe('montarProposta', () => {
   it('monta valores, itens e links', () => {
@@ -21,7 +21,7 @@ describe('montarProposta', () => {
     expect(p.valores.implantacao).toBe(900);
     expect(p.validadeAte).toBe('14/11/2026');
     expect(p.links.aceitar).toContain('https://wa.me/5511999990000?text=');
-    expect(p.links.duvida).toMatch(/^mailto:a@zela.com/);
+    expect(p.links.duvida).toContain('https://wa.me/5511999990000?text=');
   });
   it('adicional avulso entra por cima do pacote', () => {
     const p = montarProposta({ ...base, extras: ['chat'] });
