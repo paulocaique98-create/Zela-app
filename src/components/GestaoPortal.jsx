@@ -57,6 +57,7 @@ const GestaoPlanos = lazy(() => import('./GestaoPlanos'));
 const GestaoDespesas = lazy(() => import('./GestaoDespesas'));
 const GestaoDre = lazy(() => import('./GestaoDre'));
 const GestaoBolsas = lazy(() => import('./GestaoBolsas'));
+const GestaoHistoricoEscolar = lazy(() => import('./GestaoHistoricoEscolar'));
 const GestaoFluxoCaixa = lazy(() => import('./GestaoFluxoCaixa'));
 const GestaoFornecedores = lazy(() => import('./GestaoFornecedores'));
 const GestaoAnoLetivo = lazy(() => import('./GestaoAnoLetivo'));
@@ -116,7 +117,7 @@ const LEGACY_TABS = {
 // 28/10/2026). Os ids antigos cadastros-* das listas foram mantidos de propósito
 // (permissões, atalhos e pendências apontam para eles); quem manda no grupo é esta lista.
 const GRUPO_CADASTROS = ['cadastros-novo', 'cadastros-funcionario-novo', 'cadastros-turma-nova', 'cadastros-fornecedor-novo', 'secretaria-matriculas'];
-const GRUPO_GERENCIAMENTO = ['cadastros-usuarios', 'secretaria-alunos', 'cadastros-funcionarios', 'cadastros-turmas', 'cadastros-fornecedores', 'cadastros-exclusoes'];
+const GRUPO_GERENCIAMENTO = ['cadastros-usuarios', 'secretaria-alunos', 'secretaria-historico', 'cadastros-funcionarios', 'cadastros-turmas', 'cadastros-fornecedores', 'cadastros-exclusoes'];
 
 // Grupo do menu de cada aba: abre o grupo certo ao navegar por atalho.
 function groupOf(tab) {
@@ -310,6 +311,7 @@ export default function GestaoPortal({
             {group('gerenciamento', 'Gerenciamento', Folders, <>
               {item('cadastros-usuarios', Users, 'Usuários', { badge: pendingUsersCount > 0 ? pendingUsersCount : null })}
               {item('secretaria-alunos', GraduationCap, 'Alunos')}
+              {chaveLigada(features, 'historico_escolar') && item('secretaria-historico', ScrollText, 'Histórico escolar')}
               {item('cadastros-funcionarios', Users, 'Funcionários')}
               {item('cadastros-turmas', School, 'Turmas')}
               {item('cadastros-fornecedores', Truck, 'Fornecedores')}
@@ -449,6 +451,7 @@ export default function GestaoPortal({
               </div>
             </>
           )}
+          {abaAtual === 'secretaria-historico' && <GestaoHistoricoEscolar currentUser={currentUser} />}
           {abaAtual === 'secretaria-matriculas' && <AdminMatriculas currentUser={currentUser} currentSchool={currentSchool} />}
           {abaAtual === 'secretaria-documentos' && <GestaoDocumentosPendentes currentUser={currentUser} onOpenAluno={openAluno} onVoltar={() => go('pendencias')} />}
 

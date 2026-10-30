@@ -32,6 +32,7 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'ajuda',
   // Secretaria
   'secretaria-alunos',
+  'secretaria-historico',
   'secretaria-matriculas',
   'secretaria-documentos',
   // Presença (consulta e correções que não geram hora extra)
@@ -169,6 +170,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'financeiro-dre': 'financeiro_avancado',
   'financeiro-fluxo': 'financeiro_avancado',
   'financeiro-bolsas': 'bolsas',
+  'secretaria-historico': 'historico_escolar',
   'relatorios-financeiro': 'financeiro',
   'relatorios-painel': 'bi_dashboards',
   'config-financeiro': 'financeiro',

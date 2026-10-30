@@ -16,7 +16,7 @@ Nada deste plano foi implementado. Cada fase é uma sessão própria (CLAUDE.md 
 3. ~~Item 1 · Dashboards BI interativo~~ ✅ (detalhado)
 4. Prioridade Baixa: ~~2 Plano de aula~~ ✅ · ~~3 DRE e fluxo de caixa~~ ✅ · ~~4 Biblioteca~~ ✅ · ~~5 Transporte~~ (removido) · ~~6 Estoque~~ ✅
 5. Prioridade Média: ~~7 Ocorrências~~ ✅ · ~~8 Avaliação institucional~~ ✅ · ~~9 Conciliação completa~~ ✅ · ~~10 Negociação de dívida~~ ✅ · ~~11 Captação (CRM)~~ ✅
-6. Prioridade Alta: 12 Histórico escolar · ~~13 Bolsas~~ ✅ · 14 Régua de cobrança · 15 NFS-e
+6. Prioridade Alta: ~~12 Histórico escolar~~ ✅ · ~~13 Bolsas~~ ✅ · 14 Régua de cobrança · 15 NFS-e
 7. Decisões pendentes (consolidadas)
 8. Checklist padrão de entrega de cada fase
 
@@ -414,7 +414,7 @@ src/lib/bi/
 
 ## 6. Prioridade Alta
 
-### Item 12 · Histórico escolar oficial
+### ~~Item 12 · Histórico escolar oficial~~ ✅ (código pronto, 29/10; falta aplicar a migration 20261123120000, implantar a função verify-document e testar no navegador)
 
 **Para que serve:** documento oficial com a vida escolar do aluno (séries, disciplinas, notas, carga horária, frequência, resultado), exigido em transferência.
 

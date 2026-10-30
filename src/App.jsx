@@ -33,6 +33,7 @@ const ForcePasswordChange = lazy(() => import('./components/ForcePasswordChange'
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
 const PublicMatricula = lazy(() => import('./components/PublicMatricula'));
 const PublicLead = lazy(() => import('./components/PublicLead'));
+const PublicVerificarDocumento = lazy(() => import('./components/PublicVerificarDocumento'));
 
 // Helper para obter a data (YYYY-MM-DD) no fuso de Brasília, independente do fuso
 // do dispositivo/servidor. Usar toISOString() aqui pegaria a data em UTC, que já
@@ -1483,6 +1484,11 @@ export default function App() {
   // Formulário público da Captação (item 11): link divulgado pela escola.
   if (currentPath === '/quero-conhecer') {
     return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><PublicLead /></Suspense>;
+  }
+
+  // Verificação pública de histórico e declarações (item 12): /verificar/<codigo>, sem login.
+  if (currentPath === '/verificar' || currentPath.startsWith('/verificar/')) {
+    return <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}><PublicVerificarDocumento /></Suspense>;
   }
 
   if (!currentUser) {
