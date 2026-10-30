@@ -12,6 +12,7 @@ import { linkWhatsapp } from '../lib/captacao';
 
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4 space-y-3';
 const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py-2 text-sm text-dev-text';
+const campoCurto = campo.replace('w-full', 'w-28 shrink-0');
 const rotulo = 'block text-[11px] font-bold text-dev-text-muted mb-1';
 const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm font-medium transition-all disabled:opacity-50';
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
@@ -171,8 +172,8 @@ export default function DeveloperPropostas() {
             <div className="space-y-2">
               <p className={rotulo}>Na mensalidade (máximo {dados.config.desconto_mensalidade_max_percent} por cento)</p>
               <div className="flex gap-2">
-                <select aria-label="Tipo do desconto na mensalidade" className={`${campo} w-24 shrink-0`} value={mTipo} onChange={e => setMTipo(e.target.value)}><option value="percent">Por cento</option><option value="valor">R$</option></select>
-                <input aria-label="Valor do desconto na mensalidade" type="number" min="0" className={campo} value={mValor} onChange={e => setMValor(e.target.value)} />
+                <select aria-label="Tipo do desconto na mensalidade" className={campoCurto} value={mTipo} onChange={e => setMTipo(e.target.value)}><option value="percent">Por cento</option><option value="valor">R$</option></select>
+                <input aria-label="Valor do desconto na mensalidade" type="number" min="0" className={`${campo} min-w-0`} value={mValor} onChange={e => setMValor(e.target.value)} />
               </div>
               <label className="flex items-center gap-2 text-sm text-dev-text"><input type="checkbox" checked={mRecorrente} onChange={e => setMRecorrente(e.target.checked)} /> Vale em todo o ciclo</label>
               {!mRecorrente && <input aria-label="Meses de desconto" type="number" min="1" placeholder="Quantos meses" className={campo} value={mMeses} onChange={e => setMMeses(e.target.value)} />}
@@ -180,8 +181,8 @@ export default function DeveloperPropostas() {
             <div className="space-y-2">
               <p className={rotulo}>Na implantação</p>
               <div className="flex gap-2">
-                <select aria-label="Tipo do desconto na implantação" className={`${campo} w-24 shrink-0`} value={iTipo} onChange={e => setITipo(e.target.value)}><option value="percent">Por cento</option><option value="valor">R$</option></select>
-                <input aria-label="Valor do desconto na implantação" type="number" min="0" className={campo} value={iValor} onChange={e => setIValor(e.target.value)} />
+                <select aria-label="Tipo do desconto na implantação" className={campoCurto} value={iTipo} onChange={e => setITipo(e.target.value)}><option value="percent">Por cento</option><option value="valor">R$</option></select>
+                <input aria-label="Valor do desconto na implantação" type="number" min="0" className={`${campo} min-w-0`} value={iValor} onChange={e => setIValor(e.target.value)} />
               </div>
             </div>
           </div>
