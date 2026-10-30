@@ -239,6 +239,20 @@ export const ITENS = [
     aoDesligar: 'A régua para de enviar e o lembrete simples de 2 dias antes volta a valer. Textos e histórico ficam guardados.',
   },
   {
+    id: 'nfse',
+    grupo: 'adicional',
+    nome: 'Nota fiscal de serviço (NFS-e)',
+    resumo: 'Emissão automática da nota das mensalidades pelo Asaas, para o município de cada escola.',
+    keys: ['nfse'],
+    inclui: [
+      { nome: 'Configuração fiscal', desc: 'Código do serviço e alíquotas da escola, confirmadas com a contabilidade antes de ligar' },
+      { nome: 'Emissão automática', desc: 'A nota sai depois da confirmação do pagamento, em mensalidades mensais, trimestrais, semestrais e anuais' },
+      { nome: 'Acompanhamento', desc: 'Situação de cada nota, com PDF e XML quando autorizada e o motivo quando houver erro' },
+    ],
+    onde: [{ portal: 'Gestão', menus: 'Configurações › Financeiro › Nota fiscal (só a Gestão)' }],
+    aoDesligar: 'Contratos novos deixam de configurar a nota. Notas já emitidas e a configuração fiscal ficam guardadas.',
+  },
+  {
     id: 'historico_escolar',
     grupo: 'adicional',
     nome: 'Histórico escolar',

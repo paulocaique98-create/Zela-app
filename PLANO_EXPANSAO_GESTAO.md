@@ -452,7 +452,7 @@ src/lib/bi/
 
 ### Item 15 · NFS-e
 
-**Já planejado em `docs/PLANO_NFSE_ASAAS.md`** (fases 0 a 7, perguntas 3.2 a 3.8 abertas). Não duplicar aqui. Pontos de encaixe com este plano:
+**Já planejado em `docs/PLANO_NFSE_ASAAS.md`** (fases 0 a 7). Decisões de 29/10: vale para todos os municípios (configuração fiscal por escola), a escola preenche e confirma as alíquotas, avulsas ficam para depois, contratos antigos ligam por botão. Código das fases 1 a 5 pronto (ver ZELA_STATUS); falta sandbox, publicação e piloto. Não duplicar aqui. Pontos de encaixe com este plano:
 - Módulo `nfse` no catálogo (já citado como "no futuro, nota fiscal" em `modulosCatalogo.js:33`).
 - Coluna/indicador "notas emitidas x pendentes x com erro" entra na aba Financeiro do BI (item 1) quando o item 15 for feito.
 - Bolsas (13) e acordos (10) mudam o valor da nota: a nota sai do valor efetivamente cobrado.

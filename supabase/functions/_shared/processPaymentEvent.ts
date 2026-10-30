@@ -17,6 +17,7 @@
 // ruído.
 import { sendFamilyNotification, centsToBRL } from './sendFamilyNotification.ts';
 import { createAsaasClient } from './asaas.ts';
+import { ehEventoFiscal, processInvoiceEvent } from './processInvoiceEvent.ts';
 import { buildTrustedPayment } from './trustedPayment.ts';
 
 // Consulta o pagamento direto no Asaas com a chave da PRÓPRIA escola (a
@@ -66,6 +67,7 @@ export interface ProcessResult {
 // deno-lint-ignore no-explicit-any
 export async function processPaymentEvent(adminClient: any, webhookEventRow: any): Promise<ProcessResult> {
   const { school_id: schoolId, event_type: eventType, payload } = webhookEventRow;
+  if (ehEventoFiscal(eventType)) return await processInvoiceEvent(adminClient, webhookEventRow);
   const eventPayment = payload?.payment;
 
   if (!eventPayment || !eventPayment.id) {

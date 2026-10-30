@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { sendFamilyNotification, centsToBRL } from '../_shared/sendFamilyNotification.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { agendarNotaAvulsa } from '../_shared/nfseAvulsa.ts';
 
 // Fase 16 — cobrança avulsa (não-recorrente): taxa de matrícula, multa,
 // material didático, qualquer cobrança pontual que não faz parte da
@@ -94,7 +95,7 @@ serve(async (req) => {
 
     const { data: guardian, error: guardianError } = await adminClient
       .from('users')
-      .select('id, name, email, doc_number')
+      .select('id, name, email, doc_number, zip_code, street, number, complement, neighborhood')
       .eq('id', guardianLink.guardian_id)
       .single();
     if (guardianError || !guardian) throw new Error('Responsável financeiro não encontrado.');
@@ -109,10 +110,19 @@ serve(async (req) => {
 
     const asaas = createAsaasClient(apiKey);
 
+    const cep = String(guardian.zip_code ?? '').replace(/\D/g, '');
+    const temEndereco = cep.length === 8 && guardian.street && guardian.number;
     const customer = await asaas.createCustomer({
       name: guardian.name,
       cpfCnpj: guardian.doc_number,
       email: guardian.email || undefined,
+      ...(temEndereco ? {
+        postalCode: cep,
+        address: guardian.street,
+        addressNumber: guardian.number,
+        complement: guardian.complement || undefined,
+        province: guardian.neighborhood || undefined,
+      } : {}),
     });
 
     const amountReais = amount_cents / 100;
@@ -164,6 +174,12 @@ serve(async (req) => {
       .select('id')
       .single();
     if (insertError) throw insertError;
+
+    // Nota fiscal da avulsa (módulo nfse + opção da escola): nunca derruba a cobrança.
+    await agendarNotaAvulsa(adminClient, asaas, {
+      schoolId, chargeId: charge.id, paymentId: payment.id, dueDate: due_date,
+      descricao: description || `Cobrança avulsa — ${student.name}`,
+    });
 
     await adminClient.from('financial_charge_events').insert({
       charge_id: charge.id,

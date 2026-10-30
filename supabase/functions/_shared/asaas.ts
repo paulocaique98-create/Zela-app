@@ -78,7 +78,7 @@ export function createAsaasClient(apiKey: string) {
   }
 
   return {
-    createCustomer(input: { name: string; cpfCnpj: string; email?: string; mobilePhone?: string; externalReference?: string }): Promise<AsaasCustomer> {
+    createCustomer(input: { name: string; cpfCnpj: string; email?: string; mobilePhone?: string; externalReference?: string; postalCode?: string; address?: string; addressNumber?: string; complement?: string; province?: string }): Promise<AsaasCustomer> {
       return asaasFetch('/v3/customers', { method: 'POST', body: JSON.stringify(input) });
     },
 
@@ -168,6 +168,31 @@ export function createAsaasClient(apiKey: string) {
     // pra frente. updatePendingPayments=false deixa as já emitidas como estão.
     updateSubscription(subscriptionId: string, input: { value?: number; updatePendingPayments?: boolean; nextDueDate?: string; description?: string }): Promise<AsaasSubscription> {
       return asaasFetch(`/v3/subscriptions/${encodeURIComponent(subscriptionId)}`, { method: 'PUT', body: JSON.stringify(input) });
+    },
+
+    // NFS-e: configuração de emissão automática de uma assinatura (vale para as cobranças futuras).
+    // deno-lint-ignore no-explicit-any
+    setInvoiceSettings(subscriptionId: string, input: unknown): Promise<any> {
+      return asaasFetch(`/v3/subscriptions/${encodeURIComponent(subscriptionId)}/invoiceSettings`, { method: 'POST', body: JSON.stringify(input) });
+    },
+
+    // NFS-e de cobrança avulsa (sem assinatura): agenda a nota de um pagamento, com data literal.
+    // deno-lint-ignore no-explicit-any
+    createInvoice(input: unknown): Promise<any> {
+      return asaasFetch('/v3/invoices', { method: 'POST', body: JSON.stringify(input) });
+    },
+
+    // NFS-e: serviços do município da conta (id próprio do Asaas, descrição e ISS de referência).
+    // O Asaas não valida o id no invoiceSettings, por isso a escola escolhe sempre desta lista.
+    // deno-lint-ignore no-explicit-any
+    listMunicipalServices(description: string): Promise<{ data: any[] }> {
+      return asaasFetch(`/v3/invoices/municipalServices?description=${encodeURIComponent(description)}&limit=20`, { method: 'GET' });
+    },
+
+    // Fonte da verdade de uma nota: o webhook nunca confia só no conteúdo do evento.
+    // deno-lint-ignore no-explicit-any
+    getInvoice(invoiceId: string): Promise<any> {
+      return asaasFetch(`/v3/invoices/${encodeURIComponent(invoiceId)}`, { method: 'GET' });
     },
 
     // Chamada leve só pra validar que a chave é válida (usada por
