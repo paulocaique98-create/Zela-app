@@ -24,7 +24,7 @@ Objetivo: estruturar a cobrança do Zela para as escolas, junto com contrato e N
 9. **Reaproveitamento:** os dados vêm de `school_contratacoes` (via `usePlanosZela`), sem duplicar. Os cálculos de valor ficam em `src/lib/planosZela.js`; o painel só lê o que o servidor gravou.
 10. **Fases:**
     - Fase 1: lista e ficha somente leitura, sem cobrança. Entrega valor logo e não tem risco.
-    - Fase 2: faturamento e cobrança pelo Asaas do Zela.
+    - Fase 2: faturamento e cobrança pelo Asaas do Zela. Detalhada em `PLANO_FATURAMENTO_ZELA.md`.
     - Fase 3: NFS-e e contrato.
     - Fase 4: reajuste, crédito e régua de atraso.
 
