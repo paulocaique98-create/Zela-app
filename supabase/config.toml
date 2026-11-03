@@ -416,6 +416,10 @@ enabled = true
 # não pelo middleware de auth padrão do Supabase.
 [functions.payment-webhook]
 verify_jwt = false
+
+# zela-billing-webhook: servidor do Asaas (conta oficial do Zela); autenticado pelo secret ZELA_BILLING_WEBHOOK_TOKEN.
+[functions.zela-billing-webhook]
+verify_jwt = false
 # Directory under `supabase/` where declarative files are written.
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.

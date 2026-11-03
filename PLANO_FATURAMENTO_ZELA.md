@@ -34,6 +34,9 @@ Na tela, aparece **Período** e **Pagamento**. O termo "ciclo" fica só no códi
 Regras:
 - ✅ **O desconto da condição substitui o desconto do ciclo de hoje.** Hoje `zela_plano_ciclos.desconto_percent` define Semestral 5%, Anual 10% e Bianual 15% por plano, na tela de Planos. Esse campo deixa de valer: o servidor passa a ignorá-lo, a tela de Planos deixa de mostrá-lo, e a coluna fica no banco com 0, sem ser apagada. Os percentuais da tabela acima ficam numa tabela de configuração editável pelo developer, não fixos no código.
 - ✅ **Sem desconto em cascata.** O desconto negociado na mensalidade (hoje com teto de 10%, escolhido no modal) não soma mais por cima do desconto da condição. Os percentuais de desconto da mensalidade passam a ser definidos na tela de Configurações (seção 7A) e aplicados contrato a contrato no Painel de contratos (seção 7B).
+- ✅ **Reajuste pelo IPCA no Anual: só na renovação.** O cliente contratou sabendo quanto vai pagar até o fim. Enquanto o contrato em vigência não vencer, o valor não muda de jeito nenhum, nem nas parcelas restantes, mesmo que o IPCA do ano seguinte já tenha saído. O reajuste entra apenas no novo contrato (renovação), e só no valor do sistema (a implantação não se repete). O Anual não tem assinatura no Asaas.
+- ✅ **Reajuste no Mensal: a qualquer momento.** O Mensal não tem fidelidade e o reajuste não causa prejuízo ao cliente, então pode ser aplicado na virada do ano (ou quando quiser) na assinatura do Asaas, valendo só para as cobranças futuras (`updatePendingPayments = false`).
+- ❓ Falta definir: fonte do índice, período acumulado e como a renovação do Anual é gerada (seção 12, itens 13 e 15).
 - ✅ **O valor do contrato é congelado no momento da contratação.** Já existe o `snapshot` em `school_contratacoes`. Mudar o preço depois não altera contratos já assinados.
 - **Arredondamento:** total dividido pelo nº de parcelas, com os centavos que sobrarem somados na última parcela. A soma das parcelas tem que bater exatamente com o total.
 - **Vencimentos:** a 1ª vence em 3 dias por padrão (editável) ✅. As demais vencem no mesmo dia dos meses seguintes (12x e Mensal) ou a cada 2 meses (6x). Se o mês não tiver esse dia (29, 30 ou 31), vale o último dia do mês.
@@ -212,7 +215,7 @@ Regras:
 | A | 1, 2, 3, 4, 5 | Respostas desta lista |
 | B | 8, 9 (sem a chamada real) | A |
 | C | 6, 7 e teste ponta a ponta | Chave do sandbox do Asaas |
-| D | 11 | C |
+| ~~D~~ ✅ | ~~11~~ (código e testes locais, 03/11; migration 20261209180000, cron só documentado) | C |
 | E | Produção | Seu pedido explícito (migration e funções) |
 | F | 10 | E |
 
@@ -226,10 +229,13 @@ Regras:
 6. ✅ Bloqueio total com 15 dias de carência, editável. Aviso no portal da Gestão. E-mail e WhatsApp depois. ❓ Recepção, professores e famílias veem algum aviso antes do bloqueio?
 7. ~~Multa e juros~~ ✅ 2% e 1% ao mês, editáveis.
 8. Boleto e Pix, ou também cartão?
-9. Mensal: função agendada do Zela ou assinatura do Asaas?
-10. Renovação no fim do período: automática ou só aviso?
+9. ~~Mensal: função agendada do Zela ou assinatura do Asaas?~~ ✅ Assinatura do Asaas (o Asaas gera as cobranças mensais; o webhook cria a linha em `zela_cobrancas` a cada `PAYMENT_CREATED`).
+10. ~~Renovação no fim do período~~ ✅ Também pelo Asaas (assinatura recorrente). A função agendada do item 11 fica só com vencida, carência e suspensão.
 11. Cancelamento: multa de fidelidade e devolução no à vista?
 12. 1ª parcela não paga: cancelar sozinho após quantos dias?
+13. ~~IPCA: fonte e período~~ ✅ Digitado pelo developer no Portal do Dev (Faturamento), acumulado dos 12 meses, um valor por ano. Ano já usado em reajuste ou renovação não muda mais. Busca automática do IBGE fica para depois.
+14. ~~Contrato Mensal: vigência e IPCA~~ ✅ Sem fidelidade; reajuste a qualquer momento pela assinatura do Asaas.
+15. ~~Renovação do Anual~~ ✅ Nasce como rascunho (rotina diária, 60 dias antes do fim, editável em `renovacao_antecedencia_dias`) com o valor do contrato mais o IPCA. Só vira contrato e cobrança quando o developer confirma. Implantação não se repete.
 
 ## Bloqueios
 - A conta oficial do Zela Edu no Asaas ainda vai ser criada. Pedir também a chave do sandbox.

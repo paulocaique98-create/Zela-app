@@ -141,6 +141,8 @@ export function createAsaasClient(apiKey: string) {
       cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
       description?: string;
       externalReference?: string;
+      fine?: { value: number };
+      interest?: { value: number };
     }): Promise<AsaasSubscription> {
       return asaasFetch('/v3/subscriptions', { method: 'POST', body: JSON.stringify(input) });
     },
@@ -168,6 +170,12 @@ export function createAsaasClient(apiKey: string) {
     // pra frente. updatePendingPayments=false deixa as já emitidas como estão.
     updateSubscription(subscriptionId: string, input: { value?: number; updatePendingPayments?: boolean; nextDueDate?: string; description?: string }): Promise<AsaasSubscription> {
       return asaasFetch(`/v3/subscriptions/${encodeURIComponent(subscriptionId)}`, { method: 'PUT', body: JSON.stringify(input) });
+    },
+
+    // Encerra a assinatura: o Asaas para de gerar cobranças novas (as já emitidas seguem).
+    // deno-lint-ignore no-explicit-any
+    cancelSubscription(subscriptionId: string): Promise<any> {
+      return asaasFetch(`/v3/subscriptions/${encodeURIComponent(subscriptionId)}`, { method: 'DELETE' });
     },
 
     // NFS-e: configuração de emissão automática de uma assinatura (vale para as cobranças futuras).
