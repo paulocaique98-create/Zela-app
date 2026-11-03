@@ -5,6 +5,7 @@ import { createAsaasClient } from '../_shared/asaas.ts';
 import { sendFamilyNotification, centsToBRL } from '../_shared/sendFamilyNotification.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { agendarNotaAvulsa } from '../_shared/nfseAvulsa.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Fase 16 — cobrança avulsa (não-recorrente): taxa de matrícula, multa,
 // material didático, qualquer cobrança pontual que não faz parte da
@@ -42,6 +43,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     // Financeiro é exclusivo da Gestão desde a Fase 5 da migração Admin ->
     // Gestão (a RLS já era só gestao; esta checagem tinha ficado pra trás).
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {

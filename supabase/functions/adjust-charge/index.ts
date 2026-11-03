@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas } from '../_shared/financialContract.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Ajuste do valor de UMA cobrança em aberto (04/10/2026): desconto pontual
 // em um mês específico, ou correção de valor. Só a Gestão. O Asaas é
@@ -32,6 +33,7 @@ serve(async (req) => {
 
     const { data: callerData, error: dbCallerError } = await adminClient
       .from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
       throw new Error('Acesso negado: apenas a Gestão pode ajustar cobranças.');
     }

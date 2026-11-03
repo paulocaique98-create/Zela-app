@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Push do Plano de aula (item 2.5 do PLANO_EXPANSAO_GESTAO).
 //  * enviado   -> só a Coordenação e a Gestão da MESMA escola (gestao e
@@ -28,6 +29,7 @@ serve(async (req) => {
     if (callerError || !caller) throw new Error('Token inválido ou expirado');
 
     const { data: callerData } = await adminClient.from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (!callerData) throw new Error('Usuário não encontrado');
 
     const { plan_id } = await req.json();

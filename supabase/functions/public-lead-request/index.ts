@@ -74,8 +74,8 @@ serve(async (req) => {
     // Mesma mensagem para código errado e para módulo desligado: não confirma nada.
     const indisponivel = 'Este formulário não está disponível. Confirme o link com a escola.'
     const { data: school, error: schoolError } = await adminClient
-      .from('schools').select('id, features_enabled').eq('school_code', codigo.toUpperCase()).maybeSingle()
-    if (schoolError || !school || school.features_enabled?.captacao !== true) throw new Error(indisponivel)
+      .from('schools').select('id, features_enabled, is_active').eq('school_code', codigo.toUpperCase()).maybeSingle()
+    if (schoolError || !school || school.features_enabled?.captacao !== true || school.is_active === false) throw new Error(indisponivel)
     const schoolId = school.id as string
 
     const { data: escolaOk, error: escolaErr } = await adminClient.rpc('check_rate_limit', {

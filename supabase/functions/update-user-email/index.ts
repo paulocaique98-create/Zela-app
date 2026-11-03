@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { logEdgeError } from "../_shared/logEdgeError.ts";
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Correção definitiva do bug real (achado 23/09, caso Maria Elisa de Freitas
 // Falcão): editar o e-mail de um usuário em AdminUserRegistration.jsx só
@@ -41,6 +42,7 @@ serve(async (req) => {
       .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
+    await exigirEscolaLiberada(supabaseClient, callerData);
 
     // Recepção (admin) só consulta cadastros: quem altera e-mail de acesso é
     // Gestão, Coordenação/Direção ou o suporte (decisão do produto, 28/10/2026).

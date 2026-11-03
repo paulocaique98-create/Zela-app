@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Push de Pesquisas (item 8 do PLANO_EXPANSAO_GESTAO). Avisa o público quando a
 // Gestão publica a pesquisa. O servidor re-busca a pesquisa e confere quem chamou:
@@ -26,6 +27,7 @@ serve(async (req) => {
     if (callerError || !caller) throw new Error('Token inválido ou expirado');
 
     const { data: callerData } = await adminClient.from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (!callerData || !['gestao', 'gestao_pedagogica'].includes(callerData.role)) throw new Error('Acesso negado');
 
     const { survey_id } = await req.json();

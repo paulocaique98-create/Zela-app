@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sincronizarEscola } from '../_shared/asaasWhatsapp.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // WhatsApp pelas notificações nativas do Asaas (régua de cobrança, D12 opção a).
 //  Gestão:  acao 'estado' | 'ativar' | 'desativar' | 'sincronizar'
@@ -23,6 +24,7 @@ serve(async (req) => {
     if (userErr || !user) return json({ error: 'Token inválido ou expirado' }, 401);
 
     const { data: eu } = await admin.from('users').select('role, school_id').eq('id', user.id).single();
+    await exigirEscolaLiberada(admin, eu);
     if (!eu) return json({ error: 'Usuário não encontrado' }, 403);
     const { data: escola } = await admin.from('schools').select('features_enabled').eq('id', eu.school_id).single();
     if (escola?.features_enabled?.regua_cobranca !== true) return json({ error: 'A régua de cobrança não está ligada nesta escola.' }, 403);

@@ -5,6 +5,7 @@ import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas } from '../_shared/financialContract.ts';
 import { configurarNotaDoContrato } from '../_shared/nfseContrato.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // NFS-e: liga a nota automática em contratos que já existiam (ou cuja configuração falhou).
 // Só a Gestão. Recebe { contract_id } para um contrato ou {} para todos os ativos ainda sem nota
@@ -25,6 +26,7 @@ serve(async (req) => {
     if (callerError || !caller) throw new Error('Token inválido ou expirado');
 
     const { data: callerData } = await adminClient.from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (!callerData || callerData.role !== 'gestao') throw new Error('Acesso negado: apenas a Gestão pode ligar a nota fiscal.');
     const schoolId = callerData.school_id;
 

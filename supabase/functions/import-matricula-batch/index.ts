@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // import-matricula-batch — importação em massa de formulários antigos
 // (planilha) pra dentro do fluxo já existente de Matrícula/Rematrícula.
@@ -84,6 +85,7 @@ serve(async (req) => {
 
     const schoolId = callerData.school_id
     const results: Array<{ index: number; status: 'success' | 'error'; message: string; credentials?: { email: string; password: string } | null }> = []
+    await exigirEscolaLiberada(supabaseClient, callerData);
 
     for (let i = 0; i < families.length; i++) {
       const fam = families[i]

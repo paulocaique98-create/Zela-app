@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { sendPush } from '../_shared/push.ts';
 import { sendEmail } from '../_shared/resend.ts';
 import { dataBR, modeloPadrao, preencher, somaDias, textoParaHtml, agoraBrasilia } from '../_shared/billingRules.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Envio de teste da régua de cobrança (item 14): manda o modelo preenchido com dados de exemplo
 // só para o próprio usuário da Gestão que pediu. Nunca para a família.
@@ -22,6 +23,7 @@ serve(async (req) => {
     if (userErr || !user) return json({ error: 'Token inválido ou expirado' }, 401);
 
     const { data: eu } = await adminClient.from('users').select('role, school_id, name, email').eq('id', user.id).single();
+    await exigirEscolaLiberada(adminClient, eu);
     if (!eu || eu.role !== 'gestao') return json({ error: 'Acesso negado: apenas a Gestão.' }, 403);
     const { data: escola } = await adminClient.from('schools').select('features_enabled').eq('id', eu.school_id).single();
     if (escola?.features_enabled?.regua_cobranca !== true) return json({ error: 'A régua de cobrança não está ligada nesta escola.' }, 403);

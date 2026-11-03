@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { sendEmail } from '../_shared/resend.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -177,6 +178,7 @@ serve(async (req) => {
     // 7. Cria um placeholder em authorized_persons pra esse 2º Responsável,
     // sob a PRÓPRIA conta dele (family_id = newUserId) — SEM foto/biometria.
     // Isso é o que faz ele aparecer em "Pendentes" no Cadastro de Biometria;
+    await exigirEscolaLiberada(adminClient, callerData);
     // sem isso, o 2º Responsável nunca aparece lá e a escola não tem como
     // saber que falta cadastrar a biometria dele (bug real: vários 2º
     // responsáveis ficaram invisíveis nessa tela por meses).

@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas, criarMensalidade, MensalidadeError } from '../_shared/financialContract.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Fase 9 — Recorrência Automática, parte 1: Matrícula/contrato → plano
 // financeiro → assinatura real no Asaas. Recorrência é nativa do Asaas
@@ -40,6 +41,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     // Financeiro é exclusivo da Gestão desde a Fase 5 da migração Admin ->
     // Gestão (a RLS já era só gestao; esta checagem tinha ficado pra trás).
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {

@@ -6,6 +6,7 @@ import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas } from '../_shared/financialContract.ts';
 import { aplicarPercentual, calcularValorDoCiclo, planoDoAluno, procurarPreco } from '../_shared/planPricing.ts';
 import type { PeriodicidadeDeCobranca } from '../_shared/planPricing.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Reajuste de mensalidades ativas (04/10/2026). Só a Gestão.
 //   · mode 'table': cada contrato passa a usar o preço da tabela de Planos do
@@ -38,6 +39,7 @@ serve(async (req) => {
 
     const { data: callerData, error: dbCallerError } = await adminClient
       .from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
       throw new Error('Acesso negado: apenas a Gestão pode reajustar mensalidades.');
     }

@@ -55,12 +55,13 @@ serve(async (req) => {
 
     const { data: school, error: schoolError } = await adminClient
       .from('schools')
-      .select('id')
+      .select('id, is_active')
       .eq('school_code', school_code.trim().toUpperCase())
       .maybeSingle()
     if (schoolError || !school) {
       throw new Error('Código de escola inválido. Confirme com a secretaria da escola.')
     }
+    if (school.is_active === false) throw new Error('Cadastro indisponível no momento. Fale com a escola.')
 
     const ext = (file_name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`

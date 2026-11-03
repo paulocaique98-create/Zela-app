@@ -5,6 +5,7 @@ import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas, criarMensalidade, MensalidadeError, CODIGOS_QUE_PULAM } from '../_shared/financialContract.ts';
 import { primeiroVencimentoPadrao } from '../_shared/planPricing.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Mensalidades em lote (04/10/2026). Dois modos:
 //   · 'manual': a Gestão marcou alunos na lista "aguardando mensalidade" e
@@ -38,6 +39,7 @@ serve(async (req) => {
 
     const { data: callerData, error: dbCallerError } = await adminClient
       .from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
       throw new Error('Acesso negado: apenas a Gestão pode criar contratos financeiros.');
     }

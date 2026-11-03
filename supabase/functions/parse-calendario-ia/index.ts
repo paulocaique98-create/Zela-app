@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Lê o calendário escolar (PDF com layout livre — lista de datas + mini
 // calendário gráfico, como o modelo real da escola) usando a API do Google
@@ -58,6 +59,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
       throw new Error('Acesso negado: apenas a Gestão, a Coordenação e a Direção podem importar calendário.');
     }

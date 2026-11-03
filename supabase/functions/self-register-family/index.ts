@@ -75,13 +75,14 @@ serve(async (req) => {
     // "quase certo" existe, sempre a mesma mensagem genérica.
     const { data: school, error: schoolError } = await adminClient
       .from('schools')
-      .select('id')
+      .select('id, is_active')
       .eq('school_code', school_code.trim().toUpperCase())
       .maybeSingle()
 
     if (schoolError || !school) {
       throw new Error('Código de escola inválido. Confirme com a secretaria da escola.')
     }
+    if (school.is_active === false) throw new Error('Cadastro indisponível no momento. Fale com a escola.')
     const schoolId = school.id
 
     // 1. Criar o usuário no Auth — email_confirm true pra já poder logar

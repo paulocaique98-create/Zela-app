@@ -28,6 +28,7 @@ const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const GestaoPortal = lazy(() => import('./components/GestaoPortal'));
+const BloqueioFinanceiro = lazy(() => import('./components/BloqueioFinanceiro'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const ForcePasswordChange = lazy(() => import('./components/ForcePasswordChange'));
 const SelfRegister = lazy(() => import('./components/SelfRegister'));
@@ -322,11 +323,24 @@ export default function App() {
   // foco e a cada 5 min, para o totem/tablet que ficam abertos o dia todo).
   // O bloqueio de dados em si é no banco (get_my_school_id); aqui é o aviso.
   const userIdLogado = currentUser?.id;
+  const [bloqueioGestao, setBloqueioGestao] = useState(null);
   useEffect(() => {
-    if (!userIdLogado) return undefined;
+    if (!userIdLogado) {
+      setBloqueioGestao(null);
+      return undefined;
+    }
     const checarSuspensao = async () => {
-      const { data, error } = await supabase.rpc('minha_escola_suspensa');
-      if (error || data !== true) return;
+      const { data: estado, error } = await supabase.rpc('meu_estado_bloqueio');
+      if (error) return;
+      if (estado?.suspensa !== true) {
+        setBloqueioGestao(null);
+        return;
+      }
+      // A Gestão fica logada só para ver a cobrança em aberto; os demais perfis são derrubados.
+      if (estado.role === 'gestao') {
+        setBloqueioGestao(estado);
+        return;
+      }
       localStorage.removeItem('zela_user');
       localStorage.removeItem('zela_school');
       setCurrentUser(null);
@@ -1497,6 +1511,15 @@ export default function App() {
 
   // Conta criada pela escola com senha provisória: nada do portal abre até
   // a pessoa criar a própria senha.
+  // Escola bloqueada por inadimplência: a Gestão vê só a tela de bloqueio (com o link de pagamento).
+  if (bloqueioGestao) {
+    return (
+      <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}>
+        <BloqueioFinanceiro estado={bloqueioGestao} onLogout={handleLogout} />
+      </Suspense>
+    );
+  }
+
   if (currentUser.must_change_password) {
     return (
       <Suspense fallback={<div className="h-screen flex items-center justify-center">Carregando...</div>}>

@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Notifica (in-app + push) as famílias de uma escola quando o admin publica
 // uma novidade (comunicado, foto no mural, evento no calendário, cardápio).
@@ -32,6 +33,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     // Gestão incluída (27/09/2026): decisão de matrícula, comunicados e
     // contratos saem do Portal da Gestão -- antes o aviso às famílias falhava
     // em silêncio quando a Gestão aprovava/rejeitava uma matrícula.

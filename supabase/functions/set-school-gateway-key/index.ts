@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Admin da escola cadastra a PRÓPRIA chave do gateway (Opção A — 1 conta
 // Asaas por escola). Valida a chave com uma chamada real ao Asaas ANTES de
@@ -33,6 +34,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     // Financeiro é exclusivo da Gestão desde a Fase 5 da migração Admin ->
     // Gestão (a RLS já era só gestao; esta checagem tinha ficado pra trás).
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
