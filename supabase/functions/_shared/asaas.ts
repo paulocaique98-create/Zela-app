@@ -147,6 +147,12 @@ export function createAsaasClient(apiKey: string) {
       return asaasFetch('/v3/subscriptions', { method: 'POST', body: JSON.stringify(input) });
     },
 
+    // Busca assinaturas pela referência externa (contratacao:<id>): trava contra criar a mesma assinatura duas vezes.
+    // deno-lint-ignore no-explicit-any
+    listSubscriptionsByReference(externalReference: string): Promise<{ data: any[] }> {
+      return asaasFetch(`/v3/subscriptions?externalReference=${encodeURIComponent(externalReference)}&limit=20`, { method: 'GET' });
+    },
+
     // Ajuste do valor de UMA cobrança ainda em aberto (desconto de um mês).
     // O Asaas só aceita enquanto a cobrança está aguardando pagamento ou vencida.
     // deno-lint-ignore no-explicit-any

@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { garantirAssinaturaContratacao } from '../_shared/assinaturaContratacao.ts';
 import { proximoStatus, statusLocalDoAsaas, tokenConfere, valorConfere } from '../_shared/zelaBilling.ts';
 
 // Faturamento do Zela Edu (PLANO_FATURAMENTO_ZELA.md, item 7): webhook da conta OFICIAL do Zela no Asaas
@@ -43,7 +44,7 @@ serve(async (req) => {
     if (typeof eventId !== 'string' || typeof evento !== 'string') return resp(400, { error: 'Campos obrigatórios: id, event' });
     if (typeof paymentId !== 'string' || !paymentId) return resp(200, { received: true, ignorado: 'sem pagamento' });
 
-    const COLUNAS_COBRANCA = 'id, school_id, contratacao_id, status, valor, asaas_payment_id';
+    const COLUNAS_COBRANCA = 'id, school_id, contratacao_id, status, valor, asaas_payment_id, tipo, numero';
     let { data: cb } = await adminClient.from('zela_cobrancas')
       .select(COLUNAS_COBRANCA).eq('asaas_payment_id', paymentId).maybeSingle();
     // Cobrança gerada pela assinatura do Asaas (Mensal e renovação): ainda não existe linha local.
@@ -125,6 +126,13 @@ serve(async (req) => {
     if (novo === 'paga') {
       const { data: ct } = await adminClient.from('school_contratacoes').select('status').eq('id', cb.contratacao_id).single();
       let ativar = ct?.status === 'aguardando_pagamento';
+      if (ativar) {
+        // Só ativa quando nenhuma parcela anterior (a 1ª, com a implantação) segue em aberto:
+        // a cobrança seguinte da assinatura pode ser paga antes da 1ª.
+        const { count: anteriores } = await adminClient.from('zela_cobrancas').select('id', { count: 'exact', head: true })
+          .eq('contratacao_id', cb.contratacao_id).eq('tipo', 'parcela').lt('numero', cb.numero ?? 0).in('status', ['pendente', 'vencida']);
+        ativar = (anteriores ?? 0) === 0;
+      }
       if (ct?.status === 'suspensa') {
         const { count } = await adminClient.from('zela_cobrancas').select('id', { count: 'exact', head: true })
           .eq('contratacao_id', cb.contratacao_id).eq('status', 'vencida');
@@ -133,6 +141,16 @@ serve(async (req) => {
       if (ativar) {
         const { error: ativErr } = await adminClient.rpc('zela_ativar_contratacao', { p_contratacao_id: cb.contratacao_id });
         if (ativErr) throw ativErr;
+        // Mensal: a assinatura nasce agora que a 1ª parcela foi paga. Falhar aqui não desfaz a baixa:
+        // o erro vai para o log e "Gerar links" retenta (idempotente, não duplica).
+        try {
+          const r = await garantirAssinaturaContratacao(adminClient, createAsaasClient(Deno.env.get('ZELA_ASAAS_API_KEY') ?? ''), cb.contratacao_id);
+          if (!r.ok && !r.motivo.startsWith('Só o Mensal')) {
+            await logEdgeError(adminClient, 'zela-billing-webhook', `Assinatura não criada: ${r.motivo}`, { contratacao_id: cb.contratacao_id }, cb.school_id);
+          }
+        } catch (e) {
+          await logEdgeError(adminClient, 'zela-billing-webhook', `Assinatura não criada: ${(e as Error)?.message || e}`, { contratacao_id: cb.contratacao_id }, cb.school_id);
+        }
       }
     }
     // Suspensão por atraso é da função agendada (etapa D): aqui OVERDUE só marca a cobrança como vencida.
