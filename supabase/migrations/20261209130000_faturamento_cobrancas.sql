@@ -62,7 +62,7 @@ alter table public.zela_cobrancas enable row level security;
 alter table public.zela_billing_eventos enable row level security;
 
 revoke all on public.zela_cobrancas, public.zela_billing_eventos from anon;
-revoke insert, update, delete on public.zela_cobrancas, public.zela_billing_eventos from authenticated;
+revoke all on public.zela_cobrancas, public.zela_billing_eventos from authenticated;
 grant select on public.zela_cobrancas, public.zela_billing_eventos to authenticated;
 
 drop policy if exists "Developer le as cobrancas do Zela" on public.zela_cobrancas;

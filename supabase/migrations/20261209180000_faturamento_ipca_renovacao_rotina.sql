@@ -64,6 +64,10 @@ alter table public.zela_ipca_anual enable row level security;
 alter table public.zela_reajustes_mensal enable row level security;
 alter table public.zela_renovacoes enable row level security;
 
+-- Só leitura para o developer (policies abaixo); sem truncate, references nem trigger para o cliente.
+revoke all on public.zela_ipca_anual, public.zela_reajustes_mensal, public.zela_renovacoes from anon, authenticated;
+grant select on public.zela_ipca_anual, public.zela_reajustes_mensal, public.zela_renovacoes to authenticated;
+
 drop policy if exists "Developer le o IPCA" on public.zela_ipca_anual;
 create policy "Developer le o IPCA" on public.zela_ipca_anual
   for select to authenticated using (public.get_my_role() = 'developer');
