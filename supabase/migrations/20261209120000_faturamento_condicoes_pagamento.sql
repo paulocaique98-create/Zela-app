@@ -56,7 +56,7 @@ for each row execute function public.zela_registrar_historico();
 
 alter table public.zela_condicoes_pagamento enable row level security;
 revoke all on public.zela_condicoes_pagamento from anon;
-revoke insert, update, delete on public.zela_condicoes_pagamento from authenticated;
+revoke all on public.zela_condicoes_pagamento from authenticated;
 grant select, update on public.zela_condicoes_pagamento to authenticated;
 
 drop policy if exists "Developer le as condicoes de pagamento" on public.zela_condicoes_pagamento;
