@@ -14,6 +14,8 @@ import { parseShortTime } from './utils/attendanceUtils';
 import { useRealtimeMonitor } from './hooks/useRealtimeMonitor';
 import { useTabHistory } from './hooks/useTabHistory';
 import { useAppUpdate } from './hooks/useAppUpdate';
+import useAvisoAtraso from './hooks/useAvisoAtraso';
+import AvisoAtrasoFinanceiro from './components/AvisoAtrasoFinanceiro';
 import { toast } from './lib/toast';
 import { mensagemDaFuncao } from './lib/contasVinculadas';
 import { EVENTO_SESSAO_ENCERRADA, EVENTO_SAIR_TODOS_APARELHOS } from './lib/sessao';
@@ -113,6 +115,7 @@ export default function App() {
 
   // Publicação nova do Zela enquanto a aba estava aberta: oferece recarregar.
   const updateAvailable = useAppUpdate();
+  const avisoAtraso = useAvisoAtraso(activeRole === 'gestao' || activeRole === 'admin');
   const isOnline = useOnlineStatus();
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
@@ -1613,6 +1616,9 @@ export default function App() {
           </button>
         </div>
       )}
+
+      {/* Aviso de atraso do Zela (Gestão completo, Recepção curto); o servidor decide o que devolver. */}
+      {!isKioskFullscreen && <AvisoAtrasoFinanceiro aviso={avisoAtraso} />}
 
       {/* Só o respiro de mobile pequeno (p-3) continua igual -- é o que
           sustenta o truque de "-m-3 sm:m-0" que cada tela já usa pra ficar
