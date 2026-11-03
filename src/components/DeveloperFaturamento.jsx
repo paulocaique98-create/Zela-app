@@ -5,10 +5,13 @@ import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import { brl, formatarData } from '../lib/planosZela';
 import { gerarMensagemCobranca } from '../lib/mensagemCobrancaZela';
+import DeveloperFaturamentoReajustes from './DeveloperFaturamentoReajustes';
 
 // Portal do Dev · Faturamento (PLANO_FATURAMENTO_ZELA.md, item 9). Lê zela_cobrancas (RLS: developer lê tudo)
-// e age só por RPCs do servidor (developer). Ainda não fala com o Asaas: sem link, a mensagem não é copiada.
-// "Em atraso" aqui é só visual (pendente com vencimento passado); a função agendada vem na etapa D.
+// e age pela Edge Function create-zela-charge (developer; Asaas do Zela + banco) e por RPCs do servidor.
+// Sem link de pagamento, a mensagem não é copiada: use "Gerar links".
+// "Em atraso" aqui inclui pendente com vencimento passado; a rotina diária (zela_faturamento_rotina) marca
+// vencida e suspende após a carência.
 
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4';
 const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py-2 text-sm text-dev-text';
@@ -92,6 +95,20 @@ export default function DeveloperFaturamento() {
     carregar();
   };
 
+  // Ações que também mexem no Asaas passam pela Edge Function (chave do Zela só no servidor).
+  const chamarFuncao = async (body, ok) => {
+    setAcao(a => ({ ...a, salvando: true }));
+    const { data, error } = await supabase.functions.invoke('create-zela-charge', { body });
+    let msg = data?.error || error?.message;
+    if (error?.context?.json) { try { msg = (await error.context.json())?.error || msg; } catch { /* mantém msg */ } }
+    if (error || data?.error) { setAcao(a => (a ? { ...a, salvando: false } : a)); return toast.error(msg || 'Não foi possível concluir a ação.'); }
+    if (data?.falhas?.length) toast.error(`${data.falhas.length} cobrança(s) falharam: ${data.falhas[0].erro}`);
+    else if (data?.aviso) toast.error(data.aviso);
+    else toast.success(ok);
+    setAcao(null);
+    carregar();
+  };
+
   const copiar = async (c) => {
     const r = gerarMensagemCobranca({ escola: escolas[c.school_id], cobranca: c, aVista: c.tipo === 'parcela' && contratos[c.contratacao_id]?.condicao_chave === 'anual_vista' });
     if (!r.ok) return toast.error(r.erro);
@@ -101,10 +118,11 @@ export default function DeveloperFaturamento() {
   const confirmar = () => {
     const { tipo, alvo, valor, salvando } = acao;
     if (salvando) return;
-    if (tipo === 'paga') return rodar('zela_cobranca_marcar_paga', { p_cobranca_id: alvo.id, p_comprovante: valor?.trim() || null }, 'Cobrança marcada como paga.');
-    if (tipo === 'vencimento') return rodar('zela_cobranca_novo_vencimento', { p_cobranca_id: alvo.id, p_vencimento: valor }, 'Novo vencimento salvo.');
-    if (tipo === 'cancelar') return rodar('zela_cobranca_cancelar', { p_cobranca_id: alvo.id }, 'Cobrança cancelada.');
-    if (tipo === 'cancelar_contrato') return rodar('zela_contratacao_cancelar_pendente', { p_contratacao_id: alvo.id }, 'Contratação cancelada.');
+    if (tipo === 'paga') return chamarFuncao({ action: 'marcar_paga', cobranca_id: alvo.id, comprovante: valor?.trim() || null }, 'Cobrança marcada como paga.');
+    if (tipo === 'vencimento') return chamarFuncao({ action: 'novo_vencimento', cobranca_id: alvo.id, vencimento: valor }, 'Novo vencimento salvo.');
+    if (tipo === 'cancelar') return chamarFuncao({ action: 'cancelar', cobranca_id: alvo.id }, 'Cobrança cancelada.');
+    if (tipo === 'gerar') return chamarFuncao({ action: 'criar', contratacao_id: alvo.id }, 'Links de pagamento gerados.');
+    if (tipo === 'cancelar_contrato') return chamarFuncao({ action: 'cancelar_contratacao', contratacao_id: alvo.id }, 'Contratação cancelada.');
     if (tipo === 'suspender') return rodar('zela_contratacao_suspender', { p_contratacao_id: alvo.id }, 'Escola suspensa.');
     if (tipo === 'reativar') return rodar('zela_contratacao_reativar', { p_contratacao_id: alvo.id }, 'Escola reativada.');
   };
@@ -115,9 +133,11 @@ export default function DeveloperFaturamento() {
     <div className="h-full overflow-y-auto p-4 md:p-6 space-y-4 text-dev-text">
       <div>
         <h2 className="text-lg font-bold flex items-center gap-2"><Receipt size={20} className="text-dev-primary" /> Faturamento</h2>
-        <p className="text-xs text-dev-text-muted mt-0.5">Cobranças do Zela Edu para as escolas. A geração dos links no Asaas e a baixa automática entram na próxima etapa; por enquanto as baixas são manuais.</p>
+        <p className="text-xs text-dev-text-muted mt-0.5">Cobranças do Zela Edu para as escolas, com IPCA, renovações e reajuste do Mensal.</p>
       </div>
       {erro && <p className="text-sm text-error">Não foi possível carregar: {erro}</p>}
+
+      <DeveloperFaturamentoReajustes onMudou={carregar} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className={card}><p className={rotulo}>Em aberto</p><p className="text-lg font-bold">{brl(resumo.aberto)}</p></div>
@@ -160,6 +180,7 @@ export default function DeveloperFaturamento() {
               <p className="text-xs text-dev-text-muted">Contratação: {STATUS_CONTRATO[g.contrato?.status] || g.contrato?.status || '—'}</p>
             </div>
             <div className="flex gap-2">
+              {g.itens.some(c => c.status === 'pendente' && !c.invoice_url) && <button type="button" className={btnPrimario} onClick={() => setAcao({ tipo: 'gerar', alvo: { id: g.id }, escola: g.escola?.name })}><Receipt size={14} /> Gerar links</button>}
               {g.contrato?.status === 'ativa' && <button type="button" className={btnNeutro} onClick={() => setAcao({ tipo: 'suspender', alvo: { id: g.id }, escola: g.escola?.name })}><PauseCircle size={14} /> Suspender</button>}
               {g.contrato?.status === 'suspensa' && <button type="button" className={btnPrimario} onClick={() => setAcao({ tipo: 'reativar', alvo: { id: g.id }, escola: g.escola?.name })}><PlayCircle size={14} /> Reativar</button>}
               {g.contrato?.status === 'aguardando_pagamento' && <button type="button" className={btnNeutro} onClick={() => setAcao({ tipo: 'cancelar_contrato', alvo: { id: g.id }, escola: g.escola?.name })}><Ban size={14} /> Cancelar contratação</button>}
@@ -217,13 +238,14 @@ export default function DeveloperFaturamento() {
 }
 
 const TITULOS = {
-  paga: 'Marcar como paga', vencimento: 'Novo vencimento', cancelar: 'Cancelar cobrança',
+  gerar: 'Gerar links de pagamento', paga: 'Marcar como paga', vencimento: 'Novo vencimento', cancelar: 'Cancelar cobrança',
   cancelar_contrato: 'Cancelar contratação', suspender: 'Suspender escola', reativar: 'Reativar escola',
 };
 const TEXTOS = {
+  gerar: 'Cria no Asaas do Zela as cobranças ainda sem link (boleto com Pix). Se algumas falharem, é seguro tentar de novo: as que já têm link não duplicam.',
   paga: 'Baixa manual. Se for a 1ª parcela de uma contratação aguardando pagamento, ela passa a ativa e os módulos do plano são liberados.',
-  vencimento: 'Vale só no Zela. Quando o Asaas estiver ligado, o vencimento do link também será atualizado.',
-  cancelar: 'A cobrança deixa de contar como a receber. Não dá para desfazer.',
+  vencimento: 'Atualiza o vencimento no Zela e no link do Asaas.',
+  cancelar: 'Cancela o link no Asaas e a cobrança deixa de contar como a receber. Não dá para desfazer.',
   cancelar_contrato: 'Cancela a contratação e as parcelas em aberto. A contratação anterior da escola continua valendo.',
   suspender: 'A escola perde o acesso ao sistema até ser reativada. Use só por inadimplência.',
   reativar: 'A escola volta a ter acesso e a contratação volta a ficar ativa.',
