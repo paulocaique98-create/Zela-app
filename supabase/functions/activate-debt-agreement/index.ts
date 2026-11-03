@@ -6,6 +6,7 @@ import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { criarClienteAsaas } from '../_shared/financialContract.ts';
 import { sendFamilyNotification } from '../_shared/sendFamilyNotification.ts';
 import { brl } from '../_shared/debtAgreement.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Item 10: ativa o acordo depois que a família assinou o termo. Quem chama: a própria família
 // financeira (logo após assinar) ou a Gestão da escola. O servidor confere a assinatura no banco,
@@ -54,6 +55,7 @@ serve(async (req) => {
     if (callerError || !caller) throw new Error('Token inválido ou expirado');
 
     const { data: callerData } = await adminClient.from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (!callerData || !['gestao', 'family'].includes(callerData.role)) throw new Error('Acesso negado.');
 
     const { data: rateLimitOk, error: rateLimitError } = await adminClient.rpc('check_rate_limit', {

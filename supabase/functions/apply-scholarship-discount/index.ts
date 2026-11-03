@@ -8,6 +8,7 @@ import { calcularValorDoCiclo } from '../_shared/planPricing.ts';
 import type { PeriodicidadeDeCobranca } from '../_shared/planPricing.ts';
 import { bolsaVigenteEm, descontoComBolsas } from '../_shared/scholarshipDiscount.ts';
 import type { BolsaVigente } from '../_shared/scholarshipDiscount.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Aplica as bolsas vigentes de UM aluno na mensalidade ativa dele (item 13). Só a Gestão.
 // Recalcula no servidor: desconto da família + bolsas, com o limite da escola. Asaas primeiro,
@@ -36,6 +37,7 @@ serve(async (req) => {
 
     const { data: callerData, error: dbCallerError } = await adminClient
       .from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
       throw new Error('Acesso negado: apenas a Gestão pode aplicar bolsas.');
     }

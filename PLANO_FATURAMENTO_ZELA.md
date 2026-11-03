@@ -190,7 +190,7 @@ Regras:
    - Restrição única por contrato, tipo e parcela.
    - Tabela de eventos do webhook, para a idempotência.
    - RLS: developer lê tudo; a escola lê só as próprias linhas; gravação só pelo servidor.
-3. **Estados do contrato e da escola e bloqueio por inadimplência:** novos status, revisão do índice único e da função de leitura da escola, e escolas atuais mantidas como `ativa`. Inclui a função `escola_liberada`, a tela de bloqueio e o corte de Realtime e Edge Functions. Antes, ler o uso de `is_active` e fazer a análise de segurança própria (Auth e RLS).
+3. ~~**Estados do contrato e da escola e bloqueio por inadimplência:** novos status, revisão do índice único e da função de leitura da escola, e escolas atuais mantidas como `ativa`. Inclui a função `escola_liberada`, a tela de bloqueio e o corte de Realtime e Edge Functions. Antes, ler o uso de `is_active` e fazer a análise de segurança própria (Auth e RLS).~~ ✅ Código e testes no banco local (migrations 20261210120000 e 20261210130000, só local). Falta: teste no navegador, `deno check`, publicar as funções e aplicar em produção, só com pedido.
 4. **RPC `contratar_plano_escola`:** recebe a condição de pagamento, aplica o desconto da condição no lugar do desconto do ciclo, grava como `aguardando_pagamento` e calcula as parcelas. A prévia em `src/lib/planosZela.js` usa a mesma regra, com teste.
 5. **Gerador da mensagem:** `src/lib/mensagemCobrancaZela.js`, com teste (parcela 1, parcela única, implantação, falta de CNPJ).
 6. **Edge Function `create-zela-charge`:** só developer, com role validado pelo JWT. Cria o cliente e as cobranças, grava e devolve os links. Também serve para "tentar de novo" e "novo vencimento".

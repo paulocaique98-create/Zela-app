@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { logEdgeError } from "../_shared/logEdgeError.ts";
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -28,6 +29,7 @@ serve(async (req) => {
       .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
+    await exigirEscolaLiberada(supabaseClient, userData);
 
     // Hierarquia de contas (27/09/2026): a Gestão é o topo da escola e cria
     // admins, professores e responsáveis (Fase 1, em paralelo com o admin).

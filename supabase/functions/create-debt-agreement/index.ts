@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendFamilyNotification } from '../_shared/sendFamilyNotification.ts';
 import { brl, calcularAcordo, dataBR, preencherTermo, TERMO_PADRAO } from '../_shared/debtAgreement.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Item 10 do plano de expansão da Gestão: cria o acordo de dívida (só a Gestão).
 // Nada muda no Asaas aqui. O acordo nasce "aguardando_assinatura" com o termo enviado à
@@ -31,6 +32,7 @@ serve(async (req) => {
 
     const { data: callerData, error: dbCallerError } = await adminClient
       .from('users').select('role, school_id').eq('id', caller.id).single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || callerData.role !== 'gestao') {
       throw new Error('Acesso negado: apenas a Gestão pode negociar dívidas.');
     }

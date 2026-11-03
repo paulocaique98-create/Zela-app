@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Notifica (in-app, quando o destinatário é família + push, sempre que houver
 // subscription) quando uma nova mensagem chega numa conversa do chat interno.
@@ -34,6 +35,7 @@ serve(async (req) => {
       .select('role, school_id, departamento, chat_visibilidade_total')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData) throw new Error('Usuário não encontrado');
 
     const { thread_id } = await req.json();

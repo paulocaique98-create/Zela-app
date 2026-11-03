@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Lê um cardápio em formato de tabela livre (sem data de calendário no
 // texto — só dia da semana × refeição, como o documento real da
@@ -52,6 +53,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     if (dbCallerError || !callerData || (callerData.role !== 'developer' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica')) {
       throw new Error('Acesso negado: apenas a Gestão, a Coordenação e a Direção podem importar cardápio.');
     }

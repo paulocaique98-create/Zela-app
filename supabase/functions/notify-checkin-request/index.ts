@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 // Notifica (in-app + push) os responsáveis de UM aluno em dois momentos:
 //   - SOLICITAÇÃO (pending_entry/pending_exit): assim que o reconhecimento
@@ -47,6 +48,7 @@ serve(async (req) => {
       .select('role, school_id')
       .eq('id', caller.id)
       .single();
+    await exigirEscolaLiberada(adminClient, callerData);
     // Quem opera o Autoatendimento (kiosk embutido no painel, ou totem físico
     // logado como admin) é sempre um admin da escola — mesma checagem de
     // notify-families.

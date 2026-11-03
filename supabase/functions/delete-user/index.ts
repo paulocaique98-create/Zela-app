@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -104,6 +105,7 @@ serve(async (req) => {
       // conseguia apagar a conta da Gestão) e pra conta do suporte.
       // Hierarquia (27/09/2026): conta da Gestão e do suporte, só o suporte
       // exclui. Conta de admin: a Gestão exclui (topo da escola); admin não.
+    await exigirEscolaLiberada(adminClient, callerData);
       if (targetData.role === 'gestao' || targetData.role === 'developer') {
         throw new Error('Acesso negado: apenas o suporte pode excluir a conta da Gestão.')
       }
