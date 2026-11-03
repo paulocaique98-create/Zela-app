@@ -3,7 +3,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
-import { montarPagamentoAsaas, planoAssinatura } from '../_shared/zelaBilling.ts';
+import { montarPagamentoAsaas } from '../_shared/zelaBilling.ts';
+import { garantirAssinaturaContratacao } from '../_shared/assinaturaContratacao.ts';
 
 // Faturamento do Zela Edu (PLANO_FATURAMENTO_ZELA.md, item 6): cobra a escola na conta OFICIAL do Zela no
 // Asaas (secret ZELA_ASAAS_API_KEY, nunca a chave de uma escola). Só o developer chama, com o role lido do
@@ -17,7 +18,7 @@ import { montarPagamentoAsaas, planoAssinatura } from '../_shared/zelaBilling.ts
 //  - cancelar: cobranca_id. Cancela no Asaas e depois no banco.
 //  - cancelar_contratacao: contratacao_id aguardando pagamento. Cancela os links abertos no Asaas e depois a contratação.
 //  - marcar_paga: cobranca_id (+ comprovante). Baixa no Asaas (receiveInCash) e depois no banco.
-// A assinatura do Asaas (só Mensal; o Anual tem valor travado até a renovação) é criada no fim de "criar", uma vez por contratação, e cancelada
+// A assinatura do Asaas (só Mensal; o Anual tem valor travado até a renovação) nasce no webhook, depois da 1ª parcela paga (garantirAssinaturaContratacao, idempotente), e é cancelada
 // junto com a contratação. As cobranças que ela gera chegam pelo zela-billing-webhook.
 // Suspender e reativar não passam por aqui: não dependem do Asaas e seguem pelas RPCs.
 
@@ -129,39 +130,16 @@ serve(async (req) => {
         }
       }
 
-      // Assinatura só no Mensal (sem fidelidade: o valor pode ser reajustado a qualquer momento, via
-      // updateSubscription). No Anual NÃO existe assinatura: o valor é travado até o fim do contrato, e a
-      // renovação é um contrato novo, já com o IPCA. Só depois de todas as cobranças iniciais terem link,
-      // e só uma vez por contratação (asaas_subscription_id).
-      // Falhar aqui não desfaz as cobranças: "tentar de novo" cai neste mesmo ponto.
-      let assinatura: { id: string; proximo_vencimento: string } | null = null;
+      // A assinatura do Mensal NÃO nasce aqui: só depois da 1ª parcela paga (webhook), para a 2ª cobrança não
+      // existir antes da 1ª. Aqui só retenta quando a contratação já está ativa e ficou sem assinatura.
+      // Idempotente: garantirAssinaturaContratacao nunca duplica.
+      let assinatura: { id: string; proximo_vencimento?: string } | null = null;
       let assinaturaErro: string | null = null;
-      const iniciaisCompletas = !falhas.length && customerId && (cobrancas || []).every(c =>
-        c.status === 'cancelada' ? true : !!c.asaas_payment_id || criadas.some(x => x.id === c.id));
-      if (ct.pagamento === 'mes_a_mes' && !ct.asaas_subscription_id && iniciaisCompletas && parcelas.length > 0) {
+      if (ct.pagamento === 'mes_a_mes' && ct.status === 'ativa' && !ct.asaas_subscription_id) {
         try {
-          const { data: cond } = await adminClient.from('zela_condicoes_pagamento')
-            .select('intervalo_meses').eq('chave', ct.condicao_chave).single();
-          if (!cond || !ct.primeiro_vencimento) throw new Error('Condição de pagamento ou 1º vencimento ausente na contratação.');
-          const { data: p1 } = await adminClient.from('zela_cobrancas')
-            .select('valor_sistema').eq('contratacao_id', ct.id).eq('tipo', 'parcela').eq('numero', 1).single();
-          const plano = planoAssinatura({
-            primeiroVencimento: ct.primeiro_vencimento, parcelas: ct.parcelas ?? parcelas.length,
-            intervaloMeses: cond.intervalo_meses, valorSistema: p1!.valor_sistema,
-          });
-          const sub = await asaas.createSubscription({
-            customer: customerId!, billingType: 'BOLETO', value: plano.value, nextDueDate: plano.nextDueDate,
-            cycle: plano.cycle, description: 'Zela Edu: assinatura', externalReference: `contratacao:${ct.id}`,
-            fine: { value: Number(cfg.multa_percent) }, interest: { value: Number(cfg.juros_mensal_percent) },
-          });
-          const { error: subErr } = await adminClient.from('school_contratacoes')
-            .update({ asaas_subscription_id: sub.id }).eq('id', ct.id).is('asaas_subscription_id', null);
-          if (subErr) {
-            // Criada no Asaas mas não gravada: cancela lá para não gerar cobrança sem dono.
-            await asaas.cancelSubscription(sub.id).catch(() => {});
-            throw subErr;
-          }
-          assinatura = { id: sub.id, proximo_vencimento: plano.nextDueDate };
+          const r = await garantirAssinaturaContratacao(adminClient, asaas, ct.id);
+          if (r.ok) assinatura = { id: r.id, proximo_vencimento: r.proximo_vencimento };
+          else assinaturaErro = r.motivo;
         } catch (e) {
           assinaturaErro = (e as Error)?.message || String(e);
           await logEdgeError(adminClient, 'create-zela-charge', `Assinatura não criada: ${assinaturaErro}`, { contratacao_id: ct.id }, ct.school_id);
