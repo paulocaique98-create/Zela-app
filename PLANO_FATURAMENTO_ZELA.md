@@ -204,10 +204,10 @@ Regras:
 ~~11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.~~ ✅ Conferida e testada no banco local (03/11): `zela_faturamento_rotina` marca vencidas, suspende após a carência (`is_active`, com trilha pelo gatilho da fase 1) e cria rascunho de renovação do Anual (confirmação manual no Portal do Dev). A cobrança do Mensal vem da assinatura do Asaas, via webhook. Reativação ao pagar pelo webhook e pela baixa manual. Falta só agendar o cron (`cron_jobs_producao.sql`), que depende das migrations 20261210120000 a 20261210160000 em produção e do seu pedido.
 12. **Validação:** (03/11: parcial)
     - ~~testes novos com `npx vitest run <arquivo>`;~~ ✅ 57/57 no banco local, mais `faturamentoZelaIsolamento.test.js` 9/9;
-    - fluxo inteiro no sandbox do Asaas: contratar, pagar, atrasar, estornar e cancelar; ⏳ não executado nesta sessão (`zelaBillingFuncoes.test.js` com `ZELA_E2E=1`);
+    - ~~fluxo inteiro no sandbox do Asaas~~ ✅ (04/11) `zelaBillingFuncoes.test.js` com `ZELA_E2E=1`: 7/7 no banco local;
     - ~~RLS conferido como escola A, escola B e developer;~~ ✅ no banco local (isolamento, escrita direta, tabelas internas, RPCs, anon);
     - ~~`deno check`~~ ✅ limpo no faturamento e na guarda (04/11); restam erros antigos de tipagem em outras funções;
-    - pendente: Anual, Reajuste e telas em 360/768/1280px no navegador;
+    - ~~Anual, Reajuste e telas em 360/768/1280px no navegador~~ ✅ (04/11, banco local + sandbox): Anual 6x, aviso, bloqueio, Meu plano, Config. faturamento e Reajuste Mensal; 12.12 segue aberta (1ª parcela vencida não bloqueia);
     - atualizar `docs/ZELA_STATUS.md`.
 
 ## 11. Ordem de execução
