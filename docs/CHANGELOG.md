@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Assinatura no portal da escola** (03/11): Configurações › Meu plano mostra todas as parcelas do Zela, o que foi pago e o link das em aberto, só leitura e só para a Gestão (RPC minhas_parcelas_zela, migration 20261210160000 NÃO aplicada em produção).
 - **Ajustes na ficha do contrato** (03/11): aba Ajustes no Painel de contratos (só developer, motivo obrigatório, autor, data, antes e depois): vencimentos, reparcelamento do saldo (30 dias entre parcelas, editável) e desconto na mensalidade pelos percentuais da Configuração. Parcela paga nunca muda; Mensal com assinatura no Asaas só ajusta vencimentos. Migration 20261210150000 e ações novas da create-zela-charge NÃO aplicadas em produção.
 - **Configurações do faturamento no Portal do Dev** (03/11): Faturamento › Configurações (desconto e ativação das condições, vencimento da 1ª parcela, carência, multa, juros, descontos da mensalidade e implantação, com um Salvar) e Faturamento › Histórico (quem mudou, quando, antes e depois). Sem migration. Menu do Dev com submenus (flyout no menu recolhido) e modais do Dev em tela cheia.
 - **Aviso de atraso antes do bloqueio** (03/11): faixa fixa em brass; Gestão vê parcela, valor, dias, bloqueio e link, Recepção só a data do bloqueio (RPC meu_aviso_atraso, migration 20261210140000 só no local).

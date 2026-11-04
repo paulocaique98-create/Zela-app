@@ -192,7 +192,7 @@ export const AJUDA_GESTAO = [
     id: 'configuracoes',
     titulo: 'Configurações',
     itens: [
-      { id: 'cfg-plano', titulo: 'Meu plano', serve: 'O plano contratado pela escola com o Zela Edu.', faz: ['Consulte os módulos incluídos no plano.'] },
+      { id: 'cfg-plano', titulo: 'Meu plano', serve: 'O plano contratado pela escola com o Zela Edu.', faz: ['Consulte os módulos incluídos no plano.', 'Veja todas as parcelas do Zela Edu, o que já foi pago e abra o link de pagamento das que estão em aberto.'] },
       { id: 'cfg-escola', titulo: 'Escola', serve: 'Dados da escola, como nome, logo e contatos.', faz: ['Atualize os dados que aparecem para as famílias.'] },
       { id: 'cfg-academico', titulo: 'Acadêmico', serve: 'Ajustes do método pedagógico e do calendário letivo.', faz: ['Revise antes de abrir um ano letivo novo.'] },
       { id: 'cfg-financeiro', titulo: 'Financeiro', serve: 'Ajustes de cobrança e pagamento da escola.', faz: ['Revise as regras antes de gerar mensalidades.'] },
