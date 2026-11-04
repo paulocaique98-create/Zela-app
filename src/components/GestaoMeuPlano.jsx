@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, CalendarClock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PageShell, Loading } from './GestaoShared';
+import GestaoParcelasZela from './GestaoParcelasZela';
 import { ITEM_POR_ID } from '../lib/modulosCatalogo';
 import { CICLOS, brl, diasParaVencer, formatarData } from '../lib/planosZela';
 
@@ -19,7 +20,10 @@ export default function GestaoMeuPlano() {
   if (!plano) {
     return (
       <PageShell description="O plano contratado pela escola com o Zela Edu.">
-        <p className="text-small text-on-surface-variant">Nenhum plano registrado ainda. Fale com o suporte do Zela Edu para conferir a contratação.</p>
+        <div className="max-w-2xl space-y-4">
+          <p className="text-small text-on-surface-variant">Nenhum plano registrado ainda. Fale com o suporte do Zela Edu para conferir a contratação.</p>
+          <GestaoParcelasZela />
+        </div>
       </PageShell>
     );
   }
@@ -62,6 +66,7 @@ export default function GestaoMeuPlano() {
             {itens.map(n => <li key={n}>{n}</li>)}
           </ul>
         </div>
+        <GestaoParcelasZela />
       </div>
     </PageShell>
   );

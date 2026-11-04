@@ -200,7 +200,7 @@ Regras:
 9C. **Aviso de atraso no portal da Gestão** (seção 7): aviso fixo no topo, lido do servidor e filtrado pelo `school_id` da escola.
 ~~9A. **Tela de Configurações do faturamento** (seção 7A), com histórico de alterações.~~ ✅ Código (03/11): DeveloperConfigFaturamento.jsx, sem migration; falta navegador.
 ~~9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.~~ ✅ Código (03/11), só local: migration 20261210150000, aba Ajustes; falta navegador, sandbox do Asaas e `deno check`.
-10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.
+~~10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.~~ ✅ Código (03/11), só local: migration 20261210160000 (RPC minhas_parcelas_zela, só Gestão), Configurações › Meu plano; falta navegador e produção.
 11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.
 12. **Validação:**
     - testes novos com `npx vitest run <arquivo>`;
