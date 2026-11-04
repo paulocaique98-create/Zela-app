@@ -17,7 +17,7 @@ runIf('Aviso de atraso da Gestão e da Recepção', () => {
     c.teacherA = await createTestUser({ role: 'teacher', schoolId: c.A });
     c.familyA = await createTestUser({ role: 'family', schoolId: c.A });
     c.gestaoB = await createTestUser({ role: 'gestao', schoolId: c.B });
-    const venc = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+    const venc = new Date(Date.now() - 3 * 86400000).toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
     const { data: plano } = await adminClient.from('zela_planos').select('id').limit(1).single();
     const { data: ct, error: e1 } = await adminClient.from('school_contratacoes').insert({
       school_id: c.A, plano_id: plano.id, ciclo: 'MENSAL', meses: 1, alunos_contratados: 10, itens: [], snapshot: {},
