@@ -1,15 +1,19 @@
 # Plano — Emissão Automática de NFS-e via Asaas
 
-> Reorganizado em 05/10/2026. Nenhuma implementação foi encontrada no código (sem `financial_invoices`, `invoiceSettings` nem flag `nfse_emissao`). Abaixo da linha, o plano original.
+> Atualizado em 04/11/2026. Implementação entregue em 30/10 (PR #80, módulo `nfse` desligado em produção). Abaixo da linha, o plano original (histórico).
 
 ## 🔴 PENDENTE
-- **Decisões de negócio abertas:** 3.2 (opt-in por escola), 3.3 (alíquotas `taxes`), 3.4 (endereço do responsável, hoje `createCustomer` não envia), 3.5 (código de serviço configurável), 3.6 (cobranças avulsas), 3.7 (tratamento de `INVOICE_ERROR`), 3.8 (backfill de contratos existentes).
-- **Fase 0:** spike no sandbox (campo de erro de `INVOICE_ERROR`, exigência de endereço, alíquotas de exemplo).
-- **Fases 1 a 7:** schema, emissão (`POST /v3/subscriptions/{id}/invoiceSettings`), webhook fiscal, persistência, UI, testes e rollout. Nenhuma iniciada.
+- **Confirmar com o Asaas** a cobertura de municípios e o certificado A1 por escola (contato do usuário com o suporte).
+- **Reproduzir um `INVOICE_ERROR` real** no sandbox (hoje só coberto por teste com payload montado a partir da documentação). Tentativa em 04/11 na conta sandbox do Zela: a nota ficou `SCHEDULED` e `POST /invoices/{id}/authorize` devolveu 400 síncrono ("Apenas empresas (pessoa jurídica) podem emitir notas fiscais", configurações fiscais e conexão com a prefeitura ausentes). Não gerou `INVOICE_ERROR` nem webhook; para isso a conta precisa de cadastro fiscal de PJ no sandbox.
+- **Piloto em 1 escola** (Fase 7): ligar o módulo `nfse`, emitir uma nota real e só então liberar para as demais. Exige aval explícito do usuário.
 
 ## ✅ CONCLUÍDO
-- ~~**Análise e validação da arquitetura da API** contra a documentação oficial do Asaas.~~
-- ~~**3.1, onde configurar a emissão automática:** `POST /v3/subscriptions/{id}/invoiceSettings`.~~
+- ~~**Análise e validação da arquitetura da API** contra a documentação oficial do Asaas.~~ ✅
+- ~~**3.1, onde configurar a emissão automática:** `POST /v3/subscriptions/{id}/invoiceSettings`.~~ ✅
+- ~~**Decisões 3.2 a 3.8** (opt-in por escola, alíquotas, endereço, serviço configurável por município, avulsas, erro, contratos existentes).~~ ✅ implementadas em 30/10; respostas não registradas uma a uma.
+- ~~**Fase 0:** spike no sandbox (invoiceSettings e endereço aceitos, erro em `invoice.statusDescription`).~~ ✅
+- ~~**Fases 1 a 6:** schema (migration 20261126120000), emissão, webhook fiscal, persistência, UI (Configurações › Financeiro › Nota fiscal) e testes (37 ok).~~ ✅
+- ~~**Central de Ajuda:** passo da aba Nota fiscal em Configurações › Financeiro (src/lib/ajuda/gestao.js).~~ ✅ (04/11) Tour e atalho: não se aplicam, o tour não cobre módulos adicionais e os atalhos da Início seguem a ordem de cliques.
 
 ---
 
