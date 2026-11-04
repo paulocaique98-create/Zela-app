@@ -5,6 +5,7 @@ import { createAsaasClient } from '../_shared/asaas.ts';
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { montarPagamentoAsaas } from '../_shared/zelaBilling.ts';
 import { garantirAssinaturaContratacao } from '../_shared/assinaturaContratacao.ts';
+import { sincronizarAjuste } from '../_shared/zelaAjustes.ts';
 
 // Faturamento do Zela Edu (PLANO_FATURAMENTO_ZELA.md, item 6): cobra a escola na conta OFICIAL do Zela no
 // Asaas (secret ZELA_ASAAS_API_KEY, nunca a chave de uma escola). Só o developer chama, com o role lido do
@@ -260,6 +261,88 @@ serve(async (req) => {
         }
       }
       return json(corsHeaders, 200, { ok: true });
+    }
+
+    // Ajustes na ficha do contrato (9B): banco primeiro (RPC valida role, estado e motivo), Asaas depois.
+    // Se o Asaas falhar o ajuste fica gravado com erro_asaas e "sincronizar_ajuste" tenta de novo.
+    if (action === 'ajustar_vencimentos' || action === 'reparcelar' || action === 'aplicar_desconto' || action === 'sincronizar_ajuste') {
+      const respostaSync = async (ajusteId: string) => {
+        const { falhas } = await sincronizarAjuste(adminClient, asaas, ajusteId);
+        if (falhas.length > 0) {
+          return json(corsHeaders, 200, { ok: true, ajuste_id: ajusteId, falhas,
+            aviso: 'Ajuste gravado, mas o Asaas não aceitou tudo. Use "Sincronizar de novo" na aba Ajustes.' });
+        }
+        return json(corsHeaders, 200, { ok: true, ajuste_id: ajusteId });
+      };
+
+      if (action === 'sincronizar_ajuste') {
+        const ajusteId = body?.ajuste_id;
+        if (typeof ajusteId !== 'string' || !UUID.test(ajusteId)) return json(corsHeaders, 400, { error: 'ajuste_id inválido.' });
+        return await respostaSync(ajusteId);
+      }
+
+      const contratacaoId = body?.contratacao_id;
+      if (typeof contratacaoId !== 'string' || !UUID.test(contratacaoId)) return json(corsHeaders, 400, { error: 'contratacao_id inválido.' });
+      const motivo = typeof body?.motivo === 'string' ? body.motivo.trim() : '';
+      if (motivo.length < 3 || motivo.length > 500) return json(corsHeaders, 400, { error: 'Informe o motivo do ajuste (3 a 500 caracteres).' });
+
+      if (action === 'ajustar_vencimentos') {
+        const itens = body?.itens;
+        if (!Array.isArray(itens) || itens.length === 0 || itens.length > 60
+          || itens.some((i: { cobranca_id?: unknown; vencimento?: unknown }) => typeof i?.cobranca_id !== 'string' || !UUID.test(i.cobranca_id) || typeof i?.vencimento !== 'string' || !DATA_ISO.test(i.vencimento))) {
+          return json(corsHeaders, 400, { error: 'Itens de vencimento inválidos.' });
+        }
+        const { data: ajusteId, error: rpcErr } = await userClient.rpc('zela_ajustar_vencimentos', { p_contratacao_id: contratacaoId, p_itens: itens, p_motivo: motivo });
+        if (rpcErr) return json(corsHeaders, 422, { error: rpcErr.message });
+        return await respostaSync(ajusteId);
+      }
+
+      if (action === 'aplicar_desconto') {
+        const aPartir = Number(body?.a_partir);
+        const percentual = Number(body?.percentual);
+        if (!Number.isInteger(aPartir) || aPartir < 1 || !Number.isFinite(percentual)) return json(corsHeaders, 400, { error: 'Parcela inicial ou percentual inválido.' });
+        const { data: ajusteId, error: rpcErr } = await userClient.rpc('zela_aplicar_desconto_mensalidade', {
+          p_contratacao_id: contratacaoId, p_a_partir: aPartir, p_percentual: percentual, p_motivo: motivo,
+        });
+        if (rpcErr) return json(corsHeaders, 422, { error: rpcErr.message });
+        return await respostaSync(ajusteId);
+      }
+
+      // reparcelar: cancela no Asaas os links das parcelas escolhidas, grava no banco e cria os novos links.
+      const ids = body?.cobranca_ids;
+      const vencimentos = body?.vencimentos;
+      if (!Array.isArray(ids) || ids.length === 0 || ids.length > 60 || ids.some((i: unknown) => typeof i !== 'string' || !UUID.test(i))
+        || !Array.isArray(vencimentos) || vencimentos.length === 0 || vencimentos.length > 24
+        || vencimentos.some((v: unknown) => typeof v !== 'string' || !DATA_ISO.test(v))) {
+        return json(corsHeaders, 400, { error: 'Parcelas ou vencimentos inválidos.' });
+      }
+      const { data: ctRp } = await adminClient.from('school_contratacoes').select('id, pagamento, asaas_subscription_id').eq('id', contratacaoId).maybeSingle();
+      if (!ctRp) return json(corsHeaders, 404, { error: 'Contratação não encontrada.' });
+      if (ctRp.pagamento === 'mes_a_mes' && ctRp.asaas_subscription_id) {
+        return json(corsHeaders, 409, { error: 'Contrato Mensal com assinatura recorrente no Asaas não aceita reparcelamento.' });
+      }
+      const { data: alvos } = await adminClient.from('zela_cobrancas')
+        .select('id, status, asaas_payment_id').eq('contratacao_id', contratacaoId).in('id', ids);
+      if ((alvos || []).length !== new Set(ids).size) return json(corsHeaders, 404, { error: 'Alguma parcela não pertence a este contrato.' });
+      if ((alvos || []).some(a => !['pendente', 'vencida'].includes(a.status))) return json(corsHeaders, 409, { error: 'Só parcela pendente ou vencida pode ser reparcelada.' });
+
+      const cancelados: string[] = [];
+      try {
+        for (const a of alvos || []) {
+          if (a.asaas_payment_id) { await asaas.cancelPayment(a.asaas_payment_id); cancelados.push(a.asaas_payment_id); }
+        }
+      } catch (e) {
+        for (const pid of cancelados) await asaas.restorePayment(pid).catch(() => {});
+        throw e;
+      }
+      const { data: rp, error: rpcErr } = await userClient.rpc('zela_reparcelar_saldo', {
+        p_contratacao_id: contratacaoId, p_cobranca_ids: ids, p_vencimentos: vencimentos, p_motivo: motivo,
+      });
+      if (rpcErr) {
+        for (const pid of cancelados) await asaas.restorePayment(pid).catch(() => {});
+        return json(corsHeaders, 422, { error: rpcErr.message });
+      }
+      return await respostaSync(rp.ajuste_id);
     }
 
     return json(corsHeaders, 400, { error: 'Ação inválida.' });
