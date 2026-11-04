@@ -206,7 +206,8 @@ Regras:
     - ~~testes novos com `npx vitest run <arquivo>`;~~ ✅ 57/57 no banco local, mais `faturamentoZelaIsolamento.test.js` 9/9;
     - fluxo inteiro no sandbox do Asaas: contratar, pagar, atrasar, estornar e cancelar; ⏳ não executado nesta sessão (`zelaBillingFuncoes.test.js` com `ZELA_E2E=1`);
     - ~~RLS conferido como escola A, escola B e developer;~~ ✅ no banco local (isolamento, escrita direta, tabelas internas, RPCs, anon);
-    - pendente: Anual, Reajuste e telas em 360/768/1280px no navegador; `deno check`;
+    - ~~`deno check`~~ ✅ limpo no faturamento e na guarda (04/11); restam erros antigos de tipagem em outras funções;
+    - pendente: Anual, Reajuste e telas em 360/768/1280px no navegador;
     - atualizar `docs/ZELA_STATUS.md`.
 
 ## 11. Ordem de execução
