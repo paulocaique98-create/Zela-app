@@ -137,8 +137,8 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
       </div>
 
       {reajuste && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm">
-          <div className="bg-dev-surface rounded-zela-xl border border-dev-border shadow-2xl w-full max-w-md p-5 space-y-3 text-dev-text">
+        <div className="fixed inset-0 z-[100] bg-ink/70 backdrop-blur-sm">
+          <div className="bg-dev-surface w-full h-full overflow-y-auto p-5 space-y-3 text-dev-text">
             <h3 className="font-bold">Reajustar {reajuste.escola}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div><label className={rotulo} htmlFor="rj-ano">IPCA de</label>

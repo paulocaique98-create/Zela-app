@@ -13,13 +13,6 @@ import DeveloperPlanosPacotes from './DeveloperPlanosPacotes';
 // ESCOLA com o Zela (não é a mensalidade da família). O menu escolhe itens do
 // catálogo (modulosCatalogo.js); módulo novo continua exigindo código.
 
-const ABAS = [
-  { id: 'planos', label: 'Planos' },
-  { id: 'pacotes', label: 'Pacotes' },
-  { id: 'precos', label: 'Preços dos módulos' },
-  { id: 'simulador', label: 'Simulador' },
-  { id: 'contratacoes', label: 'Contratações' },
-];
 const MODALIDADE = { por_aluno: 'Por aluno', pacote: 'Pacote' };
 const card = 'bg-dev-surface border border-dev-border rounded-zela-lg p-4';
 const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py-2 text-sm text-dev-text';
@@ -28,9 +21,12 @@ const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm 
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
 const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high`;
 
-export default function DeveloperPlanos({ initialTab = 'planos' }) {
+export default function DeveloperPlanos({ initialTab = 'planos', aba: abaExterna, onAba }) {
   const dados = usePlanosZela();
-  const [aba, setAba] = useState(initialTab);
+  // Aba controlada pelo submenu do menu lateral (DeveloperLayout); sozinho, guarda a própria.
+  const [abaInterna, setAbaInterna] = useState(initialTab);
+  const aba = abaExterna ?? abaInterna;
+  const setAba = onAba ?? setAbaInterna;
   const [pedidoNovo, setPedidoNovo] = useState(0);
 
   const nomeItem = (id) => ITEM_POR_ID[id]?.nome || id;
@@ -59,21 +55,13 @@ export default function DeveloperPlanos({ initialTab = 'planos' }) {
           {alertasFaixa === 1 ? '1 escola passou da faixa de alunos contratada.' : `${alertasFaixa} escolas passaram da faixa de alunos contratada.`} Troque para uma faixa maior.
         </button>
       )}
-      <div className="flex items-center gap-2 border-b border-dev-border -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex flex-1 min-w-0 gap-1 overflow-x-auto scrollbar-none" role="tablist">
-          {ABAS.map(a => (
-            <button key={a.id} type="button" role="tab" aria-selected={aba === a.id} onClick={() => setAba(a.id)}
-              className={`px-4 py-3 md:py-2.5 text-sm font-medium whitespace-nowrap shrink-0 border-b-2 -mb-px ${aba === a.id ? 'border-dev-primary text-dev-primary' : 'border-transparent text-dev-text-muted hover:text-dev-text'}`}>
-              {a.label}
-            </button>
-          ))}
-        </div>
-        {aba === 'planos' && (
-          <button type="button" aria-label="Novo plano" className={`${btnPrimario} shrink-0 justify-center min-h-[44px] md:min-h-0 my-1`} onClick={() => setPedidoNovo(n => n + 1)}>
+      {aba === 'planos' && (
+        <div className="flex justify-end">
+          <button type="button" aria-label="Novo plano" className={`${btnPrimario} shrink-0 justify-center min-h-[44px] md:min-h-0`} onClick={() => setPedidoNovo(n => n + 1)}>
             <Plus size={14} /> <span className="hidden sm:inline">Novo plano</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {aba === 'planos' && <AbaPlanos dados={dados} nomeItem={nomeItem} pedidoNovo={pedidoNovo} />}
       {aba === 'pacotes' && <DeveloperPlanosPacotes dados={dados} />}
@@ -312,8 +300,8 @@ function EditorPlano({ estado, dados, onClose, onSaved }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] bg-black/60 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-4xl bg-dev-bg border border-dev-border rounded-zela-lg p-5 space-y-4 my-8">
+    <div className="fixed inset-0 z-[90] bg-black/60">
+      <div className="w-full h-full overflow-y-auto bg-dev-bg p-5 space-y-4">
         <div className="flex items-center justify-between">
           <p className="font-bold text-lg">{plano.id ? 'Editar plano' : 'Novo plano'}</p>
           <button type="button" onClick={onClose} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text"><X size={18} /></button>

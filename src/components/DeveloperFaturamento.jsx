@@ -6,6 +6,7 @@ import { toast } from '../lib/toast';
 import { brl, formatarData } from '../lib/planosZela';
 import { gerarMensagemCobranca } from '../lib/mensagemCobrancaZela';
 import DeveloperFaturamentoReajustes from './DeveloperFaturamentoReajustes';
+import DeveloperConfigFaturamento from './DeveloperConfigFaturamento';
 
 // Portal do Dev · Faturamento (PLANO_FATURAMENTO_ZELA.md, item 9). Lê zela_cobrancas (RLS: developer lê tudo)
 // e age pela Edge Function create-zela-charge (developer; Asaas do Zela + banco) e por RPCs do servidor.
@@ -27,7 +28,8 @@ const hojeIso = () => new Date().toISOString().slice(0, 10);
 const emAtraso = (c) => c.status === 'vencida' || (c.status === 'pendente' && c.vencimento < hojeIso());
 const statusVisual = (c) => (emAtraso(c) ? 'Em atraso' : STATUS_COBRANCA[c.status] || c.status);
 
-export default function DeveloperFaturamento() {
+export default function DeveloperFaturamento({ aba = 'cobrancas' }) {
+  // A aba vem do submenu do menu lateral (DeveloperLayout).
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
   const [cobrancas, setCobrancas] = useState([]);
@@ -130,13 +132,11 @@ export default function DeveloperFaturamento() {
   const listaEscolas = Object.values(escolas).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-6 space-y-4 text-dev-text">
-      <div>
-        <h2 className="text-lg font-bold flex items-center gap-2"><Receipt size={20} className="text-dev-primary" /> Faturamento</h2>
-        <p className="text-xs text-dev-text-muted mt-0.5">Cobranças do Zela Edu para as escolas, com IPCA, renovações e reajuste do Mensal.</p>
-      </div>
+    <div className="h-full overflow-y-auto text-dev-text">
+      <div className="p-4 md:p-6 space-y-4">
       {erro && <p className="text-sm text-error">Não foi possível carregar: {erro}</p>}
-
+      {aba === 'cobrancas' ? (
+      <>
       <DeveloperFaturamentoReajustes onMudou={carregar} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -216,8 +216,8 @@ export default function DeveloperFaturamento() {
       ))}
 
       {acao && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm">
-          <div className="bg-dev-surface rounded-zela-xl border border-dev-border shadow-2xl w-full max-w-md p-5 space-y-3 text-dev-text">
+        <div className="fixed inset-0 z-[100] bg-ink/70 backdrop-blur-sm">
+          <div className="bg-dev-surface w-full h-full overflow-y-auto p-5 space-y-3 text-dev-text">
             <div className="flex justify-between items-start">
               <h3 className="font-bold">{TITULOS[acao.tipo]}</h3>
               <button type="button" onClick={() => setAcao(null)} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text"><X size={18} /></button>
@@ -233,6 +233,9 @@ export default function DeveloperFaturamento() {
         </div>,
         document.body
       )}
+      </>
+      ) : <DeveloperConfigFaturamento embutido secao={aba} />}
+      </div>
     </div>
   );
 }

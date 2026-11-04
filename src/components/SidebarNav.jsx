@@ -27,12 +27,12 @@ import { ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
 // mesmo centro (ver Header.jsx). Item ativo: fundo ink-2 e faixa de latão.
 export const SIDEBAR_ICON_SIZE = 20;
 
-export function SidebarItem({ active, icon: Icon, label, badge, onClick }) {
+export function SidebarItem({ active, icon: Icon, label, badge, onClick, dev = false }) {
   return (
     <button
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${active ? 'bg-ink-2 text-white border-brass' : 'border-transparent text-ink-text hover:bg-ink-2 hover:text-white'}`}
+      className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${dev ? (active ? 'border-transparent bg-dev-primary-container text-dev-primary' : 'border-transparent text-dev-text-muted hover:bg-dev-surface hover:text-dev-text') : (active ? 'bg-ink-2 text-white border-brass' : 'border-transparent text-ink-text hover:bg-ink-2 hover:text-white')}`}
     >
       <span className="relative shrink-0">
         <Icon size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
@@ -82,7 +82,7 @@ const FLYOUT_GAP = 2;
 // Atraso para fechar ao tirar o mouse, para dar tempo de atravessar a folga.
 const FLYOUT_CLOSE_DELAY_MS = 150;
 
-export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, collapsed, children }) {
+export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, collapsed, children, dev = false }) {
   const buttonRef = useRef(null);
   const closeTimerRef = useRef(null);
   const panelRef = useRef(null);
@@ -196,7 +196,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
         onClick={handleClick}
         onMouseEnter={aoEntrar}
         onMouseLeave={() => { if (collapsed) agendarFechamento(); }}
-        className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] border-transparent text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isOpen || flyoutPos ? 'text-white bg-ink-2' : 'text-ink-text hover:bg-ink-2 hover:text-white'}`}
+        className={`w-full flex items-center gap-3 pl-4 pr-4 py-1.5 md:w-9 md:h-9 md:p-0 md:justify-center md:group-data-[expanded=true]/side:w-full md:group-data-[expanded=true]/side:h-auto md:group-data-[expanded=true]/side:justify-start md:group-data-[expanded=true]/side:pl-4 md:group-data-[expanded=true]/side:pr-4 md:group-data-[expanded=true]/side:py-1.5 rounded-zela-sm border-l-[3px] border-transparent text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${dev ? (isOpen || flyoutPos ? 'text-dev-text bg-dev-surface' : 'text-dev-text-muted hover:bg-dev-surface hover:text-dev-text') : (isOpen || flyoutPos ? 'text-white bg-ink-2' : 'text-ink-text hover:bg-ink-2 hover:text-white')}`}
       >
         <span className="relative shrink-0">
           <Icon size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
@@ -222,7 +222,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
             ref={panelRef}
             onMouseEnter={cancelarFechamento}
             onMouseLeave={agendarFechamento}
-            className="group/side fixed z-50 min-w-[200px] bg-ink-2 border border-ink-line rounded-zela-md shadow-md py-2 overflow-y-auto"
+            className={`group/side fixed z-50 min-w-[200px] border rounded-zela-md shadow-md py-2 overflow-y-auto ${dev ? 'bg-dev-bg border-dev-border' : 'bg-ink-2 border-ink-line'}`}
             data-expanded="true"
             style={{
               top: (resolvedPos ?? flyoutPos).top,
@@ -231,7 +231,7 @@ export function SidebarGroup({ label, icon: Icon, isOpen, onToggle, badge, colla
               visibility: resolvedPos ? 'visible' : 'hidden',
             }}
           >
-            <p className="px-4 pb-1 text-xs font-semibold text-ink-text">{label}</p>
+            <p className={`px-4 pb-1 text-xs font-semibold ${dev ? 'text-dev-text-muted' : 'text-ink-text'}`}>{label}</p>
             <div className="flex flex-col gap-0.5 px-1" onClick={fecharEste}>
               {children}
             </div>

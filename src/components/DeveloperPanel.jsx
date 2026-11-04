@@ -480,8 +480,8 @@ export default function DeveloperPanel() {
 
       {/* Modal form (criar/editar) */}
       {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-ink/70 backdrop-blur-sm">
-          <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-ink/70 backdrop-blur-sm">
+          <div className="bg-dev-surface w-full h-full overflow-hidden flex flex-col">
             <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
               <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
                 <Building2 size={20} className="text-dev-primary" />

@@ -99,11 +99,9 @@ export function DeveloperPlanosContratacoes({ dados }) {
   const planoPor = useMemo(() => Object.fromEntries(dados.planos.map(p => [p.id, p])), [dados.planos]);
   const ctPor = useMemo(() => Object.fromEntries(dados.contratacoes.map(c => [c.school_id, c])), [dados.contratacoes]);
   const linhas = dados.escolas.filter(e => e.is_active !== false).map(e => ({ escola: e, ct: ctPor[e.id], ativos: dados.alunosAtivos[e.id] || 0 }));
-  const semPlano = linhas.filter(l => !l.ct).length;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-dev-text-muted">{semPlano > 0 ? `${semPlano} escola(s) sem contratação registrada. ` : ''}Contratar um plano liga os módulos dele e guarda os valores daquele momento. Mudar o plano depois não altera contratos vigentes.</p>
       <div className="overflow-x-auto border border-dev-border rounded-zela-lg">
         <table className="w-full text-sm">
           <thead>
@@ -243,20 +241,18 @@ export function ContratarPlanoModal({ dados, schoolId, onClose, onDone }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-ink/70 backdrop-blur-sm">
-      <div className="bg-dev-surface sm:rounded-zela-xl border border-dev-border shadow-2xl w-full h-full sm:w-full sm:h-auto sm:max-w-4xl overflow-hidden sm:max-h-[calc(100vh-3rem)] flex flex-col text-dev-text">
-        <div className="px-4 sm:px-6 py-4 border-b border-dev-border flex justify-between items-center bg-dev-bg shrink-0">
-          <div>
-            <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
-              <FileSignature size={20} className="text-dev-primary" />
-              Contratar plano
-            </h3>
-            <p className="text-xs text-dev-text-muted mt-0.5">{escola?.name} · {ativos} aluno(s) ativo(s)</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
+    <div className="fixed inset-0 z-[100] bg-ink/70 backdrop-blur-sm">
+      <div className="bg-dev-surface w-full h-full overflow-hidden flex flex-col text-dev-text">
+        <div className="px-4 sm:px-6 py-4 border-b border-dev-border grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-dev-bg shrink-0">
+          <h3 className="font-bold text-dev-text text-lg flex items-center gap-2">
+            <FileSignature size={20} className="text-dev-primary shrink-0" />
+            Contratar plano
+          </h3>
+          <p className="text-sm font-medium text-dev-text text-center truncate max-w-[40vw]">{escola?.name}</p>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="justify-self-end text-dev-text-muted hover:text-dev-text p-2"><X size={20} /></button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-none">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-none">
         {criada ? (
           <div className="space-y-3">
             <p className="text-sm">Contratação registrada para <b>{escola?.name}</b>, aguardando o pagamento da 1ª parcela.</p>
