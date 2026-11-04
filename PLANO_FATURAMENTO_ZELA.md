@@ -228,13 +228,13 @@ Regras:
 3. ~~O desconto negociado na mensalidade continua por cima?~~ ✅ Não. Ajuste no Painel de contratos, com lista fixa de 5% e 10%.
 4. ~~Implantação~~ ✅ Acompanha o parcelamento do sistema, no mesmo link. No Mensal, inteira no 1º mês.
 5. ~~"Parcela única" no à vista?~~ ✅ Sim.
-6. ✅ Bloqueio total com 15 dias de carência, editável. Aviso no portal da Gestão. E-mail e WhatsApp depois. ❓ Recepção, professores e famílias veem algum aviso antes do bloqueio?
+6. ✅ Bloqueio total com 15 dias de carência, editável. Aviso no portal da Gestão. E-mail e WhatsApp depois. ✅ (04/11) Só a Gestão vê valor e parcela; Recepção só a data do bloqueio; professores e famílias nada antes do bloqueio.
 7. ~~Multa e juros~~ ✅ 2% e 1% ao mês, editáveis.
-8. Boleto e Pix, ou também cartão?
+8. ~~Boleto e Pix, ou também cartão?~~ ✅ (04/11) Só boleto e Pix; cartão depois, se uma escola pedir.
 9. ~~Mensal: função agendada do Zela ou assinatura do Asaas?~~ ✅ Assinatura do Asaas (o Asaas gera as cobranças mensais; o webhook cria a linha em `zela_cobrancas` a cada `PAYMENT_CREATED`).
 10. ~~Renovação no fim do período~~ ✅ Também pelo Asaas (assinatura recorrente). A função agendada do item 11 fica só com vencida, carência e suspensão.
-11. Cancelamento: multa de fidelidade e devolução no à vista?
-12. 1ª parcela não paga: cancelar sozinho após quantos dias?
+11. ~~Cancelamento: multa de fidelidade e devolução no à vista?~~ ✅ (04/11) Sem multa nem devolução automáticas; caso a caso por "Ajustar valor".
+12. ~~1ª parcela não paga: cancelar sozinho após quantos dias?~~ ✅ Decidido (04/11): 30 dias, configurável em zela_config_comercial; só contrato nunca ativado, com trilha. ⏳ Código não feito: a rotina não chama o Asaas, então o boleto aberto continuaria pagável depois do cancelamento no banco.
 13. ~~IPCA: fonte e período~~ ✅ Digitado pelo developer no Portal do Dev (Faturamento), acumulado dos 12 meses, um valor por ano. Ano já usado em reajuste ou renovação não muda mais. Busca automática do IBGE fica para depois.
 14. ~~Contrato Mensal: vigência e IPCA~~ ✅ Sem fidelidade; reajuste a qualquer momento pela assinatura do Asaas.
 15. ~~Renovação do Anual~~ ✅ Nasce como rascunho (rotina diária, 60 dias antes do fim, editável em `renovacao_antecedencia_dias`) com o valor do contrato mais o IPCA. Só vira contrato e cobrança quando o developer confirma. Implantação não se repete.
