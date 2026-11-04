@@ -2,7 +2,8 @@
 // que ignora RLS, então a checagem precisa ser explícita. Developer é isento (school_id nulo ou papel).
 // Falha fechada: se a consulta der erro, a chamada é recusada.
 export async function exigirEscolaLiberada(
-  client: { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> },
+  // deno-lint-ignore no-explicit-any
+  client: { rpc: (...args: any[]) => PromiseLike<{ data: unknown; error: unknown }> },
   chamador: { role?: string | null; school_id?: string | null } | null | undefined,
 ): Promise<void> {
   if (!chamador || chamador.role === 'developer' || !chamador.school_id) return;
