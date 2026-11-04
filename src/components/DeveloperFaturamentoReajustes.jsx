@@ -3,6 +3,7 @@ import { Loader2, TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import { brl, formatarData } from '../lib/planosZela';
+import { avisoReferencia } from '../lib/ipcaIbge';
 
 // Portal do Dev · Faturamento: IPCA, renovação do Anual (rascunho) e reajuste do Mensal
 // (PLANO_FATURAMENTO_ZELA.md, seção 2). Leitura pelas tabelas com RLS de developer; toda gravação
@@ -15,6 +16,7 @@ const btn = 'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-zela-md text
 const btnNeutro = `${btn} border border-dev-border text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-high`;
 const btnPrimario = `${btn} bg-dev-primary-container text-dev-primary hover:brightness-110`;
 
+const DUAS_CASAS = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 const mesesEntre = (de, ate) => (ate.getFullYear() - de.getFullYear()) * 12 + (ate.getMonth() - de.getMonth());
 
 export default function DeveloperFaturamentoReajustes({ onMudou }) {
@@ -26,6 +28,7 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
   const [ano, setAno] = useState(String(new Date().getFullYear()));
   const [perc, setPerc] = useState('');
   const [ocupado, setOcupado] = useState(null);
+  const [avisoIbge, setAvisoIbge] = useState(null);
   const [reajuste, setReajuste] = useState(null);
 
   const carregar = useCallback(async () => {
@@ -56,7 +59,21 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
     if (error) return toast.error(error.message);
     toast.success('IPCA registrado.');
     setPerc('');
+    setAvisoIbge(null);
     carregar();
+  };
+
+  // Só preenche o formulário; nada é gravado até o developer clicar em Registrar.
+  const buscarIbge = async () => {
+    setOcupado('ibge');
+    const { data, error } = await supabase.functions.invoke('buscar-ipca-ibge', { body: {} });
+    let msg = data?.error || error?.message;
+    if (error?.context?.json) { try { msg = (await error.context.json())?.error || msg; } catch { /* mantém msg */ } }
+    setOcupado(null);
+    if (error || data?.error || !Number.isFinite(Number(data?.percentual))) return toast.error(msg || 'Não foi possível buscar o IPCA no IBGE.');
+    setAno(String(data.ano));
+    setPerc(Number(data.percentual).toFixed(2).replace('.', ','));
+    setAvisoIbge(avisoReferencia(data));
   };
 
   const decidirRenovacao = async (r, confirmar) => {
@@ -91,13 +108,15 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
     <div className="space-y-4">
       <div className={card}>
         <p className="font-bold flex items-center gap-2 mb-1"><TrendingUp size={16} className="text-dev-primary" /> IPCA</p>
-        <p className="text-xs text-dev-text-muted mb-3">Acumulado dos 12 meses, digitado por você. Um ano já usado em reajuste ou renovação não muda mais de valor.</p>
+        <p className="text-xs text-dev-text-muted mb-3">Acumulado dos 12 meses: digite ou busque no IBGE (a busca só preenche, você confere e registra). Um ano já usado em reajuste ou renovação não muda mais de valor.</p>
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-28"><label className={rotulo} htmlFor="ipca-ano">Ano</label><input id="ipca-ano" type="number" min="2000" max="2100" className={campo} value={ano} onChange={e => setAno(e.target.value)} /></div>
           <div className="w-32"><label className={rotulo} htmlFor="ipca-perc">Percentual</label><input id="ipca-perc" inputMode="decimal" placeholder="4,50" className={campo} value={perc} onChange={e => setPerc(e.target.value)} /></div>
+          <button type="button" className={btnNeutro} onClick={buscarIbge} disabled={!!ocupado}>{ocupado === 'ibge' ? <Loader2 size={13} className="animate-spin" /> : null} Buscar do IBGE</button>
           <button type="button" className={btnPrimario} onClick={registrarIpca} disabled={ocupado === 'ipca' || !perc}>{ocupado === 'ipca' ? <Loader2 size={13} className="animate-spin" /> : null} Registrar</button>
         </div>
-        {ipcas.length > 0 && <p className="text-xs text-dev-text-muted mt-3">{ipcas.map(i => `${i.ano}: ${Number(i.percentual).toLocaleString('pt-BR')}%`).join(' · ')}</p>}
+        {avisoIbge && <p className={`text-xs mt-3 ${avisoIbge.parcial ? 'text-brass' : 'text-dev-text-muted'}`}>{avisoIbge.texto}</p>}
+        {ipcas.length > 0 && <p className="text-xs text-dev-text-muted mt-3">{ipcas.map(i => `${i.ano}: ${Number(i.percentual).toLocaleString('pt-BR', DUAS_CASAS)}%`).join(' · ')}</p>}
       </div>
 
       <div className={card}>
@@ -107,7 +126,7 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
           <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-dev-border py-2 first:border-t-0">
             <div className="text-sm">
               <p className="font-medium">{escolas[r.school_id] || 'Escola'}</p>
-              <p className="text-xs text-dev-text-muted">Mensalidade {brl(r.base_mensal)} para {brl(r.novo_mensal)} (IPCA {r.ipca_ano}: {Number(r.ipca_percent).toLocaleString('pt-BR')}%)</p>
+              <p className="text-xs text-dev-text-muted">Mensalidade {brl(r.base_mensal)} para {brl(r.novo_mensal)} (IPCA {r.ipca_ano}: {Number(r.ipca_percent).toLocaleString('pt-BR', DUAS_CASAS)}%)</p>
             </div>
             <div className="flex gap-2">
               <button type="button" className={btnNeutro} onClick={() => decidirRenovacao(r, false)} disabled={ocupado === r.id}>Descartar</button>
@@ -143,7 +162,7 @@ export default function DeveloperFaturamentoReajustes({ onMudou }) {
             <div className="grid grid-cols-2 gap-3">
               <div><label className={rotulo} htmlFor="rj-ano">IPCA de</label>
                 <select id="rj-ano" className={campo} value={reajuste.ano} onChange={e => setReajuste(a => ({ ...a, ano: e.target.value, percentual: String(ipcas.find(i => String(i.ano) === e.target.value)?.percentual ?? '') }))}>
-                  {ipcas.map(i => <option key={i.ano} value={i.ano}>{i.ano} ({Number(i.percentual).toLocaleString('pt-BR')}%)</option>)}
+                  {ipcas.map(i => <option key={i.ano} value={i.ano}>{i.ano} ({Number(i.percentual).toLocaleString('pt-BR', DUAS_CASAS)}%)</option>)}
                 </select></div>
               <div><label className={rotulo} htmlFor="rj-perc">Percentual aplicado</label><input id="rj-perc" inputMode="decimal" className={campo} value={reajuste.percentual} onChange={e => setReajuste(a => ({ ...a, percentual: e.target.value }))} /></div>
             </div>
