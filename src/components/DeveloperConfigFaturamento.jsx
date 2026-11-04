@@ -13,7 +13,7 @@ const campo = 'w-full bg-dev-bg border border-dev-border rounded-zela-md px-3 py
 const rotulo = 'block text-[11px] font-bold text-dev-text-muted mb-1';
 const btn = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-zela-md text-sm font-medium transition-all disabled:opacity-50 bg-dev-primary-container text-dev-primary hover:brightness-110';
 
-const COLS_CONFIG = 'vencimento_primeira_dias, carencia_dias, multa_percent, juros_mensal_percent, desconto_mensalidade_opcoes, desconto_implantacao_max_percent, implantacao_min, implantacao_max';
+const COLS_CONFIG = 'vencimento_primeira_dias, carencia_dias, cancelar_1a_parcela_dias, multa_percent, juros_mensal_percent, desconto_mensalidade_opcoes, desconto_implantacao_max_percent, implantacao_min, implantacao_max';
 const COLS_COND = 'id, chave, ciclo, pagamento, parcelas, desconto_percent, ativo, ordem';
 const COLS_HIST = 'id, tabela, acao, antes, depois, changed_by, changed_at';
 const NOME_COND = { mensal: 'Mensal', anual_vista: 'Anual à vista', anual_6x: 'Anual em 6x', anual_12x: 'Anual em 12x' };
@@ -63,10 +63,13 @@ export default function DeveloperConfigFaturamento({ embutido = false, secao = '
     const opcoes = paraLista(opcoesTxt);
     if (opcoes.some(n => !(n >= 0 && n <= 100))) return toast.error('Os descontos da mensalidade devem ficar entre 0 e 100.');
     if (conds.some(c => !(Number(c.desconto_percent) >= 0 && Number(c.desconto_percent) <= 50))) return toast.error('O desconto de cada condição deve ficar entre 0 e 50.');
+    const diasCancelar = Number(cfg.cancelar_1a_parcela_dias);
+    if (!Number.isInteger(diasCancelar) || diasCancelar < 7 || diasCancelar > 180) return toast.error('Os dias para sugerir o cancelamento da 1ª parcela devem ficar entre 7 e 180.');
     setSalvando(true);
     const { error } = await supabase.from('zela_config_comercial').update({
       vencimento_primeira_dias: Number(cfg.vencimento_primeira_dias),
       carencia_dias: Number(cfg.carencia_dias),
+      cancelar_1a_parcela_dias: diasCancelar,
       multa_percent: Number(cfg.multa_percent),
       juros_mensal_percent: Number(cfg.juros_mensal_percent),
       desconto_mensalidade_opcoes: opcoes,
@@ -133,6 +136,7 @@ export default function DeveloperConfigFaturamento({ embutido = false, secao = '
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {num('vencimento_primeira_dias', CAMPOS_CONFIG.vencimento_primeira_dias.rotulo)}
           {num('carencia_dias', CAMPOS_CONFIG.carencia_dias.rotulo)}
+          {num('cancelar_1a_parcela_dias', CAMPOS_CONFIG.cancelar_1a_parcela_dias.rotulo)}
           {num('multa_percent', 'Multa por atraso (%)', '0.01')}
           {num('juros_mensal_percent', 'Juros ao mês (%)', '0.01')}
           {num('implantacao_min', 'Implantação mínima (R$)', '0.01')}
