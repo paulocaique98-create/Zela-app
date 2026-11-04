@@ -201,11 +201,12 @@ Regras:
 ~~9A. **Tela de Configurações do faturamento** (seção 7A), com histórico de alterações.~~ ✅ Código (03/11): DeveloperConfigFaturamento.jsx, sem migration; falta navegador.
 ~~9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.~~ ✅ Código (03/11), só local: migration 20261210150000, aba Ajustes; falta navegador, sandbox do Asaas e `deno check`.
 ~~10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.~~ ✅ Código (03/11), só local: migration 20261210160000 (RPC minhas_parcelas_zela, só Gestão), Configurações › Meu plano; falta navegador e produção.
-11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.
-12. **Validação:**
-    - testes novos com `npx vitest run <arquivo>`;
-    - fluxo inteiro no sandbox do Asaas: contratar, pagar, atrasar, estornar e cancelar;
-    - RLS conferido como escola A, escola B e developer;
+~~11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.~~ ✅ Conferida e testada no banco local (03/11): `zela_faturamento_rotina` marca vencidas, suspende após a carência (`is_active`, com trilha pelo gatilho da fase 1) e cria rascunho de renovação do Anual (confirmação manual no Portal do Dev). A cobrança do Mensal vem da assinatura do Asaas, via webhook. Reativação ao pagar pelo webhook e pela baixa manual. Falta só agendar o cron (`cron_jobs_producao.sql`), que depende das migrations 20261210120000 a 20261210160000 em produção e do seu pedido.
+12. **Validação:** (03/11: parcial)
+    - ~~testes novos com `npx vitest run <arquivo>`;~~ ✅ 57/57 no banco local, mais `faturamentoZelaIsolamento.test.js` 9/9;
+    - fluxo inteiro no sandbox do Asaas: contratar, pagar, atrasar, estornar e cancelar; ⏳ não executado nesta sessão (`zelaBillingFuncoes.test.js` com `ZELA_E2E=1`);
+    - ~~RLS conferido como escola A, escola B e developer;~~ ✅ no banco local (isolamento, escrita direta, tabelas internas, RPCs, anon);
+    - pendente: Anual, Reajuste e telas em 360/768/1280px no navegador; `deno check`;
     - atualizar `docs/ZELA_STATUS.md`.
 
 ## 11. Ordem de execução
