@@ -13,7 +13,7 @@ export default function AvisoAtrasoFinanceiro({ aviso }) {
   const bloqueioEm = cob?.bloqueio_em || aviso.bloqueio_em;
 
   return (
-    <div role="alert" className="shrink-0 bg-brass-50 border-b border-brass text-gray-800 px-4 py-2 text-sm">
+    <div role="alert" className="shrink-0 bg-brass-50 border-b border-brass text-on-surface px-4 py-2 text-sm">
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
         <span className="flex items-center gap-2 font-medium text-brass">
           <AlertTriangle size={16} className="shrink-0" />

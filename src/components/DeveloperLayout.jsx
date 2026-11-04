@@ -1,8 +1,10 @@
-import React, { lazy, Suspense } from 'react';
-import { Building2, Receipt, Tags, ClipboardList, FileDown, FileText, LifeBuoy, Settings, ScanFace } from 'lucide-react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { Building2, Receipt, Tags, ClipboardList, FileDown, FileText, LifeBuoy, Settings, ScanFace, Package, CircleDollarSign, Calculator, FileSignature, SlidersHorizontal, History, Palette, Shield, Zap, Bell, Server, MonitorSmartphone } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
-import { SidebarToggleButton, SidebarLogoutItem, SIDEBAR_ICON_SIZE } from './SidebarNav';
+import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useRecolherSubmenusNoMobile } from '../hooks/useRecolherSubmenusNoMobile';
+import { SidebarToggleButton, SidebarLogoutItem, SidebarItem, SidebarGroup, SIDEBAR_ICON_SIZE } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
 
 // Lazy: cada aba só entra no bundle quando o developer realmente abre ela.
@@ -16,9 +18,42 @@ const DeveloperPropostas = lazy(() => import('./DeveloperPropostas'));
 const DeveloperPainelContratos = lazy(() => import('./DeveloperPainelContratos'));
 const DeveloperFaturamento = lazy(() => import('./DeveloperFaturamento'));
 
+// Itens do menu com abas na página: viram submenu (acordeão; flyout ao passar o mouse com o menu recolhido).
+// Os ids são os mesmos das abas de cada tela, que passam a ser controladas pelo layout.
+const SUBMENUS = {
+  planos: [
+    { id: 'planos', label: 'Planos', icon: Tags },
+    { id: 'pacotes', label: 'Pacotes', icon: Package },
+    { id: 'precos', label: 'Preços dos módulos', icon: CircleDollarSign },
+    { id: 'simulador', label: 'Simulador', icon: Calculator },
+    { id: 'contratacoes', label: 'Gerar Contrato', icon: FileSignature },
+  ],
+  billing: [
+    { id: 'cobrancas', label: 'Cobranças', icon: Receipt },
+    { id: 'config', label: 'Configurações', icon: SlidersHorizontal },
+    { id: 'historico', label: 'Histórico', icon: History },
+  ],
+  settings: [
+    { id: 'appearance', label: 'Aparência (Logo)', icon: Palette },
+    { id: 'general', label: 'Geral', icon: Settings },
+    { id: 'security', label: 'Segurança', icon: Shield },
+    { id: 'integrations', label: 'Integrações', icon: Zap },
+    { id: 'notifications', label: 'Notificações', icon: Bell },
+    { id: 'backup', label: 'Backup e Manutenção', icon: Server },
+    { id: 'dispositivos', label: 'Dispositivos', icon: MonitorSmartphone },
+  ],
+};
+
 export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMobileMenuOpen, setIsMobileMenuOpen, activeTab, setActiveTab, onLogout }) {
   const { count: chatUnreadCount, refresh: refreshChatUnread } = useChatUnreadCount(currentUser, true);
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
+  const [subTab, setSubTab] = useState({ planos: 'planos', billing: 'cobrancas', settings: 'appearance' });
+  const [grupoAberto, setGrupoAberto] = useState(SUBMENUS[activeTab] ? activeTab : null);
+  useRecolherSubmenusNoMobile(isMobileMenuOpen, isDesktop, setGrupoAberto);
+  useEffect(() => { if (SUBMENUS[activeTab]) setGrupoAberto(activeTab); }, [activeTab]);
+  const mudarSub = (grupo) => (id) => setSubTab(s => ({ ...s, [grupo]: id }));
 
   const navItems = [
     { id: 'schools', label: 'Gestão de Escolas', icon: Building2, enabled: true },
@@ -59,6 +94,35 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+
+              if (SUBMENUS[item.id]) {
+                return (
+                  <SidebarGroup
+                    key={item.id}
+                    dev
+                    collapsed={collapsed}
+                    label={item.label}
+                    icon={Icon}
+                    isOpen={grupoAberto === item.id}
+                    onToggle={() => setGrupoAberto(g => (g === item.id ? null : item.id))}
+                  >
+                    {SUBMENUS[item.id].map(sub => (
+                      <SidebarItem
+                        key={sub.id}
+                        dev
+                        active={isActive && subTab[item.id] === sub.id}
+                        icon={sub.icon}
+                        label={sub.label}
+                        onClick={() => {
+                          mudarSub(item.id)(sub.id);
+                          setActiveTab(item.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      />
+                    ))}
+                  </SidebarGroup>
+                );
+              }
 
               if (!item.enabled) {
                 return (
@@ -122,6 +186,7 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
           {activeTab === 'settings' && (
             <ConfiguracoesPanel
               onUpdateGlobalLogo={onUpdateGlobalLogo}
+              aba={subTab.settings}
             />
           )}
           {activeTab === 'support' && (
@@ -131,10 +196,10 @@ export default function DeveloperLayout({ currentUser, onUpdateGlobalLogo, isMob
             <DeveloperErrorLogs currentUser={currentUser} />
           )}
           {activeTab === 'biometria' && <DeveloperQualidadeBiometria />}
-          {activeTab === 'planos' && <DeveloperPlanos />}
+          {activeTab === 'planos' && <DeveloperPlanos aba={subTab.planos} onAba={mudarSub('planos')} />}
           {activeTab === 'propostas' && <DeveloperPropostas />}
           {activeTab === 'contratos' && <DeveloperPainelContratos />}
-          {activeTab === 'billing' && <DeveloperFaturamento />}
+          {activeTab === 'billing' && <DeveloperFaturamento aba={subTab.billing} />}
         </Suspense>
       </main>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Settings, ShieldAlert, ImageIcon, Palette, Shield, Zap, Bell, Server, MonitorSmartphone } from 'lucide-react';
+import { Settings, ShieldAlert, ImageIcon } from 'lucide-react';
 import SairTodosAparelhos from './SairTodosAparelhos';
 
 const CartaoImagem = ({ titulo, descricao, valor, Icone, ajuste, alt, onFile, onRemover, onSalvar, salvando, rotuloSalvar, msg }) => (
@@ -34,8 +34,8 @@ const CartaoImagem = ({ titulo, descricao, valor, Icone, ajuste, alt, onFile, on
   </div>
 );
 
-export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
-  const [activeTab, setActiveTab] = useState('appearance');
+export default function ConfiguracoesPanel({ onUpdateGlobalLogo, aba: activeTab = 'appearance' }) {
+  // A aba vem do submenu do menu lateral (DeveloperLayout).
 
   // --- LOGO GLOBAL LOGIC ---
   const [zelaGlobalLogo, setZelaGlobalLogo] = useState('');
@@ -133,16 +133,6 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
   };
   // -------------------------------
 
-  const tabs = [
-    { id: 'appearance', label: 'Aparência (Logo)', icon: Palette },
-    { id: 'general', label: 'Geral', icon: Settings },
-    { id: 'security', label: 'Segurança', icon: Shield },
-    { id: 'integrations', label: 'Integrações', icon: Zap },
-    { id: 'notifications', label: 'Notificações', icon: Bell },
-    { id: 'backup', label: 'Backup e Manutenção', icon: Server },
-    { id: 'dispositivos', label: 'Dispositivos', icon: MonitorSmartphone },
-  ];
-
   const PlaceholderBadge = () => (
     <span className="bg-dev-surface-high text-dev-text-muted text-[11px] font-bold px-2 py-0.5 rounded-zela-sm ml-2">
       Em breve
@@ -159,28 +149,6 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo }) {
           <Settings size={18} />
         </div>
         <p className="text-small text-dev-text-muted">Parâmetros globais do Zela Edu</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-none shrink-0 mb-5 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-dev-border" role="tablist">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-zela-md text-sm font-bold transition-all whitespace-nowrap ${
-                isActive 
-                  ? 'bg-dev-primary-container text-dev-primary shadow-sm border border-dev-primary/10'
-                  : 'text-dev-text-muted hover:bg-dev-bg border border-transparent'
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
-            </button>
-          );
-        })}
       </div>
 
       {/* Content Area */}
