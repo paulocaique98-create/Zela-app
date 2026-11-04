@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import React, { useMemo, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
+import DeveloperAjustesContrato from './DeveloperAjustesContrato';
 import { usePlanosZela } from '../hooks/usePlanosZela';
 import { ITEM_POR_ID } from '../lib/modulosCatalogo';
 import { CICLO_POR_ID, brl, diasParaVencer, formatarData, situacaoContrato, mensalVigente } from '../lib/planosZela';
@@ -14,6 +15,7 @@ const COR_SITUACAO = { Ativo: 'text-success', Vencido: 'text-error', Inativo: 't
 const ABAS_FICHA = [
   { id: 'dados', label: 'Dados' },
   { id: 'faturamento', label: 'Faturamento' },
+  { id: 'ajustes', label: 'Ajustes' },
   { id: 'historico', label: 'Histórico' },
   { id: 'reajustes', label: 'Reajustes' },
 ];
@@ -168,6 +170,7 @@ function FichaContratacao({ linha, onClose }) {
           </div>
         ))}
         {aba === 'faturamento' && <p className="text-sm text-dev-text-muted">Cobranças do Zela para a escola entram na Fase 2, depois que a conta de cobrança do Zela estiver definida.</p>}
+        {aba === 'ajustes' && (ct ? <DeveloperAjustesContrato contratacaoId={ct.id} /> : <p className="text-sm text-dev-text-muted">Esta escola não tem contratação para ajustar.</p>)}
         {aba === 'historico' && <p className="text-sm text-dev-text-muted">O histórico de ações do contrato entra junto com as ações do painel (Fase 2).</p>}
         {aba === 'reajustes' && <p className="text-sm text-dev-text-muted">Reajustes entram na Fase 4.</p>}
       </aside>

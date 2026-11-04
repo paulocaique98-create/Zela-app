@@ -199,7 +199,7 @@ Regras:
 9. **Faturamento no Portal do Dev:** cobranças por escola, com filtros por status e vencimento. Ações: copiar mensagem, novo vencimento, marcar como paga, cancelar, suspender e reativar. Resumo no card da escola em Planos. Menu em `src/components/DeveloperLayout.jsx`.
 9C. **Aviso de atraso no portal da Gestão** (seção 7): aviso fixo no topo, lido do servidor e filtrado pelo `school_id` da escola.
 ~~9A. **Tela de Configurações do faturamento** (seção 7A), com histórico de alterações.~~ ✅ Código (03/11): DeveloperConfigFaturamento.jsx, sem migration; falta navegador.
-9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.
+~~9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.~~ ✅ Código (03/11), só local: migration 20261210150000, aba Ajustes; falta navegador, sandbox do Asaas e `deno check`.
 10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.
 11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.
 12. **Validação:**
