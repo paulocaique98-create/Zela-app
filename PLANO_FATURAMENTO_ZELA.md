@@ -162,7 +162,7 @@ Regras:
 
 | Caso | Proposta |
 |---|---|
-| 1ª parcela venceu sem pagamento | Contrato fica `aguardando_pagamento`. Botão "Gerar novo vencimento" atualiza a cobrança no Asaas e copia a mensagem de novo. ❓ Cancelar sozinho após N dias? |
+| 1ª parcela venceu sem pagamento | Contrato fica `aguardando_pagamento`. Botão "Gerar novo vencimento" atualiza a cobrança no Asaas e copia a mensagem de novo. ~~Cancelar sozinho após N dias?~~ ✅ Sugerido após N dias (padrão 30) e confirmado pelo developer (12.12). |
 | Clique duplo em Contratar | Restrição única por contrato e parcela no banco, mais uma chave de idempotência na função. |
 | Asaas fora do ar no meio | Contrato fica "pendente de cobrança", com botão para tentar de novo, que cria só o que faltou. |
 | Pagamento por fora (Pix direto, transferência) | "Marcar como paga" manual, com registro de quem fez e do comprovante. Cancela a cobrança no Asaas. |
@@ -234,7 +234,7 @@ Regras:
 9. ~~Mensal: função agendada do Zela ou assinatura do Asaas?~~ ✅ Assinatura do Asaas (o Asaas gera as cobranças mensais; o webhook cria a linha em `zela_cobrancas` a cada `PAYMENT_CREATED`).
 10. ~~Renovação no fim do período~~ ✅ Também pelo Asaas (assinatura recorrente). A função agendada do item 11 fica só com vencida, carência e suspensão.
 11. ~~Cancelamento: multa de fidelidade e devolução no à vista?~~ ✅ (04/11) Sem multa nem devolução automáticas; caso a caso por "Ajustar valor".
-12. ~~1ª parcela não paga: cancelar sozinho após quantos dias?~~ ✅ Decidido (04/11): 30 dias, configurável em zela_config_comercial; só contrato nunca ativado, com trilha. ⏳ Código não feito: a rotina não chama o Asaas, então o boleto aberto continuaria pagável depois do cancelamento no banco.
+12. ~~1ª parcela não paga: cancelar sozinho após quantos dias?~~ ✅ Decidido (04/11): 30 dias, configurável em zela_config_comercial; só contrato nunca ativado, com trilha. ✅ Feito (04/11, só local) no desenho "sugerir e confirmar": a rotina não cancela (não chama o Asaas, o boleto ficaria pagável). A RPC `zela_contratacoes_para_cancelar` (só developer) lista as contratações; o developer confirma em Faturamento › Cobranças pelo `cancelar_contratacao` (Asaas primeiro, banco depois), com trilha em zela_planos_historico. Dias em Configurações (7 a 180, padrão 30). Migration 20261210170000 NÃO aplicada em produção.
 13. ~~IPCA: fonte e período~~ ✅ Digitado pelo developer no Portal do Dev (Faturamento), acumulado dos 12 meses, um valor por ano. Ano já usado em reajuste ou renovação não muda mais. Busca automática do IBGE fica para depois.
 14. ~~Contrato Mensal: vigência e IPCA~~ ✅ Sem fidelidade; reajuste a qualquer momento pela assinatura do Asaas.
 15. ~~Renovação do Anual~~ ✅ Nasce como rascunho (rotina diária, 60 dias antes do fim, editável em `renovacao_antecedencia_dias`) com o valor do contrato mais o IPCA. Só vira contrato e cobrança quando o developer confirma. Implantação não se repete.

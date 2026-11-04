@@ -4,6 +4,7 @@
 export const CAMPOS_CONFIG = {
   vencimento_primeira_dias: { rotulo: 'Vencimento da 1ª parcela (dias)', tipo: 'dias' },
   carencia_dias: { rotulo: 'Carência até o bloqueio (dias)', tipo: 'dias' },
+  cancelar_1a_parcela_dias: { rotulo: 'Sugerir cancelar 1ª parcela não paga após (dias)', tipo: 'dias' },
   multa_percent: { rotulo: 'Multa por atraso', tipo: 'percent' },
   juros_mensal_percent: { rotulo: 'Juros ao mês', tipo: 'percent' },
   desconto_mensalidade_opcoes: { rotulo: 'Descontos da mensalidade', tipo: 'lista' },

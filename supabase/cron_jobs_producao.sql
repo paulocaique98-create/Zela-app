@@ -74,5 +74,5 @@ SELECT cron.schedule('run-billing-rules-job', '0 * * * *', '
 
 -- Faturamento do Zela (etapa D): marca cobranças vencidas, suspende após a carência e cria rascunhos de renovação
 -- do Anual, todo dia às 9h UTC (6h em Brasília). Chama a função SQL direto (sem HTTP, sem token).
--- NÃO agendado em produção: só com pedido explícito, depois de aplicar as migrations 20261209120000 a 20261209180000.
--- SELECT cron.schedule('zela-faturamento-rotina-job', '0 9 * * *', 'SELECT public.zela_faturamento_rotina();');
+-- AGENDADO em produção em 04/11/2026, a pedido do usuário, depois das migrations 20261209120000 a 20261210170000.
+SELECT cron.schedule('zela-faturamento-rotina-job', '0 9 * * *', 'SELECT public.zela_faturamento_rotina();');

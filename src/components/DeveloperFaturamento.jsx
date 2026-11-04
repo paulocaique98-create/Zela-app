@@ -40,6 +40,7 @@ export default function DeveloperFaturamento({ aba = 'cobrancas' }) {
   const [fDe, setFDe] = useState('');
   const [fAte, setFAte] = useState('');
   const [acao, setAcao] = useState(null);
+  const [sugestoes, setSugestoes] = useState([]);
 
   const carregar = useCallback(async () => {
     const { data: cobs, error } = await supabase.from('zela_cobrancas').select(COLS_COBRANCAS).order('vencimento').limit(1000);
@@ -50,6 +51,9 @@ export default function DeveloperFaturamento({ aba = 'cobrancas' }) {
       ctIds.length ? supabase.from('school_contratacoes').select('id, status, ciclo, condicao_chave').in('id', ctIds).limit(1000) : { data: [] },
       escIds.length ? supabase.from('schools').select('id, name, school_code, cnpj').in('id', escIds).limit(1000) : { data: [] },
     ]);
+    // Sugestões de cancelamento (12.12): leitura pura, só developer. Falha aqui não derruba a tela.
+    const { data: sug } = await supabase.rpc('zela_contratacoes_para_cancelar');
+    setSugestoes(sug || []);
     setCobrancas(cobs || []);
     setContratos(Object.fromEntries((ct.data || []).map(c => [c.id, c])));
     setEscolas(Object.fromEntries((es.data || []).map(e => [e.id, e])));
@@ -138,6 +142,24 @@ export default function DeveloperFaturamento({ aba = 'cobrancas' }) {
       {aba === 'cobrancas' ? (
       <>
       <DeveloperFaturamentoReajustes onMudou={carregar} />
+
+      {sugestoes.length > 0 && (
+        <div className="bg-dev-surface border border-brass rounded-zela-lg p-4" data-testid="sugestoes-cancelar">
+          <h3 className="text-sm font-bold text-dev-text mb-1">Contratações para cancelar ({sugestoes.length})</h3>
+          <p className="text-xs text-dev-text-muted mb-3">1ª parcela sem pagamento há {sugestoes[0].limite_dias} dias ou mais, contrato nunca ativado. Nada cancela sozinho: ao confirmar, o boleto é cancelado no Asaas e depois a contratação no sistema.</p>
+          <div className="space-y-2">
+            {sugestoes.map(s => (
+              <div key={s.contratacao_id} className="flex flex-wrap items-center justify-between gap-2 border-t border-dev-border pt-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold break-words">{s.school_name}</p>
+                  <p className="text-xs text-dev-text-muted">Parcela {s.parcela_numero} · {brl(Number(s.valor))} · venceu em {formatarData(s.vencimento)} · {s.dias_atraso} dias de atraso</p>
+                </div>
+                <button type="button" className={btnNeutro} onClick={() => setAcao({ tipo: 'cancelar_contrato', alvo: { id: s.contratacao_id }, escola: s.school_name })}><Ban size={14} /> Cancelar contratação</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className={card}><p className={rotulo}>Em aberto</p><p className="text-lg font-bold">{brl(resumo.aberto)}</p></div>
