@@ -36,7 +36,7 @@ Regras:
 - ✅ **Sem desconto em cascata.** O desconto negociado na mensalidade (hoje com teto de 10%, escolhido no modal) não soma mais por cima do desconto da condição. Os percentuais de desconto da mensalidade passam a ser definidos na tela de Configurações (seção 7A) e aplicados contrato a contrato no Painel de contratos (seção 7B).
 - ✅ **Reajuste pelo IPCA no Anual: só na renovação.** O cliente contratou sabendo quanto vai pagar até o fim. Enquanto o contrato em vigência não vencer, o valor não muda de jeito nenhum, nem nas parcelas restantes, mesmo que o IPCA do ano seguinte já tenha saído. O reajuste entra apenas no novo contrato (renovação), e só no valor do sistema (a implantação não se repete). O Anual não tem assinatura no Asaas.
 - ✅ **Reajuste no Mensal: a qualquer momento.** O Mensal não tem fidelidade e o reajuste não causa prejuízo ao cliente, então pode ser aplicado na virada do ano (ou quando quiser) na assinatura do Asaas, valendo só para as cobranças futuras (`updatePendingPayments = false`).
-- ❓ Falta definir: fonte do índice, período acumulado e como a renovação do Anual é gerada (seção 12, itens 13 e 15).
+- ✅ Definido (seção 12, itens 13 e 15): índice digitado pelo developer, acumulado dos 12 meses; a renovação do Anual nasce como rascunho e só vira contrato quando o developer confirma.
 - ✅ **O valor do contrato é congelado no momento da contratação.** Já existe o `snapshot` em `school_contratacoes`. Mudar o preço depois não altera contratos já assinados.
 - **Arredondamento:** total dividido pelo nº de parcelas, com os centavos que sobrarem somados na última parcela. A soma das parcelas tem que bater exatamente com o total.
 - **Vencimentos:** a 1ª vence em 3 dias por padrão (editável) ✅. As demais vencem no mesmo dia dos meses seguintes (12x e Mensal) ou a cada 2 meses (6x). Se o mês não tiver esse dia (29, 30 ou 31), vale o último dia do mês.
@@ -122,7 +122,7 @@ CPF_CNPJ: {schools.cnpj formatado}
 - **Desbloqueio automático:** o webhook libera o acesso assim que o pagamento é confirmado.
 - **Seu controle:** você pode bloquear ou liberar manualmente a qualquer momento, por exemplo para dar mais prazo após um acordo.
 - ✅ **Multa e juros:** valor inicial de 2% de multa e 1% de juros ao mês, proporcional aos dias, enviados em cada cobrança ao Asaas. São o padrão de mercado no Brasil e o teto que o Código de Defesa do Consumidor aceita para multa. Entre empresas não há esse limite, mas valores acima disso costumam gerar contestação. Ficam editáveis na Configuração, para revisar depois. Para um valor de R$ 1.000 com 15 dias de atraso, dá R$ 20 de multa e R$ 5 de juros.
-- ~~**Aviso de atraso no portal da Gestão:**~~ ✅ (fase 2, 03/11, só local; Recepção vê aviso curto sem valor nem link, professores e famílias nada) um aviso próprio, fixo no topo do portal da Gestão da escola, visível a partir do 1º dia de atraso. Mostra a parcela vencida, o valor, os dias de atraso, a data do bloqueio e o link para pagar. Some sozinho quando o pagamento é confirmado. Na Recepção, nos professores e nas famílias, ❓ aparece só um aviso curto ou nada até o bloqueio?
+- ~~**Aviso de atraso no portal da Gestão:**~~ ✅ (fase 2, 03/11, só local; Recepção vê aviso curto sem valor nem link, professores e famílias nada) um aviso próprio, fixo no topo do portal da Gestão da escola, visível a partir do 1º dia de atraso. Mostra a parcela vencida, o valor, os dias de atraso, a data do bloqueio e o link para pagar. Some sozinho quando o pagamento é confirmado. Na Recepção, nos professores e nas famílias: ✅ a Recepção vê só a data do bloqueio; professores e famílias nada antes do bloqueio (12.6).
 - **E-mail e WhatsApp:** ficam para uma etapa posterior. O WhatsApp depende de o sistema ter WhatsApp integrado, o que ainda não existe.
 - Toda suspensão e reativação grava quem fez, quando e o motivo.
 
@@ -167,18 +167,18 @@ Regras:
 | Asaas fora do ar no meio | Contrato fica "pendente de cobrança", com botão para tentar de novo, que cria só o que faltou. |
 | Pagamento por fora (Pix direto, transferência) | "Marcar como paga" manual, com registro de quem fez e do comprovante. Cancela a cobrança no Asaas. |
 | Escola sem CNPJ ou e-mail | Contratação bloqueada, com aviso do que falta. |
-| Cancelamento do contrato | Cancela no Asaas as parcelas futuras não pagas. ❓ Multa de fidelidade? ❓ Devolução proporcional no à vista? |
+| Cancelamento do contrato | Cancela no Asaas as parcelas futuras não pagas. ~~Multa de fidelidade? Devolução proporcional no à vista?~~ ✅ Sem multa nem devolução automáticas; caso a caso por "Ajustar valor" (12.11). |
 | Estorno ou chargeback | Webhook marca como `estornada`. Se for a 1ª parcela, o contrato volta para `aguardando_pagamento`. |
 | Mais alunos que a faixa contratada | Fora deste plano. Fica para a Fase 4 (reajuste e upgrade). Por enquanto, só aviso no painel. |
-| Fim do período | ❓ Renova sozinho, gerando as novas cobranças com X dias de antecedência, ou só avisa você? |
+| Fim do período | ✅ Mensal renova pela assinatura do Asaas. Anual gera um rascunho de renovação 60 dias antes do fim (editável), e só o developer confirma (12.10 e 12.15). |
 | Semestral e Bianual | Saem do projeto ✅. ⚠️ Antes, conferir se algum contrato usa um deles. Se usar, ele segue até o fim. No banco, os ciclos são desativados (`ativo = false`), não apagados. A tela e a prévia em `src/lib/planosZela.js` passam a listar só Mensal e Anual. |
-| Meio de pagamento | ❓ Boleto e Pix (a escola escolhe no link), ou também cartão? |
+| Meio de pagamento | ✅ Só boleto e Pix (a escola escolhe no link); cartão depois, se uma escola pedir (12.8). |
 
 ## 9. Asaas: como gerar
 
 - **À vista:** 1 cobrança avulsa.
 - **6x ou 12x:** recomendo criar cada parcela como cobrança avulsa do Zela, e não usar o "parcelamento" do Asaas. Assim, cada uma tem id, link e status próprios em `zela_cobrancas`, e reemitir ou cancelar uma não mexe nas outras.
-- **Mensal:** ❓ assinatura do Asaas (gera sozinha todo mês) ou função agendada do Zela que gera a do mês seguinte? A recomendação é a função agendada: o valor muda com reajuste e faixa, e o controle fica num lugar só.
+- **Mensal:** ✅ decidido (12.9): assinatura do Asaas, criada pelo webhook depois da 1ª parcela paga; o webhook cria a linha em `zela_cobrancas` a cada `PAYMENT_CREATED`. Reajuste pela própria assinatura, só para as cobranças futuras. (A recomendação original era a função agendada; foi trocada.)
 - **Ambientes:** chave do sandbox e chave de produção em segredos separados (`ZELA_ASAAS_API_KEY`, `ZELA_ASAAS_ENV`). As chaves nunca passam pelo chat nem pelo frontend.
 - **Webhook:** função própria, `zela-billing-webhook`, com token próprio, e não o `payment-webhook` das escolas. Assim não há risco de misturar cobrança de família com cobrança do Zela, nem de quebrar o fluxo que já funciona. Eventos tratados: recebido, confirmado, vencido, removido, estornado.
 - **Idempotência do webhook:** guardar o id de cada evento recebido. Evento repetido é ignorado.
@@ -199,16 +199,16 @@ Regras:
 9. **Faturamento no Portal do Dev:** cobranças por escola, com filtros por status e vencimento. Ações: copiar mensagem, novo vencimento, marcar como paga, cancelar, suspender e reativar. Resumo no card da escola em Planos. Menu em `src/components/DeveloperLayout.jsx`.
 9C. **Aviso de atraso no portal da Gestão** (seção 7): aviso fixo no topo, lido do servidor e filtrado pelo `school_id` da escola.
 ~~9A. **Tela de Configurações do faturamento** (seção 7A), com histórico de alterações.~~ ✅ Código (03/11): DeveloperConfigFaturamento.jsx, sem migration; falta navegador.
-~~9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.~~ ✅ Código (03/11), só local: migration 20261210150000, aba Ajustes; falta navegador, sandbox do Asaas e `deno check`.
-~~10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.~~ ✅ Código (03/11), só local: migration 20261210160000 (RPC minhas_parcelas_zela, só Gestão), Configurações › Meu plano; falta navegador e produção.
-~~11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.~~ ✅ Conferida e testada no banco local (03/11): `zela_faturamento_rotina` marca vencidas, suspende após a carência (`is_active`, com trilha pelo gatilho da fase 1) e cria rascunho de renovação do Anual (confirmação manual no Portal do Dev). A cobrança do Mensal vem da assinatura do Asaas, via webhook. Reativação ao pagar pelo webhook e pela baixa manual. Falta só agendar o cron (`cron_jobs_producao.sql`), que depende das migrations 20261210120000 a 20261210160000 em produção e do seu pedido.
+~~9B. **Ajustes na ficha do contrato** (seção 7B): datas, reparcelamento e desconto, com sincronização no Asaas.~~ ✅ Código (03/11), só local: migration 20261210150000, aba Ajustes; em produção desde 04/11 (migration e função). Sandbox e `deno check` do faturamento já validados no item 12; falta só conferir a aba Ajustes no navegador em produção.
+~~10. **Assinatura no portal da escola** (segunda etapa): só leitura, com todas as parcelas e seus links.~~ ✅ Código (03/11), só local: migration 20261210160000 (RPC minhas_parcelas_zela, só Gestão), Configurações › Meu plano; em produção desde 04/11; navegador local ok no item 12, falta conferir em produção.
+~~11. **Função agendada:** marca cobranças vencidas, aplica a carência e a suspensão, e gera a cobrança do Mensal e da renovação.~~ ✅ Conferida e testada no banco local (03/11): `zela_faturamento_rotina` marca vencidas, suspende após a carência (`is_active`, com trilha pelo gatilho da fase 1) e cria rascunho de renovação do Anual (confirmação manual no Portal do Dev). A cobrança do Mensal vem da assinatura do Asaas, via webhook. Reativação ao pagar pelo webhook e pela baixa manual. ✅ Cron `zela-faturamento-rotina-job` agendado em produção em 04/11 (`0 9 * * *`, ativo), depois das migrations 20261210120000 a 20261210170000.
 12. **Validação:** (03/11: parcial)
     - ~~testes novos com `npx vitest run <arquivo>`;~~ ✅ 57/57 no banco local, mais `faturamentoZelaIsolamento.test.js` 9/9;
     - ~~fluxo inteiro no sandbox do Asaas~~ ✅ (04/11) `zelaBillingFuncoes.test.js` com `ZELA_E2E=1`: 7/7 no banco local;
     - ~~RLS conferido como escola A, escola B e developer;~~ ✅ no banco local (isolamento, escrita direta, tabelas internas, RPCs, anon);
     - ~~`deno check`~~ ✅ limpo no faturamento e na guarda (04/11); restam erros antigos de tipagem em outras funções;
-    - ~~Anual, Reajuste e telas em 360/768/1280px no navegador~~ ✅ (04/11, banco local + sandbox): Anual 6x, aviso, bloqueio, Meu plano, Config. faturamento e Reajuste Mensal; 12.12 segue aberta (1ª parcela vencida não bloqueia);
-    - atualizar `docs/ZELA_STATUS.md`.
+    - ~~Anual, Reajuste e telas em 360/768/1280px no navegador~~ ✅ (04/11, banco local + sandbox): Anual 6x, aviso, bloqueio, Meu plano, Config. faturamento e Reajuste Mensal; a 12.12 fechou o achado "1ª parcela vencida não bloqueia" (04/11);
+    - ~~atualizar `docs/ZELA_STATUS.md`~~ ✅.
 
 ## 11. Ordem de execução
 
@@ -218,8 +218,8 @@ Regras:
 | B | 8, 9 (sem a chamada real) | A |
 | C | 6, 7 e teste ponta a ponta | Chave do sandbox do Asaas |
 | ~~D~~ ✅ | ~~11~~ (código e testes locais, 03/11; migration 20261209180000, cron só documentado) | C |
-| E | Produção | Seu pedido explícito (migration e funções) |
-| F | 10 | E |
+| ~~E~~ ✅ | ~~Produção~~ (04/11: migrations até 20261210170000, 34 funções e cron; chave do Asaas ainda é a do sandbox) | Seu pedido explícito (migration e funções) |
+| ~~F~~ ✅ | ~~10~~ | E |
 
 ## 12. Respostas que faltam (resumo)
 
@@ -234,7 +234,7 @@ Regras:
 9. ~~Mensal: função agendada do Zela ou assinatura do Asaas?~~ ✅ Assinatura do Asaas (o Asaas gera as cobranças mensais; o webhook cria a linha em `zela_cobrancas` a cada `PAYMENT_CREATED`).
 10. ~~Renovação no fim do período~~ ✅ Também pelo Asaas (assinatura recorrente). A função agendada do item 11 fica só com vencida, carência e suspensão.
 11. ~~Cancelamento: multa de fidelidade e devolução no à vista?~~ ✅ (04/11) Sem multa nem devolução automáticas; caso a caso por "Ajustar valor".
-12. ~~1ª parcela não paga: cancelar sozinho após quantos dias?~~ ✅ Decidido (04/11): 30 dias, configurável em zela_config_comercial; só contrato nunca ativado, com trilha. ✅ Feito (04/11, só local) no desenho "sugerir e confirmar": a rotina não cancela (não chama o Asaas, o boleto ficaria pagável). A RPC `zela_contratacoes_para_cancelar` (só developer) lista as contratações; o developer confirma em Faturamento › Cobranças pelo `cancelar_contratacao` (Asaas primeiro, banco depois), com trilha em zela_planos_historico. Dias em Configurações (7 a 180, padrão 30). Migration 20261210170000 NÃO aplicada em produção.
+12. ~~1ª parcela não paga: cancelar sozinho após quantos dias?~~ ✅ Decidido (04/11): 30 dias, configurável em zela_config_comercial; só contrato nunca ativado, com trilha. ✅ Feito (04/11, só local) no desenho "sugerir e confirmar": a rotina não cancela (não chama o Asaas, o boleto ficaria pagável). A RPC `zela_contratacoes_para_cancelar` (só developer) lista as contratações; o developer confirma em Faturamento › Cobranças pelo `cancelar_contratacao` (Asaas primeiro, banco depois), com trilha em zela_planos_historico. Dias em Configurações (7 a 180, padrão 30). Migration 20261210170000 aplicada em produção em 04/11. Falta testar o cancelamento ponta a ponta com o Asaas.
 13. ~~IPCA: fonte e período~~ ✅ Digitado pelo developer no Portal do Dev (Faturamento), acumulado dos 12 meses, um valor por ano. Ano já usado em reajuste ou renovação não muda mais. Busca automática do IBGE fica para depois.
 14. ~~Contrato Mensal: vigência e IPCA~~ ✅ Sem fidelidade; reajuste a qualquer momento pela assinatura do Asaas.
 15. ~~Renovação do Anual~~ ✅ Nasce como rascunho (rotina diária, 60 dias antes do fim, editável em `renovacao_antecedencia_dias`) com o valor do contrato mais o IPCA. Só vira contrato e cobrança quando o developer confirma. Implantação não se repete.
