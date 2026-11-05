@@ -1218,6 +1218,10 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
               {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'gestao_pedagogica') && (
                 <option value="gestao_pedagogica">Coordenação ou Direção</option>
               )}
+              {/* Marketing: calendário, comunicados, mural e lista de alunos (05/11/2026). Só a Gestão cria. */}
+              {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'marketing') && (
+                <option value="marketing">Marketing</option>
+              )}
               <option value="teacher">Professor</option>
             </select>
           )}

@@ -19,6 +19,7 @@ export const CARGOS_FUNCIONARIOS = [
   'Cozinheira',
   'Diretora',
   'Estagiária',
+  'Marketing',
   'Porteiro',
   'Professora',
   'Recepcionista',

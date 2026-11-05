@@ -286,6 +286,19 @@ export const ITENS = [
     aoDesligar: 'O menu Biblioteca some para a escola e para a família. Acervo e histórico ficam guardados.',
   },
   {
+    id: 'marketing',
+    grupo: 'adicional',
+    nome: 'Marketing',
+    resumo: 'Perfil da equipe de marketing: lista de alunos para exportar, calendário, comunicados e mural de fotos.',
+    keys: ['marketing'],
+    inclui: [
+      { nome: 'Lista de alunos', desc: 'Nome, turma, turno, aniversário, idade, responsável e telefone, com exportação em Excel, PDF e CSV (sem foto)' },
+      { nome: 'Calendário, comunicados e mural', desc: 'Publica eventos, comunicados e fotos por turma' },
+    ],
+    onde: [{ portal: 'Marketing', menus: 'Alunos, Calendário, Comunicados e Mural de fotos' }],
+    aoDesligar: 'O acesso do perfil Marketing deixa de funcionar. Nada publicado é apagado.',
+  },
+  {
     id: 'estoque',
     grupo: 'adicional',
     nome: 'Estoque',

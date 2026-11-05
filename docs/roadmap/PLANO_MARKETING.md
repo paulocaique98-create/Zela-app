@@ -2,7 +2,7 @@
 
 Criado em 05/11/2026. Origem: demanda da Sense Kids (ZL001). A equipe de marketing cuida de eventos e agenda e precisa da lista atualizada de alunos para envios particulares e personalizações (lembranças, premiações).
 
-Status: **planejado, aguardando OK**. Nada implementado, nenhuma migration escrita, nenhum teste executado.
+Status (05/11/2026): **Fase A com código pronto e publicada no backend de produção** (migration 20261211120000 aplicada, create-admin-user e notify-families publicadas, módulo ligado na ZL001; frontend não publicado). Fases B, C e D seguem planejadas. Pendências 1 e 2 respondidas: SIM e SIM. Falta: testar no navegador, testar as policies de Storage (Storage local desligado), publicar o frontend.
 
 ---
 
@@ -63,30 +63,30 @@ Também altera `users.role` de usuários reais.
 
 ## Fase A. Perfil Marketing (implementar primeiro)
 
-- [ ] **A1. Migration do papel `marketing`, fechado por padrão.**
+- [x] ~~**A1. Migration do papel `marketing`, fechado por padrão.**~~ ✅
   - Função `mkt_da_escola(p_school_id)`: `get_my_role() = 'marketing'` e a escola informada é a do usuário. Escola vazia nunca bate.
   - Policies aditivas com o nome começando por "Marketing": escrita em `eventos_calendario`, `comunicados` e `mural_fotos`.
   - Storage: buckets `comunicados-anexos` e `mural-fotos`, presos à pasta `school_id/`.
   - Nenhuma policy existente muda.
-- [ ] **A2. RPC `marketing_lista_alunos()`.**
+- [x] ~~**A2. RPC `marketing_lista_alunos()`.**~~ ✅
   - `security definer`, `school_id` do usuário logado, só alunos ativos.
   - Colunas explícitas: nome, turma, turno, nascimento, idade, nome e telefone do responsável.
   - O marketing **não** lê a tabela `students` direto.
-- [ ] **A3. Módulo "Marketing" no catálogo.**
+- [x] ~~**A3. Módulo "Marketing" no catálogo.**~~ ✅
   - Nasce desligado e é ligado só na ZL001.
   - Policies e RPC exigem o módulo ligado. Ler a chave como `=== true`.
-- [ ] **A4. Criação de acesso.**
+- [x] ~~**A4. Criação de acesso.**~~ ✅
   - `notify-families` passa a aceitar `marketing`.
   - A Edge Function de criação de contas e o atalho "Criar acesso de login" oferecem o papel Marketing (`src/components/AdminFuncionarios.jsx:19`, `CARGO_PARA_ACESSO`, `ACCESS_ROLE_LABEL`).
-- [ ] **A5. Portal do Marketing com menu reduzido.**
+- [x] ~~**A5. Portal do Marketing com menu reduzido.**~~ ✅
   - Entram: Alunos (filtro por turma e turno), Calendário, Comunicados e Mural de fotos.
   - Ficam de fora: chat, financeiro, check-in, totem, ficha médica, documentos e configurações.
-- [ ] **A6. Botão Exportar na lista de alunos.**
+- [x] ~~**A6. Botão Exportar na lista de alunos.**~~ ✅
   - Abre um modal no centro da tela com a pergunta "Em qual formato você quer exportar?".
   - Três opções, nesta ordem: **Excel**, **PDF**, **CSV**.
   - O clique baixa o arquivo no formato escolhido, já com os filtros aplicados.
   - Cada exportação grava em `audit_logs` quem exportou, quando, o formato e a quantidade de alunos.
-- [ ] **A7. Testes.**
+- [x] ~~**A7. Testes.**~~ ✅
   - Lista de regras aprovadas do perfil, no molde de `src/test/perfilGestaoPedagogica.test.js`.
   - Isolamento entre escolas.
   - Módulo desligado bloqueia.
@@ -125,7 +125,7 @@ Antes de começar: análise de segurança de todas as policies que citam `admin`
 
 ---
 
-## Pendências de decisão
+## Pendências de decisão (respondidas em 05/11: 1 SIM, 2 SIM, só calendário, comunicados e mural)
 
 1. **"Demais informações" da Recepção:** cardápio e aulas especiais também viram só visualização na Fase B?
 2. **O marketing também mexe em aulas especiais e cardápio, ou só calendário, comunicados e mural?** Recomendação: só os três.

@@ -30,6 +30,7 @@ const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const TeacherPortal = lazy(() => import('./components/TeacherPortal'));
 const DeveloperLayout = lazy(() => import('./components/DeveloperLayout'));
 const GestaoPortal = lazy(() => import('./components/GestaoPortal'));
+const MarketingPortal = lazy(() => import('./components/MarketingPortal'));
 const BloqueioFinanceiro = lazy(() => import('./components/BloqueioFinanceiro'));
 const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const ForcePasswordChange = lazy(() => import('./components/ForcePasswordChange'));
@@ -1715,6 +1716,12 @@ export default function App() {
                   onOpenAuthModal={() => { setAuthError(''); setIsAuthModalOpen(true); }}
                   isMobileMenuOpen={isMobileMenuOpen}
                   setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  onLogout={handleLogout}
+                />
+              ) : currentUser.role === 'marketing' ? (
+                <MarketingPortal
+                  currentUser={currentUser}
+                  currentSchool={currentSchool}
                   onLogout={handleLogout}
                 />
               ) : null}

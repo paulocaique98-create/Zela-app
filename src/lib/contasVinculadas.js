@@ -12,6 +12,7 @@ const ROTULOS = {
   family: 'Responsável',
   teacher: 'Professora',
   gestao: 'Gestão',
+  marketing: 'Marketing',
 };
 
 export function rotuloDaConta(conta) {
