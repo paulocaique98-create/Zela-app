@@ -36,7 +36,7 @@ serve(async (req) => {
     // admins, professores e responsáveis (Fase 1, em paralelo com o admin).
     // Gestão Pedagógica (Coordenação/Direção, 29/09/2026): cria professoras e
     // famílias, nunca contas da equipe.
-    if (!userData || !['admin', 'recepcao', 'developer', 'gestao', 'gestao_pedagogica'].includes(userData.role)) {
+    if (!userData || !['recepcao', 'developer', 'gestao', 'gestao_pedagogica'].includes(userData.role)) {
       throw new Error('Permissão negada');
     }
 
@@ -86,8 +86,8 @@ serve(async (req) => {
     // Hierarquia de contas (decisão de 27/09/2026): a conta da Gestão é o
     // topo da escola e é criada SÓ pelo suporte (developer), na adesão da
     // escola -- nunca por admin, nem pelo admin principal.
-    if (!['admin', 'recepcao', 'teacher', 'family', 'gestao', 'gestao_pedagogica', 'marketing'].includes(role)) {
-      throw new Error('role deve ser "admin", "recepcao", "teacher", "family", "gestao", "gestao_pedagogica" ou "marketing".');
+    if (!['recepcao', 'teacher', 'family', 'gestao', 'gestao_pedagogica', 'marketing'].includes(role)) {
+      throw new Error('role deve ser "teacher", "family", "gestao", "gestao_pedagogica" ou "marketing".');
     }
     if (role === 'gestao' && userData.role !== 'developer') {
       throw new Error('Só o suporte do Zela pode criar a conta da Gestão.');
