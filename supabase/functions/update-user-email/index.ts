@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from "../_shared/logEdgeError.ts";
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
@@ -89,7 +90,7 @@ serve(async (req) => {
     if (targetError || !targetUser) {
       throw new Error('Usuário não encontrado.');
     }
-    if ((callerData.role === 'admin' || callerData.role === 'gestao' || callerData.role === 'gestao_pedagogica') && targetUser.school_id !== callerData.school_id) {
+    if ((ehRecepcao(callerData.role) || callerData.role === 'gestao' || callerData.role === 'gestao_pedagogica') && targetUser.school_id !== callerData.school_id) {
       throw new Error('Permissão negada.');
     }
 
@@ -123,7 +124,7 @@ serve(async (req) => {
         }
         // Fase 3: e-mail de admin (inclusive o próprio) só a Gestão altera;
         // o admin corrige professor e responsável.
-        if (targetUser.role === 'admin' && callerData.role !== 'gestao') {
+        if (ehRecepcao(targetUser.role) && callerData.role !== 'gestao') {
           throw new Error('Só a Gestão pode alterar o e-mail de um administrador.');
         }
         // Coordenação/Direção (Gestão Pedagógica, 29/09/2026): só a Gestão.

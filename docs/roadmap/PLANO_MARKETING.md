@@ -109,7 +109,7 @@ Também altera `users.role` de usuários reais.
 
 Cada etapa sai em um PR separado.
 
-- [ ] **C1. Banco, RLS, funções (`get_my_role` e dependentes) e Edge Functions passam a aceitar os dois valores.**
+- [x] ~~**C1. Banco, RLS, funções (`get_my_role` e dependentes) e Edge Functions passam a aceitar os dois valores.**~~ ✅ (05/11, só local: migration 20261211140000 + `_shared/papeis.ts`)
 - [ ] **C2. Migration troca `users.role` de `admin` para `recepcao`.** Antes, backup da lista de usuários afetados e script de reversão. Revisar também os metadados do JWT, se o papel estiver lá.
 - [ ] **C3. `src` e testes passam a usar só `recepcao`.** O rótulo na tela continua "Recepção".
 - [ ] **C4. Remover `admin` de policies, funções e Edge Functions.** O nome fica livre para a nova funcionalidade.

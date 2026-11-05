@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
@@ -53,7 +54,7 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (!callerData || (callerData.role !== 'admin' && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
+    if (!callerData || (!ehRecepcao(callerData.role) && callerData.role !== 'developer' && callerData.role !== 'gestao')) {
       throw new Error('Permissão negada')
     }
 
