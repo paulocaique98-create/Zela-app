@@ -96,12 +96,12 @@ Também altera `users.role` de usuários reais.
 
 ## Fase B. Recepção só visualiza (logo depois da A)
 
-- [ ] **B1. Migration de leitura apenas.**
+- [x] **B1. Migration de leitura apenas.**
   - Troca as policies "Admins gerenciam comunicados/eventos/fotos do mural da escola" por policies só de leitura.
   - Vale para as tabelas e para os buckets `comunicados-anexos` e `mural-fotos`.
-- [ ] **B2. `notify-families` deixa de aceitar `admin`.**
-- [ ] **B3. Interface da Recepção.** Esconde os botões de criar, editar, excluir e enviar nas telas de comunicados, calendário e mural.
-- [ ] **B4. Testes.** A Recepção lê e não escreve; Gestão e Coordenação/Direção continuam publicando.
+- [x] **B2. `notify-families` deixa de aceitar `admin`.**
+- [x] **B3. Interface da Recepção.** Esconde os botões de criar, editar, excluir e enviar nas telas de comunicados, calendário e mural.
+- [x] **B4. Testes.** A Recepção lê e não escreve; Gestão e Coordenação/Direção continuam publicando.
 
 **Impacto:** contas da Recepção que publicam hoje perdem esse poder imediatamente. Gestão e Coordenação/Direção continuam publicando, então ninguém fica sem quem publique.
 
