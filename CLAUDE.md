@@ -8,7 +8,7 @@ Evidência (logs 20/08–05/10): 10.262 turnos numa sessão só, 86% dos turnos 
 src/App.jsx (~83KB), src/components/AdminFaceScanner.jsx (~74KB), src/components/AdminPortal.jsx (~53KB): Grep para achar a região e Read com offset/limit (trechos de ~80–150 linhas).
 Não reler arquivo já lido na sessão, salvo se mudou por terceiros. Após um Edit bem-sucedido não reler "para conferir".
 Não ler: .scratch/, node_modules/, dist/, package-lock.json, *.sql de backfill, logs e saídas persistidas em AppData\Local\Temp\claude\.
-Docs em docs/ (PLANO_*.md, METODO_PEDAGOGICO.md, Proximas_Atualizações.md) só com pedido explícito, e só a seção relevante.
+Docs em docs/ (PLANO_UNIFICADO.md, referencia/METODO_PEDAGOGICO.md, roadmap/Proximas_Atualizações.md) só com pedido explícito, e só a seção relevante.
 1.2 Buscar antes de ler; limitar saídas
 Ordem: Glob/Grep (files_with_matches ou count primeiro, head_limit) → Read parcial → Edit. Varredura ampla: delegar a subagente Explore.
 Comandos sempre limitados: | head -n 40, | tail -n 60, --silent.

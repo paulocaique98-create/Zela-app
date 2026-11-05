@@ -1,5 +1,5 @@
 // Conta turnos por sessão do Claude Code para a pasta atual (somente leitura).
-// Uso (da raiz do projeto): node docs/contar_turnos.js
+// Uso (da raiz do projeto): node docs/operacao/contar_turnos.cjs
 const fs = require('fs');
 const path = require('path');
 const os = require('os');

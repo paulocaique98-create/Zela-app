@@ -1,5 +1,5 @@
 ROTINA MANUAL — ECONOMIA DE TOKENS NO ZELA
-Guia para o dono do projeto. Lista só o que o Claude não consegue fazer sozinho. Não é lido pelo Claude (não é citado no CLAUDE.md), então não gasta tokens. Sugestão de local: docs/ROTINA_MANUAL.md.
+Guia para o dono do projeto. Lista só o que o Claude não consegue fazer sozinho. Não é lido pelo Claude (não é citado no CLAUDE.md), então não gasta tokens. Sugestão de local: docs/operacao/ROTINA_MANUAL.md.
 
 Por que isso importa
 Nos logs de 20/08 a 05/10, uma única sessão rodou 10.262 turnos, 86% deles com mais de 200K de contexto (média ~495K, pico 967K). Cada turno relê todo o contexto acumulado. O custo vem de sessões longas, não do tamanho do CLAUDE.md. Início saudável de sessão: ~48K (5% da janela de 1M).
@@ -115,9 +115,9 @@ Alguns comandos (/cost, /rewind, /resume) variam com a versão e o plano. Se um 
 Se o Claude responder de forma genérica sobre as regras de economia, abra uma sessão nova: o CLAUDE.md é lido no início da sessão.
 
 Para achar um comando depois, sem gastar tokens, rode no terminal do Zela:
-grep -n "/compact" docs/ROTINA_MANUAL.md
+grep -n "/compact" docs/operacao/ROTINA_MANUAL.md
 
 Contar_turnos.js para contar os turnos em uma pasta
 
 Rodar no terminal do Zela:
-node docs/contar_turnos.cjs
+node docs/operacao/contar_turnos.cjs

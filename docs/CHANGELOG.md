@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Organização de docs** (05/11): planos de docs/ unificados em PLANO_UNIFICADO.md (só pendências, por prioridade) e documentos agrupados em subpastas referencia, juridico, operacao, precos e roadmap
 - **Busca do IPCA no IBGE** (04/11): botão "Buscar do IBGE" em Faturamento preenche ano e percentual (2 casas) com o último mês publicado e avisa se não for dezembro; quem grava continua sendo o Registrar. Edge Function buscar-ipca-ibge (só developer, só lê) publicada em produção em 04/11 (v1, JWT ligado); sem migration.
 - **Cancelar 1ª parcela não paga (12.12)** (04/11): sugerir e confirmar. RPC zela_contratacoes_para_cancelar (só developer) lista contratações aguardando pagamento com a 1ª parcela vencida há N dias (padrão 30, configurável de 7 a 180); a rotina não cancela. Bloco "Contratações para cancelar" em Cobranças confirma pelo cancelar_contratacao (Asaas primeiro). Trilha em zela_planos_historico. Migration 20261210170000 em produção, junto com 20261210120000 a 20261210160000, funções e cron zela-faturamento-rotina-job.
 - **Assinatura no portal da escola** (03/11): Configurações › Meu plano mostra todas as parcelas do Zela, o que foi pago e o link das em aberto, só leitura e só para a Gestão (RPC minhas_parcelas_zela, migration 20261210160000 NÃO aplicada em produção).

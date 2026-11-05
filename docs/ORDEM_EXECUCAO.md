@@ -25,7 +25,7 @@ Contexto detalhado de cada item: docs/ZELA_STATUS.md (seção Pendências conhec
 - [~] 11. Fase 6 (15/10/2026), homologação OK: ASAAS_API_KEY (sandbox) e VAPID presentes; cobrança avulsa gerada pelo app, vista pela Família e paga no sandbox com webhook atualizando para Pago; send-test-push respondeu {"success":true}. Pendente: segredos Asaas/VAPID na produção (com aprovação), confirmar se o push apareceu na tela, iOS em aparelho real. Perfil `financeiro` abre tela em branco (sem rota no app).
 ## Bloco F. Organização e docs
 - [x] 12. CLAUDE.md e docs/ (15/10/2026): já versionados e árvore limpa; .scratch/ e .stitch/ já no .gitignore (linhas "Pastas de trabalho locais"). Nada a commitar.
-- [~] 13. Loja e SLA (15/10/2026): briefing para o jurídico pronto (docs/BRIEFING_JURIDICO_SLA.md). Pendente: capturas reais no aparelho (iOS TestFlight e Android, roteiro em docs/mobile/PREPARACAO_LOJAS.md 4.1), revisão jurídica, WhatsApp comercial e e-mail do domínio, decisão sobre página de status.
+- [~] 13. Loja e SLA (15/10/2026): briefing para o jurídico pronto (docs/juridico/BRIEFING_JURIDICO_SLA.md). Pendente: capturas reais no aparelho (iOS TestFlight e Android, roteiro em docs/mobile/PREPARACAO_LOJAS.md 4.1), revisão jurídica, WhatsApp comercial e e-mail do domínio, decisão sobre página de status.
 
 ## Por último
 - [ ] iOS em aparelho real (Sideloadly).

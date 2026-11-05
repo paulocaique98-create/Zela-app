@@ -28,7 +28,7 @@ Status: rascunho técnico revisado em 14/10, não é texto final nem parecer jur
 ## Direitos do titular (art. 18)
 - Acesso, correção, exclusão, revogação do consentimento e portabilidade: definir canal (e-mail do encarregado) e prazo.
 - Exclusão de conta já existe e foi testada no S23 (13/10). Documentar o que ela apaga e o que é mantido (histórico de check-in/out, por rastreabilidade e segurança escolar), com a base legal da retenção.
-- Já existe `docs/LGPD_RETENCAO.md`: alinhar a retenção com ele (não revisado nesta sessão).
+- Já existe `docs/juridico/LGPD_RETENCAO.md`: alinhar a retenção com ele (não revisado nesta sessão).
 
 ## Segurança (art. 46)
 - Isolamento por escola (school_id) e RLS em todas as tabelas; fotos em bucket com acesso por URL assinada (conferir se o bucket é privado antes de afirmar).
@@ -48,7 +48,7 @@ Status: rascunho técnico revisado em 14/10, não é texto final nem parecer jur
 
 ## Perguntas em aberto
 1. ~~Imagens faciais ou só descritor?~~ Respondida pelas migrations: ficam os dois (ver acima). Falta confirmar se o bucket `person-photos` é privado.
-2. Prazo de retenção após a saída do aluno da escola (alinhar com `docs/LGPD_RETENCAO.md`).
+2. Prazo de retenção após a saída do aluno da escola (alinhar com `docs/juridico/LGPD_RETENCAO.md`).
 3. Divisão final controlador e operador (ver Papéis).
 4. Base legal da biometria (consentimento ou art. 11, II, g) e como consentem os autorizados.
 5. Região do Supabase e demais transferências internacionais.
