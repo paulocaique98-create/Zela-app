@@ -24,9 +24,11 @@ const CARGO_PARA_ACESSO = {
   'Diretora': { role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica' },
   'Administradora': { role: 'admin', departamento: 'administrativo' },
   'Recepcionista': { role: 'admin', departamento: 'recepcao' },
+  // Marketing (05/11/2026): lista de alunos, calendário, comunicados e mural.
+  'Marketing': { role: 'marketing' },
 };
 
-const ACCESS_ROLE_LABEL = { admin: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção' };
+const ACCESS_ROLE_LABEL = { admin: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção', marketing: 'Marketing' };
 const ACCESS_ROLE_STYLE = {
   admin: 'bg-brass-50 text-warning border-warning/40',
   gestao_pedagogica: 'bg-primary/10 text-primary border-primary/40',

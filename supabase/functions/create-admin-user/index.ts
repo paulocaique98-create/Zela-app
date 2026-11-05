@@ -85,15 +85,15 @@ serve(async (req) => {
     // Hierarquia de contas (decisão de 27/09/2026): a conta da Gestão é o
     // topo da escola e é criada SÓ pelo suporte (developer), na adesão da
     // escola -- nunca por admin, nem pelo admin principal.
-    if (!['admin', 'teacher', 'family', 'gestao', 'gestao_pedagogica'].includes(role)) {
-      throw new Error('role deve ser "admin", "teacher", "family", "gestao" ou "gestao_pedagogica".');
+    if (!['admin', 'teacher', 'family', 'gestao', 'gestao_pedagogica', 'marketing'].includes(role)) {
+      throw new Error('role deve ser "admin", "teacher", "family", "gestao", "gestao_pedagogica" ou "marketing".');
     }
     if (role === 'gestao' && userData.role !== 'developer') {
       throw new Error('Só o suporte do Zela pode criar a conta da Gestão.');
     }
     // Fase 3: admin só é criado pela Gestão (ou pelo suporte); a Gestão
     // Pedagógica (Coordenação/Direção) também.
-    if ((role === 'admin' || role === 'gestao_pedagogica') && userData.role !== 'gestao' && userData.role !== 'developer') {
+    if ((role === 'admin' || role === 'gestao_pedagogica' || role === 'marketing') && userData.role !== 'gestao' && userData.role !== 'developer') {
       throw new Error('Só a Gestão da escola pode criar contas da equipe.');
     }
     const efDepartamento = (extra_fields || {}).departamento;
@@ -136,7 +136,7 @@ serve(async (req) => {
     if (role === 'teacher') {
       safeExtraFields.turmas = Array.isArray(ef.turmas) ? ef.turmas : [];
     }
-    if (role === 'gestao' || role === 'gestao_pedagogica') {
+    if (role === 'gestao' || role === 'gestao_pedagogica' || role === 'marketing') {
       // Conta com acesso amplo e senha escolhida por outra pessoa: troca
       // obrigatória no primeiro acesso.
       safeExtraFields.must_change_password = true;
