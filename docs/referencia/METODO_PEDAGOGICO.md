@@ -5,7 +5,7 @@
 Esta parte guarda o que ainda não foi concluído. O histórico detalhado das
 partes entregues (modelo de dados, `useSchoolConfig`, matérias,
 frequência, `classes` Fase 1, transferência de turma, gestão e renomeação
-de turmas, imagem de login) está no git: `git log -p -- docs/METODO_PEDAGOGICO.md`.
+de turmas, imagem de login) está no git: `git log -p -- docs/referencia/METODO_PEDAGOGICO.md`.
 
 ## 1. Normalização de turmas, Fase 2+ (não decidida)
 

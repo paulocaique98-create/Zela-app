@@ -406,7 +406,7 @@ src/lib/bi/
 - **Módulo:** `captacao`.
 - **Banco:** `leads` (responsável, telefone, e-mail, nome e nascimento da criança, turma/ano desejado, origem `site|indicacao|instagram|google|visita|outro`, `etapa` `novo|contato|visita_agendada|visitou|proposta|matriculado|perdido`, `motivo_perda`, `responsavel_id` da equipe, `consentimento_em`), `lead_interactions` (tipo, nota, data), `lead_visits` (data/hora, status), `waitlist` (`lead_id` ou `student_id`, turma, posição, data).
 - **Formulário público** "Quero conhecer a escola": novo caminho no padrão `PublicMatricula.jsx`, via Edge Function com `check_rate_limit` por IP, validação e consentimento LGPD; nunca insert anônimo direto na tabela.
-- **LGPD:** lead perdido é apagado/anonimizado após 12 meses (D9), cron igual ao de retenção (`docs/LGPD_RETENCAO.md`).
+- **LGPD:** lead perdido é apagado/anonimizado após 12 meses (D9), cron igual ao de retenção (`docs/juridico/LGPD_RETENCAO.md`).
 - **Telas:** Gestão › nova seção **Captação** (Quadro em colunas por etapa com arrastar no computador e lista no celular; Agenda de visitas; Lista de espera; Relatório do funil com o kit do BI). "Converter em matrícula" pré-preenche a matrícula existente.
 - **Integração BI:** aba Matrículas ganha o funil de captação.
 

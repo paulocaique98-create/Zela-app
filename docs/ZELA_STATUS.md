@@ -84,7 +84,8 @@
 
 ## Decisões e cuidados vigentes
 - Multi-tenant por school_id; RLS sempre ativo; Realtime filtrado no frontend (filtro de coluna no canal já causou perda de eventos, ver CHANGELOG 1.2.3).
-- Roadmap de 40 itens em Proximas_Atualizações.md (revisado em 24/09; 5 feitos, 7 parciais, 28 pendentes). Consultar só a seção necessária.
+- Roadmap de 40 itens em docs/roadmap/Proximas_Atualizações.md (revisado em 24/09; 5 feitos, 7 parciais, 28 pendentes). Consultar só a seção necessária.
+- Docs reorganizados (05/11): 9 planos de docs/ unificados em docs/PLANO_UNIFICADO.md (só pendências, por prioridade); docs em subpastas referencia/, juridico/, operacao/, precos/, roadmap/. Planos da raiz mantidos. PRIORIDADE_DOS_PLANOS.md segue, substituível.
 
 ## Pendências conhecidas
 - Estrutura acadêmica Tradicional (28/10): Horários reorganizado para desktop (5 colunas Segunda a Sexta sem rolagem, editar aula, aviso de choque de horário e de Nº repetido, intervalo); abas numeradas, formulário acima da lista; PageShell sem faixa de descrição (todas as telas da Gestão); cadastro de professor em escola Tradicional usa as turmas da Estrutura acadêmica. Migrations 20261103120000 (7 textos BNCC corrigidos) e 20261103130000 (intervalo, atribuicao_id nulo) APLICADAS na produção em 28/10 e registradas no histórico; testadas antes no banco local (8 casos de trigger, FK e RLS ok). Carga BNCC considerada revisada pelo usuário (só 7 de 35 conferidos contra fontes; o resto sem conferência contra o PDF do MEC). Pendente: testar no navegador (docs/TESTE_MANUAL_TRADICIONAL.md); mobile NÃO foi tratado (análise adiada); roteiro em docs/TESTE_MANUAL_TRADICIONAL.md.
@@ -113,7 +114,7 @@
 - Blocos A a F e lista de passos em docs/ORDEM_EXECUCAO.md (15/10). Início de sessão: ler esse arquivo, pegar o próximo bloco não marcado.
 
 ## Documentos de apoio (ler só se necessário)
-DOCUMENTATION.md, CHANGELOG.md, LGPD_RETENCAO.md, OBSERVABILIDADE.md, METODO_PEDAGOGICO.md, PLANO_*.md.
+referencia/DOCUMENTATION.md, CHANGELOG.md, juridico/LGPD_RETENCAO.md, operacao/OBSERVABILIDADE.md, referencia/METODO_PEDAGOGICO.md, PLANO_UNIFICADO.md.
 - Painel BI Fase 1.4 (28/10, não commitado): abas Matrículas e Frequência (bi_matriculas, bi_frequencia, drill novo) na migration 20261106120000; as migrations 20261105120000 e 20261106120000 foram aplicadas na produção em 29/10 (db push). Testes de RLS/isolamento com rollback ok; vitest src/lib/bi 36/36 e build ok. Fora do painel: funil de matrícula, vagas por turma, datas de saída. Conferido no navegador.
 - Painel BI Fase 1.5 (29/10, não commitado): abas Acadêmico e Operação (bi_academico, bi_operacao) na migration 20261107120000, aplicada na produção em 29/10 (db push). Testes de integração no Supabase local 8/8 (biAcademicoOperacao + biPainel); vitest src/lib/bi 42/42; build ok; conferido no navegador. Fora do painel: forma de identificação, tempo até a confirmação no monitor, horas extras (o banco não grava); drill do Acadêmico/Operação não feito. Fase 1.6 (29/10): Dashboard renomeado, ajuda, atalho, impressão, filtros na barra do topo. Documentos pendentes virou subtela de Pendências (sem grupo Secretaria). Cabeçalho desktop 56 px. vitest 100/100, build ok; impressão e visual não conferidos no navegador.
 - Expansão da Gestão, item 8 Avaliação institucional (29/10, código pronto): módulo `avaliacao_institucional` (desligado em todas as escolas). Migration 20261117120000 só no banco local (12/12 testes de integração), NÃO aplicada em produção; função notify-pesquisa não implantada. Telas: Gestão › Comunicação › Pesquisas, Família e Professor › Acadêmico › Pesquisas + aviso na Início. Falta navegador (360, 768 e 1280px).
