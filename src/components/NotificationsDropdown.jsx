@@ -30,7 +30,7 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
     // destinatário" -- também vale pra admin (ver notifyAdmins.ts), então
     // a mesma query .eq('family_id', currentUser.id) funciona sem
     // nenhuma mudança pros dois papéis.
-    if (!currentUser || (currentUser.role !== 'family' && currentUser.role !== 'admin')) return;
+    if (!currentUser || (currentUser.role !== 'family' && currentUser.role !== 'recepcao')) return;
 
     fetchNotifications();
 
@@ -241,7 +241,7 @@ export default function NotificationsDropdown({ currentUser, onNavigateTab }) {
                 </div>
                 <h4 className="font-semibold text-on-surface">Bem-vindo ao Zela Edu</h4>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
-                  {currentUser?.role === 'admin'
+                  {currentUser?.role === 'recepcao'
                     ? 'Aqui você receberá avisos de novos cadastros e outros eventos importantes da escola.'
                     : 'Aqui você receberá avisos de check-in, check-out e lembretes importantes sobre o horário do seu filho.'}
                 </p>

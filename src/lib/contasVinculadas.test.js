@@ -7,10 +7,10 @@ describe('contas vinculadas · botão do cabeçalho', () => {
     expect(rotuloDaConta({ role: 'family' })).toBe('Responsável');
     expect(rotuloDaConta({ role: 'gestao_pedagogica', departamento: 'coordenacao' })).toBe('Coordenação');
     expect(rotuloDaConta({ role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica' })).toBe('Direção');
-    expect(rotuloDaConta({ role: 'admin', departamento: 'recepcao' })).toBe('Recepção');
-    expect(rotuloDaConta({ role: 'admin' })).toBe('Recepção');
-    expect(rotuloDaConta({ role: 'admin', departamento: 'administrativo' })).toBe('Administrativo');
-    expect(rotuloDaConta({ role: 'admin', departamento: 'desconhecido' })).toBe('Recepção');
+    expect(rotuloDaConta({ role: 'recepcao', departamento: 'recepcao' })).toBe('Recepção');
+    expect(rotuloDaConta({ role: 'recepcao' })).toBe('Recepção');
+    expect(rotuloDaConta({ role: 'recepcao', departamento: 'administrativo' })).toBe('Administrativo');
+    expect(rotuloDaConta({ role: 'recepcao', departamento: 'desconhecido' })).toBe('Recepção');
     expect(rotuloDaConta({ role: 'gestao', departamento: 'administrativo' })).toBe('Gestão');
     expect(rotuloDaConta({ role: 'teacher' })).toBe('Professora');
     expect(rotuloDaConta({ role: 'gestao' })).toBe('Gestão');

@@ -10,7 +10,7 @@ export function useUnreadSystemUpdates(currentUser) {
   const [hasUnread, setHasUnread] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!currentUser?.id || !['admin', 'developer'].includes(currentUser?.role)) {
+    if (!currentUser?.id || !['recepcao', 'developer'].includes(currentUser?.role)) {
       setHasUnread(false);
       return;
     }
@@ -37,7 +37,7 @@ export function useUnreadSystemUpdates(currentUser) {
   // escutar system_update_reads: quando o próprio usuário lê, a tela
   // AdminSystemUpdates já sai do ar (unmount) antes de importar de novo.
   useEffect(() => {
-    if (!currentUser?.id || !['admin', 'developer'].includes(currentUser?.role)) return;
+    if (!currentUser?.id || !['recepcao', 'developer'].includes(currentUser?.role)) return;
 
     const channel = supabase
       .channel(`system-updates-${currentUser.id}`)

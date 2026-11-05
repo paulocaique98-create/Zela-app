@@ -144,7 +144,7 @@ async function loadGestao(schoolId, school) {
       { label: 'Alunos ativos', value: active.length, hint: max ? `Ocupação ${pct(active.length, max)} de ${max}` : '' },
       { label: 'Saídas e trancamentos', value: all.length - active.length, tone: 'warn' },
       { label: 'Famílias', value: count('family') },
-      { label: 'Equipe', value: count('admin') + count('teacher'), hint: `${count('teacher')} professora${count('teacher') !== 1 ? 's' : ''}, ${count('admin')} administrativo` },
+      { label: 'Equipe', value: count('recepcao') + count('teacher'), hint: `${count('teacher')} professora${count('teacher') !== 1 ? 's' : ''}, ${count('recepcao')} administrativo` },
     ],
     table: {
       title: `Alunos por turma${year.data ? `, ano letivo ${year.data.name}` : ''}`,

@@ -16,7 +16,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
 
   it('admin da própria escola transfere o aluno; log de auditoria é gravado com motivo', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const studentId = await setupStudent(schoolId);
     try {
       const { error } = await admin.client.rpc('transfer_student_class', { p_student_id: studentId, p_new_turma: 'Kids I', p_reason: 'Progressão de idade' });
@@ -40,7 +40,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
   it('CRÍTICO — admin de outra escola não consegue transferir aluno alheio', async () => {
     const schoolA = await createTestSchool();
     const schoolB = await createTestSchool();
-    const adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    const adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     const studentId = await setupStudent(schoolA);
     try {
       const { error } = await adminB.client.rpc('transfer_student_class', { p_student_id: studentId, p_new_turma: 'Kids I' });
@@ -86,7 +86,7 @@ runIf('Transferência de turma (transfer_student_class)', () => {
 
   it('transferir pra mesma turma retorna erro claro (não permite "transferência" nula)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const studentId = await setupStudent(schoolId);
     try {
       const { error } = await admin.client.rpc('transfer_student_class', { p_student_id: studentId, p_new_turma: 'Nido' });
@@ -101,8 +101,8 @@ runIf('Transferência de turma (transfer_student_class)', () => {
   it('admin lê o histórico de transferências da própria escola; admin de outra escola não lê', async () => {
     const schoolA = await createTestSchool();
     const schoolB = await createTestSchool();
-    const adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
-    const adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    const adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
+    const adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     const studentId = await setupStudent(schoolA);
     await adminA.client.rpc('transfer_student_class', { p_student_id: studentId, p_new_turma: 'Kids I' });
     try {

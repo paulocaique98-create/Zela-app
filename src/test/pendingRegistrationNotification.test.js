@@ -12,7 +12,7 @@ runIf('Notificação de admin — cadastro pendente (self-register-family -> not
   it('admin recebe notificação in-app ao autocadastro de um responsável, consegue marcar como lida, e usePendingUsersCount reflete a contagem', async () => {
     const school = await createTestSchool();
     const { data: schoolRow } = await adminClient.from('schools').select('school_code').eq('id', school).single();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     // Hierarquia (27/09/2026): quem aprova cadastros é a Gestão, que também
     // precisa ser avisada (bug de 28/09/2026: só contas 'admin' recebiam).
     const gestao = await createTestUser({ role: 'gestao', schoolId: school });
@@ -68,8 +68,8 @@ runIf('Notificação de admin — cadastro pendente (self-register-family -> not
   it('CRÍTICO — admin de outra escola não vê a notificação nem conta o pendente de escola alheia', async () => {
     const schoolA = await createTestSchool();
     const schoolB = await createTestSchool();
-    const adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
-    const adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    const adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
+    const adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     const familyPending = await createTestUser({ role: 'family', schoolId: schoolA, extra: { status: 'pending' } });
 
     // Notificação simulada diretamente (sem passar pela Edge Function de

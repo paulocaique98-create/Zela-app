@@ -76,7 +76,7 @@ runIf('Correção de presença · cobrança calculada no servidor', () => {
 
   it('tela diz "não aumenta", mas a correção aumenta a cobrança: vai pra aprovação, não aplica na hora', async () => {
     const s = await setup();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     const original = new Date('2026-09-21T17:00:00-03:00').toISOString();
     const { data: log } = await adminClient.from('attendance_logs')
       .insert({ school_id: s.schoolId, student_id: s.student.id, family_id: s.family.id, event_type: 'exit', event_time: original })
@@ -102,7 +102,7 @@ runIf('Correção de presença · cobrança calculada no servidor', () => {
 
   it('correção que realmente não aumenta a cobrança continua sendo aplicada na hora', async () => {
     const s = await setup();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     const { data: log } = await adminClient.from('attendance_logs')
       .insert({ school_id: s.schoolId, student_id: s.student.id, family_id: s.family.id, event_type: 'exit', event_time: new Date('2026-09-21T19:00:00-03:00').toISOString() })
       .select('id').single();
@@ -127,7 +127,7 @@ runIf('Correção de presença · cobrança calculada no servidor', () => {
 
   it('lançamento manual de saída com hora extra vai pra aprovação mesmo com a tela dizendo o contrário', async () => {
     const s = await setup();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     try {
       const { data, error } = await admin.client.rpc('request_attendance_manual_entry', {
         p_student_id: s.student.id, p_event_type: 'exit', p_new_event_time: new Date('2026-09-21T19:30:00-03:00').toISOString(),

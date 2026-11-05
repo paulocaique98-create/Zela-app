@@ -36,7 +36,7 @@ async function callFn(name, token) {
 runIf('Funções financeiras · exclusivas da Gestão', () => {
   it.each(FINANCIAL_FUNCTIONS)('%s: admin recebe acesso negado; Gestão passa da checagem de permissão', async (name) => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       const asAdmin = await callFn(name, admin.token);

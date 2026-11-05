@@ -55,7 +55,7 @@ export function buildPendencias(data, today, opcoes = {}) {
     rows.push({
       key: `exclusao-${r.id}`, area: 'lgpd', priority: 'urgente', icon: 'exclusao',
       title: `Pedido de exclusão de conta · ${r.user_name}`,
-      meta: `${r.user_role === 'teacher' ? 'Professora' : r.user_role === 'admin' ? 'Administrativo' : 'Responsável'} · pediu em ${formatDateBR(r.requested_at)}`,
+      meta: `${r.user_role === 'teacher' ? 'Professora' : (r.user_role === 'recepcao' || r.user_role === 'admin') ? 'Administrativo' : 'Responsável'} · pediu em ${formatDateBR(r.requested_at)}`,
       badge: restantes >= 0 ? `Faltam ${plural(restantes, 'dia', 'dias')}` : `Prazo vencido há ${plural(-restantes, 'dia', 'dias')}`,
       deadlineDays: restantes,
       action: 'Responder', tab: 'cadastros-exclusoes',

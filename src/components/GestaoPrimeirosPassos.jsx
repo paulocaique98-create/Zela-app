@@ -6,7 +6,7 @@ import { calcularOnboarding } from '../lib/onboardingChecklist';
 import { chaveLigada } from '../lib/perfisGestao';
 
 // Perfis da equipe que contam no passo "Convidar a equipe".
-const PAPEIS_EQUIPE = ['admin', 'teacher', 'financeiro', 'gestao_pedagogica'];
+const PAPEIS_EQUIPE = ['recepcao', 'teacher', 'financeiro', 'gestao_pedagogica'];
 
 // Primeiros passos da escola nova (PLANO_VALORIZACAO_ZELA.md, 1.1). Só
 // leitura: conta o que já existe e cada passo abre a tela que já faz aquilo.

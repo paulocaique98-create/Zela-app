@@ -28,7 +28,7 @@ async function loginAndResolveRole(client, userId) {
 runIf('Resolução de role no login (auth + public.users)', () => {
   it('admin: role resolvida no login é exatamente "admin", vinda de public.users', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     try {
       const { users, error } = await loginAndResolveRole(admin.client, admin.id);
       expect(error).toBeNull();

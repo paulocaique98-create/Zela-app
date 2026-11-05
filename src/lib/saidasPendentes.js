@@ -3,7 +3,7 @@ import { logAction } from './auditLog';
 
 // Quem pode LANÇAR a saída (o servidor confere de novo). Professora só vê.
 export function podeLancarSaida(role) {
-  return ['admin', 'gestao', 'gestao_pedagogica'].includes(role);
+  return ['recepcao', 'gestao', 'gestao_pedagogica'].includes(role);
 }
 
 // "YYYY-MM-DD" de ontem no fuso de Brasília (dia padrão da tela).

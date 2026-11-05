@@ -23,7 +23,7 @@ async function callCreateAdminUser(token, body) {
 runIf('create-admin-user — role deve aceitar admin/teacher/family, nunca developer', () => {
   it('cadastra role=family com sucesso (regressão do bug real em produção)', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     let createdId = null;
     try {
       const { status, body } = await callCreateAdminUser(admin.token, {
@@ -45,7 +45,7 @@ runIf('create-admin-user — role deve aceitar admin/teacher/family, nunca devel
 
   it('cadastra role=teacher com sucesso', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     let createdId = null;
     try {
       const { status, body } = await callCreateAdminUser(admin.token, {
@@ -67,7 +67,7 @@ runIf('create-admin-user — role deve aceitar admin/teacher/family, nunca devel
 
   it('continua bloqueando role=developer (regressão do achado de segurança da Fase 17)', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     try {
       const { status, body } = await callCreateAdminUser(admin.token, {
         email: `vitest.hacker.${Date.now()}@zela-teste.com`,
@@ -107,7 +107,7 @@ runIf('create-admin-user — role deve aceitar admin/teacher/family, nunca devel
 
   it('hierarquia: nem o admin principal cria conta da Gestão (só o suporte)', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: true } });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: true } });
     try {
       const { status, body } = await callCreateAdminUser(admin.token, {
         email: `vitest.gestao.neg.${Date.now()}@zela-teste.com`,

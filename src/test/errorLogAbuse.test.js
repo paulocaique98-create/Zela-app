@@ -58,7 +58,7 @@ runIf('log_error · sem alerta crítico falso nem escola forjada', () => {
 
   it('equipe da escola (admin) continua podendo registrar "critical" (falha ao gravar presença no check-in)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data: id } = await admin.client.rpc('log_error', {
         p_source: 'business', p_category: 'vitest', p_message: uniqueMsg('admin'), p_severity: 'critical',

@@ -23,7 +23,7 @@ const email = (tag) => `vitest.h23.${tag}.${Date.now()}${Math.random().toString(
 runIf('Hierarquia · Fase 2: criado pelo admin nasce pendente', () => {
   it('professor criado pelo admin fica pendente; criado pela Gestão já nasce ativo', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const created = [];
     try {
@@ -46,7 +46,7 @@ runIf('Hierarquia · Fase 2: criado pelo admin nasce pendente', () => {
 
   it('2º responsável criado pelo admin fica pendente', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const { data: student } = await adminClient.from('students').insert({ school_id: schoolId, name: 'Vitest H23 Aluno', turma: 'Nido' }).select('id').single();
     let createdId = null;
     try {
@@ -71,18 +71,18 @@ runIf('Hierarquia · Fase 2: criado pelo admin nasce pendente', () => {
 runIf('Hierarquia · Fase 3: poderes da Gestão, não do admin', () => {
   it('admin (nem o antigo "admin principal") não cria admin nem gerencia turmas; a Gestão sim', async () => {
     const schoolId = await createTestSchool();
-    const primary = await createTestUser({ role: 'admin', schoolId, extra: { is_primary_admin: true } });
+    const primary = await createTestUser({ role: 'recepcao', schoolId, extra: { is_primary_admin: true } });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     let createdId = null;
     try {
-      const asPrimary = await callFn('create-admin-user', primary.token, { email: email('adm'), password: 'SenhaTeste123!', name: 'Admin Negado', role: 'admin', school_id: schoolId });
+      const asPrimary = await callFn('create-admin-user', primary.token, { email: email('adm'), password: 'SenhaTeste123!', name: 'Admin Negado', role: 'recepcao', school_id: schoolId });
       expect(asPrimary.status).not.toBe(200);
       expect(asPrimary.body.error).toMatch(/Gestão/);
 
       const { error: turmasErr } = await primary.client.rpc('update_school_turmas', { p_turmas: ['Nido', 'Kids I'] });
       expect(turmasErr?.message).toMatch(/Gestão/);
 
-      const asGestao = await callFn('create-admin-user', gestao.token, { email: email('adm2'), password: 'SenhaTeste123!', name: 'Admin Criado', role: 'admin', school_id: schoolId });
+      const asGestao = await callFn('create-admin-user', gestao.token, { email: email('adm2'), password: 'SenhaTeste123!', name: 'Admin Criado', role: 'recepcao', school_id: schoolId });
       expect(asGestao.status).toBe(200);
       createdId = asGestao.body.id;
     } finally {
@@ -95,8 +95,8 @@ runIf('Hierarquia · Fase 3: poderes da Gestão, não do admin', () => {
 
   it('antigo "admin principal" não libera mais a visibilidade total do chat; a Gestão libera', async () => {
     const schoolId = await createTestSchool();
-    const primary = await createTestUser({ role: 'admin', schoolId, extra: { is_primary_admin: true } });
-    const other = await createTestUser({ role: 'admin', schoolId });
+    const primary = await createTestUser({ role: 'recepcao', schoolId, extra: { is_primary_admin: true } });
+    const other = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       // A Recepção nem enxerga a linha para editar (RLS): erro ou 0 linhas, e o valor não muda.

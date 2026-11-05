@@ -18,7 +18,7 @@ async function pagadorDaCobranca(studentId) {
 runIf('Responsável financeiro por aluno', () => {
   it('cada irmão com seu pagador; exige CPF, vínculo e nenhum contrato em andamento; nunca dois financeiros', async () => {
     const schoolId = await createTestSchool();
-    const recepcao = await createTestUser({ role: 'admin', schoolId });
+    const recepcao = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const pai = await createTestUser({ role: 'family', schoolId, extra: { doc_number: '11122233344' } });
     const mae = await createTestUser({ role: 'family', schoolId });

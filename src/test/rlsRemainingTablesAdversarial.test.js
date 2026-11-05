@@ -13,7 +13,7 @@ runIf('Isolamento multi-tenant — comunicados e mural_fotos', () => {
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest Comm A');
     schoolB = await createTestSchool('Vitest Comm B');
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     familyA = await createTestUser({ role: 'family', schoolId: schoolA });
     familyB = await createTestUser({ role: 'family', schoolId: schoolB });
 
@@ -83,7 +83,7 @@ runIf('matricula_solicitacoes — isolamento e integridade pós-decisão do admi
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest Matr A');
     schoolB = await createTestSchool('Vitest Matr B');
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     familyA = await createTestUser({ role: 'family', schoolId: schoolA });
     familyB = await createTestUser({ role: 'family', schoolId: schoolB });
   });
