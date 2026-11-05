@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { sendEmail } from '../_shared/resend.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
@@ -89,7 +90,7 @@ serve(async (req) => {
     // Gestão incluída (27/09/2026): a aprovação de matrícula com 2º
     // responsável roda no Portal da Gestão desde a Fase 9 da Secretaria e
     // falhava aqui por falta desse papel.
-    if (callerData.role !== 'developer' && callerData.role !== 'admin' && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica' && callerData.role !== 'family') {
+    if (callerData.role !== 'developer' && !ehRecepcao(callerData.role) && callerData.role !== 'gestao' && callerData.role !== 'gestao_pedagogica' && callerData.role !== 'family') {
       throw new Error('Acesso negado: você não tem permissão para criar guardiões')
     }
 
@@ -148,7 +149,7 @@ serve(async (req) => {
         must_change_password: must_change_password === true,
         // Hierarquia (Fase 2): responsável criado pelo admin nasce pendente
         // e só a Gestão aprova.
-        ...(callerData.role === 'admin' ? { status: 'pending' } : {}),
+        ...(ehRecepcao(callerData.role) ? { status: 'pending' } : {}),
       })
 
     if (publicUserError) {

@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
 
@@ -109,7 +110,7 @@ serve(async (req) => {
       if (targetData.role === 'gestao' || targetData.role === 'developer') {
         throw new Error('Acesso negado: apenas o suporte pode excluir a conta da Gestão.')
       }
-      if (targetData.role === 'admin' && callerData.role !== 'gestao') {
+      if (ehRecepcao(targetData.role) && callerData.role !== 'gestao') {
         throw new Error('Acesso negado: apenas a Gestão pode excluir contas de administrador.')
       }
     }

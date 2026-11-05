@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
@@ -52,7 +53,7 @@ serve(async (req) => {
     // Quem opera o Autoatendimento (kiosk embutido no painel, ou totem físico
     // logado como admin) é sempre um admin da escola — mesma checagem de
     // notify-families.
-    if (dbCallerError || !callerData || callerData.role !== 'admin') {
+    if (dbCallerError || !callerData || !ehRecepcao(callerData.role)) {
       throw new Error('Acesso negado: apenas administradores podem disparar esta notificação.');
     }
     const schoolId = callerData.school_id;

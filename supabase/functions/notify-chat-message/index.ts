@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from '../_shared/logEdgeError.ts';
 import { sendPush } from '../_shared/push.ts';
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
@@ -56,7 +57,7 @@ serve(async (req) => {
     // Staff da escola (admin, gestão pedagógica, gestão): decidido pela matriz de
     // chat_acesso_setor, a mesma das policies. Só responde quem tem "responder".
     let isStaffOwner = false;
-    if (!isSuporteZela && ['admin', 'gestao_pedagogica', 'gestao'].includes(callerData.role)
+    if (!isSuporteZela && ['admin', 'recepcao', 'gestao_pedagogica', 'gestao'].includes(callerData.role)
         && thread.school_id === callerData.school_id) {
       const { data: pode } = await adminClient.rpc('chat_pode_user', {
         p_user: caller.id, p_school: thread.school_id, p_setor: thread.setor, p_acao: 'responder',

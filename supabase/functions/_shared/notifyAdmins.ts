@@ -23,7 +23,7 @@ export async function notifyAdmins(adminClient: any, params: {
   // Padrão: Recepção, Gestão e Coordenação/Direção. Passe uma lista para restringir.
   roles?: string[];
 }) {
-  const { schoolId, type, message, url, pushTitle, pushBody, pushTag, roles = ['admin', 'gestao', 'gestao_pedagogica'] } = params;
+  const { schoolId, type, message, url, pushTitle, pushBody, pushTag, roles = ['admin', 'recepcao', 'gestao', 'gestao_pedagogica'] } = params;
 
   const { data: admins, error: adminsError } = await adminClient
     .from('users')
