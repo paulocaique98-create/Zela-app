@@ -66,7 +66,7 @@ export function useRealtimeMonitor({ currentUser, setStudents, adminTab }) {
   // antes — nunca em re-broadcast do mesmo status. Reaproveitado tanto pelo
   // evento Realtime quanto pela reconciliação por polling.
   const maybeAlert = useCallback((row, previousStatus) => {
-    if (currentUserRef.current?.role !== 'admin') return;
+    if (currentUserRef.current?.role !== 'recepcao') return;
     if (adminTabRef.current === 'kiosk') return; // não se auto-alerta no próprio totem
     if (row.status !== 'pending_entry' && row.status !== 'pending_exit') return;
     if (previousStatus === row.status) return;

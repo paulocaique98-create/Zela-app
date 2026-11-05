@@ -18,7 +18,7 @@ async function setupStudent(schoolId, extra = {}) {
 runIf('Secretaria — Alunos (students.enrollment_status / UPDATE em paralelo)', () => {
   it('a Gestão edita o cadastro do aluno; a Recepção (admin) não (somente consulta, 28/10/2026)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const studentId = await setupStudent(schoolId);
     try {
@@ -74,7 +74,7 @@ runIf('Secretaria — Matrículas (matricula_solicitacoes cortado pra gestao na 
 
   it('admin NÃO consegue mais decidir (aprovar/rejeitar/pedir ajuste) — só gestao', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     const solicitacaoId = await setupSolicitacao(schoolId, family.id);
@@ -101,7 +101,7 @@ runIf('Secretaria — Matrículas (matricula_solicitacoes cortado pra gestao na 
 
   it('approve_atualizacao_cadastral: admin recebe "Permissão negada", gestao aprova (checagem de role trocada na Fase 9)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     const { data: solicitacao, error: setupErr } = await adminClient.from('matricula_solicitacoes').insert({
@@ -134,7 +134,7 @@ runIf('Secretaria — Matrículas (matricula_solicitacoes cortado pra gestao na 
 
   it('admin continua lendo (nunca perde leitura) as solicitações da escola', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     const solicitacaoId = await setupSolicitacao(schoolId, family.id);
     try {
@@ -205,7 +205,7 @@ runIf('Secretaria — Transferência externa (transfer_student_to_external_schoo
 
   it('admin NÃO consegue transferir pra outra escola — só gestao (cortado na Fase 9)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const studentId = await setupStudent(schoolId);
     try {
       const { error } = await admin.client.rpc('transfer_student_to_external_school', {
@@ -227,7 +227,7 @@ runIf('Secretaria — Transferência externa (transfer_student_to_external_schoo
 runIf('Secretaria — Documentos do aluno (student_documents, exclusivo gestao)', () => {
   it('gestao insere e lê documento; admin lê mas não insere (leitura nunca é cortada, escrita é exclusiva)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     const studentId = await setupStudent(schoolId);
     let docId;

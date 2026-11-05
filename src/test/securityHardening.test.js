@@ -135,7 +135,7 @@ runIf('Segurança · funções internas de presença bloqueadas pra quem não te
 runIf('Segurança · fluxo legítimo de correção de presença continua funcionando', () => {
   it('Recepção (admin) solicita correção que NÃO aumenta cobrança: aplica na hora', async () => {
     const s = await setupScenario();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     try {
       const newTime = plusMinutes(YESTERDAY_10H, -30);
       const { data, error } = await admin.client.rpc('request_attendance_correction', {
@@ -152,7 +152,7 @@ runIf('Segurança · fluxo legítimo de correção de presença continua funcion
 
   it('correção que aumenta cobrança fica pendente e só a Gestão aprova (admin não aprova)', async () => {
     const s = await setupScenario();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId: s.schoolId });
     try {
       const newTime = plusMinutes(YESTERDAY_10H, 45);
@@ -178,7 +178,7 @@ runIf('Segurança · fluxo legítimo de correção de presença continua funcion
   it('admin de outra escola não corrige registro alheio', async () => {
     const s = await setupScenario();
     const otherSchool = await createTestSchool();
-    const otherAdmin = await createTestUser({ role: 'admin', schoolId: otherSchool });
+    const otherAdmin = await createTestUser({ role: 'recepcao', schoolId: otherSchool });
     try {
       const { error } = await otherAdmin.client.rpc('request_attendance_correction', {
         p_log_id: s.logId, p_new_event_time: iso(plusMinutes(YESTERDAY_10H, -30)), p_reason_code: 'x',
@@ -194,7 +194,7 @@ runIf('Segurança · fluxo legítimo de correção de presença continua funcion
 
   it('Recepção lança presença manual que não aumenta cobrança: cria o registro', async () => {
     const s = await setupScenario();
-    const admin = await createTestUser({ role: 'admin', schoolId: s.schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: s.schoolId });
     try {
       const { data, error } = await admin.client.rpc('request_attendance_manual_entry', {
         p_student_id: s.studentId, p_event_type: 'entry', p_new_event_time: iso(plusMinutes(YESTERDAY_10H, -180)),
@@ -429,7 +429,7 @@ runIf('Segurança · item 11: cadastro pendente não tem acesso até a escola ap
   it('família pendente fica sem papel no banco; ao ser aprovada, ganha o papel family', async () => {
     const schoolId = await createTestSchool();
     const family = await createTestUser({ role: 'family', schoolId, extra: { status: 'pending' } });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data: pendingRole } = await family.client.rpc('get_my_role');
       expect(pendingRole).toBeNull();
@@ -541,7 +541,7 @@ runIf('Segurança · item 7: biometria facial fora do alcance do professor', () 
     const family = await createTestUser({ role: 'family', schoolId });
     const teacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'ativo', turmas: ['Nido'] } });
     const otherTeacher = await createTestUser({ role: 'teacher', schoolId, extra: { teacher_status: 'ativo', turmas: ['Kids II'] } });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const { data: student } = await adminClient.from('students')
       .insert({ school_id: schoolId, family_id: family.id, name: 'Vitest Biometria Aluno', turma: 'Nido' }).select('id').single();
     const { data: person, error } = await adminClient.from('authorized_persons')

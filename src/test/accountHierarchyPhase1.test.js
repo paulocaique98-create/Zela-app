@@ -23,7 +23,7 @@ async function setup() {
   const schoolId = await createTestSchool();
   await adminClient.from('schools').update({ turmas: ['Nido'] }).eq('id', schoolId);
   const gestao = await createTestUser({ role: 'gestao', schoolId });
-  const admin = await createTestUser({ role: 'admin', schoolId });
+  const admin = await createTestUser({ role: 'recepcao', schoolId });
   return { schoolId, gestao, admin, users: [gestao, admin] };
 }
 async function teardown(s, extraIds = []) {
@@ -76,7 +76,7 @@ runIf('Hierarquia · Fase 1: Gestão com os poderes do admin principal', () => {
     let createdId = null;
     try {
       const { status, body } = await callFn('create-admin-user', s.gestao.token, {
-        email: email('novoadmin'), password: 'SenhaTeste123!', name: 'Admin Criado pela Gestão', role: 'admin', school_id: otherSchool,
+        email: email('novoadmin'), password: 'SenhaTeste123!', name: 'Admin Criado pela Gestão', role: 'recepcao', school_id: otherSchool,
       });
       expect(status).toBe(200);
       expect(body.school_id).toBe(s.schoolId);
@@ -98,7 +98,7 @@ runIf('Hierarquia · Fase 1: Gestão com os poderes do admin principal', () => {
 
   it('Gestão corrige o e-mail do admin principal; admin comum não', async () => {
     const s = await setup();
-    const primary = await createTestUser({ role: 'admin', schoolId: s.schoolId, extra: { is_primary_admin: true } });
+    const primary = await createTestUser({ role: 'recepcao', schoolId: s.schoolId, extra: { is_primary_admin: true } });
     s.users.push(primary);
     try {
       const asAdmin = await callFn('update-user-email', s.admin.token, { user_id: primary.id, new_email: email('x') });

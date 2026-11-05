@@ -15,7 +15,7 @@ runIf('historico escolar (RLS e funções)', () => {
     await adminClient.from('schools').update({ features_enabled: { historico_escolar: true } }).eq('id', schoolA);
     gestao = await createTestUser({ role: 'gestao', schoolId: schoolA });
     coordenacao = await createTestUser({ role: 'gestao_pedagogica', schoolId: schoolA });
-    recepcao = await createTestUser({ role: 'admin', schoolId: schoolA });
+    recepcao = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     familia = await createTestUser({ role: 'family', schoolId: schoolA });
     gestaoB = await createTestUser({ role: 'gestao', schoolId: schoolB });
     await adminClient.from('schools').update({ features_enabled: { historico_escolar: true } }).eq('id', schoolB);
@@ -60,7 +60,7 @@ runIf('historico escolar (RLS e funções)', () => {
   it('Recepção só emite com a permissão historico.emitir', async () => {
     expect((await emitir(recepcao)).error).not.toBeNull();
     await adminClient.from('school_role_permissions')
-      .insert({ school_id: schoolA, role: 'admin', permission: 'historico.emitir', granted: true });
+      .insert({ school_id: schoolA, role: 'recepcao', permission: 'historico.emitir', granted: true });
     expect((await emitir(recepcao)).error).toBeNull();
   });
 

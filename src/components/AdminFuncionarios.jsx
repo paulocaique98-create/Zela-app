@@ -22,15 +22,15 @@ const CARGO_PARA_ACESSO = {
   // (Gestão Pedagógica, 29/09/2026).
   'Coordenadora': { role: 'gestao_pedagogica', departamento: 'coordenacao' },
   'Diretora': { role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica' },
-  'Administradora': { role: 'admin', departamento: 'administrativo' },
-  'Recepcionista': { role: 'admin', departamento: 'recepcao' },
+  'Administradora': { role: 'recepcao', departamento: 'administrativo' },
+  'Recepcionista': { role: 'recepcao', departamento: 'recepcao' },
   // Marketing (05/11/2026): lista de alunos, calendário, comunicados e mural.
   'Marketing': { role: 'marketing' },
 };
 
-const ACCESS_ROLE_LABEL = { admin: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção', marketing: 'Marketing' };
+const ACCESS_ROLE_LABEL = { recepcao: 'Recepção', teacher: 'Professor', gestao: 'Gestão', gestao_pedagogica: 'Coordenação/Direção', marketing: 'Marketing' };
 const ACCESS_ROLE_STYLE = {
-  admin: 'bg-brass-50 text-warning border-warning/40',
+  recepcao: 'bg-brass-50 text-warning border-warning/40',
   gestao_pedagogica: 'bg-primary/10 text-primary border-primary/40',
   teacher: 'bg-success/10 text-success border-success/40',
   gestao: 'bg-primary/10 text-primary border-primary/20',
@@ -141,7 +141,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool, modo = '
         .from('users')
         .select('*')
         .eq('school_id', schoolId)
-        .in('role', ['admin', 'teacher', 'gestao', 'gestao_pedagogica'])
+        .in('role', ['recepcao', 'teacher', 'gestao', 'gestao_pedagogica'])
         .order('name', { ascending: true });
       if (fetchError) throw fetchError;
       setAccessUsers(data || []);
@@ -552,7 +552,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool, modo = '
                         </span>
                       </div>
                       <p className="text-on-surface-variant/70 text-xs truncate mt-0.5">{u.email}</p>
-                      {['admin', 'gestao_pedagogica'].includes(u.role) && u.departamento && (
+                      {['recepcao', 'gestao_pedagogica'].includes(u.role) && u.departamento && (
                         <p className="text-on-surface-variant text-xs mt-1">{DEPARTAMENTOS_LABEL[u.departamento] || u.departamento}</p>
                       )}
                     </div>
@@ -577,7 +577,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool, modo = '
                     </div>
                   </div>
 
-                  {isGestao && u.role === 'admin' && ['coordenacao', 'diretoria_pedagogica'].includes(u.departamento) && (
+                  {isGestao && u.role === 'recepcao' && ['coordenacao', 'diretoria_pedagogica'].includes(u.departamento) && (
                     <button
                       onClick={() => mudarTipoDeAcesso(u, 'gestao_pedagogica')}
                       disabled={mudandoTipoId === u.id}
@@ -588,7 +588,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool, modo = '
                   )}
                   {isGestao && u.role === 'gestao_pedagogica' && (
                     <button
-                      onClick={() => mudarTipoDeAcesso(u, 'admin')}
+                      onClick={() => mudarTipoDeAcesso(u, 'recepcao')}
                       disabled={mudandoTipoId === u.id}
                       className="mt-3 w-full py-1.5 bg-white text-on-surface-variant hover:bg-surface-container-low border border-outline-variant rounded-lg transition font-bold text-xs disabled:opacity-50"
                     >

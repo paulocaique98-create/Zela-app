@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { podeNoSetor, setoresVisiveis, matrizDeAcesso } from '../lib/chatAcesso';
 
-const recepcao = { role: 'admin', departamento: 'recepcao' };
-const coordenacao = { role: 'admin', departamento: 'coordenacao' };
+const recepcao = { role: 'recepcao', departamento: 'recepcao' };
+const coordenacao = { role: 'recepcao', departamento: 'coordenacao' };
 const gestao = { role: 'gestao', departamento: null };
 
 describe('acesso ao chat por setor (padrão)', () => {
@@ -17,7 +17,7 @@ describe('acesso ao chat por setor (padrão)', () => {
     expect(setoresVisiveis(coordenacao, []).map(s => s.value)).toEqual(['coordenacao']);
   });
   it('visibilidade total continua vendo tudo', () => {
-    expect(setoresVisiveis({ role: 'admin', departamento: 'recepcao', chat_visibilidade_total: true }, [])).toHaveLength(4);
+    expect(setoresVisiveis({ role: 'recepcao', departamento: 'recepcao', chat_visibilidade_total: true }, [])).toHaveLength(4);
   });
   it('suporte_zela nunca é setor da escola', () => {
     expect(podeNoSetor(gestao, [], 'suporte_zela', 'ver')).toBe(false);

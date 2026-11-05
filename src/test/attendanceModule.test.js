@@ -12,7 +12,7 @@ runIf('Frequência formal (class_attendance) — permissões e isolamento', () =
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest Freq A');
     schoolB = await createTestSchool('Vitest Freq B');
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     teacherA = await createTestUser({ role: 'teacher', schoolId: schoolA, extra: { teacher_status: 'ativo', turmas: ['Infantil I'] } });
     teacherOutraTurma = await createTestUser({ role: 'teacher', schoolId: schoolA, extra: { teacher_status: 'ativo', turmas: ['Infantil II'] } });
 
@@ -73,7 +73,7 @@ runIf('Frequência formal (class_attendance) — permissões e isolamento', () =
   });
 
   it('admin de outra escola não lê nem escreve frequência da escola A', async () => {
-    const adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    const adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     try {
       const { data } = await adminB.client.from('class_attendance').select('id').eq('student_id', studentA);
       expect(data).toEqual([]);

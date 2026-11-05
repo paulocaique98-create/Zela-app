@@ -21,7 +21,7 @@ runIf('Isolamento multi-tenant — chat', () => {
     schoolB = await createTestSchool('Vitest Chat B');
     familyA = await createTestUser({ role: 'family', schoolId: schoolA });
     familyB = await createTestUser({ role: 'family', schoolId: schoolB });
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA, extra: { departamento: 'administrativo' } });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA, extra: { departamento: 'administrativo' } });
 
     const { data: thread, error } = await adminClient
       .from('chat_threads')

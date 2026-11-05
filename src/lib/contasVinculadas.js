@@ -19,7 +19,7 @@ export function rotuloDaConta(conta) {
   if (!conta) return '';
   if (conta.role === 'gestao_pedagogica') return conta.departamento === 'diretoria_pedagogica' ? 'Direção' : 'Coordenação';
   // Equipe da Recepção: o nome do setor do cadastro (Recepção, Administrativo...).
-  if (conta.role === 'admin') return SETORES_CHAT.find(s => s.value === conta.departamento && s.value !== 'suporte_zela')?.label || 'Recepção';
+  if (conta.role === 'recepcao') return SETORES_CHAT.find(s => s.value === conta.departamento && s.value !== 'suporte_zela')?.label || 'Recepção';
   return ROTULOS[conta.role] || 'Conta';
 }
 
@@ -38,7 +38,7 @@ export function totalNaoLidas(contas) {
 // veem, para poder vincular. A Recepção (admin) e o suporte nunca: a conta da
 // Recepção só enxerga a Recepção (10/10/2026).
 export function mostrarBotaoDeContas(role, contas) {
-  if (!role || role === 'developer' || role === 'admin') return false;
+  if (!role || role === 'developer' || role === 'recepcao') return false;
   if (role === 'family') return (contas || []).some(c => !c.atual);
   return true;
 }

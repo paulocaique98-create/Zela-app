@@ -15,12 +15,12 @@ runIf('Recepção só visualiza', () => {
     ctx.schoolId = await createTestSchool();
     ctx.outraEscola = await createTestSchool();
     await adminClient.from('schools').update({ features_enabled: { marketing: true } }).eq('id', ctx.schoolId);
-    ctx.recepcao = await createTestUser({ role: 'admin', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
+    ctx.recepcao = await createTestUser({ role: 'recepcao', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
     ctx.gestao = await createTestUser({ role: 'gestao', schoolId: ctx.schoolId });
     ctx.coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: ctx.schoolId });
     ctx.mkt = await createTestUser({ role: 'marketing', schoolId: ctx.schoolId });
     ctx.familia = await createTestUser({ role: 'family', schoolId: ctx.schoolId });
-    ctx.recepcaoOutra = await createTestUser({ role: 'admin', schoolId: ctx.outraEscola });
+    ctx.recepcaoOutra = await createTestUser({ role: 'recepcao', schoolId: ctx.outraEscola });
 
     const uid = ctx.gestao.id;
     const ins = async (t, row) => {

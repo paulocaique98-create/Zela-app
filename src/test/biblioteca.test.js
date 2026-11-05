@@ -14,7 +14,7 @@ async function montaCenario({ modulo = true } = {}) {
   }
   const gestao = await createTestUser({ role: 'gestao', schoolId: schoolA });
   const coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: schoolA });
-  const recepcao = await createTestUser({ role: 'admin', schoolId: schoolA });
+  const recepcao = await createTestUser({ role: 'recepcao', schoolId: schoolA });
   const prof = await createTestUser({ role: 'teacher', schoolId: schoolA });
   const familia = await createTestUser({ role: 'family', schoolId: schoolA });
   const outraFamilia = await createTestUser({ role: 'family', schoolId: schoolA });
@@ -89,7 +89,7 @@ runIf('Biblioteca · RLS e RPCs', () => {
     const c = await montaCenario();
     try {
       await adminClient.from('school_role_permissions').insert({
-        school_id: c.schoolA, role: 'admin', permission: 'biblioteca.gerenciar', granted: false,
+        school_id: c.schoolA, role: 'recepcao', permission: 'biblioteca.gerenciar', granted: false,
       });
       const { data } = await c.recepcao.client.from('library_items').select('id');
       expect(data).toEqual([]);

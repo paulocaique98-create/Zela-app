@@ -53,7 +53,7 @@ export default function GestaoBiblioteca({ currentUser, aba: abaFixa }) {
     supabase.from('students').select('id, name, turma').eq('school_id', schoolId).order('name').limit(3000)
       .then(({ data }) => setAlunos(data || []));
     supabase.from('users').select('id, name, role').eq('school_id', schoolId)
-      .in('role', ['admin', 'teacher', 'gestao', 'gestao_pedagogica', 'financeiro']).order('name').limit(500)
+      .in('role', ['recepcao', 'teacher', 'gestao', 'gestao_pedagogica', 'financeiro']).order('name').limit(500)
       .then(({ data }) => setEquipe(data || []));
   }, [aba, schoolId, alunos.length]);
 

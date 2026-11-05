@@ -11,7 +11,7 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
   it('Gestão (hierarquia 27/09/2026) configura; admin comum e família são bloqueados (nada muda)', async () => {
     const school = await createTestSchool();
     const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
-    const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
+    const regularAdmin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: false } });
     const family = await createTestUser({ role: 'family', schoolId: school });
     const { data: student } = await adminClient.from('students').insert({ name: 'Aluno Vitest', school_id: school, family_id: family.id }).select('id').single();
 
@@ -72,7 +72,7 @@ runIf('Horários personalizados por dia (students.weekly_schedule)', () => {
 
   it('bloqueia INSERT de aluno já com weekly_schedule preenchido por quem não é admin principal', async () => {
     const school = await createTestSchool();
-    const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
+    const regularAdmin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: false } });
     const family = await createTestUser({ role: 'family', schoolId: school });
 
     try {
@@ -90,7 +90,7 @@ runIf('Config de cobrança por escola (schools.billing_config)', () => {
   it('Gestão (hierarquia 27/09/2026) configura; admin comum é bloqueado', async () => {
     const school = await createTestSchool();
     const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
-    const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
+    const regularAdmin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: false } });
 
     try {
       let r = await primaryAdmin.client.from('schools').update({ billing_config: { early_checkin_tolerance_min: 10, late_checkout_tolerance_min: 20, hourly_rate_cents: 4000, charge_early_checkin: false } }).eq('id', school).select();
