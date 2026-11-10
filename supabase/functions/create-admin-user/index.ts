@@ -30,7 +30,15 @@ serve(async (req) => {
       .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
-    await exigirEscolaLiberada(supabaseClient, userData);
+    // escola_liberada só tem EXECUTE para service_role (migration 20261210120000);
+    // chamar com o client do usuário falha sempre. O caller já foi validado pelo JWT acima.
+    await exigirEscolaLiberada(
+      createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      ),
+      userData,
+    );
 
     // Hierarquia de contas (27/09/2026): a Gestão é o topo da escola e cria
     // admins, professores e responsáveis (Fase 1, em paralelo com o admin).
