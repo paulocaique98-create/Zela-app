@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, KeyRound, Power, Copy, Check } from 'lucide-react';
+import { Plus, RefreshCw, KeyRound, Power, Copy, Check, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import {
   conexaoDoDispositivo, tempoDesde, validarNovoDispositivo, ROTULO_CONEXAO, ROTULO_STATUS, MODELOS_DISPOSITIVO,
@@ -7,6 +7,7 @@ import {
 import {
   PageShell, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable, EmptyState, Loading, Notice, Modal,
 } from './GestaoShared';
+import GestaoDispositivoPessoas from './GestaoDispositivoPessoas';
 
 // Painel de dispositivos de acesso (Control iD, fase 7). Só a Gestão gerencia (as RPCs
 // conferem papel e escola no banco). O token só existe em texto aqui, em memória, no
@@ -34,6 +35,7 @@ export default function GestaoDispositivos({ currentUser }) {
   const [ocupado, setOcupado] = useState(false);
   const [tokenMostrado, setTokenMostrado] = useState(null); // { nome, token }
   const [copiado, setCopiado] = useState(false);
+  const [pessoasDe, setPessoasDe] = useState(null); // dispositivo com o modal de pessoas aberto
 
   const carregar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCarregando(true);
@@ -115,6 +117,7 @@ export default function GestaoDispositivos({ currentUser }) {
       label: 'Ações', actions: true,
       render: d => (
         <div className="flex gap-2">
+          <SecondaryButton disabled={ocupado} onClick={() => setPessoasDe(d)}><Users size={14} /> Pessoas</SecondaryButton>
           <SecondaryButton disabled={ocupado} onClick={() => girar(d)}><KeyRound size={14} /> Girar token</SecondaryButton>
           <SecondaryButton disabled={ocupado} onClick={() => alternar(d)}><Power size={14} /> {d.status === 'disabled' ? 'Ativar' : 'Desativar'}</SecondaryButton>
         </div>
@@ -148,6 +151,8 @@ export default function GestaoDispositivos({ currentUser }) {
           <Field label="Local" id="disp-local"><input id="disp-local" maxLength={120} value={novo.location} onChange={e => setNovo({ ...novo, location: e.target.value })} className={inputCls} /></Field>
         </Modal>
       )}
+
+      {pessoasDe && <GestaoDispositivoPessoas dispositivo={pessoasDe} schoolId={schoolId} onClose={() => setPessoasDe(null)} />}
 
       {tokenMostrado && (
         <Modal title={`Token de "${tokenMostrado.nome}"`} onClose={() => setTokenMostrado(null)} footer={<PrimaryButton onClick={() => setTokenMostrado(null)}>Já copiei, fechar</PrimaryButton>}>
