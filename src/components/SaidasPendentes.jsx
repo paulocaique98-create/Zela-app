@@ -3,7 +3,7 @@ import { LogOut, Clock, RefreshCw, Loader2, X, CheckCircle2, AlertTriangle, Hour
 import { supabase } from '../lib/supabase';
 import { ATTENDANCE_CORRECTION_REASONS } from '../lib/constants';
 import { evaluateCorrectionImpact } from '../lib/attendanceCorrections';
-import { listSaidasPendentes, lancarSaidaPendente, podeLancarSaida, ontemBrasilia } from '../lib/saidasPendentes';
+import { listPendenciasPonto, lancarSaidaPendente, lancarEntradaPendente, podeLancarSaida, ontemBrasilia } from '../lib/saidasPendentes';
 
 const horaBR = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 
@@ -15,7 +15,7 @@ function isoDoDia(dateStr, timeValue) {
   return new Date(y, m - 1, d, h, min, 0, 0).toISOString();
 }
 
-function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClose, onSaved }) {
+function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, currentUser, onClose, onSaved }) {
   const [time, setTime] = useState('');
   const [reasonCode, setReasonCode] = useState('ESQUECEU_REGISTRAR');
   const [reasonDetail, setReasonDetail] = useState('');
@@ -23,12 +23,14 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
   const [error, setError] = useState('');
 
   const exitIso = useMemo(() => isoDoDia(dia, time), [dia, time]);
-  const antesDaEntrada = exitIso && alunos.some(a => new Date(exitIso) <= new Date(a.entry_time));
+  const ehEntrada = modo === 'entrada';
+  // Saída: tem de ser depois da entrada. Entrada: tem de ser antes do registro existente (que passa a ser a saída).
+  const antesDaEntrada = exitIso && alunos.some(a => (ehEntrada ? new Date(exitIso) >= new Date(a.entry_time) : new Date(exitIso) <= new Date(a.entry_time)));
 
   // Prévia usando as mesmas funções do relatório de horas extras. O servidor
   // recalcula e decide de verdade; isto só avisa antes de enviar.
   const geraHoraExtra = useMemo(() => {
-    if (!exitIso) return null;
+    if (!exitIso || ehEntrada) return null;
     return alunos.some(a => {
       const s = students[a.student_id];
       if (!s) return false;
@@ -36,7 +38,7 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
         return evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: exitIso, otherIso: a.entry_time, student: s, billingConfig }).increasesBilling;
       } catch { return false; }
     });
-  }, [exitIso, alunos, students, billingConfig]);
+  }, [exitIso, alunos, students, billingConfig, ehEntrada]);
 
   const precisaAprovacao = geraHoraExtra && currentUser?.role !== 'gestao';
   const canSubmit = exitIso && !antesDaEntrada && reasonCode && !saving;
@@ -54,10 +56,15 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
         if (s) {
           try { minutesDelta = evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: exitIso, otherIso: a.entry_time, student: s, billingConfig }).minutesDelta || 0; } catch { /* servidor recalcula */ }
         }
-        const r = await lancarSaidaPendente({
-          studentId: a.student_id, exitIso, reasonCode, reasonDetail, minutesDelta,
-          schoolId: currentUser?.school_id, actorId: currentUser?.id,
-        });
+        const r = ehEntrada
+          ? await lancarEntradaPendente({
+            studentId: a.student_id, entryIso: exitIso, reasonCode, reasonDetail, minutesDelta: 0,
+            schoolId: currentUser?.school_id, actorId: currentUser?.id,
+          })
+          : await lancarSaidaPendente({
+            studentId: a.student_id, exitIso, reasonCode, reasonDetail, minutesDelta,
+            schoolId: currentUser?.school_id, actorId: currentUser?.id,
+          });
         if (r?.status === 'pending') pendentes += 1;
       } catch (err) {
         console.error('Erro ao lançar saída:', err);
@@ -78,7 +85,7 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between gap-3 p-5 border-b border-outline-variant">
           <div className="min-w-0">
-            <h3 className="font-bold text-on-surface text-sm">Registrar saída</h3>
+            <h3 className="font-bold text-on-surface text-sm">{ehEntrada ? 'Registrar entrada' : 'Registrar saída'}</h3>
             <p className="text-xs text-on-surface-variant font-semibold break-words">
               {alunos.length === 1 ? alunos[0].student_name : `${alunos.length} alunos`}
             </p>
@@ -89,10 +96,10 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="flex items-center gap-1.5 text-[11px] font-bold text-error mb-1.5"><LogOut size={13} /> Horário da saída</label>
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-error mb-1.5"><LogOut size={13} /> {ehEntrada ? 'Horário da entrada' : 'Horário da saída'}</label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)}
               className="w-full px-3 py-2.5 bg-white border border-outline-variant rounded-xl text-lg font-mono font-bold text-on-surface focus:ring-2 focus:ring-primary outline-none text-center" />
-            {antesDaEntrada && <p className="text-[11px] text-error mt-1">A saída precisa ser depois da entrada.</p>}
+            {antesDaEntrada && <p className="text-[11px] text-error mt-1">{ehEntrada ? 'A entrada precisa ser antes do registro existente.' : 'A saída precisa ser depois da entrada.'}</p>}
           </div>
           <div>
             <label className="block text-[11px] font-bold text-on-surface-variant mb-1.5">Motivo</label>
@@ -119,7 +126,7 @@ function ModalLancar({ alunos, dia, students, billingConfig, currentUser, onClos
           <button onClick={handleSubmit} disabled={!canSubmit}
             className="flex-1 py-2.5 text-sm font-bold text-white bg-primary rounded-xl disabled:opacity-40 flex items-center justify-center gap-2">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            {precisaAprovacao ? 'Solicitar saída' : 'Registrar saída'}
+            {ehEntrada ? 'Registrar entrada' : precisaAprovacao ? 'Solicitar saída' : 'Registrar saída'}
           </button>
         </div>
       </div>
@@ -131,7 +138,8 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
   const podeLancar = podeLancarSaida(currentUser?.role);
   const ontem = ontemBrasilia();
   const [dia, setDia] = useState(ontem);
-  const [rows, setRows] = useState([]);
+  const [aba, setAba] = useState('saida');
+  const [todas, setTodas] = useState([]);
   const [students, setStudents] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -143,10 +151,12 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
     setLoading(true);
     setError('');
     try {
-      const data = await listSaidasPendentes(dia);
-      setRows(data);
+      const bruto = await listPendenciasPonto(dia);
+      // Normaliza para o formato que a tela já usa (entry_time = horário do registro existente).
+      const data = bruto.map(r => ({ ...r, entry_time: r.event_time }));
+      setTodas(data);
       setSelecionados(new Set());
-      onChanged?.(data.filter(r => !r.awaiting_approval).length);
+      onChanged?.(data.filter(r => r.kind === 'saida' && !r.awaiting_approval).length);
       // Dados de horário contratado, só para a prévia de hora extra. Se a
       // leitura falhar, a prévia some e o servidor decide do mesmo jeito.
       if (podeLancar && data.length) {
@@ -165,6 +175,11 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
   }, [dia, podeLancar, onChanged]);
 
   useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { setSelecionados(new Set()); }, [aba]);
+
+  const rows = useMemo(() => todas.filter(r => r.kind === aba), [todas, aba]);
+  const qtdEntradas = todas.filter(r => r.kind === 'entrada').length;
+  const qtdSaidas = todas.length - qtdEntradas;
 
   const grupos = useMemo(() => {
     const mapa = new Map();
@@ -187,7 +202,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
 
   const aoSalvar = ({ pendentes = 0, parcial = false } = {}) => {
     setModal(null);
-    if (!parcial) setAviso(pendentes ? `${pendentes} saída(s) enviada(s) para aprovação da Gestão.` : 'Saída registrada.');
+    if (!parcial) setAviso(pendentes ? `${pendentes} saída(s) enviada(s) para aprovação da Gestão.` : (aba === 'entrada' ? 'Entrada registrada.' : 'Saída registrada.'));
     carregar();
   };
 
@@ -195,7 +210,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-on-surface">Saídas pendentes</h2>
+          <h2 className="text-lg font-bold text-on-surface">{aba === 'entrada' ? 'Entradas pendentes' : 'Saídas pendentes'}</h2>
           <p className="text-xs text-on-surface-variant capitalize">{diaLabel}</p>
         </div>
         <div className="flex items-end gap-2">
@@ -210,8 +225,17 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
         </div>
       </div>
 
+      <div className="flex gap-2">
+        {[['saida', `Saídas (${qtdSaidas})`], ['entrada', `Entradas (${qtdEntradas})`]].map(([id, label]) => (
+          <button key={id} onClick={() => setAba(id)}
+            className={`px-4 py-2 text-xs font-bold rounded-xl ${aba === id ? 'bg-primary text-white' : 'bg-white border border-outline-variant text-on-surface-variant'}`}>{label}</button>
+        ))}
+      </div>
+
       <p className="text-xs text-on-surface-variant">
-        Alunos que tiveram a entrada registrada neste dia e não tiveram a saída. Quem não veio à escola não aparece aqui.
+        {aba === 'entrada'
+          ? 'Alunos com um único registro neste dia, feito depois do horário limite de entrada da escola: na prática é a saída, e falta lançar a entrada.'
+          : 'Alunos que tiveram a entrada registrada neste dia e não tiveram a saída. Quem não veio à escola não aparece aqui.'}
       </p>
 
       {aviso && <div className="bg-success/10 text-success text-xs font-semibold rounded-xl p-3">{aviso}</div>}
@@ -221,7 +245,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-primary text-white rounded-xl p-3">
           <span className="text-sm font-bold">{selecionados.size} selecionado(s)</span>
           <button onClick={() => setModal(rows.filter(r => selecionados.has(r.student_id)))}
-            className="px-4 py-2 bg-white text-primary text-sm font-bold rounded-lg">Registrar saída</button>
+            className="px-4 py-2 bg-white text-primary text-sm font-bold rounded-lg">{aba === 'entrada' ? 'Registrar entrada' : 'Registrar saída'}</button>
         </div>
       )}
 
@@ -230,7 +254,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
       ) : !rows.length ? (
         <div className="text-center py-12 text-on-surface-variant">
           <CheckCircle2 className="mx-auto mb-2 text-success" />
-          <p className="text-sm font-semibold">Nenhum aluno sem saída neste dia.</p>
+          <p className="text-sm font-semibold">{aba === 'entrada' ? 'Nenhum aluno sem entrada neste dia.' : 'Nenhum aluno sem saída neste dia.'}</p>
         </div>
       ) : (
         grupos.map(([turma, lista]) => (
@@ -245,7 +269,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-on-surface break-words">{r.student_name}</p>
                     <p className="text-[11px] text-on-surface-variant flex items-center gap-1">
-                      <Clock size={11} /> Entrada às {horaBR(r.entry_time)}
+                      <Clock size={11} /> {aba === 'entrada' ? 'Registro às' : 'Entrada às'} {horaBR(r.entry_time)}
                       {r.recorded_by_name ? ` por ${r.recorded_by_name}` : ''}
                     </p>
                   </div>
@@ -255,7 +279,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
                     </span>
                   ) : podeLancar ? (
                     <button onClick={() => setModal([r])} className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary/15 px-3 py-2 rounded-lg shrink-0">
-                      Registrar saída
+                      {aba === 'entrada' ? 'Registrar entrada' : 'Registrar saída'}
                     </button>
                   ) : null}
                 </div>
@@ -272,7 +296,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
 
       {modal && (
         <ModalLancar
-          alunos={modal} dia={dia} students={students}
+          modo={aba} alunos={modal} dia={dia} students={students}
           billingConfig={currentSchool?.billing_config}
           currentUser={currentUser}
           onClose={() => setModal(null)} onSaved={aoSalvar}

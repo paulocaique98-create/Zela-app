@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import CamposEnderecoEscola, { enderecoDaEscola } from './CamposEnderecoEscola';
 import { Save, Upload, AlertCircle, Building2, Trash2, School, Plus, Minus, X, Loader2, Pencil, Image as ImageIcon, Clock, CalendarX, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import RegraPontoSection from './RegraPontoSection';
 import { compressImage } from '../lib/imageCompression';
 import { mergeBillingConfig, mergeAbsenceAlertConfig, GENERAL_BAND_MINUTES } from '../utils/attendanceUtils';
 import { formatarCnpj, formatarCpf, cnpjValido, cpfValido, somenteDigitos } from '../lib/documentos';
@@ -641,6 +642,7 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
       { id: 'login_image', label: 'Imagem de Login' },
       { id: 'billing', label: 'Cobrança de Hora Extra' },
       { id: 'absence_alert', label: 'Faltas' },
+      { id: 'ponto', label: 'Entrada/Saída pendente' },
     ] : ehGestaoPedagogica ? [{ id: 'absence_alert', label: 'Faltas' }] : []),
     // "Personalizar Menu" saiu em 30/09/2026: o que a escola tem é decidido
     // em Módulos (Portal do Dev) e o que a Recepção faz, em Permissões
@@ -971,6 +973,9 @@ export default function AdminSettings({ currentUser, currentSchool, onUpdate, on
                     </div>
                   )}
                 </div>
+              )}
+              {activeConfigTab === 'ponto' && canManageSchool && (
+                <RegraPontoSection schoolId={currentUser?.school_id} userId={currentUser?.id} />
               )}
               {activeConfigTab === 'absence_alert' && (
                 <AbsenceAlertSection currentUser={currentUser} config={absenceAlertConfig} onConfigChange={setAbsenceAlertConfig} noBorder />

@@ -14,6 +14,60 @@ export function ontemBrasilia(agora = new Date()) {
   return ontem.toISOString().slice(0, 10);
 }
 
+// "HH:MM[:SS]" -> minutos desde 00:00 (ou null).
+function minutosDoDia(hhmm) {
+  if (!hhmm) return null;
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+}
+
+// Limite de entrada do aluno em minutos: horário contratado + N horas; sem
+// horário contratado, usa o horário fixo da escola. Sem regra: null.
+// Espelha public._limite_entrada (o servidor é quem decide de verdade).
+export function limiteEntradaMin(contractedEntry, rules) {
+  if (!rules) return null;
+  const contratado = minutosDoDia(contractedEntry);
+  if (rules.entry_limit_hours != null && contratado != null) {
+    return Math.min(contratado + Math.round(Number(rules.entry_limit_hours) * 60), 1439);
+  }
+  return minutosDoDia(rules.entry_limit_fixed);
+}
+
+// Um único registro 'entry' feito a partir do limite é, na prática, a saída:
+// o que falta é a ENTRADA. Espelha list_pendencias_ponto.
+export function classificarPendencia({ totalRegistros, horaRegistro, contractedEntry, rules }) {
+  const limite = limiteEntradaMin(contractedEntry, rules);
+  const hora = minutosDoDia(horaRegistro);
+  if (totalRegistros === 1 && limite != null && hora != null && hora >= limite) return 'entrada';
+  return 'saida';
+}
+
+// Pendências do dia (kind = 'saida' | 'entrada'). Filtro de escola/turma é do servidor.
+export async function listPendenciasPonto(dateStr) {
+  const { data, error } = await supabase.rpc('list_pendencias_ponto', { p_date: dateStr || null });
+  if (error) throw error;
+  return data || [];
+}
+
+// Lança a entrada que faltou; o registro único do dia vira a saída.
+export async function lancarEntradaPendente({ studentId, entryIso, reasonCode, reasonDetail, minutesDelta, schoolId, actorId }) {
+  const { data, error } = await supabase.rpc('lancar_entrada_pendente', {
+    p_student_id: studentId,
+    p_entry_time: entryIso,
+    p_reason_code: reasonCode,
+    p_reason_detail: reasonDetail || null,
+    p_minutes_delta: minutesDelta || 0,
+  });
+  if (error) throw error;
+  if (schoolId && actorId) {
+    logAction({
+      actorId, schoolId, action: 'correct_attendance', entityType: 'attendance_log', entityId: null,
+      details: { student_id: studentId, event_type: 'entry', reason_code: reasonCode, status: data?.status, manual_entry: true, entrada_pendente: true },
+    });
+  }
+  return data;
+}
+
 // Alunos com entrada no dia e sem saída. Filtro de escola/turma é do servidor.
 export async function listSaidasPendentes(dateStr) {
   const { data, error } = await supabase.rpc('list_saidas_pendentes', { p_date: dateStr || null });

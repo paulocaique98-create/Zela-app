@@ -19,7 +19,7 @@ describe('ontemBrasilia', () => {
 
 describe('podeLancarSaida', () => {
   it('Recepção e Gestão lançam; professora, família e financeiro não', () => {
-    for (const r of ['admin', 'gestao', 'gestao_pedagogica']) expect(podeLancarSaida(r)).toBe(true);
+    for (const r of ['recepcao', 'gestao', 'gestao_pedagogica']) expect(podeLancarSaida(r)).toBe(true);
     for (const r of ['teacher', 'family', 'financeiro', undefined]) expect(podeLancarSaida(r)).toBe(false);
   });
 });
