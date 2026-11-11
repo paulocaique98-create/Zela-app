@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Control iD, base de dados e segurança** (11/11): tabelas `access_devices` e `device_events` (RLS ligada, sem acesso direto), funções de painel e do equipamento, token por dispositivo guardado só como hash, rollback. Teste `dispositivosAcesso.test.js`. Migration 20261212120000 NÃO aplicada em produção.
 - **Teste da Gestão Pedagógica em dia** (11/11): `perfilGestaoPedagogica.test.js` inclui na lista aprovada as 19 policies de plano de aula e Método Tradicional (conferidas: todas por escola, nenhuma para anon). Só teste, sem mudança de banco.
 - **Marketing só edita os próprios comunicados** (11/11): RLS em `comunicados` troca o ALL do Marketing por leitura da escola e insert/update/delete só com `created_by = auth.uid()`. Migration 20261211170000 APLICADA em produção (conferida em pg_policies e migration list). Teste negativo em perfilMarketing.test.js. Corrige também 20261201120000 (insere `financeiro_avancado` no catálogo; no-op em produção) para o banco local subir do zero.
 - **Marketing no celular** (11/11): menu padrão (sidebar e barra inferior), tela Início, Alunos em cartões, Comunicados recolhidos com editar/excluir só do autor (Marketing), Calendário sem importação com IA para Marketing e formulários de Mural e Comunicados compactos.
