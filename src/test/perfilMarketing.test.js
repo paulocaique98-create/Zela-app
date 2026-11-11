@@ -13,7 +13,10 @@ const runIf = hasIntegrationCredentials ? describe : describe.skip;
 
 // Qualquer regra nova para este perfil precisa ser acrescentada aqui DE PROPÓSITO.
 const REGRAS_APROVADAS = [
-  'public.comunicados|Marketing gerencia comunicados',
+  'public.comunicados|Marketing cria comunicados proprios',
+  'public.comunicados|Marketing edita comunicados proprios',
+  'public.comunicados|Marketing exclui comunicados proprios',
+  'public.comunicados|Marketing le comunicados da escola',
   'public.eventos_calendario|Marketing gerencia calendario',
   'public.mural_fotos|Marketing gerencia mural',
   'storage.objects|Marketing gerencia anexos de comunicados',
@@ -105,6 +108,29 @@ runIf('Perfil Marketing', () => {
     expect(lidos.length).toBeGreaterThan(0);
     const { error: del } = await c.from('eventos_calendario').delete().eq('id', ev.data.id);
     expect(del).toBeNull();
+  });
+
+  it('lê todos os comunicados da escola, mas só edita e exclui os próprios', async () => {
+    const c = ctx.mkt.client;
+    const { data: alheio } = await adminClient.from('comunicados')
+      .insert({ school_id: ctx.schoolId, title: 'Da Gestão', body: 'x', created_by: ctx.recepcao.id }).select('id').single();
+    const { data: lidos } = await c.from('comunicados').select('id').eq('id', alheio.id);
+    expect(lidos).toHaveLength(1);
+    const { data: upd } = await c.from('comunicados').update({ title: 'Hackeado' }).eq('id', alheio.id).select('id');
+    expect(upd).toEqual([]);
+    const { data: del } = await c.from('comunicados').delete().eq('id', alheio.id).select('id');
+    expect(del).toEqual([]);
+    const { data: depois } = await adminClient.from('comunicados').select('title').eq('id', alheio.id).single();
+    expect(depois.title).toBe('Da Gestão');
+    // não cria em nome de outra pessoa
+    const { error: falso } = await c.from('comunicados').insert({ school_id: ctx.schoolId, title: 'x', body: 'x', created_by: ctx.recepcao.id });
+    expect(falso).not.toBeNull();
+    // o próprio ele edita e exclui
+    const { data: meu } = await c.from('comunicados').insert({ school_id: ctx.schoolId, title: 'Meu', body: 'x', created_by: ctx.mkt.id }).select('id').single();
+    const { data: meuUpd } = await c.from('comunicados').update({ title: 'Meu 2' }).eq('id', meu.id).select('id');
+    expect(meuUpd).toHaveLength(1);
+    const { data: meuDel } = await c.from('comunicados').delete().eq('id', meu.id).select('id');
+    expect(meuDel).toHaveLength(1);
   });
 
   // ─── 3. Isolamento entre escolas ─────────────────────────────────────────
