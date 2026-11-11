@@ -424,3 +424,8 @@ verify_jwt = false
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# controlid-push: equipamento Control iD (servidor-a-servidor). Autenticado pelo
+# token por dispositivo no path (hash no banco), não por JWT de sessão.
+[functions.controlid-push]
+verify_jwt = false
