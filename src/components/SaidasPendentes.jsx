@@ -3,8 +3,10 @@ import { LogOut, Clock, RefreshCw, Loader2, X, CheckCircle2, AlertTriangle, Hour
 import { supabase } from '../lib/supabase';
 import { ATTENDANCE_CORRECTION_REASONS } from '../lib/constants';
 import { evaluateCorrectionImpact } from '../lib/attendanceCorrections';
-import { listPendenciasPonto, lancarSaidaPendente, lancarEntradaPendente, podeLancarSaida, ontemBrasilia } from '../lib/saidasPendentes';
+import { listPendenciasPeriodo, lancarSaidaPendente, lancarEntradaPendente, horarioContratadoDoDia, podeLancarSaida, ontemBrasilia } from '../lib/saidasPendentes';
 
+const textoContratado = (h) => (h ? `Contratado: ${h.entry || '--:--'} às ${h.exit || '--:--'}` : 'Horário contratado não cadastrado');
+const dataBR = (d) => d.split('-').reverse().join('/');
 const horaBR = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 
 // Meia-noite local do dia "YYYY-MM-DD" somada ao "HH:MM" digitado.
@@ -15,17 +17,19 @@ function isoDoDia(dateStr, timeValue) {
   return new Date(y, m - 1, d, h, min, 0, 0).toISOString();
 }
 
-function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, currentUser, onClose, onSaved }) {
+function ModalLancar({ modo = 'saida', alunos, students, billingConfig, currentUser, onClose, onSaved }) {
   const [time, setTime] = useState('');
   const [reasonCode, setReasonCode] = useState('ESQUECEU_REGISTRAR');
   const [reasonDetail, setReasonDetail] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const exitIso = useMemo(() => isoDoDia(dia, time), [dia, time]);
+  // Cada linha tem o próprio dia (o período pode ter vários): o horário digitado vale para o dia de cada aluno.
+  const isoDe = (a) => isoDoDia(a.dia, time);
+  const exitIso = time || null;
   const ehEntrada = modo === 'entrada';
   // Saída: tem de ser depois da entrada. Entrada: tem de ser antes do registro existente (que passa a ser a saída).
-  const antesDaEntrada = exitIso && alunos.some(a => (ehEntrada ? new Date(exitIso) >= new Date(a.entry_time) : new Date(exitIso) <= new Date(a.entry_time)));
+  const antesDaEntrada = exitIso && alunos.some(a => (ehEntrada ? new Date(isoDe(a)) >= new Date(a.entry_time) : new Date(isoDe(a)) <= new Date(a.entry_time)));
 
   // Prévia usando as mesmas funções do relatório de horas extras. O servidor
   // recalcula e decide de verdade; isto só avisa antes de enviar.
@@ -35,10 +39,10 @@ function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, cur
       const s = students[a.student_id];
       if (!s) return false;
       try {
-        return evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: exitIso, otherIso: a.entry_time, student: s, billingConfig }).increasesBilling;
+        return evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: isoDe(a), otherIso: a.entry_time, student: s, billingConfig }).increasesBilling;
       } catch { return false; }
     });
-  }, [exitIso, alunos, students, billingConfig, ehEntrada]);
+  }, [time, alunos, students, billingConfig, ehEntrada]);
 
   const precisaAprovacao = geraHoraExtra && currentUser?.role !== 'gestao';
   const canSubmit = exitIso && !antesDaEntrada && reasonCode && !saving;
@@ -54,15 +58,15 @@ function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, cur
         let minutesDelta = 0;
         const s = students[a.student_id];
         if (s) {
-          try { minutesDelta = evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: exitIso, otherIso: a.entry_time, student: s, billingConfig }).minutesDelta || 0; } catch { /* servidor recalcula */ }
+          try { minutesDelta = evaluateCorrectionImpact({ eventType: 'exit', originalIso: null, newIso: isoDe(a), otherIso: a.entry_time, student: s, billingConfig }).minutesDelta || 0; } catch { /* servidor recalcula */ }
         }
         const r = ehEntrada
           ? await lancarEntradaPendente({
-            studentId: a.student_id, entryIso: exitIso, reasonCode, reasonDetail, minutesDelta: 0,
+            studentId: a.student_id, entryIso: isoDe(a), reasonCode, reasonDetail, minutesDelta: 0,
             schoolId: currentUser?.school_id, actorId: currentUser?.id,
           })
           : await lancarSaidaPendente({
-            studentId: a.student_id, exitIso, reasonCode, reasonDetail, minutesDelta,
+            studentId: a.student_id, exitIso: isoDe(a), reasonCode, reasonDetail, minutesDelta,
             schoolId: currentUser?.school_id, actorId: currentUser?.id,
           });
         if (r?.status === 'pending') pendentes += 1;
@@ -95,6 +99,15 @@ function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, cur
           </button>
         </div>
         <div className="p-5 space-y-4">
+          <div className="bg-surface-container rounded-xl p-3 space-y-2 max-h-40 overflow-y-auto">
+            {alunos.map(a => (
+              <div key={a.student_id} className="text-[11px] text-on-surface-variant">
+                {alunos.length > 1 && <p className="font-bold text-on-surface">{a.student_name}</p>}
+                <p>{textoContratado(horarioContratadoDoDia(students[a.student_id], a.dia))}</p>
+                <p>{dataBR(a.dia)} · {ehEntrada ? 'Registro existente (vira a saída)' : 'Entrada registrada'}: {horaBR(a.entry_time)}</p>
+              </div>
+            ))}
+          </div>
           <div>
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-error mb-1.5"><LogOut size={13} /> {ehEntrada ? 'Horário da entrada' : 'Horário da saída'}</label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)}
@@ -137,7 +150,8 @@ function ModalLancar({ modo = 'saida', alunos, dia, students, billingConfig, cur
 export default function SaidasPendentes({ currentUser, currentSchool, onChanged }) {
   const podeLancar = podeLancarSaida(currentUser?.role);
   const ontem = ontemBrasilia();
-  const [dia, setDia] = useState(ontem);
+  const [de, setDe] = useState(ontem);
+  const [ate, setAte] = useState(ontem);
   const [aba, setAba] = useState('saida');
   const [todas, setTodas] = useState([]);
   const [students, setStudents] = useState({});
@@ -151,15 +165,15 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
     setLoading(true);
     setError('');
     try {
-      const bruto = await listPendenciasPonto(dia);
+      const bruto = await listPendenciasPeriodo(de, ate);
       // Normaliza para o formato que a tela já usa (entry_time = horário do registro existente).
-      const data = bruto.map(r => ({ ...r, entry_time: r.event_time }));
+      const data = bruto.map(r => ({ ...r, dia: r.dia, entry_time: r.event_time, chave: `${r.student_id}|${r.dia}` }));
       setTodas(data);
       setSelecionados(new Set());
       onChanged?.(data.filter(r => r.kind === 'saida' && !r.awaiting_approval).length);
       // Dados de horário contratado, só para a prévia de hora extra. Se a
       // leitura falhar, a prévia some e o servidor decide do mesmo jeito.
-      if (podeLancar && data.length) {
+      if (data.length) {
         const { data: st } = await supabase
           .from('students')
           .select('id, contracted_entry_time, contracted_exit_time, weekly_schedule, isento_hora_extra')
@@ -172,9 +186,9 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
     } finally {
       setLoading(false);
     }
-  }, [dia, podeLancar, onChanged]);
+  }, [de, ate, onChanged]);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { if (!(de > ate || Math.round((new Date(`${ate}T12:00:00`) - new Date(`${de}T12:00:00`)) / 86400000) > 30)) carregar(); }, [carregar, de, ate]);
   useEffect(() => { setSelecionados(new Set()); }, [aba]);
 
   const rows = useMemo(() => todas.filter(r => r.kind === aba), [todas, aba]);
@@ -198,7 +212,11 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
   });
 
   const lancaveis = rows.filter(r => !r.awaiting_approval);
-  const diaLabel = new Date(`${dia}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const periodoLabel = de === ate
+    ? new Date(`${de}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+    : `${dataBR(de)} a ${dataBR(ate)}`;
+  const diasEntre = Math.round((new Date(`${ate}T12:00:00`) - new Date(`${de}T12:00:00`)) / 86400000);
+  const periodoInvalido = de > ate || diasEntre > 30;
 
   const aoSalvar = ({ pendentes = 0, parcial = false } = {}) => {
     setModal(null);
@@ -211,12 +229,17 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-on-surface">{aba === 'entrada' ? 'Entradas pendentes' : 'Saídas pendentes'}</h2>
-          <p className="text-xs text-on-surface-variant capitalize">{diaLabel}</p>
+          <p className="text-xs text-on-surface-variant capitalize">{periodoLabel}</p>
         </div>
         <div className="flex items-end gap-2">
           <div>
-            <label className="block text-[10px] font-bold text-on-surface-variant mb-1">Dia</label>
-            <input type="date" value={dia} max={ontem} onChange={e => e.target.value && setDia(e.target.value)}
+            <label className="block text-[10px] font-bold text-on-surface-variant mb-1">De</label>
+            <input type="date" value={de} max={ontem} onChange={e => { if (!e.target.value) return; setDe(e.target.value); if (e.target.value > ate) setAte(e.target.value); }}
+              className="px-3 py-2 bg-white border border-outline-variant rounded-xl text-sm text-on-surface" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-on-surface-variant mb-1">Até</label>
+            <input type="date" value={ate} min={de} max={ontem} onChange={e => e.target.value && setAte(e.target.value)}
               className="px-3 py-2 bg-white border border-outline-variant rounded-xl text-sm text-on-surface" />
           </div>
           <button onClick={carregar} title="Atualizar" className="p-2.5 bg-white border border-outline-variant rounded-xl text-on-surface-variant hover:text-on-surface">
@@ -232,19 +255,25 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
         ))}
       </div>
 
+      {podeLancar && lancaveis.length > 1 && selecionados.size === 0 && (
+        <button onClick={() => setSelecionados(new Set(lancaveis.map(r => r.chave)))}
+          className="text-xs font-bold text-primary underline">Selecionar todos</button>
+      )}
+
       <p className="text-xs text-on-surface-variant">
         {aba === 'entrada'
-          ? 'Alunos com um único registro neste dia, feito depois do horário limite de entrada da escola: na prática é a saída, e falta lançar a entrada.'
-          : 'Alunos que tiveram a entrada registrada neste dia e não tiveram a saída. Quem não veio à escola não aparece aqui.'}
+          ? 'Alunos com um único registro no período, feito depois do horário limite de entrada da escola: na prática é a saída, e falta lançar a entrada.'
+          : 'Alunos que tiveram a entrada registrada no período e não tiveram a saída. Quem não veio à escola não aparece aqui.'}
       </p>
 
+      {periodoInvalido && <div className="bg-error/10 text-error text-xs font-semibold rounded-xl p-3">O período pode ter no máximo 31 dias.</div>}
       {aviso && <div className="bg-success/10 text-success text-xs font-semibold rounded-xl p-3">{aviso}</div>}
       {error && <div className="bg-error/10 text-error text-xs font-semibold rounded-xl p-3">{error}</div>}
 
       {podeLancar && selecionados.size > 0 && (
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-primary text-white rounded-xl p-3">
           <span className="text-sm font-bold">{selecionados.size} selecionado(s)</span>
-          <button onClick={() => setModal(rows.filter(r => selecionados.has(r.student_id)))}
+          <button onClick={() => setModal(rows.filter(r => selecionados.has(r.chave)))}
             className="px-4 py-2 bg-white text-primary text-sm font-bold rounded-lg">{aba === 'entrada' ? 'Registrar entrada' : 'Registrar saída'}</button>
         </div>
       )}
@@ -254,7 +283,7 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
       ) : !rows.length ? (
         <div className="text-center py-12 text-on-surface-variant">
           <CheckCircle2 className="mx-auto mb-2 text-success" />
-          <p className="text-sm font-semibold">{aba === 'entrada' ? 'Nenhum aluno sem entrada neste dia.' : 'Nenhum aluno sem saída neste dia.'}</p>
+          <p className="text-sm font-semibold">{aba === 'entrada' ? 'Nenhum aluno sem entrada neste período.' : 'Nenhum aluno sem saída neste período.'}</p>
         </div>
       ) : (
         grupos.map(([turma, lista]) => (
@@ -262,16 +291,17 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
             <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wide">{turma}</h3>
             <div className="bg-white border border-outline-variant rounded-2xl divide-y divide-outline-variant">
               {lista.map(r => (
-                <div key={r.student_id} className="flex items-center gap-3 p-3">
+                <div key={r.chave} className="flex items-center gap-3 p-3">
                   {podeLancar && !r.awaiting_approval && (
-                    <input type="checkbox" checked={selecionados.has(r.student_id)} onChange={() => toggle(r.student_id)} className="size-4 accent-primary" />
+                    <input type="checkbox" checked={selecionados.has(r.chave)} onChange={() => toggle(r.chave)} className="size-4 accent-primary" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-on-surface break-words">{r.student_name}</p>
                     <p className="text-[11px] text-on-surface-variant flex items-center gap-1">
-                      <Clock size={11} /> {aba === 'entrada' ? 'Registro às' : 'Entrada às'} {horaBR(r.entry_time)}
+                      <Clock size={11} /> {dataBR(r.dia)} · {aba === 'entrada' ? 'Registro às' : 'Entrada às'} {horaBR(r.entry_time)}
                       {r.recorded_by_name ? ` por ${r.recorded_by_name}` : ''}
                     </p>
+                    <p className="text-[11px] text-on-surface-variant">{textoContratado(horarioContratadoDoDia(students[r.student_id], r.dia))}</p>
                   </div>
                   {r.awaiting_approval ? (
                     <span className="flex items-center gap-1 text-[11px] font-bold text-warning bg-brass-50 px-2 py-1 rounded-lg shrink-0">
@@ -289,14 +319,9 @@ export default function SaidasPendentes({ currentUser, currentSchool, onChanged 
         ))
       )}
 
-      {podeLancar && lancaveis.length > 1 && selecionados.size === 0 && (
-        <button onClick={() => setSelecionados(new Set(lancaveis.map(r => r.student_id)))}
-          className="text-xs font-bold text-primary underline">Selecionar todos</button>
-      )}
-
       {modal && (
         <ModalLancar
-          modo={aba} alunos={modal} dia={dia} students={students}
+          modo={aba} alunos={modal} students={students}
           billingConfig={currentSchool?.billing_config}
           currentUser={currentUser}
           onClose={() => setModal(null)} onSaved={aoSalvar}
