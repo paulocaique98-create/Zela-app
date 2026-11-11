@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseRota, parseEventos, sanitizar, extrairDeviceId, paraIso } from '../../supabase/functions/controlid-push/parser.ts';
+import { parseRota, parseEventos, sanitizar, extrairDeviceId, paraIso, montarComandoPush, parseResultado } from '../../supabase/functions/controlid-push/parser.ts';
 
 const T = 'a'.repeat(64);
 
@@ -46,5 +46,24 @@ describe('controlid parser', () => {
     expect(parseEventos('access_photo', { photo: 'x' })).toEqual([]);
     expect(paraIso(0)).toBeNull();
     expect(paraIso('2999-01-01')).toBeNull();
+  });
+});
+
+describe('controlid parser · comandos (fase 5)', () => {
+  it('monta create/update/delete com o id do equipamento', () => {
+    expect(montarComandoPush('create_user', 7, 'Maria')?.body).toEqual({ object: 'users', values: [{ id: 7, name: 'Maria' }] });
+    expect(montarComandoPush('update_user', 7, 'Ana')?.endpoint).toBe('modify_objects');
+    expect(montarComandoPush('delete_user', 7, null)?.body.where).toEqual({ users: { id: 7 } });
+  });
+  it('recusa id inválido e set_photo sem foto; limpa nome', () => {
+    expect(montarComandoPush('create_user', 0, 'x')).toBeNull();
+    expect(montarComandoPush('set_photo', 7, 'x')).toBeNull();
+    expect(montarComandoPush('set_photo', 7, 'x', 'QUJD')?.body.user_images[0].image).toBe('QUJD');
+    expect(montarComandoPush('create_user', 7, 'A\nB')?.body.values[0].name).toBe('A B');
+  });
+  it('parseResultado: sem erro é ok; erro é cortado', () => {
+    expect(parseResultado({ response: {} })).toEqual({ ok: true, erro: null });
+    expect(parseResultado({ error: 'falhou' })).toEqual({ ok: false, erro: 'falhou' });
+    expect(parseResultado({ response: { error: 'x'.repeat(500) } }).erro).toHaveLength(200);
   });
 });

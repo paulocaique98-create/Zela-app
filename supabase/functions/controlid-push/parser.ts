@@ -82,11 +82,75 @@ export function sanitizar(v: unknown, prof = 0): unknown {
   return null;
 }
 
+export type ComandoFila = 'create_user' | 'update_user' | 'delete_user' | 'set_photo';
+
+export interface ComandoPush {
+  verb: 'POST';
+  endpoint: string;
+  body: Record<string, unknown>;
+  contentType: 'application/json';
+}
+
+// Monta a resposta do /push para um comando da fila (formato da doc Control iD; confirmar na
+// fase 9 com o equipamento real). fotoBase64 só é usado em set_photo e NUNCA é gravado/logado.
+export function montarComandoPush(
+  comando: ComandoFila,
+  externalUserId: number,
+  nome: string | null,
+  fotoBase64?: string,
+): ComandoPush | null {
+  if (!Number.isSafeInteger(externalUserId) || externalUserId <= 0) return null;
+  const nomeLimpo = (nome ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 100);
+  switch (comando) {
+    case 'create_user':
+      return {
+        verb: 'POST', endpoint: 'create_objects', contentType: 'application/json',
+        body: { object: 'users', values: [{ id: externalUserId, name: nomeLimpo || `Pessoa ${externalUserId}` }] },
+      };
+    case 'update_user':
+      return {
+        verb: 'POST', endpoint: 'modify_objects', contentType: 'application/json',
+        body: { object: 'users', values: { name: nomeLimpo || `Pessoa ${externalUserId}` }, where: { users: { id: externalUserId } } },
+      };
+    case 'delete_user':
+      return {
+        verb: 'POST', endpoint: 'destroy_objects', contentType: 'application/json',
+        body: { object: 'users', where: { users: { id: externalUserId } } },
+      };
+    case 'set_photo':
+      if (!fotoBase64) return null;
+      return {
+        verb: 'POST', endpoint: 'user_set_image_list', contentType: 'application/json',
+        body: { match: false, user_images: [{ user_id: externalUserId, timestamp: Math.floor(Date.now() / 1000), image: fotoBase64 }] },
+      };
+    default:
+      return null;
+  }
+}
+
+// Lê o corpo do /result: ok se não houver erro. Só devolve texto curto, nunca o corpo.
+export function parseResultado(corpo: unknown): { ok: boolean; erro: string | null } {
+  const c = obj(corpo);
+  const resp = obj(c.response);
+  const bruto = c.error ?? resp.error ?? null;
+  if (bruto === null || bruto === undefined || bruto === '' || bruto === false) return { ok: true, erro: null };
+  return { ok: false, erro: String(typeof bruto === 'object' ? 'erro do equipamento' : bruto).slice(0, 200) };
+}
+
 function obj(v: unknown): Record<string, unknown> {
   return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 }
 
 // Converte o corpo recebido numa lista de eventos prontos para gravar.
+// Código 7 de access_logs da Control iD = acesso liberado (rosto reconhecido e autorizado
+// pelas regras do equipamento). Só esse evento, com usuário identificado, vira solicitação.
+export const EVENTO_ACESSO_LIBERADO = 7;
+export function eventoPedeCheckin(e: EventoParseado): boolean {
+  return e.event_type === 'access_log'
+    && e.external_user_id !== null && e.external_user_id > 0
+    && Number((e.payload as Record<string, unknown>)?.event) === EVENTO_ACESSO_LIBERADO;
+}
+
 export function parseEventos(rota: Rota, corpo: unknown): EventoParseado[] {
   const c = obj(corpo);
 
