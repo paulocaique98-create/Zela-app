@@ -42,9 +42,32 @@ export function classificarPendencia({ totalRegistros, horaRegistro, contractedE
   return 'saida';
 }
 
+const DIAS_SEMANA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+
+// Período contratado do aluno no dia "YYYY-MM-DD": usa o horário do dia da
+// semana (weekly_schedule) quando tem entrada e saída; senão o geral.
+export function horarioContratadoDoDia(student, dateStr) {
+  if (!student || !dateStr) return null;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dia = DIAS_SEMANA[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  const ov = student.weekly_schedule && typeof student.weekly_schedule === 'object' ? student.weekly_schedule[dia] : null;
+  const usaDia = ov && ov.entry && ov.exit;
+  const entry = (usaDia ? ov.entry : student.contracted_entry_time) || null;
+  const exit = (usaDia ? ov.exit : student.contracted_exit_time) || null;
+  if (!entry && !exit) return null;
+  return { entry: entry ? String(entry).slice(0, 5) : null, exit: exit ? String(exit).slice(0, 5) : null };
+}
+
 // Pendências do dia (kind = 'saida' | 'entrada'). Filtro de escola/turma é do servidor.
 export async function listPendenciasPonto(dateStr) {
   const { data, error } = await supabase.rpc('list_pendencias_ponto', { p_date: dateStr || null });
+  if (error) throw error;
+  return data || [];
+}
+
+// Pendências de um período "YYYY-MM-DD" a "YYYY-MM-DD" (máx. 31 dias, até ontem).
+export async function listPendenciasPeriodo(de, ate) {
+  const { data, error } = await supabase.rpc('list_pendencias_ponto_periodo', { p_from: de, p_to: ate });
   if (error) throw error;
   return data || [];
 }

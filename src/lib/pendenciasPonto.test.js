@@ -3,7 +3,19 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('./supabase', () => ({ supabase: {} }));
 vi.mock('./auditLog', () => ({ logAction: vi.fn() }));
 
-const { limiteEntradaMin, classificarPendencia } = await import('./saidasPendentes');
+const { limiteEntradaMin, classificarPendencia, horarioContratadoDoDia } = await import('./saidasPendentes');
+
+describe('horarioContratadoDoDia', () => {
+  const aluno = { contracted_entry_time: '08:00:00', contracted_exit_time: '17:00:00', weekly_schedule: { quarta: { entry: '10:00', exit: '15:00' } } };
+  it('usa o horário geral', () => {
+    expect(horarioContratadoDoDia(aluno, '2026-11-04')).toEqual({ entry: '10:00', exit: '15:00' }); // quarta
+    expect(horarioContratadoDoDia(aluno, '2026-11-05')).toEqual({ entry: '08:00', exit: '17:00' }); // quinta
+  });
+  it('sem horário nenhum devolve null', () => {
+    expect(horarioContratadoDoDia({}, '2026-11-05')).toBeNull();
+    expect(horarioContratadoDoDia(undefined, '2026-11-05')).toBeNull();
+  });
+});
 
 const regraHoras = { entry_limit_hours: 4, entry_limit_fixed: null };
 

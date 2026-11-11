@@ -556,7 +556,7 @@ export default function GestaoPortal({
 
           {/* Configurações */}
           {abaAtual === 'config-escola' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} only={['login_image']} />}
-          {abaAtual === 'config-academico' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} only={['absence_alert']} showSchoolData={false} />}
+          {abaAtual === 'config-academico' && <AdminSettings currentUser={currentUser} currentSchool={currentSchool} onUpdate={onUpdateSchool} only={['absence_alert', 'ponto']} showSchoolData={false} />}
           {abaAtual === 'config-financeiro' && (
             <div className="h-full flex flex-col min-h-0">
               <div className="px-4 md:px-6 pt-4 shrink-0">
