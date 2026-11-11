@@ -74,6 +74,16 @@ const REGRAS_APROVADAS = [
   'storage.objects|Gestao pedagogica gerencia arquivos de documentos do aluno',
   'storage.objects|Gestao pedagogica gerencia fotos de autorizados',
   'storage.objects|Gestao pedagogica gerencia fotos do mural',
+  // Plano de aula (migration 20261108120000): a Coordenação lê e revisa os planos da escola.
+  'public.lesson_plans|Coordenacao le planos de aula da escola',
+  'public.lesson_plans|Coordenacao revisa planos de aula da escola',
+  'storage.objects|Coordenacao le anexos dos planos da escola',
+  // Método Tradicional (Fases 0 a 5): a equipe pedagógica gerencia o módulo da própria escola.
+  'public.trad_atas_conselho|Coordenacao e direcao gerenciam atas da escola',
+  'public.trad_resultados|Coordenacao e direcao gerenciam resultados da escola',
+  'public.trad_tarefa_habilidades|Equipe e professor gerenciam habilidades das tarefas',
+  ...['atribuicoes', 'aulas', 'avaliacoes', 'config_avaliacao', 'disciplinas', 'frequencia', 'grade', 'horarios', 'notas', 'segmentos', 'series', 'tarefas', 'turmas']
+    .map(t => `public.trad_${t}|Equipe gerencia trad_${t} da escola`),
 ].sort();
 
 // Tabelas que NUNCA podem ter regra para este perfil.
