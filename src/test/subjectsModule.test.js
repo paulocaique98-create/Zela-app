@@ -15,8 +15,8 @@ runIf('Módulo de Matérias/Disciplinas — permissões e isolamento', () => {
     schoolB = await createTestSchool('Vitest Subjects B');
     await adminClient.from('schools').update({ turmas: ['Infantil I', 'Infantil II'] }).eq('id', schoolA);
 
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
-    adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
+    adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     teacherA = await createTestUser({ role: 'teacher', schoolId: schoolA, extra: { teacher_status: 'ativo', turmas: ['Infantil I'] } });
     teacherOutraTurma = await createTestUser({ role: 'teacher', schoolId: schoolA, extra: { teacher_status: 'ativo', turmas: ['Infantil II'] } });
     familyA = await createTestUser({ role: 'family', schoolId: schoolA });

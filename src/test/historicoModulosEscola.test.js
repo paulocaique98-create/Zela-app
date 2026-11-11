@@ -21,7 +21,7 @@ runIf('Histórico dos módulos da escola', () => {
   it('grava só as chaves que mudaram, com o nome de quem mudou; só o developer lê', async () => {
     const schoolId = await createTestSchool();
     const dev = await createTestUser({ role: 'developer' });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       await adminClient.from('schools').update({ features_enabled: { checkin: true, financeiro: false, diario: true } }).eq('id', schoolId);

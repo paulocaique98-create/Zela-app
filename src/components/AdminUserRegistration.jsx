@@ -11,7 +11,7 @@ import ConfirmModal from './ConfirmModal';
 const DEPARTAMENTOS_CHAT = SETORES_CHAT.filter(s => s.value !== 'suporte_zela');
 // Coordenação e Direção (Gestão Pedagógica, 29/09/2026): só esses dois.
 const DEPARTAMENTOS_GESTAO_PEDAGOGICA = SETORES_CHAT.filter(s => ['coordenacao', 'diretoria_pedagogica'].includes(s.value));
-const EQUIPE_COM_DEPARTAMENTO = ['admin', 'gestao_pedagogica'];
+const EQUIPE_COM_DEPARTAMENTO = ['recepcao', 'gestao_pedagogica'];
 
 // ──────────────────────────────────────────────────────────
 // Dados de Ciclo / Turno / Período
@@ -740,7 +740,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
       setSuccessMsg(
         result.authorized_person_created === false
           ? '2º Responsável criado, mas não foi possível gerar o registro em Autorizados automaticamente — adicione manualmente em "Autorizados" se quiser que apareça em Pendentes.'
-          : (currentUser?.role === 'admin'
+          : (currentUser?.role === 'recepcao'
             ? '2º Responsável criado! A conta fica aguardando a aprovação da Gestão para ter acesso.'
             : '2º Responsável criado com sucesso!')
       );
@@ -1061,7 +1061,20 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         });
 
         if (funcError || !newUser || newUser.error) {
-          const errMsg = (funcError?.message || newUser?.error || 'Erro ao criar usuário');
+          // supabase-js só traz "non-2xx"; a mensagem real vem no corpo da resposta.
+          let detalhe = null;
+          const resp = funcError?.context;
+          if (resp && typeof resp.text === 'function') {
+            try {
+              const txt = await resp.text();
+              try {
+                const j = JSON.parse(txt);
+                detalhe = j?.error || j?.message || j?.msg || txt;
+              } catch { detalhe = txt; }
+              if (resp.status) detalhe = `${detalhe} (HTTP ${resp.status})`;
+            } catch { /* corpo ilegível */ }
+          }
+          const errMsg = (detalhe || newUser?.error || funcError?.message || 'Erro ao criar usuário');
           if (errMsg.includes('already registered')) throw new Error('Este e-mail já está em uso.');
           throw new Error(errMsg);
         }
@@ -1166,7 +1179,7 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
           }]);
         }
 
-        setSuccessMsg(currentUser?.role === 'admin' ? 'Cadastro realizado! A conta fica aguardando a aprovação da Gestão para ter acesso.' : 'Cadastro realizado com sucesso!');
+        setSuccessMsg(currentUser?.role === 'recepcao' ? 'Cadastro realizado! A conta fica aguardando a aprovação da Gestão para ter acesso.' : 'Cadastro realizado com sucesso!');
         setFormData({ name: '', email: '', password: '', phone1: '', phone2: '', doc_type: 'CPF', doc_number: '', profession: '', civil_status: '', role: 'family' });
         setStudents([emptyStudent()]);
         setGuardianType('Responsável');
@@ -1211,8 +1224,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
             <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className={inputCls}>
               <option value="family">Responsáveis</option>
               {/* Admin só é criado pela Gestão (hierarquia de 27/09/2026). */}
-              {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'admin') && (
-                <option value="admin">Recepção</option>
+              {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'recepcao') && (
+                <option value="recepcao">Recepção</option>
               )}
               {/* Coordenação e Direção: Portal da Gestão sem financeiro (29/09/2026). */}
               {(['gestao', 'developer'].includes(currentUser?.role) || formData.role === 'gestao_pedagogica') && (

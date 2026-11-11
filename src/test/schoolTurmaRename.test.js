@@ -13,7 +13,7 @@ runIf('Renomear turma com propagação (rename_school_turma)', () => {
     await adminClient.from('schools').update({ turmas: ['Kids I', 'Kids II'] }).eq('id', school);
 
     const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
-    const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
+    const regularAdmin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: false } });
     const teacher = await createTestUser({ role: 'teacher', schoolId: school, extra: { turmas: ['Kids I'] } });
     const family = await createTestUser({ role: 'family', schoolId: school });
     const { data: student } = await adminClient.from('students').insert({ name: 'Aluno Vitest', school_id: school, family_id: family.id, turma: 'Kids I' }).select('id').single();

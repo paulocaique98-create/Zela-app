@@ -6,7 +6,7 @@ import { PageShell, Loading, Notice } from './GestaoShared';
 // Só o Administrativo por enquanto: o portal das professoras não tem estes
 // módulos (a tabela no banco já aceita 'teacher' pra quando tiver).
 const ROLES = [
-  { id: 'admin', label: 'Administrativo' },
+  { id: 'recepcao', label: 'Administrativo' },
 ];
 
 // Permissões, Perfis e Permissões. A Gestão tem tudo sempre (não dá pra se

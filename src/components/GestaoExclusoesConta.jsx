@@ -5,7 +5,7 @@ import { formatDateBR } from '../lib/gestaoUtils';
 import { PageShell, Loading, EmptyState, Notice, Modal, Field, inputCls, PrimaryButton, SecondaryButton } from './GestaoShared';
 
 const STATUS = { pendente: 'Aguardando', concluida: 'Conta excluída', recusada: 'Recusado', cancelada: 'Cancelado pela pessoa' };
-const ROLE = { family: 'Responsável', teacher: 'Professora', admin: 'Administrativo' };
+const ROLE = { family: 'Responsável', teacher: 'Professora', recepcao: 'Recepção', admin: 'Administrativo' };
 
 // Cadastros, Pedidos de exclusão de conta (LGPD). Quem pede é a própria
 // pessoa, em Configurações; a Gestão conclui (exclui de verdade, pela

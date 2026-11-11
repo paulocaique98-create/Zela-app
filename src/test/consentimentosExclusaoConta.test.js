@@ -42,7 +42,7 @@ runIf('Pedido de exclusão de conta', () => {
     const otherFamily = await createTestUser({ role: 'family', schoolId: schoolA });
     const gestao = await createTestUser({ role: 'gestao', schoolId: schoolA });
     const gestaoB = await createTestUser({ role: 'gestao', schoolId: schoolB });
-    const admin = await createTestUser({ role: 'admin', schoolId: schoolA });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     try {
       const { data: reqId, error } = await family.client.rpc('request_account_deletion', { p_reason: 'Mudei de escola' });
       expect(error).toBeNull();

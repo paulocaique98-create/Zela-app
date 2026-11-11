@@ -91,7 +91,7 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
     ctx.outraEscola = await createTestSchool();
     ctx.coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: ctx.schoolId, extra: { departamento: 'coordenacao', name: 'Vitest Coordenadora' } });
     ctx.gestao = await createTestUser({ role: 'gestao', schoolId: ctx.schoolId });
-    ctx.recepcao = await createTestUser({ role: 'admin', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
+    ctx.recepcao = await createTestUser({ role: 'recepcao', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
     ctx.familia = await createTestUser({ role: 'family', schoolId: ctx.schoolId, extra: { doc_number: '11122233344' } });
     ctx.familiaOutra = await createTestUser({ role: 'family', schoolId: ctx.outraEscola });
 
@@ -164,7 +164,7 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
       ['financial_billing_discounts', { school_id: ctx.schoolId, guardian_id: ctx.familia.id, billing_cycle: 'YEARLY', discount_percent: 99 }],
       ['contract_documents', { school_id: ctx.schoolId, student_id: ctx.aluno, title: 'Forjado', body: 'x' }],
       ['contract_templates', { school_id: ctx.schoolId, name: 'Modelo', body: 'x' }],
-      ['school_role_permissions', { school_id: ctx.schoolId, role: 'admin', permission: 'despesas.ver', granted: true }],
+      ['school_role_permissions', { school_id: ctx.schoolId, role: 'recepcao', permission: 'despesas.ver', granted: true }],
       ['funcionarios', { school_id: ctx.schoolId, name: 'Funcionario X', cargo: 'Porteiro' }],
     ];
     for (const [tabela, linha] of tentativas) {
@@ -233,10 +233,10 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
     const { data: gestaoDepois } = await adminClient.from('users').select('name, role').eq('id', ctx.gestao.id).single();
     expect(gestaoDepois.name).not.toBe('Invadido');
     // Família não vira equipe.
-    const { error: promover } = await c.from('users').update({ role: 'admin' }).eq('id', ctx.familia.id);
+    const { error: promover } = await c.from('users').update({ role: 'recepcao' }).eq('id', ctx.familia.id);
     expect(promover).not.toBeNull();
     // Não cria conta da equipe nem exclui ninguém.
-    const { error: criaEquipe } = await c.from('users').insert({ id: crypto.randomUUID(), email: 'x@y.z', name: 'X', role: 'admin', school_id: ctx.schoolId });
+    const { error: criaEquipe } = await c.from('users').insert({ id: crypto.randomUUID(), email: 'x@y.z', name: 'X', role: 'recepcao', school_id: ctx.schoolId });
     expect(criaEquipe).not.toBeNull();
     const { data: excluiu } = await c.from('users').delete().eq('id', ctx.familia.id).select();
     expect(excluiu || []).toEqual([]);
@@ -259,7 +259,7 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
     ctx.extras.push({ id: pelaGestao.body.id });
     expect(pelaGestao.body).toMatchObject({ role: 'gestao_pedagogica', departamento: 'diretoria_pedagogica', must_change_password: true, school_id: ctx.schoolId });
 
-    const equipePelaCoord = await chamarFuncao('create-admin-user', ctx.coord.token, { email: email('adm'), password: 'SenhaTeste123!', name: 'X', role: 'admin', school_id: ctx.schoolId, extra_fields: { departamento: 'recepcao' } });
+    const equipePelaCoord = await chamarFuncao('create-admin-user', ctx.coord.token, { email: email('adm'), password: 'SenhaTeste123!', name: 'X', role: 'recepcao', school_id: ctx.schoolId, extra_fields: { departamento: 'recepcao' } });
     expect(equipePelaCoord.status).toBe(400);
     const professora = await chamarFuncao('create-admin-user', ctx.coord.token, { email: email('prof'), password: 'SenhaTeste123!', name: 'Vitest Professora', role: 'teacher', school_id: ctx.schoolId, extra_fields: { turmas: ['Kids I'] } });
     expect(professora.status).toBe(200);
@@ -395,7 +395,7 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
   });
 
   it('a Gestão troca a Recepção de Coordenação para o perfil novo e volta; ninguém mais consegue', async () => {
-    const coordAntiga = await createTestUser({ role: 'admin', schoolId: ctx.schoolId, extra: { departamento: 'coordenacao' } });
+    const coordAntiga = await createTestUser({ role: 'recepcao', schoolId: ctx.schoolId, extra: { departamento: 'coordenacao' } });
     ctx.extras = ctx.extras || [];
     ctx.extras.push(coordAntiga);
     const { error: recErr } = await ctx.recepcao.client.rpc('set_staff_access_type', { p_user_id: coordAntiga.id, p_role: 'gestao_pedagogica' });
@@ -406,7 +406,7 @@ runIf('Perfil Gestão Pedagógica (Coordenação e Direção)', () => {
     expect(ida).toBeNull();
     const { data: agora } = await adminClient.from('users').select('role').eq('id', coordAntiga.id).single();
     expect(agora.role).toBe('gestao_pedagogica');
-    const { error: volta } = await ctx.gestao.client.rpc('set_staff_access_type', { p_user_id: coordAntiga.id, p_role: 'admin' });
+    const { error: volta } = await ctx.gestao.client.rpc('set_staff_access_type', { p_user_id: coordAntiga.id, p_role: 'recepcao' });
     expect(volta).toBeNull();
     // A Gestão não usa a troca para criar outra Gestão.
     const { error: virarGestao } = await ctx.gestao.client.from('users').update({ role: 'gestao' }).eq('id', coordAntiga.id);

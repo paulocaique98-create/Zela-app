@@ -27,7 +27,7 @@ runIf('Plano de aula (RLS, transições e métodos)', () => {
     gestao = await createTestUser({ role: 'gestao', schoolId: escolaA });
     coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: escolaA });
     gestaoB = await createTestUser({ role: 'gestao', schoolId: escolaB });
-    recepcao = await createTestUser({ role: 'admin', schoolId: escolaA });
+    recepcao = await createTestUser({ role: 'recepcao', schoolId: escolaA });
     familia = await createTestUser({ role: 'family', schoolId: escolaA });
 
     const aberto = await ok(adminClient.from('school_years').select('id').eq('school_id', escolaA).eq('status', 'aberto').limit(1).maybeSingle());

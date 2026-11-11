@@ -23,8 +23,8 @@ runIf('Isolamento multi-tenant — policies corrigidas na Fase 17', () => {
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest RLS A');
     schoolB = await createTestSchool('Vitest RLS B');
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
-    adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
+    adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
 
     const { data: student, error } = await adminClient
       .from('students')
@@ -96,7 +96,7 @@ runIf('Isolamento multi-tenant — policies corrigidas na Fase 17', () => {
   it('regressão específica: usuário forjando o próprio user_metadata pra role=admin não ganha acesso (achado RLS/user_metadata)', async () => {
     const familyOutro = await createTestUser({ role: 'family', schoolId: schoolB });
     try {
-      await familyOutro.client.auth.updateUser({ data: { role: 'admin', school_id: schoolA } });
+      await familyOutro.client.auth.updateUser({ data: { role: 'recepcao', school_id: schoolA } });
       // Precisa de um login novo pro user_metadata forjado entrar no JWT.
       const relogged = createClient(SUPABASE_URL, ANON_KEY);
       await relogged.auth.signInWithPassword({ email: familyOutro.email, password: 'SenhaTeste123!' });

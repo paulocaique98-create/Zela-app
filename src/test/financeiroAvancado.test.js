@@ -15,7 +15,7 @@ async function montaCenario() {
   const schoolB = await createTestSchool();
   const gestao = await createTestUser({ role: 'gestao', schoolId: schoolA });
   const coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: schoolA });
-  const recepcao = await createTestUser({ role: 'admin', schoolId: schoolA });
+  const recepcao = await createTestUser({ role: 'recepcao', schoolId: schoolA });
   const familia = await createTestUser({ role: 'family', schoolId: schoolA });
   const gestaoB = await createTestUser({ role: 'gestao', schoolId: schoolB });
 

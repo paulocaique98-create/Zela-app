@@ -59,7 +59,7 @@ runIf('classes (normalização, Fase 1) — trigger automática', () => {
     const schoolB = await createTestSchool();
     const { data: subject } = await adminClient.from('subjects').insert({ school_id: schoolA, name: 'Vitest Classes Subj 3' }).select('id').single();
     const { data: cs } = await adminClient.from('class_subjects').insert({ school_id: schoolA, subject_id: subject.id, class_name: 'Turma Isolamento Vitest' }).select().single();
-    const adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    const adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     try {
       const { data } = await adminB.client.from('classes').select('id').eq('id', cs.class_id);
       expect(data).toEqual([]);
@@ -77,7 +77,7 @@ runIf('classes (normalização, Fase 1) — trigger automática', () => {
     const schoolId = await createTestSchool();
     const { data: subject } = await adminClient.from('subjects').insert({ school_id: schoolId, name: 'Vitest Classes Subj 4' }).select('id').single();
     const { data: cs } = await adminClient.from('class_subjects').insert({ school_id: schoolId, subject_id: subject.id, class_name: 'Turma Leitura Vitest' }).select().single();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data } = await admin.client.from('classes').select('id, name').eq('id', cs.class_id);
       expect(data).toHaveLength(1);

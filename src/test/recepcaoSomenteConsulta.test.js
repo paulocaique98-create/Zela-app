@@ -11,7 +11,7 @@ runIf('Recepção somente consulta', () => {
 
   beforeAll(async () => {
     schoolId = await createTestSchool('Vitest Recepcao');
-    recepcao = await createTestUser({ role: 'admin', schoolId });
+    recepcao = await createTestUser({ role: 'recepcao', schoolId });
     gestao = await createTestUser({ role: 'gestao', schoolId });
     familia = await createTestUser({ role: 'family', schoolId });
     const { data: aluno, error } = await adminClient.from('students')

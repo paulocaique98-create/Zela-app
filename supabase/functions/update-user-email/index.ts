@@ -43,7 +43,14 @@ serve(async (req) => {
       .select('role, school_id, is_primary_admin')
       .eq('id', user.id)
       .single();
-    await exigirEscolaLiberada(supabaseClient, callerData);
+    // escola_liberada só tem EXECUTE para service_role (migration 20261210120000).
+    await exigirEscolaLiberada(
+      createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      ),
+      callerData,
+    );
 
     // Recepção (admin) só consulta cadastros: quem altera e-mail de acesso é
     // Gestão, Coordenação/Direção ou o suporte (decisão do produto, 28/10/2026).

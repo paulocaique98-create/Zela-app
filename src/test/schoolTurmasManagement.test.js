@@ -13,7 +13,7 @@ runIf('Gestão de turmas pela escola (update_school_turmas)', () => {
     await adminClient.from('schools').update({ turmas: ['Nido', 'Kids I'] }).eq('id', school);
 
     const primaryAdmin = await createTestUser({ role: 'gestao', schoolId: school });
-    const regularAdmin = await createTestUser({ role: 'admin', schoolId: school, extra: { is_primary_admin: false } });
+    const regularAdmin = await createTestUser({ role: 'recepcao', schoolId: school, extra: { is_primary_admin: false } });
     const teacher = await createTestUser({ role: 'teacher', schoolId: school });
     const family = await createTestUser({ role: 'family', schoolId: school });
 

@@ -181,7 +181,7 @@ export default function AdminChat({ currentUser, currentSchool, onClose }) {
   // lista de famílias) — abre direto, criando a thread se ainda não existir.
   const [isOpeningSupport, setIsOpeningSupport] = useState(false);
   // Recepção (role admin) e Família não falam com o Suporte Zela; o botão é só dos demais perfis da escola.
-  const mostraSuporte = currentUser?.role !== 'admin';
+  const mostraSuporte = currentUser?.role !== 'recepcao';
   const openSupportThread = async () => {
     setIsOpeningSupport(true);
     setError('');

@@ -74,7 +74,7 @@ runIf('Regressão — achado #2: delete_school_and_users sem validação de cham
 
   it('usuário autenticado SEM ser developer é rejeitado pela checagem interna, escola continua existindo', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     try {
       const { error } = await admin.client.rpc('delete_school_and_users', { target_school_id: school });
       expect(error).not.toBeNull();

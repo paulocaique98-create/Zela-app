@@ -30,7 +30,7 @@ runIf('Portal da Gestão · permissões configuráveis', () => {
   it('Gestão sempre pode; admin segue o padrão do catálogo até a Gestão liberar; admin não altera permissões', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data: gDesp } = await gestao.client.rpc('has_permission', { p_permission: 'despesas.gerenciar' });
       expect(gDesp).toBe(true);
@@ -39,20 +39,20 @@ runIf('Portal da Gestão · permissões configuráveis', () => {
       // contratos.ver não é mais padrão da Recepção (migration 20261010130000): a Gestão libera por escola.
       const { data: aContratos } = await admin.client.rpc('has_permission', { p_permission: 'contratos.ver' });
       expect(aContratos).toBe(false);
-      const { error: liberaContratos } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'contratos.ver', granted: true });
+      const { error: liberaContratos } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'recepcao', permission: 'contratos.ver', granted: true });
       expect(liberaContratos).toBeNull();
       const { data: aContratosLiberado } = await admin.client.rpc('has_permission', { p_permission: 'contratos.ver' });
       expect(aContratosLiberado).toBe(true);
 
-      const { error: selfGrant } = await admin.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'despesas.gerenciar', granted: true });
+      const { error: selfGrant } = await admin.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'recepcao', permission: 'despesas.gerenciar', granted: true });
       expect(selfGrant).not.toBeNull();
 
-      const { error: grant } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'despesas.gerenciar', granted: true });
+      const { error: grant } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'recepcao', permission: 'despesas.gerenciar', granted: true });
       expect(grant).toBeNull();
       const { data: aDesp2 } = await admin.client.rpc('has_permission', { p_permission: 'despesas.gerenciar' });
       expect(aDesp2).toBe(true);
 
-      const { error: revoke } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'admin', permission: 'contratos.ver', granted: false });
+      const { error: revoke } = await gestao.client.from('school_role_permissions').upsert({ school_id: schoolId, role: 'recepcao', permission: 'contratos.ver', granted: false });
       expect(revoke).toBeNull();
       const { data: aContratos2 } = await admin.client.rpc('has_permission', { p_permission: 'contratos.ver' });
       expect(aContratos2).toBe(false);
@@ -70,7 +70,7 @@ runIf('Portal da Gestão · despesas e fornecedores', () => {
     const schoolA = await createTestSchool();
     const schoolB = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId: schoolA });
-    const admin = await createTestUser({ role: 'admin', schoolId: schoolA });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: schoolA });
     const gestaoB = await createTestUser({ role: 'gestao', schoolId: schoolB });
     try {
       const { data: sup, error: supErr } = await gestao.client.from('suppliers').insert({ school_id: schoolA, name: 'Padaria Vitest' }).select('id').single();
@@ -108,7 +108,7 @@ runIf('Portal da Gestão · baixa manual de cobrança', () => {
   it('admin sem permissão é barrado; Gestão dá baixa numa cobrança fora do Asaas e fica registrado', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     const studentId = await createStudent(schoolId, { family_id: family.id });
     const { data: charge, error: chargeErr } = await adminClient.from('financial_charges').insert({
@@ -151,7 +151,7 @@ runIf('Portal da Gestão · ano letivo', () => {
   it('escola nova nasce com ano aberto; matrícula do ano acompanha o aluno; só a Gestão vira o ano', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const studentId = await createStudent(schoolId, { enrollment_status: 'ativo' });
     try {
       const { data: years } = await gestao.client.from('school_years').select('id, status').eq('school_id', schoolId);
@@ -254,13 +254,13 @@ runIf('Portal da Gestão · segurança e leitura', () => {
   it('só a Gestão exige troca de senha, sem afetar a própria conta', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const teacher = await createTestUser({ role: 'teacher', schoolId });
     try {
       const { error: adminErr } = await admin.client.rpc('require_password_change_school', { p_roles: ['teacher'] });
       expect(adminErr).not.toBeNull();
 
-      const { data: count, error } = await gestao.client.rpc('require_password_change_school', { p_roles: ['admin', 'teacher', 'gestao'] });
+      const { data: count, error } = await gestao.client.rpc('require_password_change_school', { p_roles: ['recepcao', 'teacher', 'gestao'] });
       expect(error).toBeNull();
       expect(count).toBe(2);
       const { data: rows } = await adminClient.from('users').select('id, must_change_password').in('id', [gestao.id, admin.id, teacher.id]);

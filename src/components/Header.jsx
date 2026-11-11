@@ -23,7 +23,7 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
   // Configurações; Professora e Recepção abrem por aqui. A Gestão só pelo suporte.
   // Recepção e Professora desabilitadas (14/10/2026): são contas da escola, sem dado
   // pessoal próprio, e o botão no cabeçalho ficava fácil demais de acionar por engano.
-  // Para reativar, voltar 'teacher' e/ou 'admin' na lista.
+  // Para reativar, voltar 'teacher' e/ou 'recepcao' na lista.
   const podeExcluirConta = [].includes(currentUser.role);
 
   return (
@@ -105,10 +105,10 @@ export default function Header({ currentUser, currentSchool, globalLogo, screenL
             <img
               src={schoolLogo}
               alt="Logo da escola"
-              className={`w-9 h-9 object-cover rounded-md border border-outline-variant bg-white mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:block' : ''}`}
+              className={`w-9 h-9 object-cover rounded-md border border-outline-variant bg-white mr-2 ${currentUser.role !== 'recepcao' ? 'hidden sm:block' : ''}`}
             />
           ) : (
-            <div className={`w-9 h-9 bg-ink-2 rounded-md items-center justify-center border border-ink-line text-white font-semibold text-sm mr-2 ${currentUser.role !== 'admin' ? 'hidden sm:flex' : 'flex'}`}>
+            <div className={`w-9 h-9 bg-ink-2 rounded-md items-center justify-center border border-ink-line text-white font-semibold text-sm mr-2 ${currentUser.role !== 'recepcao' ? 'hidden sm:flex' : 'flex'}`}>
               {currentSchool.name?.charAt(0)}
             </div>
           )

@@ -12,7 +12,7 @@ import MapaHabilidadesCatalogo from './MapaHabilidadesCatalogo';
 // Coordenação e Direção Pedagógica revisam, corrigem e publicam. Nunca criam
 // registro do zero (a professora cria) e a RLS garante isso no banco.
 const DEPARTAMENTOS_EDITORES = ['coordenacao', 'diretoria_pedagogica'];
-const ROLES_EDITORES = ['admin', 'gestao_pedagogica'];
+const ROLES_EDITORES = ['recepcao', 'gestao_pedagogica'];
 
 const COLUNAS_REGISTRO = 'id, student_id, habilidade_id, ano, semestre, situacao, status';
 

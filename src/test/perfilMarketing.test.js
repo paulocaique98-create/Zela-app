@@ -37,7 +37,7 @@ runIf('Perfil Marketing', () => {
     await adminClient.from('schools').update({ features_enabled: { marketing: true } }).eq('id', ctx.schoolId);
     ctx.mkt = await createTestUser({ role: 'marketing', schoolId: ctx.schoolId, extra: { name: 'Vitest Marketing' } });
     ctx.mktDesligado = await createTestUser({ role: 'marketing', schoolId: ctx.outraEscola });
-    ctx.recepcao = await createTestUser({ role: 'admin', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
+    ctx.recepcao = await createTestUser({ role: 'recepcao', schoolId: ctx.schoolId, extra: { departamento: 'recepcao' } });
     ctx.familia = await createTestUser({ role: 'family', schoolId: ctx.schoolId, extra: { name: 'Vitest Responsavel', phone: '11999990000' } });
     ctx.familiaOutra = await createTestUser({ role: 'family', schoolId: ctx.outraEscola, extra: { phone: '11888880000' } });
 

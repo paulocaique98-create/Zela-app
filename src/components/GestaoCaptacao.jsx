@@ -51,7 +51,7 @@ export default function GestaoCaptacao({ currentUser, currentSchool, aba }) {
       supabase.from('lead_interactions').select('id, lead_id, tipo, nota, ocorrida_em, registrado_por').eq('school_id', schoolId).order('ocorrida_em', { ascending: false }).limit(3000),
       supabase.from('lead_visits').select('id, lead_id, agendada_para, status, observacao').eq('school_id', schoolId).order('agendada_para', { ascending: false }).limit(1500),
       supabase.from('waitlist').select('id, lead_id, student_id, turma, posicao, status, observacao').eq('school_id', schoolId).order('posicao').limit(2000),
-      supabase.from('users').select('id, name').eq('school_id', schoolId).in('role', ['gestao', 'gestao_pedagogica', 'admin']).limit(200),
+      supabase.from('users').select('id, name').eq('school_id', schoolId).in('role', ['gestao', 'gestao_pedagogica', 'recepcao']).limit(200),
     ]);
     if (ld.error || it.error || vs.error || wl.error) { setErro('Não foi possível carregar a Captação.'); setLeads([]); return; }
     setErro('');

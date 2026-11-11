@@ -33,7 +33,7 @@ runIf('Sair de um aparelho não derruba o totem', () => {
 
   beforeAll(async () => {
     ctx.escola = await createTestSchool('Vitest Sair Aparelho');
-    ctx.recepcao = await createTestUser({ role: 'admin', schoolId: ctx.escola, extra: { departamento: 'recepcao' } });
+    ctx.recepcao = await createTestUser({ role: 'recepcao', schoolId: ctx.escola, extra: { departamento: 'recepcao' } });
     ctx.familia = await createTestUser({ role: 'family', schoolId: ctx.escola });
     ctx.contas.push(ctx.recepcao.id, ctx.familia.id);
     const { data: aluno } = await adminClient.from('students')

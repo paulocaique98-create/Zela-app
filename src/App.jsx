@@ -106,17 +106,17 @@ export default function App() {
   // (antes saía do Zela). O Autoatendimento fica travado: sair dele exige senha.
   const activeRole = currentUser?.role || null;
   const [activeTab, setActiveTab] =
-    activeRole === 'admin' ? [adminTab, setAdminTab] :
+    activeRole === 'recepcao' ? [adminTab, setAdminTab] :
     activeRole === 'family' ? [familyTab, setFamilyTab] :
     activeRole === 'teacher' ? [teacherTab, setTeacherTab] :
     usaPortalGestao(activeRole) ? [gestaoTab, setGestaoTab] :
     activeRole === 'developer' ? [developerTab, setDeveloperTab] :
     [null, null];
-  useTabHistory(activeTab ? activeRole : null, activeTab, setActiveTab, activeRole === 'admin' ? KIOSK_LOCKED_TABS : NO_LOCKED_TABS);
+  useTabHistory(activeTab ? activeRole : null, activeTab, setActiveTab, activeRole === 'recepcao' ? KIOSK_LOCKED_TABS : NO_LOCKED_TABS);
 
   // Publicação nova do Zela enquanto a aba estava aberta: oferece recarregar.
   const updateAvailable = useAppUpdate();
-  const avisoAtraso = useAvisoAtraso(activeRole === 'gestao' || activeRole === 'admin');
+  const avisoAtraso = useAvisoAtraso(activeRole === 'gestao' || activeRole === 'recepcao');
   const isOnline = useOnlineStatus();
 
   // Fase D do PLANO_TELA_DE_ORIGEM_NOS_LOGS.md — qual aba está ativa agora,
@@ -125,7 +125,7 @@ export default function App() {
   // aba do portal realmente ativo é usada.
   useEffect(() => {
     const screen =
-      currentUser?.role === 'admin' ? adminTab :
+      currentUser?.role === 'recepcao' ? adminTab :
       currentUser?.role === 'family' ? familyTab :
       currentUser?.role === 'teacher' ? teacherTab :
       currentUser?.role === 'developer' ? `dev-${developerTab}` :
@@ -446,7 +446,7 @@ export default function App() {
 
         // Admin vê todo mundo da própria escola; família só os seus próprios
         // autorizados — mesmo escopo já usado no fetch inicial (fetchData).
-        const belongs = role === 'admin'
+        const belongs = role === 'recepcao'
           ? newRow.school_id === currentUserRef.current?.school_id
           : newRow.family_id === currentUserRef.current?.id;
         if (!belongs) return;
@@ -630,7 +630,7 @@ export default function App() {
           // Atualiza no banco em background -- só na sessão da escola: a
           // família não grava mais em students (check-in/out centralizado
           // no autoatendimento).
-          if (['admin', 'gestao', 'gestao_pedagogica', 'developer'].includes(currentUser.role)) supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
+          if (['recepcao', 'gestao', 'gestao_pedagogica', 'developer'].includes(currentUser.role)) supabase.from('students').update({ status: 'idle', today_entry: null, today_exit: null, today_entry_at: null, today_exit_at: null }).eq('id', s.id)
             .then(({ error }) => {
               if (error) console.error('[Zela] Falha ao resetar status do aluno para idle:', s.id, error);
             });
@@ -1537,13 +1537,13 @@ export default function App() {
   // totem e deixar o layout dedicado à tarefa — o botão de sair some daqui e
   // reaparece dentro da engrenagem de Biometria de Responsáveis (ver
   // AdminPortal.jsx).
-  const isKioskFullscreen = currentUser.role === 'admin' && adminTab === 'kiosk';
+  const isKioskFullscreen = currentUser.role === 'recepcao' && adminTab === 'kiosk';
 
   // Título dinâmico do Header ("Zela - Usuários" etc.) -- na Início de cada
   // portal continua mostrando só "Zela Portal" (currentHeaderLabel null),
   // pedido explícito do usuário pra não poluir a tela mais usada.
   const currentHeaderTab =
-    currentUser.role === 'admin' ? adminTab :
+    currentUser.role === 'recepcao' ? adminTab :
     currentUser.role === 'family' ? familyTab :
     currentUser.role === 'teacher' ? teacherTab :
     currentUser.role === 'developer' ? `dev-${developerTab}` :
@@ -1590,7 +1590,7 @@ export default function App() {
             // clicar numa notificação de admin não teria efeito nenhum
             // (chamaria o setter errado, o estado que a tela realmente lê
             // pra decidir o que mostrar nunca mudava).
-            currentUser?.role === 'admin' ? setAdminTab
+            currentUser?.role === 'recepcao' ? setAdminTab
             : currentUser?.role === 'teacher' ? setTeacherTab
             : usaPortalGestao(currentUser?.role) ? setGestaoTab
             : setFamilyTab
@@ -1655,7 +1655,7 @@ export default function App() {
                   activeTab={developerTab}
                   setActiveTab={setDeveloperTab}
                 />
-              ) : currentUser.role === 'admin' ? (
+              ) : currentUser.role === 'recepcao' ? (
                 <AdminPortal
                   currentUser={currentUser}
                   currentSchool={currentSchool}

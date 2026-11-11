@@ -57,7 +57,7 @@ serve(async (req) => {
     // Staff da escola (admin, gestão pedagógica, gestão): decidido pela matriz de
     // chat_acesso_setor, a mesma das policies. Só responde quem tem "responder".
     let isStaffOwner = false;
-    if (!isSuporteZela && ['admin', 'recepcao', 'gestao_pedagogica', 'gestao'].includes(callerData.role)
+    if (!isSuporteZela && ['recepcao', 'gestao_pedagogica', 'gestao'].includes(callerData.role)
         && thread.school_id === callerData.school_id) {
       const { data: pode } = await adminClient.rpc('chat_pode_user', {
         p_user: caller.id, p_school: thread.school_id, p_setor: thread.setor, p_acao: 'responder',

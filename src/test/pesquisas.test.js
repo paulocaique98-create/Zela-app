@@ -42,7 +42,7 @@ runIf('Pesquisas (RLS e RPCs)', () => {
     await adminClient.from('schools').update({ features_enabled: { avaliacao_institucional: true } }).in('id', [escolaA, escolaB]);
     gestao = await createTestUser({ role: 'gestao', schoolId: escolaA });
     coord = await createTestUser({ role: 'gestao_pedagogica', schoolId: escolaA });
-    recepcao = await createTestUser({ role: 'admin', schoolId: escolaA });
+    recepcao = await createTestUser({ role: 'recepcao', schoolId: escolaA });
     gestaoB = await createTestUser({ role: 'gestao', schoolId: escolaB });
     prof = await createTestUser({ role: 'teacher', schoolId: escolaA, extra: { teacher_status: 'ativo', turmas: ['Nido'] } });
     profInativa = await createTestUser({ role: 'teacher', schoolId: escolaA, extra: { teacher_status: 'inativo', turmas: ['Nido'] } });
