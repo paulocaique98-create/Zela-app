@@ -33,3 +33,24 @@ export function validarNovoDispositivo({ name, model }) {
   if (n.length > 80) return 'O nome pode ter no máximo 80 caracteres.';
   return '';
 }
+
+// Vínculo pessoa↔equipamento (Control iD, fase 4 no front). O id do equipamento é o
+// número do usuário dentro do iDFace; sugerimos o próximo livre naquele aparelho.
+export function proximoIdExterno(vinculos) {
+  const max = (vinculos || []).reduce((m, v) => Math.max(m, Number(v.external_user_id) || 0), 0);
+  return max + 1;
+}
+
+export function validarVinculo({ pessoaId, externalId }, vinculos) {
+  if (!pessoaId) return 'Selecione a pessoa autorizada.';
+  const n = Number(externalId);
+  if (!Number.isInteger(n) || n <= 0) return 'O número no equipamento deve ser um inteiro maior que zero.';
+  if ((vinculos || []).some(v => Number(v.external_user_id) === n)) return 'Esse número já está em uso neste equipamento.';
+  if ((vinculos || []).some(v => v.authorized_person_id === pessoaId)) return 'Essa pessoa já está vinculada a este equipamento.';
+  return '';
+}
+
+export const ROTULO_COMANDO = {
+  create_user: 'Cadastrar', update_user: 'Atualizar', delete_user: 'Remover', set_photo: 'Enviar foto',
+};
+export const ROTULO_COMANDO_STATUS = { pending: 'Na fila', sent: 'Enviado', done: 'Concluído', failed: 'Falhou' };
