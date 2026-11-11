@@ -34,6 +34,7 @@ const ACCESS_ROLE_STYLE = {
   gestao_pedagogica: 'bg-primary/10 text-primary border-primary/40',
   teacher: 'bg-success/10 text-success border-success/40',
   gestao: 'bg-primary/10 text-primary border-primary/20',
+  marketing: 'bg-primary/10 text-primary border-primary/40',
 };
 
 // modo: 'completo' | 'cadastro' (só o formulário de novo funcionário) | 'gerenciar' (lista e edição, sem criar).
@@ -141,7 +142,7 @@ export default function AdminFuncionarios({ currentUser, currentSchool, modo = '
         .from('users')
         .select('*')
         .eq('school_id', schoolId)
-        .in('role', ['recepcao', 'teacher', 'gestao', 'gestao_pedagogica'])
+        .in('role', ['recepcao', 'teacher', 'gestao', 'gestao_pedagogica', 'marketing'])
         .order('name', { ascending: true });
       if (fetchError) throw fetchError;
       setAccessUsers(data || []);
