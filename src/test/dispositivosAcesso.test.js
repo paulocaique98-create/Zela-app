@@ -45,7 +45,7 @@ runIf('Dispositivos de acesso · permissões e isolamento', () => {
       const { data, error } = await registrar(c.gestao.client, c.schoolA);
       expect(error).toBeNull();
       const { id, token } = um(data);
-      expect(token).toHaveLength(64);
+      expect(token).toMatch(/^[2-9A-HJKMNP-Z]{4}(-[2-9A-HJKMNP-Z]{4}){3}$/);
 
       // token nunca fica em texto: só o hash (64 hex) diferente do token
       const { data: linha } = await adminClient.from('access_devices').select('token_hash, school_id').eq('id', id).single();

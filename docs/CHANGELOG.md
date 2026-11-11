@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Control iD, token curto** (11/11): token do dispositivo passa a `XXXX-XXXX-XXXX-XXXX` (16 caracteres, ~79 bits, sem caracteres ambíguos), aceito em qualquer caixa; tokens de 64 hex continuam válidos. Migration 20261212200000 (com rollback) e `parser.ts` ajustados. NÃO aplicada em produção; a ordem é migration e depois deploy de `controlid-push`.
 - **Control iD, painel de dispositivos, fase 7** (11/11): aba Configurações > Dispositivos da Gestão (adicionar com modelo por seleção, girar token mostrado 1x, ativar/desativar, online/offline por last_seen_at). Só front, usa as RPCs da fase 1. Em 11/11 `migration list --remote` mostra as migrations 20261212120000 a 20261212190000 (Control iD fases 1 a 6 e preços) aplicadas em produção; o conteúdo aplicado não foi conferido. Tela não validada no navegador.
 - **Control iD, base de dados e segurança** (11/11): tabelas `access_devices` e `device_events` (RLS ligada, sem acesso direto), funções de painel e do equipamento, token por dispositivo guardado só como hash, rollback. Teste `dispositivosAcesso.test.js`. Migration 20261212120000 NÃO aplicada em produção.
 - **Teste da Gestão Pedagógica em dia** (11/11): `perfilGestaoPedagogica.test.js` inclui na lista aprovada as 19 policies de plano de aula e Método Tradicional (conferidas: todas por escola, nenhuma para anon). Só teste, sem mudança de banco.
