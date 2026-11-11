@@ -110,7 +110,7 @@ export const ABAS_SO_GESTAO = new Set([
   'cadastros-funcionario-novo', 'cadastros-fornecedor-novo',
   'cadastros-funcionarios', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-qualidade-biometria', 'cadastros-unificar',
   'relatorios-gestao', 'relatorios-financeiro',
-  'config-meu-plano', 'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca',
+  'config-meu-plano', 'config-escola', 'config-financeiro', 'config-comunicacao', 'config-seguranca', 'config-dispositivos',
   'permissoes-perfis', 'permissoes-auditoria', 'integracoes',
   'primeiros-passos',
 ]);
