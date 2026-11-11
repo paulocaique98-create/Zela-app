@@ -7,6 +7,9 @@ describe('controlid parser', () => {
   it('aceita só token de 64 hex e rota conhecida', () => {
     expect(parseRota(`/controlid-push/${T}/push`)).toEqual({ token: T, rota: 'push' });
     expect(parseRota(`/functions/v1/controlid-push/${T}/dao`)?.rota).toBe('dao');
+    expect(parseRota('/controlid-push/K7M2-QX9R-4TBH-W3ND/push')).toEqual({ token: 'K7M2-QX9R-4TBH-W3ND', rota: 'push' });
+    expect(parseRota('/controlid-push/K7M2QX9R4TBHW3ND/push')).toBeNull();
+    expect(parseRota('/controlid-push/K7M2-QX9R-4TBH/push')).toBeNull();
     expect(parseRota('/controlid-push/curto/push')).toBeNull();
     expect(parseRota(`/controlid-push/${T}/outra`)).toBeNull();
     expect(parseRota(`/controlid-push/${T}/push/extra`)).toBeNull();

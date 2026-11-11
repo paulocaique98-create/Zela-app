@@ -25,7 +25,8 @@ export function parseRota(pathname: string): { token: string; rota: Rota } | nul
   const resto = i >= 0 ? partes.slice(i + 1) : partes;
   if (resto.length !== 2) return null;
   const [token, rota] = resto;
-  if (!/^[0-9a-f]{64}$/.test(token)) return null;
+  // 64 hex (formato antigo) ou XXXX-XXXX-XXXX-XXXX (curto). A conferência de verdade é o hash no banco.
+  if (!/^[0-9a-f]{64}$/.test(token) && !/^[0-9A-Za-z]{4}(-[0-9A-Za-z]{4}){3}$/.test(token)) return null;
   if (!ROTAS.includes(rota as Rota)) return null;
   return { token, rota: rota as Rota };
 }
