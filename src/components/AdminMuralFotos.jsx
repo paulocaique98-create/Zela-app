@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Image as ImageIcon, Loader2, Trash2, X, Upload, Users, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Trash2, X, Upload, Plus, Users, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrls, buildSafeFileName } from '../lib/storage';
@@ -212,7 +212,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Mural de Fotos" e ícone removidos (o Header do app já
           mostra o nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
+      <div className={`${showForm ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0`}>
         <p className="text-on-surface-variant text-small hidden sm:block">Compartilhe fotos com as famílias, por turma ou para todos.</p>
         {!showForm && (
           <button
@@ -224,50 +224,79 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2.5 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
+      <div className={`flex-1 min-h-0 flex flex-col sm:block overflow-y-auto px-2.5 ${showForm ? 'pt-0 pb-0' : 'pt-1 pb-4'} sm:p-6 space-y-3 sm:space-y-4`}>
         {showForm && (
-          <div className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+          <div className="bg-surface-container-low border-y sm:border border-outline-variant rounded-none sm:rounded-zela-lg -mx-2.5 sm:mx-0 max-sm:flex-1 max-sm:flex max-sm:flex-col max-sm:justify-between px-3 py-3 sm:p-5 space-y-3 sm:space-y-5">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-on-surface text-sm">Adicionar fotos</h3>
-              <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
+              <h3 className="font-bold text-on-surface text-sm sm:text-base">Nova publicação</h3>
+              <button type="button" onClick={resetForm} aria-label="Fechar" className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
                 <X size={18} />
               </button>
             </div>
 
-            {pendingFiles.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {pendingFiles.map((f, i) => (
-                  <div key={`${f.name}-${i}`} className="relative aspect-square rounded-zela-md overflow-hidden border border-outline-variant group">
-                    <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => removePendingFile(i)}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-lg p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
-                    >
-                      <X size={14} />
-                    </button>
+            {/* 1. Fotos */}
+            <section className="space-y-1.5">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center" aria-hidden="true">1</span>
+                Fotos
+              </h4>
+              {pendingFiles.length > 0 ? (
+                <div className="flex gap-2 h-24 sm:h-28">
+                  {/* Botão fixo à esquerda; só as miniaturas rolam, então ele nunca some. */}
+                  <label className="h-full aspect-square shrink-0 rounded-zela-md border border-dashed border-outline-variant hover:border-primary/60 bg-white flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary cursor-pointer transition">
+                    <Plus size={20} aria-hidden="true" />
+                    <span className="text-[11px] font-bold">Mais fotos</span>
+                    <input type="file" multiple accept={ALLOWED_TYPES.join(',')} onChange={handleFilesSelected} className="hidden" />
+                  </label>
+                  <div className="flex gap-2 flex-1 min-w-0 overflow-x-auto">
+                  {pendingFiles.map((f, i) => (
+                    <div key={`${f.name}-${i}`} className="relative h-full aspect-square shrink-0 rounded-zela-md overflow-hidden border border-outline-variant group">
+                      <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePendingFile(i)}
+                        aria-label={`Remover ${f.name}`}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-lg p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center gap-1.5 text-center bg-white border-2 border-dashed border-outline-variant hover:border-primary/60 rounded-zela-lg px-4 h-24 sm:h-28 text-on-surface-variant hover:text-primary cursor-pointer transition">
+                  <Upload size={20} aria-hidden="true" />
+                  <span className="text-sm font-bold">Toque para escolher as fotos</span>
+                  <span className="text-xs text-on-surface-variant">Até 10MB cada</span>
+                  <input type="file" multiple accept={ALLOWED_TYPES.join(',')} onChange={handleFilesSelected} className="hidden" />
+                </label>
+              )}
+            </section>
 
-            <label className="inline-flex items-center gap-2 bg-white border border-dashed border-outline-variant hover:border-primary/60 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
-              <Upload size={14} /> Escolher fotos (até 10MB cada)
-              <input type="file" multiple accept={ALLOWED_TYPES.join(',')} onChange={handleFilesSelected} className="hidden" />
-            </label>
+            {/* 2. Legenda */}
+            <section className="space-y-1.5">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center" aria-hidden="true">2</span>
+                Legenda <span className="text-xs font-medium text-on-surface-variant">(opcional)</span>
+              </h4>
+              <textarea
+                rows={1}
+                placeholder="Escreva uma legenda para as fotos"
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                maxLength={200}
+                className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm resize-none"
+              />
+              <p className="hidden sm:block text-right text-[11px] text-on-surface-variant">{caption.length}/200</p>
+            </section>
 
-            <input
-              type="text"
-              placeholder="Legenda (opcional, aplicada a todas as fotos deste envio)"
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-              maxLength={200}
-              className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm"
-            />
-
-            <div>
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant mb-1.5">
-                <Users size={12} /> Visível para
-              </label>
+            {/* 3. Quem vê */}
+            <section className="space-y-1.5">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center" aria-hidden="true">3</span>
+                <Users size={14} aria-hidden="true" /> Quem pode ver
+              </h4>
               <div className="flex flex-wrap gap-2">
                 {currentUser?.role !== 'teacher' && (
                 <button
@@ -296,12 +325,12 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
                   );
                 })}
               </div>
-            </div>
+            </section>
 
             <button
               onClick={handleUpload}
               disabled={isUploading || pendingFiles.length === 0}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-container disabled:bg-outline-variant disabled:text-on-surface-variant text-white px-5 py-2.5 rounded-zela-md font-bold transition-all active:scale-95 text-sm"
             >
               {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
               Publicar {pendingFiles.length > 0 ? `(${pendingFiles.length})` : ''}
@@ -313,6 +342,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
+        <div className={showForm ? 'hidden sm:block' : ''}>
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -355,6 +385,7 @@ export default function AdminMuralFotos({ currentUser, currentSchool }) {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {lightboxFoto && (

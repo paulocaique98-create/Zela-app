@@ -90,6 +90,7 @@ export default function App() {
   const [teacherTab, setTeacherTab] = useState(() => sessionStorage.getItem('zela_teacher_tab') || 'home');
   // Portal da Gestão -- scaffold novo, mesmo padrão dos
   // outros 3 portais (Admin/Família/Professor).
+  const [marketingTab, setMarketingTab] = useState('inicio');
   const [gestaoTab, setGestaoTab] = useState(() => sessionStorage.getItem('zela_gestao_tab') || 'home');
   // Antes vivia isolado dentro do próprio DeveloperLayout.jsx (só ele lia/
   // escrevia) -- subiu pra cá pra virar disponível pro título dinâmico do
@@ -1722,6 +1723,10 @@ export default function App() {
                 <MarketingPortal
                   currentUser={currentUser}
                   currentSchool={currentSchool}
+                  marketingTab={marketingTab}
+                  setMarketingTab={setMarketingTab}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
                   onLogout={handleLogout}
                 />
               ) : null}

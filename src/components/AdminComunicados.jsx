@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Megaphone, Loader2, Trash2, Pencil, X, Check, Plus, Users, Paperclip, FileText, Image as ImageIcon, File as FileIcon } from 'lucide-react';
+import { ChevronDown, Megaphone, Loader2, Trash2, Pencil, X, Check, Plus, Users, Paperclip, FileText, Image as ImageIcon, File as FileIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSchoolConfig } from '../lib/schoolConfig';
 import { uploadFile, removeFile, getSignedUrl, buildSafeFileName } from '../lib/storage';
@@ -43,6 +43,10 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [pendingFiles, setPendingFiles] = useState([]);
   const [openingPath, setOpeningPath] = useState(null);
+  // Marketing só edita/exclui o que ele mesmo publicou (o banco também barra);
+  // Gestão, Direção, Coordenação e Recepção/Admin seguem gerenciando todos.
+  const podeGerenciar = (c) => currentUser?.role !== 'marketing' || c.created_by === currentUser?.id;
+  const [expandedId, setExpandedId] = useState(null); // comunicado aberto (só o título aparece fechado)
 
   const schoolId = currentSchool?.id || currentUser?.school_id;
   const { turmas: TURMA_OPTIONS } = useSchoolConfig(schoolId);
@@ -238,7 +242,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
     <div className="h-full flex flex-col bg-white -m-3 sm:m-0 rounded-none sm:rounded-zela-xl border-0 sm:border sm:border-outline-variant md:rounded-none md:shadow-none md:border-0 shadow-none sm:shadow-sm overflow-hidden">
       {/* Título "Comunicados" e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); só a descrição, direto. */}
-      <div className="flex items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0">
+      <div className={`${showForm ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-2.5 py-3 sm:p-6 sm:border-b border-outline-variant shrink-0`}>
         <p className="text-on-surface-variant text-small hidden sm:block">Crie e gerencie avisos para as famílias da escola.</p>
         {!showForm && (
           <button
@@ -250,9 +254,9 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2.5 pt-1 pb-4 sm:p-6 space-y-3 sm:space-y-4">
+      <div className={`flex-1 min-h-0 flex flex-col sm:block overflow-y-auto px-2.5 ${showForm ? 'pt-0 pb-0' : 'pt-1 pb-4'} sm:p-6 space-y-3 sm:space-y-4`}>
         {showForm && (
-          <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-zela-lg p-4 sm:p-5 space-y-3">
+          <form onSubmit={handleSubmit} className="bg-surface-container-low border-y sm:border border-outline-variant rounded-none sm:rounded-zela-lg -mx-2.5 sm:mx-0 px-3 py-3 sm:p-5 space-y-3 max-sm:flex-1 max-sm:flex max-sm:flex-col">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-on-surface text-sm">{editingId ? 'Editar comunicado' : 'Novo comunicado'}</h3>
               <button type="button" onClick={resetForm} className="p-1 text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container-high rounded-lg transition">
@@ -272,9 +276,9 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
               placeholder="Escreva o comunicado..."
               value={body}
               onChange={e => setBody(e.target.value)}
-              rows={4}
+              rows={3}
               required
-              className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm resize-none"
+              className="w-full px-4 py-2.5 bg-white border border-outline-variant rounded-zela-md focus:outline-none focus:ring-2 focus:ring-primary text-on-surface text-sm resize-none max-sm:flex-1 max-sm:min-h-[84px]"
             />
             <div>
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant mb-1.5">
@@ -320,31 +324,10 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                 <Paperclip size={12} /> Anexos (imagem, PDF, Word, até {MAX_FILES}, 15MB cada)
               </label>
 
-              {(existingAttachments.length > 0 || pendingFiles.length > 0) && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {existingAttachments.map((a) => (
-                    <div key={a.path} className="flex items-center gap-1.5 bg-white border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs">
-                      <AttachmentIcon type={a.type} />
-                      <span className="max-w-[140px] truncate text-on-surface font-medium">{a.name}</span>
-                      <button type="button" onClick={() => removeExistingAttachment(a)} className="text-on-surface-variant/70 hover:text-error">
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  {pendingFiles.map((f, i) => (
-                    <div key={`${f.name}-${i}`} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 text-xs">
-                      <AttachmentIcon type={f.type} />
-                      <span className="max-w-[140px] truncate text-primary font-medium">{f.name}</span>
-                      <button type="button" onClick={() => removePendingFile(i)} className="text-primary hover:text-error">
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
+              {/* Botão fixo à esquerda; só os arquivos rolam, altura fixa. */}
+              <div className="flex gap-2 items-stretch">
               {totalAttachmentCount < MAX_FILES && (
-                <label className="inline-flex items-center gap-2 bg-white border border-dashed border-outline-variant hover:border-primary/60 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
+                <label className="shrink-0 inline-flex items-center gap-2 bg-white border border-dashed border-outline-variant hover:border-primary/60 rounded-zela-md px-4 py-2.5 text-xs font-bold text-on-surface-variant hover:text-primary cursor-pointer transition">
                   <Paperclip size={14} /> Adicionar arquivo
                   <input
                     type="file"
@@ -355,6 +338,29 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                   />
                 </label>
               )}
+              {(existingAttachments.length > 0 || pendingFiles.length > 0) && (
+                <div className="flex flex-1 min-w-0 gap-2 overflow-x-auto items-center">
+                  {existingAttachments.map((a) => (
+                    <div key={a.path} className="shrink-0 flex items-center gap-1.5 bg-white border border-outline-variant rounded-lg px-2.5 py-1.5 text-xs">
+                      <AttachmentIcon type={a.type} />
+                      <span className="max-w-[140px] truncate text-on-surface font-medium">{a.name}</span>
+                      <button type="button" onClick={() => removeExistingAttachment(a)} className="text-on-surface-variant/70 hover:text-error">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {pendingFiles.map((f, i) => (
+                    <div key={`${f.name}-${i}`} className="shrink-0 flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 text-xs">
+                      <AttachmentIcon type={f.type} />
+                      <span className="max-w-[140px] truncate text-primary font-medium">{f.name}</span>
+                      <button type="button" onClick={() => removePendingFile(i)} className="text-primary hover:text-error">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              </div>
             </div>
 
             <button
@@ -372,6 +378,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
           <div className="bg-error/10 border border-error/30 text-error p-3 rounded-zela-md text-sm font-medium">{error}</div>
         )}
 
+        <div className={showForm ? 'hidden sm:block' : ''}>
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -385,11 +392,20 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
         ) : (
           <div className="grid gap-3 lg:grid-cols-2 items-start">
           {comunicados.map(c => (
-            <div key={c.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4">
+            <div key={c.id} className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg p-4 min-w-0">
               <div className="flex justify-between items-start gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="font-bold text-on-surface w-full sm:w-auto">{c.title}</h4>
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                  aria-expanded={expandedId === c.id}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="font-bold text-on-surface min-w-0 break-words">{c.title}</h4>
+                    <ChevronDown size={18} aria-hidden="true" className={`shrink-0 text-on-surface-variant transition-transform ${expandedId === c.id ? 'rotate-180' : ''}`} />
+                  </div>
+                  {expandedId === c.id && (<>
+                  <div className="flex items-center gap-1.5 flex-wrap mt-1">
                     {c.turmas && c.turmas.length > 0 ? (
                       c.turmas.map(t => (
                         <span key={t} className="text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-primary/10 text-primary">
@@ -405,7 +421,9 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                   <p className="text-on-surface-variant text-xs mt-0.5">
                     {new Date(c.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                   </p>
-                </div>
+                  </>)}
+                </button>
+                {podeGerenciar(c) && (
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     onClick={() => handleEdit(c)}
@@ -423,9 +441,12 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
                     {deletingId === c.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                   </button>
                 </div>
+                )}
               </div>
+              {expandedId === c.id && (
               <p className="text-on-surface-variant text-sm mt-3 whitespace-pre-wrap break-words">{c.body}</p>
-              {c.attachments && c.attachments.length > 0 && (
+              )}
+              {expandedId === c.id && c.attachments && c.attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {c.attachments.map(a => (
                     <button
@@ -444,6 +465,7 @@ export default function AdminComunicados({ currentUser, currentSchool }) {
           ))}
           </div>
         )}
+        </div>
       </div>
 
       {confirmDeleteId && (
