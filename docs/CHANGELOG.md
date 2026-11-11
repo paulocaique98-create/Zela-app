@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Recepção substitui admin, em produção** (10/11): Fase B, C1, C2 e C4 aplicadas; `users.role` admin virou `recepcao` (backup e rollback da C2); create-admin-user, update-user-email e import-matricula-batch publicadas chamando escola_liberada com service_role, o que destrava o cadastro pela Gestão (ex.: perfil Marketing). Funcionários passa a listar contas `marketing`.
 - **Recepção só visualiza, Fase B** (05/11): a Recepção (`admin`) lê, mas não cria, edita nem exclui comunicados, calendário, mural, cardápio e aulas especiais (policies de leitura nas tabelas e nos buckets comunicados-anexos e mural-fotos); `notify-families` não aceita mais `admin`. Migration 20261211130000 e função só no local, não aplicadas em produção.
 - **Perfil Marketing, Fase A** (05/11): papel `marketing`, fechado por padrão e só com o módulo Marketing ligado (ligado na ZL001). Escreve em calendário, comunicados e mural de fotos; lista de alunos pela RPC marketing_lista_alunos (nome, turma, turno, nascimento, idade, responsável e telefone, sem foto) com exportação em Excel, PDF e CSV registrada em audit_logs. Migration 20261211120000, create-admin-user e notify-families publicadas em produção; frontend ainda não publicado.
 - **Organização de docs** (05/11): planos de docs/ unificados em PLANO_UNIFICADO.md (só pendências, por prioridade) e documentos agrupados em subpastas referencia, juridico, operacao, precos e roadmap
