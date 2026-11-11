@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Marketing só edita os próprios comunicados** (11/11): RLS em `comunicados` troca o ALL do Marketing por leitura da escola e insert/update/delete só com `created_by = auth.uid()`. Migration 20261211170000 APLICADA em produção (conferida em pg_policies e migration list). Teste negativo em perfilMarketing.test.js. Corrige também 20261201120000 (insere `financeiro_avancado` no catálogo; no-op em produção) para o banco local subir do zero.
 - **Marketing no celular** (11/11): menu padrão (sidebar e barra inferior), tela Início, Alunos em cartões, Comunicados recolhidos com editar/excluir só do autor (Marketing), Calendário sem importação com IA para Marketing e formulários de Mural e Comunicados compactos.
 - **Recepção substitui admin, em produção** (10/11): Fase B, C1, C2 e C4 aplicadas; `users.role` admin virou `recepcao` (backup e rollback da C2); create-admin-user, update-user-email e import-matricula-batch publicadas chamando escola_liberada com service_role, o que destrava o cadastro pela Gestão (ex.: perfil Marketing). Funcionários passa a listar contas `marketing`.
 - **Recepção só visualiza, Fase B** (05/11): a Recepção (`admin`) lê, mas não cria, edita nem exclui comunicados, calendário, mural, cardápio e aulas especiais (policies de leitura nas tabelas e nos buckets comunicados-anexos e mural-fotos); `notify-families` não aceita mais `admin`. Migration 20261211130000 e função só no local, não aplicadas em produção.
