@@ -10,12 +10,12 @@ describe('decidePop · botão Voltar entre telas', () => {
   });
 
   it('Autoatendimento não sai pelo Voltar (exige senha)', () => {
-    expect(decidePop({ event: pop({ zelaRole: 'admin', zelaTab: 'home' }), role: 'admin', currentTab: 'kiosk', lockedTabs: ['kiosk'] }))
+    expect(decidePop({ event: pop({ zelaRole: 'admin', zelaTab: 'home' }), role: 'recepcao', currentTab: 'kiosk', lockedTabs: ['kiosk'] }))
       .toEqual({ action: 'repush' });
   });
 
   it('ignora o popstate sintético do navigateTo', () => {
-    expect(decidePop({ event: pop({}, false), role: 'admin', currentTab: 'kiosk', lockedTabs: ['kiosk'] }))
+    expect(decidePop({ event: pop({}, false), role: 'recepcao', currentTab: 'kiosk', lockedTabs: ['kiosk'] }))
       .toEqual({ action: 'ignore' });
   });
 

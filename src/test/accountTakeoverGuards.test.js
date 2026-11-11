@@ -28,7 +28,7 @@ const newEmail = () => `vitest.troca.${Date.now()}${Math.random().toString(36).s
 runIf('update-user-email · admin comum não toma conta protegida', () => {
   it('admin comum NÃO troca o e-mail da conta da Gestão', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       const { status } = await callFn('update-user-email', admin.token, { user_id: gestao.id, new_email: newEmail() });
@@ -43,9 +43,9 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
 
   it('admin comum NÃO troca o e-mail do admin principal nem de outro admin', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
-    const primary = await createTestUser({ role: 'admin', schoolId, extra: { is_primary_admin: true } });
-    const otherAdmin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
+    const primary = await createTestUser({ role: 'recepcao', schoolId, extra: { is_primary_admin: true } });
+    const otherAdmin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const r1 = await callFn('update-user-email', admin.token, { user_id: primary.id, new_email: newEmail() });
       expect(r1.status).not.toBe(200);
@@ -64,7 +64,7 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
 
   it('fluxo normal continua: a Gestão corrige e-mail de família e de admin; a Recepção (admin) não corrige nenhum', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const primary = await createTestUser({ role: 'gestao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
@@ -91,7 +91,7 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
 
   it('salvar cadastro da Gestão SEM mudar o e-mail continua funcionando (AdminUserRegistration chama em todo salvamento)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       const { status } = await callFn('update-user-email', gestao.token, { user_id: gestao.id, new_email: gestao.email });
@@ -105,7 +105,7 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
 
   it('não dá pra disfarçar a troca alterando public.users antes (compara com o e-mail de login)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       const attackerEmail = newEmail();
@@ -124,7 +124,7 @@ runIf('update-user-email · admin comum não toma conta protegida', () => {
 runIf('delete-user · Recepção não apaga a conta da Gestão', () => {
   it('admin NÃO exclui a conta da Gestão', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const gestao = await createTestUser({ role: 'gestao', schoolId });
     try {
       const { status } = await callFn('delete-user', admin.token, { userId: gestao.id });
@@ -141,7 +141,7 @@ runIf('delete-user · Recepção não apaga a conta da Gestão', () => {
   it('hierarquia (Fase 3): admin NÃO exclui conta de família; a Gestão exclui', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const recepcao = await createTestUser({ role: 'admin', schoolId });
+    const recepcao = await createTestUser({ role: 'recepcao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     try {
       const asAdmin = await callFn('delete-user', recepcao.token, { userId: family.id });

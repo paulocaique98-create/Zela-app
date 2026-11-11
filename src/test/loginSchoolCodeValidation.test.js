@@ -39,7 +39,7 @@ runIf('Login -- validação do código de escola pós-autenticação', () => {
     const email = `vitest.schoolcode.${Date.now()}@zela-teste.com`;
     const password = 'SenhaTeste123!';
     const { data: authUser } = await adminClient.auth.admin.createUser({ email, password, email_confirm: true });
-    await adminClient.from('users').insert({ id: authUser.user.id, email, name: 'Vitest', role: 'admin', school_id: school, status: 'active' });
+    await adminClient.from('users').insert({ id: authUser.user.id, email, name: 'Vitest', role: 'recepcao', school_id: school, status: 'active' });
 
     try {
       let r = await loginAndValidate(email, password, schoolRow.school_code);

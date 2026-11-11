@@ -13,7 +13,7 @@ runIf('Família vê quem fez a entrada e a saída', () => {
 
   beforeAll(async () => {
     ctx.schoolId = await createTestSchool('Vitest Quem Registrou');
-    ctx.recepcao = await createTestUser({ role: 'admin', schoolId: ctx.schoolId });
+    ctx.recepcao = await createTestUser({ role: 'recepcao', schoolId: ctx.schoolId });
     ctx.titular = await createTestUser({ role: 'family', schoolId: ctx.schoolId });
     ctx.segundo = await createTestUser({ role: 'family', schoolId: ctx.schoolId });
     ctx.outra = await createTestUser({ role: 'family', schoolId: ctx.schoolId });

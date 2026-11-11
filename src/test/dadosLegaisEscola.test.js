@@ -96,7 +96,7 @@ runIf('Dados legais da escola', () => {
 
   it('a Recepção com permissão de gerar contrato lê o responsável legal (precisa para montar o contrato)', async () => {
     const { error } = await adminClient.from('school_role_permissions')
-      .insert({ school_id: ctx.schoolId, role: 'admin', permission: 'contratos.gerenciar', granted: true });
+      .insert({ school_id: ctx.schoolId, role: 'recepcao', permission: 'contratos.gerenciar', granted: true });
     expect(error).toBeNull();
     const { data } = await ctx.recepcao.client.from('escola_responsavel_legal').select('nome, cpf').eq('school_id', ctx.schoolId);
     expect(data).toEqual([{ nome: 'Ana Responsável', cpf: '52998224725' }]);

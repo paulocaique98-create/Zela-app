@@ -62,7 +62,7 @@ runIf('Idempotência do Totem — dois totens simultâneos não corrompem a tran
 
   it('depois que outro totem já resolveu a solicitação, o "perdedor" da corrida recalcula em cima do estado real (não sobrescreve pending_exit com pending_entry por engano)', async () => {
     const school = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId: school });
+    const admin = await createTestUser({ role: 'recepcao', schoolId: school });
     const { data: student, error } = await adminClient
       .from('students')
       .insert({ name: 'Vitest Concorrência 2', school_id: school, status: 'idle', turma: 'Infantil I' })

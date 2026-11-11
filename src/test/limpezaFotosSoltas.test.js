@@ -11,7 +11,7 @@ runIf('Limpeza de fotos soltas', () => {
   it('acha só a foto sem cadastro; envio recente fica de fora; só a Gestão', async () => {
     const schoolId = await createTestSchool();
     const gestao = await createTestUser({ role: 'gestao', schoolId });
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     const family = await createTestUser({ role: 'family', schoolId });
     const { data: pessoa } = await adminClient.from('authorized_persons').insert({
       school_id: schoolId, family_id: family.id, name: 'Vitest Com Foto', relation: 'Avó', status: 'approved', has_photo: true,

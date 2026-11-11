@@ -20,8 +20,8 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
   beforeAll(async () => {
     schoolA = await createTestSchool('Vitest Fin A');
     schoolB = await createTestSchool('Vitest Fin B');
-    adminA = await createTestUser({ role: 'admin', schoolId: schoolA });
-    adminB = await createTestUser({ role: 'admin', schoolId: schoolB });
+    adminA = await createTestUser({ role: 'recepcao', schoolId: schoolA });
+    adminB = await createTestUser({ role: 'recepcao', schoolId: schoolB });
     // Fase 5 do plano de migração Admin -> Portal da Gestão: escrita
     // financeira agora é exclusiva de 'gestao' -- admin mantém só leitura.
     gestaoA = await createTestUser({ role: 'gestao', schoolId: schoolA });
@@ -236,7 +236,7 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
 
       // Com a permissão (Gestão · Perfis e Permissões): lê, acesso legítimo preservado.
       const { error: grantErr } = await gestaoA.client.from('school_role_permissions').upsert({
-        school_id: schoolA, role: 'admin', permission: 'relatorios.financeiro.ver', granted: true,
+        school_id: schoolA, role: 'recepcao', permission: 'relatorios.financeiro.ver', granted: true,
       });
       expect(grantErr).toBeNull();
       try {
@@ -245,7 +245,7 @@ runIf('Isolamento multi-tenant — módulo financeiro', () => {
         const { data: contracts } = await adminA.client.from('financial_contracts').select('id').eq('id', contractA);
         expect(contracts).toHaveLength(1);
       } finally {
-        await adminClient.from('school_role_permissions').delete().eq('school_id', schoolA).eq('role', 'admin');
+        await adminClient.from('school_role_permissions').delete().eq('school_id', schoolA).eq('role', 'recepcao');
       }
     });
 

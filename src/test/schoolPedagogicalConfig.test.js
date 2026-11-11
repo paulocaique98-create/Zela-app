@@ -39,7 +39,7 @@ runIf('Configuração pedagógica por escola', () => {
 
   it('admin NÃO consegue mudar pedagogical_method/turmas da própria escola (só developer)', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data, error } = await admin.client.from('schools').update({ pedagogical_method: 'montessori' }).eq('id', schoolId).select();
       expect(data ?? []).toEqual([]);
@@ -56,7 +56,7 @@ runIf('Configuração pedagógica por escola', () => {
   it('CRÍTICO — admin NÃO consegue se auto-escalar via is_active/plan/features_enabled/limits (achado real durante varredura de policies conflitantes)', async () => {
     const schoolId = await createTestSchool();
     await adminClient.from('schools').update({ is_active: false, plan: 'basic', features_enabled: { financeiro: false } }).eq('id', schoolId);
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const r1 = await admin.client.from('schools').update({ is_active: true }).eq('id', schoolId).select();
       expect(r1.data ?? []).toEqual([]);
@@ -83,7 +83,7 @@ runIf('Configuração pedagógica por escola', () => {
 
   it('admin AINDA consegue editar outros campos da própria escola (nome) — trigger não bloqueia campos não-pedagógicos', async () => {
     const schoolId = await createTestSchool();
-    const admin = await createTestUser({ role: 'admin', schoolId });
+    const admin = await createTestUser({ role: 'recepcao', schoolId });
     try {
       const { data, error } = await admin.client.from('schools').update({ name: 'Nome Editado Pelo Admin' }).eq('id', schoolId).select();
       expect(error).toBeNull();

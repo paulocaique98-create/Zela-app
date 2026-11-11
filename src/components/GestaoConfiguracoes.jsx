@@ -145,7 +145,7 @@ function ChatAcessoSetor({ currentUser }) {
 }
 
 const ROLE_OPTIONS = [
-  { id: 'admin', label: 'Administrativo' },
+  { id: 'recepcao', label: 'Administrativo' },
   { id: 'teacher', label: 'Professoras' },
   { id: 'family', label: 'Famílias' },
 ];
@@ -154,13 +154,13 @@ const ROLE_OPTIONS = [
 // exigir a troca no próximo acesso.
 export function ConfigSeguranca({ currentUser }) {
   const [stats, setStats] = useState(null);
-  const [roles, setRoles] = useState(['admin', 'teacher']);
+  const [roles, setRoles] = useState(['recepcao', 'teacher']);
   const [abaSeg, setAbaSeg] = useState('senhas');
   const [msg, setMsg] = useState({ type: '', text: '' });
   const [isSaving, setIsSaving] = useState(false);
 
   const load = async () => {
-    const { data, error } = await supabase.from('users').select('role, must_change_password').eq('school_id', currentUser.school_id).in('role', ['admin', 'teacher', 'family']);
+    const { data, error } = await supabase.from('users').select('role, must_change_password').eq('school_id', currentUser.school_id).in('role', ['recepcao', 'teacher', 'family']);
     if (error) { setMsg({ type: 'error', text: 'Não foi possível carregar as contas.' }); setStats({}); return; }
     const s = {};
     (data || []).forEach(u => {
