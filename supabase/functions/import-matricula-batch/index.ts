@@ -86,7 +86,8 @@ serve(async (req) => {
 
     const schoolId = callerData.school_id
     const results: Array<{ index: number; status: 'success' | 'error'; message: string; credentials?: { email: string; password: string } | null }> = []
-    await exigirEscolaLiberada(supabaseClient, callerData);
+    // escola_liberada só tem EXECUTE para service_role (migration 20261210120000).
+    await exigirEscolaLiberada(supabaseAdmin, callerData);
 
     for (let i = 0; i < families.length; i++) {
       const fam = families[i]

@@ -1061,7 +1061,20 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
         });
 
         if (funcError || !newUser || newUser.error) {
-          const errMsg = (funcError?.message || newUser?.error || 'Erro ao criar usuário');
+          // supabase-js só traz "non-2xx"; a mensagem real vem no corpo da resposta.
+          let detalhe = null;
+          const resp = funcError?.context;
+          if (resp && typeof resp.text === 'function') {
+            try {
+              const txt = await resp.text();
+              try {
+                const j = JSON.parse(txt);
+                detalhe = j?.error || j?.message || j?.msg || txt;
+              } catch { detalhe = txt; }
+              if (resp.status) detalhe = `${detalhe} (HTTP ${resp.status})`;
+            } catch { /* corpo ilegível */ }
+          }
+          const errMsg = (detalhe || newUser?.error || funcError?.message || 'Erro ao criar usuário');
           if (errMsg.includes('already registered')) throw new Error('Este e-mail já está em uso.');
           throw new Error(errMsg);
         }
