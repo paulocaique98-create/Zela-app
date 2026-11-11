@@ -69,6 +69,7 @@ const GestaoRelatorios = lazy(() => import('./GestaoRelatorios'));
 const GestaoPainelBI = lazy(() => import('./bi/GestaoPainelBI'));
 const GestaoPermissoes = lazy(() => import('./GestaoPermissoes'));
 const GestaoIntegracoes = lazy(() => import('./GestaoIntegracoes'));
+const GestaoDispositivos = lazy(() => import('./GestaoDispositivos'));
 const GestaoMeuPlano = lazy(() => import('./GestaoMeuPlano'));
 const GestaoPrimeirosPassos = lazy(() => import('./GestaoPrimeirosPassos'));
 const GestaoExclusoesConta = lazy(() => import('./GestaoExclusoesConta'));
@@ -407,6 +408,7 @@ export default function GestaoPortal({
               {item('config-seguranca', KeyRound, 'Segurança')}
               {item('permissoes-perfis', ShieldCheck, 'Perfis e Permissões')}
               {item('permissoes-auditoria', ScrollText, 'Auditoria')}
+              {item('config-dispositivos', ScanFace, 'Dispositivos')}
               {item('integracoes', Plug, 'Integrações')}
             </>)}
             {item('ajuda', CircleHelp, 'Central de Ajuda')}
@@ -577,6 +579,7 @@ export default function GestaoPortal({
           {abaAtual === 'config-meu-plano' && <GestaoMeuPlano />}
           {abaAtual === 'ajuda' && <CentralAjuda perfil="gestao" method={method} onRefazerTour={tour.refazer} />}
           {tour.aberto && <TourGuiado perfil="gestao" method={method} onFechar={tour.fechar} />}
+          {abaAtual === 'config-dispositivos' && <GestaoDispositivos currentUser={currentUser} />}
           {abaAtual === 'integracoes' && <GestaoIntegracoes currentUser={currentUser} currentSchool={currentSchool} setGestaoTab={goFromShortcut} />}
         </Suspense>
 

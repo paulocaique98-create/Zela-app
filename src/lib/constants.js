@@ -127,7 +127,7 @@ export const SCREEN_LABELS = {
   'permissoes-perfis': 'Perfis e Permissões', 'permissoes-auditoria': 'Auditoria',
   'config-escola': 'Configurações da Escola', 'config-academico': 'Configurações Acadêmicas',
   'config-financeiro': 'Configurações Financeiras', 'config-comunicacao': 'Configurações de Comunicação',
-  'config-seguranca': 'Segurança', integracoes: 'Integrações',
+  'config-seguranca': 'Segurança', 'config-dispositivos': 'Dispositivos de Acesso', integracoes: 'Integrações',
   // Admin · módulos liberados pela Gestão (Permissões)
   'gestao-contratos': 'Contratos', 'gestao-modelos': 'Modelos de Contrato', 'gestao-inadimplencia': 'Inadimplência',
   'gestao-despesas': 'Despesas', 'gestao-biblioteca': 'Biblioteca', 'gestao-historico': 'Histórico escolar', 'gestao-fornecedores': 'Fornecedores', 'gestao-relatorio-financeiro': 'Relatório Financeiro',
