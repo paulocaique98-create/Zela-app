@@ -11,6 +11,12 @@ insert into public.zela_modulo_precos (item_id, tipo_cobranca, valor, custo_esti
   ('avaliacao_institucional','por_aluno', 0, 0, array['avaliacao_institucional'])
 on conflict (item_id) do nothing;
 
+-- financeiro_avancado existe em produção (criado fora das migrations: 2,00 por aluno, custo 0).
+-- Sem esta linha, recriar o banco do zero falha no plano Avançado. Em produção não muda nada.
+insert into public.zela_modulo_precos (item_id, tipo_cobranca, valor, custo_estimado, chaves)
+values ('financeiro_avancado', 'por_aluno', 2.00, 0, array['financeiro_avancado'])
+on conflict (item_id) do nothing;
+
 update public.zela_planos set itens = array['pedagogico','rotina','historico_escolar','bi_dashboards']
   where nome = 'Básico' and modalidade = 'pacote';
 
