@@ -566,6 +566,8 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <span className="text-xs sm:text-sm">{isParsingPdf ? 'Lendo PDF...' : 'Importar'}</span>
               <input type="file" accept="application/pdf" onChange={handlePdfSelected} className="hidden" disabled={isParsingPdf} />
             </label>
+            {/* Marketing não usa a importação com IA: só evento manual ou o modelo. */}
+            {currentUser?.role !== 'marketing' && (
             <label
               className={`flex items-center gap-2 bg-white border border-outline-variant hover:border-primary/60 text-on-surface-variant hover:text-primary px-3 sm:px-4 h-10 justify-center rounded-zela-md font-bold transition-all active:scale-95 text-sm cursor-pointer ${isParsingIA ? 'opacity-60 pointer-events-none' : ''}`}
               title="Lê qualquer PDF de calendário (mesmo em layout gráfico) usando IA, sem precisar seguir o modelo"
@@ -574,6 +576,7 @@ export default function AdminCalendario({ currentUser, currentSchool }) {
               <span className="text-xs sm:text-sm">{isParsingIA ? 'Lendo com IA...' : 'Importar com IA'}</span>
               <input type="file" accept="application/pdf" onChange={handleIaFileSelected} className="hidden" disabled={isParsingIA} />
             </label>
+            )}
             {eventos.length > 0 && (
               <button
                 onClick={() => setIsSelectingEventos(true)}
