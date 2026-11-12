@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { camposMudaram, CAMPOS_DO_TOTEM, agruparChamadas } from '../lib/realtimeAutorizados';
-import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 'lucide-react';
+import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode, Settings } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
@@ -17,6 +17,10 @@ import { detectViaHumanWorker, cosineSimilarity } from '../lib/humanShadowClient
 const HUMAN_MATCH_THRESHOLD_COSINE = 0.48;
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getCurrentScreen, registroDeErrosAtivo } from '../lib/errorLogger';
+import {
+  lerConfig, salvarConfig, foraDoHorario, calcularIntervalo, deveEntrarEmRepouso,
+  registrarInferencia, avaliarSobrecarga, mediaInferencia,
+} from '../lib/energiaDoTotem';
 
 // Beeps curtos via Web Audio API — sem depender de arquivos de áudio externos.
 let _audioCtx = null;
@@ -69,7 +73,6 @@ const CONSISTENCY_FRAMES = 3;
 // aplicado automaticamente.
 const DARK_LUMINANCE_THRESHOLD = 85;
 const LUMINANCE_CHECK_INTERVAL_MS = 1000;
-const DETECTION_INTERVAL_MS = 180;
 const LIVE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
 
 // ── Liveness Detection (Fase 1 — passivo, só em modo observação) ──
@@ -309,7 +312,25 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // Mantém a tela do dispositivo sempre acesa enquanto esta tela estiver
   // aberta — reclamação da escola: a tela apagava sozinha (economia de
   // energia do SO/navegador) no meio do reconhecimento facial.
-  useWakeLock(true);
+  // Economia de energia/calor (celular/tablet no totem) — ver lib/energiaDoTotem.js.
+  const energiaConfigRef = useRef(lerConfig());
+  const [repouso, setRepouso] = useState(false);
+  const [mostrarConfig, setMostrarConfig] = useState(false);
+  const [configRascunho, setConfigRascunho] = useState(() => lerConfig());
+  const [sobrecarregadoUI, setSobrecarregadoUI] = useState(false);
+  const [foraHorario, setForaHorario] = useState(() => foraDoHorario(lerConfig()));
+  // "Ligar câmera agora" fora do horário: vale por 10 min.
+  const [forcarLigadoAte, setForcarLigadoAte] = useState(0);
+  const foraHorarioEfetivo = foraHorario && Date.now() >= forcarLigadoAte;
+  const ultimaAtividadeRef = useRef(Date.now());
+  const ultimoRostoEmRef = useRef(null);
+  const duracoesRef = useRef([]);
+  const sobrecargaRef = useRef(false);
+  const repousoRef = useRef(false);
+  useEffect(() => { repousoRef.current = repouso; }, [repouso]);
+
+  // Fora do horário a tela pode apagar sozinha (sem wake lock) e a câmera fica desligada.
+  useWakeLock(!foraHorarioEfetivo);
 
   // Sair desta tela (biometria) volta direto pro menu do Autoatendimento, sem
   // senha — a senha só é exigida pra sair do Autoatendimento como um todo
@@ -340,6 +361,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
   const [matchedPerson, setMatchedPerson] = useState(null); // The authorized person detected
   const [matchStatus, setMatchStatus] = useState('idle'); // 'idle' | 'searching' | 'matched' | 'no-match'
+  const matchStatusRef = useRef('idle');
+  useEffect(() => { matchStatusRef.current = matchStatus; }, [matchStatus]);
   const [matchedStudents, setMatchedStudents] = useState([]);
   // Quais dos alunos vinculados a essa pessoa estão de fato sendo
   // entregues/buscados agora — o reconhecimento facial só identifica o
@@ -487,6 +510,8 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     let stream = null;
 
     async function init() {
+      // Fora do horário de atendimento: não abre a câmera.
+      if (foraHorarioEfetivo) return;
       try {
         // 1. Aguarda modelos (já carregados em background pelo AdminPortal)
         await preloadFaceModels(); // retorna imediatamente se já estiverem em cache
@@ -548,7 +573,9 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         // 5. Inicia câmera (o texto "Iniciando câmera" já é mostrado pela UI
         // derivada de modelsLoaded/cameraReady, ver render mais abaixo)
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: 'user' }
+          // 15 fps bastam para o reconhecimento (detecção roda a ≤5/s) e
+          // reduzem calor/consumo da câmera frente aos ~30 fps padrão.
+          video: { width: 640, height: 480, facingMode: 'user', frameRate: { ideal: 15, max: 20 } }
         });
         streamRef.current = stream;
         if (videoRef.current) {
@@ -575,7 +602,47 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       }
       if (streamRef.current === stream) streamRef.current = null;
     };
-  }, [retryCount]);
+  }, [retryCount, foraHorarioEfetivo]);
+
+  // Horário de funcionamento: reavalia a cada 30s; ao sair do horário a
+  // câmera é parada (cleanup do efeito acima) e a UI marcada como não pronta.
+  useEffect(() => {
+    const checar = () => {
+      setForaHorario(foraDoHorario(energiaConfigRef.current));
+      // Expira o "ligar agora" re-renderizando (foraHorarioEfetivo usa Date.now()).
+      setForcarLigadoAte(v => v);
+    };
+    const id = setInterval(checar, 30000);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (foraHorarioEfetivo) { setCameraReady(false); setRepouso(false); }
+  }, [foraHorarioEfetivo]);
+
+  // Atividade do usuário (toque/teclado) adia o repouso; rosto também (no loop).
+  // O repouso é checado a cada 5s.
+  useEffect(() => {
+    const marcar = () => { ultimaAtividadeRef.current = Date.now(); };
+    document.addEventListener('pointerdown', marcar, true);
+    document.addEventListener('keydown', marcar, true);
+    const id = setInterval(() => {
+      if (repousoRef.current) return;
+      const ocupado = !!capturedImageRef.current || actionDoneRef.current
+        || matchStatusRef.current !== 'idle';
+      if (deveEntrarEmRepouso({
+        agora: Date.now(),
+        ultimaAtividadeEm: ultimaAtividadeRef.current,
+        config: energiaConfigRef.current,
+        sobrecarregado: sobrecargaRef.current,
+        ocupado,
+      })) setRepouso(true);
+    }, 5000);
+    return () => {
+      document.removeEventListener('pointerdown', marcar, true);
+      document.removeEventListener('keydown', marcar, true);
+      clearInterval(id);
+    };
+  }, []);
 
   // "Tela preta com o molde ao vivo" — relato real de um pai/dev chegando na
   // escola e encontrando o totem travado assim: cameraReady já tinha virado
@@ -894,6 +961,14 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       resetStuckTimer();
     };
 
+    // Intervalo adaptativo: rápido com rosto à vista, lento com a portaria
+    // vazia, ainda mais lento se o aparelho estiver sob estresse térmico.
+    const proximoIntervalo = () => calcularIntervalo({
+      agora: Date.now(),
+      ultimoRostoEm: ultimoRostoEmRef.current,
+      sobrecarregado: sobrecargaRef.current,
+    });
+
     const detectFace = async () => {
       if (isDetecting) return;
       // Travamento real (30/09/2026, "precisa fechar no X e abrir de novo"):
@@ -905,7 +980,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         if (videoAtual?.paused && !videoAtual.ended) {
           try { videoAtual.play()?.then(null, () => {}); } catch { /* melhor esforço */ }
         }
-        if (!cancelled) timerId = setTimeout(detectFace, DETECTION_INTERVAL_MS);
+        if (!cancelled) timerId = setTimeout(detectFace, proximoIntervalo());
         return;
       }
 
@@ -935,9 +1010,31 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
 
           // Depois de já confirmado, só precisamos monitorar a posição do rosto (mais
           // barato) — landmarks/descriptor só são recalculados enquanto ainda buscando.
+          const inicioInferencia = performance.now();
           const detections = matchConfirmed
             ? await faceapi.detectSingleFace(detectionInput, LIVE_DETECTOR_OPTIONS)
             : await faceapi.detectSingleFace(detectionInput, LIVE_DETECTOR_OPTIONS).withFaceLandmarks().withFaceDescriptor();
+
+          // Autoproteção térmica: só conta inferências COM rosto (sem rosto a
+          // duração não representa a carga completa) e reavalia com histerese.
+          if (detections) {
+            duracoesRef.current = registrarInferencia(duracoesRef.current, performance.now() - inicioInferencia);
+            const sobrecarga = avaliarSobrecarga(duracoesRef.current, sobrecargaRef.current);
+            if (sobrecarga !== sobrecargaRef.current) {
+              sobrecargaRef.current = sobrecarga;
+              setSobrecarregadoUI(sobrecarga);
+              if (sobrecarga) {
+                logFaceEvent('thermal_throttle', 'warn', {
+                  media_inferencia_ms: Math.round(mediaInferencia(duracoesRef.current)),
+                }, 'aparelho do totem lento (possível aquecimento) — intervalo de detecção aumentado');
+              }
+            }
+            // Rosto à vista = atividade: sai do repouso e volta à detecção rápida.
+            const t = Date.now();
+            ultimoRostoEmRef.current = t;
+            ultimaAtividadeRef.current = t;
+            if (repousoRef.current) setRepouso(false);
+          }
 
           if (!detections) {
             if (matchConfirmed) {
@@ -1153,7 +1250,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
         console.error('Erro no loop de detecção:', err);
       }
       isDetecting = false;
-      timerId = setTimeout(detectFace, DETECTION_INTERVAL_MS);
+      timerId = setTimeout(detectFace, proximoIntervalo());
     };
 
     timerId = setTimeout(detectFace, 100); // Primeira execução um pouco mais cedo
@@ -1253,6 +1350,86 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       autoTriggeredRef.current = false;
     }
   }, [matchStatus]);
+
+  // Camadas de energia: ficam FORA do contêiner do modal (fixed, acima de tudo).
+  const acordar = () => { ultimaAtividadeRef.current = Date.now(); setRepouso(false); };
+  const overlaysEnergia = (
+    <>
+      {sobrecarregadoUI && !repouso && !foraHorarioEfetivo && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[1000] bg-warning text-ink text-xs font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none">
+          Aparelho aquecido — desempenho reduzido para protegê-lo
+        </div>
+      )}
+      {!foraHorarioEfetivo && !repouso && (
+        <button
+          onClick={() => { setConfigRascunho(energiaConfigRef.current); setMostrarConfig(true); }}
+          className="fixed bottom-2 right-2 z-[1000] p-2 rounded-full bg-ink/40 text-white/70 hover:bg-ink/70"
+          aria-label="Energia do aparelho"
+        >
+          <Settings size={16} />
+        </button>
+      )}
+      {mostrarConfig && (
+        <div className="fixed inset-0 z-[1002] bg-ink/70 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-zela-lg p-5 w-full max-w-sm space-y-4 text-on-surface">
+            <h3 className="font-bold">Energia deste aparelho</h3>
+            <label className="block text-sm">
+              Repouso (tela preta) após quantos minutos sem ninguém? (0 = nunca)
+              <input type="number" min="0" max="120" value={configRascunho.repousoMin}
+                onChange={e => setConfigRascunho(c => ({ ...c, repousoMin: e.target.value }))}
+                className="mt-1 w-full border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
+            </label>
+            <div className="text-sm">
+              Horário de atendimento (câmera desligada fora dele; vazio = sempre ligada)
+              <div className="flex gap-2 mt-1">
+                <input type="time" value={configRascunho.horarioInicio}
+                  onChange={e => setConfigRascunho(c => ({ ...c, horarioInicio: e.target.value }))}
+                  className="flex-1 border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
+                <input type="time" value={configRascunho.horarioFim}
+                  onChange={e => setConfigRascunho(c => ({ ...c, horarioFim: e.target.value }))}
+                  className="flex-1 border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
+              </div>
+            </div>
+            <p className="text-xs text-on-surface-variant">Vale só para este aparelho.</p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setMostrarConfig(false)} className="px-4 py-2 text-sm rounded-zela-md bg-surface-container">Cancelar</button>
+              <button
+                onClick={() => {
+                  const salva = salvarConfig(configRascunho);
+                  energiaConfigRef.current = salva;
+                  setForaHorario(foraDoHorario(salva));
+                  setMostrarConfig(false);
+                }}
+                className="px-4 py-2 text-sm font-bold rounded-zela-md bg-primary text-white"
+              >Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {repouso && !foraHorarioEfetivo && (
+        <div
+          onPointerDown={acordar}
+          className="fixed inset-0 z-[1001] bg-black flex items-end justify-center pb-10 select-none"
+        >
+          <p className="text-white/25 text-sm">Toque ou aproxime-se para começar</p>
+        </div>
+      )}
+      {foraHorarioEfetivo && (
+        <div className="fixed inset-0 z-[1001] bg-black flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <p className="text-white/50 text-sm">Fora do horário de atendimento — câmera desligada</p>
+          <button
+            onClick={() => setForcarLigadoAte(Date.now() + 10 * 60000)}
+            className="px-5 py-2 text-sm font-bold rounded-zela-md bg-white/15 text-white"
+          >Ligar câmera agora (10 min)</button>
+          {isKioskMode && onUseAlternative && (
+            <button onClick={onUseAlternative} className="px-5 py-2 text-sm rounded-zela-md bg-white/10 text-white flex items-center gap-1.5">
+              <QrCode size={16} /> Usar QR Code / Senha
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
 
   const innerContent = (
     <>
@@ -1553,6 +1730,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
     return (
       <div className="w-full h-full flex flex-col bg-surface-container-lowest overflow-hidden">
         {innerContent}
+        {overlaysEnergia}
       </div>
     );
   }
@@ -1562,6 +1740,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       <div className="w-full h-full max-w-5xl max-h-[850px] bg-surface-container-lowest rounded-zela-lg sm:rounded-zela-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         {innerContent}
       </div>
+      {overlaysEnergia}
     </div>
   );
 }
