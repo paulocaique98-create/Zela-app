@@ -44,6 +44,8 @@ function dateStrToLocalDate(dateStr) {
 //      totem) -- LANÇA o horário do zero (request_attendance_manual_entry,
 //      novidade desta tela).
 export default function AttendanceEditTodayModal({ student, entryLog, exitLog, targetDateStr, currentUser, billingConfig, onClose, onSaved }) {
+  // Gestão aprova a própria alteração (o servidor decide; aqui só o texto).
+  const isGestao = currentUser?.role === 'gestao';
   const targetDate = useMemo(() => dateStrToLocalDate(targetDateStr), [targetDateStr]);
   const [entryTime, setEntryTime] = useState(toTimeValue(entryLog?.event_time));
   const [exitTime, setExitTime] = useState(toTimeValue(exitLog?.event_time));
@@ -252,9 +254,9 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
               <div className="flex items-start gap-2.5 bg-brass-50 border border-warning/40 rounded-xl p-3">
                 <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
                 <p className="text-xs text-warning leading-relaxed">
-                  Essa alteração aumenta a cobrança de hora extra deste aluno nesse dia.
-                  Não entra em vigor sozinha: fica pendente até outro administrador
-                  da escola aprovar.
+                  {isGestao
+                    ? 'Essa alteração aumenta a cobrança de hora extra deste aluno nesse dia. Como Gestão, ela é aprovada e aplicada na hora; o registro fica guardado com o seu nome.'
+                    : 'Essa alteração aumenta a cobrança de hora extra deste aluno nesse dia. Não entra em vigor sozinha: fica pendente até a Gestão da escola aprovar.'}
                 </p>
               </div>
             ) : (
@@ -287,7 +289,7 @@ export default function AttendanceEditTodayModal({ student, entryLog, exitLog, t
             className="flex-[1.5] font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 text-white bg-primary hover:bg-primary disabled:bg-outline-variant disabled:text-on-surface-variant"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
-            {anyIncreasesBilling ? 'Enviar para aprovação' : 'Salvar horário'}
+            {anyIncreasesBilling && !isGestao ? 'Enviar para aprovação' : 'Salvar horário'}
           </button>
         </div>
       </div>

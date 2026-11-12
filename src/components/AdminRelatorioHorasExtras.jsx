@@ -53,21 +53,20 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
   const [customEnd, setCustomEnd] = useState('');
   // Só um card aberto por vez -- abrir outro fecha o anterior automaticamente.
   const [expandedStudentKey, setExpandedStudentKey] = useState(null);
-  // Período e status ficam escondidos atrás desse painel — modelo "foco na
-  // lista" validado com o usuário (proposta com 3 layouts, 17/09): sem isso,
-  // os filtros disputavam espaço/atenção com o resultado por aluno, que é a
-  // informação que a recepção realmente precisa ver primeiro.
-  const [showFilters, setShowFilters] = useState(false);
-  const filtersRef = useRef(null);
-
-  useEffect(() => {
-    if (!showFilters) return;
-    const handleClickOutside = (e) => {
-      if (filtersRef.current && !filtersRef.current.contains(e.target)) setShowFilters(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showFilters]);
+  // Campos De:/Até: sempre visíveis (mesmo padrão do Histórico Geral). Sem
+  // datas digitadas mostram o dia de hoje; editar qualquer campo passa o
+  // período para "custom".
+  const todayStr = getBrasiliaDateStr();
+  const shownFrom = period === 'custom' ? customDate : (period === 'today' ? todayStr
+    : getBrasiliaDateStr(new Date(Date.now() - ((period === '7days' ? 7 : (period === 'this_month' ? new Date().getDate() : 30)) - 1) * 86400000)));
+  const shownTo = period === 'custom' ? customEnd : todayStr;
+  const pickDate = (which, value) => {
+    const from = which === 'from' ? value : (shownFrom || value);
+    const to = which === 'to' ? value : (shownTo || value);
+    setCustomDate(from);
+    setCustomEnd(to < from ? from : to);
+    setPeriod(from === todayStr && to === todayStr ? 'today' : 'custom');
+  };
 
   const fetchExtras = async (silencioso = false) => {
     if (!currentSchool) return;
@@ -265,23 +264,40 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
       {/* Header -- título e ícone removidos (o Header do app já mostra o
           nome da tela dinamicamente); não sobrava descrição pra ficar no
           lugar, então os botões vão sozinhos na linha. */}
-      <div className="flex items-center justify-end gap-2 sm:gap-4 mb-3 shrink-0">
-        <div className="relative flex items-center gap-2 shrink-0" ref={filtersRef}>
-          <button
-            onClick={() => setShowFilters(v => !v)}
-            className={`flex items-center justify-center gap-2 h-10 pl-3 pr-2.5 text-sm font-semibold rounded-zela-md transition shadow-sm border focus:outline-none focus:ring-2 focus:ring-primary ${
-              showFilters
-                ? 'bg-primary/10 border-primary/40 text-primary'
-                : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-low'
-            }`}
-            title="Período"
-            aria-label={`Período: ${periodLabel}`}
-            aria-expanded={showFilters}
-          >
-            <SlidersHorizontal size={16} className={showFilters ? 'text-primary' : 'text-on-surface-variant'} aria-hidden="true" />
-            <span className="max-w-[7.5rem] truncate">{periodLabel}</span>
-            <ChevronDown size={16} aria-hidden="true" className={`transition-transform ${showFilters ? 'rotate-180 text-primary' : 'text-on-surface-variant'}`} />
-          </button>
+      <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 shrink-0 flex-wrap">
+        {/* Resumo na mesma linha dos filtros (cards compactos). */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label={`Resumo: ${periodLabel}`}>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-1.5 min-w-[9.5rem]">
+            <p className="text-[11px] font-semibold text-on-surface-variant leading-tight">Minutos excedentes</p>
+            <p className="text-base font-semibold tabular-nums text-warning whitespace-nowrap leading-tight">{totalMinutosExcedentes} <span className="text-[11px] font-semibold">min</span></p>
+          </div>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-3 py-1.5 min-w-[9.5rem]">
+            <p className="text-[11px] font-semibold text-on-surface-variant leading-tight">A receber</p>
+            <p className="text-base font-semibold tabular-nums text-error whitespace-nowrap leading-tight">{totalValorFormatado}</p>
+          </div>
+        </div>
+        <div className="relative flex items-center gap-2 flex-wrap justify-end shrink-0 ml-auto">
+          <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70">
+            De:
+            <input
+              type="date"
+              value={shownFrom || ''}
+              max={shownTo || todayStr}
+              onChange={e => e.target.value && pickDate('from', e.target.value)}
+              className="px-2 py-2 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70">
+            Até:
+            <input
+              type="date"
+              value={shownTo || ''}
+              min={shownFrom || undefined}
+              max={todayStr}
+              onChange={e => e.target.value && pickDate('to', e.target.value)}
+              className="px-2 py-2 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
 
           <button
             onClick={handleExport}
@@ -289,76 +305,14 @@ export default function AdminRelatorioHorasExtras({ currentSchool }) {
             title={exportRecords.length === 0 ? 'Ninguém com hora extra neste período' : undefined}
             className="flex items-center justify-center gap-2 h-10 text-sm font-semibold text-white bg-primary hover:bg-primary-container disabled:bg-surface-container-high disabled:text-on-surface-variant px-3.5 sm:px-4 rounded-zela-md transition shadow-sm shrink-0"
           >
-            <Download size={16} /> <span className="hidden sm:inline">Exportar Relatório</span>
+            <Download size={16} /> <span className="hidden sm:inline">Exportar</span>
           </button>
 
-          {/* Ancorado no grupo inteiro (não só no botão de filtro) e sempre
-              pela direita -- evita o painel nascer fora da tela quando o
-              botão de filtro não está colado na borda direita real. */}
-          {showFilters && (
-            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-outline-variant rounded-2xl shadow-lg p-3 z-20 space-y-3">
-                <div>
-                  <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1.5 px-1">Período</p>
-                  <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-                    {[
-                      { id: 'today', label: 'Hoje' },
-                      { id: '7days', label: 'Semana' },
-                      { id: 'this_month', label: 'Mês' },
-                      { id: 'custom', label: 'De / até' }
-                    ].map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => { setPeriod(p.id); if (p.id !== 'custom') setShowFilters(false); }}
-                        className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          period === p.id ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                  {period === 'custom' && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
-                        De
-                        <input
-                          type="date"
-                          value={customDate}
-                          max={customEnd || undefined}
-                          onChange={e => setCustomDate(e.target.value)}
-                          className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
-                        Até
-                        <input
-                          type="date"
-                          value={customEnd}
-                          min={customDate || undefined}
-                          onChange={e => { setCustomEnd(e.target.value); if (e.target.value && customDate) setShowFilters(false); }}
-                          className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Resumo -- vira uma frase, não mais cards: modelo "foco na lista"
           validado com o usuário (proposta com 3 layouts, 17/09). */}
-      <div className="grid grid-cols-2 gap-3 mb-4 shrink-0 sm:max-w-md" aria-label={`Resumo: ${periodLabel}`}>
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3">
-          <p className="text-xs font-semibold text-on-surface-variant">Minutos excedentes</p>
-          <p className="text-lg font-semibold mt-0.5 tabular-nums text-warning whitespace-nowrap">{totalMinutosExcedentes} <span className="text-xs font-semibold">min</span></p>
-        </div>
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-zela-lg px-4 py-3">
-          <p className="text-xs font-semibold text-on-surface-variant">A receber</p>
-          <p className="text-lg font-semibold mt-0.5 tabular-nums text-error whitespace-nowrap">{totalValorFormatado}</p>
-        </div>
-      </div>
 
       {/* Busca */}
       <div className="relative mb-4 sm:mb-6 shrink-0">

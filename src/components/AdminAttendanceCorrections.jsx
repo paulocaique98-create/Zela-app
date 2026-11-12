@@ -128,7 +128,7 @@ export default function AdminAttendanceCorrections({ currentUser }) {
           <p className="text-[11px] italic text-on-surface-variant/70">Aguardando a Gestão aprovar.</p>
         )}
         {reviewable && podeAprovar && (
-          isOwnRequest ? (
+          isOwnRequest && currentUser?.role !== 'gestao' ? (
             <p className="text-[11px] italic text-on-surface-variant/70">Você solicitou esta correção — outro admin precisa aprovar.</p>
           ) : (
             <div className="flex gap-2 pt-1">
