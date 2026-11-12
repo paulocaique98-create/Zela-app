@@ -7,7 +7,6 @@ export default function AdminInicio({ currentSchool, setAdminTab, clickCounts = 
   
   const ADMIN_MENUS = [
     { key: 'monitor', label: 'Monitor de solicitações', icon: MonitorCheck, tab: 'monitor', feature: 'checkin', defaultOn: true },
-    { key: 'presence', label: 'Presença diária', icon: CalendarCheck, tab: 'presence', feature: 'checkin', defaultOn: true },
     { key: 'students', label: 'Lista de alunos', icon: Users, tab: 'students', feature: 'gerenciamento', defaultOn: true },
     { key: 'history', label: 'Histórico geral', icon: History, tab: 'history', feature: 'gerenciamento', defaultOn: true },
     { key: 'users', label: 'Gestão de usuários', icon: UserCog, tab: 'users', feature: 'cadastros', defaultOn: true },

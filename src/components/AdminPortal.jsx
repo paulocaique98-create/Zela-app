@@ -37,12 +37,12 @@ const AdminFichaMedica = lazy(() => import('./AdminFichaMedica'));
 const AdminQrCheckin = lazy(() => import('./AdminQrCheckin'));
 const AdminChat = lazy(() => import('./AdminChat'));
 const AdminUserManagement = lazy(() => import('./AdminUserManagement'));
-const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminStudentList = lazy(() => import('./AdminStudentList'));
 const AdminFaceScanner = lazy(() => import('./AdminFaceScanner'));
 const AdminQrScanner = lazy(() => import('./AdminQrScanner'));
 const AdminPasswordLogin = lazy(() => import('./AdminPasswordLogin'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
+const AdminAjustes = lazy(() => import('./AdminAjustes'));
 const SaidasPendentes = lazy(() => import('./SaidasPendentes'));
 const AdminSystemUpdates = lazy(() => import('./AdminSystemUpdates'));
 const AdminDuplicateBiometrics = lazy(() => import('./AdminDuplicateBiometrics'));
@@ -313,9 +313,9 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                 {showQrCheckin && (
                   <SidebarItem active={adminTab === 'qr-checkin'} icon={Fingerprint} label="Carteirinhas QR" onClick={() => go('qr-checkin')} />
                 )}
-                <SidebarItem active={adminTab === 'presence'} icon={CalendarDays} label="Presença Diária" onClick={() => go('presence')} />
-                <SidebarItem active={adminTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
                 <SidebarItem active={adminTab === 'history'} icon={ScrollText} label="Histórico Geral" onClick={() => go('history')} />
+                <SidebarItem active={adminTab === 'ajustes'} icon={Clock} label="Ajuste manual" onClick={() => go('ajustes')} />
+                <SidebarItem active={adminTab === 'saidas-pendentes'} icon={LogOut} label="Registros pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
               </SidebarGroup>
             )}
 
@@ -675,7 +675,8 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         )}
 
         {/* PRESENÇA */}
-        {adminTab === 'presence' && <AdminDailyPresence currentUser={currentUser} currentSchool={currentSchool} />}
+        {/* 'presence' (antiga Presença Diária) agora é o período "Hoje" do Histórico Geral; mantido só como alias de links antigos. */}
+        {adminTab === 'presence' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
 
         {/* CARTEIRINHAS QR */}
         {adminTab === 'qr-checkin' && <AdminQrCheckin students={students} currentSchool={currentSchool} />}
@@ -689,6 +690,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
         {/* HISTÓRICO */}
         {adminTab === 'saidas-pendentes' && <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />}
         {adminTab === 'history' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
+        {adminTab === 'ajustes' && <AdminAjustes currentSchool={currentSchool} currentUser={currentUser} />}
 
         {/* CADASTRO */}
 
@@ -831,7 +833,7 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
             { key: 'home', label: 'Início', icon: Home, active: adminTab === 'home', onClick: () => go('home') },
             { key: 'students', label: 'Alunos', icon: Users, active: adminTab === 'students', onClick: () => go('students'), show: showGerenciamento },
             { key: 'monitor', label: 'Monitor', icon: MonitorCheck, active: adminTab === 'monitor', onClick: () => go('monitor'), badge: monitorStudents.length, show: showCheckin },
-            { key: 'presence', label: 'Presença', icon: CalendarDays, active: adminTab === 'presence', onClick: () => go('presence'), show: showCheckin },
+            { key: 'history', label: 'Presença', icon: CalendarDays, active: adminTab === 'history' || adminTab === 'presence', onClick: () => go('history'), show: showCheckin },
           ]}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}

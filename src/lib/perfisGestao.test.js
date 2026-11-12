@@ -19,7 +19,7 @@ describe('Perfis do Portal da Gestão', () => {
   it('Coordenação e Direção não veem nada financeiro, de contrato, hora extra, configuração ou LGPD', () => {
     const sensiveis = [
       'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia', 'financeiro-recebimentos',
-      'financeiro-despesas', 'contratos-lista', 'contratos-modelos', 'contratos-assinaturas', 'contratos-aditivos', 'horas-extras', 'historico-geral',
+      'financeiro-despesas', 'contratos-lista', 'contratos-modelos', 'contratos-assinaturas', 'contratos-aditivos', 'horas-extras',
       'relatorios-financeiro', 'relatorios-gestao', 'config-financeiro', 'config-seguranca', 'permissoes-perfis', 'permissoes-auditoria',
       'integracoes', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-unificar', 'cadastros-funcionarios', 'cadastros-fornecedores',
     ];
@@ -30,7 +30,7 @@ describe('Perfis do Portal da Gestão', () => {
   });
 
   it('Coordenação e Direção veem secretaria, cadastros, acadêmico, comunicação e o alerta de faltas', () => {
-    for (const t of ['secretaria-alunos', 'secretaria-matriculas', 'cadastros-usuarios', 'cadastros-turmas', 'attendance-corrections',
+    for (const t of ['secretaria-alunos', 'secretaria-matriculas', 'cadastros-usuarios', 'cadastros-turmas', 'attendance-corrections', 'historico-geral', 'ajustes',
       'academico-relatorios', 'academico-cardapio', 'comunicacao-comunicados', 'relatorios-operacional', 'config-academico']) {
       expect([t, podeVerAba('gestao_pedagogica', t)]).toEqual([t, true]);
     }

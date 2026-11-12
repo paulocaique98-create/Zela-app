@@ -72,7 +72,7 @@ export const AJUDA_GESTAO = [
     itens: [
       { id: 'pres-dia', titulo: 'Presença do Dia', serve: 'Quem está na escola hoje, com horários de entrada e saída.', faz: ['Consulte a lista do dia e filtre por turma.'] },
       { id: 'pres-correcoes', titulo: 'Correções', serve: 'Pedidos para corrigir um registro de presença. Quando a correção gera cobrança de hora extra, só a Gestão aprova.', faz: ['Abra o pedido, confira o motivo e aprove ou recuse.'], dica: 'O número no menu mostra quantas correções aguardam você.' },
-      { id: 'pres-saidas', titulo: 'Saídas Pendentes', serve: 'Saídas que ainda não foram concluídas.', faz: ['Acompanhe cada saída até a conclusão.'] },
+      { id: 'pres-saidas', titulo: 'Registros pendentes', serve: 'Entradas e saídas que ainda não foram concluídas.', faz: ['Acompanhe cada saída até a conclusão.'] },
       { id: 'pres-horas', titulo: 'Horas Extras', serve: 'Horas que o aluno ficou além do horário contratado e o valor delas.', faz: ['Consulte as horas do período e confira os valores.'] },
       { id: 'pres-historico', titulo: 'Histórico Geral', serve: 'Registro de todas as entradas e saídas, para rastreabilidade.', faz: ['Filtre por aluno ou data.'] },
     ],

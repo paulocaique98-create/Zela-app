@@ -161,7 +161,7 @@ export default function TeacherPortal({
               <SidebarItem active={teacherTab === 'tarefas'} icon={ClipboardList} label="Tarefas" onClick={() => go('tarefas')} />
             )}
             {showSaidasPendentes && (
-              <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Saídas Pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
+              <SidebarItem active={teacherTab === 'saidas-pendentes'} icon={LogOut} label="Registros pendentes" badge={saidasPendentesCount > 0 ? saidasPendentesCount : null} onClick={() => go('saidas-pendentes')} />
             )}
             {(showDiario || showCardapio || showMural || showPlanoAula || showOcorrencias || showPesquisas || showBiblioteca) && (
               <SidebarGroup

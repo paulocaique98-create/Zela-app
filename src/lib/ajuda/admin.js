@@ -92,14 +92,8 @@ export const AJUDA_ADMIN = [
         faz: ['Escolha a pessoa e gere ou reimprima a carteirinha.'],
       },
       {
-        id: 'presenca-diaria',
-        titulo: 'Presença Diária',
-        serve: 'Quem está na escola hoje e quem ainda não chegou, com os horários de entrada e saída registrados.',
-        faz: ['Consulte a lista do dia e filtre por turma quando precisar.'],
-      },
-      {
         id: 'saidas-pendentes',
-        titulo: 'Saídas Pendentes',
+        titulo: 'Registros pendentes',
         serve: 'Saídas que ainda não foram concluídas, para a Recepção acompanhar e resolver.',
         faz: ['Abra a lista e acompanhe cada saída até a conclusão.'],
         dica: 'O número no menu mostra quantas saídas aguardam.',
@@ -107,8 +101,14 @@ export const AJUDA_ADMIN = [
       {
         id: 'historico-geral',
         titulo: 'Histórico Geral',
-        serve: 'Registro de todas as entradas e saídas da escola. Garante rastreabilidade: cada movimento fica guardado e não é apagado.',
-        faz: ['Filtre por aluno ou por data e consulte quem fez a retirada e quem confirmou.'],
+        serve: 'Presença de hoje (quem está na escola, quem já saiu e quem ainda não chegou) e registro de todas as entradas e saídas de outros períodos. Garante rastreabilidade: cada movimento fica guardado e não é apagado.',
+        faz: ['Em "Hoje", veja os grupos Presentes, Já saíram e Ausentes e filtre por turma.', 'Use o botão de período para ver semana, mês ou datas escolhidas e consulte quem fez a retirada e quem confirmou.'],
+      },
+      {
+        id: 'ajuste-manual',
+        titulo: 'Ajuste manual',
+        serve: 'Lançar ou corrigir entrada e saída de qualquer dia, inclusive de aluno sem registro, informando o motivo.',
+        faz: ['Escolha o período e clique em Adicionar para lançar o horário de um aluno em um dia.'],
       },
     ],
   },
