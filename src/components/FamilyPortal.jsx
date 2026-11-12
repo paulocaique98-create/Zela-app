@@ -157,6 +157,7 @@ export default function FamilyPortal({
 
   // Estados dos Accordions
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [configAba, setConfigAba] = useState('geral'); // submenu Configurações: 'geral' | 'dispositivos' (Segurança)
   const toggleAccordion = (name) => {
     setOpenAccordion(openAccordion === name ? null : name);
   };
@@ -341,7 +342,16 @@ export default function FamilyPortal({
             <SidebarItem active={familyTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
 
             {showConfiguracoes && (
-              <SidebarItem active={familyTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
+              <SidebarGroup
+                collapsed={collapsed}
+                label="Configurações"
+                icon={Settings}
+                isOpen={openAccordion === 'configuracoes'}
+                onToggle={() => toggleAccordion('configuracoes')}
+              >
+                <SidebarItem active={familyTab === 'settings' && configAba === 'geral'} icon={Settings} label="Geral" onClick={() => { setConfigAba('geral'); go('settings'); }} />
+                <SidebarItem active={familyTab === 'settings' && configAba === 'dispositivos'} icon={ShieldCheck} label="Segurança" onClick={() => { setConfigAba('dispositivos'); go('settings'); }} />
+              </SidebarGroup>
             )}
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
@@ -410,6 +420,7 @@ export default function FamilyPortal({
               currentSchool={currentSchool}
               pushData={pushData}
               onAbrirContratos={() => go('contratos')}
+              aba={configAba}
             />
           )}
         </Suspense>

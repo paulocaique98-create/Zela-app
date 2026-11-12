@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Verificação em duas etapas (Google Authenticator) no login** (12/11): obrigatória para developer e gestão, opcional nos demais perfis em Configurações > Segurança; recuperação por e-mail no Portal do Dev (remover-mfa). Exige deploy das funções remover-mfa e trocar-conta.
 - **Totem sem superaquecer** (12/11): detecção facial adaptativa, câmera a 15 fps, repouso com tela preta, autoproteção térmica com aviso, e horário de atendimento opcional por aparelho (engrenagem no totem). Só front, sem migration.
 - **Gestão aprova a própria alteração de hora extra** (12/11): correção ou lançamento manual da Gestão que gera cobrança adicional é aplicado na hora (status approved, com quem aprovou e quando); Recepção, Coordenação e Direção seguem pendentes. Migrations 20261213130000 (aplicada) e 20261213140000 (aprovar a própria solicitação pendente, ainda não aplicada). Horas Extras ganha filtro De:/Até: e resumo na linha dos filtros.
 - **Ajuste manual e Histórico Geral unificado** (12/11): submenu Ajuste manual para lançar entrada/saída de aluno sem registro no dia; Histórico Geral em "Hoje" passa a ser a Presença do Dia; "Saídas Pendentes" renomeado para "Registros pendentes". Migration 20261213120000 (perfil Gestão no lançamento manual).

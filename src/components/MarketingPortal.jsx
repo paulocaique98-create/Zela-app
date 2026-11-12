@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
-import { CalendarDays, Home, Images, Megaphone, Users, LogOut } from 'lucide-react';
-import { SidebarItem, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
+import React, { Suspense, lazy, useState } from 'react';
+import { CalendarDays, Home, Images, Megaphone, Settings, ShieldCheck, Users, LogOut } from 'lucide-react';
+import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import MobileBottomNav from './MobileBottomNav';
 import LoadingLogo from './LoadingLogo';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
@@ -10,6 +11,7 @@ const MarketingAlunos = lazy(() => import('./MarketingAlunos'));
 const AdminCalendario = lazy(() => import('./AdminCalendario'));
 const AdminCadastroComunicados = lazy(() => import('./AdminCadastroComunicados'));
 const AdminMuralFotos = lazy(() => import('./AdminMuralFotos'));
+const ConfiguracoesPortal = lazy(() => import('./ConfigSubmenu')); // só "Dispositivos" + verificação em duas etapas
 
 // Portal do perfil Marketing (PLANO_MARKETING.md, A5). Menu reduzido: Alunos,
 // Calendário, Comunicados e Mural de fotos. Sem chat, financeiro, check-in,
@@ -23,14 +25,18 @@ const ABAS = [
   { id: 'calendario', label: 'Calendário', icon: CalendarDays },
   { id: 'comunicados', label: 'Comunicados', icon: Megaphone },
   { id: 'mural', label: 'Mural de fotos', icon: Images },
+  { id: 'configuracoes', label: 'Segurança', icon: ShieldCheck },
 ];
 
 // Abas que no celular ficam só no menu hambúrguer, fora da barra inferior.
 const ABAS_AUTOCONTIDAS = ['calendario', 'comunicados', 'mural'];
-const ABAS_NO_MENU =['comunicados', 'mural'];
+const ABAS_NO_MENU =['comunicados', 'mural', 'configuracoes'];
 
 export default function MarketingPortal({ currentUser, currentSchool, marketingTab, setMarketingTab, isMobileMenuOpen, setIsMobileMenuOpen, onLogout }) {
   const [isSidebarExpanded, toggleSidebarExpanded] = useSidebarExpanded();
+  const isDesktop = useIsDesktop();
+  const collapsed = isDesktop && !isSidebarExpanded;
+  const [configAberto, setConfigAberto] = useState(false);
   const aba = marketingTab || 'inicio';
   const moduloLigado = currentSchool?.features_enabled?.marketing === true;
   const go = (id) => {
@@ -65,9 +71,12 @@ export default function MarketingPortal({ currentUser, currentSchool, marketingT
         <SidebarToggleButton isExpanded={isSidebarExpanded} onToggle={toggleSidebarExpanded} />
         <div className="h-full flex flex-col min-h-0 overflow-hidden">
           <nav aria-label="Menu do Marketing" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 md:px-[18px] md:group-data-[expanded=true]/side:px-4 pt-4 pb-2 space-y-1">
-            {ABAS.map(({ id, label, icon }) => (
+            {ABAS.filter(a => a.id !== 'configuracoes').map(({ id, label, icon }) => (
               <SidebarItem key={id} active={aba === id} icon={icon} label={label} onClick={() => go(id)} />
             ))}
+            <SidebarGroup collapsed={collapsed} label="Configurações" icon={Settings} isOpen={configAberto} onToggle={() => setConfigAberto(o => !o)}>
+              <SidebarItem active={aba === 'configuracoes'} icon={ShieldCheck} label="Segurança" onClick={() => go('configuracoes')} />
+            </SidebarGroup>
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>
@@ -92,6 +101,7 @@ export default function MarketingPortal({ currentUser, currentSchool, marketingT
             {aba === 'calendario' && <AdminCalendario currentUser={currentUser} currentSchool={currentSchool} />}
             {aba === 'comunicados' && <AdminCadastroComunicados currentUser={currentUser} currentSchool={currentSchool} />}
             {aba === 'mural' && <AdminMuralFotos currentUser={currentUser} currentSchool={currentSchool} />}
+            {aba === 'configuracoes' && <ConfiguracoesPortal />}
           </Suspense>
         </div>
       </main>

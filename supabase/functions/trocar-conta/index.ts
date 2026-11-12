@@ -49,6 +49,14 @@ serve(async (req) => {
     const { data: alvo, error: alvoError } = await supabaseAdmin.auth.admin.getUserById(destino);
     if (alvoError || !alvo?.user?.email) return responder(corsHeaders, { error: 'Conta não encontrada.' }, 400);
 
+    // Conta com Authenticator não abre sem senha: a sessão sairia só em aal1 e
+    // pularia o 2º fator. Nesse caso a pessoa entra com e-mail, senha e código.
+    const { data: fatoresAlvo, error: mfaError } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId: destino });
+    if (mfaError) throw mfaError;
+    if ((fatoresAlvo?.factors ?? []).some((f: { status: string }) => f.status === 'verified')) {
+      return responder(corsHeaders, { error: 'Esta conta usa verificação em duas etapas. Saia e entre com e-mail, senha e o código do Authenticator.' }, 403);
+    }
+
     const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: alvo.user.email });
     if (linkError || !link?.properties?.hashed_token) throw linkError ?? new Error('Código de troca não gerado.');
 

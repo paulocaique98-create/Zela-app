@@ -3,6 +3,9 @@ import { ShieldCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { publicAppUrl } from '../lib/publicUrl';
 import ZelaMark from './ZelaMark';
+import MfaChallenge from './MfaChallenge';
+import MfaEnroll from './MfaEnroll';
+import { exigeSegundoFator, listarFatoresVerificados, mfaObrigatorio } from '../lib/mfa';
 
 export default function Login({ onLogin }) {
   // Imagem central customizável pelo developer (ConfiguracoesPanel) --
@@ -75,6 +78,8 @@ export default function Login({ onLogin }) {
   const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
   const [recoveryMsg, setRecoveryMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // 2FA: null | { tipo: 'desafio', factorId, userId } | { tipo: 'cadastro', userId }
+  const [mfaStep, setMfaStep] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -103,11 +108,37 @@ export default function Login({ onLogin }) {
         return;
       }
 
+      // 1.5 Verificação em duas etapas (Authenticator) -- só no login do app.
+      const mfa = await exigeSegundoFator();
+      if (mfa.exige) {
+        setMfaStep({ tipo: 'desafio', factorId: mfa.factorId, userId: authData.user.id });
+        return;
+      }
+      await continuarAposAuth(authData.user.id);
+    } catch (err) {
+      console.error('[Login] Catch error:', err);
+      const msg = err?.message || err?.error_description || 'Erro ao conectar ao banco de dados.';
+      setLoginError(typeof msg === 'string' ? msg : 'Erro inesperado. Verifique sua conexão.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Cancela o 2º fator: a sessão em aal1 não pode ficar aberta no aparelho.
+  const cancelarMfa = async () => {
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+    setMfaStep(null);
+    setLoginPassword('');
+  };
+
+  // Tudo que vem depois de a sessão estar completa (senha + 2º fator, quando exigido).
+  const continuarAposAuth = async (userId) => {
+    try {
       // 2. Buscar o perfil correspondente na tabela pública 'users'
       const { data: users, error: dbError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', authData.user.id);
+        .eq('id', userId);
 
       if (dbError) {
         console.error('[Login] DB error:', dbError);
@@ -118,6 +149,12 @@ export default function Login({ onLogin }) {
         if (users[0].status === 'pending') {
           await supabase.auth.signOut({ scope: 'local' });
           setLoginError('Seu cadastro está aguardando aprovação da escola. Você receberá acesso assim que for aprovado.');
+          return;
+        }
+
+        // Role obrigado a ter Authenticator e ainda sem nenhum: cadastro antes de entrar.
+        if (mfaObrigatorio(users[0].role) && (await listarFatoresVerificados()).length === 0) {
+          setMfaStep({ tipo: 'cadastro', userId });
           return;
         }
 
@@ -257,7 +294,11 @@ export default function Login({ onLogin }) {
             </p>
           </div>
 
-          {isRecoveringPassword ? (
+          {mfaStep?.tipo === 'desafio' ? (
+            <MfaChallenge factorId={mfaStep.factorId} onVerified={async () => { setMfaStep(null); await continuarAposAuth(mfaStep.userId); }} onCancel={cancelarMfa} />
+          ) : mfaStep?.tipo === 'cadastro' ? (
+            <MfaEnroll obrigatorio onDone={async () => { setMfaStep(null); await continuarAposAuth(mfaStep.userId); }} />
+          ) : isRecoveringPassword ? (
             <form onSubmit={handlePasswordRecovery} className="flex flex-col gap-5 w-full">
               <div className="flex flex-col gap-1.5">
                 <label className="text-label text-on-surface" htmlFor="recovery-email">E-mail cadastrado</label>

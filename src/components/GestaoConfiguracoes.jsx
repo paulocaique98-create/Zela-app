@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { PageShell, Loading, Notice, Field, inputCls, PrimaryButton, StatCard } from './GestaoShared';
 import ConfirmModal from './ConfirmModal';
 import SairTodosAparelhos from './SairTodosAparelhos';
+import VerificacaoDuasEtapas from './VerificacaoDuasEtapas';
 import { ConfigSubmenu, ABA_DISPOSITIVOS } from './ConfigSubmenu';
 import { SETORES_ESCOLA_CHAT, matrizDeAcesso } from '../lib/chatAcesso';
 
@@ -190,8 +191,8 @@ export function ConfigSeguranca({ currentUser }) {
   return (
     <PageShell description="Senhas e acesso das contas da escola." infoOnMobile>
       <div className="max-w-3xl">
-      <ConfigSubmenu abas={[{ id: 'senhas', label: 'Senhas' }, ABA_DISPOSITIVOS]} ativa={abaSeg} onChange={setAbaSeg} />
-      {abaSeg === 'dispositivos' && <SairTodosAparelhos />}
+      <ConfigSubmenu abas={[{ id: 'senhas', label: 'Senhas' }, { ...ABA_DISPOSITIVOS, label: 'Meu acesso' }]} ativa={abaSeg} onChange={setAbaSeg} />
+      {abaSeg === 'dispositivos' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"><VerificacaoDuasEtapas /><SairTodosAparelhos /></div>}
       <div className={abaSeg === 'dispositivos' ? 'hidden' : 'space-y-4'}>
         <Notice type={msg.type || 'error'}>{msg.text}</Notice>
         {stats === null ? <Loading /> : (
