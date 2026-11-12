@@ -27,7 +27,12 @@ const STATUS_CONFIG = {
   idle:           { label: 'Ausente',          cls: 'bg-error/15 text-error',     icon: null },
 };
 
-export default function AdminDailyPresence({ currentUser, currentSchool }) {
+// `embedded`: usado dentro do Histórico Geral (período "Hoje"), sem o cartão
+// externo -- o Histórico já fornece o contêiner.
+// No modo embutido, a turma escolhida (`turma`), o pedido de atualização
+// (`refreshSignal`) e o aviso de carregando (`onLoadingChange`) ficam com o
+// Histórico Geral, que mostra os botões na linha dos filtros.
+export default function AdminDailyPresence({ currentUser, currentSchool, embedded = false, turma, refreshSignal = 0, onLoadingChange }) {
   // Turmas cadastradas oficialmente em Gestão de Turmas (schools.turmas) --
   // a MESMA lista usada no cadastro de aluno (Novo Usuário > Alunos
   // vinculados > Turma), pra não duplicar opção quando o texto gravado num
@@ -36,7 +41,8 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
   const turmaOptions = ['Todas as Turmas', ...schoolTurmas];
 
-  const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
+  const [ownTurma, setSelectedTurma] = useState('Todas as Turmas');
+  const selectedTurma = embedded ? (turma || 'Todas as Turmas') : ownTurma;
   // Presentes (na escola ou com solicitação em aberto), Já saíram e
   // Ausentes: cada aluno em um grupo só (src/lib/presencaDiaria.js).
   const [statusFilter, setStatusFilter] = useState('presentes');
@@ -72,6 +78,9 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   useEffect(() => {
     fetchPresence();
   }, []);
+
+  useEffect(() => { if (refreshSignal > 0) fetchPresence(); /* eslint-disable-next-line */ }, [refreshSignal]);
+  useEffect(() => { onLoadingChange?.(isLoading); /* eslint-disable-next-line */ }, [isLoading]);
 
   // Essa tela lê o horário direto de students.today_entry/today_exit (não de
   // attendance_logs), então não tem o id dos logs à mão — busca os dois
@@ -111,10 +120,12 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
   const contagem = contarSituacoes(allStudents);
 
   return (
-    <div className="h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-2xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-outline-variant md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className={embedded
+      ? 'flex-1 min-h-0 flex flex-col'
+      : 'h-full flex flex-col bg-white -m-3 sm:m-0 p-2.5 sm:p-5 md:p-6 rounded-none sm:rounded-2xl md:rounded-none shadow-none sm:shadow-sm md:shadow-none border-0 sm:border sm:border-outline-variant md:border-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400'}>
       {/* Header -- título "Presença Diária" e ícone removidos (o Header do
           app já mostra o nome da tela dinamicamente); só a data, direto. */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3 shrink-0">
         <p className="text-[13px] sm:text-sm text-on-surface-variant whitespace-nowrap overflow-x-auto w-full text-center sm:w-auto">
           {(() => {
             const weekday = new Date().toLocaleDateString('pt-BR', { weekday: 'long' }).split('-')[0];
@@ -122,6 +133,7 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
           })()} · {new Date().toLocaleDateString('pt-BR')}
           {lastUpdate && <span className="text-on-surface-variant/70"> · Atualizado em {lastUpdate}</span>}
         </p>
+        {!embedded && (
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={fetchPresence}
@@ -163,12 +175,13 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Quatro botões no lugar da frase com os números (30/09/2026): cada um
           mostra a contagem e filtra a lista. No celular, número embaixo do
           nome, pra caber numa linha só. */}
-      <div className="grid grid-cols-4 bg-surface-container rounded-xl p-1 gap-1 mb-5 shrink-0">
+      <div className="grid grid-cols-4 bg-surface-container rounded-xl p-1 gap-1 mb-3 shrink-0">
         {GRUPOS_PRESENCA.map(grupo => (
           <button
             key={grupo.id}
@@ -197,43 +210,42 @@ export default function AdminDailyPresence({ currentUser, currentSchool }) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pb-1 content-start">
             {displayed.map(student => {
               const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.idle;
               return (
-                <div key={student.id} className="flex flex-col gap-2.5 border border-outline-variant rounded-2xl bg-white shadow-sm p-3.5 min-w-0">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 border border-primary/30">
-                      <span className="text-primary font-bold text-xs">
-                        {student.name.charAt(0).toUpperCase()}
-                      </span>
+                <div key={student.id} className="flex flex-col gap-1.5 border border-outline-variant rounded-xl bg-white shadow-sm px-3 py-2 min-w-0">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 border border-primary/30">
+                        <span className="text-primary font-bold text-[11px]">
+                          {student.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block font-bold text-on-surface text-sm leading-tight truncate">{student.name}</span>
+                        <span className="block text-[10px] text-on-surface-variant/70 font-semibold truncate">{student.turma || '—'}</span>
+                      </div>
                     </div>
-                    <span className="font-bold text-on-surface text-sm min-w-0 break-words">{student.name}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[11px] text-on-surface-variant/70 font-semibold min-w-0 truncate">
-                      {student.turma || '—'}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md shrink-0 ${cfg.cls}`}>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${cfg.cls}`}>
                       {cfg.icon} {cfg.label}
                     </span>
                   </div>
 
-                  <div className="flex items-end justify-between gap-2 pt-2 border-t border-dashed border-outline-variant">
-                    <div className="flex gap-5 flex-wrap">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[11px] font-bold text-on-surface-variant/70">Entrada</span>
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-dashed border-outline-variant">
+                    <div className="flex gap-4 items-center">
+                      <span className="flex items-baseline gap-1">
+                        <span className="text-[10px] font-bold text-on-surface-variant/70">Entrada</span>
                         <span className="font-mono font-bold text-primary text-sm">
                           {student.today_entry ? student.today_entry.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[11px] font-bold text-on-surface-variant/70">Saída</span>
+                      </span>
+                      <span className="flex items-baseline gap-1">
+                        <span className="text-[10px] font-bold text-on-surface-variant/70">Saída</span>
                         <span className="font-mono font-bold text-on-surface-variant text-sm">
                           {student.today_exit ? student.today_exit.substring(0, 5) : <span className="text-on-surface-variant/50">—</span>}
                         </span>
-                      </div>
+                      </span>
                     </div>
                     {/* Botão único -- substitui os dois lápis separados de
                         Entrada/Saída. Abre um modal só, com os dois horários

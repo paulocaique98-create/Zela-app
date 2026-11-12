@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, BarChart3, LayoutDashboard, ShieldCheck, ScrollText, KeyRound, Plug, MessageSquare, Gavel, ArrowUpCircle, UserCheck, UserX, ScanFace,
   Sprout, UtensilsCrossed, BookMarked, Soup, MessageCircle, X, Maximize2, Minimize2, Tags, LogOut, Rocket, Scale, TrendingUp,
 } from 'lucide-react';
-import { ClipboardPen, CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus, Kanban, CalendarClock, Users as UsersIcon, Filter } from 'lucide-react';
+import { SlidersHorizontal, ClipboardPen, CircleHelp, BookOpenCheck, Library, Boxes, ArrowLeftRight, PackageMinus, Kanban, CalendarClock, Users as UsersIcon, Filter } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { SidebarItem, SidebarGroup, SidebarToggleButton, SidebarLogoutItem } from './SidebarNav';
 import MobileBottomNav from './MobileBottomNav';
@@ -79,6 +79,7 @@ const ConfigSeguranca = lazy(() => import('./GestaoConfiguracoes').then(m => ({ 
 // Telas do Admin reaproveitadas (a RLS de cada tabela já aceita gestao).
 const AdminDailyPresence = lazy(() => import('./AdminDailyPresence'));
 const AdminHistory = lazy(() => import('./AdminHistory'));
+const AdminAjustes = lazy(() => import('./AdminAjustes'));
 const AdminFrequencia = lazy(() => import('./AdminFrequencia'));
 const AdminMitigacao = lazy(() => import('./AdminMitigacao'));
 const AdminMapaHabilidades = lazy(() => import('./AdminMapaHabilidades'));
@@ -128,7 +129,7 @@ function groupOf(tab) {
   if (GRUPO_GERENCIAMENTO.includes(tab) || ABAS_BIOMETRIAS.some(a => a.id === tab)) return 'gerenciamento';
   if (tab.startsWith('contratos-')) return 'contratos';
   if (tab.startsWith('financeiro-')) return 'financeiro';
-  if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras', 'historico-geral'].includes(tab)) return 'presenca';
+  if (['presenca-dia', 'attendance-corrections', 'saidas-pendentes', 'horas-extras', 'historico-geral', 'ajustes'].includes(tab)) return 'presenca';
   if (tab.startsWith('cadastros-')) return 'cadastros';
   if (tab.startsWith('academico-') || tab === 'calendario') return 'academico';
   if (tab === 'comunicacao-mural') return 'academico';
@@ -344,11 +345,12 @@ export default function GestaoPortal({
               {chaveLigada(features, 'bolsas') && item('financeiro-bolsas', GraduationCap, 'Bolsas')}
             </>)}
             {showCheckin && group('presenca', 'Check-in/out', Clock, <>
-              {item('presenca-dia', UserCheck, 'Presença do Dia')}
-              {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
-              {item('saidas-pendentes', LogOut, 'Saídas Pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
-              {item('horas-extras', Clock, 'Horas Extras')}
+              {/* A Presença do Dia virou o período "Hoje" do Histórico Geral (todos os perfis). */}
               {item('historico-geral', ScrollText, 'Histórico Geral')}
+              {item('ajustes', SlidersHorizontal, 'Ajuste manual')}
+              {item('saidas-pendentes', LogOut, 'Registros pendentes', { badge: saidasPendentesCount > 0 ? saidasPendentesCount : null })}
+              {item('attendance-corrections', ClipboardCheck, 'Correções', { badge: correcoesParaMim > 0 ? correcoesParaMim : null })}
+              {item('horas-extras', Clock, 'Horas Extras')}
             </>, (correcoesParaMim + saidasPendentesCount) > 0 ? (correcoesParaMim + saidasPendentesCount) : null)}
             {group('academico', 'Acadêmico', BookOpen, <>
               {item('academico-ano-letivo', CalendarRange, 'Ano Letivo')}
@@ -482,6 +484,7 @@ export default function GestaoPortal({
           {abaAtual === 'horas-extras' && <AdminRelatorioHorasExtras currentSchool={currentSchool} />}
           {abaAtual === 'attendance-corrections' && <AdminAttendanceCorrections currentUser={currentUser} />}
           {abaAtual === 'historico-geral' && <AdminHistory currentSchool={currentSchool} currentUser={currentUser} />}
+          {abaAtual === 'ajustes' && <AdminAjustes currentSchool={currentSchool} currentUser={currentUser} />}
           {abaAtual === 'saidas-pendentes' && (
             <div className="h-full min-h-0 overflow-y-auto bg-surface p-3 sm:p-4 md:p-6 lg:p-8">
               <SaidasPendentes currentUser={currentUser} currentSchool={currentSchool} />

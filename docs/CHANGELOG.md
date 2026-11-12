@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Ajuste manual e Histórico Geral unificado** (12/11): submenu Ajuste manual para lançar entrada/saída de aluno sem registro no dia; Histórico Geral em "Hoje" passa a ser a Presença do Dia; "Saídas Pendentes" renomeado para "Registros pendentes". Migration 20261213120000 (perfil Gestão no lançamento manual).
 - **Pendências de ponto por período** (11/11): Saídas/Entradas pendentes passam a aceitar De/Até (até 31 dias), mostram data e horário contratado de cada aluno e têm "Selecionar todos" no topo. Migration 20261213110000.
 - **Entrada pendente x saída pendente** (11/11): regra por escola (Configurações > Entrada/Saída pendente: horas após a entrada contratada e/ou horário fixo) separa o aluno com um único registro tardio (ex.: 18h09) como "entrada pendente" em vez de saída pendente; nova aba Entradas em Saídas pendentes. Migration 20261213100000.
 - **Control iD, tela de vínculo pessoa↔equipamento** (11/11): botão "Pessoas" em Dispositivos (vincular pessoa autorizada, enviar ao equipamento = cadastro + foto na fila, remover = exclusão no aparelho + desvínculo). Só front, usa as RPCs das fases 4 e 5, sem migration. Build e navegador não validados (vite trava com erro 1450 no ambiente).

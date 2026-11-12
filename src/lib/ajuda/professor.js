@@ -70,7 +70,7 @@ export const AJUDA_PROFESSOR = [
       },
       {
         id: 'saidas-pendentes',
-        titulo: 'Saídas Pendentes',
+        titulo: 'Registros pendentes',
         serve: 'Saídas que ainda não foram concluídas, para acompanhar.',
         faz: ['Abra a lista e acompanhe cada saída.'],
       },

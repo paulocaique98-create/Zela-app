@@ -37,8 +37,10 @@ export const ABAS_GESTAO_PEDAGOGICA = new Set([
   'secretaria-documentos',
   // Presença (consulta e correções que não geram hora extra)
   'presenca-dia',
+  'historico-geral', // Presença e histórico (sem o excedente de horário, ver AdminHistory)
   'attendance-corrections',
   'saidas-pendentes',
+  'ajustes', // Ajuste manual: Coordenação e Direção também lançam horário
   // Cadastros
   'cadastros-usuarios',
   'cadastros-novo',
@@ -106,7 +108,6 @@ export const ABAS_SO_GESTAO = new Set([
   'financeiro-visao', 'financeiro-planos', 'financeiro-mensalidades', 'financeiro-cobrancas', 'financeiro-inadimplencia',
   'financeiro-recebimentos', 'financeiro-despesas', 'financeiro-dre', 'financeiro-fluxo', 'financeiro-bolsas',
   'horas-extras',
-  'historico-geral',
   'cadastros-funcionario-novo', 'cadastros-fornecedor-novo',
   'cadastros-funcionarios', 'cadastros-fornecedores', 'cadastros-exclusoes', 'cadastros-biometria', 'cadastros-qualidade-biometria', 'cadastros-unificar',
   'relatorios-gestao', 'relatorios-financeiro',
@@ -160,6 +161,7 @@ export const MODULO_DA_ABA_GESTAO = {
   'saidas-pendentes': 'checkin',
   'horas-extras': 'checkin',
   'historico-geral': 'checkin',
+  ajustes: 'checkin',
   'financeiro-visao': 'financeiro',
   'financeiro-planos': 'financeiro',
   'financeiro-mensalidades': 'financeiro',

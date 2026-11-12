@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, Search, X, FileText, LogIn, LogOut, Pencil, SlidersHorizontal, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useSchoolConfig } from '../lib/schoolConfig';
 import { supabase } from '../lib/supabase';
 import { buscarTodos } from '../lib/buscarTodos';
 import { agruparEventosPorDia, calcularHorasExtras, calcularCobrancaDoDia, getBrasiliaDateStr } from '../utils/attendanceUtils';
 import { printHistoricoReport } from '../lib/printHistorico';
 import { quemRegistrouDoLog } from '../lib/quemRegistrou';
 import AttendanceEditTodayModal from './AttendanceEditTodayModal';
+import AdminDailyPresence from './AdminDailyPresence';
 
 function formatMinutes(mins) {
   if (mins === null || mins === undefined || mins < 0) return '—';
@@ -35,19 +37,27 @@ export default function AdminHistory({ currentSchool, currentUser }) {
   const [customDate, setCustomDate] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [correctionTarget, setCorrectionTarget] = useState(null); // { student, entryLog, exitLog, dateStr }
-  // Período fica escondido atrás desse painel -- mesmo modelo "foco na
-  // lista" validado no Relatório de Horas Extras (17/09).
-  const [showFilters, setShowFilters] = useState(false);
-  const filtersRef = useRef(null);
+  // Filtro de turma e Atualizar da visão "Hoje" (a presença em si fica em
+  // AdminDailyPresence; aqui só o estado, pra os botões ficarem na linha dos filtros).
+  const { turmas: schoolTurmas } = useSchoolConfig(currentUser?.school_id);
+  const [selectedTurma, setSelectedTurma] = useState('Todas as Turmas');
+  const [turmaMenuOpen, setTurmaMenuOpen] = useState(false);
+  const [refreshSignal, setRefreshSignal] = useState(0);
+  const [presenceLoading, setPresenceLoading] = useState(false);
 
-  useEffect(() => {
-    if (!showFilters) return;
-    const handleClickOutside = (e) => {
-      if (filtersRef.current && !filtersRef.current.contains(e.target)) setShowFilters(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showFilters]);
+  // Datas exibidas nos campos De/Até: as do atalho escolhido (Hoje/Semana/Mês)
+  // ou as digitadas. Editar qualquer campo passa o período para "custom".
+  const todayStr = getBrasiliaDateStr();
+  const shownFrom = period === 'custom' ? customDate : period === 'today' ? todayStr
+    : getBrasiliaDateStr(new Date(Date.now() - ((period === '7days' ? 7 : 30) - 1) * 86400000));
+  const shownTo = period === 'custom' ? customEnd : todayStr;
+  const pickDate = (which, value) => {
+    const from = which === 'from' ? value : (shownFrom || value);
+    const to = which === 'to' ? value : (shownTo || value);
+    setCustomDate(from);
+    setCustomEnd(to < from ? from : to);
+    setPeriod(from === todayStr && to === todayStr ? 'today' : 'custom');
+  };
 
   const fetchHistory = async () => {
     if (!currentSchool) return;
@@ -173,11 +183,13 @@ export default function AdminHistory({ currentSchool, currentUser }) {
       : formatDate(`${customDate}T00:00:00`))
     : (PERIOD_LABELS[period] || 'Período selecionado');
 
-  const overCount = filtered.filter(log => !!log.overtime).length;
+  // Coordenação e Direção não veem excedente de horário (dado de cobrança).
+  const hideExcedente = currentUser?.role === 'gestao_pedagogica';
+  const overCount = hideExcedente ? 0 : filtered.filter(log => !!log.overtime).length;
 
   const handleExport = () => {
     printHistoricoReport({
-      records: filtered,
+      records: hideExcedente ? filtered.map(r => ({ ...r, overtime: null })) : filtered,
       periodLabel,
       school: currentSchool,
     });
@@ -194,75 +206,84 @@ export default function AdminHistory({ currentSchool, currentUser }) {
         {/* ml-auto -- no mobile o <p> acima some (display:none), e sem isso
             justify-between com um filho só jogaria estes botões pra
             esquerda em vez de manter à direita. */}
-        <div className="relative flex items-center gap-2 shrink-0 ml-auto" ref={filtersRef}>
-          <button
-            onClick={() => setShowFilters(v => !v)}
-            className={`flex items-center justify-center gap-2 text-sm font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm border ${
-              showFilters ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant hover:bg-surface-container-low'
-            }`}
-            title="Período"
-          >
-            <SlidersHorizontal size={16} />
-          </button>
+        <div className="relative flex items-center gap-2 flex-wrap justify-end shrink-0 ml-auto">
+          {period === 'today' && (<>
+            <button
+              onClick={() => setRefreshSignal(n => n + 1)}
+              disabled={presenceLoading}
+              className="flex items-center justify-center gap-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/40 px-3.5 py-2.5 rounded-xl transition disabled:opacity-50 shrink-0"
+              title="Atualizar"
+            >
+              <RefreshCw size={15} className={presenceLoading ? 'animate-spin' : ''} /> <span className="hidden sm:inline">Atualizar</span>
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setTurmaMenuOpen(o => !o)}
+                className="flex items-center gap-2 text-sm font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high border border-outline-variant px-3.5 py-2.5 rounded-xl transition"
+              >
+                <SlidersHorizontal size={15} />
+                <span className="hidden sm:inline">{selectedTurma}</span>
+              </button>
+              {turmaMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setTurmaMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-72 max-w-[85vw] bg-white border border-outline-variant rounded-2xl shadow-lg z-20 p-1.5">
+                    {['Todas as Turmas', ...schoolTurmas].map(t => (
+                      <button
+                        key={t}
+                        onClick={() => { setSelectedTurma(t); setTurmaMenuOpen(false); }}
+                        className={`w-full px-3 py-2 rounded-xl text-sm font-bold text-left truncate transition ${
+                          selectedTurma === t ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-surface-container-low'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </>)}
+          <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70">
+            De:
+            <input
+              type="date"
+              value={shownFrom || ''}
+              max={shownTo || todayStr}
+              onChange={e => e.target.value && pickDate('from', e.target.value)}
+              className="px-2 py-2 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant/70">
+            Até:
+            <input
+              type="date"
+              value={shownTo || ''}
+              min={shownFrom || undefined}
+              max={todayStr}
+              onChange={e => e.target.value && pickDate('to', e.target.value)}
+              className="px-2 py-2 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+            />
+          </label>
 
           <button
             onClick={handleExport}
             disabled={filtered.length === 0}
             className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-primary hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed px-3.5 sm:px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
           >
-            <FileText size={16} /> <span className="hidden sm:inline">Exportar Relatório</span>
+            <FileText size={16} /> <span className="hidden sm:inline">Exportar</span>
           </button>
-
-          {showFilters && (
-            <div className="absolute right-0 top-full mt-2 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white border border-outline-variant rounded-2xl shadow-lg p-3 z-20">
-              <p className="text-[11px] font-bold text-on-surface-variant/70 mb-1.5 px-1">Período</p>
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-                {[
-                  { id: 'today', label: 'Hoje' },
-                  { id: '7days', label: 'Semana' },
-                  { id: '30days', label: 'Mês' },
-                  { id: 'custom', label: 'De / até' }
-                ].map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPeriod(p.id)}
-                    className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      period === p.id ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-              {period === 'custom' && (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
-                    De
-                    <input
-                      type="date"
-                      value={customDate}
-                      max={customEnd || undefined}
-                      onChange={e => setCustomDate(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-[11px] font-bold text-on-surface-variant/70">
-                    Até
-                    <input
-                      type="date"
-                      value={customEnd}
-                      min={customDate || undefined}
-                      onChange={e => setCustomEnd(e.target.value)}
-                      className="w-full px-2 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
+      {/* Período "Hoje" = a antiga Presença do Dia (todos os alunos, grupos
+          Presentes/Já saíram/Ausentes, filtro de turma e editar horário).
+          Outros períodos seguem com a lista de registros abaixo. */}
+      {period === 'today' && (
+        <AdminDailyPresence embedded currentUser={currentUser} currentSchool={currentSchool} turma={selectedTurma} refreshSignal={refreshSignal} onLoadingChange={setPresenceLoading} />
+      )}
+
+      {period !== 'today' && (<>
       {/* Resumo -- vira uma frase, não mais uma linha de filtros grande
           (mesmo modelo "foco na lista" do Relatório de Horas Extras). */}
       <p className="text-sm text-on-surface-variant mb-4 shrink-0">
@@ -305,11 +326,11 @@ export default function AdminHistory({ currentSchool, currentUser }) {
             <p className="text-on-surface-variant/70 text-xs mt-1">Os registros aparecem após o check-in ser confirmado.</p>
           </div>
         ) : (
-          <div className="space-y-2 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4 items-start">
             {filtered.map(log => {
               const initials = log.studentName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
               return (
-                <div key={log.key} className="p-3 sm:p-4 rounded-2xl border border-outline-variant bg-white shadow-sm">
+                <div key={log.key} className="px-3 py-2.5 rounded-xl border border-outline-variant bg-white shadow-sm">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
                       {initials}
@@ -321,7 +342,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                     <p className="text-xs text-on-surface-variant/70 min-w-0 break-words">{log.date} · ciclo {log.contracted}</p>
                     {log.duration === null ? (
                       <span className="text-[11px] font-bold px-2 py-1 rounded-sm bg-brass-50 text-warning border border-warning/40 shrink-0">Na Escola</span>
-                    ) : log.overtime ? (
+                    ) : hideExcedente ? null : log.overtime ? (
                       <span className="text-[11px] font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-error/15 text-error shrink-0">+{log.overtime}</span>
                     ) : (
                       <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-sm whitespace-nowrap bg-success/15 text-success shrink-0">
@@ -331,7 +352,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
                   </div>
 
                   <div className="mt-2.5 pt-2.5 border-t border-dashed border-outline-variant flex items-end justify-between gap-2">
-                    <div className="space-y-2 min-w-0">
+                    <div className="flex flex-wrap items-start gap-x-6 gap-y-2 min-w-0">
                       <div className="min-w-0">
                         <span className="flex items-center gap-1.5 font-bold text-primary text-sm flex-wrap">
                           <LogIn size={13} className="shrink-0" /> {log.entry || <span className="text-on-surface-variant/50">—</span>}
@@ -371,6 +392,7 @@ export default function AdminHistory({ currentSchool, currentUser }) {
           </div>
         )}
       </div>
+      </>)}
 
       {correctionTarget && (
         <AttendanceEditTodayModal
