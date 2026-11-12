@@ -16,7 +16,7 @@ export default function SairTodosAparelhos({ dev = false }) {
 
   return (
     <>
-      <section className={`${dev ? 'bg-dev-surface border-dev-border' : 'bg-surface-container-lowest border-outline-variant'} border rounded-zela-lg p-4 sm:p-5 space-y-3`}>
+      <section className={`${dev ? 'bg-dev-surface border-dev-border' : 'bg-surface-container-lowest border-outline-variant'} border rounded-zela-lg p-4 sm:p-5 flex flex-col gap-3`}>
         <div className="flex items-start gap-3">
           <span className={`w-10 h-10 shrink-0 rounded-zela-md flex items-center justify-center ${dev ? 'bg-dev-primary-container text-dev-primary' : 'bg-primary/10 text-primary'}`}><MonitorSmartphone size={20} /></span>
           <div className="min-w-0">
@@ -27,7 +27,7 @@ export default function SairTodosAparelhos({ dev = false }) {
         <button
           type="button"
           onClick={() => setConfirmando(true)}
-          className={`w-full sm:w-auto h-10 px-4 border font-bold rounded-zela-md text-sm transition inline-flex items-center justify-center gap-2 ${dev ? 'border-dev-border text-dev-text-muted hover:bg-dev-bg' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}
+          className={`mt-auto self-start w-full sm:w-auto h-10 px-4 border font-bold rounded-zela-md text-sm transition inline-flex items-center justify-center gap-2 ${dev ? 'border-dev-border text-dev-text-muted hover:bg-dev-bg' : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'}`}
         >
           <MonitorSmartphone size={15} /> Sair de todos os aparelhos
         </button>

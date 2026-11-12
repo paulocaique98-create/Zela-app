@@ -370,7 +370,15 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
 
             <SidebarItem active={adminTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
 
-            <SidebarItem active={adminTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
+            <SidebarGroup
+              collapsed={collapsed}
+              label="Configurações"
+              icon={Settings}
+              isOpen={openAccordion === 'configuracoes'}
+              onToggle={() => toggleAccordion('configuracoes')}
+            >
+              <SidebarItem active={adminTab === 'settings'} icon={ShieldCheck} label="Segurança" onClick={() => go('settings')} />
+            </SidebarGroup>
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>

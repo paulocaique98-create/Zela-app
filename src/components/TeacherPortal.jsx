@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, GraduationCap, BookMarked, ClipboardList, BookOpenCheck, Library, NotebookPen, ClipboardPen } from 'lucide-react';
+import { CircleHelp, Home, MonitorCheck, FileText, ClipboardCheck, LogOut, BookOpen, Soup, UtensilsCrossed, Image as ImageIcon, Settings, ShieldCheck, GraduationCap, BookMarked, ClipboardList, BookOpenCheck, Library, NotebookPen, ClipboardPen } from 'lucide-react';
 import { useSaidasPendentesCount } from '../hooks/useSaidasPendentesCount';
 import { usePermissions } from '../hooks/usePermissions';
 import { usePesquisasPendentes } from '../hooks/usePesquisasPendentes';
@@ -210,7 +210,15 @@ export default function TeacherPortal({
             )}
 
             <SidebarItem active={teacherTab === 'ajuda'} icon={CircleHelp} label="Central de Ajuda" onClick={() => go('ajuda')} />
-            <SidebarItem active={teacherTab === 'settings'} icon={Settings} label="Configurações" onClick={() => go('settings')} />
+            <SidebarGroup
+              collapsed={collapsed}
+              label="Configurações"
+              icon={Settings}
+              isOpen={openAccordion === 'configuracoes'}
+              onToggle={() => toggleAccordion('configuracoes')}
+            >
+              <SidebarItem active={teacherTab === 'settings'} icon={ShieldCheck} label="Segurança" onClick={() => go('settings')} />
+            </SidebarGroup>
           </nav>
           <SidebarLogoutItem onLogout={onLogout} />
         </div>

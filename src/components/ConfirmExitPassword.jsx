@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Loader2, ShieldAlert } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAuthHelper } from '../lib/supabase';
 
 // Confirmação de saída do Autoatendimento (Reconhecimento Facial / Senha-PIN):
 // a tela fica exposta pra qualquer pessoa (pais, visitantes) durante o check-in,
@@ -17,8 +17,11 @@ export default function ConfirmExitPassword({ email, onConfirm, onCancel }) {
     setIsLoading(true);
     setError('');
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      // Confere a senha num cliente à parte (sem persistir sessão): um signInWithPassword
+      // no cliente principal trocaria a sessão de 2FA (aal2) por uma só de senha (aal1).
+      const { error: authError } = await supabaseAuthHelper.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
+      await supabaseAuthHelper.auth.signOut({ scope: 'local' }).catch(() => { });
       onConfirm();
     } catch {
       setError('Senha incorreta.');

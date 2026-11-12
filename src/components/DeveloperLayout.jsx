@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { Building2, Receipt, Tags, ClipboardList, FileDown, FileText, LifeBuoy, Settings, ScanFace, Package, CircleDollarSign, Calculator, FileSignature, SlidersHorizontal, History, Palette, Shield, Zap, Bell, Server, MonitorSmartphone } from 'lucide-react';
+import { Building2, Receipt, Tags, ClipboardList, FileDown, FileText, LifeBuoy, Settings, ScanFace, Package, CircleDollarSign, Calculator, FileSignature, SlidersHorizontal, History, Palette, Shield, Zap, Bell, Server } from 'lucide-react';
 import { useChatUnreadCount } from '../hooks/useChatUnreadCount';
 import { useSidebarExpanded } from '../hooks/useSidebarExpanded';
 import { useIsDesktop } from '../hooks/useIsDesktop';
@@ -40,7 +40,6 @@ const SUBMENUS = {
     { id: 'integrations', label: 'Integrações', icon: Zap },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'backup', label: 'Backup e Manutenção', icon: Server },
-    { id: 'dispositivos', label: 'Dispositivos', icon: MonitorSmartphone },
   ],
 };
 

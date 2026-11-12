@@ -257,6 +257,17 @@ export default function App() {
       // O usuário vem do cache do navegador (zela_user) -- confere no banco
       // se há troca obrigatória de senha pendente, senão quem já estava com
       // sessão aberta escaparia da tela de "Crie sua senha".
+      // 2FA: sessão guardada só com a senha (aal1) de quem tem Authenticator não vale
+      // -- ex.: fechou a aba entre a senha e o código. Volta para o login.
+      if (session) {
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+          localStorage.removeItem('zela_user');
+          setCurrentUser(null);
+          return;
+        }
+      }
       if (session) {
         const { data } = await supabase.from('users').select('must_change_password').eq('id', session.user.id).maybeSingle();
         if (data?.must_change_password) {

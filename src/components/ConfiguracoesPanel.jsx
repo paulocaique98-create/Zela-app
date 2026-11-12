@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Settings, ShieldAlert, ImageIcon } from 'lucide-react';
 import SairTodosAparelhos from './SairTodosAparelhos';
+import VerificacaoDuasEtapas from './VerificacaoDuasEtapas';
+import RecuperarMfaUsuario from './RecuperarMfaUsuario';
 
 const CartaoImagem = ({ titulo, descricao, valor, Icone, ajuste, alt, onFile, onRemover, onSalvar, salvando, rotuloSalvar, msg }) => (
   <div className="bg-dev-surface border border-dev-border rounded-zela-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5">
@@ -221,7 +223,10 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo, aba: activeTab 
 
         {/* ABA: SEGURANÇA */}
         {activeTab === 'security' && (
-          <div className="space-y-4 max-w-3xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <VerificacaoDuasEtapas dev />
+            <SairTodosAparelhos dev />
+            <RecuperarMfaUsuario />
             <div className="bg-dev-surface border border-dev-border rounded-zela-lg p-4 sm:p-6">
               <h3 className="font-bold text-dev-text mb-2 flex items-center">Política de Senhas <PlaceholderBadge /></h3>
               <p className="text-small text-dev-text-muted mb-4">Configurações de exigência e força de senha para novos usuários.</p>
@@ -267,10 +272,6 @@ export default function ConfiguracoesPanel({ onUpdateGlobalLogo, aba: activeTab 
         )}
 
         {/* ABA: DISPOSITIVOS */}
-        {activeTab === 'dispositivos' && (
-          <div className="max-w-3xl"><SairTodosAparelhos dev /></div>
-        )}
-
         {/* ABA: BACKUP */}
         {activeTab === 'backup' && (
           <div className="space-y-4 max-w-3xl">
