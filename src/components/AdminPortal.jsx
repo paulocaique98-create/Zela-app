@@ -13,6 +13,8 @@ import { useUnreadSystemUpdates } from '../hooks/useUnreadSystemUpdates';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushGuidanceModal from './PushGuidanceModal';
 import { useAtualizacaoDoTotem } from '../hooks/useAtualizacaoDoTotem';
+import { useRepousoDoMenu } from '../hooks/useRepousoDoMenu';
+import EnergiaDoTotemModal from './EnergiaDoTotemModal';
 import { lembrarLeitorAberto, leitorParaReabrir, esquecerLeitorAberto } from '../lib/atualizacaoDoTotem';
 import AdminInicio from './AdminInicio';
 import LoadingLogo from './LoadingLogo';
@@ -197,6 +199,13 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
   // "Cadastrar biometria" (ação de sempre) e "Sair", já que o botão de sair
   // do Header não existe mais nessa tela.
   const [isKioskSettingsOpen, setIsKioskSettingsOpen] = useState(false);
+  const [isEnergiaOpen, setIsEnergiaOpen] = useState(false);
+  // Repouso (tela preta) do menu do Autoatendimento: depois de um check-in/out
+  // o totem volta ao menu (câmera desligada) e antes ficava aceso para sempre.
+  const { repouso: menuEmRepouso, acordar: acordarMenu } = useRepousoDoMenu(
+    adminTab === 'kiosk' && !isFaceScannerOpen && !isQrScannerOpen
+      && !isPasswordLoginOpen && !isFaceEnrollmentOpen && !isKioskSettingsOpen && !isEnergiaOpen,
+  );
   const applyTabChange = (tab) => {
     setAdminTab(tab);
     registerClick(tab);
@@ -608,6 +617,12 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
                       >
                         <Camera size={16} className="text-on-surface-variant/70" /> Biometria de Responsáveis
                       </button>
+                      <button
+                        onClick={() => { setIsKioskSettingsOpen(false); setIsEnergiaOpen(true); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low transition text-left"
+                      >
+                        <Clock size={16} className="text-on-surface-variant/70" /> Energia e horário
+                      </button>
                       <div className="h-px bg-outline-variant my-1" />
                       {/* Voltar: sai do Autoatendimento pra tela inicial, sem
                           deslogar — continua exigindo a senha (mesma trava
@@ -716,6 +731,22 @@ export default function AdminPortal({ currentUser, currentSchool, students, admi
               currentUser={currentUser}
             />
           </Suspense>,
+          document.body
+        )}
+
+        {isEnergiaOpen && createPortal(
+          <EnergiaDoTotemModal onClose={() => setIsEnergiaOpen(false)} />,
+          document.body
+        )}
+
+        {/* Repouso do menu: tela preta; qualquer toque acorda (sem câmera). */}
+        {menuEmRepouso && createPortal(
+          <div
+            onPointerDown={acordarMenu}
+            className="fixed inset-0 z-[1001] bg-black flex items-end justify-center pb-10 select-none"
+          >
+            <p className="text-white/25 text-sm">Toque para começar</p>
+          </div>,
           document.body
         )}
 

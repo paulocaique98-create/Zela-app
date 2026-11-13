@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { camposMudaram, CAMPOS_DO_TOTEM, agruparChamadas } from '../lib/realtimeAutorizados';
-import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode, Settings } from 'lucide-react';
+import { X, Camera, ShieldAlert, CheckCircle, Loader2, RefreshCw, QrCode } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 import { preloadFaceModels } from '../lib/faceModels';
 import { supabase } from '../lib/supabase';
@@ -18,7 +18,7 @@ const HUMAN_MATCH_THRESHOLD_COSINE = 0.48;
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getCurrentScreen, registroDeErrosAtivo } from '../lib/errorLogger';
 import {
-  lerConfig, salvarConfig, foraDoHorario, calcularIntervalo, deveEntrarEmRepouso,
+  lerConfig, foraDoHorario, calcularIntervalo, deveEntrarEmRepouso,
   registrarInferencia, avaliarSobrecarga, mediaInferencia,
 } from '../lib/energiaDoTotem';
 
@@ -315,8 +315,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   // Economia de energia/calor (celular/tablet no totem) — ver lib/energiaDoTotem.js.
   const energiaConfigRef = useRef(lerConfig());
   const [repouso, setRepouso] = useState(false);
-  const [mostrarConfig, setMostrarConfig] = useState(false);
-  const [configRascunho, setConfigRascunho] = useState(() => lerConfig());
   const [sobrecarregadoUI, setSobrecarregadoUI] = useState(false);
   const [foraHorario, setForaHorario] = useState(() => foraDoHorario(lerConfig()));
   // "Ligar câmera agora" fora do horário: vale por 10 min.
@@ -1358,52 +1356,6 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
       {sobrecarregadoUI && !repouso && !foraHorarioEfetivo && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[1000] bg-warning text-ink text-xs font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none">
           Aparelho aquecido — desempenho reduzido para protegê-lo
-        </div>
-      )}
-      {!foraHorarioEfetivo && !repouso && (
-        <button
-          onClick={() => { setConfigRascunho(energiaConfigRef.current); setMostrarConfig(true); }}
-          className="fixed bottom-2 right-2 z-[1000] p-2 rounded-full bg-ink/40 text-white/70 hover:bg-ink/70"
-          aria-label="Energia do aparelho"
-        >
-          <Settings size={16} />
-        </button>
-      )}
-      {mostrarConfig && (
-        <div className="fixed inset-0 z-[1002] bg-ink/70 flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-zela-lg p-5 w-full max-w-sm space-y-4 text-on-surface">
-            <h3 className="font-bold">Energia deste aparelho</h3>
-            <label className="block text-sm">
-              Repouso (tela preta) após quantos minutos sem ninguém? (0 = nunca)
-              <input type="number" min="0" max="120" value={configRascunho.repousoMin}
-                onChange={e => setConfigRascunho(c => ({ ...c, repousoMin: e.target.value }))}
-                className="mt-1 w-full border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
-            </label>
-            <div className="text-sm">
-              Horário de atendimento (câmera desligada fora dele; vazio = sempre ligada)
-              <div className="flex gap-2 mt-1">
-                <input type="time" value={configRascunho.horarioInicio}
-                  onChange={e => setConfigRascunho(c => ({ ...c, horarioInicio: e.target.value }))}
-                  className="flex-1 border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
-                <input type="time" value={configRascunho.horarioFim}
-                  onChange={e => setConfigRascunho(c => ({ ...c, horarioFim: e.target.value }))}
-                  className="flex-1 border border-outline-variant rounded-zela-md px-3 py-2 bg-surface" />
-              </div>
-            </div>
-            <p className="text-xs text-on-surface-variant">Vale só para este aparelho.</p>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setMostrarConfig(false)} className="px-4 py-2 text-sm rounded-zela-md bg-surface-container">Cancelar</button>
-              <button
-                onClick={() => {
-                  const salva = salvarConfig(configRascunho);
-                  energiaConfigRef.current = salva;
-                  setForaHorario(foraDoHorario(salva));
-                  setMostrarConfig(false);
-                }}
-                className="px-4 py-2 text-sm font-bold rounded-zela-md bg-primary text-white"
-              >Salvar</button>
-            </div>
-          </div>
         </div>
       )}
       {repouso && !foraHorarioEfetivo && (
