@@ -5,6 +5,7 @@ import { ehRecepcao } from "../_shared/papeis.ts";
 import { sendEmail } from '../_shared/resend.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
+import { verificarEmailReal } from '../_shared/emailReal.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -81,6 +82,8 @@ serve(async (req) => {
     if (!name || !email || !password || !school_id || !student_ids || student_ids.length === 0) {
       throw new Error('Dados incompletos. Informe name, email, password, school_id e student_ids.')
     }
+    const emailCheck = await verificarEmailReal(email)
+    if (!emailCheck.ok) throw new Error(emailCheck.error)
     
     // Validar se o caller pertence à mesma escola do usuário que está sendo criado
     if (callerData.role !== 'developer' && callerData.school_id !== school_id) {

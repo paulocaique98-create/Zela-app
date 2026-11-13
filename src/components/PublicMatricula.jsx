@@ -7,6 +7,7 @@ import {
   ImageIcon, HeartPulse,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { erroEmail } from '../utils/emailReal';
 import { uploadFileWithSignedUrl, buildSafeFileName } from '../lib/storage';
 import { compressImage } from '../lib/imageCompression';
 import { navigateTo } from '../utils/navigate';
@@ -262,6 +263,12 @@ export default function PublicMatricula() {
   const validate = () => {
     if (!schoolCode.trim()) return 'Informe o código da escola.';
     if (!email.trim()) return 'Informe um e-mail.';
+    const emailErr = erroEmail(email);
+    if (emailErr) return emailErr;
+    if (segundoResponsavel.nome?.trim() && segundoResponsavel.email?.trim()) {
+      const email2Err = erroEmail(segundoResponsavel.email);
+      if (email2Err) return `2º responsável: ${email2Err}`;
+    }
     if (password.length < 8) return 'Crie uma senha com pelo menos 8 caracteres.';
     if (password !== passwordConfirm) return 'As senhas digitadas não são iguais.';
     if (!responsavel.nome.trim() || !responsavel.telefone.trim()) return 'Preencha ao menos nome e telefone do responsável financeiro.';

@@ -5,6 +5,7 @@ import VerificacaoDuasEtapas from './VerificacaoDuasEtapas';
 import FamilyPreferenciasCobranca from './FamilyPreferenciasCobranca';
 import { User, FileText, ChevronRight, X, Check, Pencil, Bell, BellOff, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { erroEmail } from '../utils/emailReal';
 
 // ─── Texto do LGPD ────────────────────────────────────────────────────────────
 const LGPD_TEXT = `TERMO DE CONSENTIMENTO: PROTEÇÃO DE DADOS (LGPD)
@@ -145,6 +146,10 @@ function EditAccountModal({ currentUser, setCurrentUser, onClose }) {
     setIsLoading(true);
     setError('');
     try {
+      if (form.email.trim().toLowerCase() !== (currentUser.email || '').trim().toLowerCase()) {
+        const emailErr = erroEmail(form.email);
+        if (emailErr) throw new Error(emailErr);
+      }
       const { error: dbError } = await supabase
         .from('users').update({ email: form.email, phone: form.phone }).eq('id', currentUser.id);
       if (dbError) {

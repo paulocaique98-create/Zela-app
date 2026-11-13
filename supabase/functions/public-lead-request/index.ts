@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { notifyAdmins } from '../_shared/notifyAdmins.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { verificarEmailReal } from '../_shared/emailReal.ts'
 
 // public-lead-request: endpoint PÚBLICO (sem sessão) do formulário "Quero conhecer a escola"
 // (PublicLead.jsx, rota /quero-conhecer?codigo=XXXX). Item 11 do plano de expansão da Gestão.
@@ -59,6 +60,10 @@ serve(async (req) => {
     if (!telefone && !email) throw new Error('Informe um telefone ou um e-mail para contato.')
     if (telefone && (digitos.length < 8 || digitos.length > 15)) throw new Error('Confira o telefone informado.')
     if (email && !EMAIL.test(email)) throw new Error('Confira o e-mail informado.')
+    if (email) {
+      const emailCheck = await verificarEmailReal(email)
+      if (!emailCheck.ok) throw new Error(emailCheck.error)
+    }
 
     let nascimentoOk: string | null = null
     if (nascimento) {

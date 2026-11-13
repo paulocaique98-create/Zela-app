@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from "../_shared/logEdgeError.ts";
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
+import { verificarEmailReal } from '../_shared/emailReal.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -76,6 +77,9 @@ serve(async (req) => {
     }
 
     const { email, password, name, role, school_id, extra_fields } = await req.json();
+
+    const emailCheck = await verificarEmailReal(email);
+    if (!emailCheck.ok) throw new Error(emailCheck.error);
 
     // Achado de auditoria (Fase 17): `role` vinha direto do body sem
     // validação nenhuma — qualquer admin conseguia se autopromover a
