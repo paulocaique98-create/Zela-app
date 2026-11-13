@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Banco e Storage migrados de Canadá (ca-central-1) para São Paulo (sa-east-1)** (13/11): novo projeto Supabase `krfabcwmufmzavkcukdr`, mesmo schema, dados, policies, crons e arquivos, validados contra o projeto antigo. Os usuários precisam entrar de novo (segredo JWT novo); 2FA e senhas foram preservados. Projeto antigo mantido só leitura até D+30. Runbook: docs/operacao/MIGRACAO_REGIAO_SAO_PAULO.md.
 - **E-mail real nos cadastros** (12/11): bloqueia formato inválido, e-mails temporários, erros de digitação (gmial.com) e domínios sem MX em auto-cadastro, matrícula pública, cadastro pela Recepção, troca de e-mail, importação em lote e captação. Exige deploy das 7 funções alteradas.
 - **Verificação em duas etapas (Google Authenticator) no login** (12/11): obrigatória para developer e gestão, opcional nos demais perfis em Configurações > Segurança; recuperação por e-mail no Portal do Dev (remover-mfa). Exige deploy das funções remover-mfa e trocar-conta.
 - **Totem sem superaquecer** (12/11): detecção facial adaptativa, câmera a 15 fps, repouso com tela preta, autoproteção térmica com aviso, e horário de atendimento opcional por aparelho (engrenagem no totem). Só front, sem migration.
