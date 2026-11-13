@@ -3,6 +3,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ## [Não lançado] - 2026-10-05
 ### Adicionado
+- **Exclusão de responsável com retenção LGPD** (13/11, só código, migration NÃO aplicada em produção): apaga alunos, autorizados, biometria, fichas, arquivos e 2º responsável sem vínculo externo; mantém contratos, cobranças e notas desligados da pessoa, com registro de retenção (Art. 16, I). Carência de 15 dias, exceção urgente justificada. Ver migration 20261213150000.
 - **Repouso (tela preta) também no menu do Autoatendimento** (13/11): depois de um check-in/out o totem volta ao menu e agora escurece após o tempo configurado; um toque acorda. A configuração de repouso e horário de atendimento passou para "Energia e horário" na engrenagem principal do Autoatendimento. Só front, sem migration.
 - **Banco e Storage migrados de Canadá (ca-central-1) para São Paulo (sa-east-1)** (13/11): novo projeto Supabase `krfabcwmufmzavkcukdr`, mesmo schema, dados, policies, crons e arquivos, validados contra o projeto antigo. Os usuários precisam entrar de novo (segredo JWT novo); 2FA e senhas foram preservados. Projeto antigo mantido só leitura até D+30. Runbook: docs/operacao/MIGRACAO_REGIAO_SAO_PAULO.md.
 - **E-mail real nos cadastros** (12/11): bloqueia formato inválido, e-mails temporários, erros de digitação (gmial.com) e domínios sem MX em auto-cadastro, matrícula pública, cadastro pela Recepção, troca de e-mail, importação em lote e captação. Exige deploy das 7 funções alteradas.
