@@ -61,6 +61,10 @@ begin
       and array_length(c.conkey, 1) = 1
       and c.confrelid in ('public.users'::regclass, 'public.students'::regclass)
       and t.relname ~ '^(financial_|debt_agreement|bank_statement|contract_documents|scholarship_grants|scholarship_applications|school_fiscal)'
+      -- Coluna que é parte da chave primária não aceita NULL (ex.:
+      -- financial_guardian_conditions, config por responsável): mantém a FK
+      -- como está (CASCADE), a configuração da pessoa some com a conta.
+      and not exists (select 1 from pg_constraint p where p.conrelid = c.conrelid and p.contype = 'p' and c.conkey[1] = any(p.conkey))
   loop
     execute format('alter table %s alter column %I drop not null', r.tbl, r.attname);
     execute format('alter table %s drop constraint %I', r.tbl, r.conname);

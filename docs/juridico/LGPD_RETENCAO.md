@@ -3,7 +3,7 @@
 > Reorganizado em 05/10/2026. Abaixo da linha, o documento original.
 
 ## 🔴 PENDENTE
-- **Exclusão de responsável (13/11):** implementada só local (migration 20261213150000); falta aplicar, testar com banco, validar prazo (5 anos) com o jurídico e tratar dados pessoais em financial_invoices (tomador) após o prazo.
+- **Exclusão de responsável (13/11):** aplicada em produção (13/11) e testada no ensaio; falta validar prazo (5 anos) com o jurídico e tratar dados pessoais em financial_invoices (tomador) após o prazo.
 - **Confirmar os prazos da seção 2** com quem decide sobre política de dados da escola (são proposta técnica, não decisão jurídica).
 - **Retenção de logs (90 dias) e de documentos de matrícula rejeitada (180 dias):** sem rotina; a retenção de `error_logs` resolvidos (Fase G do `PLANO_LOGGING_ERROS_PORTAL_DEV.md`) também não foi feita.
 - **Automação do expurgo:** continua manual, por decisão (nunca job que apaga sozinho sem supervisão).
