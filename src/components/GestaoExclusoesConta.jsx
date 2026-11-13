@@ -123,6 +123,8 @@ function ResponderModal({ currentUser, acting, onClose, onDone }) {
   const [confirmText, setConfirmText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [urgente, setUrgente] = useState(false);
+  const [justificativa, setJustificativa] = useState('');
   const isDelete = kind === 'excluir';
 
   const submit = async () => {
@@ -131,7 +133,7 @@ function ResponderModal({ currentUser, acting, onClose, onDone }) {
     try {
       if (isDelete) {
         if (!req.user_id) throw new Error('A conta já não existe mais.');
-        const { data, error: fnError } = await supabase.functions.invoke('delete-user', { body: { userId: req.user_id } });
+        const { data, error: fnError } = await supabase.functions.invoke('delete-user', { body: { userId: req.user_id, urgente, justificativa: justificativa.trim() } });
         if (fnError || data?.error) {
           let msg = data?.error;
           if (!msg && fnError?.context && typeof fnError.context.json === 'function') {
@@ -169,9 +171,22 @@ function ResponderModal({ currentUser, acting, onClose, onDone }) {
       {isDelete ? (
         <>
           <p className="text-sm text-on-surface">
-            A conta de <strong>{req.user_name}</strong> ({req.user_email}) será excluída e a pessoa perde o acesso. Os vínculos com alunos são desfeitos. Isso não pode ser desfeito.
+            A conta de <strong>{req.user_name}</strong> ({req.user_email}) será excluída e a pessoa perde o acesso. Isso não pode ser desfeito.
           </p>
-          <p className="text-xs text-on-surface-variant">Se for o único responsável de algum aluno, cadastre outro responsável antes.</p>
+          {req.user_role === 'family' && (
+            <>
+              <p className="text-xs text-on-surface-variant">
+                Serão apagados: alunos, autorizados, biometria, fichas e arquivos da família, e o 2º responsável que não tiver vínculo com outra família. Ficam apenas contratos, cobranças e notas, com o registro do titular guardado pelo prazo legal (LGPD, Art. 16, I). Há carência de 15 dias desde o pedido.
+              </p>
+              <label className="flex items-center gap-2 text-xs text-on-surface">
+                <input type="checkbox" checked={urgente} onChange={e => setUrgente(e.target.checked)} />
+                Exclusão urgente (ordem judicial, fraude): pular a carência
+              </label>
+              {urgente && (
+                <Field label="Justificativa (fica registrada)" id="del-urgent"><input id="del-urgent" value={justificativa} onChange={e => setJustificativa(e.target.value)} className={inputCls} /></Field>
+              )}
+            </>
+          )}
           <Field label="Observação (opcional)" id="del-response"><input id="del-response" value={response} onChange={e => setResponse(e.target.value)} className={inputCls} /></Field>
           <Field label='Digite EXCLUIR para confirmar' id="del-confirm"><input id="del-confirm" value={confirmText} onChange={e => setConfirmText(e.target.value)} className={inputCls} /></Field>
         </>

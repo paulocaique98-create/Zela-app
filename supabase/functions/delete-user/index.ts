@@ -67,7 +67,8 @@ serve(async (req) => {
     }
 
     // 3. Obter o userId a ser excluído
-    const { userId } = await req.json()
+    const bodyExtra = await req.json()
+    const { userId } = bodyExtra
     if (!userId) {
       throw new Error('userId é obrigatório')
     }
@@ -125,6 +126,85 @@ serve(async (req) => {
     // PRIMEIRO, e só apaga o login (Auth) por último, quando o resto já deu
     // certo -- se algo travar no banco, a pessoa nem percebe, o login dela
     // continua funcionando normalmente.
+
+    // 3b. Responsável (role 'family'): exclusão LGPD completa. Apaga a família
+    // inteira (alunos, autorizados, biometria, 2º responsável sem vínculo com
+    // outra família, arquivos) e MANTÉM só o financeiro (contratos, cobranças,
+    // notas) + um registro de retenção (Art. 16, I, LGPD). Ver migration
+    // 20261213150000_exclusao_responsavel_lgpd.sql.
+    const { data: tgtRole, error: tgtRoleError } = await adminClient
+      .from('users').select('role').eq('id', userId).maybeSingle()
+    if (tgtRoleError) throw tgtRoleError
+
+    if (tgtRole?.role === 'family') {
+      const body = {
+        urgente: bodyExtra.urgente === true,
+        justificativa: String(bodyExtra.justificativa || '').trim(),
+      }
+
+      // Carência de 15 dias: vale quando há pedido de exclusão pendente da
+      // própria pessoa. Exclusão direta da Gestão (sem pedido) não tem carência.
+      // Exceção urgente (ordem judicial, fraude) exige justificativa e fica
+      // registrada em audit_logs.
+      const { data: pedido } = await adminClient
+        .from('account_deletion_requests')
+        .select('id, requested_at')
+        .eq('user_id', userId)
+        .eq('status', 'pendente')
+        .maybeSingle()
+      if (pedido) {
+        const dias = (Date.now() - new Date(pedido.requested_at).getTime()) / 86400000
+        if (dias < 15) {
+          if (!body.urgente || body.justificativa.length < 10) {
+            const faltam = Math.ceil(15 - dias)
+            throw new Error(`Carência de 15 dias: faltam ${faltam} dia(s). Em caso urgente (ordem judicial, fraude), informe a justificativa.`)
+          }
+          await adminClient.from('audit_logs').insert({
+            school_id: callerData.school_id,
+            actor_id: caller.id,
+            action: 'lgpd_exclusao_urgente',
+            entity_type: 'user',
+            entity_id: userId,
+            details: { justificativa: body.justificativa, pedido_id: pedido.id },
+          })
+        }
+      }
+
+      const { data: res, error: rpcError } = await adminClient.rpc('lgpd_excluir_familia', {
+        p_user_id: userId,
+        p_caller_id: caller.id,
+        p_reason: body.urgente ? body.justificativa : null,
+      })
+      if (rpcError) throw new Error(`Erro ao excluir a família: ${rpcError.message}`)
+
+      // Banco já limpo: agora os arquivos e os logins (Auth).
+      const porBucket: Record<string, string[]> = {}
+      for (const f of (res?.storage_paths || [])) {
+        (porBucket[f.bucket] ||= []).push(f.path)
+      }
+      for (const [bucket, paths] of Object.entries(porBucket)) {
+        const { error: rmErr } = await adminClient.storage.from(bucket).remove(paths)
+        if (rmErr) console.warn(`Falha ao remover arquivos de ${bucket}: ${rmErr.message}`)
+      }
+      for (const uid of (res?.deleted_user_ids || [])) {
+        const { error: delAuthErr } = await adminClient.auth.admin.deleteUser(uid)
+        if (delAuthErr && !/not.?found/i.test(delAuthErr.message || '')) {
+          console.warn(`Falha ao excluir login ${uid}: ${delAuthErr.message}`)
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Família excluída. Dados financeiros mantidos pelo prazo legal.',
+          students_deleted: res?.students_deleted ?? 0,
+          second_guardians_kept: res?.second_guardians_kept ?? [],
+          contracts_retained: res?.contracts_retained ?? 0,
+          charges_retained: res?.charges_retained ?? 0,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
 
     // 4. Excluir os cadastros de "Autorizados" (e a foto/biometria de cada
     // um) dessa família. Achado ao investigar um falso-positivo na tela de
