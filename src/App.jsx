@@ -1024,6 +1024,15 @@ export default function App() {
     if (error) throw error;
     setAuthorized(prev => prev.filter(p => p.id !== id));
 
+    // Foto de rosto é dado biométrico (LGPD): apaga o arquivo do Storage junto
+    // com o cadastro. Só depois do DELETE no banco dar certo; se o arquivo não
+    // sair, o pior caso é um órfão (a limpeza de fotos soltas pega).
+    if (target?.photo_storage_path) {
+      removeAuthorizedPersonPhoto(target.photo_storage_path).catch((removeErr) => {
+        console.error('Erro ao remover foto do Storage (arquivo pode ter ficado órfão):', removeErr);
+      });
+    }
+
     // Auditoria: exclusão de autorizado é uma ação sensível (some com nome,
     // foto e biometria de vez) — registrada em audit_logs (mesma
     // infraestrutura já usada pra Mitigação), visível em Sistema > Auditoria.
