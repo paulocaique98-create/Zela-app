@@ -4,6 +4,7 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from '../_shared/logEdgeError.ts'
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
+import { verificarEmailReal } from '../_shared/emailReal.ts'
 
 // import-matricula-batch — importação em massa de formulários antigos
 // (planilha) pra dentro do fluxo já existente de Matrícula/Rematrícula.
@@ -97,6 +98,8 @@ serve(async (req) => {
           throw new Error('Responsável sem nome, e-mail ou CPF.')
         }
         const email = String(responsavel.email).trim().toLowerCase()
+        const emailCheck = await verificarEmailReal(email)
+        if (!emailCheck.ok) throw new Error(emailCheck.error)
         const validCriancas = Array.isArray(fam.criancas) ? fam.criancas.filter((c: { nome?: string }) => c?.nome?.trim()) : []
         if (validCriancas.length === 0) throw new Error('Nenhuma criança válida nessa família.')
 

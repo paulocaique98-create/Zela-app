@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { notifyAdmins } from '../_shared/notifyAdmins.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { verificarEmailReal } from '../_shared/emailReal.ts'
 
 // self-register-family — endpoint PÚBLICO (sem JWT de chamador): usado pela
 // tela "Novo usuário?" da tela de login, onde ninguém está autenticado ainda.
@@ -63,6 +64,8 @@ serve(async (req) => {
     if (!school_code || !name || !email || !password || !Array.isArray(students) || students.length === 0) {
       throw new Error('Preencha todos os campos obrigatórios, incluindo ao menos um aluno.')
     }
+    const emailCheck = await verificarEmailReal(email)
+    if (!emailCheck.ok) throw new Error(emailCheck.error)
     if (password.length < 6) {
       throw new Error('A senha deve ter ao menos 6 caracteres.')
     }

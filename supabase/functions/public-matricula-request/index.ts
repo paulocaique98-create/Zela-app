@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { notifyAdmins } from '../_shared/notifyAdmins.ts'
 import { logEdgeError } from '../_shared/logEdgeError.ts'
+import { verificarEmailReal } from '../_shared/emailReal.ts'
 
 // public-matricula-request — endpoint PÚBLICO (sem JWT de chamador), usado
 // pelo link de Matrícula que só o Admin acessa/distribui (PublicMatricula.jsx,
@@ -60,6 +61,12 @@ serve(async (req) => {
 
     if (!school_code || !email || !password || !responsavel?.nome?.trim() || !responsavel?.telefone?.trim()) {
       throw new Error('Preencha ao menos o e-mail, a senha e os dados do responsável.')
+    }
+    const emailCheck = await verificarEmailReal(email)
+    if (!emailCheck.ok) throw new Error(emailCheck.error)
+    if (segundo_responsavel?.nome?.trim() && segundo_responsavel?.email?.trim()) {
+      const email2Check = await verificarEmailReal(segundo_responsavel.email)
+      if (!email2Check.ok) throw new Error(`2º responsável: ${email2Check.error}`)
     }
     if (typeof password !== 'string' || password.length < 8) {
       throw new Error('A senha deve ter ao menos 8 caracteres.')

@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { ehRecepcao } from "../_shared/papeis.ts";
 import { logEdgeError } from "../_shared/logEdgeError.ts";
 import { exigirEscolaLiberada } from '../_shared/escolaLiberada.ts';
+import { verificarEmailReal } from '../_shared/emailReal.ts';
 
 // Correção definitiva do bug real (achado 23/09, caso Maria Elisa de Freitas
 // Falcão): editar o e-mail de um usuário em AdminUserRegistration.jsx só
@@ -115,6 +116,17 @@ serve(async (req) => {
     // comparação é contra o e-mail de LOGIN (auth.users) -- nunca contra
     // public.users, que admin consegue alterar direto e daria pra usar pra
     // disfarçar uma troca como "sem mudança".
+    // Validação de "e-mail real" só quando o e-mail de login de fato muda:
+    // salvar um usuário antigo sem trocar o e-mail não pode quebrar.
+    {
+      const { data: authAtual } = await supabaseAdmin.auth.admin.getUserById(user_id);
+      const mudou = (authAtual?.user?.email || '').trim().toLowerCase() !== normalizedEmail;
+      if (mudou) {
+        const emailCheck = await verificarEmailReal(normalizedEmail);
+        if (!emailCheck.ok) throw new Error(emailCheck.error);
+      }
+    }
+
     if (callerData.role !== 'developer') {
       const { data: authTarget, error: authTargetError } = await supabaseAdmin.auth.admin.getUserById(user_id);
       if (authTargetError || !authTarget?.user) {

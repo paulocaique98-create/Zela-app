@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, Plus, Trash2, CheckCircle2, Users, Baby, Clock, KeyRound, X, UserMinus, AlertTriangle, ChevronDown, UserCog } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { erroEmail } from '../utils/emailReal';
 import { SETORES_CHAT } from '../lib/constants';
 import { publicAppUrl } from '../lib/publicUrl';
 import { formatPersonName } from '../utils/formatName';
@@ -1034,6 +1035,8 @@ export default function AdminUserRegistration({ currentUser, editingUser, initia
 
       } else {
         // 1. Criar usuário de forma segura via Edge Function
+        const emailErr = erroEmail(formData.email);
+        if (emailErr) throw new Error(emailErr);
         const extraFields = {
           phone: formData.phone1,
           phone2: formData.phone2 || null,

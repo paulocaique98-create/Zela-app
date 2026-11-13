@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { TURMAS } from '../lib/constants';
 import { navigateTo } from '../utils/navigate';
 import { formatPersonName } from '../utils/formatName';
+import { erroEmail } from '../utils/emailReal';
 
 // Tela pública de autocadastro de Responsável — chega aqui por "/cadastro",
 // sem estar logado (ver App.jsx, mesmo padrão de rota pública já usado por
@@ -169,6 +170,9 @@ export default function SelfRegister() {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
+
+    const emailErr = erroEmail(formData.email);
+    if (emailErr) { setErrorMsg(emailErr); setIsLoading(false); return; }
 
     try {
       const studentsPayload = students.map(s => ({
