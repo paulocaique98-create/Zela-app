@@ -5,6 +5,7 @@ import Header from './components/Header';
 import LoadingLogo from './components/LoadingLogo';
 import AuthModal from './components/AuthModal';
 import { supabase } from './lib/supabase';
+import { mfaConfiavel } from './lib/mfa';
 import { desativarPushNativo } from './lib/pushNativo';
 import { uploadAuthorizedPersonPhoto, removeAuthorizedPersonPhoto, getAuthorizedPersonPhotoSignedUrl, getAuthorizedPersonPhotoSignedUrls } from './lib/storage';
 import { notifyCheckinRequest } from './lib/notifyCheckinRequest';
@@ -261,7 +262,7 @@ export default function App() {
       // -- ex.: fechou a aba entre a senha e o código. Volta para o login.
       if (session) {
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
+        if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2' && !mfaConfiavel(session.user.id)) {
           await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
           localStorage.removeItem('zela_user');
           setCurrentUser(null);
