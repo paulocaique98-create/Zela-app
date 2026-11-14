@@ -12,7 +12,7 @@ import GestaoDispositivoPessoas from './GestaoDispositivoPessoas';
 // Painel de dispositivos de acesso (Control iD, fase 7). Só a Gestão gerencia (as RPCs
 // conferem papel e escola no banco). O token só existe em texto aqui, em memória, no
 // momento em que é gerado: nunca vai para storage, log ou URL.
-const CHIP = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap';
+const CHIP = 'inline-block px-2 py-0.5 rounded-sm text-[11px] font-semibold border whitespace-nowrap';
 const CONEXAO_CLS = {
   online: 'bg-success/10 text-success border-success/30',
   offline: 'bg-error/10 text-error border-error/30',

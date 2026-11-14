@@ -220,7 +220,7 @@ export default function Tarefas({ currentUser, currentSchool, modo = 'professor'
               {t.descricao && <p className="text-sm text-on-surface whitespace-pre-wrap break-words">{t.descricao}</p>}
               {(habsPorTarefa[t.id] || []).length > 0 && (
                 <div className="flex flex-wrap gap-1 pt-1">
-                  {habsPorTarefa[t.id].map(c => <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">{c}</span>)}
+                  {habsPorTarefa[t.id].map(c => <span key={c} className="text-xs px-2 py-0.5 rounded-sm bg-primary/10 text-primary font-bold">{c}</span>)}
                 </div>
               )}
             </article>

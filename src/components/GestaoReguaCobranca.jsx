@@ -10,7 +10,7 @@ import { Tabs, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable,
 // Régua de cobrança (item 14 do plano de expansão da Gestão). Só a Gestão (a RLS barra os outros).
 // A tela só configura: quem envia é a função run-billing-rules, de hora em hora, e a chave única
 // de billing_dispatches impede mensagem repetida. Canais desta versão: notificação e e-mail.
-const CHIP = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap';
+const CHIP = 'inline-block px-2 py-0.5 rounded-sm text-[11px] font-semibold border whitespace-nowrap';
 const STATUS_CLS = {
   enviado: 'bg-success/10 text-success border-success/30',
   falhou: 'bg-brass text-ink border-brass',

@@ -18,7 +18,7 @@ import {
 const COLUNAS_ESCOLA = 'id, name, razao_social, cnpj, phone, email, director_name, zip_code, street, number, complement, neighborhood, city, state, pedagogical_method';
 const COLUNAS_EXTERNO = 'id, student_id, escola_origem, cidade, uf, ano_letivo, serie, disciplinas, carga_horaria, frequencia, resultado, observacao';
 const COLUNAS_EMITIDO = 'id, tipo, numero, codigo_verificacao, conteudo, hash_conteudo, emitido_em, cancelado_em, motivo_cancelamento';
-const CHIP = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap';
+const CHIP = 'inline-block px-2 py-0.5 rounded-sm text-[11px] font-semibold border whitespace-nowrap';
 const EXTERNO_VAZIO = {
   escola_origem: '', cidade: '', uf: '', ano_letivo: '', serie: '', disciplinas_texto: '',
   carga_horaria: '', frequencia: '', resultado: 'aprovado', observacao: '',

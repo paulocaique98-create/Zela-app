@@ -165,7 +165,7 @@ function PrecosTab({ currentUser, ctx, recarregar, irParaAlunos }) {
               type="button"
               onClick={() => setAno(a)}
               aria-pressed={a === ano}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition ${a === ano ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`}
+              className={`px-4 py-1.5 rounded-sm text-sm font-semibold border transition ${a === ano ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`}
             >
               {a}
             </button>
@@ -309,7 +309,7 @@ function AlunosTab({ currentUser, ctx, recarregar }) {
   };
 
   const pendentes = useMemo(() => ctx.alunos.filter(a => planoDoAluno(a).faltando.length > 0).length, [ctx.alunos]);
-  const chipCls = (on) => `px-3.5 py-1.5 rounded-full text-sm font-semibold border transition ${on ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`;
+  const chipCls = (on) => `px-3.5 py-1.5 rounded-sm text-sm font-semibold border transition ${on ? 'bg-primary text-white border-primary' : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary/60'}`;
 
   return (
     <div className="space-y-4 max-w-4xl">
@@ -349,9 +349,9 @@ function AlunosTab({ currentUser, ctx, recarregar }) {
                     {a.turma && <p className="text-xs text-on-surface-variant truncate">{a.turma}</p>}
                   </div>
                   {a.plano.faltando.length > 0 ? (
-                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning/10 text-warning">Incompleto</span>
+                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-sm bg-warning/10 text-warning">Incompleto</span>
                   ) : comContrato.has(a.id) ? (
-                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success">Com mensalidade</span>
+                    <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-sm bg-success/10 text-success">Com mensalidade</span>
                   ) : null}
                 </header>
                 <div className="grid grid-cols-2 gap-3 p-3.5">

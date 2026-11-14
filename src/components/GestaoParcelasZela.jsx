@@ -12,7 +12,7 @@ const TOM = {
 
 function Etiqueta({ status }) {
   const s = statusParcela(status);
-  return <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full border ${TOM[s.tom]}`}>{s.label}</span>;
+  return <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-sm border ${TOM[s.tom]}`}>{s.label}</span>;
 }
 
 function Link({ url }) {

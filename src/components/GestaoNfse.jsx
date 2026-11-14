@@ -7,7 +7,7 @@ import { Tabs, Field, inputCls, PrimaryButton, SecondaryButton, ResponsiveTable,
 // Nota fiscal de serviço (item 15). Só a Gestão (a RLS barra os outros). Vale para qualquer município:
 // código do serviço e alíquotas são da escola, sem valor padrão de imposto. A nota só liga depois que
 // a escola confirma as alíquotas (o banco exige). Quem emite é o Asaas; aqui se configura e se acompanha.
-const CHIP = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap';
+const CHIP = 'inline-block px-2 py-0.5 rounded-sm text-[11px] font-semibold border whitespace-nowrap';
 const TOM_CLS = {
   ok: 'bg-success/10 text-success border-success/30',
   alerta: 'bg-brass text-ink border-brass',

@@ -63,7 +63,7 @@ export default function FamilyTarefas({ currentUser, currentSchool, familyStuden
                 {t.descricao && <p className="text-sm text-on-surface whitespace-pre-wrap break-words">{t.descricao}</p>}
                 {(habs[t.id] || []).length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1">
-                    {habs[t.id].map(c => <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">{c}</span>)}
+                    {habs[t.id].map(c => <span key={c} className="text-xs px-2 py-0.5 rounded-sm bg-primary/10 text-primary font-bold">{c}</span>)}
                   </div>
                 )}
               </article>
