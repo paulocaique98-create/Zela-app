@@ -14,7 +14,7 @@ import {
 // Gestão de bolsas (item 13 do plano de expansão da Gestão). Só a Gestão (a RLS barra os outros).
 // Pedido, decisão e encerramento passam por funções do banco; o desconto na mensalidade é
 // recalculado no servidor (apply-scholarship-discount). Renda e documentos são dado sensível.
-const CHIP = 'inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap';
+const CHIP = 'inline-block px-2 py-0.5 rounded-sm text-[11px] font-semibold border whitespace-nowrap';
 const STATUS_CLS = {
   enviada: 'bg-brass text-ink border-brass',
   em_analise: 'bg-primary/10 text-primary border-primary/30',

@@ -1354,7 +1354,7 @@ export default function AdminFaceScanner({ onClose, requestKioskAccess, students
   const overlaysEnergia = (
     <>
       {sobrecarregadoUI && !repouso && !foraHorarioEfetivo && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[1000] bg-warning text-ink text-xs font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[1000] bg-warning text-ink text-xs font-bold px-3 py-1.5 rounded-sm shadow-lg pointer-events-none">
           Aparelho aquecido — desempenho reduzido para protegê-lo
         </div>
       )}

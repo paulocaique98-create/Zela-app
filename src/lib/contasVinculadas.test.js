@@ -28,11 +28,11 @@ describe('contas vinculadas · botão do cabeçalho', () => {
     expect(totalNaoLidas(null)).toBe(0);
   });
 
-  it('botão: equipe sempre, família só com vínculo, suporte nunca', () => {
+  it('botão: equipe sempre, família só com vínculo, recepção e suporte nunca', () => {
     expect(mostrarBotaoDeContas('gestao_pedagogica', [])).toBe(true);
     expect(mostrarBotaoDeContas('gestao', [])).toBe(true);
-    expect(mostrarBotaoDeContas('admin', [])).toBe(false);
-    expect(mostrarBotaoDeContas('admin', [{ atual: true }, { atual: false }])).toBe(false);
+    expect(mostrarBotaoDeContas('recepcao', [])).toBe(false);
+    expect(mostrarBotaoDeContas('recepcao', [{ atual: true }, { atual: false }])).toBe(false);
     expect(mostrarBotaoDeContas('teacher', [])).toBe(true);
     expect(mostrarBotaoDeContas('family', [])).toBe(false);
     expect(mostrarBotaoDeContas('family', [{ atual: true }])).toBe(false);
